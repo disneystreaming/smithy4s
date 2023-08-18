@@ -20,8 +20,8 @@ import smithy4s.kinds._
 import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.codecs.{Encoder => BodyEncoder}
-import smithy4s.capability.Zipper
 import smithy4s.schema._
+import smithy4s.capability.MonadThrowLike
 
 final case class HttpRequest[+A](
     method: HttpMethod,
@@ -40,6 +40,11 @@ final case class HttpRequest[+A](
 
   def addHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpRequest[A] =
     this.copy(headers = this.headers ++ headers)
+
+  def withContentType(contentType: String): HttpRequest[A] =
+    this.copy(headers =
+      this.headers + (CaseInsensitive("Content-Type") -> Seq(contentType))
+    )
 }
 
 object HttpRequest {
@@ -54,11 +59,15 @@ object HttpRequest {
   object Encoder {
     private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
-        req.addHeaders(meta.headers)
+        val oldUri = req.uri
+        val newUri =
+          oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
+        req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
-    private def bodyEncoder[Body]: Encoder[Body, Body] = {
-      (resp: HttpRequest[Body], body: Body) => resp.copy(body = body)
+    private def bodyEncoder[Body](contentType: String): Encoder[Body, Body] = {
+      (req: HttpRequest[Body], body: Body) =>
+        req.copy(body = body).withContentType(contentType)
     }
 
     private def fromMetadataEncoderK[Body]
@@ -67,18 +76,22 @@ object HttpRequest {
         .widen[Writer[HttpRequest[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
-    private def fromEntityEncoderK[Body]
-        : PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
-      Writer.pipeDataK[HttpRequest[Body], Body](bodyEncoder[Body]).narrow
+    private def fromEntityEncoderK[Body](
+        contentType: String
+    ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
+      Writer
+        .pipeDataK[HttpRequest[Body], Body](bodyEncoder[Body](contentType))
+        .narrow
 
     def restSchemaCompiler[Body](
         metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]]
+        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
+        contentType: String
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
       val bodyCompiler =
-        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body])
+        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
       HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
     }
 
@@ -99,6 +112,27 @@ object HttpRequest {
 
   object Decoder {
 
+    def restSchemaCompiler[F[_]: MonadThrowLike, Body](
+        metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
+        entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
+    ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
+      val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+        metadataDecoderCompiler.mapK(
+          Metadata.Decoder.toReaderK
+            .andThen(
+              extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+            )
+        )
+
+      val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+        entityDecoderCompiler.mapK { extractBody[F, Body] }
+
+      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
+        restMetadataCompiler,
+        bodyMetadataCompiler
+      )
+    }
+
     private def extractMetadata[F[_]](
         liftToF: PolyFunction[Either[MetadataError, *], F]
     ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
@@ -110,25 +144,6 @@ object HttpRequest {
     private def extractBody[F[_], Body]
         : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
       Reader.in[F].composeK(_.body)
-
-    def restSchemaCompiler[F[_]: Zipper, Body](
-        metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]],
-        liftToF: PolyFunction[Either[MetadataError, *], F]
-    ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
-      val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
-        metadataDecoderCompiler.mapK(
-          Metadata.Decoder.toReaderK.andThen(extractMetadata[F](liftToF))
-        )
-
-      val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
-        entityDecoderCompiler.mapK { extractBody[F, Body] }
-
-      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
-        restMetadataCompiler,
-        bodyMetadataCompiler
-      )
-    }
 
   }
 

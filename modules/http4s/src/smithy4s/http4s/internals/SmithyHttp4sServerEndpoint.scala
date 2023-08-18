@@ -23,8 +23,7 @@ import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.HttpApp
 import org.http4s.Method
-import org.http4s.Response
-import org.http4s.Status
+import org.http4s.Entity
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds._
@@ -33,6 +32,7 @@ import smithy4s.kinds._
   * A construct that encapsulates a smithy4s endpoint, and exposes
   * http4s specific semantics.
   */
+// scalafmt { maxColumn = 120}
 private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
@@ -50,12 +50,12 @@ private[http4s] object SmithyHttp4sServerEndpoint {
   def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      makeServerCodecs: UnaryServerCodecs.Make[F],
+      makeServerCodecs: HttpUnaryServerCodecs.Make[F, Entity[F]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
   ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
   // format: on
     HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
-      toHttp4sMethod(httpEndpoint.method)
+      fromSmithy4sHttpMethod(httpEndpoint.method)
         .leftMap { e =>
           HttpEndpoint.HttpEndpointError(
             "Couldn't parse HTTP method: " + e
@@ -87,7 +87,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   val serverCodecs = makeServerCodecs(endpoint)
   import serverCodecs._
-  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
+  val contractErrorResponseEncoder: HttpResponse.Encoder[Entity[F], HttpContractError] =
+    serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {
@@ -97,30 +98,35 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   override val httpApp: HttpApp[F] = {
     val baseApp = HttpApp[F] { req =>
       val run: F[O] = for {
-        input <- inputDecoder.read(req)
+        input <- inputDecoder.read(toSmithy4sHttpRequest(req))
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
-      run.map(outputEncoder.write(successResponseBase, _))
+      run
+        .map(outputEncoder.write(successResponseBase, _))
+        .map(fromSmithy4sHttpResponse)
     }
     middleware(endpoint)(baseApp).handleErrorWith(error =>
-      Kleisli.liftF(errorResponse(error))
+      Kleisli.liftF(errorResponse(error).map(fromSmithy4sHttpResponse))
     )
   }
 
-  private val successResponseBase: Response[F] =
-    Response[F](Status.fromInt(httpEndpoint.code).getOrElse(Status.Ok))
-  private val internalErrorBase: Response[F] =
-    Response[F](Status.InternalServerError)
-  private val badRequestBase: Response[F] = Response[F](Status.BadRequest)
+  private val successResponseBase: HttpResponse[Entity[F]] =
+    HttpResponse(httpEndpoint.code, Map.empty, Entity.empty)
+  // Response[F](Status.fromInt(httpEndpoint.code).getOrElse(Status.Ok))
+  private val internalErrorBase: HttpResponse[Entity[F]] =
+    HttpResponse(500, Map.empty, Entity.empty)
+  private val badRequestBase: HttpResponse[Entity[F]] =
+    HttpResponse(400, Map.empty, Entity.empty)
 
-  def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
-    case e: HttpContractError =>
-      F.pure(contractErrorResponseEncoder.write(badRequestBase, e))
-    case endpoint.Error((_, e)) =>
-      F.pure(errorEncoder.write(internalErrorBase, e))
-    case e: Throwable =>
-      F.raiseError(e)
-  }
+  def errorResponse(throwable: Throwable): F[HttpResponse[Entity[F]]] =
+    throwable match {
+      case e: HttpContractError =>
+        F.pure(contractErrorResponseEncoder.write(badRequestBase, e))
+      case endpoint.Error((_, e)) =>
+        F.pure(errorEncoder.write(internalErrorBase, e))
+      case e: Throwable =>
+        F.raiseError(e)
+    }
 
 }

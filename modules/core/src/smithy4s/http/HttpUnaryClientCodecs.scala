@@ -26,7 +26,7 @@ trait HttpUnaryClientCodecs[F[_], Body, I, E, O] {
   val errorDecoder: HttpResponse.Decoder[F, Body, Throwable]
 }
 
-object UnaryClientCodecs {
+object HttpUnaryClientCodecs {
 
   type For[F[_], Body] = {
     type toKind5[I, E, O, SI, SO] = HttpUnaryClientCodecs[F, Body, I, E, O]
@@ -40,8 +40,8 @@ object UnaryClientCodecs {
         input: CachedSchemaCompiler[HttpRequest.Encoder[Body, *]],
         output: CachedSchemaCompiler[HttpResponse.Decoder[F, Body, *]],
         error: CachedSchemaCompiler[HttpResponse.Decoder[F, Body, *]],
-        errorDiscriminator: HttpResponse[Body] => F[Option[HttpDiscriminator]],
-        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+        errorDiscriminator: HttpResponse[Body] => F[HttpDiscriminator],
+        toStrict: Body => F[(Body, Blob)]
     ): Make[F, Body] = new Make[F, Body] {
 
       private val requestEncoderCache: input.Cache = input.createCache()

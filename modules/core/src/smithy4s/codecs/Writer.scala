@@ -113,6 +113,42 @@ object Writer {
 
   type CachedCompiler[In, Out] = CachedSchemaCompiler[Writer[In, Out, *]]
 
+  def addingTo[In]: PartiallyAppliedWriterBuilder[In] = new PartiallyAppliedWriterBuilder()
+
+  class PartiallyAppliedWriterBuilder[In](val dummy: Boolean = true) extends AnyVal {
+
+    /**
+    * Lifts an Output transformation as a higher-kinded function that
+    * operates on writers.
+    */
+    def andThenK[Out, Out0](
+        f: Out => Out0
+    ): PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] =
+      new PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] {
+        def apply[A](fa: Writer[In, Out, A]): Writer[In, Out0, A] =
+          fa.andThen(f)
+      }
+
+    /**
+    * Lifts an Output transformation as a higher-kinded function that
+    * operates on writers.
+    */
+    def andThenK_(f: In => In): PolyFunction[Writer[In, In, *], Writer[In, In, *]] =
+      andThenK(f)
+
+    /**
+    * Lifts an piping transformation that connects the output channel of a writer
+    * to the data channel of another writer.
+    */
+    def pipeDataK[Out](
+        other: Writer[In, In, Out]
+    ): PolyFunction[Writer[In, Out, *], Writer[In, In, *]] =
+      new PolyFunction[Writer[In, Out, *], Writer[In, In, *]] {
+        def apply[A](writer: Writer[In, Out, A]): Writer[In, In, A] =
+          writer.pipeData(other)
+      }
+  }
+
   /**
     * Creates an writer from a function.
     */

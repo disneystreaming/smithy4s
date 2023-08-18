@@ -19,6 +19,7 @@ package smithy4s.codecs
 import smithy4s.kinds._
 import smithy4s.capability.Covariant
 import smithy4s.capability.Zipper
+import smithy4s.capability.MonadThrowLike
 
 trait Reader[F[_], -Message, A] { self =>
 
@@ -63,6 +64,21 @@ object Reader {
     def read(message: Message): F[A] = f(message)
   }
 
+  def of[Message]: PartiallyAppliedReaderBuilder[Message] =
+    new PartiallyAppliedReaderBuilder[Message]()
+
+  class PartiallyAppliedReaderBuilder[Message](
+      private val dummy: Boolean = true
+  ) extends AnyVal {
+    def liftPolyFunction[F[_], G[_]](
+        fk: PolyFunction[F, G]
+    ): PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] =
+      new PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] {
+        def apply[A](fa: Reader[F, Message, A]): Reader[G, Message, A] =
+          fa.mapK(fk)
+      }
+  }
+
   def in[F[_]]: PartiallyAppliedReaderBuilderF[F] =
     new PartiallyAppliedReaderBuilderF[F]
 
@@ -74,6 +90,19 @@ object Reader {
       new PolyFunction[Reader[F, To, *], Reader[F, From, *]] {
         def apply[A](fa: Reader[F, To, A]): Reader[F, From, A] =
           fa.compose(f)
+      }
+
+    def flatComposeK[Message, Message2](
+        f: Message2 => F[Message]
+    )(implicit
+        F: MonadThrowLike[F]
+    ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
+      new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
+        def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
+          new Reader[F, Message2, A] {
+            def read(message: Message2): F[A] =
+              F.flatMap(f(message))(fa.read)
+          }
       }
   }
 

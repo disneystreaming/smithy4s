@@ -178,14 +178,14 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
+          val errorHandler =
+            ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+          val finalMiddleware = errorHandler |+| middleware |+| errorHandler
           new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
-            simpleProtocolCodecs.makeServerCodecs[F], {
-              val errorHandler =
-                ServerEndpointMiddleware.flatMapErrors(errorTransformation)
-              errorHandler |+| middleware |+| errorHandler
-            }
+            simpleProtocolCodecs.makeServerCodecs[F],
+            finalMiddleware
           ).routes
         }
 

@@ -17,10 +17,9 @@
 package smithy4s.http4s
 
 import cats.Applicative
-import cats.Monad
 import cats.effect.SyncIO
 import cats.syntax.all._
-import org.http4s.EntityDecoder
+import org.http4s.Entity
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Media
@@ -28,17 +27,157 @@ import org.http4s.ParseFailure
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.{Method => Http4sMethod}
+import org.http4s.Status
+import org.http4s.Uri
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
-import smithy4s.capability.Covariant
+import smithy4s.kinds.PolyFunctions
+import smithy4s.Blob
 import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs._
+import smithy4s.http.HttpContractError
 import smithy4s.http.CaseInsensitive
-import smithy4s.http.Metadata
 import smithy4s.http.PathParams
+import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 import smithy4s.http.{HttpMethod => SmithyMethod}
+import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
+import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
+import smithy4s.http.{HttpUri => Smithy4sHttpUri}
+import smithy4s.kinds.PolyFunction
 import cats.MonadThrow
+import cats.effect.Concurrent
+import fs2.Stream
+import fs2.Chunk
 
+// scalafmt: { maxColumn = 120}
 package object kernel {
+
+  type UnaryServerCodecs[F[_], I, E, O] =
+    smithy4s.http.HttpUnaryServerCodecs[F, Entity[F], I, E, O]
+  object UnaryServerCodecs {
+    type Make[F[_]] =
+      smithy4s.http.HttpUnaryServerCodecs.Make[F, Entity[F]]
+  }
+
+  type EntityWriter[F[_], A] = Writer[Any, Entity[F], A]
+  object EntityWriter {
+    def fromPayloadWriterK[F[_]]: PolyFunction[PayloadWriter, EntityWriter[F, *]] =
+      Writer
+        .addingTo[Any]
+        .andThenK((blob: Blob) =>
+          Entity(
+            Stream.chunk(Chunk.array(blob.toArray)),
+            Some(blob.size.toLong)
+          )
+        )
+  }
+
+  type EntityReader[F[_], A] = Reader[F, Entity[F], A]
+
+  object EntityReader {
+
+    def fromPayloadReaderK[F[_]: Concurrent]: PolyFunction[PayloadReader, EntityReader[F, *]] =
+      Reader
+        .of[Blob]
+        .liftPolyFunction(
+          PolyFunctions
+            .mapErrorK(HttpContractError.fromPayloadError)
+            .andThen(MonadThrowLike.liftEitherK[F, HttpContractError])
+        )
+        .andThen(Reader.in[F].flatComposeK(collectBytes[F]))
+
+    private def collectBytes[F[_]: Concurrent](
+        entity: Entity[F]
+    ): F[Blob] = entity.body.chunks.compile
+      .to(Chunk)
+      .map(_.flatten)
+      .map(chunk => Blob(chunk.toArray))
+
+  }
+
+  private[smithy4s] def toSmithy4sHttpRequest[F[_]](
+      req: Request[F]
+  ): Smithy4sHttpRequest[Entity[F]] = {
+    val pathParams = req.attributes.lookup(pathParamsKey)
+    val uri = toSmithy4sHttpUri(req.uri, pathParams)
+    val headers = getHeaders(req)
+    val method = toSmithy4sMethod(req.method)
+    Smithy4sHttpRequest(method, uri, headers, Entity(req.body, req.contentLength))
+  }
+
+  private[smithy4s] def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Entity[F]]): F[Request[F]] =
+    for {
+      method <- fromSmithy4sHttpMethod(req.method).liftTo[F]
+    } yield {
+      Request(method, fromSmithy4sHttpUri(req.uri), headers = toHeaders(req.headers), body = req.body.body)
+    }
+
+  private[smithy4s] def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
+    val uriScheme = uri.scheme match {
+      case Some(Uri.Scheme.http) => Smithy4sHttpUriScheme.Http
+      case _                     => Smithy4sHttpUriScheme.Https
+    }
+    Smithy4sHttpUri(
+      uriScheme,
+      uri.host.map(_.renderString).getOrElse("localhost"),
+      uri.port,
+      uri.path.segments.map(_.encoded),
+      getQueryParams(uri),
+      pathParams
+    )
+  }
+
+  private[smithy4s] def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
+    val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
+    Uri(
+      path = path,
+      authority = Some(Uri.Authority(host = Uri.RegName(uri.host), port = uri.port))
+    ).withMultiValueQueryParams(uri.queryParams)
+  }
+
+  private[smithy4s] def fromSmithy4sHttpResponse[F[_]](
+      res: Smithy4sHttpResponse[Entity[F]]
+  ): Response[F] = {
+    val status =
+      Status
+        .fromInt(res.statusCode)
+        .getOrElse(
+          throw new IllegalStateException(
+            s"Invalid status code ${res.statusCode}"
+          )
+        )
+    val contentLength: Option[Header.ToRaw] =
+      res.body.length.map(l => org.http4s.headers.`Content-Length`(l))
+
+    val rawHeaders: Seq[Header.ToRaw] =
+      res.headers.toSeq.map { case (name, values) =>
+        Header.ToRaw.rawToRaw(
+          Header.Raw(CIString(name.value), values.mkString(","))
+        )
+      }
+    val headers = Headers(rawHeaders ++ contentLength)
+    Response(status, headers = headers, body = res.body.body)
+  }
+
+  private[smithy4s] def toSmithy4sHttpResponse[F[_]](
+      res: Response[F]
+  ): Smithy4sHttpResponse[Entity[F]] = Smithy4sHttpResponse[Entity[F]](
+    res.status.code,
+    res.headers.headers
+      .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
+      .toMap,
+    Entity(
+      res.body,
+      res.headers.get[org.http4s.headers.`Content-Length`].map(_.length)
+    )
+  )
+
+  type UnaryClientCodecs[F[_], I, E, O] =
+    smithy4s.http.HttpUnaryClientCodecs[F, Entity[F], I, E, O]
+  object UnaryClientCodecs {
+    type Make[F[_]] =
+      smithy4s.http.HttpUnaryClientCodecs.Make[F, Entity[F]]
+  }
 
   type ResponseEncoder[F[_], A] =
     smithy4s.codecs.Writer[Response[F], Response[F], A]
@@ -48,8 +187,7 @@ package object kernel {
   type RequestDecoder[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
   type ResponseDecoder[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
 
-  private[kernel] implicit def monadThrowShim[F[_]: MonadThrow]
-      : MonadThrowLike[F] =
+  private[smithy4s] implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
     new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = Applicative[F].pure(a)
       def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
@@ -70,7 +208,7 @@ package object kernel {
   val pathParamsKey: Key[PathParams] =
     Key.newKey[SyncIO, PathParams].unsafeRunSync()
 
-  private[smithy4s] def toHttp4sMethod(
+  private[smithy4s] def fromSmithy4sHttpMethod(
       method: SmithyMethod
   ): Either[ParseFailure, Http4sMethod] =
     method match {
@@ -113,9 +251,9 @@ package object kernel {
     }
 
   private[smithy4s] def getQueryParams[F[_]](
-      request: Request[F]
+      uri: Uri
   ): Map[String, List[String]] =
-    request.uri.query.pairs
+    uri.query.pairs
       .collect {
         case (name, None)        => name -> "true"
         case (name, Some(value)) => name -> value
@@ -123,30 +261,11 @@ package object kernel {
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2).toList }
 
-  def getRequestMetadata[F[_]](
-      pathParams: PathParams,
-      request: Request[F]
-  ): Metadata =
-    Metadata(
-      path = pathParams,
-      query = getQueryParams(request),
-      headers = getHeaders(request),
-      statusCode = None
-    )
-
-  def getResponseMetadata[F[_]](
-      response: Response[F]
-  ): Metadata =
-    Metadata(
-      headers = getHeaders(response),
-      statusCode = Some(response.status.code)
-    )
-
-  implicit def covariantEntityDecoder[F[_]](implicit
-      F: Monad[F]
-  ): Covariant[EntityDecoder[F, *]] = new Covariant[EntityDecoder[F, *]] {
-    def map[A, B](fa: EntityDecoder[F, A])(f: A => B): EntityDecoder[F, B] =
-      fa.map(f)
+  private[smithy4s] def toStrict[F[_]: Concurrent](entity: Entity[F]): F[(Entity[F], Blob)] = {
+    entity.body.chunks.compile
+      .to(Chunk)
+      .map(_.flatten)
+      .map(chunk => Entity(Stream.chunk(chunk), Some(chunk.size.toLong)) -> Blob(chunk.toArray))
   }
 
 }

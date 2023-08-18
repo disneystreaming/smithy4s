@@ -20,8 +20,11 @@ package internals
 
 import cats.effect.Concurrent
 import cats.syntax.all._
+import smithy4s.http.HttpRequest
+import smithy4s.http.HttpMethod
+import smithy4s.http.HttpResponse
+import org.http4s.Entity
 import org.http4s.Request
-import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
@@ -37,9 +40,10 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
 
   private val transformedClient: Client[F] = middleware(client)
 
-  def apply(input: I): F[O] = {
+  def apply(input: I): F[O] = inputToRequest(input).flatMap { request =>
     transformedClient
-      .run(inputToRequest(input))
+      .run(request)
+      .map(toSmithy4sHttpResponse)
       .use { response =>
         outputFromResponse(response)
       }
@@ -48,14 +52,23 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
   import clientCodecs._
 
   // Method will be amended by inputEncoder
-  val baseRequest = Request[F](org.http4s.Method.POST, baseUri).withEmptyBody
+  val baseRequest = HttpRequest[Entity[F]](
+    method = HttpMethod.POST,
+    uri = toSmithy4sHttpUri(baseUri),
+    headers = Map.empty,
+    body = Entity.empty
+  )
 
-  def inputToRequest(input: I): Request[F] = {
-    inputEncoder.write(baseRequest, input)
+  def inputToRequest(input: I): F[Request[F]] = {
+    fromSmithy4sHttpRequest(inputEncoder.write(baseRequest, input))
   }
 
-  private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.read(response)
-    else errorDecoder.read(response).flatMap(effect.raiseError[O](_))
+  private def outputFromResponse(response: HttpResponse[Entity[F]]): F[O] =
+    if (response.isSuccessful)
+      outputDecoder.read(response)
+    else
+      errorDecoder
+        .read(response)
+        .flatMap(effect.raiseError[O](_))
 
 }

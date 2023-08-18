@@ -28,6 +28,16 @@ object HttpDiscriminator {
   final case class StatusCode(int: Int) extends HttpDiscriminator
   // format: on
 
+  def fromResponse(
+      discriminatingHeaderNames: List[String],
+      response: HttpResponse[Any]
+  ): HttpDiscriminator =
+    fromStatusOrHeader(
+      discriminatingHeaderNames,
+      response.statusCode,
+      response.headers
+    )
+
   def fromMetadata(
       discriminatingHeaderNames: List[String],
       metadata: Metadata

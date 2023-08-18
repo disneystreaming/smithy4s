@@ -675,6 +675,7 @@ lazy val http4s = projectMatrix
   .dependsOn(
     `http4s-kernel`,
     json,
+    fs2,
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",

@@ -15,9 +15,12 @@
  */
 
 package smithy4s.http
+import smithy4s.http.HttpUriScheme
 
 final case class HttpUri(
+    scheme: HttpUriScheme,
     host: String,
+    port: Option[Int],
     path: Seq[String],
     queryParams: Map[String, Seq[String]],
     /**

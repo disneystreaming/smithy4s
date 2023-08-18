@@ -21,7 +21,6 @@ import smithy4s.codecs.{Reader, Writer}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.codecs.{Encoder => BodyEncoder}
-import smithy4s.capability.Zipper
 import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.capability.MonadThrowLike
@@ -45,22 +44,34 @@ final case class HttpResponse[+A](
     headers = headers,
     statusCode = Some(statusCode)
   )
+
+  def withContentType(contentType: String): HttpResponse[A] =
+    this.copy(headers =
+      this.headers + (CaseInsensitive("Content-Type") -> Seq(contentType))
+    )
+
+  def isSuccessful: Boolean =
+    HttpResponse.isStatusCodeSuccess(statusCode)
 }
 
 object HttpResponse {
   type Encoder[Body, A] = Writer[HttpResponse[Body], HttpResponse[Body], A]
   type Decoder[F[_], Body, A] = Reader[F, HttpResponse[Body], A]
 
+  private[http] def isStatusCodeSuccess(statusCode: Int): Boolean =
+    100 <= statusCode && statusCode <= 399
+
   object Encoder {
 
     def restSchemaCompiler[Body](
         metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]]
+        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
+        contentType: String
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
       val bodyCompiler =
-        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body])
+        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
       HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
     }
 
@@ -74,9 +85,6 @@ object HttpResponse {
       case None => Writer.noop
     }
 
-    private def isStatusCodeSuccess(statusCode: Int): Boolean =
-      100 <= statusCode && statusCode <= 399
-
     private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
       (resp: HttpResponse[Body], meta: Metadata) =>
         val statusCode =
@@ -88,8 +96,9 @@ object HttpResponse {
           .addHeaders(meta.headers)
     }
 
-    private def bodyEncoder[Body]: Encoder[Body, Body] = {
-      (resp: HttpResponse[Body], body: Body) => resp.copy(body = body)
+    private def bodyEncoder[Body](contentType: String): Encoder[Body, Body] = {
+      (resp: HttpResponse[Body], body: Body) =>
+        resp.copy(body = body).withContentType(contentType)
     }
 
     private def fromMetadataEncoderK[Body]
@@ -98,9 +107,12 @@ object HttpResponse {
         .widen[Writer[HttpResponse[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
-    private def fromEntityEncoderK[Body]
-        : PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
-      Writer.pipeDataK[HttpResponse[Body], Body](bodyEncoder[Body]).narrow
+    private def fromEntityEncoderK[Body](
+        contentType: String
+    ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
+      Writer
+        .pipeDataK[HttpResponse[Body], Body](bodyEncoder[Body](contentType))
+        .narrow
 
     private def forErrorAux[Body, E](
         errorTypeHeaders: List[String],
@@ -143,14 +155,15 @@ object HttpResponse {
 
   object Decoder {
 
-    def restSchemaCompiler[F[_]: Zipper, Body](
+    def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]],
-        liftToF: PolyFunction[Either[MetadataError, *], F]
+        entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         metadataDecoderCompiler.mapK(
-          Metadata.Decoder.toReaderK.andThen(extractMetadata[F](liftToF))
+          Metadata.Decoder.toReaderK.andThen(
+            extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+          )
         )
 
       val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
@@ -169,8 +182,8 @@ object HttpResponse {
     def forError[F[_]: MonadThrowLike, Body, E](
         maybeErrorable: Option[Errorable[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
-        discriminate: HttpResponse[Body] => F[Option[HttpDiscriminator]],
-        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+        discriminate: HttpResponse[Body] => F[HttpDiscriminator],
+        toStrict: Body => F[(Body, Blob)]
     ): Decoder[F, Body, E] =
       discriminating(
         discriminate,
@@ -186,8 +199,8 @@ object HttpResponse {
     def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
         maybeErrorable: Option[Errorable[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
-        discriminate: HttpResponse[Body] => F[Option[HttpDiscriminator]],
-        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+        discriminate: HttpResponse[Body] => F[HttpDiscriminator],
+        toStrict: Body => F[(Body, Blob)]
     ): Decoder[F, Body, Throwable] =
       discriminating(
         discriminate,
@@ -200,15 +213,16 @@ object HttpResponse {
     * to a given decoder, based on some discriminator.
     */
     private def discriminating[F[_], Body, Discriminator, E](
-        discriminate: HttpResponse[Body] => F[Option[Discriminator]],
+        discriminate: HttpResponse[Body] => F[Discriminator],
         select: Discriminator => Option[Decoder[F, Body, E]],
-        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+        toStrict: Body => F[(Body, Blob)]
     )(implicit F: MonadThrowLike[F]): Decoder[F, Body, E] =
       new Decoder[F, Body, E] {
         def read(response: HttpResponse[Body]): F[E] = {
-          F.flatMap(toStrict(response)) { case (strictResponse, bodyBlob) =>
-            F.flatMap(discriminate(strictResponse)) { maybeDiscriminator =>
-              maybeDiscriminator.flatMap(select) match {
+          F.flatMap(toStrict(response.body)) { case (strictBody, bodyBlob) =>
+            val strictResponse = response.copy(body = strictBody)
+            F.flatMap(discriminate(strictResponse)) { discriminator =>
+              select(discriminator) match {
                 case Some(decoder) => decoder.read(strictResponse)
                 case None =>
                   F.raiseError(
