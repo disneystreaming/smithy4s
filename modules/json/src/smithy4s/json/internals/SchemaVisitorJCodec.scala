@@ -396,11 +396,15 @@ private[smithy4s] class SchemaVisitorJCodec(
         case a: DArray =>
           out.writeArrayStart()
           a.value match {
+            // short-circuiting on empty arrays to avoid the downcast to array of documents
+            // which has proven to be dangerous in Scala 3:
+            // https://github.com/disneystreaming/smithy4s/issues/1158
+            case x: ArraySeq[_] if x.isEmpty =>
             case x: ArraySeq[_] =>
-              val xs = x.unsafeArray
+              val xs = x.unsafeArray.asInstanceOf[Array[Document]]
               var i = 0
               while (i < xs.length) {
-                encodeValue(xs(i).asInstanceOf[Document], out)
+                encodeValue(xs(i), out)
                 i += 1
               }
             case xs =>
