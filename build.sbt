@@ -696,6 +696,9 @@ lazy val http4s = projectMatrix
         Dependencies.Alloy.`protocol-tests` % Test
       )
     },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.example.guides.auth"
+    ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
