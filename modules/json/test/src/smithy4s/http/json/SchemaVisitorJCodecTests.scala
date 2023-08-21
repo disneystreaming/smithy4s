@@ -379,6 +379,18 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(decoded, doc)
   }
 
+  test("empty document arrays can be encoded (#1158)") {
+    val doc: Document = Document.array()
+    val documentJson = writeToString(doc)
+    val expected =
+      """[]"""
+
+    val decoded = readFromString[Document](documentJson)
+
+    expect.same(documentJson, expected)
+    expect.same(decoded, doc)
+  }
+
   test("Range checks are performed correctly") {
     val json = """{"qty":0}"""
     val result = util.Try(readFromString[RangeCheck](json))
