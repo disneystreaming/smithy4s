@@ -136,8 +136,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
     val schema: smithy4s.Schema[Recursive] = recursive(
       struct(
         string
-          .required[Recursive]("name", _.name)
-          .addHints(smithy.api.Required()),
+          .required[Recursive]("name", _.name),
         Recursive.schema.optional[Recursive]("parent", _.parent)
       ) {
         Recursive.apply
