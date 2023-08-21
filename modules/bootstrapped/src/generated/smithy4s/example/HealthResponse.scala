@@ -16,7 +16,7 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
   )
 
   implicit val schema: Schema[HealthResponse] = struct(
-    string.required[HealthResponse]("status", _.status).addHints(smithy.api.Required()),
+    string.required[HealthResponse]("status", _.status),
   ){
     HealthResponse.apply
   }.withId(id).addHints(hints)

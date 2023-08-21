@@ -16,7 +16,7 @@ object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
   )
 
   implicit val schema: Schema[ReservationOutput] = struct(
-    string.required[ReservationOutput]("message", _.message).addHints(smithy.api.Required()),
+    string.required[ReservationOutput]("message", _.message),
   ){
     ReservationOutput.apply
   }.withId(id).addHints(hints)
