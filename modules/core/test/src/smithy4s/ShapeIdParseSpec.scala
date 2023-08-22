@@ -42,4 +42,19 @@ class ShapeIdParseSpec extends FunSuite {
     val shapeId = ShapeId.parse("smithy4s#Shape#Id")
     expect(shapeId.isEmpty)
   }
+
+  test("Member parses when valid") {
+    val memberResult = ShapeId.Member.parse("smithy4s#ShapeId$member")
+    expect.same(memberResult, Some(ShapeId("smithy4s", "ShapeId").withMember("member")))
+  }
+
+  test("Member parse fails when it's just a shapeId") {
+    val memberResult = ShapeId.Member.parse("smithy4s#ShapeId")
+    expect(memberResult.isEmpty)
+  }
+
+  test("Member parse fails when there's more than one $") {
+    val memberResult = ShapeId.Member.parse("smithy4s#ShapeId$member$member")
+    expect(memberResult.isEmpty)
+  }
 }

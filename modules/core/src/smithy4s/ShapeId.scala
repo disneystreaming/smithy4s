@@ -40,6 +40,23 @@ object ShapeId extends ShapeTag.Has[ShapeId] {
 
   final case class Member(shapeId: ShapeId, member: String)
 
+  object Member {
+    def parse(string: String): Option[Member] = {
+      if (!string.contains('#') || !string.contains('$')) None
+      else {
+        string.split("#") match {
+          case Array(namespace, id) =>
+            id.split('$') match {
+              case Array(name, member) =>
+                Some(ShapeId(namespace, name).withMember(member))
+              case _ => None
+            }
+          case _ => None
+        }
+      }
+    }
+  }
+
   // Not relying on ShapeTag.Companion here, as it seems to trigger a Scala 3
   // only bug that we have yet to minify.
   implicit val shapeIdTag: ShapeTag[ShapeId] = new ShapeTag[ShapeId] {
