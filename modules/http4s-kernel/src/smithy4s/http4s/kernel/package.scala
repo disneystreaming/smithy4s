@@ -182,14 +182,6 @@ package object kernel {
       smithy4s.http.HttpUnaryClientCodecs.Make[F, Entity[F]]
   }
 
-  type ResponseEncoder[F[_], A] =
-    smithy4s.codecs.Writer[Response[F], Response[F], A]
-  type RequestEncoder[F[_], A] =
-    smithy4s.codecs.Writer[Request[F], Request[F], A]
-  type MediaDecoder[F[_], A] = smithy4s.codecs.Reader[F, Media[F], A]
-  type RequestDecoder[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
-  type ResponseDecoder[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
-
   private[smithy4s] implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
     new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = Applicative[F].pure(a)
