@@ -28,6 +28,7 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.{Method => Http4sMethod}
 import org.http4s.Status
+import org.http4s.EntityDecoder
 import org.http4s.Uri
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
@@ -92,6 +93,17 @@ package object kernel {
       .to(Chunk)
       .map(_.flatten)
       .map(chunk => Blob(chunk.toArray))
+
+    def toEntityDecoderK[F[_]: cats.Functor]: PolyFunction[EntityReader[F, *], EntityDecoder[F, *]] =
+      new PolyFunction[EntityReader[F, *], EntityDecoder[F, *]] {
+        def apply[A](fa: EntityReader[F, A]) = new EntityDecoder[F, A] {
+          def consumes: Set[org.http4s.MediaRange] = Set(org.http4s.MediaRange.`*/*`)
+          def decode(m: org.http4s.Media[F], strict: Boolean): org.http4s.DecodeResult[F, A] = {
+            val entity = Entity(m.body, m.contentLength)
+            cats.data.EitherT.liftF(fa.read(entity))
+          }
+        }
+      }
 
   }
 

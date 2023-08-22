@@ -25,10 +25,11 @@ import fs2.compression.Compression
 import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.MediaRange
+import org.http4s.Entity
 import org.http4s.MediaType
 import smithy4s.Endpoint
 import smithy4s.capability.Covariant
-import smithy4s.http.Metadata
+import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
@@ -70,11 +71,11 @@ private[aws] object AwsXmlCodecs {
     }
 
   private def requestEncoderCompilers[F[_]: Concurrent]
-      : CachedSchemaCompiler[RequestEncoder[F, *]] = {
+      : CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] = {
     val stringAndBlobsEntityEncoderCompilers =
       smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK(
         Covariant.liftPolyFunction[Option](
-          EntityEncoders.fromHttpMediaWriterK[F]
+          EntityWriter.fromHttpMediaWriterK[F]
         )
       )
     val xmlEntityEncoderCompilers = xmlEntityEncoder[F]
@@ -82,20 +83,21 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityEncoderCompilers,
       xmlEntityEncoderCompilers
     )
-    RequestEncoder.restSchemaCompiler[F](
+    HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = entityEncoderCompilers
     )
   }
 
   def responseDecoderCompilers[F[_]: Concurrent]
-      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
+      : CachedSchemaCompiler[HttpResponse.Decoder[F, Entity[F], *]] = {
     val stringAndBlobsEntityDecoderCompilers =
-      smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
-        Covariant.liftPolyFunction[Option](
-          EntityDecoders.fromHttpMediaReaderK[F]
+      smithy4s.http.StringAndBlobCodecs.ReaderCompiler
+        .mapK(
+          Covariant.liftPolyFunction[Option](
+            EntityReader.fromHttpMediaReaderK[F]
+          )
         )
-      )
     val xmlEntityDecoderCompilers = xmlEntityDecoder[F]
 
     val entityDecoderCompilers = CachedSchemaCompiler.getOrElse(

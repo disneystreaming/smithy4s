@@ -19,10 +19,12 @@ package internals
 
 import cats.effect.Concurrent
 import smithy4s.http4s.kernel._
-import smithy4s.http.HttpMediaType
+import smithy4s.http._
 import smithy4s.json.Json
 import fs2.compression.Compression
+import org.http4s.Entity
 import smithy4s.Endpoint
+import smithy4s.codecs.PayloadCodec
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -45,15 +47,16 @@ private[aws] object AwsJsonCodecs {
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val encoders = RequestEncoder.rpcSchemaCompiler[F](
+    val encoders =
       jsonPayloadCodecs.mapK(
-        EntityEncoders.fromPayloadCodecK[F](httpMediaType)
+        PayloadCodec.writerK
+          .andThen(EntityWriter.fromPayloadWriterK[F])
+          .andThen(HttpRequest.Encoder.fromEntityEncoderK(httpMediaType.value))
       )
-    )
     val decoders = jsonPayloadCodecs.mapK(
-      EntityDecoders
-        .fromPayloadCodecK[F](httpMediaType)
-        .andThen(MediaDecoder.fromEntityDecoderK)
+      PayloadCodec.readerK
+        .andThen(EntityReader.fromPayloadReaderK[F])
+        .andThen(HttpResponse.extractBody)
     )
 
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
@@ -63,8 +66,14 @@ private[aws] object AwsJsonCodecs {
       ): UnaryClientCodecs[F, I, E, O] = {
         val transformEncoders = applyCompression[F](endpoint.hints)
         val finalEncoders = transformEncoders(encoders)
-        val make = UnaryClientCodecs
-          .Make[F](finalEncoders, decoders, decoders, discriminator)
+        val make = HttpUnaryClientCodecs
+          .Make[F, Entity[F]](
+            finalEncoders,
+            decoders,
+            decoders,
+            discriminator,
+            toStrict
+          )
         make.apply(endpoint)
       }
     }

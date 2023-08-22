@@ -169,6 +169,7 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
       case StatusCode(int) => byStatusCode(int)
+      case Undetermined    => None
     }
   }
 }

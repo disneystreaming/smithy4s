@@ -30,7 +30,8 @@ import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
-import smithy4s.http4s.kernel.EntityDecoders
+import smithy4s.http4s.kernel._
+import smithy4s.codecs._
 
 import scala.concurrent.duration._
 
@@ -47,11 +48,13 @@ object AwsCredentialsProvider {
 
 class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
-  private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
+  // private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
   implicit val awsInstanceMetadataDecoder
       : EntityDecoder[F, AwsInstanceMetadata] =
     internals.AwsJsonCodecs.jsonPayloadCodecs
-      .mapK(EntityDecoders.fromPayloadCodecK[F](httpMediaType))
+      .mapK(PayloadCodec.readerK)
+      .mapK(EntityReader.fromPayloadReaderK[F])
+      .mapK(EntityReader.toEntityDecoderK[F])
       .fromSchema(AwsInstanceMetadata.schema)
 
   def default(

@@ -16,28 +16,27 @@
 
 package smithy4s.aws
 
-import cats.MonadThrow
-import cats.syntax.all._
+import smithy4s.capability.MonadThrowLike
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
 import smithy4s.http.HttpDiscriminator
-import org.typelevel.ci.CIString
 import smithy4s.schema._
-import smithy4s.http4s.kernel._
-import org.http4s._
+import smithy4s.http.HttpResponse
+import smithy4s.http.CaseInsensitive
 
+// scalafmt: { maxColumn: 120 }
 object AwsErrorTypeDecoder {
 
-  private val errorTypeHeader = CIString(`X-Amzn-Errortype`)
+  private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
 
-  private[aws] def fromResponse[F[_]](
-      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]]
-  )(implicit F: MonadThrow[F]): Response[F] => F[Option[HttpDiscriminator]] = {
+  private[aws] def fromResponse[F[_], Body](
+      decoderCompiler: CachedSchemaCompiler[HttpResponse.Decoder[F, Body, *]]
+  )(implicit F: MonadThrowLike[F]): HttpResponse[Body] => F[HttpDiscriminator] = {
     val decoder = decoderCompiler.fromSchema(AwsErrorType.schema)
-    (response: Response[F]) =>
-      val maybeTypeHeader =
+    (response: HttpResponse[Body]) =>
+      val maybeTypeHeader: Option[String] =
         response.headers
           .get(errorTypeHeader)
-          .map(_.head.value)
+          .flatMap(_.headOption)
       val errorTypeF = maybeTypeHeader match {
         case Some(typeHeader) =>
           F.pure(
@@ -50,7 +49,7 @@ object AwsErrorTypeDecoder {
         case None =>
           decoder.read(response)
       }
-      errorTypeF.map(_.discriminator)
+      F.map(errorTypeF)(_.discriminator)
   }
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#operation-error-serialization
@@ -59,7 +58,7 @@ object AwsErrorTypeDecoder {
       code: Option[String],
       typeHeader: Option[String]
   ) {
-    def discriminator: Option[HttpDiscriminator] = {
+    def discriminator: HttpDiscriminator = {
       __type
         .orElse(code)
         .orElse(typeHeader)
@@ -72,6 +71,7 @@ object AwsErrorTypeDecoder {
           else withoutColumn
         }
         .map(HttpDiscriminator.NameOnly(_))
+        .getOrElse(HttpDiscriminator.Undetermined)
     }
   }
 

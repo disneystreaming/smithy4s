@@ -50,4 +50,8 @@ object HttpMediaTyped {
         HttpMediaTyped(mediaType, fa)
     }
 
+  def unwrappedK[F[_]]: PolyFunction[HttpMediaTyped[F, *], F] =
+    new PolyFunction[HttpMediaTyped[F, *], F] {
+      def apply[A](fa: HttpMediaTyped[F, A]): F[A] = fa.instance
+    }
 }

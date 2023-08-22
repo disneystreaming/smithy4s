@@ -19,15 +19,17 @@ package smithy4s.http4s.kernel
 import fs2.compression.Compression
 import fs2.compression.DeflateParams
 import fs2.compression.ZLibParams
-import org.http4s.Header
-import org.http4s.Request
-import org.http4s.headers.`Content-Encoding`
-import org.http4s.headers.`Content-Length`
+import smithy4s.http.HttpRequest
+import smithy4s.http.CaseInsensitive
+import org.http4s.Entity
 
 // inspired from:
 // https://github.com/http4s/http4s/blob/v0.23.19/client/shared/src/main/scala/org/http4s/client/middleware/GZip.scala
 object GzipRequestCompression {
   val DefaultBufferSize = 32 * 1024
+
+  private val CONTENT_LENGTH = CaseInsensitive("Content-Length")
+  private val CONTENT_ENCODING = CaseInsensitive("Content-Encoding")
 
   def apply[F[_]: Compression](
       // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to conform to the
@@ -38,21 +40,7 @@ object GzipRequestCompression {
       retainUserEncoding: Boolean,
       bufferSize: Int = DefaultBufferSize,
       level: DeflateParams.Level = DeflateParams.Level.DEFAULT
-  ): Request[F] => Request[F] = { request =>
-    val updateContentTypeEncoding =
-      (retainUserEncoding, request.headers.get[`Content-Encoding`]) match {
-        case (true, Some(`Content-Encoding`(cc))) =>
-          Header.Raw(
-            `Content-Encoding`.headerInstance.name,
-            s"${cc.coding}, gzip"
-          )
-
-        case _ =>
-          Header.Raw(
-            `Content-Encoding`.headerInstance.name,
-            "gzip"
-          )
-      }
+  ): HttpRequest[Entity[F]] => HttpRequest[Entity[F]] = {
     val compressPipe =
       Compression[F].gzip(
         fileName = None,
@@ -64,10 +52,25 @@ object GzipRequestCompression {
           header = ZLibParams.Header.GZIP
         )
       )
-    request
-      .removeHeader[`Content-Length`]
-      .putHeaders(updateContentTypeEncoding)
-      .withBodyStream(request.body.through(compressPipe))
+
+    request =>
+      val contentEncoding = request.headers
+        .get(CONTENT_ENCODING)
+        .flatMap(_.headOption)
+      val updatedHeaders =
+        (retainUserEncoding, contentEncoding) match {
+          case (true, Some(cc)) =>
+            request.headers - CONTENT_LENGTH + (CONTENT_ENCODING -> Seq(
+              s"${cc}, gzip"
+            ))
+          case _ =>
+            request.headers - CONTENT_LENGTH + (CONTENT_ENCODING -> Seq("gzip"))
+        }
+
+      val updatedBody =
+        request.body.copy(body = compressPipe(request.body.body))
+      request
+        .copy(headers = updatedHeaders, body = updatedBody)
   }
 
 }

@@ -26,6 +26,7 @@ import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunctions
 import smithy4s.Endpoint
+import org.http4s.Entity
 
 private[aws] object AwsRestJsonCodecs {
 
@@ -68,12 +69,12 @@ private[aws] object AwsRestJsonCodecs {
     val mediaWriters =
       smithy4s.http.StringAndBlobCodecs.writerOr(jsonMediaWriters)
 
-    val encoders = RequestEncoder.restSchemaCompiler[F](
+    val encoders = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       Metadata.AwsEncoder,
-      mediaWriters.mapK(EntityEncoders.fromHttpMediaWriterK[F])
+      mediaWriters.mapK(EntityWriter.fromHttpMediaWriterK[F])
     )
 
-    val decoders = ResponseDecoder.restSchemaCompiler[F](
+    val decoders = HttpResponse.Decoder.restSchemaCompiler[F](
       Metadata.AwsDecoder,
       mediaReaders.mapK(EntityDecoders.fromHttpMediaReaderK[F])
     )

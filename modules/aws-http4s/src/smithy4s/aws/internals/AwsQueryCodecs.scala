@@ -24,6 +24,7 @@ import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
 import org.http4s.EntityEncoder
+import org.http4s.Entity
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
@@ -112,7 +113,7 @@ private[aws] object AwsQueryCodecs {
       capitalizeStructAndUnionMemberNames: Boolean,
       action: String,
       version: String
-  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+  ): CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] = {
     val urlFormEntityEncoderCompilers = UrlForm
       .Encoder(
         ignoreUrlFormFlattened = ignoreUrlFormFlattened,
@@ -132,8 +133,8 @@ private[aws] object AwsQueryCodecs {
             )
         }
       )
-    RequestEncoder
-      .restSchemaCompiler[F](
+    HttpRequest.Encoder
+      .restSchemaCompiler[EntityBody[F]](
         metadataEncoderCompiler = Metadata.AwsEncoder,
         entityEncoderCompiler = urlFormEntityEncoderCompilers,
         // We have to set this so that a body is produced even in the case where
@@ -168,7 +169,7 @@ private[aws] object AwsQueryCodecs {
   }
 
   private def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] =
-    EntityEncoders.fromHttpMediaWriter(
+    EntityWriter.fromHttpMediaWriter(
       HttpMediaTyped(
         HttpMediaType("application/x-www-form-urlencoded"),
         (_: Any, urlForm: UrlForm) => Blob(urlForm.render)
