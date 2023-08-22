@@ -57,6 +57,43 @@ object HttpRequest {
     }
 
   object Encoder {
+
+    def restSchemaCompiler[Body](
+        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
+    ): CachedSchemaCompiler[Encoder[Body, *]] = {
+      val metadataCompiler =
+        metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
+      HttpRestSchema.combineWriterCompilers(
+        metadataCompiler,
+        bodyEncoderCompiler
+      )
+    }
+
+    def restSchemaCompiler[Body](
+        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
+        contentType: String
+    ): CachedSchemaCompiler[Encoder[Body, *]] = {
+      val bodyCompiler =
+        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
+      restSchemaCompiler(metadataEncoderCompiler, bodyCompiler)
+    }
+
+    def fromHttpEndpoint[Body, I](
+        httpEndpoint: HttpEndpoint[I]
+    ): Encoder[Body, I] = new Encoder[Body, I] {
+      def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
+        val path = httpEndpoint.path(input)
+        val staticQueries = httpEndpoint.staticQueryParams
+        val oldUri = request.uri
+        val newUri =
+          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+        val method = httpEndpoint.method
+        request.copy(method = method, uri = newUri)
+      }
+    }
+
     private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
@@ -76,38 +113,13 @@ object HttpRequest {
         .widen[Writer[HttpRequest[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
-    private def fromEntityEncoderK[Body](
+    def fromEntityEncoderK[Body](
         contentType: String
     ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
       Writer
         .pipeDataK[HttpRequest[Body], Body](bodyEncoder[Body](contentType))
         .narrow
 
-    def restSchemaCompiler[Body](
-        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
-        contentType: String
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val metadataCompiler =
-        metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
-      val bodyCompiler =
-        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
-      HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
-    }
-
-    def fromHttpEndpoint[Body, I](
-        httpEndpoint: HttpEndpoint[I]
-    ): Encoder[Body, I] = new Encoder[Body, I] {
-      def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
-        val path = httpEndpoint.path(input)
-        val staticQueries = httpEndpoint.staticQueryParams
-        val oldUri = request.uri
-        val newUri =
-          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
-        val method = httpEndpoint.method
-        request.copy(method = method, uri = newUri)
-      }
-    }
   }
 
   object Decoder {

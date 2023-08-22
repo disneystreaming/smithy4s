@@ -65,14 +65,24 @@ object HttpResponse {
 
     def restSchemaCompiler[Body](
         metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
-        contentType: String
+        bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
+      HttpRestSchema.combineWriterCompilers(
+        metadataCompiler,
+        bodyEncoderCompiler
+      )
+    }
+
+    def restSchemaCompiler[Body](
+        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
+        contentType: String
+    ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val bodyCompiler =
         bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
-      HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+      restSchemaCompiler(metadataEncoderCompiler, bodyCompiler)
     }
 
     def forError[Body, E](
@@ -107,7 +117,7 @@ object HttpResponse {
         .widen[Writer[HttpResponse[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
-    private def fromEntityEncoderK[Body](
+    def fromEntityEncoderK[Body](
         contentType: String
     ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
       Writer
