@@ -109,7 +109,13 @@ package object kernel {
     for {
       method <- fromSmithy4sHttpMethod(req.method).liftTo[F]
     } yield {
-      Request(method, fromSmithy4sHttpUri(req.uri), headers = toHeaders(req.headers), body = req.body.body)
+      val headers = toHeaders(req.headers)
+      val updatedHeaders = req.body.length match {
+        case Some(0)             => headers
+        case Some(contentLength) => headers.put("Content-Length" -> contentLength.toString)
+        case None                => headers
+      }
+      Request(method, fromSmithy4sHttpUri(req.uri), headers = updatedHeaders, body = req.body.body)
     }
 
   private[smithy4s] def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
@@ -146,17 +152,14 @@ package object kernel {
             s"Invalid status code ${res.statusCode}"
           )
         )
-    val contentLength: Option[Header.ToRaw] =
-      res.body.length.map(l => org.http4s.headers.`Content-Length`(l))
 
-    val rawHeaders: Seq[Header.ToRaw] =
-      res.headers.toSeq.map { case (name, values) =>
-        Header.ToRaw.rawToRaw(
-          Header.Raw(CIString(name.value), values.mkString(","))
-        )
-      }
-    val headers = Headers(rawHeaders ++ contentLength)
-    Response(status, headers = headers, body = res.body.body)
+    val headers = toHeaders(res.headers)
+    val updatedHeaders = res.body.length match {
+      case Some(0)             => headers
+      case Some(contentLength) => headers.put("Content-Length" -> contentLength.toString)
+      case None                => headers
+    }
+    Response(status, headers = updatedHeaders, body = res.body.body)
   }
 
   private[smithy4s] def toSmithy4sHttpResponse[F[_]](
