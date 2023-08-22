@@ -93,6 +93,7 @@ private[aws] object AwsXmlCodecs {
       : CachedSchemaCompiler[HttpResponse.Decoder[F, Entity[F], *]] = {
     val stringAndBlobsEntityDecoderCompilers =
       smithy4s.http.StringAndBlobCodecs.ReaderCompiler
+        .mapK(HttpMediaTyped.unwrappedK[HttpPayloadReader])
         .mapK(
           Covariant.liftPolyFunction[Option](
             EntityReader.fromHttpMediaReaderK[F]

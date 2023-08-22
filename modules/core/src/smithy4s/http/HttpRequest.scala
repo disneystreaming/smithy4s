@@ -94,6 +94,20 @@ object HttpRequest {
       }
     }
 
+    private[smithy4s] def fromHttpMediaWriterK[Body]: PolyFunction[
+      HttpMediaTyped[BodyEncoder[Body, *], *],
+      Encoder[Body, *]
+    ] =
+      new PolyFunction[
+        HttpMediaTyped[BodyEncoder[Body, *], *],
+        Encoder[Body, *]
+      ] {
+        def apply[A](
+            fa: HttpMediaTyped[BodyEncoder[Body, *], A]
+        ): Encoder[Body, A] =
+          fromEntityEncoderK(fa.mediaType.value)(fa.instance)
+      }
+
     private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri

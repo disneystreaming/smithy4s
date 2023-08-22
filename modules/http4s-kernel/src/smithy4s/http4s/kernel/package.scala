@@ -44,6 +44,7 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
 import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
+import smithy4s.http.HttpPayloadReader
 import smithy4s.kinds.PolyFunction
 import cats.MonadThrow
 import cats.effect.Concurrent
@@ -76,6 +77,12 @@ package object kernel {
   type EntityReader[F[_], A] = Reader[F, Entity[F], A]
 
   object EntityReader {
+
+    def fromHttpPayloadReaderK[F[_]: Concurrent]: PolyFunction[HttpPayloadReader, EntityReader[F, *]] =
+      Reader
+        .of[Blob]
+        .liftPolyFunction(MonadThrowLike.liftEitherK[F, HttpContractError])
+        .andThen(Reader.in[F].flatComposeK(collectBytes[F]))
 
     def fromPayloadReaderK[F[_]: Concurrent]: PolyFunction[PayloadReader, EntityReader[F, *]] =
       Reader

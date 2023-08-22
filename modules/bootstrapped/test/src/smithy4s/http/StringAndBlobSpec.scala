@@ -44,8 +44,14 @@ class StringAndBlobSpec() extends munit.FunSuite {
 
   }
 
-  val stringsAndBlobsReaders = StringAndBlobCodecs.readerOr(DummyReaderCompiler)
-  val stringsAndBlobsWriters = StringAndBlobCodecs.writerOr(DummyWriterCompiler)
+  val stringsAndBlobsReaders = CachedSchemaCompiler.getOrElse(
+    StringAndBlobCodecs.ReaderCompiler,
+    DummyReaderCompiler
+  )
+  val stringsAndBlobsWriters = CachedSchemaCompiler.getOrElse(
+    StringAndBlobCodecs.WriterCompiler,
+    DummyWriterCompiler
+  )
 
   def check[A](
       schema: Schema[A],

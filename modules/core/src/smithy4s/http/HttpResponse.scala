@@ -247,6 +247,12 @@ object HttpResponse {
           }
         }
       }
+
+    private[smithy4s] def fromHttpMediaReaderK[F[_], Body]: PolyFunction[
+      HttpMediaTyped[Reader[F, Body, *], *],
+      Decoder[F, Body, *]
+    ] = HttpMediaTyped.unwrappedK.andThen(extractBody)
+
   }
 
   private def extractMetadata[F[_]](

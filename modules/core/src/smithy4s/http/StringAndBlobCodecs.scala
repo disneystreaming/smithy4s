@@ -25,16 +25,6 @@ import smithy4s.codecs._
 
 object StringAndBlobCodecs {
 
-  def readerOr(
-      other: CachedSchemaCompiler[HttpMediaReader]
-  ): CachedSchemaCompiler[HttpMediaReader] =
-    CachedSchemaCompiler.getOrElse(ReaderCompiler, other)
-
-  def writerOr(
-      other: CachedSchemaCompiler[HttpMediaWriter]
-  ): CachedSchemaCompiler[HttpMediaWriter] =
-    CachedSchemaCompiler.getOrElse(WriterCompiler, other)
-
   object ReaderCompiler
       extends CachedSchemaCompiler.Optional.Impl[HttpMediaReader] {
     def fromSchema[A](
