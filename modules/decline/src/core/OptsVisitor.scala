@@ -21,15 +21,7 @@ import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{
-  Bijection,
-  ByteArray,
-  Hints,
-  Lazy,
-  Refinement,
-  ShapeId,
-  Timestamp
-}
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -94,18 +86,31 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
   private def enumArg[E](
       values: List[EnumValue[E]],
-      fieldName: CoreHints.FieldName
-  ): Argument[E] =
+      fieldName: CoreHints.FieldName,
+      tag: EnumTag[E]
+  ): Argument[E] = {
+    val ordinalMap: Map[Int, E] = values.map(v => v.intValue -> v.value).toMap
+    val nameMap: Map[String, E] =
+      values.map(v => v.stringValue -> v.value).toMap
+    val extract: String => Option[E] = tag match {
+      case EnumTag.OpenIntEnum(unknown) =>
+        _.toIntOption.map(i => ordinalMap.getOrElse(i, unknown(i)))
+      case EnumTag.ClosedIntEnum =>
+        _.toIntOption.flatMap(ordinalMap.get)
+      case EnumTag.OpenStringEnum(unknown) =>
+        str => Some(nameMap.getOrElse(str, unknown(str)))
+      case EnumTag.ClosedStringEnum =>
+        nameMap.get(_)
+    }
     Argument.from("enum") { name =>
-      values
-        .find(_.stringValue == name)
-        .map(_.value)
+      extract(name)
         .toValidNel(
           s"""Unknown value "$name" for input ${fieldName.value}. Allowed values: ${values
             .map(_.stringValue)
             .mkString(", ")}"""
         )
     }
+  }
 
   private def jsonField[A](schema: Schema[A]): Opts[A] = {
     val jsonParser = parseJson(schema)
@@ -124,12 +129,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   }
 
   private def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = smithy4s.http.json.codecs()
-    val codec = capi.compileCodec(schema)
+    val reader = smithy4s.json.Json.payloadCodecs.fromSchema(schema).reader
 
     s =>
-      capi
-        .decodeFromByteArray(codec, s.getBytes())
+      reader
+        .decode(Blob(s))
         .leftMap(pe => pe.toString)
   }
 
@@ -149,7 +153,6 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       case PInt        => field[Int](hints)
       case PUUID       => field[UUID](hints)
       case PLong       => field[Long](hints)
-      case PUnit       => Opts.unit
       case PTimestamp =>
         implicit val arg: Argument[Timestamp] =
           timestampArg(FieldName.require(hints), hints.get(TimestampFormat))
@@ -168,8 +171,8 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case PDocument => jsonField(tag.schema(shapeId).addHints(hints))
       case PBlob => {
-        implicit val byteArrayArgument = commons.byteArrayArgument
-        field[ByteArray](hints)
+        implicit val blobArgument = commons.blobArgument
+        field[Blob](hints)
       }
     }
 
@@ -196,10 +199,10 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         fieldPlural(member.hints)
 
       case PBlob =>
-        implicit val byteArrayArgument = commons.byteArrayArgument
-        fieldPlural[ByteArray](member.hints)
+        implicit val blobArgument = commons.blobArgument
+        fieldPlural[Blob](member.hints)
 
-      case PUnit | PBoolean | PDocument => jsonFieldPlural(member)
+      case PBoolean | PDocument => jsonFieldPlural(member)
     }
 
   def collection[C[_], A](
@@ -237,13 +240,13 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case e: EnumerationSchema[e] =>
         implicit val arg: Argument[e] =
-          enumArg(e.values, FieldName.require(hints))
+          enumArg(e.values, FieldName.require(hints), e.tag)
 
         fieldPlural(hints)
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] =>
+          _: Schema.MapSchema[_, _] | _: Schema.OptionSchema[_] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
@@ -260,11 +263,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Opts[E] = {
-    implicit val arg: Argument[E] = enumArg(values, FieldName.require(hints))
+    implicit val arg: Argument[E] =
+      enumArg(values, FieldName.require(hints), tag)
 
     field(hints)
   }
@@ -272,11 +276,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def struct[A](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[A, _]],
+      fields: Vector[Field[A, _]],
       make: IndexedSeq[Any] => A
   ): Opts[A] = {
     def structField[X](
-        f: smithy4s.schema.Field[Schema, A, X]
+        f: smithy4s.schema.Field[A, X]
     ): Opts[X] = {
       val childHints = Hints(
         FieldName(f.label),
@@ -285,25 +289,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         IsNested(hints.get(IsNested).isDefined)
       )
 
-      f.foldK[Opts](
-        new smithy4s.schema.Field.FolderK[Schema, A, Opts] {
-          def onRequired[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Y
-          ): Opts[Y] =
-            instance.addHints(childHints).compile[Opts](self)
-
-          def onOptional[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Option[Y]
-          ): Opts[Option[Y]] = instance
-            .addHints(childHints)
-            .compile[Opts](self)
-            .orNone
-        }
-      )
+      f.schema.addHints(childHints).compile(self)
     }
 
     fields
@@ -314,12 +300,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def union[A](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[A, _]],
-      dispatch: Alt.Dispatcher[Schema, A]
+      alternatives: Vector[Alt[A, _]],
+      dispatch: Alt.Dispatcher[A]
   ): Opts[A] = {
     def go[X](
-        alt: SchemaAlt[A, X]
-    ): Opts[A] = alt.instance
+        alt: Alt[A, X]
+    ): Opts[A] = alt.schema
       .addHints(hints)
       .compile[Opts](this)
       .map(alt.inject)
@@ -343,4 +329,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       .mapValidated(a =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
+
+  override def option[A](schema: Schema[A]): Opts[Option[A]] =
+    schema.compile(this).orNone
 }

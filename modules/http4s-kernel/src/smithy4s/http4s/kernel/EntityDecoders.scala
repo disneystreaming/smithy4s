@@ -23,37 +23,42 @@ import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.MediaType
 import org.http4s._
-import smithy4s.http.CodecAPI
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
+import smithy4s.codecs._
+import smithy4s.http._
+import smithy4s.kinds.PolyFunction
+import smithy4s.kinds.PolyFunctions
 
 object EntityDecoders {
 
-  def fromCodecAPI[F[_]](
-      codecAPI: CodecAPI
-  )(implicit F: Concurrent[F]): CachedSchemaCompiler[EntityDecoder[F, *]] =
-    new CachedSchemaCompiler[EntityDecoder[F, *]] {
-      type Cache = codecAPI.Cache
-      def createCache(): Cache = codecAPI.createCache()
-      def fromSchema[A](schema: Schema[A]): EntityDecoder[F, A] =
-        fromSchema(schema, createCache())
+  def fromHttpMediaReader[F[_]: Concurrent, A](
+      httpBodyReader: HttpMediaReader[A]
+  ): EntityDecoder[F, A] = {
+    val mediaType = MediaType.unsafeParse(httpBodyReader.mediaType.value)
+    EntityDecoder
+      .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
+      .flatMapR(chunk =>
+        httpBodyReader.instance
+          .read(Blob(chunk.toArray))
+          .leftWiden[Throwable]
+          .liftTo[DecodeResult[F, *]]
+      )
+  }
 
-      def fromSchema[A](
-          schema: Schema[A],
-          cache: Cache
-      ): EntityDecoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
-        val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
-        EntityDecoder
-          .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
-          .flatMapR(chunk =>
-            codecAPI
-              .decodeFromByteArray(codecA, chunk.toArray)
-              .leftWiden[Throwable]
-              .liftTo[DecodeResult[F, *]]
-          )
-      }
-
+  def fromHttpMediaReaderK[F[_]: Concurrent]
+      : PolyFunction[HttpMediaReader, EntityDecoder[F, *]] =
+    new PolyFunction[HttpMediaReader, EntityDecoder[F, *]] {
+      def apply[A](httpBodyReader: HttpMediaReader[A]): EntityDecoder[F, A] =
+        fromHttpMediaReader[F, A](httpBodyReader)
     }
+
+  def fromPayloadCodecK[F[_]: Concurrent](
+      mediaType: HttpMediaType
+  ): PolyFunction[PayloadCodec, EntityDecoder[F, *]] = {
+    // scalafmt: {maxColumn = 120}
+    PayloadCodec.readerK
+      .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpContractError.fromPayloadError)))
+      .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
+      .andThen[EntityDecoder[F, *]](EntityDecoders.fromHttpMediaReaderK)
+  }
 
 }

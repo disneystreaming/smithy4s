@@ -178,7 +178,7 @@ class DynamicStabilitySpec extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
-        tag: EnumTag,
+        tag: EnumTag[E],
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): ConstUnit[E] = {
@@ -188,22 +188,22 @@ class DynamicStabilitySpec extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): ConstUnit[S] = {
       fields.foreach { field =>
-        self(field.instance)
+        self(field.schema)
       }
     }
 
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): ConstUnit[U] = {
       alternatives.foreach { alt =>
-        self(alt.instance)
+        self(alt.schema)
       }
     }
 
@@ -227,6 +227,10 @@ class DynamicStabilitySpec extends FunSuite {
         visitedLazies.add(underlying.shapeId)
         self(underlying)
       }
+    }
+
+    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = {
+      self(schema)
     }
   }
 

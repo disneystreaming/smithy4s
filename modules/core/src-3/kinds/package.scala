@@ -18,6 +18,8 @@ package smithy4s
 
 package object kinds {
 
+  type OptionK[F[_], A] = Option[F[A]]
+
   // format: off
   // Not using type projectors as it messes with type inference when using the algebra
   type FunctorAlgebra[Alg[_[_, _, _, _, _]], F[_]] = Alg[[I, E, O, SI, SO] =>> F[O]]

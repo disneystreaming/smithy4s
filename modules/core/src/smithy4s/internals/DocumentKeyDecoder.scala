@@ -91,7 +91,7 @@ object DocumentKeyDecoder {
 
           case PBlob =>
             fromUnsafe(shortDesc) { case DString(string) =>
-              ByteArray(Base64.getDecoder().decode(string))
+              Blob(Base64.getDecoder().decode(string))
             }
           case PBigInt =>
             from(shortDesc) {
@@ -124,20 +124,41 @@ object DocumentKeyDecoder {
               case FlexibleNumber(bd) if bd.isValidByte => bd.toByte
             }
 
-          case PUnit     => None
           case PDocument => None
         }
       }
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          tag: EnumTag,
+          tag: EnumTag[E],
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyDecoder[E] = {
         val fromName = values.map(e => e.stringValue -> e.value).toMap
-        from(s"value in [${fromName.keySet.mkString(", ")}]") {
-          case DString(value) if fromName.contains(value) => fromName(value)
+        val fromNum = values.map(e => e.intValue -> e.value).toMap
+        val intVal = s"value in [${fromNum.keySet.mkString(", ")}]"
+        val stringVal = s"value in [${fromName.keySet.mkString(", ")}]"
+        tag match {
+          case EnumTag.OpenIntEnum(unknown) =>
+            from(intVal) {
+              case DString(value) if value.toIntOption.isDefined =>
+                val i = value.toInt
+                fromNum.getOrElse(i, unknown(i))
+            }
+          case EnumTag.ClosedIntEnum =>
+            from(intVal) {
+              case DString(value)
+                  if value.toIntOption.exists(fromNum.contains(_)) =>
+                fromNum(value.toInt)
+            }
+          case EnumTag.OpenStringEnum(unknown) =>
+            from(stringVal) { case DString(value) =>
+              fromName.getOrElse(value, unknown(value))
+            }
+          case EnumTag.ClosedStringEnum =>
+            from(stringVal) {
+              case DString(value) if fromName.contains(value) => fromName(value)
+            }
         }
       }
 

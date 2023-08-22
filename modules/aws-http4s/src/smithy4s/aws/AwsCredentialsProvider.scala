@@ -18,19 +18,21 @@ package smithy4s.aws
 
 import cats.effect._
 import cats.syntax.all._
+import fs2.io.file.Files
+import org.http4s.EntityDecoder
+import org.http4s.Uri
+import org.http4s.client.Client
+import org.http4s.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
+import smithy4s.aws.kernel.AWS_PROFILE
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
-import smithy4s.aws.kernel.AWS_PROFILE
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
 import smithy4s.http4s.kernel.EntityDecoders
-import fs2.io.file.Files
+
 import scala.concurrent.duration._
-import org.http4s.EntityDecoder
-import org.http4s.client.Client
-import org.http4s.syntax.all._
 
 object AwsCredentialsProvider {
 
@@ -45,10 +47,11 @@ object AwsCredentialsProvider {
 
 class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
+  private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
   implicit val awsInstanceMetadataDecoder
       : EntityDecoder[F, AwsInstanceMetadata] =
-    EntityDecoders
-      .fromCodecAPI[F](new json.AwsJsonCodecAPI())
+    internals.AwsJsonCodecs.jsonPayloadCodecs
+      .mapK(EntityDecoders.fromPayloadCodecK[F](httpMediaType))
       .fromSchema(AwsInstanceMetadata.schema)
 
   def default(
@@ -60,6 +63,8 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     Resource
       .eval(fromEnv)
       .map(F.pure)
+      // TODO: Ensure minimal delay when these endpoints don't exist, e.g.
+      // when running locally.
       .orElse(refreshing(fromECS(httpClient)))
       .orElse(refreshing(fromEC2(httpClient)))
       .orElse(Resource.eval(_fromDisk).map(F.pure))
@@ -102,7 +107,7 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     }
   }
 
-  private def getProfileFromEnv: Option[String] =
+  def getProfileFromEnv: Option[String] =
     SysEnv.envValue(AWS_PROFILE).toOption
 
   val AWS_CONTAINER_CREDENTIALS_RELATIVE_URI =
@@ -110,6 +115,9 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
   val AWS_EC2_METADATA_URI =
     uri"http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+
+  val AWS_ECS_METADATA_BASE_URI =
+    uri"http://169.254.170.2"
 
   def fromEC2(httpClient: Client[F]): F[AwsTemporaryCredentials] =
     for {
@@ -120,7 +128,12 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     } yield metadataRes
 
   def fromECS(httpClient: Client[F]): F[AwsTemporaryCredentials] =
-    httpClient.expect[AwsInstanceMetadata](AWS_EC2_METADATA_URI).widen
+    for {
+      path <- SysEnv.envValue(AWS_CONTAINER_CREDENTIALS_RELATIVE_URI).liftTo[F]
+      metadataRes <- httpClient.expect[AwsInstanceMetadata](
+        AWS_ECS_METADATA_BASE_URI.withPath(Uri.Path.unsafeFromString(path))
+      )
+    } yield metadataRes
 
   def refreshing(
       get: F[AwsTemporaryCredentials]

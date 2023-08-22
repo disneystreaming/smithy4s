@@ -17,16 +17,18 @@
 package smithy4s.aws
 package internals
 
-import smithy4s._
+import cats.effect.Concurrent
+import cats.effect.Resource
+import cats.syntax.all._
+import fs2.Chunk
 import org.http4s._
 import org.http4s.client.Client
-import cats.effect.Resource
-import smithy4s.aws.kernel.AwsCrypto._
-import smithy4s.http.internals.URIEncoderDecoder.{encode => uriEncode}
-import cats.effect.Concurrent
-import fs2.Chunk
-import cats.syntax.all._
 import org.typelevel.ci.CIString
+import smithy4s._
+import smithy4s.aws.kernel.AwsCrypto._
+
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
   * A Client middleware that signs http requests before they are sent to AWS.
@@ -101,7 +103,7 @@ private[aws] object AwsSigningClient {
           else
             queryParams
               .map { case (k, v) =>
-                uriEncode(k) + "=" + uriEncode(v)
+                URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
               }
               .mkString("&")
 

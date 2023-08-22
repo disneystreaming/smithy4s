@@ -39,7 +39,7 @@ object crypto {
       ctx: Ptr[EVP_MD_CTX],
       data: Ptr[CSignedChar],
       datalen: unsafe.CSize
-  ): Unit = extern
+  ): CInt = extern
 
   def EVP_DigestFinal(
       ctx: Ptr[EVP_MD_CTX],

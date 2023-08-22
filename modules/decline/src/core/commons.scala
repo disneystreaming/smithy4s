@@ -20,7 +20,7 @@ import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{ByteArray, ConstraintError, Document, Schema}
+import smithy4s.{Blob, ConstraintError, Document, Schema}
 import cats.implicits._
 import cats.MonadError
 
@@ -35,17 +35,13 @@ object commons {
   ): Covariant[F] =
     new Covariant[F] {
       def map[A, B](fa: F[A])(f: A => B): F[B] = Functor[F].map(fa)(f)
-      def emap[A, B](fa: F[A])(f: A => Either[ConstraintError, B]): F[B] =
-        fa.map(f).rethrow
     }
 
   def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = smithy4s.http.json.codecs()
-    val codec = capi.compileCodec(schema)
-
+    val reader = smithy4s.json.Json.payloadCodecs.fromSchema(schema).reader
     s =>
-      capi
-        .decodeFromByteArray(codec, s.getBytes())
+      reader
+        .decode(Blob(s))
         .leftMap(pe => pe.toString)
   }
 
@@ -54,9 +50,9 @@ object commons {
 
     Argument.from("json")(parse(_).toValidatedNel)
   }
-  val byteArrayArgument: Argument[ByteArray] = {
+  val blobArgument: Argument[Blob] = {
     val decoder = Base64.getDecoder
-    Argument.from("base64")(s => Valid(ByteArray(decoder.decode(s))))
+    Argument.from("base64")(s => Valid(Blob(decoder.decode(s))))
   }
 }
 

@@ -17,20 +17,20 @@
 package smithy4s
 package internals
 
-import java.util.Base64
-import java.util.UUID
-
+import alloy.Discriminated
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import alloy.Discriminated
-import smithy4s.capability.Covariant
 import smithy4s.Document._
-import smithy4s.http.PayloadError
-import smithy4s.schema._
+import smithy4s.capability.Covariant
+import smithy4s.codecs._
 import smithy4s.schema.Primitive._
+import smithy4s.schema._
+
+import java.util.Base64
+import java.util.UUID
 import scala.collection.immutable.ListMap
 
 trait DocumentDecoder[A] { self =>
@@ -67,11 +67,6 @@ object DocumentDecoder {
     new Covariant[DocumentDecoder] {
       def map[A, B](fa: DocumentDecoder[A])(f: A => B): DocumentDecoder[B] =
         fa.map(f)
-
-      def emap[A, B](fa: DocumentDecoder[A])(
-          f: A => Either[ConstraintError, B]
-      ): DocumentDecoder[B] =
-        fa.emap(f)
     }
 
   def instance[A](
@@ -87,7 +82,7 @@ object DocumentDecoder {
         throw PayloadError(
           PayloadPath(history.reverse),
           expectedType,
-          s"Expected Json $expectedJsonShape"
+          s"Expected Json Shape: $expectedJsonShape but got the following Json Shape ${document.name}"
         )
     }
     def expected: String = expectedType
@@ -97,7 +92,7 @@ object DocumentDecoder {
 
 class DocumentDecoderSchemaVisitor(
     val cache: CompilationCache[DocumentDecoder]
-) extends SchemaVisitor.Cached[DocumentDecoder] {
+) extends SchemaVisitor.Cached[DocumentDecoder] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -126,17 +121,13 @@ class DocumentDecoderSchemaVisitor(
       from("Double") {
         case FlexibleNumber(bd) if bd.isDecimalDouble => bd.toDouble
       }
-    case PUnit =>
-      DocumentDecoder.instance("Unit", "Object") { case (_, DObject(_)) =>
-        ()
-      }
     case PTimestamp =>
       forTimestampFormat(
         hints.get(TimestampFormat).getOrElse(TimestampFormat.EPOCH_SECONDS)
       )
     case PBlob =>
       fromUnsafe("Base64 binary blob") { case DString(string) =>
-        ByteArray(Base64.getDecoder().decode(string))
+        Blob(Base64.getDecoder().decode(string))
       }
     case PBigInt =>
       from("BigInt") {
@@ -205,7 +196,7 @@ class DocumentDecoderSchemaVisitor(
       tag: CollectionTag[C],
       member: Schema[A]
   ): DocumentDecoder[C[A]] = {
-    val fa = apply(member)
+    val fa = self(member)
     DocumentDecoder.instance(tag.name, "Array") { case (pp, DArray(value)) =>
       tag.fromIterator(value.iterator.zipWithIndex.map {
         case (document, index) =>
@@ -215,6 +206,18 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
+  def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
+    new DocumentDecoder[Option[A]] {
+      val decoder = schema.compile(self)
+      def expected = decoder.expected
+
+      def apply(
+          history: List[PayloadPath.Segment],
+          document: smithy4s.Document
+      ): Option[A] = if (document == Document.DNull) None
+      else Some(decoder(history, document))
+    }
+
   override def map[K, V](
       shapeId: ShapeId,
       hints: Hints,
@@ -222,7 +225,7 @@ class DocumentDecoderSchemaVisitor(
       value: Schema[V]
   ): DocumentDecoder[Map[K, V]] = {
     val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
-    val valueDecoder = apply(value)
+    val valueDecoder = self(value)
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
@@ -230,7 +233,7 @@ class DocumentDecoderSchemaVisitor(
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
-                val path = PayloadPath.Segment.fromString(key) :: pp
+                val path = PayloadPath.Segment.parse(key) :: pp
                 throw PayloadError(
                   PayloadPath(path.reverse),
                   expectedType,
@@ -273,26 +276,31 @@ class DocumentDecoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
+    val fromOrdinal =
+      values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+    val label = s"value in [${fromName.keySet.mkString(", ")}]"
     tag match {
-      case EnumTag.IntEnum =>
-        val fromOrdinal =
-          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
-        from(
-          s"value in [${fromName.keySet.mkString(", ")}]"
-        ) {
+      case EnumTag.ClosedIntEnum =>
+        from(label) {
           case DNumber(value) if fromOrdinal.contains(value) =>
             fromOrdinal(value)
         }
-      case EnumTag.StringEnum =>
-        from(
-          s"value in [${fromName.keySet.mkString(", ")}]"
-        ) {
+      case EnumTag.OpenIntEnum(unknown) =>
+        from(label) { case DNumber(value) =>
+          fromOrdinal.getOrElse(value, unknown(value.toInt))
+        }
+      case EnumTag.ClosedStringEnum =>
+        from(label) {
           case DString(value) if fromName.contains(value) => fromName(value)
+        }
+      case EnumTag.OpenStringEnum(unknown) =>
+        from(label) { case DString(value) =>
+          fromName.getOrElse(value, unknown(value))
         }
     }
   }
@@ -300,56 +308,54 @@ class DocumentDecoderSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
-    def jsonLabel[A](field: Field[Schema, S, A]): String =
-      field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
+    def jsonLabel[A](field: Field[S, A]): String =
+      field.hints.get(JsonName).map(_.value).getOrElse(field.label)
 
     def fieldDecoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): (
         List[PayloadPath.Segment],
         Any => Unit,
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-      val maybeDefault = field.instance.getDefault
 
-      if (field.isOptional) {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(DNull) => buffer(None)
-            case Some(document) =>
-              buffer(Some(apply(field.instance)(path, document)))
-            case None => buffer(None)
-          }
-      } else {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(document) =>
-              buffer(apply(field.instance)(path, document))
-            case None if maybeDefault.isDefined =>
-              buffer(apply(field.instance)(path, maybeDefault.get))
-            case None =>
-              throw new PayloadError(
-                PayloadPath(path.reverse),
-                "",
-                "Required field not found"
-              )
-          }
+      field.getDefaultValue match {
+        case Some(defaultValue) =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                buffer(defaultValue)
+            }
+        case None =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                throw new PayloadError(
+                  PayloadPath(path.reverse),
+                  "",
+                  "Required field not found"
+                )
+            }
       }
     }
 
@@ -440,14 +446,14 @@ class DocumentDecoderSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): DocumentDecoder[U] = {
-    def jsonLabel[A](alt: Alt[Schema, U, A]): String =
-      alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+    def jsonLabel[A](alt: Alt[U, A]): String =
+      alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject) =>
+      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))

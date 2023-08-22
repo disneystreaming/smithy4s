@@ -22,7 +22,7 @@ import cats.implicits._
 import com.monovore.decline.Opts
 import smithy4s.Endpoint
 import smithy4s.decline.core.Printer
-import smithy4s.http.CodecAPI
+import smithy4s.codecs._
 
 import scala.{Console => SConsole}
 import com.monovore.decline.Argument
@@ -58,10 +58,12 @@ object PrinterApi {
   }
 
   def json[F[_]: Console: Applicative]: PrinterApi[F] = useCodec(
-    smithy4s.http.json.codecs()
+    smithy4s.json.Json.payloadCodecs.mapK(PayloadCodec.writerK)
   )
 
-  def useCodec[F[_]: Console: Applicative](codec: CodecAPI): PrinterApi[F] =
+  def useCodec[F[_]: Console: Applicative](
+      codec: PayloadWriter.CachedCompiler
+  ): PrinterApi[F] =
     new PrinterApi[F] {
 
       def printer[Op[_, _, _, _, _], I, O](

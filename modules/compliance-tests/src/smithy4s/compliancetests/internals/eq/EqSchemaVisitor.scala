@@ -18,11 +18,13 @@ package smithy4s.compliancetests.internals.eq
 
 import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
 import cats.kernel.Eq
+import cats.syntax.all._
 import smithy4s._
 import smithy4s.schema.{Schema, _}
 
 import java.util.UUID
 import smithy4s.capability.EncoderK
+import cats.kernel.Monoid
 
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
@@ -59,7 +61,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Eq[E] =
@@ -71,46 +73,20 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Eq[S] = { (x: S, y: S) =>
-    {
-      def forField[A2](field: Field[Schema, S, A2]): Boolean = {
-        val eqField = field.foldK(new Field.FolderK[Schema, S, Eq]() {
-          override def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): Eq[A] = self(instance)
-
-          override def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): Eq[Option[A]] = {
-            val showA = self(instance)
-            (x: Option[A], y: Option[A]) =>
-              (x, y) match {
-                case (Some(a), Some(b)) => showA.eqv(a, b)
-                case (None, None)       => true
-                case _                  => false
-              }
-          }
-        })
-        eqField.eqv(field.get(x), field.get(y))
-      }
-
-      fields.forall(forField(_))
-
-    }
-
+  ): Eq[S] = {
+    def forField[A2](field: Field[S, A2]): Eq[S] =
+      field.schema.compile(self).contramap(field.get)
+    implicit val monoidEqS: Monoid[Eq[S]] = Eq.allEqualBoundedSemilattice
+    fields.foldMap(forField(_))
   }
 
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Eq[U] = {
     // A version of `Eq` that assumes that the RHS is "up-casted" to U.
     trait AltEq[A] {
@@ -127,18 +103,17 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       }
     }
 
-    val precompiler = new Alt.Precompiler[Schema, AltEq] {
+    val precompiler = new Alt.Precompiler[AltEq] {
       def apply[A](label: String, instance: Schema[A]): AltEq[A] = {
         // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
         // is lost in the precompiler.
         val altA =
-          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+          alternatives.find(_.label == label).get.asInstanceOf[Alt[U, A]]
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
-        val projectA: U => Option[A] = dispatch.projector(altA)
         val eqA = instance.compile(self)
         new AltEq[A] {
-          def eqv(a: A, u: U): Boolean = projectA(u) match {
+          def eqv(a: A, u: U): Boolean = altA.project.lift(u) match {
             case None => false // U is not an A.
             case Some(a2) =>
               eqA.eqv(a, a2) // U is an A, we delegate the comparison
@@ -174,6 +149,13 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: A, y: A) => eq.value.eqv(x, y)
   }
 
+  override def option[A](schema: Schema[A]): Eq[Option[A]] = {
+    LenientOptionalCollectionEquality(schema) match {
+      case Some(eq) => eq
+      case None     => Eq.catsKernelEqForOption(self(schema))
+    }
+  }
+
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
       case Primitive.PShort      => Eq[Short]
@@ -187,10 +169,50 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case Primitive.PString     => Eq[String]
       case Primitive.PUUID       => Eq[UUID]
       case Primitive.PByte       => Eq[Byte]
-      case Primitive.PBlob       => Eq[ByteArray]
+      case Primitive.PBlob       => Eq[Blob]
       case Primitive.PDocument   => Eq[Document]
       case Primitive.PTimestamp  => Eq[Timestamp]
-      case Primitive.PUnit       => Eq[Unit]
+    }
+  }
+
+  type EqOpt[A] = Eq[Option[A]]
+  // A sub-visitor that provides lenient equality for Option-wrapped collections,
+  // where None and `Some(Empty)` are considered equivalent. s
+  object LenientOptionalCollectionEquality
+      extends SchemaVisitor.Optional[EqOpt] {
+    override def collection[C[_], A](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: CollectionTag[C],
+        member: Schema[A]
+    ): Option[Eq[Option[C[A]]]] = Some {
+      val collectionEq = EqSchemaVisitor.collection(shapeId, hints, tag, member)
+      new Eq[Option[C[A]]] {
+        def eqv(x: Option[C[A]], y: Option[C[A]]): Boolean = (x, y) match {
+          case (Some(left), Some(right)) => collectionEq.eqv(left, right)
+          case (None, Some(right))       => tag.isEmpty(right)
+          case (Some(left), None)        => tag.isEmpty(left)
+          case (None, None)              => true
+        }
+      }
+    }
+
+    override def map[K, V](
+        shapeId: ShapeId,
+        hints: Hints,
+        key: Schema[K],
+        value: Schema[V]
+    ): Option[Eq[Option[Map[K, V]]]] = Some {
+      val mapEq = EqSchemaVisitor.map(shapeId, hints, key, value)
+      new Eq[Option[Map[K, V]]] {
+        def eqv(x: Option[Map[K, V]], y: Option[Map[K, V]]): Boolean =
+          (x, y) match {
+            case (Some(left), Some(right)) => mapEq.eqv(left, right)
+            case (None, Some(right))       => right.isEmpty
+            case (Some(left), None)        => left.isEmpty
+            case (None, None)              => true
+          }
+      }
     }
   }
 

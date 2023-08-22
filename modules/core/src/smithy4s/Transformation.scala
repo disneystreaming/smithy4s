@@ -86,7 +86,7 @@ object Transformation {
         val polyFunction = service.toPolyFunction[Kind1[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind2[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
-            val endpoint = service.opToEndpoint(op)
+            val endpoint = service.endpoint(op)
             val catcher: Throwable => Option[E] = endpoint.errorable match {
               case None => PartialFunction.empty[Throwable, Option[E]]
               case Some(value) => value.liftError(_)
@@ -105,7 +105,7 @@ object Transformation {
         val polyFunction = service.toPolyFunction[Kind2[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind1[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[O] = {
-            val endpoint = service.opToEndpoint(op)
+            val endpoint = service.endpoint(op)
             val thrower: E => Throwable = endpoint.errorable match {
               case None =>
                 // This case should not happen, as an endpoint without an errorable means the operation's error type is `Nothing`

@@ -26,12 +26,13 @@ object IntOrInt {
   case class IntValue1(value: Int) extends IntOrInt
 
   val schema: Schema[IntOrInt] = {
-    val intValue0 = int.oneOf[IntOrInt]("intValue0", IntValue0(_))
-    val intValue1 = int.oneOf[IntOrInt]("intValue1", IntValue1(_))
-    union(intValue0, intValue1) {
-      case IntValue0(value) => intValue0(value)
-      case IntValue1(value) => intValue1(value)
+    val intValue0 = int.oneOf[IntOrInt]("intValue0", IntValue0(_)) {
+      case IntValue0(int) => int
     }
+    val intValue1 = int.oneOf[IntOrInt]("intValue1", IntValue1(_)) {
+      case IntValue1(int) => int
+    }
+    union(intValue0, intValue1).reflective
   }.withId(ShapeId("", "IntOrInt"))
 
 }

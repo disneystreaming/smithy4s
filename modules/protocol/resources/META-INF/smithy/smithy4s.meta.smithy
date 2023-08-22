@@ -144,3 +144,19 @@ structure typeclass {
     @required
     interpreter: Classpath
 }
+
+/// Placing this trait on a service will cause the generated code to
+/// include a Service Product version of the service.
+@trait(selector: ":is(service)")
+structure generateServiceProduct {}
+
+/// Placing this trait on a shape will cause the generated
+/// code to have optics (Lenses or Prisms) in the companion
+/// object. 
+@trait(selector: ":is(enum, intEnum, union, structure)")
+structure generateOptics {}
+
+/// Placing this trait on an error will cause the generated code to exclude the stacktrace
+///  via extending scala.util.control.NoStackTrace instead of Throwable.
+@trait(selector: "structure :is([trait|error])")
+structure noStackTrace {}

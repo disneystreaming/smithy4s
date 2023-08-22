@@ -25,7 +25,7 @@ import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.Method
 import _root_.aws.api.{Service => AwsService}
-import cats.effect.Concurrent
+import cats.effect.Async
 import cats.effect.Resource
 
 // format: off
@@ -36,7 +36,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   awsEnv: AwsEnvironment[F],
   endpoint: Endpoint.Base[I, E, O, SI, SO],
   makeClientCodecs: UnaryClientCodecs.Make[F],
-)(implicit effect: Concurrent[F]) extends (I => F[O]) {
+)(implicit effect: Async[F]) extends (I => F[O]) {
 // format: on
 
   val signingClient = AwsSigningClient(
@@ -47,10 +47,14 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
     awsEnv
   )
 
+  private val withCheckSumClient = Md5CheckSumClient[F](endpoint.hints)
+
+  private val transformedClient = withCheckSumClient(signingClient)
+
   def apply(input: I): F[O] = {
     Resource
       .eval(inputToRequest(input))
-      .flatMap(signingClient.run)
+      .flatMap(transformedClient.run)
       .use { response =>
         outputFromResponse(response)
       }
@@ -68,12 +72,12 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
       val baseUri: Uri =
         Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
       val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
-      inputEncoder.addToRequest(baseRequest, input)
+      inputEncoder.write(baseRequest, input)
     }
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.decodeResponse(response)
-    else errorDecoder.decodeResponse(response).flatMap(effect.raiseError[O](_))
+    if (response.status.isSuccess) outputDecoder.read(response)
+    else errorDecoder.read(response).flatMap(effect.raiseError[O](_))
 
 }

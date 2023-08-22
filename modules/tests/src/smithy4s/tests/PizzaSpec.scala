@@ -26,11 +26,11 @@ import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
-import smithy4s.PayloadPath
+import smithy4s.http.HttpPayloadError
+import smithy4s.codecs._
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
-import smithy4s.http.PayloadError
 import weaver._
 import cats.Show
 import org.http4s.EntityDecoder
@@ -293,6 +293,27 @@ abstract class PizzaSpec
         .map(assert.eql(_, 400))
   }
 
+  routerTest("Optional payload set to empty") { (client, uri, log) =>
+    for {
+      res <- client.send[Json](
+        GET(uri / "optional-output"),
+        log
+      )
+    } yield {
+      val (code, headers, body) = res
+      expect.same(body, Json.Null) &&
+      expect.same(code, 200) &&
+      expect(
+        headers.get("Content-Length").exists(_ == List("4")),
+        "Content-Length should be 4"
+      ) &&
+      expect.same(
+        headers.get("Content-Type"),
+        Some(List("application/json"))
+      )
+    }
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {
@@ -339,7 +360,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case PayloadError(PayloadPath(List()), _, _) =>
+        case HttpPayloadError(PayloadPath(List()), _, _) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")
@@ -349,6 +370,7 @@ abstract class PizzaSpec
           // If it was the case, these errors would be turned into a GenericServerError
           // and would fail.
           smithy4s.example.GenericServerError("CatchAll: " + t.getMessage())
+        case other => other
       }
     )
   } yield res

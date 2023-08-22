@@ -71,8 +71,8 @@ object RefinementProvider {
   implicit val stringLengthConstraint: Simple[Length, String] =
     new LengthConstraint[String](_.length)
 
-  implicit val byteArrayLengthConstraint: Simple[Length, ByteArray] =
-    new LengthConstraint[ByteArray](_.array.length)
+  implicit val blobLengthConstraint: Simple[Length, Blob] =
+    new LengthConstraint[Blob](_.size)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]
@@ -161,4 +161,19 @@ object RefinementProvider {
         }
     }
   }
+
+  // Lazy to avoid some pernicious recursive initialisation issue between
+  // the ShapeId static object and the generated code that makes use of it,
+  // as the `IdRef` type is referenced here.
+  //
+  // The problem only occurs in JS/Native.
+  lazy implicit val idRefRefinement
+      : RefinementProvider[smithy.api.IdRef, String, ShapeId] =
+    Refinement.drivenBy[smithy.api.IdRef](
+      ShapeId.parse(_: String) match {
+        case None        => Left("Invalid ShapeId")
+        case Some(value) => Right(value)
+      },
+      (_: ShapeId).show
+    )
 }

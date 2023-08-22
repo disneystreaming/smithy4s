@@ -102,13 +102,13 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
     val status =
       StatusCodeBinding.schema.oneOf[HttpBinding]("statusCode")
 
-    union(header, query, path) {
-      case h: HeaderBinding       => header(h)
-      case q: QueryBinding        => query(q)
-      case p: PathBinding         => path(p)
-      case QueryParamsBinding     => queryParams(QueryParamsBinding)
-      case h: HeaderPrefixBinding => headerPrefix(h)
-      case StatusCodeBinding      => status(StatusCodeBinding)
+    union(header, query, path, queryParams, headerPrefix, status) {
+      case _: HeaderBinding       => 0
+      case _: QueryBinding        => 1
+      case _: PathBinding         => 2
+      case QueryParamsBinding     => 3
+      case _: HeaderPrefixBinding => 4
+      case StatusCodeBinding      => 5
     }
   }
 

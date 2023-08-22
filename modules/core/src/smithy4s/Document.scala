@@ -17,10 +17,10 @@
 package smithy4s
 
 import smithy4s.Document._
-import smithy4s.http.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
+import smithy4s.codecs.PayloadError
 
 /**
   * A json-like free-form structure serving as a model for
@@ -34,6 +34,15 @@ sealed trait Document extends Product with Serializable {
     decoder.decode(this)
 
   override def toString(): String = this.show
+
+  def name: String = this match {
+    case DNumber(_)  => "Number"
+    case DString(_)  => "String"
+    case DBoolean(_) => "Boolean"
+    case DNull       => "Null"
+    case DArray(_)   => "Array"
+    case DObject(_)  => "Object"
+  }
 
   /**
     * Toy renderer that does not comply the json specification :
@@ -89,7 +98,7 @@ object Document {
     def encode(a: A): Document
   }
 
-  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+  object Encoder extends CachedSchemaCompiler.DerivingImpl[Encoder] {
 
     protected type Aux[A] = internals.DocumentEncoder[A]
 
@@ -116,7 +125,7 @@ object Document {
     }
   }
 
-  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+  object Decoder extends CachedSchemaCompiler.DerivingImpl[Decoder] {
 
     protected type Aux[A] = internals.DocumentDecoder[A]
 

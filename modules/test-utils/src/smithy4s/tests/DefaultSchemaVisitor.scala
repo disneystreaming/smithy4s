@@ -21,10 +21,8 @@ import cats.Id
 import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.Field
-import smithy4s.schema.Alt
 import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.SchemaAlt
-import smithy4s.schema.SchemaField
+import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -38,14 +36,13 @@ import smithy4s.schema.Primitive.PFloat
 import smithy4s.schema.Primitive.PInt
 import smithy4s.schema.Primitive.PShort
 import smithy4s.schema.Primitive.PString
-import smithy4s.schema.Primitive.PUnit
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PBoolean
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema.Primitive.PUUID
 
-object DefaultSchemaVisitor extends SchemaVisitor[Id] {
+object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -55,13 +52,12 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PFloat      => 0: Float
     case PBigDecimal => 0: BigDecimal
     case PBigInt     => 0: BigInt
-    case PBlob       => ByteArray(Array.emptyByteArray)
+    case PBlob       => Blob.empty
     case PDocument   => Document.DNull
     case PByte       => 0: Byte
     case PInt        => 0
     case PShort      => 0: Short
     case PString     => ""
-    case PUnit       => ()
     case PLong       => 0: Long
     case PDouble     => 0: Double
     case PBoolean    => true
@@ -86,7 +82,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Id[E] = values.head.value
@@ -94,27 +90,17 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
-    def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
-      apply(instance)
-
-    def onOptional[A](
-        label: String,
-        instance: Schema[A],
-        get: S => Option[A]
-    ): Any =
-      None
-  })))
+  ): Id[S] = make(fields.map(_.schema.compile(self)))
 
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Id[U] = {
-    def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
+    def processAlt[A](alt: Alt[U, A]) = alt.inject(apply(alt.schema))
     processAlt(alternatives.head)
   }
 
@@ -130,4 +116,5 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
+  override def option[A](schema: Schema[A]): Id[Option[A]] = None
 }

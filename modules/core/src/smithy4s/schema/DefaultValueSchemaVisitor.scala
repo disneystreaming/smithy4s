@@ -35,13 +35,12 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PLong       => Some(0L)
       case PBoolean    => Some(false)
       case PTimestamp  => Some(Timestamp.epoch)
-      case PBlob       => Some(ByteArray.empty)
+      case PBlob       => Some(Blob.empty)
       case PBigInt     => Some(BigInt(0))
       case PBigDecimal => Some(BigDecimal(0))
       case PDocument   => Some(Document.DNull)
       case PUUID       => None
       case PByte       => None
-      case PUnit       => None
     }
 
   def collection[C[_], A](
@@ -61,7 +60,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Option[E] = None
@@ -69,15 +68,15 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Option[S] = None
 
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Option[U] = None
 
   def biject[A, B](
@@ -94,4 +93,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value
+
+  def option[A](schema: Schema[A]): Option[Option[A]] = Some(None)
 }

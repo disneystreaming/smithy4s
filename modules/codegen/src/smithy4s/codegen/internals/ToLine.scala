@@ -70,6 +70,10 @@ private[internals] object ToLine {
       case Type.PrimitiveType(prim)  => primitiveLine(prim)
       case e: Type.ExternalType =>
         NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
+      case Type.Nullable(underlying) =>
+        NameRef("scala", "Option").copy(typeParams =
+          List(typeToNameRef(underlying))
+        )
     }
   }
 
@@ -78,7 +82,7 @@ private[internals] object ToLine {
     def javaP(name: String) = NameRef("java.lang", name)
     p match {
       case Primitive.Unit       => scalaP("Unit")
-      case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
+      case Primitive.Blob       => NameRef("smithy4s", "Blob")
       case Primitive.Bool       => scalaP("Boolean")
       case Primitive.String     => javaP("String")
       case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
@@ -127,6 +131,8 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 
   def appendIf(condition: this.type => Boolean)(other: Line): Line =
     if (condition(this)) this + other else this
+
+  def when(condition: => Boolean): Line = if (condition) this else Line.empty
 }
 
 private[internals] object Line {

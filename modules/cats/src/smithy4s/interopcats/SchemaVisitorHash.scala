@@ -17,11 +17,7 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{
-  catsKernelStdHashForList,
-  catsKernelStdHashForOption,
-  toContravariantOps
-}
+import cats.implicits.{catsKernelStdHashForList, toContravariantOps}
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
@@ -80,15 +76,15 @@ final class SchemaVisitorHash(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
     implicit val enumValueHash: Hash[EnumValue[E]] =
       tag match {
-        case EnumTag.IntEnum =>
+        case EnumTag.IntEnum() =>
           Hash[Int].contramap(_.intValue)
-        case EnumTag.StringEnum =>
+        case _ =>
           Hash[String].contramap(_.stringValue)
       }
 
@@ -98,28 +94,11 @@ final class SchemaVisitorHash(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Hash[S] = {
-    def forField[A2](field: Field[Schema, S, A2]): Hash[S] = {
-      val hashField: Hash[A2] =
-        field.foldK(new Field.FolderK[Schema, S, Hash]() {
-          override def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): Hash[A] = self(instance)
-
-          override def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): Hash[Option[A]] = {
-            implicit val hashA: Hash[A] = self(instance)
-            Hash[Option[A]]
-          }
-        })
-      hashField.contramap(field.get)
+    def forField[A2](field: Field[S, A2]): Hash[S] = {
+      field.schema.compile(self).contramap(field.get)
     }
     val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field))
     // similar to how productPrefix is used
@@ -137,8 +116,8 @@ final class SchemaVisitorHash(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Hash[U] = {
 
     // A version of `Hash` that assumes for the eqv method that the RHS is "up-casted" to U.
@@ -159,21 +138,20 @@ final class SchemaVisitorHash(
       }
     }
 
-    val precompiler = new Alt.Precompiler[Schema, AltHash] {
+    val precompiler = new Alt.Precompiler[AltHash] {
       def apply[A](label: String, instance: Schema[A]): AltHash[A] = {
         // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
         // is lost in the precompiler.
         val altA =
-          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+          alternatives.find(_.label == label).get.asInstanceOf[Alt[U, A]]
 
         val labelHash = Hash[String].hash(label)
 
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
-        val projectA: U => Option[A] = dispatch.projector(altA)
         val hashA = instance.compile(self)
         new AltHash[A] {
-          def eqv(a: A, u: U): Boolean = projectA(u) match {
+          def eqv(a: A, u: U): Boolean = altA.project.lift(u) match {
             case None => false // U is not an A.
             case Some(a2) =>
               hashA.eqv(a, a2) // U is an A, we delegate the comparison
@@ -215,5 +193,8 @@ final class SchemaVisitorHash(
       override def eqv(x: A, y: A): Boolean = hashA.value.eqv(x, y)
     }
   }
+
+  override def option[A](schema: Schema[A]): Hash[Option[A]] =
+    cats.instances.option.catsKernelStdHashForOption(self(schema))
 
 }

@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s.guides
+package smithy4s.example.guides
 
-import smithy4s.guides.auth._
+import smithy4s.example.guides.auth._
 import smithy4s.http4s._
 import cats.effect._
 import cats.implicits._

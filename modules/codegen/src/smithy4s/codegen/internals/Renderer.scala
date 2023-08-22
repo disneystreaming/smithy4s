@@ -20,8 +20,11 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
+import smithy4s.codegen.internals.EnumTag.IntEnum
+import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
+import smithy4s.codegen.internals.Type.Nullable
 import smithy4s.codegen.internals.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
@@ -32,14 +35,16 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
 
 private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
-  case class Config(errorsAsScala3Unions: Boolean, wildcardArgument: String)
+  case class Config(
+      errorsAsScala3Unions: Boolean,
+      wildcardArgument: String,
+      renderOptics: Boolean
+  )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
       val errorsAsScala3Unions = metadata
@@ -53,6 +58,12 @@ private[internals] object Renderer {
         .map(_.getValue())
         .getOrElse("_")
 
+      val renderOptics = metadata
+        .get("smithy4sRenderOptics")
+        .flatMap(_.asBooleanNode().asScala)
+        .map(_.getValue())
+        .getOrElse(false)
+
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
           s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
@@ -61,7 +72,8 @@ private[internals] object Renderer {
 
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
-        wildcardArgument = wildcardArgument
+        wildcardArgument = wildcardArgument,
+        renderOptics = renderOptics
       )
     }
   }
@@ -183,12 +195,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints
       .collectFirst { case h: Hint.Deprecated => h }
       .foldMap { dep =>
-        val messagePart = dep.message
-          .map(msg => line"message = ${renderStringLiteral(msg)}")
-        val versionPart =
-          dep.since.map(v => line"since = ${renderStringLiteral(v)}")
+        val messagePart =
+          line"message = ${renderStringLiteral(dep.message.getOrElse("N/A"))}"
 
-        val args = List(messagePart, versionPart).flatten.intercalate(comma)
+        val versionPart =
+          line"since = ${renderStringLiteral(dep.since.getOrElse("N/A"))}"
+
+        val args = List(messagePart, versionPart).intercalate(comma)
 
         val argListOrEmpty = if (args.nonEmpty) line"($args)" else line""
 
@@ -197,10 +210,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   /**
-    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
-    *
-    * @return formatted list of scaladoc lines
-    */
+   * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
+   *
+   * @return formatted list of scaladoc lines
+   */
   private def makeDocLines(
       rawLines: List[String]
   ): Lines = {
@@ -290,8 +303,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
+    val genNameProduct: NameDef = NameDef(name + "ProductGen")
+    val genNameProductRef: NameRef = genNameProduct.toNameRef
     val opTraitName = NameDef(name + "Operation")
     val opTraitNameRef = opTraitName.toNameRef
+    val generateServiceProduct = hints.contains(Hint.GenerateServiceProduct)
 
     lines(
       documentationAnnotation(hints),
@@ -314,13 +330,30 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
+      lines(
+        block(line"trait $genNameProduct[F[_, _, _, _, _]]")(
+          line"self =>",
+          newline,
+          ops.map { op =>
+            lines(
+              deprecationAnnotation(op.hints),
+              line"def ${op.methodName}: F[${op
+                .renderAlgParams(opTraitNameRef.name)}]"
+            )
+          }
+        ),
+        newline
+      ).when(generateServiceProduct),
       obj(
         genNameRef,
-        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
+        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]",
+        w = line"${ServiceProductMirror}[${genNameRef}]".when(
+          generateServiceProduct
+        )
       )(
         newline,
         renderId(shapeId),
-        line"""val version: String = "$version"""",
+        line"""val version: $string_ = "$version"""",
         newline,
         renderHintsVal(hints),
         newline,
@@ -331,10 +364,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
-        line"val endpoints: $list[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
+        line"val endpoints: $vector[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $vector"
           .args(ops.map(op => line"${opTraitNameRef}.${op.name}")),
         newline,
-        line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
+        line"def $input_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): I = op.$input_",
+        line"def $ordinal_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): Int = op.$ordinal_",
+        line"override def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
         line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ${opTraitNameRef}.$Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         line"def reified: $genNameRef[$opTraitNameRef] = ${opTraitNameRef}.${NameRef("reified")}",
@@ -351,14 +386,67 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"val $errorName = $opTraitNameRef.$errorName"
             )
           }
-        }
+        },
+        lines(
+          line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
+          line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
+        ).when(generateServiceProduct)
       ),
       newline,
+      lines(
+        obj(
+          genNameProductRef,
+          ext = line"$ServiceProduct[$genNameProductRef]"
+        )(
+          line"type Alg[F[_, _, _, _, _]] = ${genNameRef}[F]",
+          line"val service: $genName.type = $genName",
+          newline,
+          block(
+            line"def endpointsProduct: ${genNameProductRef}[service.Endpoint] = new ${genNameProductRef}[service.Endpoint]"
+          )(
+            ops.map { op =>
+              line"def ${op.methodName}: service.Endpoint[${op
+                .renderAlgParams(opTraitNameRef.name)}] = ${opTraitNameRef}.${op.name}"
+            }
+          ),
+          newline,
+          block(
+            line"def $toPolyFunction_[P2[_, _, _, _, _]](algebra: ${genNameProductRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
+          )(
+            line"def $apply_[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =",
+            if (ops.isEmpty) line"""sys.error("impossible")"""
+            else
+              block(line"fa match")(
+                ops.map { op =>
+                  // This normally compiles, but Scala 3 seems to have an issue with
+                  // it so we have to cast it.
+                  line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}.asInstanceOf[P2[I, E, O, SI, SO]]"
+                }
+              )
+          ),
+          newline,
+          block(
+            line"def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ${genNameProductRef}[F], f: $PolyFunction5_[F, G]): ${genNameProductRef}[G] ="
+          )(
+            block(
+              line"new ${genNameProductRef}[G]"
+            )(
+              ops.map { op =>
+                val argsTypes = op.renderAlgParams(opTraitNameRef.name)
+                line"def ${op.methodName}: G[${argsTypes}] = f[${argsTypes}](alg.${op.methodName})"
+              }
+            )
+          )
+        ),
+        newline
+      ).when(generateServiceProduct),
       block(
         line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
       )(
         line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
-        line"def endpoint: (Input, $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput])"
+        line"def ordinal: Int",
+        line"def input: Input",
+        line"def endpoint: $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput]"
       ),
       newline,
       block(
@@ -396,7 +484,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
           }
         ),
-        ops.map(renderOperation(name, _))
+        ops.zipWithIndex.map { case (op, ordinal) =>
+          renderOperation(name, op, ordinal)
+        }
       ),
       newline
     )
@@ -404,14 +494,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderOperation(
       serviceName: String,
-      op: Operation
+      op: Operation,
+      ordinal: Int
   ): Lines = {
     val params = if (op.input != Type.unit) {
       line"input: ${op.input}"
     } else Line.empty
-    val inputRef = if (op.input != Type.unit) {
-      line"input"
-    } else line"()"
     val genServiceName = serviceName + "Gen"
     val opObjectName = serviceName + "Operation"
     val opName = op.name
@@ -468,8 +556,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, smithy4s.Endpoint[$traitName,${op
-          .renderAlgParams(opObjectName)}]) = ($inputRef, $opNameRef)"
+        line"def ordinal = $ordinal",
+        if (op.input == Type.unit) line"def input: Unit = ()" else Lines.empty,
+        line"def endpoint: smithy4s.Endpoint[$traitName,${op
+          .renderAlgParams(opObjectName)}] = $opNameRef"
       ),
       obj(
         opNameRef,
@@ -535,23 +625,45 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
+  private def renderLenses(product: Product, hints: List[Hint]): Lines = if (
+    (compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )) && product.fields.nonEmpty
+  ) {
+    val smithyLens = NameRef("smithy4s.optics.Lens")
+    val lenses = product.fields.map { field =>
+      val fieldType =
+        if (field.required) Line.required(line"${field.tpe}", None)
+        else Line.optional(line"${field.tpe}")
+      line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
+    }
+    obj(product.nameRef.copy(name = "optics"))(lenses) ++
+      newline
+  } else Lines.empty
+
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
-      additionalLines: Lines
+      additionalLines: Lines,
+      classBody: Lines
   ): Lines = {
     import product._
+    val renderedArgs = renderArgs(fields)
     val decl =
-      line"final case class ${product.nameDef}(${renderArgs(fields)})"
+      line"final case class ${product.nameDef}($renderedArgs)"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {
+        val exception =
+          if (hints.contains(Hint.NoStackTrace))
+            noStackTrace
+          else throwable
         val mixinExtensions = if (mixins.nonEmpty) {
           val ext = mixins.map(m => line"$m").intercalate(line" with ")
           line" with $ext"
         } else Line.empty
-        block(line"$decl extends Throwable$mixinExtensions") {
+        block(line"$decl extends $exception$mixinExtensions") {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||
@@ -569,7 +681,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val ext =
           if (extend.nonEmpty) line" extends $extend"
           else Line.empty
-        line"$decl$ext"
+
+        if (classBody.isEmpty) line"$decl$ext"
+        else
+          block(line"$decl$ext") {
+            classBody
+          }
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
         renderId(shapeId),
@@ -577,6 +694,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
+        renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>
@@ -588,9 +706,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 val addMemHints =
                   if (memHints.nonEmpty) line".addHints($memHints)"
                   else Line.empty
-                  // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
-                  // format: on
+                // format: off
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                // format: on
               }
             }
           if (fields.size <= 22) {
@@ -643,7 +761,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     } else Line.empty
     block(line"trait $name$ext") {
       lines(
-        fields.map(f => line"def ${fieldToRenderLine(f, noDefault = true)}")
+        fields.map { f =>
+          lines(
+            deprecationAnnotation(f.hints),
+            Line.empty,
+            line"def ${fieldToRenderLine(f, noDefault = true)}"
+          )
+        }
       )
     }
   }
@@ -651,7 +775,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderProduct(
       product: Product,
       adtParent: Option[NameRef] = None,
-      additionalLines: Lines = Lines.empty
+      additionalLines: Lines = Lines.empty,
+      classBody: Lines = Lines.empty
   ): Lines = {
     import product._
     val base =
@@ -665,7 +790,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProductNonMixin(
           product,
           adtParent,
-          additionalLines
+          additionalLines,
+          classBody
         )
 
     lines(
@@ -677,13 +803,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
-      line"override def getMessage(): String = ${field.name}"
+      line"override def getMessage(): $string_ = ${field.name}"
     case field if field.tpe.isResolved =>
-      line"override def getMessage(): String = ${field.name}.orNull"
+      line"override def getMessage(): $string_ = ${field.name}.orNull"
     case field if field.required =>
-      line"override def getMessage(): String = ${field.name}.value"
+      line"override def getMessage(): $string_ = ${field.name}.value"
     case field =>
-      line"override def getMessage(): String = ${field.name}.map(_.value).orNull"
+      line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {
@@ -757,14 +883,111 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           block(
             line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
           )(
-            members.map { case (altName, _) =>
-              line"case c: $altName => ${altVal(altName)}(c)"
+            members.zipWithIndex.map { case ((altName, _), index) =>
+              line"case _: $altName => $index"
             }
           )
         )
       )
     )
   }
+
+  private def caseName(unionName: NameRef, alt: Alt): NameRef =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        unionName.down(product.name)
+      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
+        unionName.down(
+          alt.name.dropWhile(_ == '_').capitalize + "Case"
+        )
+    }
+
+  private def caseNameForMatch(unionName: NameRef, alt: Alt): NameRef =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        unionName.down(product.name)
+      case UnionMember.TypeCase(_) =>
+        unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case")
+      case UnionMember.UnitCase =>
+        unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case.type")
+    }
+
+  private def caseNameType(unionName: NameRef, alt: Alt): Line =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        line"${unionName.down(product.name)}"
+      case UnionMember.TypeCase(tpe) => line"$tpe"
+      case UnionMember.UnitCase =>
+        line"${unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case.type")}"
+    }
+
+  private def caseNameWithAlt(unionName: NameRef, alt: Alt): Line =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        line"${unionName.down(product.name)}.alt"
+      case UnionMember.TypeCase(_) =>
+        val n = unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case")
+        line"$n.alt"
+      case UnionMember.UnitCase =>
+        val n =
+          unionName.down(alt.name.dropWhile(_ == '_').capitalize + "CaseAlt")
+        line"$n"
+    }
+
+  private def renderPrisms(
+      unionName: NameRef,
+      alts: NonEmptyList[Alt],
+      hints: List[Hint]
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val altLines = alts.map { alt =>
+      alt.member match {
+        case UnionMember.ProductCase(p) =>
+          val (mat, tpe) = (p.nameDef, line"${p.name}")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
+        case UnionMember.TypeCase(t) =>
+          val (mat, tpe) = (caseName(unionName, alt), line"$t")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
+        case UnionMember.UnitCase =>
+          val (mat, tpe) =
+            (caseName(unionName, alt), line"${caseName(unionName, alt)}")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe.type] = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
+      }
+    }
+
+    obj(unionName.copy(name = "optics"))(altLines) ++
+      newline
+  } else Lines.empty
+
+  private def renderPrismsEnum(
+      enumName: NameRef,
+      values: List[EnumValue],
+      hints: List[Hint],
+      isOpen: Boolean
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val openLine =
+      if (isOpen)
+        List(
+          line"val $$unknown: $smithyPrism[$enumName, $enumName.$$Unknown] = $smithyPrism.partial[$enumName, $enumName.$$Unknown]{ case u: $enumName.$$Unknown => u }(identity)"
+        )
+      else List.empty
+    val valueLines = values.map { value =>
+      val (mat, tpe) = (value.name, line"${value.name}")
+      line"val ${value.name}: $smithyPrism[$enumName, $enumName.$tpe.type] = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
+    }
+
+    obj(enumName.copy(name = "optics"))(valueLines ++ openLine) ++
+      newline
+  } else Lines.empty
 
   private def renderUnion(
       shapeId: ShapeId,
@@ -775,12 +998,27 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(alt: Alt): NameRef = alt.member match {
-      case UnionMember.ProductCase(product) => NameRef(product.name)
-      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-        NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
+    def smartConstructor(alt: Alt): Lines = {
+      val cn = caseName(name, alt).name
+      val ident = NameDef(uncapitalise(alt.name))
+      val prefix = line"def $ident"
+      val constructor = alt.member match {
+        case UnionMember.ProductCase(product) =>
+          val args = renderArgs(product.fields)
+          val values = product.fields.map(_.name).intercalate(", ")
+          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+        case UnionMember.UnitCase =>
+          line"$prefix(): $name = ${caseName(name, alt)}"
+        case UnionMember.TypeCase(tpe) =>
+          line"$prefix($ident: $tpe): $name = $cn($ident)"
+      }
+      lines(
+        documentationAnnotation(alt.hints),
+        deprecationAnnotation(alt.hints),
+        constructor
+      )
     }
-    val caseNames = alts.map(caseName)
+    val caseNames = alts.map(caseName(name, _))
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
@@ -789,39 +1027,92 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val mixinExtendsStatement =
       if (mixinExtends.segments.isEmpty) Line.empty
       else line"$mixinExtends with "
+    val projectors: Lines = obj(NameRef("project"))(
+      alts.map { alt =>
+        val ident = NameDef(uncapitalise(alt.name))
+        val maybeMap = alt.member match {
+          case UnionMember.TypeCase(_) => line".map(_.$ident)"
+          case _                       => Line.empty
+        }
+        line"def $ident: Option[${caseNameType(name, alt)}] = ${caseNameWithAlt(name, alt)}.project.lift(self)$maybeMap"
+      }
+    )
+    val visitor: Lines = lines(
+      block(line"trait Visitor[A]")(
+        alts.map { alt =>
+          val ident = NameDef(uncapitalise(alt.name))
+          line"def $ident(value: ${caseNameType(name, alt)}): A"
+        }
+      ),
+      newline,
+      block(line"object Visitor")(
+        block(line"trait Default[A] extends Visitor[A]")(
+          line"def default: A",
+          alts.map { alt =>
+            val ident = NameDef(uncapitalise(alt.name))
+            line"def $ident(value: ${caseNameType(name, alt)}): A = default"
+          }
+        )
+      )
+    )
+    val accept: Lines =
+      block(line"def accept[A](visitor: $name.Visitor[A]): A = this match")(
+        alts.map { alt =>
+          val ident = NameDef(uncapitalise(alt.name))
+          val innerValue = alt.member match {
+            case UnionMember.TypeCase(_) => line".$ident"
+            case _                       => Line.empty
+          }
+          line"case value: ${caseNameForMatch(name, alt)} => visitor.$ident(value$innerValue)"
+        }
+      )
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
-      )(
-        line"@inline final def widen: $name = this"
+      ).withSameLineValue(line" self =>")(
+        line"@inline final def widen: $name = this",
+        line"def $$ordinal: Int",
+        newline,
+        projectors,
+        newline,
+        accept
       ),
       obj(name, line"${shapeTag(name)}")(
+        newline,
+        alts.map(smartConstructor),
+        newline,
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
-        alts.map {
-          case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
-            val cn = caseName(a)
+        renderPrisms(name, alts, hints),
+        alts.zipWithIndex.map {
+          case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
+            val cn = caseName(name, a)
             // format: off
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object $cn extends $name",
-              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
-              line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
+              line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
+              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
             )
             // format: on
-          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
-            val cn = caseName(a)
+          case (
+                a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints),
+                index
+              ) =>
+            val cn = caseName(name, a)
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
+              line"final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
             )
-          case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
+          case (
+                Alt(_, realName, UnionMember.ProductCase(struct), altHints),
+                index
+              ) =>
             val additionalLines = lines(
               newline,
               line"""val alt = schema.oneOf[$name]("$realName")"""
@@ -833,7 +1124,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               // might need deduplication (although the Hints type will take care of it, just in case)
               struct.copy(hints = altHints ++ struct.hints),
               adtParent = Some(name),
-              additionalLines
+              additionalLines,
+              classBody = Lines(line"def $$ordinal: Int = $index")
             )
         },
         newline,
@@ -844,15 +1136,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 UnionMember.TypeCase(tpe),
                 altHints
               ) =>
-            val cn = caseName(a)
-            block(line"object $cn")(
+            val cn = caseName(name, a)
+            block(line"object ${cn.nameDef}")(
               renderHintsVal(altHints),
-            // format: off
-            line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-            line"""val alt = schema.oneOf[$name]("$realName")""",
-            // format: on
+              // format: off
+              line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
+              line"""val alt = schema.oneOf[$name]("$realName")""",
+              // format: on
             )
         },
+        newline,
+        visitor,
         newline, {
           val union =
             if (error)
@@ -869,12 +1163,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .block {
-              caseNamesAndIsUnit.map {
-                case (caseName, true) =>
-                  line"case $caseName => ${caseName}AltWithValue"
-                case (caseName, false) =>
-                  line"case c: $caseName => $caseName.alt(c)"
-              }
+              line"_.$$ordinal"
             }
             .appendToLast(
               if (error) "" else ".withId(id).addHints(hints)"
@@ -907,12 +1196,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         }
 
-        deprecationAnnotation(hints).appendIf(_.nonEmpty)(Line.space) +
-          line"$name: " + tpeAndDefault
+        line"$name: " + tpeAndDefault
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
-    .map(fieldToRenderLine(_))
+    .map { f =>
+      deprecationAnnotation(f.hints).appendIf(_.nonEmpty)(Line.space) +
+        fieldToRenderLine(f)
+    }
     .intercalate(Line.comma)
 
   private def renderEnum(
@@ -921,44 +1212,63 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       tag: EnumTag,
       values: List[EnumValue],
       hints: List[Hint]
-  ): Lines = lines(
-    documentationAnnotation(hints),
-    deprecationAnnotation(hints),
-    block(
-      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
-    )(
-      line"override type EnumType = $name",
-      line"override val value: String = _value",
-      line"override val name: String = _name",
-      line"override val intValue: Int = _intValue",
-      line"override val hints: $Hints_ = _hints",
-      line"override def enumeration: $Enumeration_[EnumType] = $name",
-      line"@inline final def widen: $name = this"
-    ),
-    obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
-      renderId(shapeId),
-      newline,
-      renderHintsVal(hints),
-      newline,
-      values.map { case e @ EnumValue(value, intValue, _, hints) =>
-        val valueName = NameRef(e.name)
-        val valueHints = line"$Hints_(${memberHints(e.hints)})"
-
-        lines(
-          documentationAnnotation(hints),
-          deprecationAnnotation(hints),
-          line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
-        )
-      },
-      newline,
-      line"val values: $list[$name] = $list".args(
-        values.map(_.name)
+  ): Lines = {
+    val isOpen = hints.contains(Hint.OpenEnum)
+    val isIntEnum = tag match {
+      case EnumTag.IntEnum | EnumTag.OpenIntEnum => true
+      case _                                     => false
+    }
+    lines(
+      documentationAnnotation(hints),
+      deprecationAnnotation(hints),
+      block(
+        line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
+      )(
+        line"override type EnumType = $name",
+        line"override val value: $string_ = _value",
+        line"override val name: $string_ = _name",
+        line"override val intValue: $int_ = _intValue",
+        line"override val hints: $Hints_ = _hints",
+        line"override def enumeration: $Enumeration_[EnumType] = $name",
+        line"@inline final def widen: $name = this"
       ),
-      renderEnumTag(tag),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
-      renderTypeclasses(hints, name)
+      obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
+        renderId(shapeId),
+        newline,
+        renderHintsVal(hints),
+        newline,
+        renderPrismsEnum(name, values, hints, isOpen),
+        values.map { case e @ EnumValue(value, intValue, _, hints) =>
+          val valueName = NameRef(e.name)
+          val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
+          lines(
+            documentationAnnotation(hints),
+            deprecationAnnotation(hints),
+            line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
+          )
+        },
+        if (isOpen) {
+          val (paramName, paramType) =
+            if (isIntEnum) ("int", "Int") else ("str", "String")
+          val intValue = if (isIntEnum) paramName else "-1"
+          val stringValue = if (isIntEnum) "\"$Unknown\"" else paramName
+          lines(
+            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, "$$Unknown", $intValue, Hints.empty)""",
+            newline,
+            line"val $$unknown: $paramType => $name = $$Unknown(_)"
+          )
+        } else Lines.empty,
+        newline,
+        line"val values: $list[$name] = $list".args(
+          values.map(_.name)
+        ),
+        renderEnumTag(name, tag),
+        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
+        renderTypeclasses(hints, name)
+      )
     )
-  )
+  }
 
   private def renderNewtype(
       shapeId: ShapeId,
@@ -1034,15 +1344,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         val hintsLine =
           if (hints.isEmpty) Line.empty
-          else line".addHints(${memberHints(hints)})"
+          else line".addMemberHints(${memberHints(hints)})"
         line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
       case Type.Map(key, keyHints, value, valueHints) =>
         val keyHintsLine =
           if (keyHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(keyHints)})"
+          else line".addMemberHints(${memberHints(keyHints)})"
         val valueHintsLine =
           if (valueHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(valueHints)})"
+          else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1065,11 +1375,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
+      case Nullable(underlying) => line"${underlying.schemaRef}.option"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
       case Primitive.Unit       => s"${schemaPkg_}.unit"
-      case Primitive.ByteArray  => s"${schemaPkg_}.bytes"
+      case Primitive.Blob       => s"${schemaPkg_}.bytes"
       case Primitive.Bool       => s"${schemaPkg_}.boolean"
       case Primitive.String     => s"${schemaPkg_}.string"
       case Primitive.Timestamp  => s"${schemaPkg_}.timestamp"
@@ -1107,7 +1418,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
-    case Hint.IntEnum   => line"${NameRef("smithy4s", "IntEnum")}()".some
     case _              => None
   }
 
@@ -1117,12 +1427,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderEnumTag(tag: EnumTag): Line = {
+  def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
     val tagStr = tag match {
-      case IntEnum    => "IntEnum"
-      case StringEnum => "StringEnum"
+      case IntEnum                => "ClosedIntEnum"
+      case StringEnum             => "ClosedStringEnum"
+      case EnumTag.OpenIntEnum    => "OpenIntEnum($unknown)"
+      case EnumTag.OpenStringEnum => "OpenStringEnum($unknown)"
     }
-    line"val tag: $EnumTag_ = $EnumTag_.$tagStr"
+    line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
@@ -1221,9 +1533,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => renderStringLiteral
       case Primitive.Byte   => b => line"${b.toString}"
-      case Primitive.ByteArray =>
+      case Primitive.Blob =>
         ba =>
-          line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
+          val blob = NameRef("smithy4s", "Blob")
+          if (ba.isEmpty) line"$blob.empty"
+          else
+            line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
         ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>
@@ -1263,7 +1578,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
       // See https://github.com/disneystreaming/smithy4s/pull/499
       .replace("\\\\u", "\\u")
+    // If the string contains "$", the use of -Xlint:missing-interpolator when
+    // compiling the generated code will result in warnings. To prevent that we
+    // render any such strings as interpolated strings (even though that would
+    // otherwise be unecessary) so that we can render "$" as "$$", which get
+    // converted back to "$" during interpolation.
+    val escaped = if (str.contains('$')) s"s${str.replace("$", "$$")}" else str
 
-    line"$str"
+    line"$escaped"
   }
 }

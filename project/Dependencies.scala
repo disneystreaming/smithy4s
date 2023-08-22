@@ -5,12 +5,12 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0"
     )
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.0"
+    val jsoniterScalaVersion = "2.23.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.30.0"
+    val smithyVersion = "1.36.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.20"
+    val alloyVersion = "0.2.6"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -37,7 +37,12 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.10.0")
+  }
+
+  val Monocle = new {
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("dev.optics" %% "monocle-core" % "3.2.0")
   }
 
   object Circe {
@@ -55,20 +60,22 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
+    val fs2Version = "3.8.0"
+
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.6.1")
+      Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
 
     val io: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-io" % "3.6.1")
+      Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.7.1")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.8.0")
   }
 
   object Mill {
-    val millVersion = "0.10.12"
+    val millVersion = "0.11.1"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -91,10 +98,10 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.10")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.1")
 
   object Http4s {
-    val http4sVersion = "0.23.18"
+    val http4sVersion = "0.23.23"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -138,10 +145,12 @@ object Dependencies {
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.3"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.7"
 
-    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
+  object Webjars {
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"
+
+    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.47"
   }
 
   object AwsSpecSummary {

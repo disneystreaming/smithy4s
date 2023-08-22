@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use alloy#simpleRestJson
@@ -119,7 +121,7 @@ union Foo {
   bDec: BigDecimal
 }
 
-@enum([{value: "Low", name: "LOW"}, {value: "High", name: "HIGH"}])
+@enum([{value: "Low", name: "LOW", documentation: "low"}, {value: "High", name: "HIGH", documentation: "high"}])
 string LowHigh
 
 @uuidFormat
@@ -131,13 +133,6 @@ integer ObjectSize
 @error("server")
 structure ServerError {
   message: String
-}
-
-
-@error("server")
-structure ServerErrorCustomMessage {
-  @errorMessage
-  messageField: String
 }
 
 @trait

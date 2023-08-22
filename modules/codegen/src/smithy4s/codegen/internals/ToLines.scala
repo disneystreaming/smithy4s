@@ -56,6 +56,8 @@ private[internals] object ToLines {
 // Models
 
 private[internals] case class Lines(list: List[Line]) {
+  def isEmpty: Boolean = list.isEmpty
+
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =
       list.lastOption.flatMap(_.segments.lastOption).collect {
@@ -94,6 +96,8 @@ private[internals] case class Lines(list: List[Line]) {
   def addImports(im: Set[String]): Lines =
     Lines(list ::: im.map(s => NameRef(s).toLine).toList)
 
+  def when(cond: => Boolean): Lines =
+    if (cond) this else Lines.empty
 }
 private[internals] object Lines {
   def apply(line: Line): Lines = Lines(List(line))

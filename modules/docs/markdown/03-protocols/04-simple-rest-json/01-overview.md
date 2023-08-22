@@ -65,8 +65,10 @@ This protocol and its interpreters, are aware of the following traits provided o
 * [operations and services](https://awslabs.github.io/smithy/1.0/spec/core/model.html#service)
 * [enumerations](https://awslabs.github.io/smithy/1.0/spec/core/constraint-traits.html#enum-trait)
 * [error trait](https://awslabs.github.io/smithy/1.0/spec/core/type-refinement-traits.html#error-trait)
-* [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html), including **http**, **httpError**, **httpLabel**, **httpHeader**, **httpPayload**, **httpQuery**, **httpPrefixHeaders**, **httpQueryParams**.
+* [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html)
 * [timestampFormat trait](https://awslabs.github.io/smithy/1.0/spec/core/protocol-traits.html?highlight=timestampformat#timestampformat-trait)
+
+For the full list, see below.
 
 ## Decoding and encoding unions
 
@@ -79,9 +81,15 @@ The `SimpleRestJson` protocol supports 3 different union encodings :
 See the section about [unions](../../04-codegen/02-unions.md) for a detailed description.
 
 ## Json Array Arity
+
 * By default there is a limit on the arity of an array, which is 1024. This is to prevent the server from being overloaded with a large array as this is a vector for attacks.
 * This limit can be changed by setting the maxArity `smithy4s.http4s.SimpleRestJsonBuilder.withMaxArity(.)` to the desired value.
 * an example can be seen in the [client example](03-client.md)
+
+## Explicit Null Encoding
+
+By default, optional structure fields that are set to `None` will be excluded from encoded structures. If you wish to change this so that instead they are included and set to `null` explicitly, you can do so by calling `.withExplicitDefaultsEncoding(true)`.
+
 ## Supported traits
 
 Here is the list of traits supported by `SimpleRestJson`

@@ -17,11 +17,11 @@
 package smithy4s
 package http4s.internals
 
+import cats.effect.Concurrent
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.http4s.kernel._
 import smithy4s.http4s.ClientEndpointMiddleware
-import cats.effect.Concurrent
+import smithy4s.http4s.kernel._
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
@@ -39,8 +39,7 @@ private[http4s] object SmithyHttp4sReverseRouter {
         new SmithyHttp4sClientEndpoint(
           baseUri,
           client,
-          endpoint,
-          compilerContext,
+          compilerContext(endpoint),
           middleware.prepare(service)(endpoint)
         )
     }

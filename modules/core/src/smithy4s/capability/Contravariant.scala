@@ -16,6 +16,10 @@
 
 package smithy4s.capability
 
+/**
+  * Abstraction that encodes Contravariant Functors.
+  */
+
 trait Contravariant[F[_]] {
   def contramap[A, B](fa: F[A])(f: B => A): F[B]
 }
@@ -25,12 +29,12 @@ object Contravariant {
   def apply[F[_]](implicit instance: Contravariant[F]): Contravariant[F] =
     instance
 
-  type OptionT[F[_], A] = Option[F[A]]
-  implicit def optionInstance[F[_]](implicit
-      F: Contravariant[F]
-  ): Contravariant[OptionT[F, *]] = new Contravariant[OptionT[F, *]] {
-    def contramap[A, B](fa: OptionT[F, A])(f: B => A): OptionT[F, B] =
-      fa.map(F.contramap(_)(f))
+  implicit def contravariantOfCovariantInstance[F[_], G[_]](implicit
+      F: Covariant[F],
+      G: Contravariant[G]
+  ): Contravariant[Wrapped[F, G, *]] = new Contravariant[Wrapped[F, G, *]] {
+    def contramap[A, B](fa: F[G[A]])(f: B => A): F[G[B]] =
+      F.map(fa)(ga => G.contramap(ga)(f))
   }
 
 }

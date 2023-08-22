@@ -85,7 +85,7 @@ object AwsCredentialsFile {
         case head :: next =>
           val parts = head.split("=")
           val key = parts(0).trim().toLowerCase
-          val value = parts(1).trim().toLowerCase()
+          val value = parts(1).trim()
           val updated = data + (key -> value)
           inProfile(next, currentProfile, updated)
       }

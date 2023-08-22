@@ -62,7 +62,7 @@ object SchemaPartition {
   // format: on
 
   private[schema] def apply(
-      keep: SchemaField[_, _] => Boolean,
+      keep: Field[_, _] => Boolean,
       payload: Boolean
   ): PolyFunction[Schema, SchemaPartition] =
     new PolyFunction[Schema, SchemaPartition] {
@@ -71,12 +71,12 @@ object SchemaPartition {
         fa match {
           case StructSchema(shapeId, hints, fields, make) =>
             def buildPartialDataSchema(
-                fieldsAndIndexes: Vector[(SchemaField[S, _], Int)]
+                fieldsAndIndexes: Vector[(Field[S, _], Int)]
             ): Schema[PartialData[S]] = {
               val indexes = fieldsAndIndexes.map(_._2)
               val unsafeAccessFields = fieldsAndIndexes.map {
                 case (schemaField, _) =>
-                  schemaField.foldK(fieldFolder[S])
+                  toPartialDataField(schemaField)
               }
               def const(values: IndexedSeq[Any]): PartialData[S] =
                 PartialData.Partial(indexes, values, make)
@@ -97,9 +97,7 @@ object SchemaPartition {
                     if (remainingFields.isEmpty) None
                     else Some(buildPartialDataSchema(remainingFields))
 
-                  allowedField.fold(
-                    bijectSingle(index, make, maybeRemainingSchema)
-                  )
+                  bijectSingle(allowedField, index, make, maybeRemainingSchema)
                 }
                 .getOrElse {
                   SchemaPartition.NoMatch()
@@ -152,81 +150,53 @@ object SchemaPartition {
   //
   // We can use a bijection to express either things. When the payload is only
   // part of the larger data, that bijection makes use of the getter
-  private def bijectSingle[S](
+  private def bijectSingle[S, A](
+      field: Field[S, A],
       index: Int,
       make: IndexedSeq[Any] => S,
       maybeNotMatching: Option[Schema[PartialData[S]]]
-  ) =
-    new Field.Folder[Schema, S, SchemaPartition[S]] {
-      def onRequired[A](
-          label: String,
-          instance: Schema[A],
-          get: S => A
-      ): SchemaPartition[S] =
-        maybeNotMatching match {
-          case None =>
-            // The payload field is the only field and we can create a total
-            // match from it, by bijecting from its result onto the structure
-            val to = (a: A) => make(IndexedSeq(a))
-            val from = get
-            SchemaPartition.TotalMatch(instance.biject(to, from))
+  ): SchemaPartition[S] = {
+    maybeNotMatching match {
+      case None =>
+        // The payload field is the only field and we can create a total
+        // match from it, by bijecting from its result onto the structure
+        val to = (a: A) => make(IndexedSeq(a))
+        val from = field.get
+        SchemaPartition.TotalMatch(field.schema.biject(to, from))
 
-          case Some(notMachingSchema) =>
-            // There are other fields in the structure than the payload field.
+      case Some(notMachingSchema) =>
+        // There are other fields in the structure than the payload field.
 
-            val to = {
-              val indexes = IndexedSeq(index)
-              (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
-            }
-
-            val from = (_: PartialData[S]) match {
-              case PartialData.Total(s)      => get(s)
-              case _: PartialData.Partial[_] =>
-                // It's impossible to get the whole struct from a single field if it's not the only one
-                codingError
-            }
-
-            SchemaPartition.SplittingMatch(
-              instance.biject(to, from),
-              notMachingSchema
-            )
+        val to = {
+          val indexes = IndexedSeq(index)
+          (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
         }
-      def onOptional[A](
-          label: String,
-          instance: Schema[A],
-          get: S => Option[A]
-      ): SchemaPartition[S] =
-        // "single" only makes sense on required fields
-        SchemaPartition.NoMatch()
+
+        val from = (_: PartialData[S]) match {
+          case PartialData.Total(s)      => field.get(s)
+          case _: PartialData.Partial[_] =>
+            // It's impossible to get the whole struct from a single field if it's not the only one
+            codingError
+        }
+
+        SchemaPartition.SplittingMatch(
+          field.schema.biject(to, from),
+          notMachingSchema
+        )
     }
+  }
 
   private def codingError: Nothing =
     sys.error("Coding error: this should not happen on the encoding side")
 
-  private def fieldFolder[S] =
-    new Field.FolderK[Schema, S, SchemaField[PartialData[S], *]] {
-      def onRequired[A](
-          label: String,
-          instance: Schema[A],
-          get: S => A
-      ): SchemaField[PartialData[S], A] = {
-        def access(product: PartialData[S]): A = product match {
-          case PartialData.Total(struct)    => get(struct)
-          case PartialData.Partial(_, _, _) => codingError
-        }
-        instance.required(label, access)
-      }
-      def onOptional[A](
-          label: String,
-          instance: Schema[A],
-          get: S => Option[A]
-      ): SchemaField[PartialData[S], Option[A]] = {
-        def access(product: PartialData[S]): Option[A] = product match {
-          case PartialData.Total(struct)    => get(struct)
-          case PartialData.Partial(_, _, _) => codingError
-        }
-        instance.optional(label, access)
-      }
+  private def toPartialDataField[S, A](
+      field: Field[S, A]
+  ): Field[PartialData[S], A] = {
+    def access(product: PartialData[S]): A = product match {
+      case PartialData.Total(struct)    => field.get(struct)
+      case PartialData.Partial(_, _, _) => codingError
     }
+    Field(field.label, field.schema, access)
+  }
 
 }

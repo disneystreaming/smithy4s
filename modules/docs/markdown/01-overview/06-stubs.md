@@ -8,7 +8,7 @@ For various reasons, such as testing/mocking, you may want to instantiate a stub
 This class has a constructor parameter that requires a value. This value is what is returned when invoking any of the methods
 
 ```scala mdoc:silent
-import smithy4s.hello._
+import smithy4s.example.hello._
 import cats.effect._
 val stubbedHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub)
 ```
@@ -16,7 +16,7 @@ val stubbedHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO]
 Obviously, the generated methods can be overridden.
 
 ```scala mdoc:silent
-import smithy4s.hello._
+import smithy4s.example.hello._
 import cats.effect._
 val overriddenHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub){
   override def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {

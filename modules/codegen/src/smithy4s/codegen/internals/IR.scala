@@ -34,10 +34,16 @@ import UnionMember._
 import LineSegment.{NameDef, NameRef}
 
 private[internals] case class CompilationUnit(
-    namespace: String,
+    rawNamespace: String,
     declarations: List[Decl],
     rendererConfig: Renderer.Config
-)
+) {
+  val namespace: String =
+    rawNamespace
+      .split('.')
+      .map(CollisionAvoidance.protectKeyword(_))
+      .mkString(".")
+}
 
 private[internals] sealed trait Decl {
   def shapeId: ShapeId
@@ -115,6 +121,8 @@ private[internals] sealed trait EnumTag
 private[internals] object EnumTag {
   case object StringEnum extends EnumTag
   case object IntEnum extends EnumTag
+  case object OpenStringEnum extends EnumTag
+  case object OpenIntEnum extends EnumTag
 }
 
 private[internals] case class Field(
@@ -201,7 +209,7 @@ private[internals] object Primitive {
   type Aux[TT] = Primitive { type T = TT }
 
   case object Unit extends Primitive { type T = Unit }
-  case object ByteArray extends Primitive { type T = Array[Byte] }
+  case object Blob extends Primitive { type T = Array[Byte] }
   case object Bool extends Primitive { type T = Boolean }
   case object String extends Primitive { type T = String }
   case object Timestamp extends Primitive { type T = java.time.Instant }
@@ -226,6 +234,11 @@ private[internals] object Type {
       member: Type,
       memberHints: List[Hint]
   ) extends Type
+
+  case class Nullable(
+      underlying: Type
+  ) extends Type
+
   case class Map(
       key: Type,
       keyHints: List[Hint],
@@ -266,6 +279,7 @@ private[internals] sealed trait Hint
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint
   case object ErrorMessage extends Hint
@@ -281,6 +295,7 @@ private[internals] object Hint {
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
   case object IntEnum extends Hint
+  case object OpenEnum extends Hint
 
   sealed trait SpecializedList extends Hint
   object SpecializedList {
@@ -290,6 +305,8 @@ private[internals] object Hint {
   case object UniqueItems extends Hint
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
       extends Hint
+  case object GenerateServiceProduct extends Hint
+  case object GenerateOptics extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

@@ -19,13 +19,16 @@ package smithy4s.codegen.internals
 import cats.syntax.all._
 import smithy4s.codegen.internals.LineSegment.Literal
 
-private[internals] class PartialBlock(l: Line) {
+private[internals] class PartialBlock(l: Line, sameLine: Line = Line.empty) {
   def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
     A.render(inner)
       .transformLines(lines =>
-        (l + Literal(" {")) :: indent(lines) ::: List(Line("}"))
+        (l + Literal(" {") + sameLine) :: indent(lines) ::: List(Line("}"))
       )
   }
+
+  def withSameLineValue(value: Line): PartialBlock =
+    new PartialBlock(l, value)
 
   def apply(inner: LinesWithValue*): Lines =
     apply(inner.toList.foldMap(_.render))

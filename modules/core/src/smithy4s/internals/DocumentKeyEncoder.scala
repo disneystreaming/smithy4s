@@ -16,8 +16,6 @@
 
 package smithy4s.internals
 
-import java.util.Base64
-
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
 import smithy4s._
@@ -74,8 +72,7 @@ object DocumentKeyEncoder {
           case PByte       => forBigDecimal { a => BigDecimal(a.toInt) }
           case PFloat      => forBigDecimal { a => BigDecimal(a.toDouble) }
           case PBlob =>
-            instance(bytes => Base64.getEncoder().encodeToString(bytes.array))
-          case PUnit => None
+            instance(_.toBase64String)
           case PTimestamp =>
             hints
               .get(TimestampFormat)
@@ -93,10 +90,15 @@ object DocumentKeyEncoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          tag: EnumTag,
+          tag: EnumTag[E],
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
-      ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
+      ): OptDocumentKeyEncoder[E] = tag match {
+        case EnumTag.IntEnum() =>
+          Some { a => total(a).intValue.toString }
+        case _ =>
+          Some { a => total(a).stringValue }
+      }
 
       override def biject[A, B](
           schema: Schema[A],

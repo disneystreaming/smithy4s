@@ -15,15 +15,17 @@ In order to target an Smithy4s-built AWS client to a local environment, you need
 import cats.effect._
 import cats.syntax.all._
 import com.amazonaws.dynamodb._
+import fs2.io.net.Network
 import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
+import fs2.compression.Compression
 import org.http4s._
 import org.typelevel.ci._
 import smithy4s.aws._
 import smithy4s.aws.kernel.AwsRegion
 
 object LocalstackProxy {
-  def apply[F[_]: Async](client: Client[F]): Client[F] = Client { req =>
+  def apply[F[_]: Async: Compression](client: Client[F]): Client[F] = Client { req =>
     client.run(
       req.withUri(
         req.uri.copy(authority =
@@ -41,20 +43,18 @@ object LocalstackProxy {
 }
 
 object LocalstackDynamoDB {
-  def env[F[_]](client: Client[F], region: AwsRegion)(implicit
-      F: Async[F]
-  ): AwsEnvironment[F] = AwsEnvironment.make[F](
+  def env[F[_]: Async: Compression](client: Client[F], region: AwsRegion): AwsEnvironment[F] = AwsEnvironment.make[F](
     client,
-    F.pure(region),
-    F.pure(AwsCredentials.Default("mock-key-id", "mock-secret-key", None)),
-    F.realTime.map(_.toSeconds).map(Timestamp(_, 0))
+    Async[F].pure(region),
+    Async[F].pure(AwsCredentials.Default("mock-key-id", "mock-secret-key", None)),
+    Async[F].realTime.map(_.toSeconds).map(Timestamp(_, 0))
   )
 
-  def client[F[_]: Async](client: Client[F], region: AwsRegion): Resource[F, DynamoDB.Impl[F]] =
+  def client[F[_]: Async: Network: Compression](client: Client[F], region: AwsRegion): Resource[F, DynamoDB.Impl[F]] =
     AwsClient(DynamoDB.service, env[F](LocalstackProxy[F](client), region))
 }
 
-def myResource[F[_]](implicit F: Async[F]) = for {
+def myResource[F[_]: Async: Network: Compression] = for {
   underlying <- EmberClientBuilder
     .default[F]
     .withoutCheckEndpointAuthentication

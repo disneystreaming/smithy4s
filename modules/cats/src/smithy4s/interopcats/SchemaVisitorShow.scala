@@ -69,11 +69,11 @@ final class SchemaVisitorShow(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Show[U] = {
 
-    val precomputed: Precompiler[Schema, Show] = new Precompiler[Schema, Show] {
+    val precomputed: Precompiler[Show] = new Precompiler[Show] {
       override def apply[A](label: String, instance: Schema[A]): Show[A] = {
         val showUnion = self(instance)
         (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"
@@ -116,7 +116,7 @@ final class SchemaVisitorShow(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Show[E] = Show.show { e =>
@@ -126,30 +126,14 @@ final class SchemaVisitorShow(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Show[S] = {
     def compileField[A](
-        schemaField: SchemaField[S, A]
+        field: Field[S, A]
     ): S => String = {
-      val folder = new Field.FolderK[Schema, S, Show]() {
-        override def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): Show[AA] = self(instance)
-
-        override def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): Show[Option[AA]] = {
-          implicit val showAA: Show[AA] = self(instance)
-          Show[Option[AA]]
-        }
-      }
-      val showField = schemaField.foldK(folder)
-      s => s"${schemaField.label} = ${showField.show(schemaField.get(s))}"
+      val showField = self(field.schema).contramap(field.get)
+      s => s"${field.label} = ${showField.show(s)}"
     }
 
     val functions = fields.map(f => compileField(f))
@@ -167,6 +151,14 @@ final class SchemaVisitorShow(
       self(_)
     }
     a => ss.value.show(a)
+  }
+
+  override def option[A](schema: Schema[A]): Show[Option[A]] = {
+    val showA = self(schema)
+    locally {
+      case None        => "None"
+      case Some(value) => s"Some(${showA.show(value)})"
+    }
   }
 
 }

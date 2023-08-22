@@ -18,6 +18,8 @@ package smithy4s
 
 package object kinds {
 
+  type OptionK[F[_], A] = Option[F[A]]
+
   // format: off
   type FunctorAlgebra[Alg[_[_, _, _, _, _]], F[_]] = Alg[Kind1[F]#toKind5]
   type FunctorInterpreter[Op[_, _, _, _, _], F[_]] = PolyFunction5[Op, Kind1[F]#toKind5]
@@ -39,5 +41,4 @@ package object kinds {
   type Kind5[F[_, _, _, _, _]] = {
     type handler[I, E, O, SI, SO] = I => F[I, E, O, SI, SO]
   }
-
 }

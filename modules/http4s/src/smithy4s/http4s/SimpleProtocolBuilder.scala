@@ -23,9 +23,9 @@ import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
-import smithy4s.kinds._
 import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
 import smithy4s.http4s.internals.SmithyHttp4sRouter
+import smithy4s.kinds._
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -94,9 +94,9 @@ abstract class SimpleProtocolBuilder[P](
       new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
 
     def resource: Resource[F, service.Impl[F]] =
-      use.leftWiden[Throwable].liftTo[Resource[F, *]]
+      make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def use: Either[UnsupportedProtocolError, service.Impl[F]] = {
+    def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag)
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
@@ -124,11 +124,45 @@ abstract class SimpleProtocolBuilder[P](
       F: Concurrent[F]
   ) {
 
+    /**
+      * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
+      * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
+      * Errors raised in the [[middleware]] will be transformed too.
+      *
+      * The following two are equivalent:
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, Throwable] = ???
+      * builder.mapErrors(handlerPF).middleware(middleware)
+      * }}}
+
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, Throwable] = ???
+      * val handler = ServerEndpointMiddleware.mapErrors(handlerPF)
+      * builder.middleware(handler |+| middleware |+| handler)
+      * }}}
+      */
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder(service, impl, fe andThen (e => F.pure(e)), middleware)
 
+    /**
+      * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
+      * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
+      * Errors raised in the [[middleware]] will be transformed too.
+      *
+      * The following two are equivalent:
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, F[Throwable]] = ???
+      * builder.flatMapErrors(handlerPF).middleware(middleware)
+      * }}}
+
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, F[Throwable]] = ???
+      * val handler = ServerEndpointMiddleware.flatMapErrors(handlerPF)
+      * builder.middleware(handler |+| middleware |+| handler)
+      * }}}
+      */
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, F] =
@@ -147,9 +181,11 @@ abstract class SimpleProtocolBuilder[P](
           new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
-            errorTransformation,
-            simpleProtocolCodecs.makeServerCodecs[F],
-            middleware
+            simpleProtocolCodecs.makeServerCodecs[F], {
+              val errorHandler =
+                ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+              errorHandler |+| middleware |+| errorHandler
+            }
           ).routes
         }
 

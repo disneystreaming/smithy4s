@@ -55,11 +55,38 @@ private[smithy4s] trait XmlEncoder[-A] { self =>
     List(XmlAttr(name, values))
   }
 
-  def optional: XmlEncoder[Option[A]] = {
-    (_: Option[A]) match {
-      case None    => Nil
-      case Some(a) => self.encode(a)
+  def addXmlNamespace(maybeNs: Option[XmlAttr]): XmlEncoder[A] = {
+    maybeNs match {
+      case None => this
+      case Some(attr) =>
+        new XmlEncoder[A] {
+          def encode(value: A): List[XmlContent] = attr :: self.encode(value)
+        }
     }
+  }
+
+  def optional: XmlEncoder[Option[A]] = new XmlEncoder[Option[A]] {
+    def encode(value: Option[A]): List[XmlContent] = value match {
+      case Some(value) => self.encode(value)
+      case None        => Nil
+    }
+    override def encodesUnion: Boolean = self.encodesUnion
+    override def attribute(name: XmlQName): XmlEncoder[Option[A]] =
+      new XmlEncoder[Option[A]] {
+        val selfAttr = self.attribute(name)
+        def encode(value: Option[A]): List[XmlContent] = value match {
+          case Some(value) => selfAttr.encode(value)
+          case None        => Nil
+        }
+      }
+    override def down(tag: XmlQName): XmlEncoder[Option[A]] =
+      new XmlEncoder[Option[A]] {
+        val selfDown = self.down(tag)
+        def encode(value: Option[A]): List[XmlContent] = value match {
+          case Some(value) => selfDown.encode(value)
+          case None        => Nil
+        }
+      }
   }
 
   def down(tag: XmlQName): XmlEncoder[A] = { a =>

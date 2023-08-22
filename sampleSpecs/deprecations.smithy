@@ -1,12 +1,19 @@
 $version: "2"
+
 namespace smithy4s.example
 use smithy4s.meta#adtMember
 
 @deprecated(message: "A compelling reason", since: "0.0.1")
-structure DeprecatedStructure {
+@mixin
+structure DeprecatedMixin {
+  @deprecated strings: Strings,
+  other: Strings
+}
+
+@deprecated(message: "A compelling reason", since: "0.0.1")
+structure DeprecatedStructure with [DeprecatedMixin] {
   @deprecated name: String,
-  nameV2: String,
-  strings: Strings
+  nameV2: String
 }
 
 @deprecated
@@ -47,4 +54,3 @@ enum EnumWithDeprecations {
   OLD,
   NEW
 }
-
