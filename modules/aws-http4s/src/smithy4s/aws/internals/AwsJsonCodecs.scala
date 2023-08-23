@@ -19,6 +19,7 @@ package internals
 
 import cats.effect.Concurrent
 import smithy4s.http4s.kernel._
+import smithy4s.interopcats._
 import smithy4s.http._
 import smithy4s.json.Json
 import fs2.compression.Compression
@@ -47,30 +48,30 @@ private[aws] object AwsJsonCodecs {
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val encoders =
+    val writers =
       jsonPayloadCodecs.mapK(
         PayloadCodec.writerK
           .andThen(EntityWriter.fromPayloadWriterK[F])
           .andThen(HttpRequest.Encoder.fromEntityEncoderK(httpMediaType.value))
       )
-    val decoders = jsonPayloadCodecs.mapK(
+    val readers = jsonPayloadCodecs.mapK(
       PayloadCodec.readerK
         .andThen(EntityReader.fromPayloadReaderK[F])
         .andThen(HttpResponse.extractBody)
     )
 
-    val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
+    val discriminator = AwsErrorTypeDecoder.fromResponse(readers)
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
         val transformEncoders = applyCompression[F](endpoint.hints)
-        val finalEncoders = transformEncoders(encoders)
+        val finalEncoders = transformEncoders(writers)
         val make = HttpUnaryClientCodecs
           .Make[F, Entity[F]](
             finalEncoders,
-            decoders,
-            decoders,
+            readers,
+            readers,
             discriminator,
             toStrict
           )

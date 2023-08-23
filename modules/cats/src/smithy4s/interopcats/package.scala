@@ -17,10 +17,26 @@
 package smithy4s
 
 import scala.util.hashing.MurmurHash3
+import smithy4s.capability.MonadThrowLike
+import cats.MonadThrow
+import cats.syntax.all._
 
 package object interopcats {
 
-  def combineHash(start: Int, hashes: Int*): Int = {
+  private[smithy4s] implicit def monadThrowShim[F[_]: MonadThrow]
+      : MonadThrowLike[F] =
+    new MonadThrowLike[F] {
+      def pure[A](a: A): F[A] = MonadThrow[F].pure(a)
+      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
+        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+      def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
+        MonadThrow[F].flatMap(fa)(f)
+      def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
+      def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A] =
+        MonadThrow[F].handleErrorWith(fa)(f)
+    }
+
+  private[interopcats] def combineHash(start: Int, hashes: Int*): Int = {
     var hashResult = start
     hashes.foreach(hash => hashResult = MurmurHash3.mix(hashResult, hash))
     MurmurHash3.finalizeHash(hashResult, hashes.length)

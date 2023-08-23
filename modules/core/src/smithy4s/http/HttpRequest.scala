@@ -60,13 +60,15 @@ object HttpRequest {
 
     def restSchemaCompiler[Body](
         metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
+        bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Body, *]],
+        writeEmptyStructs: Boolean = false
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
       HttpRestSchema.combineWriterCompilers(
         metadataCompiler,
-        bodyEncoderCompiler
+        bodyEncoderCompiler,
+        writeEmptyStructs
       )
     }
 
@@ -77,7 +79,11 @@ object HttpRequest {
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val bodyCompiler =
         bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
-      restSchemaCompiler(metadataEncoderCompiler, bodyCompiler)
+      restSchemaCompiler(
+        metadataEncoderCompiler,
+        bodyCompiler,
+        writeEmptyStructs = false
+      )
     }
 
     def fromHttpEndpoint[Body, I](

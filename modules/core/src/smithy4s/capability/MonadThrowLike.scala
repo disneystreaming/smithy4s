@@ -21,6 +21,7 @@ import smithy4s.kinds.PolyFunction
 trait MonadThrowLike[F[_]] extends Zipper[F] {
   def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
   def raiseError[A](e: Throwable): F[A]
+  def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A]
 
   final def liftEither[E <: Throwable, A](either: Either[E, A]): F[A] =
     either match {
@@ -39,5 +40,15 @@ object MonadThrowLike {
     def apply[A0](either: Either[E, A0]): F[A0] =
       MonadThrowLike[F].liftEither(either)
   }
+
+  def mapErrorK[F[_]](
+      pf: PartialFunction[Throwable, Throwable]
+  )(implicit F: MonadThrowLike[F]): PolyFunction[F, F] =
+    new PolyFunction[F, F] {
+      def apply[A](fa: F[A]): F[A] = F.handleErrorWith(fa) { throwable =>
+        if (pf.isDefinedAt(throwable)) F.raiseError(pf(throwable))
+        else F.raiseError(throwable)
+      }
+    }
 
 }

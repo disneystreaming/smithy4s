@@ -77,7 +77,7 @@ object AwsClient {
           AwsRestJsonCodecs.make[F]("application/json")
 
         case AwsProtocol.AWS_REST_XML(_) =>
-          AwsXmlCodecs.make[F]()
+          AwsRestXmlCodecs.make[F]()
       }
       service.functorInterpreter {
         new service.FunctorEndpointCompiler[F] {

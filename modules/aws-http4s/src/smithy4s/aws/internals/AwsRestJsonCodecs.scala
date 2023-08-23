@@ -21,15 +21,16 @@ import smithy4s.Blob
 import smithy4s.codecs._
 import smithy4s.http._
 import smithy4s.json.Json
+import smithy4s.interopcats._
 import cats.effect.Concurrent
 import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunctions
-import smithy4s.capability.Covariant
 import smithy4s.Endpoint
 import org.http4s.Entity
 import smithy4s.schema.CachedSchemaCompiler
 
+// scalafmt: {maxColumn = 120}
 private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
@@ -47,7 +48,6 @@ private[aws] object AwsRestJsonCodecs {
           .withHintMask(hintMask)
       )
 
-    // scalafmt: {maxColumn = 120}
     def nullToEmptyObject(blob: Blob): Blob =
       if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
@@ -67,25 +67,8 @@ private[aws] object AwsRestJsonCodecs {
           .andThen(EntityReader.fromHttpPayloadReaderK[F])
       }
 
-    val stringAndBlobWriters = smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK {
-      Covariant.liftPolyFunction[Option](
-        HttpMediaTyped
-          .liftPolyFunction(EntityWriter.fromPayloadWriterK[F])
-          .andThen(HttpRequest.Encoder.fromHttpMediaWriterK)
-      )
-    }
-
-    val stringAndBlobReaders: CachedSchemaCompiler.Optional[Reader[F, Entity[F], *]] =
-      smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK {
-        Covariant.liftPolyFunction[Option](
-          HttpMediaTyped
-            .unwrappedK[HttpPayloadReader]
-            .andThen(EntityReader.fromHttpPayloadReaderK[F])
-        )
-      }
-
-    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobWriters, jsonWriters)
-    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobReaders, jsonReaders)
+    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobWriters[F], jsonWriters)
+    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobReaders[F], jsonReaders)
 
     val encoders = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       Metadata.AwsEncoder,
@@ -96,6 +79,7 @@ private[aws] object AwsRestJsonCodecs {
       Metadata.AwsDecoder,
       mediaReaders
     )
+
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
 
     new UnaryClientCodecs.Make[F] {

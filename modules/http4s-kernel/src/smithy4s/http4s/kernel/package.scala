@@ -16,7 +16,6 @@
 
 package smithy4s.http4s
 
-import cats.Applicative
 import cats.effect.SyncIO
 import cats.syntax.all._
 import org.http4s.Entity
@@ -32,6 +31,7 @@ import org.http4s.EntityDecoder
 import org.http4s.Uri
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
+import smithy4s.interopcats._
 import smithy4s.kinds.PolyFunctions
 import smithy4s.Blob
 import smithy4s.capability.MonadThrowLike
@@ -200,16 +200,6 @@ package object kernel {
     type Make[F[_]] =
       smithy4s.http.HttpUnaryClientCodecs.Make[F, Entity[F]]
   }
-
-  private[smithy4s] implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
-    new MonadThrowLike[F] {
-      def pure[A](a: A): F[A] = Applicative[F].pure(a)
-      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
-        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
-      def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
-        MonadThrow[F].flatMap(fa)(f)
-      def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
-    }
 
   /**
     * A vault key that is used to store extracted path-parameters into request during

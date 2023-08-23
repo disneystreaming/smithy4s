@@ -21,9 +21,9 @@ import _root_.aws.protocols.AwsQueryError
 import alloy.UrlFormFlattened
 import alloy.UrlFormName
 import cats.effect.Concurrent
+import smithy4s.interopcats._
 import cats.syntax.all._
 import fs2.compression.Compression
-import org.http4s.EntityEncoder
 import org.http4s.Entity
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
@@ -31,19 +31,18 @@ import smithy4s._
 import smithy4s.codecs.PayloadPath
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.kinds.PolyFunction
+import smithy4s.codecs.Writer
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.xml.internals.XmlStartingPath
 
+// scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
 
   def make[F[_]: Concurrent: Compression](
       version: String
   ): UnaryClientCodecs.Make[F] =
     new UnaryClientCodecs.Make[F] {
-      def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
+      def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): UnaryClientCodecs[F, I, E, O] = {
         val transformEncoders = applyCompression[F](
           endpoint.hints,
           // To fulfil the requirement of
@@ -61,21 +60,12 @@ private[aws] object AwsQueryCodecs {
 
         val responseTag = endpoint.name + "Response"
         val resultTag = endpoint.name + "Result"
-        val responseDecoderCompilers =
-          AwsXmlCodecs
-            .responseDecoderCompilers[F]
-            .contramapSchema(
-              Schema.transformHintsLocallyK(
-                _ ++ Hints(XmlStartingPath(List(responseTag, resultTag)))
-              )
-            )
-        val errorDecoderCompilers = AwsXmlCodecs
-          .responseDecoderCompilers[F]
-          .contramapSchema(
-            Schema.transformHintsLocallyK(
-              _ ++ Hints(XmlStartingPath(List("ErrorResponse", "Error")))
-            )
-          )
+        val responseDecoderCompilers = xmlReaders[F].contramapSchema(
+          Schema.transformHintsLocallyK(_.addTargetHints(XmlStartingPath(List(responseTag, resultTag))))
+        )
+        val errorDecoderCompilers = xmlReaders[F].contramapSchema(
+          Schema.transformHintsLocallyK(_.addTargetHints(XmlStartingPath(List("ErrorResponse", "Error"))))
+        )
         // Takes the `@awsQueryError` trait into consideration to decide how to
         // discriminate error responses.
         val errorNameMapping: (String => String) = endpoint.errorable match {
@@ -91,52 +81,51 @@ private[aws] object AwsQueryCodecs {
         }
         val errorDiscriminator = AwsErrorTypeDecoder
           .fromResponse(errorDecoderCompilers)
-          .andThen(_.map(_.map {
+          .andThen(_.map {
             case HttpDiscriminator.NameOnly(name) =>
               HttpDiscriminator.NameOnly(errorNameMapping(name))
             case other =>
               other
-          }))
+          })
 
-        val make = UnaryClientCodecs.Make[F](
+        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
           input = requestEncoderCompilersWithCompression,
           output = responseDecoderCompilers,
           error = errorDecoderCompilers,
-          errorDiscriminator = errorDiscriminator
+          errorDiscriminator = errorDiscriminator,
+          toStrict
         )
         make.apply(endpoint)
       }
     }
 
-  def requestEncoderCompilers[F[_]: Concurrent](
+  private[internals] def requestEncoderCompilers[F[_]: Concurrent](
       ignoreUrlFormFlattened: Boolean,
       capitalizeStructAndUnionMemberNames: Boolean,
       action: String,
       version: String
   ): CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] = {
-    val urlFormEntityEncoderCompilers = UrlForm
-      .Encoder(
-        ignoreUrlFormFlattened = ignoreUrlFormFlattened,
-        capitalizeStructAndUnionMemberNames =
-          capitalizeStructAndUnionMemberNames
-      )
-      .mapK(
-        new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-          def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-            urlFormEntityEncoder[F].contramap(a =>
-              UrlForm(
-                List(
-                  UrlForm.FormData(PayloadPath("Action"), Some(action)),
-                  UrlForm.FormData(PayloadPath("Version"), Some(version))
-                ) ++ fa.encode(a).values
-              )
-            )
-        }
-      )
+
+    def urlFormToBlob(urlForm: UrlForm): Blob = Blob {
+      UrlForm(
+        UrlForm.FormData(PayloadPath("Action"), Some(action)) ::
+          UrlForm.FormData(PayloadPath("Version"), Some(version)) ::
+          urlForm.values
+      ).render
+    }
+
+    val writers = UrlForm
+      .Encoder(ignoreUrlFormFlattened, capitalizeStructAndUnionMemberNames)
+      .mapK {
+        UrlForm.Encoder.toWriterK
+          .andThen(Writer.addingTo[Any].andThenK(urlFormToBlob))
+          .andThen(EntityWriter.fromPayloadWriterK[F])
+          .andThen(HttpRequest.Encoder.fromEntityEncoderK("application/x-www-form-urlencoded"))
+      }
     HttpRequest.Encoder
-      .restSchemaCompiler[EntityBody[F]](
-        metadataEncoderCompiler = Metadata.AwsEncoder,
-        entityEncoderCompiler = urlFormEntityEncoderCompilers,
+      .restSchemaCompiler[Entity[F]](
+        Metadata.AwsEncoder,
+        writers,
         // We have to set this so that a body is produced even in the case where
         // a top-level struct input is empty. If it wasn't then the contramap
         // above wouldn't have the required effect because there would be no
@@ -167,13 +156,5 @@ private[aws] object AwsQueryCodecs {
         }
       )
   }
-
-  private def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] =
-    EntityWriter.fromHttpMediaWriter(
-      HttpMediaTyped(
-        HttpMediaType("application/x-www-form-urlencoded"),
-        (_: Any, urlForm: UrlForm) => Blob(urlForm.render)
-      )
-    )
 
 }

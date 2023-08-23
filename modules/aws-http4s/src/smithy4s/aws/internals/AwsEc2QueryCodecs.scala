@@ -78,14 +78,14 @@ private[aws] object AwsEcsQueryCodecs {
 
         val responseTag = endpoint.name + "Response"
         val responseDecoderCompilers =
-          AwsXmlCodecs
+          AwsRestXmlCodecs
             .responseDecoderCompilers[F]
             .contramapSchema(
               Schema.transformHintsLocallyK(
                 _ ++ Hints(XmlStartingPath(List(responseTag)))
               )
             )
-        val errorDecoderCompilers = AwsXmlCodecs
+        val errorDecoderCompilers = AwsRestXmlCodecs
           .responseDecoderCompilers[F]
           .contramapSchema(
             Schema.transformHintsLocallyK(

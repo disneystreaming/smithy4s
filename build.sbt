@@ -656,7 +656,7 @@ lazy val fs2 = projectMatrix
  */
 lazy val `http4s-kernel` = projectMatrix
   .in(file("modules/http4s-kernel"))
-  .dependsOn(core)
+  .dependsOn(core, cats)
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
