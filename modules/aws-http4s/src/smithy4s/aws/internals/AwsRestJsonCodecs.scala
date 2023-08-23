@@ -67,29 +67,34 @@ private[aws] object AwsRestJsonCodecs {
           .andThen(EntityReader.fromHttpPayloadReaderK[F])
       }
 
-    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobWriters[F], jsonWriters)
-    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobReaders[F], jsonReaders)
+    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], jsonWriters)
+    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobResponseReaders[F], jsonReaders)
 
-    val encoders = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
+    val requestWriters = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       Metadata.AwsEncoder,
       mediaWriters
     )
 
-    val decoders = HttpResponse.Decoder.restSchemaCompiler[F, Entity[F]](
+    val responseReaders = HttpResponse.Decoder.restSchemaCompiler[F, Entity[F]](
       Metadata.AwsDecoder,
       mediaReaders
     )
 
-    val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
+    val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
 
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](endpoint.hints)
-        val finalEncoders = transformEncoders(encoders)
-        val make = HttpUnaryClientCodecs
-          .Make[F, Entity[F]](finalEncoders, decoders, decoders, discriminator, toStrict)
+        val addCompression = applyCompression[F](endpoint.hints)
+        val finalRequestWriters = addCompression(requestWriters)
+        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
+          finalRequestWriters,
+          responseReaders,
+          responseReaders,
+          discriminator,
+          toStrict
+        )
         make.apply(endpoint)
       }
     }

@@ -48,33 +48,32 @@ private[aws] object AwsJsonCodecs {
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val writers =
+    val requestWriters =
       jsonPayloadCodecs.mapK(
         PayloadCodec.writerK
           .andThen(EntityWriter.fromPayloadWriterK[F])
           .andThen(HttpRequest.Encoder.fromEntityEncoderK(httpMediaType.value))
       )
-    val readers = jsonPayloadCodecs.mapK(
+    val responseReaders = jsonPayloadCodecs.mapK(
       PayloadCodec.readerK
         .andThen(EntityReader.fromPayloadReaderK[F])
         .andThen(HttpResponse.extractBody)
     )
 
-    val discriminator = AwsErrorTypeDecoder.fromResponse(readers)
+    val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
         val transformEncoders = applyCompression[F](endpoint.hints)
-        val finalEncoders = transformEncoders(writers)
-        val make = HttpUnaryClientCodecs
-          .Make[F, Entity[F]](
-            finalEncoders,
-            readers,
-            readers,
-            discriminator,
-            toStrict
-          )
+        val finalRequestWriters = transformEncoders(requestWriters)
+        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
+          finalRequestWriters,
+          responseReaders,
+          responseReaders,
+          discriminator,
+          toStrict
+        )
         make.apply(endpoint)
       }
     }

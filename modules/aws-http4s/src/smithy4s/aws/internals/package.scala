@@ -52,7 +52,7 @@ package object internals {
     }
   }
 
-  private[internals] def stringAndBlobWriters[F[_]]
+  private[internals] def stringAndBlobRequestWriters[F[_]]
       : CachedSchemaCompiler.Optional[HttpRequest.Encoder[Entity[F], *]] =
     smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK {
       Covariant.liftPolyFunction[Option](
@@ -62,7 +62,7 @@ package object internals {
       )
     }
 
-  private[internals] def stringAndBlobReaders[F[_]: Concurrent]
+  private[internals] def stringAndBlobResponseReaders[F[_]: Concurrent]
       : CachedSchemaCompiler.Optional[Reader[F, Entity[F], *]] =
     smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK {
       Covariant.liftPolyFunction[Option](
@@ -72,7 +72,7 @@ package object internals {
       )
     }
 
-  private[internals] def xmlWriters[F[_]]
+  private[internals] def xmlRequestWriters[F[_]]
       : CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] =
     Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
       smithy4s.codecs.Writer
@@ -84,7 +84,7 @@ package object internals {
         .andThen(HttpRequest.Encoder.fromEntityEncoderK("application/xml"))
     }
 
-  private[internals] def xmlReaders[F[_]: Concurrent] =
+  private[internals] def xmlResponseReaders[F[_]: Concurrent] =
     Xml
       .xmlByteStreamDecoders[F]
       .mapK {

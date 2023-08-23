@@ -20,6 +20,7 @@ package internals
 import _root_.aws.protocols.AwsQueryError
 import _root_.aws.protocols.Ec2QueryName
 import cats.effect.Concurrent
+import smithy4s.interopcats._
 import cats.syntax.all._
 import fs2.compression.Compression
 import smithy.api.XmlName
@@ -27,6 +28,7 @@ import smithy4s._
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.xml.internals.XmlStartingPath
+import org.http4s.Entity
 
 private[aws] object AwsEcsQueryCodecs {
 
@@ -37,8 +39,8 @@ private[aws] object AwsEcsQueryCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val requestEncoderCompilers = AwsQueryCodecs
-          .requestEncoderCompilers[F](
+        val requestWriters = AwsQueryCodecs
+          .requestWriterCompiler[F](
             // These are set to fulfil the requirements of
             // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
             // without UrlFormDataEncoderSchemaVisitor having to be more aware
@@ -72,21 +74,16 @@ private[aws] object AwsEcsQueryCodecs {
           // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/ec2Query/requestCompression.smithy#L152-L298.
           retainUserEncoding = false
         )
-        val requestEncoderCompilersWithCompression = transformEncoders(
-          requestEncoderCompilers
-        )
+        val finalRequestWriters = transformEncoders(requestWriters)
 
         val responseTag = endpoint.name + "Response"
-        val responseDecoderCompilers =
-          AwsRestXmlCodecs
-            .responseDecoderCompilers[F]
-            .contramapSchema(
-              Schema.transformHintsLocallyK(
-                _ ++ Hints(XmlStartingPath(List(responseTag)))
-              )
+        val responseReaders = xmlResponseReaders[F]
+          .contramapSchema(
+            Schema.transformHintsLocallyK(
+              _ ++ Hints(XmlStartingPath(List(responseTag)))
             )
-        val errorDecoderCompilers = AwsRestXmlCodecs
-          .responseDecoderCompilers[F]
+          )
+        val errorResponseReaders = xmlResponseReaders[F]
           .contramapSchema(
             Schema.transformHintsLocallyK(
               _ ++ Hints(XmlStartingPath(List("Response", "Errors", "Error")))
@@ -106,20 +103,21 @@ private[aws] object AwsEcsQueryCodecs {
             }.toMap
             errorCode => mapping.getOrElse(errorCode, errorCode)
         }
-        val errorDiscriminator = AwsErrorTypeDecoder
-          .fromResponse(errorDecoderCompilers)
-          .andThen(_.map(_.map {
+        val discriminator = AwsErrorTypeDecoder
+          .fromResponse(errorResponseReaders)
+          .andThen(_.map {
             case HttpDiscriminator.NameOnly(name) =>
               HttpDiscriminator.NameOnly(errorNameMapping(name))
             case other =>
               other
-          }))
+          })
 
-        val make = UnaryClientCodecs.Make[F](
-          input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
-          error = errorDecoderCompilers,
-          errorDiscriminator = errorDiscriminator
+        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
+          finalRequestWriters,
+          responseReaders,
+          errorResponseReaders,
+          discriminator,
+          toStrict
         )
         make.apply(endpoint)
       }

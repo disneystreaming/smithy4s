@@ -43,27 +43,26 @@ private[aws] object AwsQueryCodecs {
   ): UnaryClientCodecs.Make[F] =
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](
+        val addCompression = applyCompression[F](
           endpoint.hints,
           // To fulfil the requirement of
           // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298.
           retainUserEncoding = false
         )
-        val requestEncoderCompilersWithCompression = transformEncoders(
-          requestEncoderCompilers[F](
-            ignoreUrlFormFlattened = false,
-            capitalizeStructAndUnionMemberNames = false,
-            action = endpoint.id.name,
-            version = version
-          )
+        val requestWriters = requestWriterCompiler[F](
+          ignoreUrlFormFlattened = false,
+          capitalizeStructAndUnionMemberNames = false,
+          action = endpoint.id.name,
+          version = version
         )
+        val finalRequestWriters = addCompression(requestWriters)
 
         val responseTag = endpoint.name + "Response"
         val resultTag = endpoint.name + "Result"
-        val responseDecoderCompilers = xmlReaders[F].contramapSchema(
+        val responseReaders = xmlResponseReaders[F].contramapSchema(
           Schema.transformHintsLocallyK(_.addTargetHints(XmlStartingPath(List(responseTag, resultTag))))
         )
-        val errorDecoderCompilers = xmlReaders[F].contramapSchema(
+        val errorResponseReaders = xmlResponseReaders[F].contramapSchema(
           Schema.transformHintsLocallyK(_.addTargetHints(XmlStartingPath(List("ErrorResponse", "Error"))))
         )
         // Takes the `@awsQueryError` trait into consideration to decide how to
@@ -80,7 +79,7 @@ private[aws] object AwsQueryCodecs {
             errorCode => mapping.getOrElse(errorCode, errorCode)
         }
         val errorDiscriminator = AwsErrorTypeDecoder
-          .fromResponse(errorDecoderCompilers)
+          .fromResponse(errorResponseReaders)
           .andThen(_.map {
             case HttpDiscriminator.NameOnly(name) =>
               HttpDiscriminator.NameOnly(errorNameMapping(name))
@@ -89,17 +88,17 @@ private[aws] object AwsQueryCodecs {
           })
 
         val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
-          input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
-          error = errorDecoderCompilers,
-          errorDiscriminator = errorDiscriminator,
+          finalRequestWriters,
+          responseReaders,
+          errorResponseReaders,
+          errorDiscriminator,
           toStrict
         )
         make.apply(endpoint)
       }
     }
 
-  private[internals] def requestEncoderCompilers[F[_]: Concurrent](
+  private[internals] def requestWriterCompiler[F[_]: Concurrent](
       ignoreUrlFormFlattened: Boolean,
       capitalizeStructAndUnionMemberNames: Boolean,
       action: String,
