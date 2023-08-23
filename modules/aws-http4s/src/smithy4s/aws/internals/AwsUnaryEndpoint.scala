@@ -18,12 +18,12 @@ package smithy4s
 package aws
 package internals
 
-import smithy4s.http4s.kernel._
 import cats.syntax.all._
 import org.http4s.Request
 import org.http4s.Response
-import org.http4s.Uri
-import org.http4s.Method
+import smithy4s.http._
+import smithy4s.http4s.kernel._
+import org.http4s.Entity
 import _root_.aws.api.{Service => AwsService}
 import cats.effect.Async
 import cats.effect.Resource
@@ -68,16 +68,26 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   // format: on
 
   def inputToRequest(input: I): F[Request[F]] = {
-    awsEnv.region.map { region =>
-      val baseUri: Uri =
-        Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
-      val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
-      inputEncoder.write(baseRequest, input)
+    awsEnv.region.flatMap { region =>
+      val baseUri = HttpUri(
+        scheme = HttpUriScheme.Https,
+        host = s"$endpointPrefix.$region.amazonaws.com",
+        port = None,
+        path = Seq.empty,
+        queryParams = Map.empty,
+        pathParams = None
+      )
+      // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
+      val baseRequest =
+        HttpRequest(HttpMethod.POST, baseUri, Map.empty, Entity.empty)
+      fromSmithy4sHttpRequest(inputEncoder.write(baseRequest, input))
     }
   }
 
-  private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.read(response)
-    else errorDecoder.read(response).flatMap(effect.raiseError[O](_))
+  private def outputFromResponse(response: Response[F]): F[O] = {
+    val r = toSmithy4sHttpResponse(response)
+    if (response.status.isSuccess) outputDecoder.read(r)
+    else errorDecoder.read(r).flatMap(effect.raiseError[O](_))
+  }
 
 }
