@@ -182,6 +182,15 @@ object HttpResponse {
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
         entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
+    ): CachedSchemaCompiler[Decoder[F, Body, *]] =
+      restSchemaCompilerAux(
+        metadataDecoderCompiler,
+        entityDecoderCompiler.mapK { extractBody[F, Body] }
+      )
+
+    private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
+        metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
+        responseReaders: CachedSchemaCompiler[Decoder[F, Body, *]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         metadataDecoderCompiler.mapK(
@@ -190,12 +199,9 @@ object HttpResponse {
           )
         )
 
-      val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
-        entityDecoderCompiler.mapK { extractBody[F, Body] }
-
       HttpRestSchema.combineReaderCompilers[F, HttpResponse[Body]](
         restMetadataCompiler,
-        bodyMetadataCompiler
+        responseReaders
       )
     }
 
@@ -277,7 +283,7 @@ object HttpResponse {
       .composeK((_: HttpResponse[Any]).toMetadata)
       .andThen(Reader.liftPolyFunction(liftToF))
 
-  def extractBody[F[_], Body]
+  private[smithy4s] def extractBody[F[_], Body]
       : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
     Reader.in[F].composeK(_.body)
 

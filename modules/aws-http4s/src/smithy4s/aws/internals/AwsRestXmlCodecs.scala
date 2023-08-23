@@ -33,14 +33,17 @@ private[aws] object AwsRestXmlCodecs {
 
   def make[F[_]: Concurrent: Compression](): UnaryClientCodecs.Make[F] = {
 
-    val mediaWriters = CachedSchemaCompiler.getOrElse(
-      stringAndBlobRequestWriters[F],
-      xmlRequestWriters[F]
-    )
+    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], xmlRequestWriters[F])
+    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobResponseReaders[F], xmlResponseReaders[F])
 
     val requestWriters = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       Metadata.AwsEncoder,
       mediaWriters
+    )
+
+    val responseReaders = HttpResponse.Decoder.restSchemaCompilerAux[F, Entity[F]](
+      Metadata.AwsDecoder,
+      mediaReaders
     )
 
     new UnaryClientCodecs.Make[F] {
@@ -50,7 +53,7 @@ private[aws] object AwsRestXmlCodecs {
         val addCompression = applyCompression[F](endpoint.hints)
         val finalRequestWriters = addCompression(requestWriters)
 
-        val errorResponseReaders = xmlResponseReaders.contramapSchema(
+        val errorResponseReaders = responseReaders.contramapSchema(
           smithy4s.schema.Schema.transformHintsLocallyK(
             _.addMemberHints(XmlStartingPath(List("ErrorResponse", "Error")))
           )
@@ -59,7 +62,7 @@ private[aws] object AwsRestXmlCodecs {
 
         val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
           finalRequestWriters,
-          xmlResponseReaders,
+          responseReaders,
           errorResponseReaders,
           discriminator,
           toStrict

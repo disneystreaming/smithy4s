@@ -148,34 +148,39 @@ object HttpRequest {
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
         entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
-      val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
-        metadataDecoderCompiler.mapK(
-          Metadata.Decoder.toReaderK
-            .andThen(
-              extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
-            )
-        )
-
-      val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+      restSchemaCompilerAux(
+        metadataDecoderCompiler,
         entityDecoderCompiler.mapK { extractBody[F, Body] }
-
-      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
-        restMetadataCompiler,
-        bodyMetadataCompiler
       )
     }
 
-    private def extractMetadata[F[_]](
-        liftToF: PolyFunction[Either[MetadataError, *], F]
-    ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
-      Reader
-        .in[Either[MetadataError, *]]
-        .composeK((_: HttpRequest[Any]).toMetadata)
-        .andThen(Reader.liftPolyFunction(liftToF))
+    private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
+        metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
+        responseDecoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]]
+    ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
+      val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+        metadataDecoderCompiler.mapK(
+          Metadata.Decoder.toReaderK.andThen(
+            extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+          )
+        )
 
+      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
+        restMetadataCompiler,
+        responseDecoderCompiler
+      )
+    }
   }
 
-  def extractBody[F[_], Body]
+  private def extractMetadata[F[_]](
+      liftToF: PolyFunction[Either[MetadataError, *], F]
+  ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
+    Reader
+      .in[Either[MetadataError, *]]
+      .composeK((_: HttpRequest[Any]).toMetadata)
+      .andThen(Reader.liftPolyFunction(liftToF))
+
+  private[smithy4s] def extractBody[F[_], Body]
       : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
     Reader.in[F].composeK(_.body)
 

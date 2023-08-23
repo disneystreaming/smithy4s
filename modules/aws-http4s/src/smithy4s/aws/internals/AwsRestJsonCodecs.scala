@@ -68,7 +68,7 @@ private[aws] object AwsRestJsonCodecs {
       }
 
     val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], jsonWriters)
-    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobResponseReaders[F], jsonReaders)
+    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobEntityReaders[F], jsonReaders)
 
     val requestWriters = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
       Metadata.AwsEncoder,
