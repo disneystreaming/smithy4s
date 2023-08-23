@@ -23,6 +23,7 @@ import cats.syntax.all._
 import smithy4s.http.HttpRequest
 import smithy4s.http.HttpMethod
 import smithy4s.http.HttpResponse
+import smithy4s.http.HttpUnaryClientCodecs
 import org.http4s.Entity
 import org.http4s.Request
 import org.http4s.Uri
@@ -33,7 +34,7 @@ import smithy4s.http4s.kernel._
 private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
   baseUri: Uri,
   client: Client[F],
-  clientCodecs: UnaryClientCodecs[F, I, E, O],
+  clientCodecs: HttpUnaryClientCodecs[F, Entity[F], I, E, O],
   middleware: Client[F] => Client[F]
 )(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on

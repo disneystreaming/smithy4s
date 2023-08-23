@@ -21,9 +21,10 @@ import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
+import org.http4s.Entity
+import smithy4s.http.HttpUnaryClientCodecs
 import smithy4s.aws.internals.AwsQueryCodecs
 import smithy4s.aws.internals._
-import smithy4s.http4s.kernel._
 
 object AwsClient {
 
@@ -60,25 +61,26 @@ object AwsClient {
     private def interpreter[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
-      val clientCodecs: UnaryClientCodecs.Make[F] = awsProtocol match {
-        case AwsProtocol.AWS_EC2_QUERY(_) =>
-          AwsEcsQueryCodecs.make[F](version = service.version)
+      val clientCodecs: HttpUnaryClientCodecs.Make[F, Entity[F]] =
+        awsProtocol match {
+          case AwsProtocol.AWS_EC2_QUERY(_) =>
+            AwsEcsQueryCodecs.make[F](version = service.version)
 
-        case AwsProtocol.AWS_JSON_1_0(_) =>
-          AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
+          case AwsProtocol.AWS_JSON_1_0(_) =>
+            AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
 
-        case AwsProtocol.AWS_JSON_1_1(_) =>
-          AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
+          case AwsProtocol.AWS_JSON_1_1(_) =>
+            AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
 
-        case AwsProtocol.AWS_QUERY(_) =>
-          AwsQueryCodecs.make[F](version = service.version)
+          case AwsProtocol.AWS_QUERY(_) =>
+            AwsQueryCodecs.make[F](version = service.version)
 
-        case AwsProtocol.AWS_REST_JSON_1(_) =>
-          AwsRestJsonCodecs.make[F]("application/json")
+          case AwsProtocol.AWS_REST_JSON_1(_) =>
+            AwsRestJsonCodecs.make[F]("application/json")
 
-        case AwsProtocol.AWS_REST_XML(_) =>
-          AwsRestXmlCodecs.make[F]()
-      }
+          case AwsProtocol.AWS_REST_XML(_) =>
+            AwsRestXmlCodecs.make[F]()
+        }
       service.functorInterpreter {
         new service.FunctorEndpointCompiler[F] {
           def apply[I, E, O, SI, SO](

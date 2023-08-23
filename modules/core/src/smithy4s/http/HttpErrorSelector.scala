@@ -82,7 +82,7 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
       def compileAlt[A](alt: Alt[E, A]): F[E] = {
         val schema = alt.schema
         // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
-        // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+        // This is because the "compile body encoder" method can trigger a transformation of hints, which
         // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
         val cache = compiler.createCache()
         val errorCodec: F[A] = compiler.fromSchema(schema, cache)

@@ -17,11 +17,13 @@
 package smithy4s.http4s
 
 import cats.effect.Concurrent
-import smithy4s.http4s.kernel._
+import smithy4s.http._
+import org.http4s.Entity
 
+// scalafmt: { maxColumn = 120 }
 trait SimpleProtocolCodecs {
 
-  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F]
-  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F]
+  def makeServerCodecs[F[_]: Concurrent]: HttpUnaryServerCodecs.Make[F, Entity[F]]
+  def makeClientCodecs[F[_]: Concurrent]: HttpUnaryClientCodecs.Make[F, Entity[F]]
 
 }

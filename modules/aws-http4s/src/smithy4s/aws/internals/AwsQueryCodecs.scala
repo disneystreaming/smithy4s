@@ -38,11 +38,11 @@ import smithy4s.xml.internals.XmlStartingPath
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
 
-  def make[F[_]: Concurrent: Compression](
-      version: String
-  ): UnaryClientCodecs.Make[F] =
-    new UnaryClientCodecs.Make[F] {
-      def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): UnaryClientCodecs[F, I, E, O] = {
+  def make[F[_]: Concurrent: Compression](version: String): HttpUnaryClientCodecs.Make[F, Entity[F]] =
+    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
+      def apply[I, E, O, SI, SO](
+          endpoint: Endpoint.Base[I, E, O, SI, SO]
+      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
         val addCompression = applyCompression[F](
           endpoint.hints,
           // To fulfil the requirement of
@@ -119,7 +119,7 @@ private[aws] object AwsQueryCodecs {
         UrlForm.Encoder.toWriterK
           .andThen(Writer.addingTo[Any].andThenK(urlFormToBlob))
           .andThen(EntityWriter.fromPayloadWriterK[F])
-          .andThen(HttpRequest.Encoder.fromEntityEncoderK("application/x-www-form-urlencoded"))
+          .andThen(HttpRequest.Encoder.fromBodyEncoderK("application/x-www-form-urlencoded"))
       }
     HttpRequest.Encoder
       .restSchemaCompiler[Entity[F]](

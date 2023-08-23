@@ -46,13 +46,13 @@ private[aws] object AwsJsonCodecs {
 
   def make[F[_]: Concurrent: Compression](
       contentType: String
-  ): UnaryClientCodecs.Make[F] = {
+  ): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
     val httpMediaType = HttpMediaType(contentType)
     val requestWriters =
       jsonPayloadCodecs.mapK(
         PayloadCodec.writerK
           .andThen(EntityWriter.fromPayloadWriterK[F])
-          .andThen(HttpRequest.Encoder.fromEntityEncoderK(httpMediaType.value))
+          .andThen(HttpRequest.Encoder.fromBodyEncoderK(httpMediaType.value))
       )
     val responseReaders = jsonPayloadCodecs.mapK(
       PayloadCodec.readerK
@@ -61,10 +61,10 @@ private[aws] object AwsJsonCodecs {
     )
 
     val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
-    new UnaryClientCodecs.Make[F] {
+    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
+      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
         val transformEncoders = applyCompression[F](endpoint.hints)
         val finalRequestWriters = transformEncoders(requestWriters)
         val make = HttpUnaryClientCodecs.Make[F, Entity[F]](

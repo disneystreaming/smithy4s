@@ -35,9 +35,7 @@ private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent: Compression](
-      contentType: String
-  ): UnaryClientCodecs.Make[F] = {
+  def make[F[_]: Concurrent: Compression](contentType: String): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
     val mediaType = HttpMediaType(contentType)
 
     val jsonPayloadCodecs =
@@ -55,7 +53,7 @@ private[aws] object AwsRestJsonCodecs {
       PayloadCodec.writerK
         .andThen[PayloadWriter](Writer.andThenK(nullToEmptyObject))
         .andThen[EntityWriter[F, *]](EntityWriter.fromPayloadWriterK)
-        .andThen[HttpRequest.Encoder[Entity[F], *]](HttpRequest.Encoder.fromEntityEncoderK(mediaType.value))
+        .andThen[HttpRequest.Encoder[Entity[F], *]](HttpRequest.Encoder.fromBodyEncoderK(mediaType.value))
     }
 
     val jsonReaders =
@@ -82,10 +80,10 @@ private[aws] object AwsRestJsonCodecs {
 
     val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
 
-    new UnaryClientCodecs.Make[F] {
+    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
+      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
         val addCompression = applyCompression[F](endpoint.hints)
         val finalRequestWriters = addCompression(requestWriters)
         val make = HttpUnaryClientCodecs.Make[F, Entity[F]](

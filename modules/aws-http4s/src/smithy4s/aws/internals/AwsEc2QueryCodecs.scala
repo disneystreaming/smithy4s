@@ -34,11 +34,11 @@ private[aws] object AwsEcsQueryCodecs {
 
   def make[F[_]: Concurrent: Compression](
       version: String
-  ): UnaryClientCodecs.Make[F] =
-    new UnaryClientCodecs.Make[F] {
+  ): HttpUnaryClientCodecs.Make[F, Entity[F]] =
+    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
+      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
         val requestWriters = AwsQueryCodecs
           .requestWriterCompiler[F](
             // These are set to fulfil the requirements of

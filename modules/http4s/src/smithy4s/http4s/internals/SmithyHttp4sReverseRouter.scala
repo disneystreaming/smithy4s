@@ -21,7 +21,7 @@ import cats.effect.Concurrent
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.ClientEndpointMiddleware
-import smithy4s.http4s.kernel._
+import smithy4s.http.HttpUnaryClientCodecs
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
@@ -31,7 +31,7 @@ private[http4s] object SmithyHttp4sReverseRouter {
       baseUri:         Uri,
       service:         smithy4s.Service[Alg],
       client:          Client[F],
-      compilerContext: UnaryClientCodecs.Make[F],
+      compilerContext: HttpUnaryClientCodecs.Make[F, Entity[F]],
       middleware:      ClientEndpointMiddleware[F]
   )(implicit effect:   Concurrent[F]): service.Impl[F] = service.impl {
     new service.FunctorEndpointCompiler[F] {

@@ -81,7 +81,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
-    makeServerCodecs: UnaryServerCodecs.Make[F],
+    makeServerCodecs: HttpUnaryServerCodecs.Make[F, Entity[F]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
 

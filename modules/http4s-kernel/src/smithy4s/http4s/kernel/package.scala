@@ -54,13 +54,6 @@ import fs2.Chunk
 // scalafmt: { maxColumn = 120}
 package object kernel {
 
-  type UnaryServerCodecs[F[_], I, E, O] =
-    smithy4s.http.HttpUnaryServerCodecs[F, Entity[F], I, E, O]
-  object UnaryServerCodecs {
-    type Make[F[_]] =
-      smithy4s.http.HttpUnaryServerCodecs.Make[F, Entity[F]]
-  }
-
   type EntityWriter[F[_], A] = Writer[Any, Entity[F], A]
   object EntityWriter {
     def fromPayloadWriterK[F[_]]: PolyFunction[PayloadWriter, EntityWriter[F, *]] =
@@ -193,13 +186,6 @@ package object kernel {
       res.headers.get[org.http4s.headers.`Content-Length`].map(_.length)
     )
   )
-
-  type UnaryClientCodecs[F[_], I, E, O] =
-    smithy4s.http.HttpUnaryClientCodecs[F, Entity[F], I, E, O]
-  object UnaryClientCodecs {
-    type Make[F[_]] =
-      smithy4s.http.HttpUnaryClientCodecs.Make[F, Entity[F]]
-  }
 
   /**
     * A vault key that is used to store extracted path-parameters into request during

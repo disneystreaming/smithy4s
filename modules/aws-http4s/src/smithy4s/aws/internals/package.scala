@@ -87,7 +87,7 @@ package object internals {
           val bytes = stream.compile.to(fs2.Chunk)
           Entity(Stream.chunk[F, Byte](bytes), Some(bytes.size.toLong))
         }
-        .andThen(HttpRequest.Encoder.fromEntityEncoderK("application/xml"))
+        .andThen(HttpRequest.Encoder.fromBodyEncoderK("application/xml"))
     }
 
   private[internals] def xmlResponseReaders[F[_]: Concurrent]

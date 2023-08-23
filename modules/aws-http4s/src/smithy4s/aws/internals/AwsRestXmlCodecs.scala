@@ -31,7 +31,7 @@ import smithy4s.interopcats._
 
 private[aws] object AwsRestXmlCodecs {
 
-  def make[F[_]: Concurrent: Compression](): UnaryClientCodecs.Make[F] = {
+  def make[F[_]: Concurrent: Compression](): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
 
     val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], xmlRequestWriters[F])
     val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobResponseReaders[F], xmlResponseReaders[F])
@@ -46,10 +46,10 @@ private[aws] object AwsRestXmlCodecs {
       mediaReaders
     )
 
-    new UnaryClientCodecs.Make[F] {
+    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
+      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
         val addCompression = applyCompression[F](endpoint.hints)
         val finalRequestWriters = addCompression(requestWriters)
 

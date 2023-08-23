@@ -78,28 +78,28 @@ object HttpResponse {
   object Encoder {
 
     def restSchemaCompiler[Body](
-        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
+        metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]]
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
-        metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
+        metadataEncoders.mapK(fromMetadataEncoderK[Body])
       HttpRestSchema.combineWriterCompilers(
         metadataCompiler,
-        bodyEncoderCompiler
+        bodyEncoders
       )
     }
 
     def restSchemaCompiler[Body](
-        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]],
+        metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoders: CachedSchemaCompiler[BodyEncoder[Body, *]],
         contentType: String
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val bodyCompiler =
-        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body](contentType))
-      restSchemaCompiler(metadataEncoderCompiler, bodyCompiler)
+        bodyEncoders.mapK(fromBodyEncoderK[Body](contentType))
+      restSchemaCompiler(metadataEncoders, bodyCompiler)
     }
 
-    def forError[Body, E](
+    private[http] def forError[Body, E](
         errorTypeHeaders: List[String],
         maybeErrorable: Option[Errorable[E]],
         encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
@@ -131,7 +131,7 @@ object HttpResponse {
         .widen[Writer[HttpResponse[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
-    def fromEntityEncoderK[Body](
+    private[smithy4s] def fromBodyEncoderK[Body](
         contentType: String
     ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
       Writer
@@ -181,11 +181,11 @@ object HttpResponse {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        entityDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
+        bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] =
       restSchemaCompilerAux(
         metadataDecoderCompiler,
-        entityDecoderCompiler.mapK { extractBody[F, Body] }
+        bodyDecoderCompiler.mapK { extractBody[F, Body] }
       )
 
     private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
@@ -209,7 +209,7 @@ object HttpResponse {
     * Creates a response decoder that dispatches the response to
     * the correct alternative, based on some discriminator.
     */
-    def forError[F[_]: MonadThrowLike, Body, E](
+    private[http] def forError[F[_]: MonadThrowLike, Body, E](
         maybeErrorable: Option[Errorable[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         discriminate: HttpResponse[Body] => F[HttpDiscriminator],
@@ -226,7 +226,7 @@ object HttpResponse {
     * the correct alternative, based on some discriminator, and
     * then upcasts the error as a throwable
     */
-    def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
+    private[http] def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
         maybeErrorable: Option[Errorable[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         discriminate: HttpResponse[Body] => F[HttpDiscriminator],

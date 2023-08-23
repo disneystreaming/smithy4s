@@ -35,7 +35,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   awsService: AwsService,
   awsEnv: AwsEnvironment[F],
   endpoint: Endpoint.Base[I, E, O, SI, SO],
-  makeClientCodecs: UnaryClientCodecs.Make[F],
+  makeClientCodecs: HttpUnaryClientCodecs.Make[F, Entity[F]],
 )(implicit effect: Async[F]) extends (I => F[O]) {
 // format: on
 
