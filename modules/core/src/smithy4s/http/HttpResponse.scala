@@ -35,10 +35,24 @@ final case class HttpResponse[+A](
     this.copy(statusCode = statusCode)
   def withHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
     this.copy(headers = headers)
+
+  def withBody[A0](body: A0)(implicit ev: A <:< A0): HttpResponse[A0] =
+    this.copy(body = body)
+
   def addHeaders(
       headers: Iterable[(CaseInsensitive, Seq[String])]
   ): HttpResponse[A] =
     this.copy(headers = this.headers ++ headers)
+
+  def addHeader(headerName: String, headerValue: String): HttpResponse[A] = {
+    val key = CaseInsensitive(headerName)
+    headers.get(key) match {
+      case Some(values) =>
+        copy(headers = headers + (key -> (values :+ headerValue)))
+      case None =>
+        copy(headers = headers + (key -> Seq(headerValue)))
+    }
+  }
 
   def toMetadata: Metadata = Metadata(
     headers = headers,

@@ -173,10 +173,10 @@ object HttpRequest {
         .composeK((_: HttpRequest[Any]).toMetadata)
         .andThen(Reader.liftPolyFunction(liftToF))
 
-    def extractBody[F[_], Body]
-        : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
-      Reader.in[F].composeK(_.body)
-
   }
+
+  def extractBody[F[_], Body]
+      : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
+    Reader.in[F].composeK(_.body)
 
 }
