@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
+  fs2,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
