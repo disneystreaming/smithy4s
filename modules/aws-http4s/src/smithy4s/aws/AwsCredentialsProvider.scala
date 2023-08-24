@@ -17,6 +17,7 @@
 package smithy4s.aws
 
 import cats.effect._
+import cats.effect.implicits._
 import cats.syntax.all._
 import fs2.io.file.Files
 import org.http4s.EntityDecoder
@@ -55,7 +56,8 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
       .fromSchema(AwsInstanceMetadata.schema)
 
   def default(
-      httpClient: Client[F]
+      httpClient: Client[F],
+      networkTimeout: FiniteDuration = 1.second
   )(implicit files: Files[F]): Resource[F, F[AwsCredentials]] = {
     val _fromDisk =
       defaultCredentialsFile.flatMap(fromDisk(_, getProfileFromEnv))
@@ -63,10 +65,8 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     Resource
       .eval(fromEnv)
       .map(F.pure)
-      // TODO: Ensure minimal delay when these endpoints don't exist, e.g.
-      // when running locally.
-      .orElse(refreshing(fromECS(httpClient)))
-      .orElse(refreshing(fromEC2(httpClient)))
+      .orElse(refreshing(fromECS(httpClient, networkTimeout)))
+      .orElse(refreshing(fromEC2(httpClient, networkTimeout)))
       .orElse(Resource.eval(_fromDisk).map(F.pure))
   }
 
@@ -119,20 +119,32 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
   val AWS_ECS_METADATA_BASE_URI =
     uri"http://169.254.170.2"
 
-  def fromEC2(httpClient: Client[F]): F[AwsTemporaryCredentials] =
+  def fromEC2(
+      httpClient: Client[F],
+      networkTimeout: FiniteDuration
+  ): F[AwsTemporaryCredentials] =
     for {
-      roleName <- httpClient.expect[String](AWS_EC2_METADATA_URI)
-      metadataRes <- httpClient.expect[AwsInstanceMetadata](
-        AWS_EC2_METADATA_URI.addSegment(roleName)
-      )
+      roleName <- httpClient
+        .expect[String](AWS_EC2_METADATA_URI)
+        .timeout(networkTimeout)
+      metadataRes <- httpClient
+        .expect[AwsInstanceMetadata](
+          AWS_EC2_METADATA_URI.addSegment(roleName)
+        )
+        .timeout(networkTimeout)
     } yield metadataRes
 
-  def fromECS(httpClient: Client[F]): F[AwsTemporaryCredentials] =
+  def fromECS(
+      httpClient: Client[F],
+      networkTimeout: FiniteDuration
+  ): F[AwsTemporaryCredentials] =
     for {
       path <- SysEnv.envValue(AWS_CONTAINER_CREDENTIALS_RELATIVE_URI).liftTo[F]
-      metadataRes <- httpClient.expect[AwsInstanceMetadata](
-        AWS_ECS_METADATA_BASE_URI.withPath(Uri.Path.unsafeFromString(path))
-      )
+      metadataRes <- httpClient
+        .expect[AwsInstanceMetadata](
+          AWS_ECS_METADATA_BASE_URI.withPath(Uri.Path.unsafeFromString(path))
+        )
+        .timeout(networkTimeout)
     } yield metadataRes
 
   def refreshing(
