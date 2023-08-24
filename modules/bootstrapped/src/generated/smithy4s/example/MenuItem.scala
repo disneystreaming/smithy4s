@@ -14,8 +14,8 @@ object MenuItem extends ShapeTag.Companion[MenuItem] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[MenuItem] = struct(
-    Food.schema.required[MenuItem]("food", _.food).addHints(smithy.api.Required()),
-    float.required[MenuItem]("price", _.price).addHints(smithy.api.Required()),
+    Food.schema.required[MenuItem]("food", _.food),
+    float.required[MenuItem]("price", _.price),
   ){
     MenuItem.apply
   }.withId(id).addHints(hints)

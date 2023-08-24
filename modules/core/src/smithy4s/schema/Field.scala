@@ -82,7 +82,7 @@ object Field {
       schema: Schema[A],
       get: S => A
   ): Field[S, A] =
-    Field(label, schema, get)
+    Field(label, schema, get).addHints(smithy.api.Required())
 
   def optional[S, A](
       label: String,

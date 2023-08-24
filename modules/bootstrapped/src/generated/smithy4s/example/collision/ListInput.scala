@@ -15,7 +15,7 @@ object ListInput extends ShapeTag.Companion[ListInput] {
   )
 
   implicit val schema: Schema[ListInput] = struct(
-    MyList.underlyingSchema.required[ListInput]("list", _.list).addHints(smithy.api.Required()),
+    MyList.underlyingSchema.required[ListInput]("list", _.list),
   ){
     ListInput.apply
   }.withId(id).addHints(hints)

@@ -21,8 +21,8 @@ object ComplexError extends ShapeTag.Companion[ComplexError] {
   )
 
   implicit val schema: Schema[ComplexError] = struct(
-    int.required[ComplexError]("value", _.value).addHints(smithy.api.Required()),
-    string.required[ComplexError]("message", _.message).addHints(smithy.api.Required()),
+    int.required[ComplexError]("value", _.value),
+    string.required[ComplexError]("message", _.message),
     ErrorDetails.schema.optional[ComplexError]("details", _.details),
   ){
     ComplexError.apply

@@ -16,7 +16,7 @@ object HelloInput extends ShapeTag.Companion[HelloInput] {
   )
 
   implicit val schema: Schema[HelloInput] = struct(
-    string.required[HelloInput]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    string.required[HelloInput]("name", _.name).addHints(smithy.api.HttpLabel()),
   ){
     HelloInput.apply
   }.withId(id).addHints(hints)

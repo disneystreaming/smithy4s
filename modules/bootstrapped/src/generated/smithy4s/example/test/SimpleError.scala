@@ -18,7 +18,7 @@ object SimpleError extends ShapeTag.Companion[SimpleError] {
   )
 
   implicit val schema: Schema[SimpleError] = struct(
-    int.required[SimpleError]("expected", _.expected).addHints(smithy.api.Required()),
+    int.required[SimpleError]("expected", _.expected),
   ){
     SimpleError.apply
   }.withId(id).addHints(hints)

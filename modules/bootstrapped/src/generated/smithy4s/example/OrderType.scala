@@ -55,7 +55,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     )
 
     val schema: Schema[InStoreOrder] = struct(
-      OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Required()),
+      OrderNumber.schema.required[InStoreOrder]("id", _.id),
       string.optional[InStoreOrder]("locationId", _.locationId),
     ){
       InStoreOrder.apply

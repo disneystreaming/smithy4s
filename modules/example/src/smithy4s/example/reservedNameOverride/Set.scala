@@ -15,8 +15,8 @@ object Set extends ShapeTag.Companion[Set] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Set] = struct(
-    string.required[Set]("someField", _.someField).addHints(smithy.api.Required()),
-    int.required[Set]("otherField", _.otherField).addHints(smithy.api.Required()),
+    string.required[Set]("someField", _.someField),
+    int.required[Set]("otherField", _.otherField),
   ){
     Set.apply
   }.withId(id).addHints(hints)

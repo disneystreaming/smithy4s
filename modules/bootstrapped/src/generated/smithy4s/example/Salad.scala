@@ -14,8 +14,8 @@ object Salad extends ShapeTag.Companion[Salad] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Salad] = struct(
-    string.required[Salad]("name", _.name).addHints(smithy.api.Required()),
-    Ingredients.underlyingSchema.required[Salad]("ingredients", _.ingredients).addHints(smithy.api.Required()),
+    string.required[Salad]("name", _.name),
+    Ingredients.underlyingSchema.required[Salad]("ingredients", _.ingredients),
   ){
     Salad.apply
   }.withId(id).addHints(hints)
