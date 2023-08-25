@@ -269,7 +269,8 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |  val hints: Hints = Hints.empty
         |  val underlyingSchema: Schema[List[Int]] = list(int).withId(id).addHints(hints)
         |  implicit val schema: Schema[TestList] = bijection(underlyingSchema, asBijection)
-        |}""".stripMargin
+        |}
+        |""".stripMargin
     )
   }
 
