@@ -333,6 +333,32 @@ abstract class PizzaSpec
     )
   }
 
+  routerTest("HEAD request should have empty body") { (client, uri, log) =>
+    for {
+      res <- client.send[String](
+        HEAD((uri / "head-request")),
+        log
+      )
+    } yield {
+      val (code, headers, body) = res
+      // There may be other headers, but this one should definitely exist.
+      // In general, content-length and content-type headers should be omitted
+      // but we won't fail the test if they aren't since the HTTP Spec is
+      // fairly vague and thus permissive in this area.
+      val expectedHeaders = Map(
+        "Test" -> List("test")
+      )
+      val containsAllExpectedHeaders =
+        expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
+      expect.same(code, 200) &&
+      expect.same(body, "") &&
+      expect(
+        containsAllExpectedHeaders,
+        s"Expected to find all of $expectedHeaders inside of $headers"
+      )
+    }
+  }
+
   pureTest("Negative: http no match (bad path)") {
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService.service,

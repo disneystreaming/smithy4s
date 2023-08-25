@@ -1287,7 +1287,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
-      // Enumeration (enum trait)
+      // Enumeration (Enum Trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =
           e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get
