@@ -1,26 +1,26 @@
 # 0.17.20
 
-* Add empty line separating generated case classes from their companion objects in #1175
+* Add empty line separating generated case classes from their companion objects in [#1175](https://github.com/disneystreaming/smithy4s/pull/1175)
 
 # 0.17.19
 
-This release brings in a smithy-model update, which resolves some issues that would've prevented code generation from succeeding. #1164
+This release brings in a smithy-model update, which resolves some issues that would've prevented code generation from succeeding. [#1164](https://github.com/disneystreaming/smithy4s/pull/1164)
 
 # 0.17.18
 
-Fixes a `ClassCastException` in document encoding in #1161
+Fixes a `ClassCastException` in document encoding in [#1161](https://github.com/disneystreaming/smithy4s/pull/1161)
 
 # 0.17.17
 
-More permissive test for HEAD requests in #1157
+More permissive test for HEAD requests in [#1157](https://github.com/disneystreaming/smithy4s/pull/1157)
 
 # 0.17.16
 
-Fixes a bug where HEAD responses contained an empty {} in the body (where there should be no body present). #1149
+Fixes a bug where HEAD responses contained an empty {} in the body (where there should be no body present). [#1149](https://github.com/disneystreaming/smithy4s/pull/1149)
 
 # 0.17.15
 
-Updates to fix compile errors when intEnum shapes are used as traits. #1139
+Updates to fix compile errors when intEnum shapes are used as traits. [#1139](https://github.com/disneystreaming/smithy4s/pull/1139)
 
 # 0.17.13
 
@@ -30,7 +30,7 @@ Updates to fix compile errors when intEnum shapes are used as traits. #1139
 
 * Remove reserved types in https://github.com/disneystreaming/smithy4s/pull/1052
 
-Remove a legacy mechanism of dealing with name conflicts in generated types. Fixes #1051
+Remove a legacy mechanism of dealing with name conflicts in generated types. Fixes [#1051](https://github.com/disneystreaming/smithy4s/issues/1051)
 
 * Flatten AWS newtypes in https://github.com/disneystreaming/smithy4s/pull/1110
 
