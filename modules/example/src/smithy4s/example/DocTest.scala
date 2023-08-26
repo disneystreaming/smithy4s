@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.constant
   * {@literal @}test
   */
 case class DocTest()
+
 object DocTest extends ShapeTag.Companion[DocTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DocTest")
 

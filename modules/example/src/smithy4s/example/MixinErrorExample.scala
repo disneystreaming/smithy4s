@@ -12,6 +12,7 @@ import smithy4s.schema.Schema.struct
 
 case class MixinErrorExample(a: Option[String] = None, b: Option[Int] = None, c: Option[Long] = None, d: Option[Boolean] = None) extends Throwable with CommonFieldsOne with CommonFieldsTwo {
 }
+
 object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinErrorExample")
 

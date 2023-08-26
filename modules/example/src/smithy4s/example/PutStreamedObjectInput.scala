@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 case class PutStreamedObjectInput(key: String)
+
 object PutStreamedObjectInput extends ShapeTag.Companion[PutStreamedObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutStreamedObjectInput")
 
