@@ -17,25 +17,25 @@
 package smithy4s
 package http4s.internals
 
-import cats.data.Kleisli
 import cats.data.OptionT
 import cats.effect.Concurrent
 import cats.implicits._
 import org.http4s._
-import smithy4s.http.HttpUnaryServerCodecs
 import smithy4s.http4s.ServerEndpointMiddleware
 import smithy4s.http4s.kernel._
 import smithy4s.kinds._
+import smithy4s.server.UnaryServerCodecs
+import smithy4s.http.HttpEndpoint
 
-// format: off
+// scalafmt: {maxColumn = 120}
 private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
-    makeServerCodecs: HttpUnaryServerCodecs.Make[F, Entity[F]],
+    makeServerCodecs: UnaryServerCodecs.Make[F, Request[F], Response[F]],
     middleware: ServerEndpointMiddleware[F]
 )(implicit effect: Concurrent[F]) {
 
-  val routes: HttpRoutes[F] = Kleisli { request =>
+  val routes: HttpRoutes[F] = HttpRoutes { request =>
     for {
       endpoints <- perMethodEndpoint.get(request.method).toOptionT[F]
       path = request.uri.path.segments.map(_.decoded()).toArray
@@ -43,24 +43,25 @@ private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _
       response <- OptionT.liftF(endpoint.httpApp(request.withAttribute(pathParamsKey, pathParams)))
     } yield response
   }
-  // format: on
 
   private val http4sEndpoints: List[SmithyHttp4sServerEndpoint[F]] =
     service.endpoints.toList
-      .map { ep =>
-        SmithyHttp4sServerEndpoint.make(
-          impl,
-          ep,
-          makeServerCodecs,
-          middleware.prepare(service) _
-        )
-      }
+      .map { makeServerEndpoint(_) }
       .collect { case Right(http4sEndpoint) =>
         http4sEndpoint
       }
 
-  private val perMethodEndpoint
-      : Map[org.http4s.Method, List[SmithyHttp4sServerEndpoint[F]]] =
+  private def makeServerEndpoint[I, E, O, SI, SO](
+      endpoint: service.Endpoint[I, E, O, SI, SO]
+  ): Either[HttpEndpoint.HttpEndpointError, SmithyHttp4sServerEndpoint[F]] =
+    SmithyHttp4sServerEndpoint.make(
+      impl,
+      endpoint,
+      makeServerCodecs(endpoint),
+      middleware.prepare(service)(endpoint)
+    )
+
+  private val perMethodEndpoint: Map[org.http4s.Method, List[SmithyHttp4sServerEndpoint[F]]] =
     http4sEndpoints.groupBy(_.method)
 
 }

@@ -21,27 +21,33 @@ import cats.effect.Concurrent
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.ClientEndpointMiddleware
-import smithy4s.http.HttpUnaryClientCodecs
+import smithy4s.client._
+import smithy4s.interopcats._
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
 private[http4s] object SmithyHttp4sReverseRouter {
 
   def impl[Alg[_[_, _, _, _, _]], F[_]](
-      baseUri:         Uri,
-      service:         smithy4s.Service[Alg],
-      client:          Client[F],
-      compilerContext: HttpUnaryClientCodecs.Make[F, Entity[F]],
-      middleware:      ClientEndpointMiddleware[F]
-  )(implicit effect:   Concurrent[F]): service.Impl[F] = service.impl {
+      service:          smithy4s.Service[Alg],
+      client:           Client[F],
+      makeClientCodecs: UnaryClientCodecs.Make[F, Request[F], Response[F]],
+      middleware:       ClientEndpointMiddleware[F]
+  )(implicit effect:    Concurrent[F]): service.Impl[F] = service.impl {
     new service.FunctorEndpointCompiler[F] {
-      def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
-        new SmithyHttp4sClientEndpoint(
-          baseUri,
-          client,
-          compilerContext(endpoint),
-          middleware.prepare(service)(endpoint)
+      def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] = {
+
+        val transformedClient = middleware.prepare(service)(endpoint).apply(client)
+
+        val adaptedClient = Http4sToSmithy4sClient(transformedClient)
+        val isSuccessful = (response: Response[F]) => response.status.isSuccess
+
+        UnaryClientEndpoint(
+          adaptedClient,
+          makeClientCodecs(endpoint),
+          isSuccessful
         )
+      }
     }
   }
 

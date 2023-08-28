@@ -39,8 +39,8 @@ package smithy4s
   * datatypes that typically fit in memory with concerns of streaming (which can
   * be encoded a great many ways, using a great many libraries)
   */
-trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO]
-    extends Endpoint.Base[I, E, O, SI, SO] {
+// scalafmt: {maxColumn = 120}
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] extends Endpoint.Base[I, E, O, SI, SO] {
 
   def wrap(input: I): Op[I, E, O, SI, SO]
 
@@ -63,6 +63,43 @@ object Endpoint {
     def errorable: Option[Errorable[E]]
     def streamedInput: StreamingSchema[SI]
     def streamedOutput: StreamingSchema[SO]
+  }
+
+  trait Middleware[Construct] { self =>
+    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+        endpoint: service.Endpoint[_, _, _, _, _]
+    ): Construct => Construct
+
+    def andThen(other: Middleware[Construct]): Middleware[Construct] =
+      new Middleware[Construct] {
+        def prepare[Alg[_[_, _, _, _, _]]](
+            service: Service[Alg]
+        )(endpoint: service.Endpoint[_, _, _, _, _]): Construct => Construct =
+          self
+            .prepare(service)(endpoint)
+            .andThen(other.prepare(service)(endpoint))
+      }
+
+  }
+// format: on
+
+  object Middleware {
+
+    trait Simple[Construct] extends Middleware[Construct] {
+      def prepareWithHints(serviceHints: Hints, endpointHints: Hints): Construct => Construct
+
+      final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Construct => Construct =
+        prepareWithHints(service.hints, endpoint.hints)
+    }
+
+    def noop[Construct]: Middleware[Construct] =
+      new Middleware[Construct] {
+        override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+            endpoint: service.Endpoint[_, _, _, _, _]
+        ): Construct => Construct = identity
+      }
 
   }
 

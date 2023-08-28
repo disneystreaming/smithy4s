@@ -25,9 +25,13 @@ import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.json.Json
-import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.codecs.PayloadCodec
-import org.http4s.Entity
+import smithy4s.client._
+import smithy4s.codecs.BlobEncoder
+import cats.syntax.all._
+import org.http4s.Response
+import org.http4s.Request
+import org.http4s.Uri
 
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(
@@ -37,7 +41,7 @@ private[http4s] class SimpleRestJsonCodecs(
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
 
-  private val underlyingCodecs = Json.payloadCodecs
+  private val jsonCodecs = Json.payloadCodecs
     .withJsoniterCodecCompiler(
       Json.jsoniter
         .withHintMask(hintMask)
@@ -46,80 +50,93 @@ private[http4s] class SimpleRestJsonCodecs(
     )
 
   // val mediaType = HttpMediaType("application/json")
-  private def entityEncoders[F[_]]: CachedSchemaCompiler[EntityWriter[F, *]] =
-    underlyingCodecs.mapK { PayloadCodec.writerK.andThen(EntityWriter.fromPayloadWriterK[F]) }
+  private val payloadEncoders: BlobEncoder.Compiler =
+    jsonCodecs.mapK { PayloadCodec.writerK }
 
-  private def entityDecoders[F[_]: Concurrent]: CachedSchemaCompiler[EntityReader[F, *]] =
-    underlyingCodecs.mapK { PayloadCodec.readerK.andThen(EntityReader.fromPayloadReaderK) }
+  private val payloadDecoders =
+    jsonCodecs.mapK { PayloadCodec.readerK }
 
+  // Adding X-Amzn-Errortype as well to facilitate interop with Amazon-issued code-generators.
   private val errorHeaders = List(
     smithy4s.http.errorTypeHeader,
-    // Adding X-Amzn-Errortype as well to facilitate interop
-    // with Amazon-issued code-generators.
     smithy4s.http.amazonErrorTypeHeader
   )
 
-  private def addEmptyJsonToResponse[F[_]](response: HttpResponse[Entity[F]]): HttpResponse[Entity[F]] = {
-    val entity = response.body
-    response
-      .copy(body = entity.copy(body = entity.body.ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))))
-      .withContentType("application/json")
+  // private def addEmptyJsonToResponse[F[_]](response: HttpResponse[Entity[F]]): HttpResponse[Entity[F]] = {
+  //   val entity = response.body
+  //   response
+  //     .copy(body = entity.copy(body = entity.body.ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))))
+  //     .withContentType("application/json")
+  // }
+
+  def makeServerCodecs[F[_]: Concurrent] = {
+    val baseResponse = HttpResponse(200, Map.empty, Blob.empty)
+    HttpUnaryServerCodecs.builder
+      .withBodyDecoders(payloadDecoders)
+      .withSuccessBodyEncoders(payloadEncoders)
+      .withErrorBodyEncoders(payloadEncoders)
+      .withErrorTypeHeaders(errorHeaders: _*)
+      .withMetadataDecoders(Metadata.Decoder)
+      .withMetadataEncoders(Metadata.Encoder)
+      .withBaseResponse(_ => baseResponse.pure[F])
+      .withResponseMediaType("application/json")
+      .withRequestTransformation[Request[F]](toSmithy4sHttpRequest[F](_))
+      .withResponseTransformation(fromSmithy4sHttpResponse[F](_).pure[F])
+      .build()
   }
 
-  def makeServerCodecs[F[_]: Concurrent]: HttpUnaryServerCodecs.Make[F, Entity[F]] = {
-    val messageDecoderCompiler =
-      HttpRequest.Decoder.restSchemaCompiler[F, Entity[F]](
-        Metadata.Decoder,
-        entityDecoders[F]
-      )
-    val responseEncoderCompiler = {
-      val restSchemaCompiler = HttpResponse.Encoder.restSchemaCompiler[Entity[F]](
-        Metadata.Encoder,
-        entityEncoders[F],
-        "application/json"
-      )
-      new CachedSchemaCompiler[HttpResponse.Encoder[Entity[F], *]] {
-        type Cache = restSchemaCompiler.Cache
-        def createCache(): Cache = restSchemaCompiler.createCache()
-        def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
+  // {
+  //   val messageDecoderCompiler =
+  //     HttpRequest.Decoder.restSchemaCompiler[F, Entity[F]](
+  //       Metadata.Decoder,
+  //       entityDecoders[F]
+  //     )
+  //   val responseEncoderCompiler = {
+  //     val restSchemaCompiler = HttpResponse.Encoder.restSchemaCompiler[Entity[F]](
+  //       Metadata.Encoder,
+  //       entityEncoders[F],
+  //       "application/json"
+  //     )
+  //     new CachedSchemaCompiler[HttpResponse.Encoder[Entity[F], *]] {
+  //       type Cache = restSchemaCompiler.Cache
+  //       def createCache(): Cache = restSchemaCompiler.createCache()
+  //       def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
-        def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
-          restSchemaCompiler.fromSchema(schema, cache)
-        } else {
-          restSchemaCompiler
-            .fromSchema(schema, cache)
-            .andThen(addEmptyJsonToResponse(_))
-        }
-      }
-    }
+  //       def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
+  //         restSchemaCompiler.fromSchema(schema, cache)
+  //       } else {
+  //         restSchemaCompiler
+  //           .fromSchema(schema, cache)
+  //           .andThen(addEmptyJsonToResponse(_))
+  //       }
+  //     }
+  //   }
 
-    smithy4s.http.HttpUnaryServerCodecs.Make[F, Entity[F]](
-      input = messageDecoderCompiler,
-      output = responseEncoderCompiler,
-      error = responseEncoderCompiler,
-      errorHeaders = errorHeaders
-    )
-  }
+  //   smithy4s.http.HttpUnaryServerCodecs.Make[F, Entity[F]](
+  //     input = messageDecoderCompiler,
+  //     output = responseEncoderCompiler,
+  //     error = responseEncoderCompiler,
+  //     errorHeaders = errorHeaders
+  //   )
+  // }
 
-  def makeClientCodecs[F[_]: Concurrent]: HttpUnaryClientCodecs.Make[F, Entity[F]] = {
-    val messageDecoderCompiler =
-      HttpResponse.Decoder.restSchemaCompiler[F, Entity[F]](
-        Metadata.Decoder,
-        entityDecoders[F]
-      )
-    val messageEncoderCompiler =
-      HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
-        Metadata.Encoder,
-        entityEncoders[F],
-        "application/json"
-      )
-    smithy4s.http.HttpUnaryClientCodecs.Make[F, Entity[F]](
-      input = messageEncoderCompiler,
-      output = messageDecoderCompiler,
-      error = messageDecoderCompiler,
-      response => Concurrent[F].pure(HttpDiscriminator.fromResponse(errorHeaders, response)),
-      toStrict = smithy4s.http4s.kernel.toStrict[F]
-    )
+  def makeClientCodecs[F[_]: Concurrent](
+      uri: Uri
+  ): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
+    val baseRequest = HttpRequest(HttpMethod.POST, toSmithy4sHttpUri(uri, None), Map.empty, Blob.empty)
+    HttpUnaryClientCodecs.builder
+      .withBodyEncoders(payloadEncoders)
+      .withSuccessBodyDecoders(payloadDecoders)
+      .withErrorBodyDecoders(payloadDecoders)
+      .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
+      .withMetadataDecoders(Metadata.Decoder)
+      .withMetadataEncoders(Metadata.Encoder)
+      .withBaseRequest(_ => baseRequest.pure[F])
+      .withRequestMediaType("application/json")
+      .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
+      .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
+      .build()
+
   }
 
 }

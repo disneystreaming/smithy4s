@@ -21,8 +21,8 @@ import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
-import org.http4s.Entity
-import smithy4s.http.HttpUnaryClientCodecs
+import smithy4s.client.UnaryClientCodecs
+import org.http4s.{Request, Response}
 import smithy4s.aws.internals.AwsQueryCodecs
 import smithy4s.aws.internals._
 
@@ -61,7 +61,7 @@ object AwsClient {
     private def interpreter[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
-      val clientCodecs: HttpUnaryClientCodecs.Make[F, Entity[F]] =
+      val clientCodecs: UnaryClientCodecs.Make[F, Request[F], Response[F]] =
         awsProtocol match {
           case AwsProtocol.AWS_EC2_QUERY(_) =>
             AwsEcsQueryCodecs.make[F](version = service.version)

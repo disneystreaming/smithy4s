@@ -52,7 +52,7 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
-      ServerEndpointMiddleware.noop[F]
+      Endpoint.Middleware.noop
     )
   }
 
@@ -70,7 +70,7 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         PartialFunction.empty,
-        ServerEndpointMiddleware.noop[F]
+        Endpoint.Middleware.noop
       )
 
   }
@@ -82,7 +82,8 @@ abstract class SimpleProtocolBuilder[P](
       client: Client[F],
       val service: smithy4s.Service[Alg],
       uri: Uri = uri"http://localhost:8080",
-      middleware: ClientEndpointMiddleware[F] = ClientEndpointMiddleware.noop[F]
+      middleware: ClientEndpointMiddleware[F] =
+        Endpoint.Middleware.noop[Client[F]] 
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =
@@ -102,10 +103,9 @@ abstract class SimpleProtocolBuilder[P](
         // doesn't happen in case of a missing protocol
         .map { _ =>
           SmithyHttp4sReverseRouter.impl[Alg, F](
-            uri,
             service,
             client,
-            simpleProtocolCodecs.makeClientCodecs[F],
+            simpleProtocolCodecs.makeClientCodecs[F](uri),
             middleware
           )
         }

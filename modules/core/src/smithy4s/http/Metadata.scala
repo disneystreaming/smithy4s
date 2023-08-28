@@ -178,6 +178,8 @@ object Metadata {
   }
 
   object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
+    type Compiler = CachedSchemaCompiler[Decoder]
+
     // scalafmt: {maxColumn = 120}
     def toReaderK: PolyFunction[Decoder, Reader] =
       new PolyFunction[Decoder, Reader] {
@@ -225,6 +227,8 @@ object Metadata {
   }
 
   object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
+    type Compiler = CachedSchemaCompiler[Encoder]
+
     // scalafmt: {maxColumn = 120}
     def toWriterK: PolyFunction[Encoder, Writer] =
       new PolyFunction[Encoder, Writer] {

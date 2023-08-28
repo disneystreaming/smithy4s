@@ -25,6 +25,7 @@ import smithy4s.http._
 import smithy4s.http4s.kernel._
 import org.http4s.Entity
 import _root_.aws.api.{Service => AwsService}
+import smithy4s.client.UnaryClientCodecs
 import cats.effect.Async
 import cats.effect.Resource
 
@@ -35,7 +36,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   awsService: AwsService,
   awsEnv: AwsEnvironment[F],
   endpoint: Endpoint.Base[I, E, O, SI, SO],
-  makeClientCodecs: HttpUnaryClientCodecs.Make[F, Entity[F]],
+  makeClientCodecs: UnaryClientCodecs.Make[F, Request[F], Response[F]],
 )(implicit effect: Async[F]) extends (I => F[O]) {
 // format: on
 

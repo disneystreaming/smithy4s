@@ -23,6 +23,24 @@ package object codecs {
 
   type Encoder[Out, A] = Writer[Any, Out, A]
 
+  type BlobEncoder[A] = Encoder[Blob, A]
+  object BlobEncoder {
+    type Compiler = CachedSchemaCompiler[BlobEncoder]
+    val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobEncoder] {
+      def fromSchema[A](schema: Schema[A]) = Writer.encodeBy(_ => Blob.empty)
+    }
+  }
+
+  type BlobDecoder[A] = Reader[Either[PayloadError, *], Blob, A]
+  object BlobDecoder {
+    type Compiler = CachedSchemaCompiler[BlobDecoder]
+    val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobDecoder] {
+      def fromSchema[A](schema: Schema[A]) = Reader.lift(_ =>
+        Left(PayloadError(PayloadPath.root, "nothing", "always failing"))
+      )
+    }
+  }
+
   type PayloadReader[A] = Reader[Either[PayloadError, *], Blob, A]
   object PayloadReader {
     type CachedCompiler = CachedSchemaCompiler[PayloadReader]

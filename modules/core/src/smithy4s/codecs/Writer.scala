@@ -90,6 +90,11 @@ trait Writer[-In, +Out, -A] { self =>
     }
 
   /**
+   * Transforms a writer into an Encoder by supplying an initial value.
+   */
+  final def toEncoder(in: In): Writer[Any, Out, A] = compose(_ => in)
+
+  /**
     * Connects this writer's output channel to the contextual input channel of another writer.
     */
   def pipe[Out0, A0 <: A](other: Writer[Out, Out0, A0]): Writer[In, Out0, A0] =
@@ -110,6 +115,23 @@ trait Writer[-In, +Out, -A] { self =>
 }
 
 object Writer {
+
+  def combineCompilers[Message](
+      left: CachedSchemaCompiler[Writer[Message, Message, *]],
+      right: CachedSchemaCompiler[Writer[Message, Message, *]]
+  ): CachedSchemaCompiler[Writer[Message, Message, *]] = new CachedSchemaCompiler[Writer[Message, Message, *]] {
+
+    type Cache = (left.Cache, right.Cache)
+    def createCache(): Cache = (left.createCache(), right.createCache())
+    def fromSchema[A](schema: Schema[A]): Writer[Message, Message, A] =
+      fromSchema(schema, createCache())
+    def fromSchema[A](schema: Schema[A], cache: Cache): Writer[Message, Message, A] = {
+      val first: Writer[Message, Message, A] = left.fromSchema(schema, cache._1)
+      val second: Writer[Message, Message, A] = right.fromSchema(schema, cache._2)
+      first.pipe(second)
+    }
+
+  }
 
   type CachedCompiler[In, Out] = CachedSchemaCompiler[Writer[In, Out, *]]
 
