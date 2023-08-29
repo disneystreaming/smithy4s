@@ -25,7 +25,6 @@ import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.json.Json
-import smithy4s.codecs.PayloadCodec
 import smithy4s.client._
 import smithy4s.codecs.BlobEncoder
 import cats.syntax.all._
@@ -51,10 +50,10 @@ private[http4s] class SimpleRestJsonCodecs(
 
   // val mediaType = HttpMediaType("application/json")
   private val payloadEncoders: BlobEncoder.Compiler =
-    jsonCodecs.mapK { PayloadCodec.writerK }
+    jsonCodecs.writers
 
   private val payloadDecoders =
-    jsonCodecs.mapK { PayloadCodec.readerK }
+    jsonCodecs.readers
 
   // Adding X-Amzn-Errortype as well to facilitate interop with Amazon-issued code-generators.
   private val errorHeaders = List(

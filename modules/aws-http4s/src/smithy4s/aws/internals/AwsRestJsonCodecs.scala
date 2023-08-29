@@ -29,13 +29,14 @@ import smithy4s.kinds.PolyFunctions
 import smithy4s.Endpoint
 import org.http4s.Entity
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.client.UnaryClientCodecs
 
 // scalafmt: {maxColumn = 120}
 private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent: Compression](contentType: String): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
+  def make[F[_]: Concurrent: Compression](contentType: String): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
     val mediaType = HttpMediaType(contentType)
 
     val jsonPayloadCodecs =

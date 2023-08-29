@@ -28,10 +28,6 @@ object XmlStartingPath extends ShapeTag.Companion[XmlStartingPath] {
   val id: ShapeId = ShapeId("smithy4s.xml.internals", "XmlStartingPath")
 
   val schema: Schema[XmlStartingPath] =
-    list(string)
-      .biject[XmlStartingPath](
-        XmlStartingPath(_),
-        (_: XmlStartingPath).path
-      )
+    list(string).biject[XmlStartingPath](XmlStartingPath(_))(_.path)
 
 }

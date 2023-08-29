@@ -23,7 +23,6 @@ import org.http4s.Entity
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
-import smithy4s.http4s.kernel.{EntityWriter, EntityReader}
 import smithy4s.codecs.Reader
 import smithy4s.capability.Covariant
 import smithy4s.interopcats._
@@ -51,32 +50,6 @@ package object internals {
       case _ => identity[RequestEncoderCompiler[F]]
     }
   }
-
-  private[internals] def stringAndBlobRequestWriters[F[_]]
-      : CachedSchemaCompiler.Optional[HttpRequest.Encoder[Entity[F], *]] =
-    smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK {
-      Covariant.liftPolyFunction[Option](
-        HttpMediaTyped
-          .liftPolyFunction(EntityWriter.fromPayloadWriterK[F])
-          .andThen(HttpRequest.Encoder.fromHttpMediaWriterK)
-      )
-    }
-
-  private[internals] def stringAndBlobEntityReaders[F[_]: Concurrent]
-      : CachedSchemaCompiler.Optional[Reader[F, Entity[F], *]] =
-    smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK {
-      Covariant.liftPolyFunction[Option](
-        HttpMediaTyped
-          .unwrappedK[HttpPayloadReader]
-          .andThen(EntityReader.fromHttpPayloadReaderK[F])
-      )
-    }
-
-  private[internals] def stringAndBlobResponseReaders[F[_]: Concurrent]
-      : CachedSchemaCompiler.Optional[HttpResponse.Decoder[F, Entity[F], *]] =
-    stringAndBlobEntityReaders[F].mapK(
-      Covariant.liftPolyFunction[Option](HttpResponse.extractBody[F, Entity[F]])
-    )
 
   private[internals] def xmlRequestWriters[F[_]]
       : CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] =

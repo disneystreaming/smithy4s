@@ -21,6 +21,7 @@ import cats.syntax.all._
 import fs2.io.file.Files
 import org.http4s.EntityDecoder
 import org.http4s.Uri
+import org.http4s.InvalidMessageBodyFailure
 import org.http4s.client.Client
 import org.http4s.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
@@ -30,10 +31,9 @@ import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
-import smithy4s.http4s.kernel._
-import smithy4s.codecs._
 
 import scala.concurrent.duration._
+import org.http4s.DecodeResult
 
 object AwsCredentialsProvider {
 
@@ -50,12 +50,21 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
   // private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
   implicit val awsInstanceMetadataDecoder
-      : EntityDecoder[F, AwsInstanceMetadata] =
-    internals.AwsJsonCodecs.jsonPayloadCodecs
-      .mapK(PayloadCodec.readerK)
-      .mapK(EntityReader.fromPayloadReaderK[F])
-      .mapK(EntityReader.toEntityDecoderK[F])
+      : EntityDecoder[F, AwsInstanceMetadata] = {
+    val reader = internals.AwsJsonCodecs.jsonPayloadCodecs
       .fromSchema(AwsInstanceMetadata.schema)
+      .reader
+    EntityDecoder.byteArrayDecoder.flatMapR { case bytes =>
+      reader.decode(smithy4s.Blob(bytes)) match {
+        case Left(error) =>
+          DecodeResult.failureT(
+            InvalidMessageBodyFailure(error.message, Some(error))
+          )
+        case Right(value) =>
+          DecodeResult.successT(value)
+      }
+    }
+  }
 
   def default(
       httpClient: Client[F]

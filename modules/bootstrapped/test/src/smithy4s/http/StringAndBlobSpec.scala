@@ -24,67 +24,57 @@ import smithy4s.schema.CachedSchemaCompiler
 
 class StringAndBlobSpec() extends munit.FunSuite {
 
-  val error = HttpPayloadError(PayloadPath.root, "error", "error")
-  object DummyReaderCompiler
-      extends CachedSchemaCompiler.Impl[HttpMediaReader] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaReader[A] =
-      HttpMediaTyped(
-        HttpMediaType("foo/bar"),
-        Reader.decodeStatic(Left(error): Either[HttpPayloadError, A])
-      )
+  val error = PayloadError(PayloadPath.root, "error", "error")
+  object DummyReaderCompiler extends CachedSchemaCompiler.Impl[PayloadReader] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadReader[A] =
+      Reader.decodeStatic(Left(error): Either[PayloadError, A])
   }
 
-  object DummyWriterCompiler
-      extends CachedSchemaCompiler.Impl[HttpMediaWriter] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaWriter[A] =
-      HttpMediaTyped(
-        HttpMediaType("foo/bar"),
-        Writer.encodeStatic(Blob.empty): Encoder[Blob, A]
-      )
+  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadWriter] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadWriter[A] =
+      Writer.encodeStatic(Blob.empty): Encoder[Blob, A]
 
   }
 
   val stringsAndBlobsReaders = CachedSchemaCompiler.getOrElse(
-    StringAndBlobCodecs.ReaderCompiler,
+    StringAndBlobCodecs.readers,
     DummyReaderCompiler
   )
   val stringsAndBlobsWriters = CachedSchemaCompiler.getOrElse(
-    StringAndBlobCodecs.WriterCompiler,
+    StringAndBlobCodecs.writers,
     DummyWriterCompiler
   )
 
   def check[A](
       schema: Schema[A],
       data: A,
-      expectedEncoded: Blob,
-      expectedMediaType: String
+      expectedEncoded: Blob
   ): Unit = {
     val writer = stringsAndBlobsWriters.fromSchema(schema)
     val reader = stringsAndBlobsReaders.fromSchema(schema)
-    val result = writer.instance.encode(data)
-    val roundTripped = reader.instance.read(result)
-    val writerMediaType = writer.mediaType
-    val readerMediaType = reader.mediaType
+    val result = writer.encode(data)
+    val roundTripped = reader.read(result)
+    // val writerMediaType = writer.mediaType
+    // val readerMediaType = reader.mediaType
     expect.same(result, expectedEncoded)
     expect.same(Right(data), roundTripped)
-    expect.same(writerMediaType, HttpMediaType(expectedMediaType))
-    expect.same(readerMediaType, HttpMediaType(expectedMediaType))
+    // expect.same(writerMediaType, HttpMediaType(expectedMediaType))
+    // expect.same(readerMediaType, HttpMediaType(expectedMediaType))
   }
 
   test("Strings") {
-    check(Schema.string, "hello", Blob("hello"), "text/plain")
+    check(Schema.string, "hello", Blob("hello"))
   }
 
   test("Strings (custom media-type)") {
-    check(CSV.schema, CSV("hello"), Blob("hello"), "text/csv")
+    check(CSV.schema, CSV("hello"), Blob("hello"))
   }
 
   test("String Enum") {
     check(
       StringEnum.schema,
       StringEnum.INTERESTING,
-      Blob("interesting"),
-      "text/plain"
+      Blob("interesting")
     )
   }
 
@@ -92,8 +82,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     check(
       AudioEnum.schema,
       AudioEnum.BASS,
-      Blob("bass"),
-      "audio/mpeg3"
+      Blob("bass")
     )
   }
 
@@ -101,8 +90,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     check(
       Schema.blob,
       Blob("hello"),
-      Blob("hello"),
-      "application/octet-stream"
+      Blob("hello")
     )
   }
 
@@ -110,24 +98,19 @@ class StringAndBlobSpec() extends munit.FunSuite {
     check(
       PNG.schema,
       PNG(Blob("hello")),
-      Blob("hello"),
-      "image/png"
+      Blob("hello")
     )
   }
 
   test("Delegates to some other codec when neither strings not bytes") {
     val writer = stringsAndBlobsWriters.fromSchema(Schema.int)
     val reader = stringsAndBlobsReaders.fromSchema(Schema.int)
-    val result = writer.instance.encode(1)
-    val roundTripped = reader.instance.read(result)
-    val readerMediaType = reader.mediaType
-    val writerMediaType = writer.mediaType
+    val result = writer.encode(1)
+    val roundTripped = reader.read(result)
     val expectedRoundTripped =
       Left(HttpPayloadError(PayloadPath.root, "error", "error"))
     expect.same(result, Blob.empty)
     expect.same(roundTripped, expectedRoundTripped)
-    expect.same(writerMediaType, HttpMediaType("foo/bar"))
-    expect.same(readerMediaType, HttpMediaType("foo/bar"))
   }
 
 }
