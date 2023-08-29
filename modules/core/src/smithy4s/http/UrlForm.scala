@@ -203,13 +203,25 @@ private[smithy4s] object UrlForm {
             schema: Schema[A],
             cache: Cache
         ): Encoder[A] = {
+          val maybeStaticUrlFormData =
+            schema.hints.get(internals.StaticUrlFormElements).map {
+              _.elements.map { case (key, value) =>
+                UrlForm.FormData(PayloadPath(key), Some(value))
+              }
+            }
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
             ignoreUrlFormFlattened,
             capitalizeStructAndUnionMemberNames
           )
           val urlFormDataEncoder = schemaVisitor(schema)
-          value => UrlForm(urlFormDataEncoder.encode(value))
+          maybeStaticUrlFormData match {
+            case Some(staticUrlFormData) =>
+              value =>
+                UrlForm(staticUrlFormData ++ urlFormDataEncoder.encode(value))
+            case None => value => UrlForm(urlFormDataEncoder.encode(value))
+          }
+
         }
       }
 

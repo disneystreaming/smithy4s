@@ -17,13 +17,6 @@
 package smithy4s.aws
 
 import fs2.compression.Compression
-import smithy4s.Hints
-import smithy4s.http.HttpRequest
-import org.http4s.Entity
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.capability.MonadThrowLike
-import smithy4s.http._
-import smithy4s.Blob
 import smithy4s.Endpoint
 import org.http4s.client.Client
 

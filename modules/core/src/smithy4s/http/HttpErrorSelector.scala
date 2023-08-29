@@ -110,7 +110,13 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
     .toMap[ShapeId, Alt[E, _]]
 
   private val byName = alts
-    .map(alt => alt.schema.shapeId.name -> alt)
+    .map { alt =>
+      val errorName = alt.schema.hints
+        .get(internals.ErrorDiscriminatorValue)
+        .map(_.name)
+        .getOrElse(alt.schema.shapeId.name)
+      errorName -> alt
+    }
     .toMap[String, Alt[E, _]]
 
   // build a map: status code to alternative

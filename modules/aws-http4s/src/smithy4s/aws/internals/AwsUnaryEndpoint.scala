@@ -21,9 +21,6 @@ package internals
 import cats.syntax.all._
 import org.http4s.Request
 import org.http4s.Response
-import smithy4s.http._
-import smithy4s.http4s.kernel._
-import org.http4s.Entity
 import _root_.aws.api.{Service => AwsService}
 import smithy4s.client.UnaryClientCodecs
 import cats.effect.Async
@@ -64,31 +61,15 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   // format: off
   val clientCodecs = makeClientCodecs(endpoint)
   import clientCodecs._
-
-  val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
   // format: on
 
   def inputToRequest(input: I): F[Request[F]] = {
-    awsEnv.region.flatMap { region =>
-      val baseUri = HttpUri(
-        scheme = HttpUriScheme.Https,
-        host = s"$endpointPrefix.$region.amazonaws.com",
-        port = None,
-        path = Seq.empty,
-        queryParams = Map.empty,
-        pathParams = None
-      )
-      // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
-      val baseRequest =
-        HttpRequest(HttpMethod.POST, baseUri, Map.empty, Entity.empty)
-      fromSmithy4sHttpRequest(inputEncoder.write(baseRequest, input))
-    }
+    clientCodecs.inputEncoder(input)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] = {
-    val r = toSmithy4sHttpResponse(response)
-    if (response.status.isSuccess) outputDecoder.read(r)
-    else errorDecoder.read(r).flatMap(effect.raiseError[O](_))
+    if (response.status.isSuccess) outputDecoder(response)
+    else errorDecoder(response).flatMap(effect.raiseError[O](_))
   }
 
 }

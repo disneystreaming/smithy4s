@@ -16,8 +16,38 @@
 
 package smithy4s
 
-trait Errorable[E] {
+import smithy4s.kinds.PolyFunction
+
+trait Errorable[E] { self =>
   def error: schema.Schema.UnionSchema[E]
   def liftError(throwable: Throwable): Option[E]
   def unliftError(e: E): Throwable
+
+  /**
+   * Transforms the hints of each alternative.
+   */
+  def transformErrorHintsLocally(f: Hints => Hints): Errorable[E] =
+    new Errorable[E] {
+      val error = schema.Schema.UnionSchema(
+        self.error.shapeId,
+        self.error.hints,
+        self.error.alternatives.map(_.transformHintsLocally(f)),
+        self.error.ordinal
+      )
+      def liftError(throwable: Throwable): Option[E] = self.liftError(throwable)
+      def unliftError(e: E): Throwable = self.unliftError(e)
+    }
+
+}
+
+object Errorable {
+
+  def transformErrorHintsLocallyK(
+      f: Hints => Hints
+  ): PolyFunction[Errorable, Errorable] =
+    new PolyFunction[Errorable, Errorable] {
+      def apply[E](errorable: Errorable[E]): Errorable[E] =
+        errorable.transformErrorHintsLocally(f)
+    }
+
 }

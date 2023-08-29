@@ -23,12 +23,14 @@ import smithy4s.codecs.{Reader, Writer}
 import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.capability.MonadThrowLike
+import smithy4s.kinds.PolyFunction5
 
 // scalafmt: { maxColumn = 120 }
 object HttpUnaryClientCodecs {
 
   def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
     HttpUnaryClientCodecsBuilderImpl[F, HttpRequest[Blob], HttpResponse[Blob]](
+      endpointPreprocessor = PolyFunction5.identity,
       baseRequest = _ => F.raiseError(new Exception("Undefined base request")),
       requestBodyEncoders = BlobEncoder.noop,
       successResponseBodyDecoders = BlobDecoder.noop,
@@ -44,6 +46,7 @@ object HttpUnaryClientCodecs {
     )
 
   trait Builder[F[_], Request, Response] {
+    def withEndpointPreprocessor(fk: PolyFunction5[Endpoint.Base, Endpoint.Base]): Builder[F, Request, Response]
     def withBaseRequest(f: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]]): Builder[F, Request, Response]
     def withBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response]
     def withSuccessBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
@@ -60,6 +63,7 @@ object HttpUnaryClientCodecs {
   }
 
   private case class HttpUnaryClientCodecsBuilderImpl[F[_], Request, Response](
+      endpointPreprocessor: PolyFunction5[Endpoint.Base, Endpoint.Base],
       baseRequest: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]],
       requestBodyEncoders: BlobEncoder.Compiler,
       successResponseBodyDecoders: BlobDecoder.Compiler,
@@ -74,7 +78,8 @@ object HttpUnaryClientCodecs {
       responseTransformation: Response => F[HttpResponse[Blob]]
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
-
+    def withEndpointPreprocessor(fk: PolyFunction5[Endpoint.Base, Endpoint.Base]): Builder[F, Request, Response] =
+      copy(endpointPreprocessor = fk)
     def withBaseRequest(f: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]]): Builder[F, Request, Response] =
       copy(baseRequest = f)
     def withBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response] =
@@ -165,8 +170,9 @@ object HttpUnaryClientCodecs {
         private val outputDecoderCache: outputDecoders.Cache = outputDecoders.createCache()
 
         def apply[I, E, O, SI, SO](
-            endpoint: Endpoint.Base[I, E, O, SI, SO]
+            originalEndpoint: Endpoint.Base[I, E, O, SI, SO]
         ): UnaryClientCodecs[F, Request, Response, I, E, O] = {
+          val endpoint = endpointPreprocessor(originalEndpoint)
 
           val inputWriter: HttpRequest.Encoder[Blob, I] =
             HttpEndpoint.cast(endpoint).toOption match {

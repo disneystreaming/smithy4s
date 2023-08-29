@@ -98,8 +98,8 @@ object AwsClient {
             // TODO retain user encoding when applying compression
             AwsQueryCodecs.make[F](version = service.version)
 
-          // case AwsProtocol.AWS_REST_JSON_1(_) =>
-          //   AwsRestJsonCodecs.make[F]("application/json")
+          case AwsProtocol.AWS_REST_JSON_1(_) =>
+            AwsRestJsonCodecs.make[F]("application/json")
 
           // case AwsProtocol.AWS_REST_XML(_) =>
           //   AwsRestXmlCodecs.make[F]()
