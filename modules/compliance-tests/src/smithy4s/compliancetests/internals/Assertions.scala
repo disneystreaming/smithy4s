@@ -51,23 +51,17 @@ private[internals] object assert {
     }
   }
 
-  def neql[A: Eq](expected: A, actual: A): ComplianceResult = {
-    if (expected =!= actual) {
+  def eql[A: Eq](
+      result: A,
+      testCase: A,
+      prefix: String = ""
+  ): ComplianceResult = {
+    if (result === testCase) {
       success
     } else {
       fail(
-        s"This test passed when it was supposed to fail, Actual value: ${pprint
-          .apply(actual)} was equal to ${pprint.apply(expected)}."
-      )
-    }
-  }
-
-  def eql[A: Eq](expected: A, actual: A): ComplianceResult = {
-    if (expected === actual) {
-      success
-    } else {
-      fail(
-        s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+        s"$prefix the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint
+          .apply(testCase)}."
       )
     }
   }
@@ -81,6 +75,19 @@ private[internals] object assert {
       jsonEql(expected, actual)
     } else {
       eql(expected, actual)
+    }
+  }
+
+  def regexEql(
+      expected: String,
+      actual: String
+  ): ComplianceResult = {
+    if (actual.matches(expected)) {
+      success
+    } else {
+      fail(
+        s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+      )
     }
   }
 
@@ -101,7 +108,7 @@ private[internals] object assert {
         }.combineAll
     }
   }
-  private def headersCheck(
+  def headersCheck(
       headers: Headers,
       expected: Option[Map[String, String]]
   ) = {

@@ -31,7 +31,6 @@ import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
 import cats.Eq
-
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
@@ -56,14 +55,13 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): F[ComplianceResult] = {
 
-    val bodyAssert = testCase.body
-      .map { expectedBody =>
-        request.bodyText.compile.string.map { responseBody =>
-          assert.bodyEql(responseBody, expectedBody, testCase.bodyMediaType)
-
-        }
-      }
-      .getOrElse(assert.success.pure[F])
+    val bodyAssert = request.bodyText.compile.string.map { responseBody =>
+      assert.bodyEql(
+        responseBody,
+        testCase.body.getOrElse(""),
+        testCase.bodyMediaType
+      )
+    }
 
     val expectedUri = baseUri
       .withPath(
@@ -74,14 +72,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
 
     val pathAssert =
-      assert.eql(expectedUri.path.renderString, request.uri.path.renderString)
+      assert.eql(
+        expectedUri.path.renderString,
+        request.uri.path.renderString,
+        "path test :"
+      )
     val queryAssert = assert.eql(
       expectedUri.query.renderString,
-      request.uri.query.renderString
+      request.uri.query.renderString,
+      "query test :"
     )
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
-      request.method.name.toLowerCase()
+      request.method.name.toLowerCase(),
+      "method test :"
     )
     val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
       List(
@@ -103,7 +107,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
-      name = endpoint.id.toString + "(client|request): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      testCase.tags,
       run = {
         val input = inputFromDocument
           .decode(testCase.params.getOrElse(Document.obj()))
@@ -152,7 +158,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val dummyInput = DefaultSchemaVisitor(endpoint.input)
 
     ComplianceTest[F](
-      name = endpoint.id.toString + "(client|response): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      testCase.tags,
       run = {
         val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         implicit val outputEq: Eq[O] =
@@ -211,8 +219,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .apply(endpoint.wrap(dummyInput))
                   res.map { output =>
                     assert.eql(
-                      expectedOutput,
-                      output
+                      output,
+                      expectedOutput
                     )
                   }
                 }

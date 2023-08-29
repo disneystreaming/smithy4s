@@ -773,6 +773,7 @@ lazy val complianceTests = projectMatrix
         else Seq.empty
       ce3 ++ Seq(
         Dependencies.Circe.parser.value,
+        Dependencies.Smithy.utils ,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,

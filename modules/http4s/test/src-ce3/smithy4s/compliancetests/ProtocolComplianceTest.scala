@@ -46,6 +46,7 @@ import smithy4s.schema.Schema.document
 object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   implicit protected def effectCompat: EffectCompat[IO] = CatsUnsafeRun
+
   def getSuite: EffectSuite[IO] = this
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
@@ -112,7 +113,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .toList
       .flatMap(wrapper => {
         HttpProtocolCompliance
-          .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
+          .allTests(
+            SimpleRestJsonIntegration,
+            wrapper.service
+          )
       })
   }
 
@@ -134,7 +138,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   }
 
   private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = Test(
-    tc.name,
+    tc.show,
     tc.run
       .map[Expectations] {
         case Left(value) =>
@@ -149,4 +153,9 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       }
   )
 
+  def expectFailure(
+      res: ComplianceTest.ComplianceResult
+  ): Expectations = {
+    res.foldMap(_ => Expectations.Helpers.success)
+  }
 }
