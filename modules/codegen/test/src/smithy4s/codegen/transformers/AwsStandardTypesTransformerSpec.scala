@@ -81,6 +81,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |case class TestStructure(i: Int, d: Option[Date] = None, l: Option[Long] = None)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
@@ -142,6 +143,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |case class TestStructure(s: Option[String] = None)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
@@ -203,6 +205,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |case class TestStructure(i: Int = 5)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |

@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 case class ServerErrorCustomMessage(messageField: Option[String] = None) extends Throwable {
   override def getMessage(): String = messageField.orNull
 }
+
 object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMessage] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerErrorCustomMessage")
 

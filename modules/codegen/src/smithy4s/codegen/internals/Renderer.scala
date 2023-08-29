@@ -553,6 +553,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else Line.empty
         line"$decl$ext"
       },
+      newline,
       obj(product.nameRef, shapeTag(product.nameRef))(
         renderId(shapeId),
         newline,

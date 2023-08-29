@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 @deprecated(message = "A compelling reason", since = "0.0.1")
 case class DeprecatedStructure(@deprecated(message = "N/A", since = "N/A") strings: Option[List[String]] = None, other: Option[List[String]] = None, @deprecated(message = "N/A", since = "N/A") name: Option[String] = None, nameV2: Option[String] = None) extends DeprecatedMixin
+
 object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedStructure")
 

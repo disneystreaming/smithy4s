@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 case class NonEmptyListFormat()
+
 object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyListFormat")
 
