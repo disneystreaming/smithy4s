@@ -65,16 +65,19 @@ object Endpoint {
     def streamedOutput: StreamingSchema[SO]
   }
 
-  trait Middleware[Construct] { self =>
-    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-        endpoint: service.Endpoint[_, _, _, _, _]
-    ): Construct => Construct
+  trait Middleware[A] { self =>
+    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A
 
-    def andThen(other: Middleware[Construct]): Middleware[Construct] =
-      new Middleware[Construct] {
+    final def biject[B](to: A => B)(from: B => A): Middleware[B] = new Middleware[B] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): B => B =
+        self.prepare(service)(endpoint).compose(from).andThen(to)
+    }
+
+    final def andThen(other: Middleware[A]): Middleware[A] =
+      new Middleware[A] {
         def prepare[Alg[_[_, _, _, _, _]]](
             service: Service[Alg]
-        )(endpoint: service.Endpoint[_, _, _, _, _]): Construct => Construct =
+        )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
           self
             .prepare(service)(endpoint)
             .andThen(other.prepare(service)(endpoint))

@@ -23,9 +23,14 @@ import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
+import smithy4s.interopcats._
 import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
-import smithy4s.http4s.internals.SmithyHttp4sRouter
 import smithy4s.kinds._
+import smithy4s.http.HttpUnaryServerRouter
+import smithy4s.http4s.kernel.{toSmithy4sHttpMethod, pathParamsKey}
+import org.http4s.HttpApp
+import org.http4s.Request
+import cats.data.OptionT
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -182,12 +187,18 @@ abstract class SimpleProtocolBuilder[P](
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
           val finalMiddleware =
             errorHandler.andThen(middleware).andThen(errorHandler)
-          new SmithyHttp4sRouter[Alg, service.Operation, F](
-            service,
-            service.toPolyFunction[Kind1[F]#toKind5](impl),
+          val router = HttpUnaryServerRouter(service)(
+            impl,
             simpleProtocolCodecs.makeServerCodecs[F],
-            finalMiddleware
-          ).routes
+            finalMiddleware.biject(_.run)(HttpApp(_)),
+            getMethod =
+              (request: Request[F]) => toSmithy4sHttpMethod(request.method),
+            getPathSegments = (request: Request[F]) =>
+              request.uri.path.segments.map(_.decoded()),
+            addDecodedPathParams = (request: Request[F], pathParams) =>
+              request.withAttribute(pathParamsKey, pathParams)
+          )
+          HttpRoutes(router.andThen(OptionT(_)))
         }
 
     def resource: Resource[F, HttpRoutes[F]] =

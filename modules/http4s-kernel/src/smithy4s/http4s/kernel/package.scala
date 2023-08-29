@@ -41,7 +41,7 @@ package object kernel {
     val pathParams = req.attributes.lookup(pathParamsKey)
     val uri = toSmithy4sHttpUri(req.uri, pathParams)
     val headers = getHeaders(req)
-    val method = toSmithy4sMethod(req.method)
+    val method = toSmithy4sHttpMethod(req.method)
     collectBytes(req.body).map { blob =>
       Smithy4sHttpRequest(method, uri, headers, blob)
     }
@@ -149,7 +149,7 @@ package object kernel {
         }
     }
 
-  private[smithy4s] def toSmithy4sMethod(method: Method): Smithy4sHttpMethod =
+  private[smithy4s] def toSmithy4sHttpMethod(method: Method): Smithy4sHttpMethod =
     method match {
       case Method.PUT    => Smithy4sHttpMethod.PUT
       case Method.POST   => Smithy4sHttpMethod.POST

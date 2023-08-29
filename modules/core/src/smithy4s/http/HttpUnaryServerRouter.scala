@@ -23,14 +23,41 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.http.PathParams
 import scala.annotation.nowarn
 
+object HttpUnaryServerRouter {
+
+  def apply[Alg[_[_, _, _, _, _]], F[_], Request, Response](
+      service: smithy4s.Service[Alg]
+  )(
+      impl: service.Impl[F],
+      makeServerCodecs: UnaryServerCodecs.Make[F, Request, Response],
+      endpointMiddleware: Endpoint.Middleware[Request => F[Response]],
+      getMethod: Request => HttpMethod,
+      getPathSegments: Request => IndexedSeq[String],
+      addDecodedPathParams: (Request, PathParams) => Request
+  )(implicit F: MonadThrowLike[F]): Request => F[Option[Response]] = {
+    val router =
+      new HttpUnaryServerRouter[Alg, service.Operation, F, Request, Response](
+        service,
+        service.toPolyFunction(impl),
+        makeServerCodecs,
+        endpointMiddleware,
+        getMethod,
+        getPathSegments,
+        addDecodedPathParams
+      )
+    router.route(_)
+  }
+
+}
+
 // scalafmt: {maxColumn = 120}
-class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_], Request, Response](
+private class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_], Request, Response](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     makeServerCodecs: UnaryServerCodecs.Make[F, Request, Response],
     endpointMiddleware: Endpoint.Middleware[Request => F[Response]],
     getMethod: Request => HttpMethod,
-    getUri: Request => HttpUri,
+    getPathSegments: Request => IndexedSeq[String],
     addDecodedPathParams: (Request, PathParams) => Request
 )(implicit F: MonadThrowLike[F]) {
 
@@ -42,13 +69,12 @@ class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_], Requ
 
   def route(request: Request): F[Option[Response]] = {
     val method = getMethod(request)
-    val uri = getUri(request)
+    val pathSegments = getPathSegments(request)
     perMethodEndpoint.get(method) match {
       case Some(httpUnaryEndpoints) =>
-        val path = uri.path.toArray
         val maybeMatched =
           httpUnaryEndpoints.iterator
-            .map(ep => (ep.handler, ep.httpEndpoint.matches(path)))
+            .map(ep => (ep.handler, ep.httpEndpoint.matches(pathSegments)))
             .find(_._2.isDefined)
         maybeMatched match {
           case Some((handler, Some(pathParams))) =>

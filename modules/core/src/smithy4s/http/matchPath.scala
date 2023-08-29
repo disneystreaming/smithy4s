@@ -43,7 +43,7 @@ object matchPath {
 
   def apply(
       path: List[PathSegment],
-      received: Array[String]
+      received: IndexedSeq[String]
   ): Option[Map[String, String]] = {
     val size = received.length
     @tailrec
