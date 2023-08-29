@@ -44,7 +44,7 @@ object HttpUnaryClientCodecs {
     )
 
   trait Builder[F[_], Request, Response] {
-    def withBaseRequest(f: Hints => F[HttpRequest[Blob]]): Builder[F, Request, Response]
+    def withBaseRequest(f: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]]): Builder[F, Request, Response]
     def withBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response]
     def withSuccessBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
     def withErrorBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
@@ -60,7 +60,7 @@ object HttpUnaryClientCodecs {
   }
 
   private case class HttpUnaryClientCodecsBuilderImpl[F[_], Request, Response](
-      baseRequest: Hints => F[HttpRequest[Blob]],
+      baseRequest: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]],
       requestBodyEncoders: BlobEncoder.Compiler,
       successResponseBodyDecoders: BlobDecoder.Compiler,
       errorResponseBodyDecoders: BlobDecoder.Compiler,
@@ -75,7 +75,7 @@ object HttpUnaryClientCodecs {
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
 
-    def withBaseRequest(f: Hints => F[HttpRequest[Blob]]): Builder[F, Request, Response] =
+    def withBaseRequest(f: Endpoint.Base[_, _, _, _, _] => F[HttpRequest[Blob]]): Builder[F, Request, Response] =
       copy(baseRequest = f)
     def withBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response] =
       copy(requestBodyEncoders = encoders)
@@ -180,7 +180,7 @@ object HttpUnaryClientCodecs {
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
 
-          val inputEncoder = (i: I) => F.map(baseRequest(endpoint.hints))(inputWriter.write(_, i))
+          val inputEncoder = (i: I) => F.map(baseRequest(endpoint))(inputWriter.write(_, i))
 
           val outputDecoder: HttpResponse.Decoder[F, Blob, O] =
             outputDecoders.fromSchema(endpoint.output, outputDecoderCache)

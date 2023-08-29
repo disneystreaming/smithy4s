@@ -17,59 +17,33 @@
 package smithy4s.aws
 package internals
 
-import cats.effect.Concurrent
-import fs2.compression.Compression
-import org.http4s.Entity
-import smithy4s.Endpoint
+import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
-import smithy4s.http4s.kernel._
-import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
-import smithy4s.interopcats._
+import smithy4s.Blob
 
 // scalafmt: {maxColumn = 120}
 
 private[aws] object AwsRestXmlCodecs {
 
-  def make[F[_]: Concurrent: Compression](): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
+  def make[F[_]: MonadThrowLike](): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
-    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], xmlRequestWriters[F])
-    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobResponseReaders[F], xmlResponseReaders[F])
-
-    val requestWriters = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
-      Metadata.AwsEncoder,
-      mediaWriters
+    val errorReaders = Xml.readers.contramapSchema(
+      smithy4s.schema.Schema.transformHintsLocallyK(
+        _.addMemberHints(XmlStartingPath(List("ErrorResponse", "Error")))
+      )
     )
 
-    val responseReaders = HttpResponse.Decoder.restSchemaCompilerAux[F, Entity[F]](
-      Metadata.AwsDecoder,
-      mediaReaders
-    )
-
-    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
-      def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
-        val addCompression = applyCompression[F](endpoint.hints)
-        val finalRequestWriters = addCompression(requestWriters)
-
-        val errorResponseReaders = responseReaders.contramapSchema(
-          smithy4s.schema.Schema.transformHintsLocallyK(
-            _.addMemberHints(XmlStartingPath(List("ErrorResponse", "Error")))
-          )
-        )
-        val discriminator = AwsErrorTypeDecoder.fromResponse(errorResponseReaders)
-
-        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
-          finalRequestWriters,
-          responseReaders,
-          errorResponseReaders,
-          discriminator,
-          toStrict
-        )
-        make.apply(endpoint)
-      }
-    }
+    HttpUnaryClientCodecs.builder
+      .withBodyEncoders(Xml.writers)
+      .withSuccessBodyDecoders(Xml.readers)
+      .withErrorBodyDecoders(errorReaders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(Xml.readers))
+      .withMetadataDecoders(Metadata.AwsDecoder)
+      .withMetadataEncoders(Metadata.AwsEncoder)
+      .withRawStringsAndBlobsPayloads
+      .withRequestMediaType("application/xml")
   }
 
 }

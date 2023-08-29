@@ -21,11 +21,16 @@ import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
-import smithy4s.client.UnaryClientCodecs
-import org.http4s.{Request, Response}
+import org.http4s.Response
 import smithy4s.aws.internals.AwsQueryCodecs
+import smithy4s.interopcats._
+import smithy4s.Endpoint
+import smithy4s.http4s.kernel._
+import smithy4s.Blob
+import smithy4s.http._
 import smithy4s.aws.internals._
 
+// scalafmt: { maxColumn = 120 }
 object AwsClient {
 
   def apply[Alg[_[_, _, _, _, _]], F[_]: Async: Compression](
@@ -61,10 +66,27 @@ object AwsClient {
     private def interpreter[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
-      val clientCodecs: UnaryClientCodecs.Make[F, Request[F], Response[F]] =
+
+      def baseRequest(endpoint: Endpoint.Base[_, _, _, _, _]): F[HttpRequest[Blob]] = {
+        awsEnv.region.map { region =>
+          val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
+          val baseUri = HttpUri(
+            scheme = HttpUriScheme.Https,
+            host = s"$endpointPrefix.$region.amazonaws.com",
+            port = None,
+            path = Seq.empty,
+            queryParams = Map.empty,
+            pathParams = None
+          )
+          // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
+          HttpRequest(HttpMethod.POST, baseUri, Map.empty, Blob.empty)
+        }
+      }
+
+      val clientCodecsBuilder: HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
         awsProtocol match {
-          case AwsProtocol.AWS_EC2_QUERY(_) =>
-            AwsEcsQueryCodecs.make[F](version = service.version)
+          // case AwsProtocol.AWS_EC2_QUERY(_) =>
+          //   AwsEcsQueryCodecs.make[F](version = service.version)
 
           case AwsProtocol.AWS_JSON_1_0(_) =>
             AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
@@ -73,14 +95,21 @@ object AwsClient {
             AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
 
           case AwsProtocol.AWS_QUERY(_) =>
+            // TODO retain user encoding when applying compression
             AwsQueryCodecs.make[F](version = service.version)
 
-          case AwsProtocol.AWS_REST_JSON_1(_) =>
-            AwsRestJsonCodecs.make[F]("application/json")
+          // case AwsProtocol.AWS_REST_JSON_1(_) =>
+          //   AwsRestJsonCodecs.make[F]("application/json")
 
-          case AwsProtocol.AWS_REST_XML(_) =>
-            AwsRestXmlCodecs.make[F]()
+          // case AwsProtocol.AWS_REST_XML(_) =>
+          //   AwsRestXmlCodecs.make[F]()
         }
+      val clientCodecs = clientCodecsBuilder
+        .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
+        .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
+        .withBaseRequest(baseRequest)
+        .build()
+
       service.functorInterpreter {
         new service.FunctorEndpointCompiler[F] {
           def apply[I, E, O, SI, SO](

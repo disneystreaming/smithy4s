@@ -45,7 +45,7 @@ object HttpUnaryServerCodecs {
     )
 
   trait Builder[F[_], Request, Response] {
-    def withBaseResponse(f: Hints => F[HttpResponse[Blob]]): Builder[F, Request, Response]
+    def withBaseResponse(f: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response]
     def withBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
     def withSuccessBodyEncoders(decoders: BlobEncoder.Compiler): Builder[F, Request, Response]
     def withErrorBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response]
@@ -61,7 +61,7 @@ object HttpUnaryServerCodecs {
   }
 
   private case class HttpUnaryClientCodecsBuilderImpl[F[_], Request, Response](
-      baseResponse: Hints => F[HttpResponse[Blob]],
+      baseResponse: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]],
       requestBodyDecoders: BlobDecoder.Compiler,
       successResponseBodyEncoders: BlobEncoder.Compiler,
       errorResponseBodyEncoders: BlobEncoder.Compiler,
@@ -76,7 +76,7 @@ object HttpUnaryServerCodecs {
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
 
-    def withBaseResponse(f: Hints => F[HttpResponse[Blob]]): Builder[F, Request, Response] =
+    def withBaseResponse(f: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response] =
       copy(baseResponse = f)
     def withBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response] =
       copy(requestBodyDecoders = decoders)
@@ -181,7 +181,7 @@ object HttpUnaryServerCodecs {
           val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.errorable, errorEncoders)
           val inputDecoder: HttpRequest.Decoder[F, Blob, I] =
             inputDecoders.fromSchema(endpoint.input, inputDecoderCache)
-          val base = baseResponse(endpoint.hints)
+          val base = baseResponse(endpoint)
 
           def encodeOutput(o: O) = F.map(base)(outputW.write(_, o))
           def encodeError(e: E) = F.map(base)(errorW.write(_, e))

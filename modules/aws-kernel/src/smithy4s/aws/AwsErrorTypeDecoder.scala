@@ -16,10 +16,11 @@
 
 package smithy4s.aws
 
+import smithy4s.Blob
 import smithy4s.capability.MonadThrowLike
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
 import smithy4s.http.HttpDiscriminator
-import smithy4s.schema._
+import smithy4s.codecs.BlobDecoder
 import smithy4s.http.HttpResponse
 import smithy4s.http.CaseInsensitive
 
@@ -28,11 +29,11 @@ object AwsErrorTypeDecoder {
 
   private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
 
-  private[aws] def fromResponse[F[_], Body](
-      decoderCompiler: CachedSchemaCompiler[HttpResponse.Decoder[F, Body, *]]
-  )(implicit F: MonadThrowLike[F]): HttpResponse[Body] => F[HttpDiscriminator] = {
-    val decoder = decoderCompiler.fromSchema(AwsErrorType.schema)
-    (response: HttpResponse[Body]) =>
+  private[aws] def fromResponse[F[_]](
+      bodyDecoders: BlobDecoder.Compiler
+  )(implicit F: MonadThrowLike[F]): HttpResponse[Blob] => F[HttpDiscriminator] = {
+    val decoder = bodyDecoders.fromSchema(AwsErrorType.bodySchema)
+    (response: HttpResponse[Blob]) =>
       val maybeTypeHeader: Option[String] =
         response.headers
           .get(errorTypeHeader)
@@ -47,7 +48,10 @@ object AwsErrorTypeDecoder {
             )
           )
         case None =>
-          decoder.read(response)
+          decoder.read(response.body) match {
+            case Left(error)        => F.raiseError(error)
+            case Right((code, tpe)) => F.pure(AwsErrorType(None, code, tpe))
+          }
       }
       F.map(errorTypeF)(_.discriminator)
   }
@@ -77,21 +81,17 @@ object AwsErrorTypeDecoder {
 
   private[aws] object AwsErrorType {
 
-    protected[aws] val schema: smithy4s.Schema[AwsErrorType] = {
+    private[aws] type Body = (Option[String], Option[String])
+
+    protected[aws] val bodySchema: smithy4s.Schema[Body] = {
       import smithy4s.schema.Schema._
 
       val __typeField = string
-        .optional[AwsErrorType]("__type", _.__type)
+        .optional[Body]("__type", _._1)
       val codeField = string
-        .optional[AwsErrorType]("code", _.code)
+        .optional[Body]("code", _._2)
         .addHints(smithy.api.XmlName("Code"))
-      val typeHeader =
-        string
-          .optional[AwsErrorType]("typeHeader", _.typeHeader)
-          .addHints(
-            smithy.api.HttpHeader(`X-Amzn-Errortype`)
-          )
-      struct(__typeField, codeField, typeHeader)(AwsErrorType.apply)
+      struct(__typeField, codeField)((_, _))
     }
   }
 

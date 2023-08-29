@@ -51,9 +51,8 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
   // private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
   implicit val awsInstanceMetadataDecoder
       : EntityDecoder[F, AwsInstanceMetadata] = {
-    val reader = internals.AwsJsonCodecs.jsonPayloadCodecs
+    val reader = internals.AwsJsonCodecs.jsonReaders
       .fromSchema(AwsInstanceMetadata.schema)
-      .reader
     EntityDecoder.byteArrayDecoder.flatMapR { case bytes =>
       reader.decode(smithy4s.Blob(bytes)) match {
         case Left(error) =>

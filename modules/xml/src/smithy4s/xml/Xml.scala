@@ -23,6 +23,7 @@ import fs2.data.xml._
 import fs2.data.xml.dom._
 import cats.syntax.all._
 import cats.effect.Concurrent
+import smithy4s.codecs._
 
 object Xml {
 
@@ -33,10 +34,7 @@ object Xml {
     * result in memory leaks.
     */
   def read[A: Schema](blob: Blob): Either[XmlDecodeError, A] =
-    readToStream[fs2.Fallible, A](blob)
-      .take(1)
-      .compile
-      .onlyOrError
+    readToStream[fs2.Fallible, A](blob).compile.onlyOrError
       .leftMap {
         case x: XmlDecodeError => x
         case other => new XmlDecodeError(XPath(List.empty), other.getMessage)
@@ -77,6 +75,38 @@ object Xml {
     */
   def xmlByteStreamDecoders[F[_]: Concurrent]: XmlByteStreamDecoderCompiler[F] =
     new smithy4s.xml.internals.XmlByteStreamDecoderCompilerImpl[F]()
+
+  // TODO move the implementation of this
+  val readers: BlobDecoder.Compiler = new BlobDecoder.Compiler {
+    type Cache = XmlDocument.Decoder.Cache
+    def createCache(): Cache = XmlDocument.Decoder.createCache()
+    def fromSchema[A](schema: Schema[A], cache: Cache): BlobDecoder[A] = {
+      val xmlDocumentDecoder = XmlDocument.Decoder.fromSchema(schema, cache)
+      new BlobDecoder[A] {
+        def read(blob: Blob): Either[PayloadError, A] =
+          readToDocumentStream[fs2.Fallible](blob).compile.onlyOrError
+            .leftMap { error =>
+              new XmlDecodeError(XPath(List.empty), error.getMessage)
+            }
+            .flatMap(xmlDocumentDecoder.decode(_))
+            .leftMap { case XmlDecodeError(xPath, message) =>
+              PayloadError(xPath.toPayloadPath, "", message)
+            }
+      }
+    }
+    def fromSchema[A](schema: Schema[A]): BlobDecoder[A] =
+      fromSchema(schema, createCache())
+  }
+
+  val writers: BlobEncoder.Compiler =
+    Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
+      smithy4s.codecs.Writer
+        .addingTo[Any]
+        .andThenK { (stream: Stream[Pure, Byte]) =>
+          val bytes = stream.compile.to(fs2.Chunk)
+          Blob(bytes.toArray)
+        }
+    }
 
   private val decoderCacheGlobal = XmlDocument.Decoder.createCache()
   private val encoderCacheGlobal = XmlDocument.Encoder.createCache()

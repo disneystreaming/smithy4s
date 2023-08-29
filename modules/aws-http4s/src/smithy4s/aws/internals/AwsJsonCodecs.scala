@@ -17,15 +17,10 @@
 package smithy4s.aws
 package internals
 
-import cats.effect.Concurrent
-import smithy4s.http4s.kernel._
-import smithy4s.interopcats._
+import smithy4s.capability.MonadThrowLike
+import smithy4s.Blob
 import smithy4s.http._
 import smithy4s.json.Json
-import fs2.compression.Compression
-import org.http4s.Entity
-import smithy4s.Endpoint
-import smithy4s.codecs.PayloadCodec
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -44,39 +39,18 @@ private[aws] object AwsJsonCodecs {
         .withHintMask(hintMask)
     )
 
-  def make[F[_]: Concurrent: Compression](
-      contentType: String
-  ): HttpUnaryClientCodecs.Make[F, Entity[F]] = {
-    val httpMediaType = HttpMediaType(contentType)
-    val requestWriters =
-      jsonPayloadCodecs.mapK(
-        PayloadCodec.writerK
-          .andThen(EntityWriter.fromPayloadWriterK[F])
-          .andThen(HttpRequest.Encoder.fromBodyEncoderK(httpMediaType.value))
-      )
-    val responseReaders = jsonPayloadCodecs.mapK(
-      PayloadCodec.readerK
-        .andThen(EntityReader.fromPayloadReaderK[F])
-        .andThen(HttpResponse.extractBody)
-    )
+  private[aws] val jsonReaders = jsonPayloadCodecs.readers
+  private[aws] val jsonWriters = jsonPayloadCodecs.writers
 
-    val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
-    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
-      def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
-        val transformEncoders = applyCompression[F](endpoint.hints)
-        val finalRequestWriters = transformEncoders(requestWriters)
-        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
-          finalRequestWriters,
-          responseReaders,
-          responseReaders,
-          discriminator,
-          toStrict
-        )
-        make.apply(endpoint)
-      }
-    }
+  def make[F[_]: MonadThrowLike](
+      contentType: String
+  ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
+    HttpUnaryClientCodecs.builder
+      .withBodyEncoders(jsonWriters)
+      .withSuccessBodyDecoders(jsonReaders)
+      .withErrorBodyDecoders(jsonReaders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonReaders))
+      .withRequestMediaType(contentType)
   }
 
 }

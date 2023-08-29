@@ -23,64 +23,26 @@ import org.http4s.Entity
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
-import smithy4s.codecs.Reader
-import smithy4s.capability.Covariant
-import smithy4s.interopcats._
-import cats.effect.Concurrent
-import smithy4s.xml.Xml
-import fs2.Stream
-import fs2.Pure
+import smithy4s.Blob
+import smithy4s.Endpoint
+import org.http4s.client.Client
 
 package object internals {
 
-  private[internals] type RequestEncoderCompiler[F[_]] =
-    CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]]
-
   private[internals] def applyCompression[F[_]: Compression](
-      hints: Hints,
       retainUserEncoding: Boolean = true
-  ): RequestEncoderCompiler[F] => RequestEncoderCompiler[F] = {
-    val compression =
-      smithy4s.http4s.kernel.GzipRequestCompression[F](retainUserEncoding)
-    import smithy4s.codecs.Writer
-    hints.get(smithy.api.RequestCompression) match {
-      case Some(rc) if rc.encodings.contains("gzip") =>
-        (encoder: RequestEncoderCompiler[F]) =>
-          encoder.mapK(Writer.andThenK_(compression))
-      case _ => identity[RequestEncoderCompiler[F]]
-    }
+  ): Endpoint.Middleware[Client[F]] = {
+    // val compression =
+    //   smithy4s.http4s.kernel.GzipRequestCompression[F](retainUserEncoding)
+    // import smithy4s.codecs.Writer
+    // hints.get(smithy.api.RequestCompression) match {
+    //   case Some(rc) if rc.encodings.contains("gzip") =>
+    //     (encoder: RequestEncoderCompiler[F]) =>
+    //       encoder.mapK(Writer.andThenK_(compression))
+    //   case _ => identity[RequestEncoderCompiler[F]]
+    // }
+    ???
   }
 
-  private[internals] def xmlRequestWriters[F[_]]
-      : CachedSchemaCompiler[HttpRequest.Encoder[Entity[F], *]] =
-    Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
-      smithy4s.codecs.Writer
-        .addingTo[Any]
-        .andThenK { (stream: Stream[Pure, Byte]) =>
-          val bytes = stream.compile.to(fs2.Chunk)
-          Entity(Stream.chunk[F, Byte](bytes), Some(bytes.size.toLong))
-        }
-        .andThen(HttpRequest.Encoder.fromBodyEncoderK("application/xml"))
-    }
-
-  private[internals] def xmlResponseReaders[F[_]: Concurrent]
-      : CachedSchemaCompiler[HttpResponse.Decoder[F, Entity[F], *]] =
-    Xml
-      .xmlByteStreamDecoders[F]
-      .mapK {
-        Reader
-          .liftPolyFunction(MonadThrowLike.mapErrorK[F](fromXmlToHttpError))
-          .andThen(Reader.in[F].composeK((_: Entity[F]).body))
-          .andThen(HttpResponse.extractBody[F, Entity[F]])
-      }
-
-  private val fromXmlToHttpError: PartialFunction[Throwable, Throwable] = {
-    case xmlDecodeError: smithy4s.xml.XmlDecodeError =>
-      smithy4s.http.HttpPayloadError(
-        xmlDecodeError.path.toPayloadPath,
-        "",
-        xmlDecodeError.message
-      )
-  }
 
 }

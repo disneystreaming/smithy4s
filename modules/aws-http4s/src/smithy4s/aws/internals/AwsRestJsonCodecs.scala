@@ -17,27 +17,20 @@
 package smithy4s.aws
 package internals
 
+import smithy4s.capability.MonadThrowLike
 import smithy4s.Blob
-import smithy4s.codecs._
 import smithy4s.http._
 import smithy4s.json.Json
-import smithy4s.interopcats._
-import cats.effect.Concurrent
-import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.kinds.PolyFunctions
-import smithy4s.Endpoint
-import org.http4s.Entity
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.client.UnaryClientCodecs
+import smithy4s.codecs.Writer
 
 // scalafmt: {maxColumn = 120}
 private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent: Compression](contentType: String): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
-    val mediaType = HttpMediaType(contentType)
+  def make[F[_]: MonadThrowLike](
+      contentType: String
+  ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
     val jsonPayloadCodecs =
       Json.payloadCodecs.withJsoniterCodecCompiler(
@@ -50,54 +43,18 @@ private[aws] object AwsRestJsonCodecs {
     def nullToEmptyObject(blob: Blob): Blob =
       if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
-    val jsonWriters = jsonPayloadCodecs.mapK {
-      PayloadCodec.writerK
-        .andThen[PayloadWriter](Writer.andThenK(nullToEmptyObject))
-        .andThen[EntityWriter[F, *]](EntityWriter.fromPayloadWriterK)
-        .andThen[HttpRequest.Encoder[Entity[F], *]](HttpRequest.Encoder.fromBodyEncoderK(mediaType.value))
-    }
+    val jsonWriters = jsonPayloadCodecs.writers.mapK { Writer.addingTo[Any].andThenK(nullToEmptyObject) }
+    val jsonReaders = jsonPayloadCodecs.readers
 
-    val jsonReaders =
-      jsonPayloadCodecs.mapK {
-        PayloadCodec.readerK
-          .andThen[HttpPayloadReader](
-            Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpContractError.fromPayloadError))
-          )
-          .andThen(EntityReader.fromHttpPayloadReaderK[F])
-      }
-
-    val mediaWriters = CachedSchemaCompiler.getOrElse(stringAndBlobRequestWriters[F], jsonWriters)
-    val mediaReaders = CachedSchemaCompiler.getOrElse(stringAndBlobEntityReaders[F], jsonReaders)
-
-    val requestWriters = HttpRequest.Encoder.restSchemaCompiler[Entity[F]](
-      Metadata.AwsEncoder,
-      mediaWriters
-    )
-
-    val responseReaders = HttpResponse.Decoder.restSchemaCompiler[F, Entity[F]](
-      Metadata.AwsDecoder,
-      mediaReaders
-    )
-
-    val discriminator = AwsErrorTypeDecoder.fromResponse(responseReaders)
-
-    new HttpUnaryClientCodecs.Make[F, Entity[F]] {
-      def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): HttpUnaryClientCodecs[F, Entity[F], I, E, O] = {
-        val addCompression = applyCompression[F](endpoint.hints)
-        val finalRequestWriters = addCompression(requestWriters)
-        val make = HttpUnaryClientCodecs.Make[F, Entity[F]](
-          finalRequestWriters,
-          responseReaders,
-          responseReaders,
-          discriminator,
-          toStrict
-        )
-        make.apply(endpoint)
-      }
-    }
-
+    HttpUnaryClientCodecs.builder
+      .withBodyEncoders(jsonWriters)
+      .withSuccessBodyDecoders(jsonReaders)
+      .withErrorBodyDecoders(jsonReaders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonReaders))
+      .withMetadataDecoders(Metadata.AwsDecoder)
+      .withMetadataEncoders(Metadata.AwsEncoder)
+      .withRawStringsAndBlobsPayloads
+      .withRequestMediaType(contentType)
   }
 
 }
