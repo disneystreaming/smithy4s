@@ -20,11 +20,11 @@ import scala.util.hashing.MurmurHash3
 import smithy4s.capability.MonadThrowLike
 import cats.MonadThrow
 import cats.syntax.all._
+import cats.kernel.Monoid
 
 package object interopcats {
 
-  private[smithy4s] implicit def monadThrowShim[F[_]: MonadThrow]
-      : MonadThrowLike[F] =
+  implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
     new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = MonadThrow[F].pure(a)
       def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
@@ -36,9 +36,22 @@ package object interopcats {
         MonadThrow[F].handleErrorWith(fa)(f)
     }
 
+  implicit def monoidEndpointMiddleware[Construct]
+      : Monoid[Endpoint.Middleware[Construct]] =
+    new Monoid[Endpoint.Middleware[Construct]] {
+      def combine(
+          a: Endpoint.Middleware[Construct],
+          b: Endpoint.Middleware[Construct]
+      ): Endpoint.Middleware[Construct] =
+        a.andThen(b)
+
+      val empty = Endpoint.Middleware.noop
+    }
+
   private[interopcats] def combineHash(start: Int, hashes: Int*): Int = {
     var hashResult = start
     hashes.foreach(hash => hashResult = MurmurHash3.mix(hashResult, hash))
     MurmurHash3.finalizeHash(hashResult, hashes.length)
   }
+
 }

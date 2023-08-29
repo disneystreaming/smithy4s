@@ -180,7 +180,8 @@ abstract class SimpleProtocolBuilder[P](
         .map { _ =>
           val errorHandler =
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
-          val finalMiddleware = errorHandler |+| middleware |+| errorHandler
+          val finalMiddleware =
+            errorHandler.andThen(middleware).andThen(errorHandler)
           new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
