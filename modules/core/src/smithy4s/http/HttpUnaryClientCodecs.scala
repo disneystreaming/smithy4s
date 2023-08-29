@@ -134,7 +134,15 @@ object HttpUnaryClientCodecs {
             CachedSchemaCompiler
               .getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, blobDecoders)
           } else blobDecoders
-          decoders.mapK(Reader.of[Blob].liftPolyFunction(MonadThrowLike.liftEitherK[F, PayloadError]))
+          decoders.mapK(
+            Reader
+              .of[Blob]
+              .liftPolyFunction(
+                MonadThrowLike
+                  .liftEitherK[F, PayloadError]
+                  .andThen(HttpContractError.fromPayloadErrorK[F])
+              )
+          )
         }
 
         metadataDecoders match {

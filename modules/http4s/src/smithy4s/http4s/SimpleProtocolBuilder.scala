@@ -83,7 +83,7 @@ abstract class SimpleProtocolBuilder[P](
       val service: smithy4s.Service[Alg],
       uri: Uri = uri"http://localhost:8080",
       middleware: ClientEndpointMiddleware[F] =
-        Endpoint.Middleware.noop[Client[F]] 
+        Endpoint.Middleware.noop[Client[F]]
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =

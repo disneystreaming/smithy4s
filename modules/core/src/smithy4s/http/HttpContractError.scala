@@ -21,6 +21,8 @@ import smithy4s.schema._
 import smithy4s.schema.Schema._
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
+import smithy4s.capability.MonadThrowLike
+import smithy4s.kinds.PolyFunction
 
 sealed trait HttpContractError
     extends Throwable
@@ -34,6 +36,9 @@ object HttpContractError {
       payloadError.expected,
       payloadError.message
     )
+
+  def fromPayloadErrorK[F[_]: MonadThrowLike]: PolyFunction[F, F] =
+    MonadThrowLike.mapErrorK[F] { case e: PayloadError => fromPayloadError(e) }
 
   val schema: Schema[HttpContractError] = {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
