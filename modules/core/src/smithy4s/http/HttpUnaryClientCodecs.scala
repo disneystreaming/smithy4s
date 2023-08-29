@@ -37,7 +37,7 @@ object HttpUnaryClientCodecs {
       metadataEncoders = None,
       metadataDecoders = None,
       rawStringsAndBlobPayloads = false,
-      writeEmptyStructs = false,
+      writeEmptyStructs = _ => false,
       requestMediaType = "text/plain",
       requestTransformation = F.pure(_),
       responseTransformation = F.pure(_)
@@ -52,7 +52,7 @@ object HttpUnaryClientCodecs {
     def withMetadataEncoders(encoders: Metadata.Encoder.Compiler): Builder[F, Request, Response]
     def withMetadataDecoders(decoders: Metadata.Decoder.Compiler): Builder[F, Request, Response]
     def withRawStringsAndBlobsPayloads: Builder[F, Request, Response]
-    def withWriteEmptyStructs: Builder[F, Request, Response]
+    def withWriteEmptyStructs(cond: Schema[_] => Boolean): Builder[F, Request, Response]
     def withRequestMediaType(mediaType: String): Builder[F, Request, Response]
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
@@ -68,7 +68,7 @@ object HttpUnaryClientCodecs {
       metadataEncoders: Option[Metadata.Encoder.Compiler],
       metadataDecoders: Option[Metadata.Decoder.Compiler],
       rawStringsAndBlobPayloads: Boolean,
-      writeEmptyStructs: Boolean,
+      writeEmptyStructs: Schema[_] => Boolean,
       requestMediaType: String,
       requestTransformation: HttpRequest[Blob] => F[Request],
       responseTransformation: Response => F[HttpResponse[Blob]]
@@ -91,8 +91,8 @@ object HttpUnaryClientCodecs {
       copy(metadataDecoders = Some(decoders))
     def withRawStringsAndBlobsPayloads: Builder[F, Request, Response] =
       copy(rawStringsAndBlobPayloads = true)
-    def withWriteEmptyStructs: Builder[F, Request, Response] =
-      copy(writeEmptyStructs = true)
+    def withWriteEmptyStructs(cond: Schema[_] => Boolean): Builder[F, Request, Response] =
+      copy(writeEmptyStructs = cond)
     def withRequestMediaType(mediaType: String): Builder[F, Request, Response] =
       copy(requestMediaType = mediaType)
 
@@ -152,8 +152,9 @@ object HttpUnaryClientCodecs {
       }
 
       val inputEncoders = metadataEncoders match {
-        case Some(mEncoders) => HttpRequest.Encoder.restSchemaCompiler(mEncoders, httpMediaWriter)
-        case None            => httpMediaWriter
+        case Some(mEncoders) =>
+          HttpRequest.Encoder.restSchemaCompiler(mEncoders, httpMediaWriter, writeEmptyStructs)
+        case None => httpMediaWriter
       }
       val outputDecoders = responseDecoders(successResponseBodyDecoders)
       val errorDecoders = responseDecoders(errorResponseBodyDecoders)

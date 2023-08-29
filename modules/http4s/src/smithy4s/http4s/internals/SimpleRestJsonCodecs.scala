@@ -62,13 +62,6 @@ private[http4s] class SimpleRestJsonCodecs(
     smithy4s.http.amazonErrorTypeHeader
   )
 
-  // private def addEmptyJsonToResponse[F[_]](response: HttpResponse[Entity[F]]): HttpResponse[Entity[F]] = {
-  //   val entity = response.body
-  //   response
-  //     .copy(body = entity.copy(body = entity.body.ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))))
-  //     .withContentType("application/json")
-  // }
-
   def makeServerCodecs[F[_]: Concurrent] = {
     val baseResponse = HttpResponse(200, Map.empty, Blob.empty)
     HttpUnaryServerCodecs.builder
@@ -80,45 +73,11 @@ private[http4s] class SimpleRestJsonCodecs(
       .withMetadataEncoders(Metadata.Encoder)
       .withBaseResponse(_ => baseResponse.pure[F])
       .withResponseMediaType("application/json")
+      .withWriteEmptyStructs(!_.isUnit)
       .withRequestTransformation[Request[F]](toSmithy4sHttpRequest[F](_))
       .withResponseTransformation(fromSmithy4sHttpResponse[F](_).pure[F])
       .build()
   }
-
-  // {
-  //   val messageDecoderCompiler =
-  //     HttpRequest.Decoder.restSchemaCompiler[F, Entity[F]](
-  //       Metadata.Decoder,
-  //       entityDecoders[F]
-  //     )
-  //   val responseEncoderCompiler = {
-  //     val restSchemaCompiler = HttpResponse.Encoder.restSchemaCompiler[Entity[F]](
-  //       Metadata.Encoder,
-  //       entityEncoders[F],
-  //       "application/json"
-  //     )
-  //     new CachedSchemaCompiler[HttpResponse.Encoder[Entity[F], *]] {
-  //       type Cache = restSchemaCompiler.Cache
-  //       def createCache(): Cache = restSchemaCompiler.createCache()
-  //       def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
-
-  //       def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
-  //         restSchemaCompiler.fromSchema(schema, cache)
-  //       } else {
-  //         restSchemaCompiler
-  //           .fromSchema(schema, cache)
-  //           .andThen(addEmptyJsonToResponse(_))
-  //       }
-  //     }
-  //   }
-
-  //   smithy4s.http.HttpUnaryServerCodecs.Make[F, Entity[F]](
-  //     input = messageDecoderCompiler,
-  //     output = responseEncoderCompiler,
-  //     error = responseEncoderCompiler,
-  //     errorHeaders = errorHeaders
-  //   )
-  // }
 
   def makeClientCodecs[F[_]: Concurrent](
       uri: Uri

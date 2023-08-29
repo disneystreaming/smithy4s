@@ -37,7 +37,7 @@ object HttpUnaryServerCodecs {
       metadataEncoders = None,
       metadataDecoders = None,
       rawStringsAndBlobPayloads = false,
-      writeEmptyStructs = false,
+      writeEmptyStructs = _ => false,
       errorTypeHeaders = Nil,
       responseMediaType = "text/plain",
       requestTransformation = F.pure(_),
@@ -52,7 +52,7 @@ object HttpUnaryServerCodecs {
     def withMetadataEncoders(encoders: Metadata.Encoder.Compiler): Builder[F, Request, Response]
     def withMetadataDecoders(decoders: Metadata.Decoder.Compiler): Builder[F, Request, Response]
     def withRawStringsAndBlobsPayloads: Builder[F, Request, Response]
-    def withWriteEmptyStructs: Builder[F, Request, Response]
+    def withWriteEmptyStructs(cond: Schema[_] => Boolean): Builder[F, Request, Response]
     def withResponseMediaType(mediaType: String): Builder[F, Request, Response]
     def withErrorTypeHeaders(headerNames: String*): Builder[F, Request, Response]
     def withRequestTransformation[Request0](f: Request0 => F[Request]): Builder[F, Request0, Response]
@@ -68,7 +68,7 @@ object HttpUnaryServerCodecs {
       metadataEncoders: Option[Metadata.Encoder.Compiler],
       metadataDecoders: Option[Metadata.Decoder.Compiler],
       rawStringsAndBlobPayloads: Boolean,
-      writeEmptyStructs: Boolean,
+      writeEmptyStructs: Schema[_] => Boolean,
       responseMediaType: String,
       errorTypeHeaders: List[String],
       requestTransformation: Request => F[HttpRequest[Blob]],
@@ -90,8 +90,8 @@ object HttpUnaryServerCodecs {
       copy(metadataDecoders = Some(decoders))
     def withRawStringsAndBlobsPayloads: Builder[F, Request, Response] =
       copy(rawStringsAndBlobPayloads = true)
-    def withWriteEmptyStructs: Builder[F, Request, Response] =
-      copy(writeEmptyStructs = true)
+    def withWriteEmptyStructs(cond: Schema[_] => Boolean): Builder[F, Request, Response] =
+      copy(writeEmptyStructs = cond)
     def withResponseMediaType(mediaType: String): Builder[F, Request, Response] =
       copy(responseMediaType = mediaType)
     def withErrorTypeHeaders(headerNames: String*): Builder[F, Request, Response] =
@@ -130,8 +130,9 @@ object HttpUnaryServerCodecs {
           Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
 
         metadataEncoders match {
-          case Some(mEncoders) => HttpResponse.Encoder.restSchemaCompiler(mEncoders, httpMediaWriters)
-          case None            => httpMediaWriters
+          case Some(mEncoders) =>
+            HttpResponse.Encoder.restSchemaCompiler(mEncoders, httpMediaWriters, writeEmptyStructs)
+          case None => httpMediaWriters
         }
       }
 
@@ -170,11 +171,18 @@ object HttpUnaryServerCodecs {
         def apply[I, E, O, SI, SO](
             endpoint: Endpoint.Base[I, E, O, SI, SO]
         ): UnaryServerCodecs[F, Request, Response, I, E, O] = {
-          val outputW = outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
+          val outputW = endpoint.hints.get(smithy.api.Http) match {
+            case Some(http) =>
+              outputEncoders
+                .fromSchema(endpoint.output, outputEncoderCache)
+                .compose[HttpResponse[Blob]](_.withStatusCode(http.code))
+            case None => outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
+          }
           val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.errorable, errorEncoders)
           val inputDecoder: HttpRequest.Decoder[F, Blob, I] =
             inputDecoders.fromSchema(endpoint.input, inputDecoderCache)
           val base = baseResponse(endpoint.hints)
+
           def encodeOutput(o: O) = F.map(base)(outputW.write(_, o))
           def encodeError(e: E) = F.map(base)(errorW.write(_, e))
           def httpContractErrorEncoder(e: HttpContractError) =

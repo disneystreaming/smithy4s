@@ -20,7 +20,6 @@ import smithy4s.Errorable
 import smithy4s.codecs.{Reader, Writer}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.{Encoder => BodyEncoder}
 import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.capability.MonadThrowLike
@@ -69,34 +68,35 @@ final case class HttpResponse[+A](
 }
 
 object HttpResponse {
-  type Encoder[Body, A] = Writer[HttpResponse[Body], HttpResponse[Body], A]
-  type Decoder[F[_], Body, A] = Reader[F, HttpResponse[Body], A]
+  private[http] type Encoder[Body, A] =
+    Writer[HttpResponse[Body], HttpResponse[Body], A]
+  private[http] type Decoder[F[_], Body, A] = Reader[F, HttpResponse[Body], A]
 
   private[http] def isStatusCodeSuccess(statusCode: Int): Boolean =
     100 <= statusCode && statusCode <= 399
 
-  object Encoder {
+  private[http] object Encoder {
 
-    def restSchemaCompiler[Body](
+    private[http] def fromHttpEndpoint[Body, I](
+        httpEndpoint: HttpEndpoint[I]
+    ): Encoder[Body, I] = new Encoder[Body, I] {
+      def write(response: HttpResponse[Body], input: I): HttpResponse[Body] = {
+        response.copy(statusCode = httpEndpoint.code)
+      }
+    }
+
+    private[http] def restSchemaCompiler[Body](
         metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]]
+        bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]],
+        writeEmptyStructs: Schema[_] => Boolean
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoders.mapK(fromMetadataEncoderK[Body])
       HttpRestSchema.combineWriterCompilers(
         metadataCompiler,
-        bodyEncoders
+        bodyEncoders,
+        writeEmptyStructs
       )
-    }
-
-    def restSchemaCompiler[Body](
-        metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoders: CachedSchemaCompiler[BodyEncoder[Body, *]],
-        contentType: String
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val bodyCompiler =
-        bodyEncoders.mapK(fromBodyEncoderK[Body](contentType))
-      restSchemaCompiler(metadataEncoders, bodyCompiler)
     }
 
     private[http] def forError[Body, E](
@@ -120,23 +120,11 @@ object HttpResponse {
           .addHeaders(meta.headers)
     }
 
-    private def bodyEncoder[Body](contentType: String): Encoder[Body, Body] = {
-      (resp: HttpResponse[Body], body: Body) =>
-        resp.copy(body = body).withContentType(contentType)
-    }
-
     private def fromMetadataEncoderK[Body]
         : PolyFunction[Metadata.Encoder, Encoder[Body, *]] =
       Metadata.Encoder.toWriterK
         .widen[Writer[HttpResponse[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
-
-    private[smithy4s] def fromBodyEncoderK[Body](
-        contentType: String
-    ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
-      Writer
-        .pipeDataK[HttpResponse[Body], Body](bodyEncoder[Body](contentType))
-        .narrow
 
     private def forErrorAux[Body, E](
         errorTypeHeaders: List[String],
@@ -177,7 +165,7 @@ object HttpResponse {
 
   }
 
-  object Decoder {
+  private[http] object Decoder {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
@@ -267,11 +255,6 @@ object HttpResponse {
           }
         }
       }
-
-    private[smithy4s] def fromHttpMediaReaderK[F[_], Body]: PolyFunction[
-      HttpMediaTyped[Reader[F, Body, *], *],
-      Decoder[F, Body, *]
-    ] = HttpMediaTyped.unwrappedK.andThen(extractBody)
 
   }
 

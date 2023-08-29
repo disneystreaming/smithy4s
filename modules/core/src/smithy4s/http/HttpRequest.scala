@@ -19,7 +19,6 @@ package smithy4s.http
 import smithy4s.kinds._
 import smithy4s.codecs._
 import smithy4s.capability.Covariant
-import smithy4s.codecs.{Encoder => BodyEncoder}
 import smithy4s.schema._
 import smithy4s.capability.MonadThrowLike
 
@@ -48,20 +47,21 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
-  type Encoder[Body, A] = Writer[HttpRequest[Body], HttpRequest[Body], A]
-  type Decoder[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
+  private[http] type Encoder[Body, A] =
+    Writer[HttpRequest[Body], HttpRequest[Body], A]
+  private[http] type Decoder[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
 
   implicit val reqCovariant: Covariant[HttpRequest] =
     new Covariant[HttpRequest] {
       def map[A, B](req: HttpRequest[A])(f: A => B): HttpRequest[B] = req.map(f)
     }
 
-  object Encoder {
+  private[http] object Encoder {
 
     def restSchemaCompiler[Body](
         metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
         bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]],
-        writeEmptyStructs: Boolean = false
+        writeEmptyStructs: Schema[_] => Boolean
     ): CachedSchemaCompiler[Encoder[Body, *]] = {
       val metadataCompiler =
         metadataEncoders.mapK(fromMetadataEncoderK[Body])
@@ -69,20 +69,6 @@ object HttpRequest {
         metadataCompiler,
         bodyEncoders,
         writeEmptyStructs
-      )
-    }
-
-    def restSchemaCompiler[Body](
-        metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoders: CachedSchemaCompiler[BodyEncoder[Body, *]],
-        contentType: String
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val bodyCompiler =
-        bodyEncoders.mapK(fromBodyEncoderK[Body](contentType))
-      restSchemaCompiler(
-        metadataEncoders,
-        bodyCompiler,
-        writeEmptyStructs = false
       )
     }
 
@@ -100,20 +86,6 @@ object HttpRequest {
       }
     }
 
-    private[smithy4s] def fromHttpMediaWriterK[Body]: PolyFunction[
-      HttpMediaTyped[BodyEncoder[Body, *], *],
-      Encoder[Body, *]
-    ] =
-      new PolyFunction[
-        HttpMediaTyped[BodyEncoder[Body, *], *],
-        Encoder[Body, *]
-      ] {
-        def apply[A](
-            fa: HttpMediaTyped[BodyEncoder[Body, *], A]
-        ): Encoder[Body, A] =
-          fromBodyEncoderK(fa.mediaType.value)(fa.instance)
-      }
-
     private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
@@ -122,23 +94,11 @@ object HttpRequest {
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
-    private def bodyEncoder[Body](contentType: String): Encoder[Body, Body] = {
-      (req: HttpRequest[Body], body: Body) =>
-        req.copy(body = body).withContentType(contentType)
-    }
-
     private def fromMetadataEncoderK[Body]
         : PolyFunction[Metadata.Encoder, Encoder[Body, *]] =
       Metadata.Encoder.toWriterK
         .widen[Writer[HttpRequest[Body], Metadata, *]]
         .andThen(Writer.pipeDataK(metadataEncoder[Body]))
-
-    private[smithy4s] def fromBodyEncoderK[Body](
-        contentType: String
-    ): PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
-      Writer
-        .pipeDataK[HttpRequest[Body], Body](bodyEncoder[Body](contentType))
-        .narrow
 
   }
 
