@@ -14,7 +14,7 @@ object Value extends ShapeTag.Companion[Value] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Value] = struct(
-    string.required[Value]("value", _.value).addHints(smithy.api.Required()),
+    string.required[Value]("value", _.value),
   ){
     Value.apply
   }.withId(id).addHints(hints)

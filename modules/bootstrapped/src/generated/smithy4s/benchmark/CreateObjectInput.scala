@@ -14,9 +14,9 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[CreateObjectInput] = struct(
-    string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
+    string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),
+    string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
+    S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(smithy.api.HttpPayload()),
   ){
     CreateObjectInput.apply
   }.withId(id).addHints(hints)

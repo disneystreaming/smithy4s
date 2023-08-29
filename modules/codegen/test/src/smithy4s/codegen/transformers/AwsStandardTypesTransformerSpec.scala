@@ -87,7 +87,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |  val hints: Hints = Hints.empty
         |
         |  implicit val schema: Schema[TestStructure] = struct(
-        |    int.required[TestStructure]("i", _.i).addHints(smithy.api.Required()),
+        |    int.required[TestStructure]("i", _.i),
         |    Date.schema.optional[TestStructure]("d", _.d),
         |    Long.schema.optional[TestStructure]("l", _.l),
         |  ){

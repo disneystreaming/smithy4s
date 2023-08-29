@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
+  fs2,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
@@ -373,7 +374,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.9.1",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.5"
+      "io.get-coursier" %% "coursier" % "2.1.6"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -697,6 +698,9 @@ lazy val http4s = projectMatrix
         Dependencies.Alloy.`protocol-tests` % Test
       )
     },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.example.guides.auth"
+    ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),

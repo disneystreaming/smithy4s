@@ -1031,7 +1031,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
-      nonConstraintNonMetaTraits.map(unfoldTrait) ++
+      nonConstraintNonMetaTraits
+        .filterNot(_.toShapeId == RequiredTrait.ID)
+        .map(unfoldTrait) ++
       maybeTypeclassesHint(shape)
   }
 

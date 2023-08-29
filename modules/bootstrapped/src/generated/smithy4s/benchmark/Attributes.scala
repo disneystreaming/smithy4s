@@ -18,11 +18,11 @@ object Attributes extends ShapeTag.Companion[Attributes] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Attributes] = struct(
-    string.required[Attributes]("user", _.user).addHints(smithy.api.Required()),
-    boolean.required[Attributes]("public", _.public).addHints(smithy.api.Required()),
-    long.required[Attributes]("size", _.size).addHints(smithy.api.Required()),
-    timestamp.required[Attributes]("creationDate", _.creationDate).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required()),
-    string.required[Attributes]("region", _.region).addHints(smithy.api.Required()),
+    string.required[Attributes]("user", _.user),
+    boolean.required[Attributes]("public", _.public),
+    long.required[Attributes]("size", _.size),
+    timestamp.required[Attributes]("creationDate", _.creationDate).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    string.required[Attributes]("region", _.region),
     boolean.optional[Attributes]("queryable", _.queryable),
     timestamp.optional[Attributes]("queryableLastChange", _.queryableLastChange).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
     boolean.optional[Attributes]("blockPublicAccess", _.blockPublicAccess),

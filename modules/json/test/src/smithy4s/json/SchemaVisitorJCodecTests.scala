@@ -80,7 +80,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     implicit val schema: smithy4s.Schema[IntList] = recursive(
       struct(
-        int.required[IntList]("head", _.head).addHints(smithy.api.Required()),
+        int.required[IntList]("head", _.head),
         IntList.schema.optional[IntList]("tail", _.tail)
       ) {
         IntList.apply
@@ -392,6 +392,18 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val documentJson = writeToString(doc)
     val expected =
       """{"int":1,"str":"hello","null":null,"bool":true,"array":["foo","bar"]}"""
+
+    val decoded = readFromString[Document](documentJson)
+
+    expect.same(documentJson, expected)
+    expect.same(decoded, doc)
+  }
+
+  test("empty document arrays can be encoded (#1158)") {
+    val doc: Document = Document.array()
+    val documentJson = writeToString(doc)
+    val expected =
+      """[]"""
 
     val decoded = readFromString[Document](documentJson)
 
