@@ -154,7 +154,7 @@ object HttpUnaryServerCodecs {
         }
 
         metadataDecoders match {
-          case Some(mDecoders) => HttpRequest.Decoder.restSchemaCompiler(mDecoders, httpBodyDecoders)
+          case Some(mDecoders) => HttpRequest.Decoder.restSchemaCompiler(mDecoders, httpBodyDecoders, None)
           case None            => httpBodyDecoders.mapK(HttpRequest.extractBody[F, Blob])
         }
       }

@@ -158,7 +158,8 @@ object HttpRestSchema {
   // scalafmt: {maxColumn = 120}
   def combineReaderCompilers[F[_]: Zipper, Message](
       metadataDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
-      bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]]
+      bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
+      drainBody: Message => F[Unit]
   ): CachedSchemaCompiler[Reader[F, Message, *]] =
     new CachedSchemaCompiler[Reader[F, Message, *]] {
       val zipper = Zipper[Reader[F, Message, *]]
@@ -182,9 +183,8 @@ object HttpRestSchema {
             // but we still decoding Unit from the body to drain the message.
             val metadataDecoder =
               metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
-            val bodyDecoder =
-              bodyDecoderCompiler.fromSchema(Schema.unit, cache._2)
-            zipper.zipMap(bodyDecoder, metadataDecoder) { case (_, data) => data }
+            val bodyDrain = Reader.lift(drainBody)
+            zipper.zipMap(bodyDrain, metadataDecoder) { case (_, data) => data }
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
             bodyDecoderCompiler.fromSchema(bodySchema, cache._2)

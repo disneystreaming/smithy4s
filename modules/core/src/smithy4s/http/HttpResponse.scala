@@ -169,16 +169,19 @@ object HttpResponse {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]]
+        bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]],
+        drainBody: Option[HttpResponse[Body] => F[Unit]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] =
       restSchemaCompilerAux(
         metadataDecoderCompiler,
-        bodyDecoderCompiler.mapK { extractBody[F, Body] }
+        bodyDecoderCompiler.mapK { extractBody[F, Body] },
+        drainBody.getOrElse(_ => MonadThrowLike[F].pure(()))
       )
 
     private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        responseReaders: CachedSchemaCompiler[Decoder[F, Body, *]]
+        responseReaders: CachedSchemaCompiler[Decoder[F, Body, *]],
+        drainBody: HttpResponse[Body] => F[Unit]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         metadataDecoderCompiler.mapK(
@@ -189,7 +192,8 @@ object HttpResponse {
 
       HttpRestSchema.combineReaderCompilers[F, HttpResponse[Body]](
         restMetadataCompiler,
-        responseReaders
+        responseReaders,
+        drainBody
       )
     }
 

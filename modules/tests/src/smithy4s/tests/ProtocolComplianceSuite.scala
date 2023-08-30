@@ -151,7 +151,7 @@ abstract class ProtocolComplianceSuite
               case Right(expectations) => expectations
               case Left(throwable) =>
                 Expectations.Helpers.failure(
-                  s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+                  s"unexpected error when running test ${throwable.getMessage}: \n $throwable"
                 )
             }
         }

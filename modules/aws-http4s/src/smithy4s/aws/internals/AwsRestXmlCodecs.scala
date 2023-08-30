@@ -39,7 +39,7 @@ private[aws] object AwsRestXmlCodecs {
       .withBodyEncoders(Xml.writers)
       .withSuccessBodyDecoders(Xml.readers)
       .withErrorBodyDecoders(errorReaders)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(Xml.readers))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(errorReaders))
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads
