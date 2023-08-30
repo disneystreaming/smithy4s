@@ -35,17 +35,6 @@ import smithy4s.xml.internals.XmlStartingPath
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
 
-  // The AWS protocol works in terms of XmlFlattened and XmlName hints,
-  // even for the input side, which is most definitely _not_ XML. Partly
-  // because that seems odd, but mostly so that the URL form support can
-  // be completely agnostic of AWS protocol details, they work with their
-  // own more appropriately named hints - which is what necessitates the
-  // translation here.
-  private[aws] val xmlToUrlFormHints = (hints: Hints) =>
-    hints
-      .expand((_: XmlFlattened) => UrlFormFlattened())
-      .expand((xmlName: XmlName) => UrlFormName(xmlName.value))
-
   private[aws] val inputEncoders = {
     UrlForm
       .Encoder(capitalizeStructAndUnionMemberNames = false)
@@ -58,30 +47,40 @@ private[aws] object AwsQueryCodecs {
     smithy4s.http.internals.ErrorDiscriminatorValue(awsQueryError.code)
   }
 
-  // The actual error payloads are nested under two layers of XML
-  private[aws] val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
-
   // The name of the endpoint and version of the service must be added to the body
   private[aws] def addEndpointInfo(endpointName: String, version: String) = (hints: Hints) =>
     hints.add(StaticUrlFormElements(List(("Action" -> endpointName), ("Version" -> version))))
 
-  private[aws] val discriminatorReaders =
+  // The actual error payloads are nested under two layers of XML
+  private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
+  private val discriminatorReaders =
     Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+
+  // The AWS protocol works in terms of XmlFlattened and XmlName hints,
+  // even for the input side, which is most definitely _not_ XML. Partly
+  // because that seems odd, but mostly so that the URL form support can
+  // be completely agnostic of AWS protocol details, they work with their
+  // own more appropriately named hints - which is what necessitates the
+  // translation here.
+  private val xmlToUrlFormHints = (hints: Hints) =>
+    hints
+      .expand((_: XmlFlattened) => UrlFormFlattened())
+      .expand((xmlName: XmlName) => UrlFormName(xmlName.value))
 
   private def endpointPreprocessor(version: String): PolyFunction5[Endpoint.Base, Endpoint.Base] =
     new PolyFunction5[Endpoint.Base, Endpoint.Base] {
       def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): Endpoint.Base[I, E, O, SI, SO] = {
 
-        val inputTransformation = Schema.transformHintsTransitivelyK {
-          xmlToUrlFormHints.andThen(addEndpointInfo(endpoint.id.name, version))
+        val inputTransformation = {
+          val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints }
+          val local = Schema.transformHintsLocallyK(addEndpointInfo(endpoint.id.name, version))
+          transitive.andThen(local)
         }
 
         def errorTransformation = Covariant.liftPolyFunction[Option] {
-          val transitive = Errorable.transformHintsTransitivelyK(xmlToUrlFormHints)
-          val local = Errorable.transformHintsLocallyK {
-            xmlToUrlFormHints.andThen(addDiscriminator).andThen(addErrorStartingPath)
+          Errorable.transformHintsLocallyK {
+            addDiscriminator.andThen(addErrorStartingPath)
           }
-          local.andThen(transitive)
         }
 
         val outputTransformation = Schema.transformHintsLocallyK {

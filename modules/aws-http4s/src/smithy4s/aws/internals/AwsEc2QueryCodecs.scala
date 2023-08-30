@@ -19,6 +19,7 @@ package internals
 
 import _root_.aws.protocols.Ec2QueryName
 import alloy.UrlFormName
+import alloy.UrlFormFlattened
 import smithy.api.XmlName
 import smithy4s._
 import smithy4s.capability.Covariant
@@ -33,14 +34,22 @@ import smithy4s.xml.internals.XmlStartingPath
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsEcsQueryCodecs {
 
-  private[aws] val xmlToUrlFormHints = (hints: Hints) =>
+  // These are set to fulfil the requirements of
+  // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+  private val xmlToUrlFormHints = (hints: Hints) =>
     hints match {
       case Ec2QueryName.hint(ec2QueryName) => hints.addMemberHints(UrlFormName(ec2QueryName.value))
       case XmlName.hint(xmlName)           => hints.addMemberHints(UrlFormName(xmlName.value.capitalize))
       case _                               => hints
     }
 
-  private[aws] val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
+  // All collections are encoded supposed to be using the flattened encoding. We simply modify the schema transitively
+  // to add the hint to all layers, for simplicity.
+  private val flattenAll = (_: Hints).add(UrlFormFlattened())
+
+  private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
+  private val discriminatorReaders =
+    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   def endpointPreprocessor(
       version: String
@@ -52,16 +61,16 @@ private[aws] object AwsEcsQueryCodecs {
 
         import AwsQueryCodecs.{addEndpointInfo, addDiscriminator}
 
-        val inputTransformation = Schema.transformHintsLocallyK {
-          xmlToUrlFormHints.andThen(addEndpointInfo(endpoint.id.name, version))
+        val inputTransformation = {
+          val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints.andThen(flattenAll) }
+          val local = Schema.transformHintsLocallyK(addEndpointInfo(endpoint.id.name, version))
+          transitive.andThen(local)
         }
 
         def errorTransformation = Covariant.liftPolyFunction[Option] {
-          val transitive = Errorable.transformHintsTransitivelyK(xmlToUrlFormHints)
-          val local = Errorable.transformHintsLocallyK {
-            xmlToUrlFormHints.andThen(addDiscriminator).andThen(addErrorStartingPath)
+          Errorable.transformHintsLocallyK {
+            addDiscriminator.andThen(addErrorStartingPath)
           }
-          local.andThen(transitive)
         }
 
         val outputTransformation = Schema.transformHintsLocallyK {
@@ -79,8 +88,7 @@ private[aws] object AwsEcsQueryCodecs {
 
   // These are set to fulfil the requirements of
   // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-  // without UrlFormDataEncoderSchemaVisitor having to be more aware
-  // than necessary of these protocol quirks.
+  // without UrlFormDataEncoderSchemaVisitor having to be more aware than necessary of these protocol quirks.
   private[aws] val inputEncoders = {
     UrlForm
       .Encoder(capitalizeStructAndUnionMemberNames = true)
@@ -98,7 +106,7 @@ private[aws] object AwsEcsQueryCodecs {
       .withErrorBodyDecoders(Xml.readers)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(AwsQueryCodecs.discriminatorReaders))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
   }
