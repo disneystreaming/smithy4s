@@ -24,12 +24,14 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
 import smithy4s.interopcats._
-import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
 import smithy4s.kinds._
+import smithy4s.client.UnaryClientCompiler
 import smithy4s.http.HttpUnaryServerRouter
+import smithy4s.http4s.internals.Http4sToSmithy4sClient
 import smithy4s.http4s.kernel.{toSmithy4sHttpMethod, pathParamsKey}
 import org.http4s.HttpApp
 import org.http4s.Request
+import org.http4s.Response
 import cats.data.OptionT
 
 /**
@@ -107,12 +109,16 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          SmithyHttp4sReverseRouter.impl[Alg, F](
-            service,
-            client,
-            simpleProtocolCodecs.makeClientCodecs[F](uri),
-            middleware
-          )
+          service.impl {
+            UnaryClientCompiler(
+              service,
+              client,
+              (client: Client[F]) => Http4sToSmithy4sClient(client),
+              simpleProtocolCodecs.makeClientCodecs[F](uri),
+              middleware,
+              (response: Response[F]) => response.status.isSuccess
+            )
+          }
         }
     }
   }

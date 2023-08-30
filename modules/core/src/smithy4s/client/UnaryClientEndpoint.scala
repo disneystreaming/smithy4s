@@ -17,12 +17,13 @@
 package smithy4s.client
 
 import smithy4s.capability.MonadThrowLike
+import smithy4s.client.UnaryLowLevelClient
 
 // scalafmt: { maxColumn = 120 }
 object UnaryClientEndpoint {
 
   def apply[F[_], Request, Response, I, E, O, SI, SO](
-      client: UnaryClient[F, Request, Response],
+      lowLevelClient: UnaryLowLevelClient[F, Request, Response],
       clientCodecs: UnaryClientCodecs[F, Request, Response, I, E, O],
       isSuccessful: Response => Boolean
   )(implicit F: MonadThrowLike[F]): (I => F[O]) = {
@@ -38,7 +39,7 @@ object UnaryClientEndpoint {
 
     (input: I) =>
       F.flatMap(inputToRequest(input)) { request =>
-        client.run(request)(outputFromResponse)
+        lowLevelClient.run(request)(outputFromResponse)
       }
   }
 

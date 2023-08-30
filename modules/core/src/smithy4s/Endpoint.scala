@@ -68,7 +68,6 @@ object Endpoint {
 
   trait Middleware[A] { self =>
     def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A
-
     final def biject[B](to: A => B)(from: B => A): Middleware[B] = new Middleware[B] {
       def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): B => B =
         self.prepare(service)(endpoint).compose(from).andThen(to)

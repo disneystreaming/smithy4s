@@ -25,16 +25,20 @@ import fs2.Stream
 import org.http4s._
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
-import smithy4s.Hints
+import smithy4s.Endpoint
+import smithy4s.Service
 
-private[internals] object Md5CheckSumClient {
-  def apply[F[_]: Sync](hints: Hints): Client[F] => Client[F] = { client =>
-    hints.get(smithy.api.HttpChecksumRequired) match {
-      case Some(_) =>
-        reqWithChecksum[F](client)
-      case _ => client
+private[aws] object Md5CheckSum {
+
+  def middleware[F[_]: Sync]: Endpoint.Middleware[Client[F]] =
+    new Endpoint.Middleware[Client[F]] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Client[F] => Client[F] = client =>
+        if (endpoint.hints.has(smithy.api.HttpChecksumRequired)) {
+          reqWithChecksum(client)
+        } else client
     }
-  }
 
   private def reqWithChecksum[F[_]: Sync](client: Client[F]): Client[F] = {
     val md5HeaderPipe: Pipe[F, Byte, String] =

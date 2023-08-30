@@ -35,15 +35,29 @@ import java.nio.charset.StandardCharsets
   * This works by compiling the body of the request in memory in a chunk before sending
   * it back, which means it is not proper to use it in the context of streaming.
   */
-private[aws] object AwsSigningClient {
+private[aws] object AwsSigning {
 
-  def apply[F[_]: Concurrent](
+  def middleware[F[_]: Concurrent](
+      awsEnvironment: AwsEnvironment[F]
+  ): Endpoint.Middleware[Client[F]] = new Endpoint.Middleware[Client[F]] {
+    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+        endpoint: service.Endpoint[_, _, _, _, _]
+    ): Client[F] => Client[F] = transformClient(
+      service.id,
+      endpoint.id,
+      service.hints,
+      endpoint.hints,
+      awsEnvironment
+    )
+  }
+
+  private def transformClient[F[_]: Concurrent](
       serviceId: ShapeId,
       endpointId: ShapeId,
       serviceHints: Hints,
       endpointHints: Hints,
       awsEnvironment: AwsEnvironment[F]
-  ): Client[F] = {
+  ): Client[F] => Client[F] = {
     val endpointPrefix = serviceHints
       .get(_root_.aws.api.Service)
       .flatMap(_.endpointPrefix)
@@ -58,11 +72,12 @@ private[aws] object AwsSigningClient {
       awsEnvironment.credentials,
       awsEnvironment.region
     )
-    Client { request =>
-      Resource.eval(sign(request)).flatMap { request =>
-        awsEnvironment.httpClient.run(request)
+    client =>
+      Client { request =>
+        Resource.eval(sign(request)).flatMap { request =>
+          client.run(request)
+        }
       }
-    }
   }
 
   private[internals] def signingFunction[F[_]: Concurrent](

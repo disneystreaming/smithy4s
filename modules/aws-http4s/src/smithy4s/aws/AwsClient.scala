@@ -22,11 +22,12 @@ import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
 import org.http4s.Response
+import org.http4s.client.Client
 import smithy4s.Blob
 import smithy4s.Endpoint
-import smithy4s.aws.internals.AwsQueryCodecs
 import smithy4s.aws.internals._
 import smithy4s.http._
+import smithy4s.client.UnaryClientCompiler
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 
@@ -63,9 +64,9 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
-    private def interpreter[F[_]: Async: Compression](
+    private def compiler[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
-    ): service.FunctorInterpreter[F] = {
+    ): service.FunctorEndpointCompiler[F] = {
 
       def baseRequest(endpoint: Endpoint.Base[_, _, _, _, _]): F[HttpRequest[Blob]] = {
         awsEnv.region.map { region =>
@@ -110,33 +111,28 @@ object AwsClient {
         .withBaseRequest(baseRequest)
         .build()
 
-      service.functorInterpreter {
-        new service.FunctorEndpointCompiler[F] {
-          def apply[I, E, O, SI, SO](
-              endpoint: service.Endpoint[I, E, O, SI, SO]
-          ): I => F[O] =
-            new AwsUnaryEndpoint(
-              service.id,
-              service.hints,
-              awsService,
-              awsEnv,
-              endpoint,
-              clientCodecs
-            )
-        }
-      }
+      val middleware = AwsSigning.middleware(awsEnv).andThen(Md5CheckSum.middleware[F])
+
+      UnaryClientCompiler(
+        service,
+        awsEnv.httpClient,
+        (client: Client[F]) => Http4sToSmithy4sClient(client),
+        clientCodecs,
+        middleware,
+        (response: Response[F]) => response.status.isSuccess
+      )
     }
 
     def build[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.Impl[F] =
-      service.fromPolyFunction(interpreter[F](awsEnv))
+      service.impl(compiler[F](awsEnv))
 
     def buildFull[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] =
       service.fromPolyFunction(
-        interpreter[F](awsEnv).andThen(AwsCall.liftEffect[F])
+        service.functorInterpreter(compiler[F](awsEnv)).andThen(AwsCall.liftEffect[F])
       )
   }
 

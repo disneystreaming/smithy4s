@@ -172,7 +172,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       .build()
     val signedAwsRequest = awsSigner.sign(amendedAwsRequest, params)
 
-    val smithy4sSigner = AwsSigningClient.signingFunction[IO](
+    val smithy4sSigner = AwsSigning.signingFunction[IO](
       serviceName,
       endpointName,
       serviceName,
