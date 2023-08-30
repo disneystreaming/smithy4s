@@ -18,13 +18,13 @@ package smithy4s
 package aws
 package internals
 
+import _root_.aws.api.{Service => AwsService}
+import cats.effect.Async
+import cats.effect.Resource
 import cats.syntax.all._
 import org.http4s.Request
 import org.http4s.Response
-import _root_.aws.api.{Service => AwsService}
 import smithy4s.client.UnaryClientCodecs
-import cats.effect.Async
-import cats.effect.Resource
 
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](

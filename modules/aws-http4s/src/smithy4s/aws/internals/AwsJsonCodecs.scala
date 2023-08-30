@@ -17,8 +17,8 @@
 package smithy4s.aws
 package internals
 
-import smithy4s.capability.MonadThrowLike
 import smithy4s.Blob
+import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
 import smithy4s.json.Json
 

@@ -19,14 +19,15 @@ package internals
 
 import _root_.aws.protocols.Ec2QueryName
 import alloy.UrlFormName
-import smithy4s.interopcats._
-import smithy4s.xml.Xml
 import smithy.api.XmlName
 import smithy4s._
-import smithy4s.http._
-import smithy4s.kinds.PolyFunction5
-import smithy4s.capability.{MonadThrowLike, Covariant}
+import smithy4s.capability.Covariant
+import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
+import smithy4s.http._
+import smithy4s.interopcats._
+import smithy4s.kinds.PolyFunction5
+import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
 
 // scalafmt: { maxColumn = 120}

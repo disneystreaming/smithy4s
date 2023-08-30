@@ -17,11 +17,11 @@
 package smithy4s.aws
 package internals
 
-import smithy4s.capability.MonadThrowLike
 import smithy4s.Blob
+import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.json.Json
-import smithy4s.codecs.Writer
 
 // scalafmt: {maxColumn = 120}
 private[aws] object AwsRestJsonCodecs {

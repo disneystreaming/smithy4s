@@ -20,9 +20,10 @@ import cats.effect._
 import cats.effect.implicits._
 import cats.syntax.all._
 import fs2.io.file.Files
+import org.http4s.DecodeResult
 import org.http4s.EntityDecoder
-import org.http4s.Uri
 import org.http4s.InvalidMessageBodyFailure
+import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
@@ -34,7 +35,6 @@ import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
 
 import scala.concurrent.duration._
-import org.http4s.DecodeResult
 
 object AwsCredentialsProvider {
 

@@ -17,8 +17,8 @@
 package smithy4s.aws
 
 import fs2.compression.Compression
-import smithy4s.Endpoint
 import org.http4s.client.Client
+import smithy4s.Endpoint
 
 package object internals {
 

@@ -22,14 +22,15 @@ import alloy.UrlFormFlattened
 import alloy.UrlFormName
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
-import smithy4s.codecs.Writer
 import smithy4s._
+import smithy4s.capability.Covariant
+import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs.Writer
 import smithy4s.http._
-import smithy4s.xml.Xml
-import smithy4s.capability.{Covariant, MonadThrowLike}
 import smithy4s.http.internals.StaticUrlFormElements
-import smithy4s.xml.internals.XmlStartingPath
 import smithy4s.kinds.PolyFunction5
+import smithy4s.xml.Xml
+import smithy4s.xml.internals.XmlStartingPath
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {

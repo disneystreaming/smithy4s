@@ -22,13 +22,13 @@ import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
 import org.http4s.Response
-import smithy4s.aws.internals.AwsQueryCodecs
-import smithy4s.interopcats._
-import smithy4s.Endpoint
-import smithy4s.http4s.kernel._
 import smithy4s.Blob
-import smithy4s.http._
+import smithy4s.Endpoint
+import smithy4s.aws.internals.AwsQueryCodecs
 import smithy4s.aws.internals._
+import smithy4s.http._
+import smithy4s.http4s.kernel._
+import smithy4s.interopcats._
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {

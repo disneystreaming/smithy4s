@@ -16,12 +16,14 @@
 
 package smithy4s.aws.internals
 
+import cats.effect.Resource
+import cats.effect.Sync
+import cats.syntax.all._
+import fs2.Chunk
+import fs2.Pipe
+import fs2.Stream
 import org.http4s._
 import org.http4s.client.Client
-import cats.effect.Sync
-import cats.effect.Resource
-import fs2.{Chunk, Pipe, Stream}
-import cats.syntax.all._
 import org.typelevel.ci.CIString
 import smithy4s.Hints
 

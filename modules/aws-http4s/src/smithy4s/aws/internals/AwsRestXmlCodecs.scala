@@ -17,11 +17,11 @@
 package smithy4s.aws
 package internals
 
+import smithy4s.Blob
 import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
 import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
-import smithy4s.Blob
 
 // scalafmt: {maxColumn = 120}
 
