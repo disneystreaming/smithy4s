@@ -362,7 +362,6 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     expect.same(
       UrlForm
         .Encoder(
-          ignoreUrlFormFlattened = false,
           capitalizeStructAndUnionMemberNames = false
         )
         .fromSchema(schema)

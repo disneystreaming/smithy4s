@@ -62,7 +62,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
     //   genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
     //   genClientTests(impl(AwsQuery), awsQuery)(dsi) ++
     //   genClientTests(impl(RestJson1), restJson1)(dsi) ++
-      genClientTests(impl(RestXml), restXml)(dsi)
+    genClientTests(impl(RestXml), restXml)(dsi)
 
   // private val awsEc2Query = ShapeId("aws.protocoltests.ec2", "AwsEc2")
   // private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")

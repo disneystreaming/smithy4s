@@ -22,8 +22,8 @@ import fs2._
 import fs2.data.xml._
 import fs2.data.xml.dom._
 import cats.syntax.all._
-import cats.effect.Concurrent
 import smithy4s.codecs._
+import cats.effect.SyncIO
 
 object Xml {
 
@@ -33,12 +33,10 @@ object Xml {
     * Beware : using this method with a non-static schema (for instance, dynamically generated) may
     * result in memory leaks.
     */
-  def read[A: Schema](blob: Blob): Either[XmlDecodeError, A] =
-    readToStream[fs2.Fallible, A](blob).compile.onlyOrError
-      .leftMap {
-        case x: XmlDecodeError => x
-        case other => new XmlDecodeError(XPath(List.empty), other.getMessage)
-      }
+  def read[A: Schema](blob: Blob): Either[XmlDecodeError, A] = {
+    val decoder = deriveXmlDecoder[A]
+    parseXmlDocument(blob).flatMap(decoder.decode)
+  }
 
   /**
     * Writes the XML representation for an instance of `A` into a [[smithy4s.Blob]].
@@ -62,21 +60,6 @@ object Xml {
   def writeToString[A: Schema](a: A): Option[String] =
     writeToStringStream[A](a).compile.last
 
-  /**
-    * Byte Stream Encoder Compiler made accessible to reduce repetition of Xml handling
-    * in interpreters.
-    */
-  def xmlByteStreamEncoders[F[_]]: XmlByteStreamEncoderCompiler[F] =
-    new smithy4s.xml.internals.XmlByteStreamEncoderCompilerImpl[F]()
-
-  /**
-    * Byte Stream Decoder Compiler made accessible to reduce repetition of Xml handling
-    * in interpreters.
-    */
-  def xmlByteStreamDecoders[F[_]: Concurrent]: XmlByteStreamDecoderCompiler[F] =
-    new smithy4s.xml.internals.XmlByteStreamDecoderCompilerImpl[F]()
-
-  // TODO move the implementation of this
   val readers: BlobDecoder.Compiler = new BlobDecoder.Compiler {
     type Cache = XmlDocument.Decoder.Cache
     def createCache(): Cache = XmlDocument.Decoder.createCache()
@@ -84,10 +67,7 @@ object Xml {
       val xmlDocumentDecoder = XmlDocument.Decoder.fromSchema(schema, cache)
       new BlobDecoder[A] {
         def read(blob: Blob): Either[PayloadError, A] =
-          readToDocumentStream[fs2.Fallible](blob).compile.onlyOrError
-            .leftMap { error =>
-              new XmlDecodeError(XPath(List.empty), error.getMessage)
-            }
+          parseXmlDocument(blob)
             .flatMap(xmlDocumentDecoder.decode(_))
             .leftMap { case XmlDecodeError(xPath, message) =>
               PayloadError(xPath.toPayloadPath, "", message)
@@ -98,15 +78,25 @@ object Xml {
       fromSchema(schema, createCache())
   }
 
-  val writers: BlobEncoder.Compiler =
-    Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
-      smithy4s.codecs.Writer
-        .addingTo[Any]
-        .andThenK { (stream: Stream[Pure, Byte]) =>
-          val bytes = stream.compile.to(fs2.Chunk)
-          Blob(bytes.toArray)
+  val writers: BlobEncoder.Compiler = new BlobEncoder.Compiler {
+    type Cache = XmlDocument.Encoder.Cache
+    def createCache(): Cache = XmlDocument.Encoder.createCache()
+    def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {
+      val xmlDocumentEncoder = XmlDocument.Encoder.fromSchema(schema, cache)
+      new BlobEncoder[A] {
+        def write(input: Any, a: A): smithy4s.Blob = Blob {
+          XmlDocument.documentEventifier
+            .eventify(xmlDocumentEncoder.encode(a))
+            .through(render(collapseEmpty = false))
+            .through(fs2.text.utf8.encode[fs2.Pure])
+            .compile
+            .to(Collector.supportsArray(Array))
         }
+      }
     }
+    def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
+      fromSchema(schema, createCache())
+  }
 
   private val decoderCacheGlobal = XmlDocument.Decoder.createCache()
   private val encoderCacheGlobal = XmlDocument.Encoder.createCache()
@@ -117,22 +107,25 @@ object Xml {
   private def deriveXmlEncoder[A: Schema]: XmlDocument.Encoder[A] =
     XmlDocument.Encoder.fromSchema(Schema[A], encoderCacheGlobal)
 
-  private def readToDocumentStream[F[_]: RaiseThrowable](
+  private def parseXmlDocument(
       blob: Blob
-  ): Stream[F, XmlDocument] =
+  ): Either[XmlDecodeError, XmlDocument] =
     Stream
       .emit(blob.toUTF8String)
-      .through(events[F, String]())
-      .through(documents[F, XmlDocument])
-
-  private def readToStream[F[_]: RaiseThrowable, A: Schema](
-      blob: Blob
-  ): Stream[F, A] = {
-    val decoder = deriveXmlDecoder[A]
-    readToDocumentStream[F](blob).flatMap(document =>
-      Stream.fromEither(decoder.decode(document))
-    )
-  }
+      .through(events[SyncIO, String]())
+      .through(referenceResolver())
+      .through(normalize)
+      .through(documents[SyncIO, XmlDocument])
+      .compile
+      .onlyOrError
+      .attempt
+      .unsafeRunSync()
+      .leftMap { error =>
+        XmlDecodeError(
+          XPath(List.empty),
+          s"Could not parse XML document: ${error.getMessage()}"
+        )
+      }
 
   private def writeToStringStream[A: Schema](a: A): Stream[fs2.Pure, String] = {
     val xmlDocument = deriveXmlEncoder[A].encode(a)
