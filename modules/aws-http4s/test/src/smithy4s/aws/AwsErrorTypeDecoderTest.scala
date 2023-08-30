@@ -18,10 +18,8 @@ package smithy4s.aws
 
 import smithy4s.Blob
 import cats.syntax.all._
-import smithy4s.capability._
 import smithy4s.interopcats._
 import smithy4s.http._
-import smithy4s.codecs._
 import cats.effect.IO
 import weaver._
 
@@ -37,12 +35,8 @@ object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
     )
 
   val fromJsonResponse =
-    AwsErrorTypeDecoder.fromResponse[IO, Blob](
-      smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs.mapK(
-        PayloadCodec.readerK
-          .andThen(Reader.liftPolyFunction(MonadThrowLike.liftEitherK[IO, PayloadError]))
-          .andThen(HttpResponse.extractBody)
-      )
+    AwsErrorTypeDecoder.fromResponse[IO](
+      smithy4s.aws.internals.AwsJsonCodecs.jsonReaders
     )
 
   val responseBase = HttpResponse(404, Map.empty, Blob.empty)

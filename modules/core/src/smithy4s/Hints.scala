@@ -69,6 +69,11 @@ trait Hints {
   )
 
   /**
+   *  Add hints to the member level
+   */
+  final def add(hints: Hint*): Hints = addMemberHints(hints: _*)
+
+  /**
     * Add hints to the target-level.
     */
   def addTargetHints(hints: Hints): Hints
@@ -76,7 +81,9 @@ trait Hints {
   /**
     * Add hints to the target-level.
     */
-  def addTargetHints(hints: Hint*): Hints = addTargetHints(Hints(hints: _*))
+  final def addTargetHints(hints: Hint*): Hints = addTargetHints(
+    Hints(hints: _*)
+  )
 
   /**
     * Provides an instance of hints containing only the member-level hints.
@@ -87,6 +94,16 @@ trait Hints {
     * Provides an instance of hints containing only the target-level hints.
     */
   def targetHints: Hints
+
+  /**
+   * Adds a new hint provided a specific hint is present
+   */
+  final def expand[A, B](f: A => Hint)(implicit key: ShapeTag[A]): Hints =
+    get(key) match {
+      case Some(a) => addMemberHints(f(a))
+      case None    => this
+    }
+
 }
 
 object Hints {

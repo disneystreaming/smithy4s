@@ -194,7 +194,6 @@ private[smithy4s] object UrlForm {
 
   object Encoder {
     def apply(
-        ignoreUrlFormFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
@@ -211,7 +210,6 @@ private[smithy4s] object UrlForm {
             }
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
-            ignoreUrlFormFlattened,
             capitalizeStructAndUnionMemberNames
           )
           val urlFormDataEncoder = schemaVisitor(schema)

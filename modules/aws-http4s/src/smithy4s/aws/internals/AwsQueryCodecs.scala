@@ -40,57 +40,48 @@ private[aws] object AwsQueryCodecs {
   // be completely agnostic of AWS protocol details, they work with their
   // own more appropriately named hints - which is what necessitates the
   // translation here.
-  val transformXmlHints = Schema.transformHintsTransitivelyK { hints =>
-    def translateFlattened(hints: Hints): Hints =
-      hints.memberHints.get(XmlFlattened) match {
-        case Some(_) => hints.addMemberHints(UrlFormFlattened())
-        case None    => hints
-      }
-    def translateName(hints: Hints): Hints =
-      hints.memberHints.get(XmlName) match {
-        case Some(XmlName(name)) =>
-          hints.addMemberHints(UrlFormName(name))
-        case None => hints
-      }
-    (translateFlattened _ andThen translateName _)(hints)
-  }
+  private[aws] val xmlToUrlFormHints = (hints: Hints) =>
+    hints
+      .expand((_: XmlFlattened) => UrlFormFlattened())
+      .expand((xmlName: XmlName) => UrlFormName(xmlName.value))
 
-  val inputEncoders = {
+  private[aws] val inputEncoders = {
     UrlForm
-      .Encoder(ignoreUrlFormFlattened = false, capitalizeStructAndUnionMemberNames = false)
+      .Encoder(capitalizeStructAndUnionMemberNames = false)
       .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
   }
 
-  def endpointPreprocessor(version: String): PolyFunction5[Endpoint.Base, Endpoint.Base] =
+  // Takes the `@awsQueryError` trait into consideration to decide how to
+  // discriminate error responses.
+  private[aws] val addDiscriminator = (_: Hints).expand { (awsQueryError: AwsQueryError) =>
+    smithy4s.http.internals.ErrorDiscriminatorValue(awsQueryError.code)
+  }
+
+  // The actual error payloads are nested under two layers of XML
+  private[aws] val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
+
+  // The name of the endpoint and version of the service must be added to the body
+  private[aws] def addEndpointInfo(endpointName: String, version: String) = (hints: Hints) =>
+    hints.add(StaticUrlFormElements(List(("Action" -> endpointName), ("Version" -> version))))
+
+  private def endpointPreprocessor(version: String): PolyFunction5[Endpoint.Base, Endpoint.Base] =
     new PolyFunction5[Endpoint.Base, Endpoint.Base] {
       def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): Endpoint.Base[I, E, O, SI, SO] = {
 
-        val inputTransformation = {
-          val staticUrlFormData = StaticUrlFormElements(List(("Action" -> endpoint.id.name), ("Version" -> version)))
-          val addStaticUrlFormData =
-            Schema.transformHintsLocallyK(_.addMemberHints(staticUrlFormData))
-          transformXmlHints.andThen(addStaticUrlFormData)
+        val inputTransformation = Schema.transformHintsLocallyK {
+          xmlToUrlFormHints.andThen(addEndpointInfo(endpoint.id.name, version))
         }
 
-        def errorTransformation = {
-          // Takes the `@awsQueryError` trait into consideration to decide how to
-          // discriminate error responses.
-          val addErrorName = (hints: Hints) =>
-            hints.get(AwsQueryError) match {
-              case Some(awsQueryError) =>
-                val newHint = smithy4s.http.internals.ErrorDiscriminatorValue(awsQueryError.code)
-                hints.addMemberHints(newHint)
-              case None => hints
-            }
-          // The actual payloads are nested under two layers of XML
-          val nestedXml = (_: Hints).addMemberHints(XmlStartingPath(List("ErrorResponse", "Error")))
-          Covariant.liftPolyFunction[Option](Errorable.transformErrorHintsLocallyK(addErrorName.andThen(nestedXml)))
+        def errorTransformation = Covariant.liftPolyFunction[Option] {
+          Errorable.transformErrorHintsLocallyK {
+            addDiscriminator.andThen(addErrorStartingPath)
+          }
         }
 
-        val outputTransformation = {
+        val outputTransformation = Schema.transformHintsLocallyK {
           val responseTag = endpoint.name + "Response"
           val resultTag = endpoint.name + "Result"
-          Schema.transformHintsLocallyK(_.addMemberHints(XmlStartingPath(List(responseTag, resultTag))))
+          (_: Hints).add(XmlStartingPath(List(responseTag, resultTag)))
         }
 
         endpoint.builder

@@ -85,8 +85,8 @@ object AwsClient {
 
       val clientCodecsBuilder: HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
         awsProtocol match {
-          // case AwsProtocol.AWS_EC2_QUERY(_) =>
-          //   AwsEcsQueryCodecs.make[F](version = service.version)
+          case AwsProtocol.AWS_EC2_QUERY(_) =>
+            AwsEcsQueryCodecs.make[F](version = service.version)
 
           case AwsProtocol.AWS_JSON_1_0(_) =>
             AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
@@ -101,8 +101,8 @@ object AwsClient {
           case AwsProtocol.AWS_REST_JSON_1(_) =>
             AwsRestJsonCodecs.make[F]("application/json")
 
-          // case AwsProtocol.AWS_REST_XML(_) =>
-          //   AwsRestXmlCodecs.make[F]()
+          case AwsProtocol.AWS_REST_XML(_) =>
+            AwsRestXmlCodecs.make[F]()
         }
       val clientCodecs = clientCodecsBuilder
         .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
