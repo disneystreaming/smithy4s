@@ -115,8 +115,10 @@ object HttpRestSchema {
           fullSchema: Schema[A],
           cache: Cache
       ): Writer[Message, Message, A] = {
+        val emptySchema =
+          Schema.unit.withId(fullSchema.shapeId).addHints(fullSchema.hints)
         val emptyBodyEncoder =
-          bodyEncoderCompiler.fromSchema(Schema.unit).contramap((_: A) => ())
+          bodyEncoderCompiler.fromSchema(emptySchema).contramap((_: A) => ())
         HttpRestSchema(fullSchema) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.

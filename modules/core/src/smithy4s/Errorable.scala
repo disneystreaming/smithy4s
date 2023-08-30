@@ -24,9 +24,9 @@ trait Errorable[E] { self =>
   def unliftError(e: E): Throwable
 
   /**
-   * Transforms the hints of each alternative.
+   * Transforms the local hints of each alternative.
    */
-  def transformErrorHintsLocally(f: Hints => Hints): Errorable[E] =
+  def transformHintsLocally(f: Hints => Hints): Errorable[E] =
     new Errorable[E] {
       val error = schema.Schema.UnionSchema(
         self.error.shapeId,
@@ -38,16 +38,39 @@ trait Errorable[E] { self =>
       def unliftError(e: E): Throwable = self.unliftError(e)
     }
 
+  /**
+   * Transforms the hints of each alternative, transitively.
+   */
+  def transformHintsTransitively(f: Hints => Hints): Errorable[E] =
+    new Errorable[E] {
+      val error = schema.Schema.UnionSchema(
+        self.error.shapeId,
+        self.error.hints,
+        self.error.alternatives.map(_.transformHintsTransitively(f)),
+        self.error.ordinal
+      )
+      def liftError(throwable: Throwable): Option[E] = self.liftError(throwable)
+      def unliftError(e: E): Throwable = self.unliftError(e)
+    }
+
 }
 
 object Errorable {
 
-  def transformErrorHintsLocallyK(
+  def transformHintsLocallyK(
       f: Hints => Hints
   ): PolyFunction[Errorable, Errorable] =
     new PolyFunction[Errorable, Errorable] {
       def apply[E](errorable: Errorable[E]): Errorable[E] =
-        errorable.transformErrorHintsLocally(f)
+        errorable.transformHintsLocally(f)
+    }
+
+  def transformHintsTransitivelyK(
+      f: Hints => Hints
+  ): PolyFunction[Errorable, Errorable] =
+    new PolyFunction[Errorable, Errorable] {
+      def apply[E](errorable: Errorable[E]): Errorable[E] =
+        errorable.transformHintsTransitively(f)
     }
 
 }

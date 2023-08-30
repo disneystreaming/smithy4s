@@ -57,9 +57,11 @@ private[aws] object AwsEcsQueryCodecs {
         }
 
         def errorTransformation = Covariant.liftPolyFunction[Option] {
-          Errorable.transformErrorHintsLocallyK {
-            addDiscriminator.andThen(addErrorStartingPath)
+          val transitive = Errorable.transformHintsTransitivelyK(xmlToUrlFormHints)
+          val local = Errorable.transformHintsLocallyK {
+            xmlToUrlFormHints.andThen(addDiscriminator).andThen(addErrorStartingPath)
           }
+          local.andThen(transitive)
         }
 
         val outputTransformation = Schema.transformHintsLocallyK {
@@ -96,7 +98,7 @@ private[aws] object AwsEcsQueryCodecs {
       .withErrorBodyDecoders(Xml.readers)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(Xml.readers))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(AwsQueryCodecs.discriminatorReaders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
   }

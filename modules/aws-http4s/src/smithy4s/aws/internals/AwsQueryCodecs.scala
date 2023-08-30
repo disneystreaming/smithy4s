@@ -65,18 +65,23 @@ private[aws] object AwsQueryCodecs {
   private[aws] def addEndpointInfo(endpointName: String, version: String) = (hints: Hints) =>
     hints.add(StaticUrlFormElements(List(("Action" -> endpointName), ("Version" -> version))))
 
+  private[aws] val discriminatorReaders =
+    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+
   private def endpointPreprocessor(version: String): PolyFunction5[Endpoint.Base, Endpoint.Base] =
     new PolyFunction5[Endpoint.Base, Endpoint.Base] {
       def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): Endpoint.Base[I, E, O, SI, SO] = {
 
-        val inputTransformation = Schema.transformHintsLocallyK {
+        val inputTransformation = Schema.transformHintsTransitivelyK {
           xmlToUrlFormHints.andThen(addEndpointInfo(endpoint.id.name, version))
         }
 
         def errorTransformation = Covariant.liftPolyFunction[Option] {
-          Errorable.transformErrorHintsLocallyK {
-            addDiscriminator.andThen(addErrorStartingPath)
+          val transitive = Errorable.transformHintsTransitivelyK(xmlToUrlFormHints)
+          val local = Errorable.transformHintsLocallyK {
+            xmlToUrlFormHints.andThen(addDiscriminator).andThen(addErrorStartingPath)
           }
+          local.andThen(transitive)
         }
 
         val outputTransformation = Schema.transformHintsLocallyK {
@@ -104,7 +109,7 @@ private[aws] object AwsQueryCodecs {
       .withErrorBodyDecoders(Xml.readers)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(Xml.readers))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
 
