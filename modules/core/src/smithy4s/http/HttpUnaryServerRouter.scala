@@ -21,6 +21,7 @@ import smithy4s.kinds._
 import smithy4s.server.UnaryServerCodecs
 import smithy4s.capability.MonadThrowLike
 import scala.annotation.nowarn
+import smithy4s.http.HttpMethod
 
 object HttpUnaryServerRouter {
 

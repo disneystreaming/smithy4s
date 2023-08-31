@@ -30,6 +30,7 @@ import smithy4s.http._
 import smithy4s.client.UnaryClientCompiler
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
+import smithy4s.http.HttpMethod
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {
@@ -136,12 +137,14 @@ object AwsClient {
     ): service.Impl[F] =
       service.impl(compiler[F](awsEnv))
 
-    def buildFull[F[_]: Async: Compression](
-        awsEnv: AwsEnvironment[F]
-    ): AwsClient[Alg, F] =
-      service.fromPolyFunction(
-        service.functorInterpreter(compiler[F](awsEnv)).andThen(AwsCall.liftEffect[F])
-      )
+    // TODO : uncomment below when we start supporting streaming.
+
+    // def buildFull[F[_]: Async: Compression](
+    //     awsEnv: AwsEnvironment[F]
+    // ): AwsClient[Alg, F] =
+    //   service.fromPolyFunction(
+    //     service.functorInterpreter(compiler[F](awsEnv)).andThen(AwsCall.liftEffect[F])
+    //   )
   }
 
 }

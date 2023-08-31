@@ -19,6 +19,7 @@ package http
 
 import smithy.api.Http
 import smithy4s.http.internals.SchemaVisitorPathEncoder
+import smithy4s.http.HttpMethod
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.

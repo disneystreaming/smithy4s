@@ -21,6 +21,7 @@ import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.schema._
 import smithy4s.capability.MonadThrowLike
+import smithy4s.http.HttpMethod
 
 final case class HttpRequest[+A](
     method: HttpMethod,
@@ -142,7 +143,7 @@ object HttpRequest {
     Reader
       .in[Either[MetadataError, *]]
       .composeK((_: HttpRequest[Any]).toMetadata)
-      .andThen(Reader.liftPolyFunction(liftToF))
+      .andThen(Reader.of[HttpRequest[Any]].liftPolyFunction(liftToF))
 
   private[smithy4s] def extractBody[F[_], Body]
       : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =

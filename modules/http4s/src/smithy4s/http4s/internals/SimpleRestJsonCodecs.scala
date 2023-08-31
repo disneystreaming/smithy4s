@@ -31,6 +31,7 @@ import cats.syntax.all._
 import org.http4s.Response
 import org.http4s.Request
 import org.http4s.Uri
+import smithy4s.http.HttpMethod
 
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(

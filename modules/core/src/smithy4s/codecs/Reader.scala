@@ -19,7 +19,6 @@ package smithy4s.codecs
 import smithy4s.kinds._
 import smithy4s.capability.Covariant
 import smithy4s.capability.Zipper
-import smithy4s.capability.MonadThrowLike
 
 trait Reader[F[_], -Message, A] { self =>
 
@@ -64,6 +63,11 @@ object Reader {
     def read(message: Message): F[A] = f(message)
   }
 
+  def decodeStatic[F[_], A](fa: F[A]): Reader[F, Any, A] =
+    new Reader[F, Any, A] {
+      def read(message: Any): F[A] = fa
+    }
+
   def of[Message]: PartiallyAppliedReaderBuilder[Message] =
     new PartiallyAppliedReaderBuilder[Message]()
 
@@ -92,18 +96,6 @@ object Reader {
           fa.compose(f)
       }
 
-    def flatComposeK[Message, Message2](
-        f: Message2 => F[Message]
-    )(implicit
-        F: MonadThrowLike[F]
-    ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
-      new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
-        def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
-          new Reader[F, Message2, A] {
-            def read(message: Message2): F[A] =
-              F.flatMap(f(message))(fa.read)
-          }
-      }
   }
 
   implicit def readerZipper[F[_]: Zipper, Message]
@@ -124,30 +116,5 @@ object Reader {
       }
     }
   }
-
-  def identity[F[_]: Zipper, A]: Reader[F, A, A] = new Reader[F, A, A] {
-    def read(message: A): F[A] = Zipper[F].pure(message)
-  }
-
-  def decodeStatic[F[_], A](fa: F[A]): Reader[F, Any, A] =
-    new Reader[F, Any, A] {
-      def read(message: Any): F[A] = fa
-    }
-
-  def composeK[F[_], Message, Message2](
-      f: Message2 => Message
-  ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
-    new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
-      def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
-        fa.compose(f)
-    }
-
-  def liftPolyFunction[Message, F[_], G[_]](
-      fk: PolyFunction[F, G]
-  ): PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] =
-    new PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] {
-      def apply[A](fa: Reader[F, Message, A]): Reader[G, Message, A] =
-        fa.mapK(fk)
-    }
 
 }
