@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package http
+package codecs
 
 import smithy4s.codecs._
 import smithy4s.Schema
@@ -54,12 +54,8 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val reader = stringsAndBlobsReaders.fromSchema(schema)
     val result = writer.encode(data)
     val roundTripped = reader.read(result)
-    // val writerMediaType = writer.mediaType
-    // val readerMediaType = reader.mediaType
     expect.same(result, expectedEncoded)
     expect.same(Right(data), roundTripped)
-    // expect.same(writerMediaType, HttpMediaType(expectedMediaType))
-    // expect.same(readerMediaType, HttpMediaType(expectedMediaType))
   }
 
   test("Strings") {
@@ -108,7 +104,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val result = writer.encode(1)
     val roundTripped = reader.read(result)
     val expectedRoundTripped =
-      Left(HttpPayloadError(PayloadPath.root, "error", "error"))
+      Left(PayloadError(PayloadPath.root, "error", "error"))
     expect.same(result, Blob.empty)
     expect.same(roundTripped, expectedRoundTripped)
   }
