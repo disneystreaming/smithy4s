@@ -105,13 +105,21 @@ object AwsClient {
           case AwsProtocol.AWS_REST_XML(_) =>
             AwsRestXmlCodecs.make[F]()
         }
+
+      val compression = awsProtocol match {
+        case AwsProtocol.AWS_EC2_QUERY(_) => compressionMiddleware[F](false)
+        case AwsProtocol.AWS_QUERY(_)     => compressionMiddleware[F](false)
+        case _                            => compressionMiddleware[F](true)
+      }
+
       val clientCodecs = clientCodecsBuilder
         .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
         .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
         .withBaseRequest(baseRequest)
         .build()
 
-      val middleware = AwsSigning.middleware(awsEnv).andThen(Md5CheckSum.middleware[F])
+      val middleware =
+        AwsSigning.middleware(awsEnv).andThen(compression).andThen(Md5CheckSum.middleware[F])
 
       UnaryClientCompiler(
         service,

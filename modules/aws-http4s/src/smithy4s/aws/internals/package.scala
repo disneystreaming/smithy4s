@@ -18,23 +18,26 @@ package smithy4s.aws
 
 import fs2.compression.Compression
 import org.http4s.client.Client
+import cats.effect.MonadCancelThrow
 import smithy4s.Endpoint
+import smithy4s.Service
+import smithy4s.http4s.kernel.GzipRequestCompression
 
 package object internals {
 
-  private[internals] def applyCompression[F[_]: Compression](
+  private[aws] def compressionMiddleware[F[_]: MonadCancelThrow: Compression](
       retainUserEncoding: Boolean = true
-  ): Endpoint.Middleware[Client[F]] = {
-    // val compression =
-    //   smithy4s.http4s.kernel.GzipRequestCompression[F](retainUserEncoding)
-    // import smithy4s.codecs.Writer
-    // hints.get(smithy.api.RequestCompression) match {
-    //   case Some(rc) if rc.encodings.contains("gzip") =>
-    //     (encoder: RequestEncoderCompiler[F]) =>
-    //       encoder.mapK(Writer.andThenK_(compression))
-    //   case _ => identity[RequestEncoderCompiler[F]]
-    // }
-    ???
+  ): Endpoint.Middleware[Client[F]] = new Endpoint.Middleware[Client[F]] {
+    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+        endpoint: service.Endpoint[_, _, _, _, _]
+    ): Client[F] => Client[F] =
+      endpoint.hints match {
+        case smithy.api.RequestCompression.hint(rc)
+            if rc.encodings.contains("gzip") =>
+          val compress = GzipRequestCompression[F](retainUserEncoding)
+          client => Client[F] { request => client.run(compress(request)) }
+        case _ => identity[Client[F]]
+      }
   }
 
 }
