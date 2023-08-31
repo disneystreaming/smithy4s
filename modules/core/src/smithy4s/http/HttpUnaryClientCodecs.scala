@@ -113,13 +113,19 @@ object HttpUnaryClientCodecs {
 
       val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Encoder[Blob, *]] {
         def fromSchema[A](schema: Schema[A]): HttpRequest.Encoder[Blob, A] = {
-          val mt = if (rawStringsAndBlobPayloads) {
-            HttpMediaType.fromSchema(schema).map(_.value).getOrElse(requestMediaType)
-          } else requestMediaType
-          new HttpRequest.Encoder[Blob, A] {
-            def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
-              if (request.body.isEmpty) request
-              else request.withContentType(mt)
+          val maybeRawMediaType = HttpMediaType.fromSchema(schema).map(_.value)
+          maybeRawMediaType match {
+            case Some(mt) =>
+              new HttpRequest.Encoder[Blob, A] {
+                def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
+                  request.withContentType(mt)
+              }
+            case None =>
+              new HttpRequest.Encoder[Blob, A] {
+                def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
+                  if (request.body.isEmpty) request
+                  else request.withContentType(requestMediaType)
+              }
           }
         }
       }
@@ -136,8 +142,7 @@ object HttpUnaryClientCodecs {
       def responseDecoders(blobDecoders: BlobDecoder.Compiler) = {
         val httpBodyDecoders: CachedSchemaCompiler[Reader[F, Blob, *]] = {
           val decoders: BlobDecoder.Compiler = if (rawStringsAndBlobPayloads) {
-            CachedSchemaCompiler
-              .getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, blobDecoders)
+            CachedSchemaCompiler.getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, blobDecoders)
           } else blobDecoders
           decoders.mapK(
             Reader
