@@ -11,7 +11,7 @@ addSbtPlugin("com.eed3si9n"         % "sbt-buildinfo"                 % "0.11.0"
 addSbtPlugin("com.eed3si9n"         % "sbt-projectmatrix"             % "0.9.1")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.5")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.9.0")
-addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.14")
+addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.15")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.1")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.3")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "1.5.10")
