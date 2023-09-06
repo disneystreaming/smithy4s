@@ -15,7 +15,6 @@
  */
 
 package smithy4s.http
-import smithy4s.http.HttpUriScheme
 
 final case class HttpUri(
     scheme: HttpUriScheme,

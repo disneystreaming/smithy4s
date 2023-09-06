@@ -35,7 +35,7 @@ final case class HttpResponse[+A](
   def withHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
     this.copy(headers = headers)
 
-  def withBody[A0](body: A0)(implicit ev: A <:< A0): HttpResponse[A0] =
+  def withBody[A0](body: A0): HttpResponse[A0] =
     this.copy(body = body)
 
   def addHeaders(

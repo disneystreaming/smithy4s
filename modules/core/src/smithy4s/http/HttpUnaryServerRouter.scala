@@ -20,7 +20,6 @@ package http
 import smithy4s.kinds._
 import smithy4s.server.UnaryServerCodecs
 import smithy4s.capability.MonadThrowLike
-import smithy4s.http.PathParams
 import scala.annotation.nowarn
 
 object HttpUnaryServerRouter {
@@ -38,7 +37,7 @@ object HttpUnaryServerRouter {
     val router =
       new HttpUnaryServerRouter[Alg, service.Operation, F, Request, Response](
         service,
-        service.toPolyFunction(impl),
+        service.toPolyFunction[smithy4s.kinds.Kind1[F]#toKind5](impl),
         makeServerCodecs,
         endpointMiddleware,
         getMethod,

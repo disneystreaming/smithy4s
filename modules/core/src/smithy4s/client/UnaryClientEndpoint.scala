@@ -17,7 +17,6 @@
 package smithy4s.client
 
 import smithy4s.capability.MonadThrowLike
-import smithy4s.client.UnaryLowLevelClient
 
 // scalafmt: { maxColumn = 120 }
 object UnaryClientEndpoint {
