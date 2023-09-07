@@ -16,12 +16,15 @@
 
 package smithy4s.aws.kernel
 
-import scala.scalanative.unsafe
 import scala.scalanative.unsafe._
 import scala.scalanative.unsigned._
 
+import crypto._
+
 trait CryptoPlatformCompat {
   type Binary = Array[Byte]
+
+  private[this] val EvpMdSha256 = EVP_sha256()
 
   def binaryFromString(str: String): Binary =
     str.getBytes("UTF-8")
@@ -29,77 +32,47 @@ trait CryptoPlatformCompat {
   def toHexString(binary: Binary): String =
     binary.map("%02x".format(_)).mkString
 
-  def sha256HexDigest(message: Array[Byte]): String =
-    unsafe.Zone { implicit z =>
-      val outLength: Ptr[CUnsignedInt] = unsafe.alloc[CUnsignedInt]()
-      val digest: Ptr[CUnsignedChar] =
-        unsafe.alloc[CUnsignedChar](CryptoPlatformCompat.EVP_MAX_MD_SIZE)
-      val dataLen = message.length.toLong
-      val cInput: CString = arrayToCString(message)
+  def sha256HexDigest(message: Array[Byte]): String = {
+    val md = new Array[Byte](EVP_MAX_MD_SIZE)
+    val size = stackalloc[CUnsignedInt]()
+    if (
+      EVP_Digest(
+        message.atUnsafe(0),
+        message.length.toULong,
+        md.atUnsafe(0),
+        size,
+        EvpMdSha256,
+        null
+      ) != 1
+    )
+      throw new RuntimeException(s"EVP_Digest: ${getError()}")
 
-      val ctx = crypto.EVP_MD_CTX_new()
-      crypto.EVP_DigestInit(ctx, crypto.EVP_sha256())
-      crypto.EVP_DigestUpdate(ctx, cInput, dataLen.toUInt)
-      crypto.EVP_DigestFinal(ctx, digest, outLength)
-
-      val out = Array.fill[Byte]((!outLength).toInt)(0)
-      var i = 0
-      while (i < (!outLength).toInt) {
-        out(i) = digest(i.toLong).toByte
-        i += 1
-      }
-
-      out.map("%02x".format(_)).mkString
-    }
+    toHexString(md.take((!size).toInt))
+  }
 
   def sha256HexDigest(message: String): String = sha256HexDigest(
     message.getBytes("UTF-8")
   )
 
-  def hmacSha256(data: String, key: Binary): Binary =
-    unsafe.Zone { implicit z =>
-      val outLength: Ptr[CUnsignedInt] = unsafe.alloc[CUnsignedInt]()
-      val digest: Ptr[CUnsignedChar] =
-        unsafe.alloc[CUnsignedChar](CryptoPlatformCompat.EVP_MAX_MD_SIZE)
-
-      val cKey = arrayToCString(key)
-      val keylen = key.length.toLong
-
-      val cData: CString = toCString(data)
-      val datalen = data.length.toUInt
-
-      crypto.HMAC(
-        crypto.EVP_sha256(),
-        cKey,
-        keylen,
-        cData,
-        datalen,
-        digest,
-        outLength
-      )
-
-      val out = Array.fill[Byte]((!outLength).toInt)(0)
-      var i = 0
-
-      while (i < (!outLength).toInt) {
-        out(i) = digest(i.toLong).toByte
-        i += 1
-      }
-      out
-    }
-
-  private def arrayToCString(bytes: Array[Byte])(implicit z: Zone): CString = {
-    val cstr = z.alloc((bytes.length.toLong + 1).toUInt)
-    var c = 0
-    while (c < bytes.length) {
-      !(cstr + c.toLong) = bytes(c)
-      c += 1
-    }
-    !(cstr + c.toLong) = 0.toByte
-    cstr
+  def hmacSha256(data: String, key: Binary): Binary = {
+    val md = new Array[Byte](EVP_MAX_MD_SIZE)
+    val mdLen = stackalloc[CUnsignedInt]()
+    if (
+      HMAC(
+        EvpMdSha256,
+        key.atUnsafe(0),
+        key.size.toInt,
+        data.getBytes("UTF-8").atUnsafe(0),
+        data.length.toULong,
+        md.atUnsafe(0),
+        mdLen
+      ) == null
+    )
+      throw new RuntimeException(s"HMAC: ${getError()}")
+    md.take((!mdLen).toInt)
   }
-}
 
-object CryptoPlatformCompat {
-  val EVP_MAX_MD_SIZE = 64L
+  private[this] def getError(): String =
+    fromCString(ERR_reason_error_string(ERR_get_error()))
+
 }
