@@ -57,13 +57,14 @@ trait CryptoPlatformCompat {
   def hmacSha256(data: String, key: Binary): Binary = {
     val md = new Array[Byte](EVP_MAX_MD_SIZE)
     val mdLen = stackalloc[CUnsignedInt]()
+    val d = data.getBytes("UTF-8")
     if (
       HMAC(
         EvpMdSha256,
         key.atUnsafe(0),
         key.size.toInt,
-        data.getBytes("UTF-8").atUnsafe(0),
-        data.length.toULong,
+        d.atUnsafe(0),
+        d.length.toULong,
         md.atUnsafe(0),
         mdLen
       ) == null
