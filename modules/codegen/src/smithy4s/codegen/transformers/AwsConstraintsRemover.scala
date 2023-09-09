@@ -19,6 +19,8 @@ package smithy4s.codegen.transformers
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.neighbor.NeighborProvider
+import scala.jdk.CollectionConverters._
 
 /** A preprocessor that removes constraints from specifications of AWS. */
 class AwsConstraintsRemover extends ProjectionTransformer {
@@ -34,9 +36,15 @@ class AwsConstraintsRemover extends ProjectionTransformer {
       context.getModel(),
       (shape, t) => {
         val shapeName = t.toShapeId().getName()
-        shape.getId.getNamespace.startsWith(
-          awsNamespacePrefix
-        ) && constraintsToRemove.contains(shapeName)
+        val isOperation = shape.isOperationShape()
+        val isInAwsNamespace =
+          shape.getId.getNamespace.startsWith(awsNamespacePrefix)
+
+        if (isOperation && isInAwsNamespace ) {
+          val np = NeighborProvider.of(context.getModel())
+          val neighbors = np.getNeighbors(shape).asScala.toList
+        }
+        ???
       }
     )
   }
