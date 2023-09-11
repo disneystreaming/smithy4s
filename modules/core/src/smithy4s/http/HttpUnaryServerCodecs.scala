@@ -181,7 +181,7 @@ object HttpUnaryServerCodecs {
                   (_: HttpResponse[Blob]).withStatusCode(http.code)
               outputEncoders
                 .fromSchema(endpoint.output, outputEncoderCache)
-                .compose[HttpResponse[Blob]](postProcessResponse)
+                .andThen[HttpResponse[Blob]](postProcessResponse)
             case None => outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
           }
           val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.errorable, errorEncoders)
