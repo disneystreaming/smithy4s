@@ -173,14 +173,16 @@ object HttpUnaryServerCodecs {
         ): UnaryServerCodecs[F, Request, Response, I, E, O] = {
           val outputW = endpoint.hints.get(smithy.api.Http) match {
             case Some(http) =>
+              val preProcess: HttpResponse[Blob] => HttpResponse[Blob] =
+                _.withStatusCode(http.code)
               // TODO : add unit-tests for this
-              val postProcessResponse =
+              val postProcessResponse: HttpResponse[Blob] => HttpResponse[Blob] =
                 if (http.code == 204 || http.method.value.toLowerCase == "head")
-                  (_: HttpResponse[Blob]).withStatusCode(http.code).withBody(Blob.empty)
-                else
-                  (_: HttpResponse[Blob]).withStatusCode(http.code)
+                  _.withBody(Blob.empty)
+                else identity
               outputEncoders
                 .fromSchema(endpoint.output, outputEncoderCache)
+                .compose[HttpResponse[Blob]](preProcess)
                 .andThen[HttpResponse[Blob]](postProcessResponse)
             case None => outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
           }
