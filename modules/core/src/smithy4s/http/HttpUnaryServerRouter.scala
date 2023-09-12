@@ -33,7 +33,7 @@ object HttpUnaryServerRouter {
       getMethod: Request => HttpMethod,
       getPathSegments: Request => IndexedSeq[String],
       addDecodedPathParams: (Request, PathParams) => Request
-  )(implicit F: MonadThrowLike[F]): Request => F[Option[Response]] = {
+  )(implicit F: MonadThrowLike[F]): Request => Option[F[Response]] = {
     val router =
       new HttpUnaryServerRouter[Alg, service.Operation, F, Request, Response](
         service,
@@ -66,7 +66,7 @@ private class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
       handler: Request => F[Response]
   )
 
-  def route(request: Request): F[Option[Response]] = {
+  def route(request: Request): Option[F[Response]] = {
     val method = getMethod(request)
     val pathSegments = getPathSegments(request)
     perMethodEndpoint.get(method) match {
@@ -75,14 +75,14 @@ private class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
           httpUnaryEndpoints.iterator
             .map(ep => (ep.handler, ep.httpEndpoint.matches(pathSegments)))
             .find(_._2.isDefined)
-        maybeMatched match {
-          case Some((handler, Some(pathParams))) =>
+        maybeMatched.flatMap {
+          case (handler, Some(pathParams)) =>
             val amendedRequest = addDecodedPathParams(request, pathParams)
-            F.map(handler(amendedRequest))(Some(_))
-          case _ => F.pure(None)
+            Some(handler(amendedRequest))
+          case (_, None) => None
         }
 
-      case None => F.pure(None)
+      case None => None
     }
 
   }

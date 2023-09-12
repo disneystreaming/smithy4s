@@ -204,7 +204,9 @@ abstract class SimpleProtocolBuilder[P](
             addDecodedPathParams = (request: Request[F], pathParams) =>
               request.withAttribute(pathParamsKey, pathParams)
           )
-          HttpRoutes(router.andThen(OptionT(_)))
+          HttpRoutes(
+            router.andThen(OptionT.fromOption(_).flatMap(OptionT.liftF(_)))
+          )
         }
 
     def resource: Resource[F, HttpRoutes[F]] =
