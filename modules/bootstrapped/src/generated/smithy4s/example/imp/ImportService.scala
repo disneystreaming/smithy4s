@@ -6,13 +6,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -85,25 +84,13 @@ object ImportServiceOperation {
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = ImportOperation
   }
-  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200),
-    )
+  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
+    def schema: OperationSchema[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.import_test", "ImportOperation"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(ImportOperationError)
+      .withOutput(OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
     def wrap(input: Unit) = ImportOperation()
-    override val errorable: Option[Errorable[ImportOperationError]] = Some(this)
-    val error: UnionSchema[ImportOperationError] = ImportOperationError.schema
-    def liftError(throwable: Throwable): Option[ImportOperationError] = throwable match {
-      case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: ImportOperationError): Throwable = e match {
-      case ImportOperationError.NotFoundErrorCase(e) => e
-    }
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ImportOperationError = this
@@ -117,7 +104,7 @@ object ImportServiceOperation {
       case value: ImportOperationError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
     }
   }
-  object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
+  object ImportOperationError extends Errorable.Companion[ImportOperationError] {
 
     def notFoundError(notFoundError: NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
 
@@ -148,6 +135,13 @@ object ImportServiceOperation {
       ImportOperationError.NotFoundErrorCase.alt,
     ){
       _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[ImportOperationError] = throwable match {
+      case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: ImportOperationError): Throwable = e match {
+      case ImportOperationError.NotFoundErrorCase(e) => e
     }
   }
 }

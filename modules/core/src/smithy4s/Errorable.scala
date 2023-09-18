@@ -16,8 +16,14 @@
 
 package smithy4s
 
-trait Errorable[E] {
-  def error: schema.Schema.UnionSchema[E]
+trait Errorable[E] extends ShapeTag[E] {
+  def schema: _root_.smithy4s.schema.Schema.UnionSchema[E]
   def liftError(throwable: Throwable): Option[E]
   def unliftError(e: E): Throwable
+}
+
+object Errorable {
+
+  trait Companion[E] extends ShapeTag.Companion[E] with Errorable[E]
+
 }

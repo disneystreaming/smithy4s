@@ -89,7 +89,7 @@ object AwsClient {
               service.hints,
               awsService,
               awsEnv,
-              endpoint,
+              endpoint.schema,
               clientCodecs
             )
         }

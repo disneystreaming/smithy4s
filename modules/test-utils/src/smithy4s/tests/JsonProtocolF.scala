@@ -93,7 +93,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
           ep.errorable match {
             case Some(errorableE) =>
               Document.Decoder
-                .fromSchema(errorableE.error)
+                .fromSchema(errorableE.schema)
                 .map(e => F.raiseError(errorableE.unliftError(e)))
             case None =>
               new Document.Decoder[F[Nothing]] {
@@ -135,7 +135,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
     implicit val encoderE: Document.Encoder[E] =
       endpoint.errorable match {
         case Some(errorableE) =>
-          Document.Encoder.fromSchema(errorableE.error)
+          Document.Encoder.fromSchema(errorableE.schema)
         case None =>
           new Document.Encoder[E] {
             def encode(e: E): Document = Document.DNull

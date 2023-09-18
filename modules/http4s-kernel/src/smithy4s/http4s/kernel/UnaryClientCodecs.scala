@@ -18,10 +18,10 @@ package smithy4s.http4s.kernel
 
 import cats.effect.Concurrent
 import org.http4s.Response
-import smithy4s.Endpoint
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpEndpoint
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.OperationSchema
 
 trait UnaryClientCodecs[F[_], I, E, O] {
   val inputEncoder: RequestEncoder[F, I]
@@ -36,7 +36,7 @@ object UnaryClientCodecs {
   }
 
   type Make[F[_]] =
-    smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F]#toKind5]
+    smithy4s.kinds.PolyFunction5[OperationSchema, For[F]#toKind5]
 
   object Make {
     def apply[F[_]: Concurrent](
@@ -50,26 +50,27 @@ object UnaryClientCodecs {
       private val responseDecoderCache: output.Cache = output.createCache()
 
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
+          operationSchema: OperationSchema[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = new UnaryClientCodecs[F, I, E, O] {
 
         val inputEncoder: RequestEncoder[F, I] =
-          HttpEndpoint.cast(endpoint).toOption match {
+          HttpEndpoint.cast(operationSchema).toOption match {
             case Some(httpEndpoint) => {
               val httpInputEncoder =
                 RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
               val requestEncoder =
-                input.fromSchema(endpoint.input, requestEncoderCache)
+                input.fromSchema(operationSchema.input, requestEncoderCache)
               httpInputEncoder.pipe(requestEncoder)
             }
-            case None => input.fromSchema(endpoint.input, requestEncoderCache)
+            case None =>
+              input.fromSchema(operationSchema.input, requestEncoderCache)
           }
 
         val outputDecoder: ResponseDecoder[F, O] =
-          output.fromSchema(endpoint.output, responseDecoderCache)
+          output.fromSchema(operationSchema.output, responseDecoderCache)
         val errorDecoder: ResponseDecoder[F, Throwable] =
           ResponseDecoder.forErrorAsThrowable(
-            endpoint.errorable,
+            operationSchema.error,
             error,
             errorDiscriminator
           )

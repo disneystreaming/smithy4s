@@ -27,6 +27,7 @@ import org.http4s.Method
 import _root_.aws.api.{Service => AwsService}
 import cats.effect.Async
 import cats.effect.Resource
+import smithy4s.schema.OperationSchema
 
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
@@ -34,20 +35,20 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   serviceHints: Hints,
   awsService: AwsService,
   awsEnv: AwsEnvironment[F],
-  endpoint: Endpoint.Base[I, E, O, SI, SO],
+  schema: OperationSchema[I, E, O, SI, SO],
   makeClientCodecs: UnaryClientCodecs.Make[F],
 )(implicit effect: Async[F]) extends (I => F[O]) {
 // format: on
 
   val signingClient = AwsSigningClient(
     serviceId,
-    endpoint.id,
+    schema.id,
     serviceHints,
-    endpoint.hints,
+    schema.hints,
     awsEnv
   )
 
-  private val withCheckSumClient = Md5CheckSumClient[F](endpoint.hints)
+  private val withCheckSumClient = Md5CheckSumClient[F](schema.hints)
 
   private val transformedClient = withCheckSumClient(signingClient)
 
@@ -61,10 +62,10 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   }
 
   // format: off
-  val clientCodecs = makeClientCodecs(endpoint)
+  val clientCodecs = makeClientCodecs(schema)
   import clientCodecs._
 
-  val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
+  val endpointPrefix = awsService.endpointPrefix.getOrElse(schema.id.name)
   // format: on
 
   def inputToRequest(input: I): F[Request[F]] = {

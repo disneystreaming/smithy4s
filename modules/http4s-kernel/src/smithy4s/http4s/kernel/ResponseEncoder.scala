@@ -49,7 +49,7 @@ object ResponseEncoder {
       errorable: Errorable[E],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = {
-    val errorUnionSchema = errorable.error
+    val errorUnionSchema = errorable.schema
     val dispatcher =
       Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
     val precompiler = new Alt.Precompiler[ResponseEncoder[F, *]] {

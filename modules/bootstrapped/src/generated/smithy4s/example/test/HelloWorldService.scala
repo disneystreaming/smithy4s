@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -75,17 +75,11 @@ object HelloWorldServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] = Hello
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example.test", "Hello")
-    val input: Schema[HelloInput] = HelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[HelloOutput] = HelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200),
-    )
+    def schema: OperationSchema[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.test", "Hello"))
+      .withInput(HelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(HelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200))
     def wrap(input: HelloInput) = Hello(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

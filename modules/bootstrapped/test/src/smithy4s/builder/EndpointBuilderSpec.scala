@@ -3,30 +3,22 @@ package smithy4s
 import munit._
 
 import smithy.api.Documentation
-import smithy4s.example.{GetForecastInput, GetForecastOutput, WeatherOperation}
+import smithy4s.example.WeatherOperation
 
 class EndpointBuilderSpec extends FunSuite {
 
   val endpoint = WeatherOperation.GetForecast
-
-  val builder = smithy4s.Endpoint.Builder.fromEndpoint[
-    WeatherOperation,
-    GetForecastInput,
-    Nothing,
-    GetForecastOutput,
-    Nothing,
-    Nothing
-  ](endpoint)
+  val operation = endpoint.schema
 
   test(
     "can replace the following values (Id and Hints) using withId and withHints"
   ) {
 
-    val newEndpoint = builder
-      .withId(ShapeId("smithy4s.example", "endpoint"))
-      .withHints(Hints(Documentation("this is a endpoint")))
-      .withErrorable(None)
-      .build
+    val newEndpoint = endpoint.mapSchema {
+      _.withId(ShapeId("smithy4s.example", "endpoint"))
+        .withHints(Hints(Documentation("this is a endpoint")))
+        .withoutError
+    }
 
     assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "endpoint"))
     assertEquals(newEndpoint.hints, Hints(Documentation("this is a endpoint")))
@@ -38,15 +30,15 @@ class EndpointBuilderSpec extends FunSuite {
     "can modify the following values (Id, Hints, Input, Output, Errorable) using mapId, mapHints, mapInput, mapOutput, mapErrorable"
   ) {
 
-    val newEndpoint = builder
-      .mapId(shapeId => ShapeId(shapeId.namespace, "getCityEndpoint"))
-      .mapHints { hints =>
-        hints ++ Hints(Documentation("new endpoint"))
-      }
-      .mapInput(s => s.withId(ShapeId("smithy4s.example", "inputSchema")))
-      .mapOutput(s => s.withId(ShapeId("smithy4s.example", "outputSchema")))
-      .mapErrorable(_ => None)
-      .build
+    val newEndpoint = endpoint.mapSchema {
+      _.mapId(shapeId => ShapeId(shapeId.namespace, "getCityEndpoint"))
+        .mapHints { hints =>
+          hints ++ Hints(Documentation("new endpoint"))
+        }
+        .mapInput(s => s.withId(ShapeId("smithy4s.example", "inputSchema")))
+        .mapOutput(s => s.withId(ShapeId("smithy4s.example", "outputSchema")))
+        .withoutError
+    }
 
     assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "getCityEndpoint"))
     assertEquals(

@@ -22,7 +22,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
 import smithy4s.json.Json
 import fs2.compression.Compression
-import smithy4s.Endpoint
+import smithy4s.schema.OperationSchema
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -59,13 +59,13 @@ private[aws] object AwsJsonCodecs {
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
+          operation: OperationSchema[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](endpoint.hints)
+        val transformEncoders = applyCompression[F](operation.hints)
         val finalEncoders = transformEncoders(encoders)
         val make = UnaryClientCodecs
           .Make[F](finalEncoders, decoders, decoders, discriminator)
-        make.apply(endpoint)
+        make.apply(operation)
       }
     }
   }

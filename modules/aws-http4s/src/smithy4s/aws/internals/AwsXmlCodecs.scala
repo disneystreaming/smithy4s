@@ -26,7 +26,6 @@ import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.MediaRange
 import org.http4s.MediaType
-import smithy4s.Endpoint
 import smithy4s.capability.Covariant
 import smithy4s.http.Metadata
 import smithy4s.http4s.kernel._
@@ -34,15 +33,16 @@ import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.xml.Xml
 import smithy4s.interopfs2._
+import smithy4s.schema.OperationSchema
 
 private[aws] object AwsXmlCodecs {
 
   def make[F[_]: Concurrent: Compression](): UnaryClientCodecs.Make[F] =
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
+          operation: OperationSchema[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](endpoint.hints)
+        val transformEncoders = applyCompression[F](operation.hints)
         val requestEncoderCompilersWithCompression = transformEncoders(
           requestEncoderCompilers[F]
         )
@@ -65,7 +65,7 @@ private[aws] object AwsXmlCodecs {
           error = errorDecoderCompilers,
           errorDiscriminator = errorDiscriminator
         )
-        make.apply(endpoint)
+        make.apply(operation)
       }
     }
 

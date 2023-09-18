@@ -27,6 +27,7 @@ import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.{Alt, EnumTag, EnumValue, Field}
 import DynamicLambdas._
+import smithy4s.schema.Schema
 
 private[dynamic] object Compiler {
 
@@ -420,11 +421,12 @@ private[dynamic] object Compiler {
         )
       } yield {
         DynamicEndpoint(
-          id,
-          inputSchema,
-          outputSchema,
-          errorable,
-          allHints(shape.traits)
+          Schema
+            .operation(id)
+            .withInput(inputSchema)
+            .withOutput(outputSchema)
+            .withErrorOption(errorable)
+            .withHints(allHints(shape.traits))
         )
       }
     }
