@@ -22,7 +22,7 @@ class EndpointBuilderSpec extends FunSuite {
 
     assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "endpoint"))
     assertEquals(newEndpoint.hints, Hints(Documentation("this is a endpoint")))
-    assertEquals(newEndpoint.errorable, None)
+    assertEquals(newEndpoint.error, None)
 
   }
 
@@ -53,6 +53,6 @@ class EndpointBuilderSpec extends FunSuite {
       newEndpoint.output.shapeId,
       ShapeId("smithy4s.example", "outputSchema")
     )
-    assertEquals(newEndpoint.errorable, None)
+    assertEquals(newEndpoint.error, None)
   }
 }
