@@ -16,9 +16,9 @@
 
 package smithy4s.http4s.kernel
 
-import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import smithy4s.schema.OperationSchema
 
 trait UnaryServerCodecs[F[_], I, E, O] {
   val inputDecoder: RequestDecoder[F, I]
@@ -34,7 +34,7 @@ object UnaryServerCodecs {
   }
 
   type Make[F[_]] =
-    smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F]#toKind5]
+    smithy4s.kinds.PolyFunction5[OperationSchema, For[F]#toKind5]
 
   def make[F[_]](
       input: CachedSchemaCompiler[RequestDecoder[F, *]],
@@ -47,16 +47,16 @@ object UnaryServerCodecs {
     val errorResponseEncoderCache: error.Cache = error.createCache()
 
     def apply[I, E, O, SI, SO](
-        endpoint: Endpoint.Base[I, E, O, SI, SO]
+        operationSchema: OperationSchema[I, E, O, SI, SO]
     ): UnaryServerCodecs[F, I, E, O] = new UnaryServerCodecs[F, I, E, O] {
       val inputDecoder: RequestDecoder[F, I] =
-        input.fromSchema(endpoint.input, requestDecoderCache)
+        input.fromSchema(operationSchema.input, requestDecoderCache)
       val outputEncoder: ResponseEncoder[F, O] =
-        output.fromSchema(endpoint.output, responseEncoderCache)
+        output.fromSchema(operationSchema.output, responseEncoderCache)
       val errorEncoder: ResponseEncoder[F, E] =
         ResponseEncoder.forError(
           errorHeaders,
-          endpoint.errorable,
+          operationSchema.error,
           error
         )
       def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE] =

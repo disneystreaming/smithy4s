@@ -54,7 +54,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
   ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
   // format: on
-    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+    HttpEndpoint.cast(endpoint.schema).flatMap { httpEndpoint =>
       toHttp4sMethod(httpEndpoint.method)
         .leftMap { e =>
           HttpEndpoint.HttpEndpointError(
@@ -85,7 +85,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
 
-  val serverCodecs = makeServerCodecs(endpoint)
+  val serverCodecs = makeServerCodecs(endpoint.schema)
   import serverCodecs._
   val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on

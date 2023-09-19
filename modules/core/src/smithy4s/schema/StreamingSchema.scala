@@ -14,16 +14,6 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.schema
 
-sealed trait StreamingSchema[A]
-
-object StreamingSchema {
-  def apply[A](fieldName: String, schema: Schema[A]): StreamingSchema[A] =
-    Streamed(fieldName, schema)
-  def nothing: StreamingSchema[Nothing] = NoStream
-
-  case class Streamed[A](fieldName: String, schema: Schema[A])
-      extends StreamingSchema[A]
-  case object NoStream extends StreamingSchema[Nothing]
-}
+case class StreamingSchema[A](fieldName: String, schema: Schema[A])

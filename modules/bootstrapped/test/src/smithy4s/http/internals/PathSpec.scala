@@ -72,7 +72,7 @@ class PathSpec() extends munit.FunSuite {
   test("parse static query params from DummyPath") {
     val httpEndpoint = HttpEndpoint
       .cast(
-        DummyPath
+        DummyPath.schema
       )
       .toOption
       .get
@@ -101,7 +101,7 @@ class PathSpec() extends munit.FunSuite {
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
       .cast(
-        DummyPath
+        DummyPath.schema
       )
       .toTry
       .get

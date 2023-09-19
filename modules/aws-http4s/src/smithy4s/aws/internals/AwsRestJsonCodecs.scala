@@ -25,7 +25,7 @@ import cats.effect.Concurrent
 import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunctions
-import smithy4s.Endpoint
+import smithy4s.schema.OperationSchema
 
 private[aws] object AwsRestJsonCodecs {
 
@@ -81,13 +81,13 @@ private[aws] object AwsRestJsonCodecs {
 
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
+          operation: OperationSchema[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](endpoint.hints)
+        val transformEncoders = applyCompression[F](operation.hints)
         val finalEncoders = transformEncoders(encoders)
         val make = UnaryClientCodecs
           .Make[F](finalEncoders, decoders, decoders, discriminator)
-        make.apply(endpoint)
+        make.apply(operation)
       }
     }
 

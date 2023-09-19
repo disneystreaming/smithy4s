@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 
 trait WeatherServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -75,16 +75,11 @@ object WeatherServiceOperation {
     def endpoint: smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = GetWeather
   }
   object GetWeather extends smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("weather", "GetWeather")
-    val input: Schema[GetWeatherInput] = GetWeatherInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetWeatherOutput] = GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200),
-    )
+    def schema: OperationSchema[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = Schema.operation(ShapeId("weather", "GetWeather"))
+      .withInput(GetWeatherInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200))
     def wrap(input: GetWeatherInput) = GetWeather(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

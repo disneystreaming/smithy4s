@@ -5,11 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -84,23 +83,12 @@ object NameCollisionOperation {
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = MyOp
   }
-  object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "MyOp")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+  object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
+    def schema: OperationSchema[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "MyOp"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(MyOpError)
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Unit) = MyOp()
-    override val errorable: Option[Errorable[MyOpError]] = Some(this)
-    val error: UnionSchema[MyOpError] = MyOpError.schema
-    def liftError(throwable: Throwable): Option[MyOpError] = throwable match {
-      case e: smithy4s.example.MyOpError => Some(MyOpError.MyOpErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: MyOpError): Throwable = e match {
-      case MyOpError.MyOpErrorCase(e) => e
-    }
   }
   sealed trait MyOpError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: MyOpError = this
@@ -114,7 +102,7 @@ object NameCollisionOperation {
       case value: MyOpError.MyOpErrorCase => visitor.myOpError(value.myOpError)
     }
   }
-  object MyOpError extends ShapeTag.Companion[MyOpError] {
+  object MyOpError extends Errorable.Companion[MyOpError] {
 
     def myOpError(myOpError: smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
@@ -146,6 +134,13 @@ object NameCollisionOperation {
     ){
       _.$ordinal
     }
+    def liftError(throwable: Throwable): Option[MyOpError] = throwable match {
+      case e: smithy4s.example.MyOpError => Some(MyOpError.MyOpErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: MyOpError): Throwable = e match {
+      case MyOpError.MyOpErrorCase(e) => e
+    }
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
@@ -154,14 +149,10 @@ object NameCollisionOperation {
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
   }
   object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "Endpoint")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    def schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Unit) = Endpoint()
-    override val errorable: Option[Nothing] = None
   }
 }
 

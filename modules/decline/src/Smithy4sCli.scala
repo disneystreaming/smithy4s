@@ -51,7 +51,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
       endpoint: service.Endpoint[_, _, _, _, _]
   ): List[String] =
     HttpEndpoint
-      .cast(endpoint)
+      .cast(endpoint.schema)
       .toOption
       .map { httpEndpoint =>
         val path = endpoint.hints
@@ -108,7 +108,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
 
           FO.flatMap(printer.printOutput)
             .onError {
-              case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+              case e if endpoint.error.flatMap(_.liftError(e)).nonEmpty =>
                 printer
                   .printError(e)
             }

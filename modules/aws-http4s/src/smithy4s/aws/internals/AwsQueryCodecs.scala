@@ -33,6 +33,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.schema.OperationSchema
 
 private[aws] object AwsQueryCodecs {
 
@@ -41,10 +42,10 @@ private[aws] object AwsQueryCodecs {
   ): UnaryClientCodecs.Make[F] =
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
+          operation: OperationSchema[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
         val transformEncoders = applyCompression[F](
-          endpoint.hints,
+          operation.hints,
           // To fulfil the requirement of
           // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298.
           retainUserEncoding = false
@@ -53,13 +54,13 @@ private[aws] object AwsQueryCodecs {
           requestEncoderCompilers[F](
             ignoreUrlFormFlattened = false,
             capitalizeStructAndUnionMemberNames = false,
-            action = endpoint.id.name,
+            action = operation.id.name,
             version = version
           )
         )
 
-        val responseTag = endpoint.name + "Response"
-        val resultTag = endpoint.name + "Result"
+        val responseTag = operation.id.name + "Response"
+        val resultTag = operation.id.name + "Result"
         val responseDecoderCompilers =
           AwsXmlCodecs
             .responseDecoderCompilers[F]
@@ -77,12 +78,12 @@ private[aws] object AwsQueryCodecs {
           )
         // Takes the `@awsQueryError` trait into consideration to decide how to
         // discriminate error responses.
-        val errorNameMapping: (String => String) = endpoint.errorable match {
+        val errorNameMapping: (String => String) = operation.error match {
           case None =>
             identity[String]
 
           case Some(err) =>
-            val mapping = err.error.alternatives.flatMap { alt =>
+            val mapping = err.schema.alternatives.flatMap { alt =>
               val shapeName = alt.schema.shapeId.name
               alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
             }.toMap
@@ -103,7 +104,7 @@ private[aws] object AwsQueryCodecs {
           error = errorDecoderCompilers,
           errorDiscriminator = errorDiscriminator
         )
-        make.apply(endpoint)
+        make.apply(operation)
       }
     }
 

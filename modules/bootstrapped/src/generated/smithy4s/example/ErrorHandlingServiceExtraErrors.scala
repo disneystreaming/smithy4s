@@ -6,11 +6,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -80,29 +79,12 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def ordinal = 0
     def endpoint: smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = ExtraErrorOperation
   }
-  object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] with Errorable[ExtraErrorOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperation")
-    val input: Schema[ExtraErrorOperationInput] = ExtraErrorOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+  object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] {
+    def schema: OperationSchema[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ExtraErrorOperation"))
+      .withInput(ExtraErrorOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(ExtraErrorOperationError)
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: ExtraErrorOperationInput) = ExtraErrorOperation(input)
-    override val errorable: Option[Errorable[ExtraErrorOperationError]] = Some(this)
-    val error: UnionSchema[ExtraErrorOperationError] = ExtraErrorOperationError.schema
-    def liftError(throwable: Throwable): Option[ExtraErrorOperationError] = throwable match {
-      case e: RandomOtherClientError => Some(ExtraErrorOperationError.RandomOtherClientErrorCase(e))
-      case e: RandomOtherServerError => Some(ExtraErrorOperationError.RandomOtherServerErrorCase(e))
-      case e: RandomOtherClientErrorWithCode => Some(ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase(e))
-      case e: RandomOtherServerErrorWithCode => Some(ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e))
-      case _ => None
-    }
-    def unliftError(e: ExtraErrorOperationError): Throwable = e match {
-      case ExtraErrorOperationError.RandomOtherClientErrorCase(e) => e
-      case ExtraErrorOperationError.RandomOtherServerErrorCase(e) => e
-      case ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase(e) => e
-      case ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e) => e
-    }
   }
   sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ExtraErrorOperationError = this
@@ -122,7 +104,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       case value: ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase => visitor.randomOtherServerErrorWithCode(value.randomOtherServerErrorWithCode)
     }
   }
-  object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
+  object ExtraErrorOperationError extends Errorable.Companion[ExtraErrorOperationError] {
 
     def randomOtherClientError(randomOtherClientError: RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
     def randomOtherServerError(randomOtherServerError: RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
@@ -183,6 +165,19 @@ object ErrorHandlingServiceExtraErrorsOperation {
       ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase.alt,
     ){
       _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[ExtraErrorOperationError] = throwable match {
+      case e: RandomOtherClientError => Some(ExtraErrorOperationError.RandomOtherClientErrorCase(e))
+      case e: RandomOtherServerError => Some(ExtraErrorOperationError.RandomOtherServerErrorCase(e))
+      case e: RandomOtherClientErrorWithCode => Some(ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase(e))
+      case e: RandomOtherServerErrorWithCode => Some(ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e))
+      case _ => None
+    }
+    def unliftError(e: ExtraErrorOperationError): Throwable = e match {
+      case ExtraErrorOperationError.RandomOtherClientErrorCase(e) => e
+      case ExtraErrorOperationError.RandomOtherServerErrorCase(e) => e
+      case ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase(e) => e
+      case ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e) => e
     }
   }
 }
