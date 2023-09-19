@@ -41,7 +41,7 @@ package object http {
   ] = httpMatch(
     service,
     method,
-    pathSegments = matchPath.make(path).toIndexedSeq
+    pathSegments = matchPath.make(path)
   )
 
   /**

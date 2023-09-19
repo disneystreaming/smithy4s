@@ -16,4 +16,11 @@
 
 package smithy4s
 
-private[smithy4s] trait ScalaCompat {}
+import scala.collection.immutable.ArraySeq
+
+private[smithy4s] trait ScalaCompat {
+
+  private[smithy4s] def unsafeWrapArray[A](array: Array[A]): IndexedSeq[A] =
+    ArraySeq.unsafeWrapArray(array)
+
+}
