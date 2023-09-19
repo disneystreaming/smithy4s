@@ -37,7 +37,7 @@ private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _
   val routes: HttpRoutes[F] = Kleisli { request =>
     for {
       endpoints <- perMethodEndpoint.get(request.method).toOptionT[F]
-      path = request.uri.path.segments.map(_.decoded()).toArray
+      path = request.uri.path.segments.map(_.decoded())
       (endpoint, pathParams) <- endpoints.collectFirstSome(_.matchTap(path)).toOptionT[F]
       response <- OptionT.liftF(endpoint.httpApp(request.withAttribute(pathParamsKey, pathParams)))
     } yield response

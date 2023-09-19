@@ -35,11 +35,11 @@ import smithy4s.kinds._
   */
 private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
-  def matches(path: Array[String]): Option[PathParams]
+  def matches(path: IndexedSeq[String]): Option[PathParams]
   def httpApp: HttpApp[F]
 
   def matchTap(
-      path: Array[String]
+      path: IndexedSeq[String]
   ): Option[(SmithyHttp4sServerEndpoint[F], PathParams)] =
     matches(path).map(this -> _)
 }
@@ -90,7 +90,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on
 
-  def matches(path: Array[String]): Option[PathParams] = {
+  def matches(path: IndexedSeq[String]): Option[PathParams] = {
     httpEndpoint.matches(path)
   }
 

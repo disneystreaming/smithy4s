@@ -33,7 +33,7 @@ trait HttpEndpoint[I] {
   def method: HttpMethod
   def code: Int
 
-  final def matches(rPath: Array[String]): Option[Map[String, String]] =
+  final def matches(rPath: IndexedSeq[String]): Option[Map[String, String]] =
     matchPath(path, rPath)
 
 }

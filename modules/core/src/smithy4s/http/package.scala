@@ -47,7 +47,7 @@ package object http {
   ] = httpMatch(
     service,
     method,
-    pathSegments = matchPath.make(path).toVector
+    pathSegments = matchPath.make(path)
   )
 
   /**
@@ -57,7 +57,7 @@ package object http {
   final def httpMatch[Alg[_[_, _, _, _, _]]](
       service: Service[Alg],
       method: http.HttpMethod,
-      pathSegments: Vector[String]
+      pathSegments: IndexedSeq[String]
   ): Option[
     (
         service.Endpoint[_, _, _, _, _],
@@ -71,7 +71,7 @@ package object http {
         case (endpoint, http.HttpEndpoint(httpEndpoint))
             if httpEndpoint.method == method =>
           httpEndpoint
-            .matches(pathSegments.toArray)
+            .matches(pathSegments)
             .map(metadata => (endpoint, httpEndpoint, metadata))
         case _ => None
       }
