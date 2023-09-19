@@ -29,9 +29,6 @@ object XmlStartingPath extends ShapeTag.Companion[XmlStartingPath] {
 
   val schema: Schema[XmlStartingPath] =
     list(string)
-      .biject[XmlStartingPath](
-        XmlStartingPath(_),
-        (_: XmlStartingPath).path
-      )
+      .biject[XmlStartingPath](XmlStartingPath(_))(_.path)
 
 }

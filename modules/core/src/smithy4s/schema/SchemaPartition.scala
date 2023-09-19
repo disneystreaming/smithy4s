@@ -126,8 +126,8 @@ object SchemaPartition {
             apply(underlying) match {
               case SchemaPartition.SplittingMatch(matching, notMatching) =>
                 SchemaPartition.SplittingMatch(
-                  matching.biject(_.map(bijection.to), _.map(bijection.from)),
-                  notMatching.biject(_.map(bijection.to), _.map(bijection.from))
+                  matching.biject(_.map(bijection.to))(_.map(bijection.from)),
+                  notMatching.biject(_.map(bijection.to))(_.map(bijection.from))
                 )
               case SchemaPartition.TotalMatch(total) =>
                 SchemaPartition.TotalMatch(total.biject(bijection))
@@ -162,12 +162,12 @@ object SchemaPartition {
         // match from it, by bijecting from its result onto the structure
         val to = (a: A) => make(IndexedSeq(a))
         val from = field.get
-        SchemaPartition.TotalMatch(field.schema.biject(to, from))
+        SchemaPartition.TotalMatch(field.schema.biject(to)(from))
 
       case Some(notMachingSchema) =>
         // There are other fields in the structure than the payload field.
 
-        val to = {
+        val to: A => PartialData[S] = {
           val indexes = IndexedSeq(index)
           (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
         }
@@ -180,7 +180,7 @@ object SchemaPartition {
         }
 
         SchemaPartition.SplittingMatch(
-          field.schema.biject(to, from),
+          field.schema.biject(to)(from),
           notMachingSchema
         )
     }
