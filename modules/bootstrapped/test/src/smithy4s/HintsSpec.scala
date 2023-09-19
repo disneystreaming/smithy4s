@@ -19,6 +19,7 @@ package smithy4s
 import smithy.api.HttpHeader
 import smithy.api.HttpLabel
 import munit._
+import smithy.api.Readonly
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
@@ -59,6 +60,25 @@ class HintsSpec() extends FunSuite {
     val concat = Hints.member(HttpHeader("X-Member")) ++ Hints(HttpLabel())
     expect.same(concat.memberHints, Hints.member(HttpHeader("X-Member")))
     expect.same(concat.targetHints, Hints(HttpLabel()))
+  }
+
+  test("Hints#add adds to the member layer") {
+    val concat = Hints.empty.add(HttpHeader("X-Member"))
+    expect.same(concat, Hints.member(HttpHeader("X-Member")))
+  }
+
+  test("Hints#addTargetHints adds to the target layer") {
+    val concat = Hints.empty.addTargetHints(HttpHeader("X-Member"))
+    expect.same(concat, Hints(HttpHeader("X-Member")))
+  }
+
+  test("Hints#expand allows to derive a hint from another hint") {
+    val expanded0 =
+      Hints.empty.expand((_: HttpLabel) => Readonly())
+    val expanded1 =
+      Hints(HttpLabel()).expand((_: HttpLabel) => Readonly())
+    assert(!expanded0.has(Readonly))
+    assert(expanded1.has(Readonly))
   }
 
 }
