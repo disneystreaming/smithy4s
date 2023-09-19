@@ -14,16 +14,13 @@
  *  limitations under the License.
  */
 
-package smithy4s
+import com.amazonaws.dynamodb.TestEnum
 
-sealed trait StreamingSchema[A]
+object Main extends App {
 
-object StreamingSchema {
-  def apply[A](fieldName: String, schema: Schema[A]): StreamingSchema[A] =
-    Streamed(fieldName, schema)
-  def nothing: StreamingSchema[Nothing] = NoStream
+  require(
+    TestEnum.hints.has(alloy.OpenEnum),
+    "Expected OpenEnum trait on aws enum."
+  )
 
-  case class Streamed[A](fieldName: String, schema: Schema[A])
-      extends StreamingSchema[A]
-  case object NoStream extends StreamingSchema[Nothing]
 }

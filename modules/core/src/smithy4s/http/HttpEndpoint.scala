@@ -17,6 +17,7 @@
 package smithy4s
 package http
 
+import smithy4s.schema.OperationSchema
 import smithy.api.Http
 import smithy4s.http.internals.SchemaVisitorPathEncoder
 import smithy4s.http.HttpMethod
@@ -41,14 +42,14 @@ trait HttpEndpoint[I] {
 object HttpEndpoint {
 
   def unapply[I, E, O, SI, SO](
-      endpoint: Endpoint.Base[I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = cast(endpoint).toOption
+      operation: OperationSchema[I, E, O, SI, SO]
+  ): Option[HttpEndpoint[I]] = cast(operation).toOption
 
   def cast[I, E, O, SI, SO](
-      endpoint: Endpoint.Base[I, E, O, SI, SO]
+      operation: OperationSchema[I, E, O, SI, SO]
   ): Either[HttpEndpointError, HttpEndpoint[I]] = {
     for {
-      http <- endpoint.hints
+      http <- operation.hints
         .get(Http)
         .toRight(HttpEndpointError("Operation doesn't have a @http trait"))
       httpMethod = HttpMethod.fromStringOrDefault(http.method.value)
@@ -62,7 +63,7 @@ object HttpEndpoint {
         )
 
       encoder <- SchemaVisitorPathEncoder(
-        endpoint.input.addHints(http)
+        operation.input.addHints(http)
       ).toRight(
         HttpEndpointError("Unable to encode operation input in HTTP path")
       )

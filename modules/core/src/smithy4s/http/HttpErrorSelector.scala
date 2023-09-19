@@ -44,7 +44,7 @@ object HttpErrorSelector {
     case None => _ => None
     case Some(errorable) =>
       new HttpErrorSelector[F, E](
-        errorable.error.alternatives,
+        errorable.schema.alternatives,
         compiler
       )
   }
@@ -64,7 +64,7 @@ object HttpErrorSelector {
     case None => _ => None
     case Some(errorable) =>
       new HttpErrorSelector[F, E](
-        errorable.error.alternatives,
+        errorable.schema.alternatives,
         compiler
       ).andThen(_.map(Covariant[F].map(_)(errorable.unliftError)))
   }

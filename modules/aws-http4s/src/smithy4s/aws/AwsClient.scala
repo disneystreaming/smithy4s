@@ -24,10 +24,10 @@ import fs2.compression.Compression
 import org.http4s.Response
 import org.http4s.client.Client
 import smithy4s.Blob
-import smithy4s.Endpoint
 import smithy4s.aws.internals._
 import smithy4s.http._
 import smithy4s.client.UnaryClientCompiler
+import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 import smithy4s.http.HttpMethod
@@ -69,7 +69,7 @@ object AwsClient {
         awsEnv: AwsEnvironment[F]
     ): service.FunctorEndpointCompiler[F] = {
 
-      def baseRequest(endpoint: Endpoint.Base[_, _, _, _, _]): F[HttpRequest[Blob]] = {
+      def baseRequest(endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
         awsEnv.region.map { region =>
           val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
           val baseUri = HttpUri(

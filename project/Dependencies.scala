@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.3"
+    val jsoniterScalaVersion = "2.23.4"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -46,7 +46,7 @@ object Dependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.5"
+    val circeVersion = "0.14.6"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -75,7 +75,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.1"
+    val millVersion = "0.11.3"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -145,7 +145,7 @@ object Dependencies {
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.7"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
 
   object Webjars {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"

@@ -287,4 +287,15 @@ object Schema {
     def default[A] : Option[A] = None
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
   }
+
+  def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =
+    OperationSchema[Unit, Nothing, Unit, Nothing, Nothing](
+      id,
+      Hints.empty,
+      Schema.unit,
+      None,
+      Schema.unit,
+      None,
+      None
+    )
 }

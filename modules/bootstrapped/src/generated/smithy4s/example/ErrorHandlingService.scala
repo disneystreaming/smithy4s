@@ -6,11 +6,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -79,29 +78,12 @@ object ErrorHandlingServiceOperation {
     def ordinal = 0
     def endpoint: smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = ErrorHandlingOperation
   }
-  object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] with Errorable[ErrorHandlingOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperation")
-    val input: Schema[ErrorHandlingOperationInput] = ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ErrorHandlingOperationOutput] = ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+  object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
+    def schema: OperationSchema[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ErrorHandlingOperation"))
+      .withInput(ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(ErrorHandlingOperationError)
+      .withOutput(ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: ErrorHandlingOperationInput) = ErrorHandlingOperation(input)
-    override val errorable: Option[Errorable[ErrorHandlingOperationError]] = Some(this)
-    val error: UnionSchema[ErrorHandlingOperationError] = ErrorHandlingOperationError.schema
-    def liftError(throwable: Throwable): Option[ErrorHandlingOperationError] = throwable match {
-      case e: EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
-      case e: EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
-      case e: EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
-      case e: EHFallbackServerError => Some(ErrorHandlingOperationError.EHFallbackServerErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: ErrorHandlingOperationError): Throwable = e match {
-      case ErrorHandlingOperationError.EHFallbackClientErrorCase(e) => e
-      case ErrorHandlingOperationError.EHServiceUnavailableCase(e) => e
-      case ErrorHandlingOperationError.EHNotFoundCase(e) => e
-      case ErrorHandlingOperationError.EHFallbackServerErrorCase(e) => e
-    }
   }
   sealed trait ErrorHandlingOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ErrorHandlingOperationError = this
@@ -121,7 +103,7 @@ object ErrorHandlingServiceOperation {
       case value: ErrorHandlingOperationError.EHFallbackServerErrorCase => visitor.eHFallbackServerError(value.eHFallbackServerError)
     }
   }
-  object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
+  object ErrorHandlingOperationError extends Errorable.Companion[ErrorHandlingOperationError] {
 
     def eHFallbackClientError(eHFallbackClientError: EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     def eHServiceUnavailable(eHServiceUnavailable: EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
@@ -182,6 +164,19 @@ object ErrorHandlingServiceOperation {
       ErrorHandlingOperationError.EHFallbackServerErrorCase.alt,
     ){
       _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[ErrorHandlingOperationError] = throwable match {
+      case e: EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
+      case e: EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
+      case e: EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
+      case e: EHFallbackServerError => Some(ErrorHandlingOperationError.EHFallbackServerErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: ErrorHandlingOperationError): Throwable = e match {
+      case ErrorHandlingOperationError.EHFallbackClientErrorCase(e) => e
+      case ErrorHandlingOperationError.EHServiceUnavailableCase(e) => e
+      case ErrorHandlingOperationError.EHNotFoundCase(e) => e
+      case ErrorHandlingOperationError.EHFallbackServerErrorCase(e) => e
     }
   }
 }

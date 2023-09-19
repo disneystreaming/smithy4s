@@ -60,8 +60,9 @@ package object http {
     )
   ] = {
     service.endpoints.iterator
+      .map(ep => ep -> ep.schema)
       .map {
-        case endpoint @ http.HttpEndpoint(httpEndpoint)
+        case (endpoint, http.HttpEndpoint(httpEndpoint))
             if httpEndpoint.method == method =>
           httpEndpoint
             .matches(pathSegments)

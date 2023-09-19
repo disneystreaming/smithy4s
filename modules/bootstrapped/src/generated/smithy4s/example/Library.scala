@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait LibraryGen[F[_, _, _, _, _]] {
@@ -83,16 +83,11 @@ object LibraryOperation {
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = ListPublishers
   }
   object ListPublishers extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "ListPublishers")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ListPublishersOutput] = ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Readonly(),
-    )
+    def schema: OperationSchema[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ListPublishers"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Readonly())
     def wrap(input: Unit) = ListPublishers()
-    override val errorable: Option[Nothing] = None
   }
   final case class GetBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.getBook()
@@ -101,16 +96,11 @@ object LibraryOperation {
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = GetBook
   }
   object GetBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetBook")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Readonly(),
-    )
+    def schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetBook"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Readonly())
     def wrap(input: Unit) = GetBook()
-    override val errorable: Option[Nothing] = None
   }
   final case class BuyBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.buyBook()
@@ -119,14 +109,10 @@ object LibraryOperation {
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = BuyBook
   }
   object BuyBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "BuyBook")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    def schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "BuyBook"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Unit) = BuyBook()
-    override val errorable: Option[Nothing] = None
   }
 }
 

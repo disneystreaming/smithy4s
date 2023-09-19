@@ -22,14 +22,13 @@ import alloy.UrlFormName
 import alloy.UrlFormFlattened
 import smithy.api.XmlName
 import smithy4s._
-import smithy4s.capability.Covariant
 import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.http._
-import smithy4s.interopcats._
 import smithy4s.kinds.PolyFunction5
 import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.schema.OperationSchema
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsEcsQueryCodecs {
@@ -51,38 +50,36 @@ private[aws] object AwsEcsQueryCodecs {
   private val discriminatorReaders =
     Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
-  def endpointPreprocessor(
+  def operationPreprocessor(
       version: String
-  ): PolyFunction5[Endpoint.Base, Endpoint.Base] =
-    new PolyFunction5[Endpoint.Base, Endpoint.Base] {
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): Endpoint.Base[I, E, O, SI, SO] = {
+          operation: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] = {
 
-        import AwsQueryCodecs.{addEndpointInfo, addDiscriminator}
+        import AwsQueryCodecs.{addOperationInfo, addDiscriminator}
 
         val inputTransformation = {
           val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints.andThen(flattenAll) }
-          val local = Schema.transformHintsLocallyK(addEndpointInfo(endpoint.id.name, version))
+          val local = Schema.transformHintsLocallyK(addOperationInfo(operation.id.name, version))
           transitive.andThen(local)
         }
 
-        def errorTransformation = Covariant.liftPolyFunction[Option] {
+        def errorTransformation =
           Errorable.transformHintsLocallyK {
             addDiscriminator.andThen(addErrorStartingPath)
           }
-        }
 
         val outputTransformation = Schema.transformHintsLocallyK {
-          val responseTag = endpoint.name + "Response"
+          val responseTag = operation.id.name + "Response"
           (_: Hints).add(XmlStartingPath(List(responseTag)))
         }
 
-        endpoint.builder
+        operation
           .mapInput(inputTransformation(_))
           .mapOutput(outputTransformation(_))
-          .mapErrorable(errorTransformation(_))
-          .build
+          .mapError(errorTransformation(_))
       }
     }
 
@@ -100,7 +97,7 @@ private[aws] object AwsEcsQueryCodecs {
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
     HttpUnaryClientCodecs.builder
-      .withEndpointPreprocessor(endpointPreprocessor(version))
+      .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
       .withSuccessBodyDecoders(Xml.readers)
       .withErrorBodyDecoders(Xml.readers)

@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 
 trait GreetServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -73,14 +73,10 @@ object GreetServiceOperation {
     def endpoint: smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Greet
   }
   object Greet extends smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example.greet", "Greet")
-    val input: Schema[GreetInput] = GreetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GreetOutput] = GreetOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    def schema: OperationSchema[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.greet", "Greet"))
+      .withInput(GreetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(GreetOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: GreetInput) = Greet(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

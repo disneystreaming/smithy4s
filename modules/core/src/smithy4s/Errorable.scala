@@ -18,8 +18,8 @@ package smithy4s
 
 import smithy4s.kinds.PolyFunction
 
-trait Errorable[E] { self =>
-  def error: schema.Schema.UnionSchema[E]
+trait Errorable[E] extends ShapeTag[E] { self =>
+  def schema: _root_.smithy4s.schema.Schema.UnionSchema[E]
   def liftError(throwable: Throwable): Option[E]
   def unliftError(e: E): Throwable
 
@@ -28,11 +28,12 @@ trait Errorable[E] { self =>
    */
   def transformHintsLocally(f: Hints => Hints): Errorable[E] =
     new Errorable[E] {
-      val error = schema.Schema.UnionSchema(
-        self.error.shapeId,
-        self.error.hints,
-        self.error.alternatives.map(_.transformHintsLocally(f)),
-        self.error.ordinal
+      val id = self.id
+      val schema = _root_.smithy4s.schema.Schema.UnionSchema(
+        self.schema.shapeId,
+        self.schema.hints,
+        self.schema.alternatives.map(_.transformHintsLocally(f)),
+        self.schema.ordinal
       )
       def liftError(throwable: Throwable): Option[E] = self.liftError(throwable)
       def unliftError(e: E): Throwable = self.unliftError(e)
@@ -43,11 +44,12 @@ trait Errorable[E] { self =>
    */
   def transformHintsTransitively(f: Hints => Hints): Errorable[E] =
     new Errorable[E] {
-      val error = schema.Schema.UnionSchema(
-        self.error.shapeId,
-        self.error.hints,
-        self.error.alternatives.map(_.transformHintsTransitively(f)),
-        self.error.ordinal
+      val id = self.id
+      val schema = _root_.smithy4s.schema.Schema.UnionSchema(
+        self.schema.shapeId,
+        self.schema.hints,
+        self.schema.alternatives.map(_.transformHintsTransitively(f)),
+        self.schema.ordinal
       )
       def liftError(throwable: Throwable): Option[E] = self.liftError(throwable)
       def unliftError(e: E): Throwable = self.unliftError(e)
@@ -56,6 +58,8 @@ trait Errorable[E] { self =>
 }
 
 object Errorable {
+
+  trait Companion[E] extends ShapeTag.Companion[E] with Errorable[E]
 
   def transformHintsLocallyK(
       f: Hints => Hints

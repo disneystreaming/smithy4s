@@ -82,7 +82,7 @@ private[aws] object AwsSigning {
 
   private[internals] def signingFunction[F[_]: Concurrent](
       serviceName: String,
-      endpointName: String,
+      operationName: String,
       endpointPrefix: String,
       timestamp: F[Timestamp],
       credentials: F[AwsCredentials],
@@ -128,7 +128,7 @@ private[aws] object AwsSigning {
           `Host` -> request.uri.host.map(_.renderString).orNull,
           `X-Amz-Date` -> timestamp.conciseDateTime,
           `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
-          `X-Amz-Target` -> (serviceName + "." + endpointName)
+          `X-Amz-Target` -> (serviceName + "." + operationName)
         ).filterNot(_._2 == null)
 
         val canonicalHeadersString = baseHeadersList

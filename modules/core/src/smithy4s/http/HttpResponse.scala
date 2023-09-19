@@ -131,7 +131,7 @@ object HttpResponse {
         errorable: Errorable[E],
         encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
     ): Encoder[Body, E] = {
-      val errorUnionSchema = errorable.error
+      val errorUnionSchema = errorable.schema
       val dispatcher =
         Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
       val precompiler = new Alt.Precompiler[Encoder[Body, *]] {

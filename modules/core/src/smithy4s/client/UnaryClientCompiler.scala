@@ -41,7 +41,7 @@ object UnaryClientCompiler {
 
         UnaryClientEndpoint(
           adaptedClient,
-          makeClientCodecs(endpoint),
+          makeClientCodecs(endpoint.schema),
           isSuccessful
         )
       }

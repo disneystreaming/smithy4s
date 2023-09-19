@@ -124,15 +124,6 @@ final class RendererConfigSpec extends munit.FunSuite {
 
     val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
-    assertContainsSection(serviceCode, "override val errorable")(
-      "override val errorable: Option[Errorable[OperationError]] = Some(this)"
-    )
-    assertContainsSection(
-      serviceCode,
-      "val error: UnionSchema[OperationError]"
-    )(
-      "val error: UnionSchema[OperationError] = OperationError.schema"
-    )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
       """|def liftError(throwable: Throwable): Option[OperationError] = throwable match {
          |  case e: OperationError => Some(e)
@@ -144,7 +135,7 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
-      """|object OperationError {
+      """|object OperationError extends Errorable[OperationError] {
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
          |  val schema: UnionSchema[OperationError] = {
@@ -155,6 +146,11 @@ final class RendererConfigSpec extends munit.FunSuite {
          |      case _: InternalServerError => 1
          |    }
          |  }
+         |  def liftError(throwable: Throwable): Option[OperationError] = throwable match {
+         |    case e: OperationError => Some(e)
+         |    case _ => None
+         |  }
+         |  def unliftError(e: OperationError): Throwable = e
          |}""".stripMargin
     )
 
@@ -219,15 +215,6 @@ final class RendererConfigSpec extends munit.FunSuite {
   private def testErrorsAsUnionsDisabled(smithy: String) = {
     val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
-    assertContainsSection(serviceCode, "override val errorable")(
-      "override val errorable: Option[Errorable[OperationError]] = Some(this)"
-    )
-    assertContainsSection(
-      serviceCode,
-      "val error: UnionSchema[OperationError]"
-    )(
-      "val error: UnionSchema[OperationError] = OperationError.schema"
-    )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
       """|def liftError(throwable: Throwable): Option[OperationError] = throwable match {
          |  case e: BadRequest => Some(OperationError.BadRequestCase(e))
@@ -258,7 +245,7 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
-      """|object OperationError extends ShapeTag.Companion[OperationError] {
+      """|object OperationError extends Errorable.Companion[OperationError] {
          |  def badRequest(badRequest: BadRequest): OperationError = BadRequestCase(badRequest)
          |  def internalServerError(internalServerError: InternalServerError): OperationError = InternalServerErrorCase(internalServerError)
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
@@ -291,6 +278,15 @@ final class RendererConfigSpec extends munit.FunSuite {
          |    OperationError.InternalServerErrorCase.alt,
          |  ){
          |    _.$ordinal
+         |  }
+         |  def liftError(throwable: Throwable): Option[OperationError] = throwable match {
+         |    case e: BadRequest => Some(OperationError.BadRequestCase(e))
+         |    case e: InternalServerError => Some(OperationError.InternalServerErrorCase(e))
+         |    case _ => None
+         |  }
+         |  def unliftError(e: OperationError): Throwable = e match {
+         |    case OperationError.BadRequestCase(e) => e
+         |    case OperationError.InternalServerErrorCase(e) => e
          |  }
          |}""".stripMargin
     )

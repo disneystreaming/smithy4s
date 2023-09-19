@@ -91,11 +91,11 @@ private class HttpUnaryServerRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
   private def makeHttpEndpointHandler[I, E, O, SI, SO](
       endpoint: service.Endpoint[I, E, O, SI, SO]
   ): Either[HttpEndpoint.HttpEndpointError, HttpEndpointHandler] = {
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
+    HttpEndpoint.cast(endpoint.schema).map { httpEndpoint =>
       val handler = smithy4s.server.UnaryServerEndpoint(
         impl,
         endpoint,
-        makeServerCodecs(endpoint),
+        makeServerCodecs(endpoint.schema),
         endpointMiddleware.prepare(service)(endpoint)
       )
       HttpEndpointHandler(httpEndpoint, handler)

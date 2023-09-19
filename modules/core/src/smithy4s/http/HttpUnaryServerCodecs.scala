@@ -22,6 +22,7 @@ import smithy4s.codecs.{BlobEncoder, BlobDecoder}
 import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.OperationSchema
 import smithy4s.codecs.Reader
 import smithy4s.codecs.PayloadError
 
@@ -45,7 +46,7 @@ object HttpUnaryServerCodecs {
     )
 
   trait Builder[F[_], Request, Response] {
-    def withBaseResponse(f: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response]
+    def withBaseResponse(f: OperationSchema[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response]
     def withBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
     def withSuccessBodyEncoders(decoders: BlobEncoder.Compiler): Builder[F, Request, Response]
     def withErrorBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response]
@@ -61,7 +62,7 @@ object HttpUnaryServerCodecs {
   }
 
   private case class HttpUnaryClientCodecsBuilderImpl[F[_], Request, Response](
-      baseResponse: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]],
+      baseResponse: OperationSchema[_, _, _, _, _] => F[HttpResponse[Blob]],
       requestBodyDecoders: BlobDecoder.Compiler,
       successResponseBodyEncoders: BlobEncoder.Compiler,
       errorResponseBodyEncoders: BlobEncoder.Compiler,
@@ -76,7 +77,7 @@ object HttpUnaryServerCodecs {
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
 
-    def withBaseResponse(f: Endpoint.Base[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response] =
+    def withBaseResponse(f: OperationSchema[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response] =
       copy(baseResponse = f)
     def withBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response] =
       copy(requestBodyDecoders = decoders)
@@ -169,7 +170,7 @@ object HttpUnaryServerCodecs {
         private val outputEncoderCache: outputEncoders.Cache = outputEncoders.createCache()
 
         def apply[I, E, O, SI, SO](
-            endpoint: Endpoint.Base[I, E, O, SI, SO]
+            endpoint: OperationSchema[I, E, O, SI, SO]
         ): UnaryServerCodecs[F, Request, Response, I, E, O] = {
           val outputW = endpoint.hints.get(smithy.api.Http) match {
             case Some(http) =>
@@ -186,7 +187,7 @@ object HttpUnaryServerCodecs {
                 .andThen[HttpResponse[Blob]](postProcessResponse)
             case None => outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
           }
-          val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.errorable, errorEncoders)
+          val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.error, errorEncoders)
           val inputDecoder: HttpRequest.Decoder[F, Blob, I] =
             inputDecoders.fromSchema(endpoint.input, inputDecoderCache)
           val base = baseResponse(endpoint)

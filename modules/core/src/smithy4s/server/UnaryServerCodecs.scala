@@ -16,7 +16,7 @@
 
 package smithy4s.server
 
-import smithy4s.Endpoint
+import smithy4s.schema.OperationSchema
 import smithy4s.capability.MonadThrowLike
 
 // scalafmt: {maxColumn = 120}
@@ -59,6 +59,6 @@ object UnaryServerCodecs {
   }
 
   type Make[F[_], Request, Response] =
-    smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F, Request, Response]#toKind5]
+    smithy4s.kinds.PolyFunction5[OperationSchema, For[F, Request, Response]#toKind5]
 
 }

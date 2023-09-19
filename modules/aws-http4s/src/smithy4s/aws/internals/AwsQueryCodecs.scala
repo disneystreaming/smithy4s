@@ -23,7 +23,6 @@ import alloy.UrlFormName
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
-import smithy4s.capability.Covariant
 import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.http._
@@ -31,6 +30,7 @@ import smithy4s.http.internals.StaticUrlFormElements
 import smithy4s.kinds.PolyFunction5
 import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.schema.OperationSchema
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
@@ -48,8 +48,8 @@ private[aws] object AwsQueryCodecs {
   }
 
   // The name of the endpoint and version of the service must be added to the body
-  private[aws] def addEndpointInfo(endpointName: String, version: String) = (hints: Hints) =>
-    hints.add(StaticUrlFormElements(List(("Action" -> endpointName), ("Version" -> version))))
+  private[aws] def addOperationInfo(operationName: String, version: String) = (hints: Hints) =>
+    hints.add(StaticUrlFormElements(List(("Action" -> operationName), ("Version" -> version))))
 
   // The actual error payloads are nested under two layers of XML
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
@@ -67,33 +67,30 @@ private[aws] object AwsQueryCodecs {
       .expand((_: XmlFlattened) => UrlFormFlattened())
       .expand((xmlName: XmlName) => UrlFormName(xmlName.value))
 
-  private def endpointPreprocessor(version: String): PolyFunction5[Endpoint.Base, Endpoint.Base] =
-    new PolyFunction5[Endpoint.Base, Endpoint.Base] {
-      def apply[I, E, O, SI, SO](endpoint: Endpoint.Base[I, E, O, SI, SO]): Endpoint.Base[I, E, O, SI, SO] = {
+  private def operationPreprocessor(version: String): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](operation: OperationSchema[I, E, O, SI, SO]): OperationSchema[I, E, O, SI, SO] = {
 
         val inputTransformation = {
           val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints }
-          val local = Schema.transformHintsLocallyK(addEndpointInfo(endpoint.id.name, version))
+          val local = Schema.transformHintsLocallyK(addOperationInfo(operation.id.name, version))
           transitive.andThen(local)
         }
 
-        def errorTransformation = Covariant.liftPolyFunction[Option] {
-          Errorable.transformHintsLocallyK {
-            addDiscriminator.andThen(addErrorStartingPath)
-          }
+        def errorTransformation = Errorable.transformHintsLocallyK {
+          addDiscriminator.andThen(addErrorStartingPath)
         }
 
         val outputTransformation = Schema.transformHintsLocallyK {
-          val responseTag = endpoint.name + "Response"
-          val resultTag = endpoint.name + "Result"
+          val responseTag = operation.id.name + "Response"
+          val resultTag = operation.id.name + "Result"
           (_: Hints).add(XmlStartingPath(List(responseTag, resultTag)))
         }
 
-        endpoint.builder
+        operation
           .mapInput(inputTransformation(_))
           .mapOutput(outputTransformation(_))
-          .mapErrorable(errorTransformation(_))
-          .build
+          .mapError(errorTransformation(_))
       }
     }
 
@@ -102,7 +99,7 @@ private[aws] object AwsQueryCodecs {
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
     HttpUnaryClientCodecs.builder
-      .withEndpointPreprocessor(endpointPreprocessor(version))
+      .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
       .withSuccessBodyDecoders(Xml.readers)
       .withErrorBodyDecoders(Xml.readers)

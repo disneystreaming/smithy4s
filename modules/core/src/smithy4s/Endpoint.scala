@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import smithy4s.schema._
+
 /**
   * A representation of a smithy operation.
   *
@@ -40,31 +42,35 @@ package smithy4s
   * be encoded a great many ways, using a great many libraries)
   */
 // scalafmt: {maxColumn = 120}
-trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] extends Endpoint.Base[I, E, O, SI, SO] {
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
 
+  final def mapSchema(
+      f: OperationSchema[I, E, O, SI, SO] => OperationSchema[I, E, O, SI, SO]
+  ): Endpoint[Op, I, E, O, SI, SO] = Endpoint(f(schema), wrap)
+
+  def schema: OperationSchema[I, E, O, SI, SO]
   def wrap(input: I): Op[I, E, O, SI, SO]
+
+  final def id: ShapeId = schema.id
+  final def name: String = schema.id.name
+  final def hints: Hints = schema.hints
+  final def input: Schema[I] = schema.input
+  final def output: Schema[O] = schema.output
+  final def error: Option[Errorable[E]] = schema.error
+  @deprecated("Use .error instead", since = "0.18")
+  final def errorable: Option[Errorable[E]] = schema.error
+  final def streamedInput: Option[StreamingSchema[SI]] = schema.streamedInput
+  final def streamedOutput: Option[StreamingSchema[SO]] = schema.streamedOutput
 
   object Error {
     def unapply(throwable: Throwable): Option[(Errorable[E], E)] =
-      errorable.flatMap { err =>
+      error.flatMap { err =>
         err.liftError(throwable).map(err -> _)
       }
   }
 }
 
 object Endpoint {
-
-  trait Base[I, E, O, SI, SO] {
-    def id: ShapeId
-    final def name: String = id.name
-    def hints: Hints
-    def input: Schema[I]
-    def output: Schema[O]
-    def errorable: Option[Errorable[E]]
-    def streamedInput: StreamingSchema[SI]
-    def streamedOutput: StreamingSchema[SO]
-    def builder: Builder[I, E, O, SI, SO] = Builder.fromEndpoint(this)
-  }
 
   trait Middleware[A] { self =>
     def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A
@@ -105,101 +111,17 @@ object Endpoint {
       }
 
   }
+  def apply[Op[_, _, _, _, _], I, E, O, SI, SO](
+      operationSchema: OperationSchema[I, E, O, SI, SO],
+      wrapFunction: I => Op[I, E, O, SI, SO]
+  ): Endpoint[Op, I, E, O, SI, SO] =
+    new Endpoint[Op, I, E, O, SI, SO] {
+      def schema = operationSchema
+      def wrap(i: I): Op[I, E, O, SI, SO] = wrapFunction(i)
+    }
 
   type ForOperation[Op[_, _, _, _, _]] = {
     type e[I, E, O, SI, SO] = Endpoint[Op, I, E, O, SI, SO]
   }
 
-  final case class Builder[I, E, O, SI, SO] private (
-      private val baseId: ShapeId,
-      private val baseHints: Hints,
-      private val baseInput: Schema[I],
-      private val baseOutput: Schema[O],
-      private val baseErrorable: Option[Errorable[E]],
-      private val baseStreamedInput: StreamingSchema[SI],
-      private val baseStreamedOutput: StreamingSchema[SO]
-  ) {
-
-    def withId(id: ShapeId): Builder[I, E, O, SI, SO] = copy(baseId = id)
-
-    def mapId(f: ShapeId => ShapeId): Builder[I, E, O, SI, SO] =
-      copy(baseId = f(baseId))
-
-    def withHints(hints: Hints): Builder[I, E, O, SI, SO] =
-      copy(baseHints = hints)
-
-    def mapHints(f: Hints => Hints): Builder[I, E, O, SI, SO] =
-      copy(baseHints = f(baseHints))
-
-    def withInput(input: Schema[I]): Builder[I, E, O, SI, SO] =
-      copy(baseInput = input)
-
-    def mapInput(f: Schema[I] => Schema[I]): Builder[I, E, O, SI, SO] =
-      copy(baseInput = f(baseInput))
-
-    def withOutput(output: Schema[O]): Builder[I, E, O, SI, SO] =
-      copy(baseOutput = output)
-
-    def mapOutput(f: Schema[O] => Schema[O]): Builder[I, E, O, SI, SO] =
-      copy(baseOutput = f(baseOutput))
-
-    def withErrorable(
-        errorable: Option[Errorable[E]]
-    ): Builder[I, E, O, SI, SO] = copy(baseErrorable = errorable)
-
-    def mapErrorable(
-        f: Option[Errorable[E]] => Option[Errorable[E]]
-    ): Builder[I, E, O, SI, SO] = copy(baseErrorable = f(baseErrorable))
-
-    def withStreamedInput(
-        streamedInput: StreamingSchema[SI]
-    ): Builder[I, E, O, SI, SO] = copy(baseStreamedInput = streamedInput)
-
-    def mapStreamedInput(
-        f: StreamingSchema[SI] => StreamingSchema[SI]
-    ): Builder[I, E, O, SI, SO] =
-      copy(baseStreamedInput = f(baseStreamedInput))
-
-    def withSteamedOutput(
-        streamedOutput: StreamingSchema[SO]
-    ): Builder[I, E, O, SI, SO] = copy(baseStreamedOutput = streamedOutput)
-
-    def mapSteamedOutput(
-        f: StreamingSchema[SO] => StreamingSchema[SO]
-    ): Builder[I, E, O, SI, SO] =
-      copy(baseStreamedOutput = f(baseStreamedOutput))
-
-    def build: Endpoint.Base[I, E, O, SI, SO] =
-      new Endpoint.Base[I, E, O, SI, SO] {
-        override val id: ShapeId = baseId
-
-        override val hints: Hints = baseHints
-
-        override val input: Schema[I] = baseInput
-
-        override val output: Schema[O] = baseOutput
-
-        override val errorable: Option[Errorable[E]] = baseErrorable
-
-        override val streamedInput: StreamingSchema[SI] = baseStreamedInput
-
-        override val streamedOutput: StreamingSchema[SO] = baseStreamedOutput
-      }
-  }
-
-  object Builder {
-    def fromEndpoint[I, E, O, SI, SO](
-        endpoint: Endpoint.Base[I, E, O, SI, SO]
-    ): Builder[I, E, O, SI, SO] = {
-      Builder(
-        baseId = endpoint.id,
-        baseHints = endpoint.hints,
-        baseInput = endpoint.input,
-        baseOutput = endpoint.output,
-        baseErrorable = endpoint.errorable,
-        baseStreamedInput = endpoint.streamedInput,
-        baseStreamedOutput = endpoint.streamedOutput
-      )
-    }
-  }
 }

@@ -80,7 +80,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
 
   case class TestInput(
       serviceName: String,
-      endpointName: String,
+      operationName: String,
       smithy4sTimestamp: Timestamp,
       smithy4sCredentials: AwsCredentials,
       smithy4sRegion: AwsRegion,
@@ -113,7 +113,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
 
     val gen: Gen[TestInput] = for {
       serviceName <- Gen.identifier
-      endpointName <- Gen.identifier
+      operationName <- Gen.identifier
       timestamp <- Gen.chooseNum(0L, 4102444800L).map(Timestamp.fromEpochSecond)
       accessKeyId <- Gen.identifier
       secretAccessKey <- Gen.identifier
@@ -123,7 +123,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     } yield {
       TestInput(
         serviceName,
-        endpointName,
+        operationName,
         timestamp,
         AwsCredentials.Default(accessKeyId, secretAccessKey, accessToken),
         AwsRegion(region.id()),
@@ -168,13 +168,13 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     // by our implementation
     val amendedAwsRequest = awsRequest
       .toBuilder()
-      .appendHeader("X-Amz-Target", serviceName + "." + endpointName)
+      .appendHeader("X-Amz-Target", serviceName + "." + operationName)
       .build()
     val signedAwsRequest = awsSigner.sign(amendedAwsRequest, params)
 
     val smithy4sSigner = AwsSigning.signingFunction[IO](
       serviceName,
-      endpointName,
+      operationName,
       serviceName,
       IO(smithy4sTimestamp),
       IO(smithy4sCredentials),
