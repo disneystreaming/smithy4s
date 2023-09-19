@@ -21,7 +21,6 @@ import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.schema._
 import smithy4s.capability.MonadThrowLike
-import smithy4s.http.HttpMethod
 
 final case class HttpRequest[+A](
     method: HttpMethod,
