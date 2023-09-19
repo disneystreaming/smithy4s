@@ -48,7 +48,7 @@ case class ErrorSchema[E](
             other.shapeId.name,
             other,
             identity[E],
-            PartialFunction.fromFunction(identity[E])
+            { case e => e }
           )
       )
   }
