@@ -135,7 +135,7 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
-      """|object OperationError extends ErrorSchema[OperationError] {
+      """|object OperationError extends ErrorSchema.Companion[OperationError] {
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
          |  val schema: Schema[OperationError] = {

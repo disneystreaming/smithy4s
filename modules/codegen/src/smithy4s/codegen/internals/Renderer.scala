@@ -850,7 +850,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
-      obj(name, line"$ErrorSchema_[${NameRef(name.name)}]")(
+      obj(name, line"$ErrorSchema_.Companion[${NameRef(name.name)}]")(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
