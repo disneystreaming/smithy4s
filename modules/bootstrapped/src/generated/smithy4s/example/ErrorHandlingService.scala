@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -81,7 +80,7 @@ object ErrorHandlingServiceOperation {
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
     def schema: OperationSchema[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ErrorHandlingOperation"))
       .withInput(ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(ErrorHandlingOperationError)
+      .withError(ErrorHandlingOperationError.errorSchema)
       .withOutput(ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: ErrorHandlingOperationInput) = ErrorHandlingOperation(input)
   }
@@ -103,7 +102,7 @@ object ErrorHandlingServiceOperation {
       case value: ErrorHandlingOperationError.EHFallbackServerErrorCase => visitor.eHFallbackServerError(value.eHFallbackServerError)
     }
   }
-  object ErrorHandlingOperationError extends Errorable.Companion[ErrorHandlingOperationError] {
+  object ErrorHandlingOperationError extends ErrorSchema.Companion[ErrorHandlingOperationError] {
 
     def eHFallbackClientError(eHFallbackClientError: EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     def eHServiceUnavailable(eHServiceUnavailable: EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
@@ -157,7 +156,7 @@ object ErrorHandlingServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[ErrorHandlingOperationError] = union(
+    implicit val schema: Schema[ErrorHandlingOperationError] = union(
       ErrorHandlingOperationError.EHFallbackClientErrorCase.alt,
       ErrorHandlingOperationError.EHServiceUnavailableCase.alt,
       ErrorHandlingOperationError.EHNotFoundCase.alt,

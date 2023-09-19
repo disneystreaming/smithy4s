@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -138,7 +137,7 @@ object PizzaAdminServiceOperation {
   object AddMenuItem extends smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
     def schema: OperationSchema[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "AddMenuItem"))
       .withInput(AddMenuItemRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(AddMenuItemError)
+      .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
     def wrap(input: AddMenuItemRequest) = AddMenuItem(input)
@@ -159,7 +158,7 @@ object PizzaAdminServiceOperation {
       case value: AddMenuItemError.GenericClientErrorCase => visitor.genericClientError(value.genericClientError)
     }
   }
-  object AddMenuItemError extends Errorable.Companion[AddMenuItemError] {
+  object AddMenuItemError extends ErrorSchema.Companion[AddMenuItemError] {
 
     def priceError(priceError: PriceError): AddMenuItemError = PriceErrorCase(priceError)
     def genericServerError(genericServerError: GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
@@ -204,7 +203,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[AddMenuItemError] = union(
+    implicit val schema: Schema[AddMenuItemError] = union(
       AddMenuItemError.PriceErrorCase.alt,
       AddMenuItemError.GenericServerErrorCase.alt,
       AddMenuItemError.GenericClientErrorCase.alt,
@@ -231,7 +230,7 @@ object PizzaAdminServiceOperation {
   object GetMenu extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
     def schema: OperationSchema[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetMenu"))
       .withInput(GetMenuRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetMenuError)
+      .withError(GetMenuError.errorSchema)
       .withOutput(GetMenuResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu"), code = 200), smithy.api.Readonly())
     def wrap(input: GetMenuRequest) = GetMenu(input)
@@ -254,7 +253,7 @@ object PizzaAdminServiceOperation {
       case value: GetMenuError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
     }
   }
-  object GetMenuError extends Errorable.Companion[GetMenuError] {
+  object GetMenuError extends ErrorSchema.Companion[GetMenuError] {
 
     def genericClientError(genericClientError: GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
     def fallbackError2(fallbackError2: FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
@@ -308,7 +307,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetMenuError] = union(
+    implicit val schema: Schema[GetMenuError] = union(
       GetMenuError.GenericClientErrorCase.alt,
       GetMenuError.FallbackError2Case.alt,
       GetMenuError.FallbackErrorCase.alt,
@@ -351,7 +350,7 @@ object PizzaAdminServiceOperation {
   object Health extends smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
     def schema: OperationSchema[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Health"))
       .withInput(HealthRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(HealthError)
+      .withError(HealthError.errorSchema)
       .withOutput(HealthResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: HealthRequest) = Health(input)
@@ -368,7 +367,7 @@ object PizzaAdminServiceOperation {
       case value: HealthError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
     }
   }
-  object HealthError extends Errorable.Companion[HealthError] {
+  object HealthError extends ErrorSchema.Companion[HealthError] {
 
     def unknownServerError(unknownServerError: UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
@@ -395,7 +394,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[HealthError] = union(
+    implicit val schema: Schema[HealthError] = union(
       HealthError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
@@ -440,7 +439,7 @@ object PizzaAdminServiceOperation {
   object GetEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
     def schema: OperationSchema[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetEnum"))
       .withInput(GetEnumInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetEnumError)
+      .withError(GetEnumError.errorSchema)
       .withOutput(GetEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetEnumInput) = GetEnum(input)
@@ -457,7 +456,7 @@ object PizzaAdminServiceOperation {
       case value: GetEnumError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
     }
   }
-  object GetEnumError extends Errorable.Companion[GetEnumError] {
+  object GetEnumError extends ErrorSchema.Companion[GetEnumError] {
 
     def unknownServerError(unknownServerError: UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
@@ -484,7 +483,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetEnumError] = union(
+    implicit val schema: Schema[GetEnumError] = union(
       GetEnumError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
@@ -505,7 +504,7 @@ object PizzaAdminServiceOperation {
   object GetIntEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
     def schema: OperationSchema[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetIntEnum"))
       .withInput(GetIntEnumInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetIntEnumError)
+      .withError(GetIntEnumError.errorSchema)
       .withOutput(GetIntEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-int-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetIntEnumInput) = GetIntEnum(input)
@@ -522,7 +521,7 @@ object PizzaAdminServiceOperation {
       case value: GetIntEnumError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
     }
   }
-  object GetIntEnumError extends Errorable.Companion[GetIntEnumError] {
+  object GetIntEnumError extends ErrorSchema.Companion[GetIntEnumError] {
 
     def unknownServerError(unknownServerError: UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
@@ -549,7 +548,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetIntEnumError] = union(
+    implicit val schema: Schema[GetIntEnumError] = union(
       GetIntEnumError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
@@ -570,7 +569,7 @@ object PizzaAdminServiceOperation {
   object CustomCode extends smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
     def schema: OperationSchema[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CustomCode"))
       .withInput(CustomCodeInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(CustomCodeError)
+      .withError(CustomCodeError.errorSchema)
       .withOutput(CustomCodeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/custom-code/{code}"), code = 200), smithy.api.Readonly())
     def wrap(input: CustomCodeInput) = CustomCode(input)
@@ -587,7 +586,7 @@ object PizzaAdminServiceOperation {
       case value: CustomCodeError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
     }
   }
-  object CustomCodeError extends Errorable.Companion[CustomCodeError] {
+  object CustomCodeError extends ErrorSchema.Companion[CustomCodeError] {
 
     def unknownServerError(unknownServerError: UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
@@ -614,7 +613,7 @@ object PizzaAdminServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[CustomCodeError] = union(
+    implicit val schema: Schema[CustomCodeError] = union(
       CustomCodeError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal

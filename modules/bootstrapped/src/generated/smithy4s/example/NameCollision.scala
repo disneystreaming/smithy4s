@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -8,8 +7,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -86,7 +85,7 @@ object NameCollisionOperation {
   object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     def schema: OperationSchema[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "MyOp"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(MyOpError)
+      .withError(MyOpError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Unit) = MyOp()
   }
@@ -102,7 +101,7 @@ object NameCollisionOperation {
       case value: MyOpError.MyOpErrorCase => visitor.myOpError(value.myOpError)
     }
   }
-  object MyOpError extends Errorable.Companion[MyOpError] {
+  object MyOpError extends ErrorSchema.Companion[MyOpError] {
 
     def myOpError(myOpError: smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
@@ -129,7 +128,7 @@ object NameCollisionOperation {
       }
     }
 
-    implicit val schema: UnionSchema[MyOpError] = union(
+    implicit val schema: Schema[MyOpError] = union(
       MyOpError.MyOpErrorCase.alt,
     ){
       _.$ordinal

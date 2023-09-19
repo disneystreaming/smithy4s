@@ -20,7 +20,7 @@ import cats.effect.Concurrent
 import org.http4s.EntityEncoder
 import org.http4s.Response
 import org.http4s.Status
-import smithy4s.Errorable
+import smithy4s.schema.ErrorSchema
 import smithy4s.codecs.Writer
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpStatusCode
@@ -36,22 +36,21 @@ object ResponseEncoder {
 
   def forError[F[_], E](
       errorTypeHeaders: List[String],
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
-  ): ResponseEncoder[F, E] = maybeErrorable match {
-    case Some(errorable) =>
-      forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
+  ): ResponseEncoder[F, E] = maybeErrorSchema match {
+    case Some(errorschema) =>
+      forErrorAux(errorTypeHeaders, errorschema, encoderCompiler)
     case None => Writer.noop
   }
 
   private def forErrorAux[F[_], E](
       errorTypeHeaders: List[String],
-      errorable: Errorable[E],
+      errorschema: ErrorSchema[E],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = {
-    val errorUnionSchema = errorable.schema
     val dispatcher =
-      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
+      Alt.Dispatcher(errorschema.alternatives, errorschema.ordinal)
     val precompiler = new Alt.Precompiler[ResponseEncoder[F, *]] {
       def apply[Err](
           label: String,

@@ -1,6 +1,5 @@
 package com.amazonaws.dynamodb
 
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -8,8 +7,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -135,7 +134,7 @@ object DynamoDBOperation {
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def schema: OperationSchema[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "ListTables"))
       .withInput(ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(ListTablesError)
+      .withError(ListTablesError.errorSchema)
       .withOutput(ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(aws.api.ClientDiscoveredEndpoint(required = false), smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"), smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))))
     def wrap(input: ListTablesInput) = ListTables(input)
@@ -154,7 +153,7 @@ object DynamoDBOperation {
       case value: ListTablesError.InvalidEndpointExceptionCase => visitor.invalidEndpointException(value.invalidEndpointException)
     }
   }
-  object ListTablesError extends Errorable.Companion[ListTablesError] {
+  object ListTablesError extends ErrorSchema.Companion[ListTablesError] {
 
     def internalServerError(internalServerError: InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
     def invalidEndpointException(invalidEndpointException: InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
@@ -190,7 +189,7 @@ object DynamoDBOperation {
       }
     }
 
-    implicit val schema: UnionSchema[ListTablesError] = union(
+    implicit val schema: Schema[ListTablesError] = union(
       ListTablesError.InternalServerErrorCase.alt,
       ListTablesError.InvalidEndpointExceptionCase.alt,
     ){

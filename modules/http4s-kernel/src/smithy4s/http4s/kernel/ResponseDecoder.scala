@@ -21,7 +21,7 @@ import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.Response
-import smithy4s.Errorable
+import smithy4s.schema.ErrorSchema
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpErrorSelector
 import smithy4s.http.HttpRestSchema
@@ -38,13 +38,13 @@ object ResponseDecoder {
     * the correct alternative, based on some discriminator.
     */
   def forError[F[_]: Concurrent, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]],
       discriminate: Response[F] => F[Option[HttpDiscriminator]]
   ): ResponseDecoder[F, E] =
     discriminating(
       discriminate,
-      HttpErrorSelector(maybeErrorable, decoderCompiler)
+      HttpErrorSelector(maybeErrorSchema, decoderCompiler)
     )
 
   /**
@@ -53,13 +53,13 @@ object ResponseDecoder {
     * then upcasts the error as a throwable
     */
   def forErrorAsThrowable[F[_]: Concurrent, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]],
       discriminate: Response[F] => F[Option[HttpDiscriminator]]
   ): ResponseDecoder[F, Throwable] =
     discriminating(
       discriminate,
-      HttpErrorSelector.asThrowable(maybeErrorable, decoderCompiler)
+      HttpErrorSelector.asThrowable(maybeErrorSchema, decoderCompiler)
     )
 
   /**

@@ -44,8 +44,8 @@ object Printer {
       def printInput(input: I): F[Unit] = Applicative[F].unit
 
       def printError(error: Throwable): F[Unit] = errCodec
-        .flatMap { case (err, errorable) =>
-          errorable.liftError(error).map { e =>
+        .flatMap { case (err, errorschema) =>
+          errorschema.liftError(error).map { e =>
             err.encode(e).toUTF8String
           }
         }

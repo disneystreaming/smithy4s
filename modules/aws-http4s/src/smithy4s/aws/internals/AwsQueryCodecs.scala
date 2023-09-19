@@ -83,7 +83,7 @@ private[aws] object AwsQueryCodecs {
             identity[String]
 
           case Some(err) =>
-            val mapping = err.schema.alternatives.flatMap { alt =>
+            val mapping = err.alternatives.flatMap { alt =>
               val shapeName = alt.schema.shapeId.name
               alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
             }.toMap

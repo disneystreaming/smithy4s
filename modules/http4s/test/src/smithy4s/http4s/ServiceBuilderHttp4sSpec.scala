@@ -85,7 +85,7 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
   }
 
   test(
-    "when an errorable is removed and the service raises an error, it behaves in the same way as any other throwable"
+    "when an errorschema is removed and the service raises an error, it behaves in the same way as any other throwable"
   ) {
     val serviceImpl: PizzaAdminService[IO] =
       new PizzaAdminService.Default[IO](IO.stub) {

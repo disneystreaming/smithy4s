@@ -135,10 +135,10 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
-      """|object OperationError extends Errorable[OperationError] {
+      """|object OperationError extends ErrorSchema[OperationError] {
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
-         |  val schema: UnionSchema[OperationError] = {
+         |  val schema: Schema[OperationError] = {
          |    val badRequestAlt = BadRequest.schema.oneOf[OperationError]("BadRequest")
          |    val internalServerErrorAlt = InternalServerError.schema.oneOf[OperationError]("InternalServerError")
          |    union(badRequestAlt, internalServerErrorAlt) {
@@ -245,7 +245,7 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
-      """|object OperationError extends Errorable.Companion[OperationError] {
+      """|object OperationError extends ErrorSchema.Companion[OperationError] {
          |  def badRequest(badRequest: BadRequest): OperationError = BadRequestCase(badRequest)
          |  def internalServerError(internalServerError: InternalServerError): OperationError = InternalServerErrorCase(internalServerError)
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
@@ -273,7 +273,7 @@ final class RendererConfigSpec extends munit.FunSuite {
          |      def internalServerError(value: InternalServerError): A = default
          |    }
          |  }
-         |  implicit val schema: UnionSchema[OperationError] = union(
+         |  implicit val schema: Schema[OperationError] = union(
          |    OperationError.BadRequestCase.alt,
          |    OperationError.InternalServerErrorCase.alt,
          |  ){

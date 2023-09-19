@@ -19,7 +19,7 @@ package internals
 
 import smithy4s.Document
 import smithy4s.schema.Schema
-import smithy4s.Errorable
+import smithy4s.schema.ErrorSchema
 import cats.ApplicativeThrow
 import cats.kernel.Eq
 import cats.syntax.all._
@@ -30,7 +30,7 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
     schema: Schema[A],
     inject: A => E,
     dispatcher: E => Option[A],
-    errorable: Errorable[E]
+    errorschema: ErrorSchema[E]
 ) {
 
   lazy val errorDecoder: Document.Decoder[A] =
@@ -38,7 +38,7 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
   implicit lazy val eq: Eq[A] = EqSchemaVisitor(schema)
 
   private def dispatchThrowable(t: Throwable): Option[A] = {
-    errorable.liftError(t).flatMap(dispatcher(_))
+    errorschema.liftError(t).flatMap(dispatcher(_))
   }
 
   def errorEq[F[_]: ApplicativeThrow]
@@ -65,7 +65,7 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
       errorDecoder
         .decode(doc)
         .map(inject)
-        .map(errorable.unliftError)
+        .map(errorschema.unliftError)
         .liftTo[F]
   }
 
@@ -74,12 +74,12 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
 private[compliancetests] object ErrorResponseTest {
   def from[E, A](
       errorAlt: smithy4s.schema.Alt[E, A],
-      errorable: smithy4s.Errorable[E]
+      errorschema: smithy4s.schema.ErrorSchema[E]
   ): ErrorResponseTest[A, E] =
     ErrorResponseTest(
       errorAlt.schema,
       errorAlt.inject,
       errorAlt.project.lift,
-      errorable
+      errorschema
     )
 }

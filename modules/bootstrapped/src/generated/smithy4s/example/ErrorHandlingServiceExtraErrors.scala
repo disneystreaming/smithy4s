@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -82,7 +81,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
   object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] {
     def schema: OperationSchema[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ExtraErrorOperation"))
       .withInput(ExtraErrorOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(ExtraErrorOperationError)
+      .withError(ExtraErrorOperationError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: ExtraErrorOperationInput) = ExtraErrorOperation(input)
   }
@@ -104,7 +103,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       case value: ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase => visitor.randomOtherServerErrorWithCode(value.randomOtherServerErrorWithCode)
     }
   }
-  object ExtraErrorOperationError extends Errorable.Companion[ExtraErrorOperationError] {
+  object ExtraErrorOperationError extends ErrorSchema.Companion[ExtraErrorOperationError] {
 
     def randomOtherClientError(randomOtherClientError: RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
     def randomOtherServerError(randomOtherServerError: RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
@@ -158,7 +157,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       }
     }
 
-    implicit val schema: UnionSchema[ExtraErrorOperationError] = union(
+    implicit val schema: Schema[ExtraErrorOperationError] = union(
       ExtraErrorOperationError.RandomOtherClientErrorCase.alt,
       ExtraErrorOperationError.RandomOtherServerErrorCase.alt,
       ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase.alt,

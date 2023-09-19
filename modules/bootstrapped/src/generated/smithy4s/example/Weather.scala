@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -111,7 +110,7 @@ object WeatherOperation {
   object GetCity extends smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
     def schema: OperationSchema[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCity"))
       .withInput(GetCityInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetCityError)
+      .withError(GetCityError.errorSchema)
       .withOutput(GetCityOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
     def wrap(input: GetCityInput) = GetCity(input)
@@ -128,7 +127,7 @@ object WeatherOperation {
       case value: GetCityError.NoSuchResourceCase => visitor.noSuchResource(value.noSuchResource)
     }
   }
-  object GetCityError extends Errorable.Companion[GetCityError] {
+  object GetCityError extends ErrorSchema.Companion[GetCityError] {
 
     def noSuchResource(noSuchResource: NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
 
@@ -155,7 +154,7 @@ object WeatherOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetCityError] = union(
+    implicit val schema: Schema[GetCityError] = union(
       GetCityError.NoSuchResourceCase.alt,
     ){
       _.$ordinal
