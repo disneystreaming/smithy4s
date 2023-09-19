@@ -31,7 +31,7 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
   def doMatch(segments: List[PathSegment])(
       path: String*
   ): Option[Map[String, String]] =
-    matchPath(segments.toList, path.toArray)
+    matchPath(segments.toList, path.toIndexedSeq)
 
   implicit def arbNel[T: Arbitrary]: Arbitrary[NonEmptyList[T]] = Arbitrary {
     Gen.resultOf(NonEmptyList.apply[T] _)
