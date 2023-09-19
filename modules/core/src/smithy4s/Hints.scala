@@ -27,7 +27,8 @@ package smithy4s
   * This `Hints` interface is a container for hints.
   *
   * Under the hood, the hints are composed of two maps : one for member-level hints,
-  * one for target-level hints.
+  * one for target-level hints. Member-level hints typically hold values corresponding
+  * to member traits, whereas target hints hold values corresponding to normal data shapes.
   */
 trait Hints {
   def isEmpty: Boolean
