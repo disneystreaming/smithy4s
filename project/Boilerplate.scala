@@ -281,7 +281,9 @@ object Boilerplate {
       -   final def narrow[F0[${`a..n`}] <: F[${`a..n`}]]: PolyFunction$suffix[F0, G] = this.asInstanceOf[PolyFunction$suffix[F0, G]]
       -
       -   final def widen[G0[${`a..n`}] >: G[${`a..n`}]]: PolyFunction$suffix[F, G0] = this.asInstanceOf[PolyFunction$suffix[F, G0]]
+      -
       -}
+      -
       -object PolyFunction$suffix{
       -  type From[F[${`_.._`}]] = {
       -    type Algebra[G[${`_.._`}]] = PolyFunction$suffix[F, G]

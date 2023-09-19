@@ -35,7 +35,9 @@ trait PolyFunction[F[_], G[_]]{ self =>
    final def narrow[F0[a0] <: F[a0]]: PolyFunction[F0, G] = this.asInstanceOf[PolyFunction[F0, G]]
 
    final def widen[G0[a0] >: G[a0]]: PolyFunction[F, G0] = this.asInstanceOf[PolyFunction[F, G0]]
+
 }
+
 object PolyFunction{
   type From[F[_]] = {
     type Algebra[G[_]] = PolyFunction[F, G]
@@ -65,7 +67,9 @@ trait PolyFunction2[F[_, _], G[_, _]]{ self =>
    final def narrow[F0[a0, a1] <: F[a0, a1]]: PolyFunction2[F0, G] = this.asInstanceOf[PolyFunction2[F0, G]]
 
    final def widen[G0[a0, a1] >: G[a0, a1]]: PolyFunction2[F, G0] = this.asInstanceOf[PolyFunction2[F, G0]]
+
 }
+
 object PolyFunction2{
   type From[F[_, _]] = {
     type Algebra[G[_, _]] = PolyFunction2[F, G]
@@ -96,7 +100,9 @@ trait PolyFunction5[F[_, _, _, _, _], G[_, _, _, _, _]]{ self =>
    final def narrow[F0[a0, a1, a2, a3, a4] <: F[a0, a1, a2, a3, a4]]: PolyFunction5[F0, G] = this.asInstanceOf[PolyFunction5[F0, G]]
 
    final def widen[G0[a0, a1, a2, a3, a4] >: G[a0, a1, a2, a3, a4]]: PolyFunction5[F, G0] = this.asInstanceOf[PolyFunction5[F, G0]]
+
 }
+
 object PolyFunction5{
   type From[F[_, _, _, _, _]] = {
     type Algebra[G[_, _, _, _, _]] = PolyFunction5[F, G]
