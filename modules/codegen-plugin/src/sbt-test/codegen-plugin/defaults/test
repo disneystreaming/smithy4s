@@ -13,3 +13,6 @@ $ exists target/scala-2.13/src_managed/main/scala/smithy4s/example/Added.scala
 # ensuring that removing existing files removes their outputs
 $ delete src/main/smithy/example.smithy
 -> compile
+
+> smithy4sGeneratedSmithyBuildFile
+$ exists smithy-build.json

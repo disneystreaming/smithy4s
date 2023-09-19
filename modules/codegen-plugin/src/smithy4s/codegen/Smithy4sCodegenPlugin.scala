@@ -141,6 +141,14 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Generated smithy files"
       )
 
+    val smithy4sGeneratedSmithyBuild =
+      taskKey[String](
+        "Derive a smithy-build.json file from the project configuration"
+      )
+
+    val smithy4sGeneratedSmithyBuildFile =
+      taskKey[File]("smithy4sGeneratedSmithyBuild written to a file")
+
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -254,6 +262,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val wildcardArg = (config / smithy4sWildcardArgument).value
       val generateOptics = (config / smithy4sRenderOptics).value
       cached((wildcardArg, generateOptics))
+    },
+    smithy4sGeneratedSmithyBuild := "hey",
+    smithy4sGeneratedSmithyBuildFile := {
+      val out = baseDirectory.value / "smithy-build.json"
+      IO.write(out, smithy4sGeneratedSmithyBuild.value)
+      out
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
