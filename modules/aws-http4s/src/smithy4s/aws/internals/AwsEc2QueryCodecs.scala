@@ -50,7 +50,7 @@ private[aws] object AwsEcsQueryCodecs {
   private val flattenAll = (_: Hints).add(UrlFormFlattened())
 
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
-  private val discriminatorReaders =
+  private val discriminatorDecoders =
     Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   def operationPreprocessor(
@@ -106,7 +106,7 @@ private[aws] object AwsEcsQueryCodecs {
       .withErrorBodyDecoders(Xml.decoders)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
   }
