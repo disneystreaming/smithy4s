@@ -18,22 +18,36 @@ package smithy4s
 
 import scala.util.hashing.MurmurHash3
 import smithy4s.capability.MonadThrowLike
+import smithy4s.capability.Zipper
 import cats.MonadThrow
 import cats.syntax.all._
 import cats.kernel.Monoid
+import cats.Applicative
+import smithy4s.capability.Covariant
+import cats.Functor
 
 package object interopcats {
 
   implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
     new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = MonadThrow[F].pure(a)
-      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
-        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
       def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
         MonadThrow[F].flatMap(fa)(f)
       def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
       def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A] =
         MonadThrow[F].handleErrorWith(fa)(f)
+    }
+
+  implicit def zipperShim[F[_]: Applicative]: Zipper[F] =
+    new Zipper[F] {
+      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
+        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+      def pure[A](a: A): F[A] = Applicative[F].pure(a)
+    }
+
+  implicit def covariantShim[F[_]: Functor]: Covariant[F] =
+    new Covariant[F] {
+      def map[A, B](fa: F[A])(f: A => B): F[B] = Functor[F].map(fa)(f)
     }
 
   implicit def monoidEndpointMiddleware[Construct]

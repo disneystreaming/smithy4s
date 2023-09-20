@@ -41,9 +41,14 @@ object Covariant {
       }
   }
 
-  implicit val covariantInstanceForOption: Covariant[Option] =
+  implicit val optionCovariant: Covariant[Option] =
     new Covariant[Option] {
       def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa.map(f)
+    }
+
+  implicit def eitherCovariant[E]: Covariant[Either[E, *]] =
+    new Covariant[Either[E, *]] {
+      def map[A, B](fa: Either[E, A])(f: A => B): Either[E, B] = fa.map(f)
     }
 
 }

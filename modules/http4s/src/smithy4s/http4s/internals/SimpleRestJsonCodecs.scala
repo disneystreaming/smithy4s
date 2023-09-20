@@ -64,7 +64,8 @@ private[http4s] class SimpleRestJsonCodecs(
 
   def makeServerCodecs[F[_]: Concurrent] = {
     val baseResponse = HttpResponse(200, Map.empty, Blob.empty)
-    HttpUnaryServerCodecs.builder
+    HttpUnaryServerCodecs
+      .builder[F]
       .withBodyDecoders(payloadDecoders)
       .withSuccessBodyEncoders(payloadEncoders)
       .withErrorBodyEncoders(payloadEncoders)

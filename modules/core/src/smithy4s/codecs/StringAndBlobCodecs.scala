@@ -19,7 +19,6 @@ package codecs
 
 import schema._
 import smithy4s.schema.Primitive._
-import smithy4s.capability.Zipper._
 
 object StringAndBlobCodecs {
 

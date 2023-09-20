@@ -18,7 +18,7 @@ package smithy4s.aws
 package internals
 
 import smithy4s.Blob
-import smithy4s.capability.MonadThrowLike
+import smithy4s.capability._
 import smithy4s.http._
 import smithy4s.json.Json
 
@@ -42,7 +42,7 @@ private[aws] object AwsJsonCodecs {
   private[aws] val jsonDecoders = jsonPayloadCodecs.decoders
   private[aws] val jsonWriters = jsonPayloadCodecs.writers
 
-  def make[F[_]: MonadThrowLike](
+  def make[F[_]: MonadThrowLike: Covariant: Zipper](
       contentType: String
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
     HttpUnaryClientCodecs.builder

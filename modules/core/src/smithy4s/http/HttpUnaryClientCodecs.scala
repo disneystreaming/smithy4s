@@ -24,26 +24,28 @@ import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
 import smithy4s.capability.MonadThrowLike
+import smithy4s.capability.Covariant
+import smithy4s.capability.Zipper
 import smithy4s.kinds.PolyFunction5
 
 // scalafmt: { maxColumn = 120 }
 object HttpUnaryClientCodecs {
 
-  def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
+  def builder[F[_]: MonadThrowLike: Covariant: Zipper]: Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
     HttpUnaryClientCodecsBuilderImpl[F, HttpRequest[Blob], HttpResponse[Blob]](
       operationPreprocessor = PolyFunction5.identity,
-      baseRequest = _ => F.raiseError(new Exception("Undefined base request")),
+      baseRequest = _ => MonadThrowLike[F].raiseError(new Exception("Undefined base request")),
       requestBodyEncoders = BlobEncoder.noop,
       successResponseBodyDecoders = BlobDecoder.noop,
       errorResponseBodyDecoders = BlobDecoder.noop,
-      errorDiscriminator = _ => F.pure(HttpDiscriminator.Undetermined),
+      errorDiscriminator = _ => MonadThrowLike[F].pure(HttpDiscriminator.Undetermined),
       metadataEncoders = None,
       metadataDecoders = None,
       rawStringsAndBlobPayloads = false,
       writeEmptyStructs = _ => false,
       requestMediaType = "text/plain",
-      requestTransformation = F.pure(_),
-      responseTransformation = F.pure(_)
+      requestTransformation = MonadThrowLike[F].pure(_),
+      responseTransformation = MonadThrowLike[F].pure(_)
     )
 
   trait Builder[F[_], Request, Response] {
@@ -77,7 +79,7 @@ object HttpUnaryClientCodecs {
       requestMediaType: String,
       requestTransformation: HttpRequest[Blob] => F[Request],
       responseTransformation: Response => F[HttpResponse[Blob]]
-  )(implicit F: MonadThrowLike[F])
+  )(implicit C: Covariant[F], F: MonadThrowLike[F], Z: Zipper[F])
       extends Builder[F, Request, Response] {
     def withOperationPreprocessor(fk: PolyFunction5[OperationSchema, OperationSchema]): Builder[F, Request, Response] =
       copy(operationPreprocessor = fk)
@@ -192,7 +194,7 @@ object HttpUnaryClientCodecs {
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
 
-          val inputEncoder = (i: I) => F.map(baseRequest(endpoint))(inputWriter.write(_, i))
+          val inputEncoder = (i: I) => C.map(baseRequest(endpoint))(inputWriter.write(_, i))
 
           val outputDecoder: HttpResponse.Decoder[F, Blob, O] =
             outputDecoders.fromSchema(endpoint.output, outputDecoderCache)

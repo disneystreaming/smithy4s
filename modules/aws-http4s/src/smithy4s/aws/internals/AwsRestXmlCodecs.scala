@@ -22,12 +22,14 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
 import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.capability._
 
 // scalafmt: {maxColumn = 120}
 
 private[aws] object AwsRestXmlCodecs {
 
-  def make[F[_]: MonadThrowLike](): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
+  def make[F[_]: MonadThrowLike: Covariant: Zipper]()
+      : HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
     val errorDecoders = Xml.decoders.contramapSchema(
       smithy4s.schema.Schema.transformHintsLocallyK(
