@@ -263,10 +263,22 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val generateOptics = (config / smithy4sRenderOptics).value
       cached((wildcardArg, generateOptics))
     },
-    smithy4sGeneratedSmithyBuild := "hey",
-    smithy4sGeneratedSmithyBuildFile := {
+    config / smithy4sGeneratedSmithyBuild := {
+      val baseDir = baseDirectory.value
+      val sourceManagedDir = (config / sourceManaged).value
+
+      val scalaBin = (config / scalaBinaryVersion).?.value
+      val deps = (config / libraryDependencies).value
+        .filter(_.configurations.exists(_.contains(Smithy4s.name)))
+        .flatMap(moduleIdEncode(_, scalaBin))
+      val imports = (config / smithy4sInputDirs).value
+        .collect(prepareInputDirs(baseDir, sourceManagedDir))
+      val repositories = externalResolvers.value.collect(prepareResolvers)
+      SmithyBuildJson.toJson(imports, deps, repositories)
+    },
+    config / smithy4sGeneratedSmithyBuildFile := {
       val out = baseDirectory.value / "smithy-build.json"
-      IO.write(out, smithy4sGeneratedSmithyBuild.value)
+      IO.write(out, (config / smithy4sGeneratedSmithyBuild).value)
       out
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
@@ -303,6 +315,22 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         BuildInfo.alloyOrg % "alloy-core" % BuildInfo.alloyVersion % Smithy4s
       )
     )
+
+  private def prepareResolvers: PartialFunction[Resolver, String] = {
+    case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root
+  }
+
+  private def prepareInputDirs(
+      base: File,
+      sourceManaged: File
+  ): PartialFunction[File, String] = {
+    // exclude files that are under sourceManaged
+    case file if file.relativeTo(sourceManaged).isEmpty =>
+      file.relativeTo(base) match {
+        case None        => file.getAbsolutePath()
+        case Some(value) => value.toString()
+      }
+  }
 
   private def moduleIdEncode(
       moduleId: ModuleID,
