@@ -1,7 +1,6 @@
 package smithy4s.json.internals
 
 import munit._
-import smithy4s.json.internals.Cursor
 import smithy4s.codecs.PayloadPath
 
 final class CursorSpec extends FunSuite {
