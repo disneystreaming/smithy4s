@@ -6,7 +6,7 @@ import smithy4s.codecs.PayloadPath
 
 final class CursorSpec extends FunSuite {
 
-  test("check") {
+  test("check push / pop accuracy") {
     val c = new Cursor()
     c.push("test")
     c.pop()
