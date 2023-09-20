@@ -20,7 +20,6 @@ import sjsonnew._
 import BasicJsonProtocol._
 import sbt.FileInfo
 import sbt.HashFileInfo
-import sjsonnew._
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
 import sbt.io.Hash
