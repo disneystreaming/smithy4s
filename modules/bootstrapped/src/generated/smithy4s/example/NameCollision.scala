@@ -83,7 +83,7 @@ object NameCollisionOperation {
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = MyOp
   }
   object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "MyOp"))
+    val schema: OperationSchema[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "MyOp"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(MyOpError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -148,7 +148,7 @@ object NameCollisionOperation {
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
   }
   object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
+    val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Unit) = Endpoint()

@@ -78,7 +78,7 @@ object ErrorHandlingServiceOperation {
     def endpoint: smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = ErrorHandlingOperation
   }
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
-    def schema: OperationSchema[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ErrorHandlingOperation"))
+    val schema: OperationSchema[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ErrorHandlingOperation"))
       .withInput(ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(ErrorHandlingOperationError.errorSchema)
       .withOutput(ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))

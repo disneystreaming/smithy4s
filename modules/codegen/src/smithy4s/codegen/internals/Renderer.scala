@@ -560,7 +560,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         opNameRef,
         ext = line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(opObjectName)}]"
       )(
-        line"""def schema: $OperationSchema_[${op.renderAlgParams(
+        line"""val schema: $OperationSchema_[${op.renderAlgParams(
           opObjectName
         )}] = $Schema_.operation($ShapeId_("$ns", "$opName"))""",
         indent(

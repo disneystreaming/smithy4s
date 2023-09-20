@@ -81,7 +81,7 @@ object HelloWorldServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Hello
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] {
-    def schema: OperationSchema[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.hello", "Hello"))
+    val schema: OperationSchema[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.hello", "Hello"))
       .withInput(Person.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(HelloError.errorSchema)
       .withOutput(Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen))

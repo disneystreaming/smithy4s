@@ -120,7 +120,7 @@ object DynamoDBOperation {
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
-    def schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
+    val schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
       .withInput(DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
@@ -132,7 +132,7 @@ object DynamoDBOperation {
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = ListTables
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
-    def schema: OperationSchema[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "ListTables"))
+    val schema: OperationSchema[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "ListTables"))
       .withInput(ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(ListTablesError.errorSchema)
       .withOutput(ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))

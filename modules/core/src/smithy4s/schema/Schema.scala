@@ -143,6 +143,11 @@ sealed trait Schema[A]{
     */
   final def isUnit: Boolean = this.shapeId == ShapeId("smithy.api", "Unit")
 
+  /**
+    * Turns this schema into an error schema.
+    */
+  final def error(unlift: A => Throwable)(lift: PartialFunction[Throwable, A]) : ErrorSchema[A] = ErrorSchema(this, lift.lift, unlift)
+
 }
 
 object Schema {
@@ -298,4 +303,5 @@ object Schema {
       None,
       None
     )
+
 }

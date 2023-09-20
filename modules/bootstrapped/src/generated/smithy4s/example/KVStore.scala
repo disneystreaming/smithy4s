@@ -91,7 +91,7 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Get
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
-    def schema: OperationSchema[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Get"))
+    val schema: OperationSchema[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Get"))
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetError.errorSchema)
       .withOutput(Value.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -169,7 +169,7 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Put
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
+    val schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
       .withInput(KeyValue.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(PutError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -233,7 +233,7 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Delete
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Delete"))
+    val schema: OperationSchema[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Delete"))
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(DeleteError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))

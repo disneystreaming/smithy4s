@@ -18,7 +18,7 @@ package smithy4s
 
 package schema
 
-final case class OperationSchema[I, E, O, SI, SO](
+final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     id: ShapeId,
     hints: Hints,
     input: Schema[I],

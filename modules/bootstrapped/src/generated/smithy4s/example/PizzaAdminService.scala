@@ -135,7 +135,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = AddMenuItem
   }
   object AddMenuItem extends smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
-    def schema: OperationSchema[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "AddMenuItem"))
+    val schema: OperationSchema[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "AddMenuItem"))
       .withInput(AddMenuItemRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -228,7 +228,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = GetMenu
   }
   object GetMenu extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
-    def schema: OperationSchema[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetMenu"))
+    val schema: OperationSchema[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetMenu"))
       .withInput(GetMenuRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetMenuError.errorSchema)
       .withOutput(GetMenuResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -336,7 +336,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing] = Version
   }
   object Version extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, Nothing, VersionOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Version"))
+    val schema: OperationSchema[Unit, Nothing, VersionOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Version"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(VersionOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/version"), code = 200), smithy.api.Readonly())
@@ -348,7 +348,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Health
   }
   object Health extends smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
-    def schema: OperationSchema[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Health"))
+    val schema: OperationSchema[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Health"))
       .withInput(HealthRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(HealthError.errorSchema)
       .withOutput(HealthResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -413,7 +413,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = HeaderEndpoint
   }
   object HeaderEndpoint extends smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
-    def schema: OperationSchema[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeaderEndpoint"))
+    val schema: OperationSchema[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeaderEndpoint"))
       .withInput(HeaderEndpointData.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(HeaderEndpointData.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/headers/"), code = 200))
@@ -425,7 +425,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = RoundTrip
   }
   object RoundTrip extends smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
-    def schema: OperationSchema[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RoundTrip"))
+    val schema: OperationSchema[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RoundTrip"))
       .withInput(RoundTripData.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(RoundTripData.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/roundTrip/{label}"), code = 200))
@@ -437,7 +437,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = GetEnum
   }
   object GetEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetEnum"))
+    val schema: OperationSchema[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetEnum"))
       .withInput(GetEnumInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetEnumError.errorSchema)
       .withOutput(GetEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -502,7 +502,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = GetIntEnum
   }
   object GetIntEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetIntEnum"))
+    val schema: OperationSchema[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetIntEnum"))
       .withInput(GetIntEnumInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetIntEnumError.errorSchema)
       .withOutput(GetIntEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -567,7 +567,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = CustomCode
   }
   object CustomCode extends smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
-    def schema: OperationSchema[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CustomCode"))
+    val schema: OperationSchema[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CustomCode"))
       .withInput(CustomCodeInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(CustomCodeError.errorSchema)
       .withOutput(CustomCodeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -632,7 +632,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Reservation
   }
   object Reservation extends smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
-    def schema: OperationSchema[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Reservation"))
+    val schema: OperationSchema[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Reservation"))
       .withInput(ReservationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ReservationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/book/{name}"), code = 200))
@@ -644,7 +644,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] = Echo
   }
   object Echo extends smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[EchoInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Echo"))
+    val schema: OperationSchema[EchoInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Echo"))
       .withInput(EchoInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/echo/{pathParam}"), code = 200))
@@ -657,7 +657,7 @@ object PizzaAdminServiceOperation {
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = OptionalOutput
   }
   object OptionalOutput extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "OptionalOutput"))
+    val schema: OperationSchema[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "OptionalOutput"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(OptionalOutputOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/optional-output"), code = 200), smithy.api.Readonly())

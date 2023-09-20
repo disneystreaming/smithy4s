@@ -94,7 +94,7 @@ object ObjectServiceOperation {
     def endpoint: smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = PutObject
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutObject"))
+    val schema: OperationSchema[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutObject"))
       .withInput(PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(PutObjectError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -173,7 +173,7 @@ object ObjectServiceOperation {
     def endpoint: smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = GetObject
   }
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
+    val schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
       .withInput(GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetObjectError.errorSchema)
       .withOutput(GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))

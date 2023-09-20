@@ -89,7 +89,7 @@ object HelloWorldAuthServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = SayWorld
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "SayWorld"))
+    val schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "SayWorld"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(SayWorldError.errorSchema)
       .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
@@ -155,7 +155,7 @@ object HelloWorldAuthServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = HealthCheck
   }
   object HealthCheck extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "HealthCheck"))
+    val schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "HealthCheck"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))

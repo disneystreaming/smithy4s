@@ -26,7 +26,7 @@ import smithy4s.ShapeTag
   * interpreters to inject data into error channels of effect types, or to recover data from
   * an error-channel prior to serialisation.
   */
-case class ErrorSchema[E](
+case class ErrorSchema[E] private[smithy4s] (
     schema: Schema[E],
     liftError: Throwable => Option[E],
     unliftError: E => Throwable
