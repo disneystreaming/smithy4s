@@ -16,69 +16,80 @@
 
 package smithy4s.codegen.transformers
 
-import software.amazon.smithy.build.TransformContext
-import software.amazon.smithy.model.Model
 import smithy4s.codegen.internals.TestUtils
+import software.amazon.smithy.build.TransformContext
+import software.amazon.smithy.model.shapes.ShapeId
+
+import scala.jdk.CollectionConverters._
 
 final class AwsConstraintsRemoverSpec extends munit.FunSuite {
+  import smithy4s.codegen.internals.TestUtils._
 
   test("Remove length trait") {
     val example =
       """
         |$version: "2"
         |
-        |namespace test
-        |
+        |namespace com.amazonaws.kinesis.service
         |
         |operation GetOutput {
         | output: com.amazonaws.kinesis#Long,
         |}
         |""".stripMargin
+    val kinesis =
+      """
+        |$version: "2"
+        |
+        |namespace com.amazonaws.kinesis
+        |
+        |@range(min: 1, max: 10)
+        |long Long
+        |""".stripMargin
+    val originalModel = loadModel(example, kinesis)
     val transformed = new AwsConstraintsRemover().transform(
-      TransformContext.builder().model(ll(example)).build()
+      TransformContext.builder().model(originalModel).build()
     )
 
-    val code =
-      TestUtils.generateScalaCode(transformed)("test.TestOutput")
+    val before = originalModel
+      .expectShape(ShapeId.from("com.amazonaws.kinesis#Long"))
+      .getAllTraits()
+      .asScala
+      .get(ShapeId.from("smithy.api#range"))
+
+    val after = transformed
+      .expectShape(ShapeId.from("com.amazonaws.kinesis#Long"))
+      .getAllTraits()
+      .asScala
+      .get(ShapeId.from("smithy.api#range"))
+
+    assert(before.isDefined)
+    assert(after.isEmpty)
+
+    val generatedCode = TestUtils.generateScalaCode(transformed)
+
+    val actualCode = generatedCode("com.amazonaws.kinesis.Long")
 
     val expected =
-      """|package test
+      """|package com.amazonaws.kinesis
          |
          |import smithy4s.Hints
+         |import smithy4s.Newtype
          |import smithy4s.Schema
          |import smithy4s.ShapeId
-         |import smithy4s.ShapeTag
-         |import smithy4s.schema.Schema.string
-         |import smithy4s.schema.Schema.struct
+         |import smithy4s.schema.Schema.bijection
+         |import smithy4s.schema.Schema.long
          |
-         |final case class TestOutput(o: Option[String] = None)
-         |object TestOutput extends ShapeTag.Companion[TestOutput] {
-         |  val id: ShapeId = ShapeId("test", "TestOutput")
-         |
-         |  val hints: Hints = Hints.empty
-         |
-         |  implicit val schema: Schema[TestOutput] = struct(
-         |    string.optional[TestOutput]("o", _.o),
-         |  ){
-         |    TestOutput.apply
-         |  }.withId(id).addHints(hints)
+         |object Long extends Newtype[scala.Long] {
+         |  val id: ShapeId = ShapeId("com.amazonaws.kinesis", "Long")
+         |  val hints: Hints = Hints(
+         |    smithy.api.Box(),
+         |  )
+         |  val underlyingSchema: Schema[scala.Long] = long.withId(id).addHints(hints)
+         |  implicit val schema: Schema[Long] = bijection(underlyingSchema, asBijection)
          |}
-      """.stripMargin
+         |""".stripMargin
 
-    assertEquals(code, expected)
-  }
-  private def ll(namespaces: String*): Model = {
-    val assembler = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-
-    namespaces
-      .foldLeft(assembler) { case (a, model) =>
-        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
-      }
-      .assemble()
-      .unwrap()
+    assertEquals(actualCode, expected)
   }
 
 }
