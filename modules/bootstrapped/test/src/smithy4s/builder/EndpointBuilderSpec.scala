@@ -27,7 +27,7 @@ class EndpointBuilderSpec extends FunSuite {
   }
 
   test(
-    "can modify the following values (Id, Hints, Input, Output, Errorable) using mapId, mapHints, mapInput, mapOutput, mapErrorable"
+    "can modify the following values (Id, Hints, Input, Output, ErrorSchema) using mapId, mapHints, mapInput, mapOutput, mapErrorSchema"
   ) {
 
     val newEndpoint = endpoint.mapSchema {

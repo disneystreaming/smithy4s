@@ -16,18 +16,19 @@
 
 package smithy4s.dynamic.internals
 
-import smithy4s.Errorable
-import smithy4s.schema.Schema._
-import smithy4s.ShapeId
+import smithy4s.schema.ErrorSchema
+import smithy4s.schema.Schema
 
-private[internals] case class DynamicErrorable[E](schema: UnionSchema[E])
-    extends Errorable[E] {
-  def id: ShapeId = schema.shapeId
+private[internals] object DynamicErrorSchema {
 
-  def liftError(throwable: Throwable): Option[E] = throwable match {
-    case DynamicError(shapeId, e) if shapeId == schema.shapeId =>
-      Some(e.asInstanceOf[E])
-    case _ => None
+  def apply[E](schema: Schema[E]): ErrorSchema[E] = {
+    def liftError(throwable: Throwable): Option[E] = throwable match {
+      case DynamicError(shapeId, e) if shapeId == schema.shapeId =>
+        Some(e.asInstanceOf[E])
+      case _ => None
+    }
+    def unliftError(e: E): Throwable = DynamicError(schema.shapeId, e)
+    ErrorSchema(schema, liftError, unliftError)
   }
-  def unliftError(e: E): Throwable = DynamicError(schema.shapeId, e)
+
 }

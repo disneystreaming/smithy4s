@@ -79,7 +79,7 @@ object StreamedObjectsOperation {
     def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = PutStreamedObject
   }
   object PutStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
-    def schema: OperationSchema[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutStreamedObject"))
+    val schema: OperationSchema[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutStreamedObject"))
       .withInput(PutStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withStreamedInput(StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))
@@ -91,7 +91,7 @@ object StreamedObjectsOperation {
     def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = GetStreamedObject
   }
   object GetStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
-    def schema: OperationSchema[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = Schema.operation(ShapeId("smithy4s.example", "GetStreamedObject"))
+    val schema: OperationSchema[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = Schema.operation(ShapeId("smithy4s.example", "GetStreamedObject"))
       .withInput(GetStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetStreamedObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withStreamedOutput(StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))

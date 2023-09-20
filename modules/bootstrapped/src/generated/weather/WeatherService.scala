@@ -75,7 +75,7 @@ object WeatherServiceOperation {
     def endpoint: smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = GetWeather
   }
   object GetWeather extends smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = Schema.operation(ShapeId("weather", "GetWeather"))
+    val schema: OperationSchema[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = Schema.operation(ShapeId("weather", "GetWeather"))
       .withInput(GetWeatherInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200))

@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -95,9 +94,9 @@ object ObjectServiceOperation {
     def endpoint: smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = PutObject
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutObject"))
+    val schema: OperationSchema[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutObject"))
       .withInput(PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(PutObjectError)
+      .withError(PutObjectError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Idempotent())
     def wrap(input: PutObjectInput) = PutObject(input)
@@ -116,7 +115,7 @@ object ObjectServiceOperation {
       case value: PutObjectError.NoMoreSpaceCase => visitor.noMoreSpace(value.noMoreSpace)
     }
   }
-  object PutObjectError extends Errorable.Companion[PutObjectError] {
+  object PutObjectError extends ErrorSchema.Companion[PutObjectError] {
 
     def serverError(serverError: ServerError): PutObjectError = ServerErrorCase(serverError)
     def noMoreSpace(noMoreSpace: NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
@@ -152,7 +151,7 @@ object ObjectServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[PutObjectError] = union(
+    implicit val schema: Schema[PutObjectError] = union(
       PutObjectError.ServerErrorCase.alt,
       PutObjectError.NoMoreSpaceCase.alt,
     ){
@@ -174,9 +173,9 @@ object ObjectServiceOperation {
     def endpoint: smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = GetObject
   }
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
+    val schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
       .withInput(GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetObjectError)
+      .withError(GetObjectError.errorSchema)
       .withOutput(GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetObjectInput) = GetObject(input)
@@ -193,7 +192,7 @@ object ObjectServiceOperation {
       case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
     }
   }
-  object GetObjectError extends Errorable.Companion[GetObjectError] {
+  object GetObjectError extends ErrorSchema.Companion[GetObjectError] {
 
     def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
 
@@ -220,7 +219,7 @@ object ObjectServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetObjectError] = union(
+    implicit val schema: Schema[GetObjectError] = union(
       GetObjectError.ServerErrorCase.alt,
     ){
       _.$ordinal

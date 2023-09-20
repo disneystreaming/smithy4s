@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -92,9 +91,9 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Get
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
-    def schema: OperationSchema[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Get"))
+    val schema: OperationSchema[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Get"))
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetError)
+      .withError(GetError.errorSchema)
       .withOutput(Value.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Key) = Get(input)
   }
@@ -112,7 +111,7 @@ object KVStoreOperation {
       case value: GetError.KeyNotFoundErrorCase => visitor.keyNotFoundError(value.keyNotFoundError)
     }
   }
-  object GetError extends Errorable.Companion[GetError] {
+  object GetError extends ErrorSchema.Companion[GetError] {
 
     def unauthorizedError(unauthorizedError: UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
     def keyNotFoundError(keyNotFoundError: KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
@@ -148,7 +147,7 @@ object KVStoreOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetError] = union(
+    implicit val schema: Schema[GetError] = union(
       GetError.UnauthorizedErrorCase.alt,
       GetError.KeyNotFoundErrorCase.alt,
     ){
@@ -170,9 +169,9 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Put
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
+    val schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
       .withInput(KeyValue.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(PutError)
+      .withError(PutError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: KeyValue) = Put(input)
   }
@@ -188,7 +187,7 @@ object KVStoreOperation {
       case value: PutError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
     }
   }
-  object PutError extends Errorable.Companion[PutError] {
+  object PutError extends ErrorSchema.Companion[PutError] {
 
     def unauthorizedError(unauthorizedError: UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
 
@@ -215,7 +214,7 @@ object KVStoreOperation {
       }
     }
 
-    implicit val schema: UnionSchema[PutError] = union(
+    implicit val schema: Schema[PutError] = union(
       PutError.UnauthorizedErrorCase.alt,
     ){
       _.$ordinal
@@ -234,9 +233,9 @@ object KVStoreOperation {
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Delete
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Delete"))
+    val schema: OperationSchema[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Delete"))
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(DeleteError)
+      .withError(DeleteError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: Key) = Delete(input)
   }
@@ -254,7 +253,7 @@ object KVStoreOperation {
       case value: DeleteError.KeyNotFoundErrorCase => visitor.keyNotFoundError(value.keyNotFoundError)
     }
   }
-  object DeleteError extends Errorable.Companion[DeleteError] {
+  object DeleteError extends ErrorSchema.Companion[DeleteError] {
 
     def unauthorizedError(unauthorizedError: UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
     def keyNotFoundError(keyNotFoundError: KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
@@ -290,7 +289,7 @@ object KVStoreOperation {
       }
     }
 
-    implicit val schema: UnionSchema[DeleteError] = union(
+    implicit val schema: Schema[DeleteError] = union(
       DeleteError.UnauthorizedErrorCase.alt,
       DeleteError.KeyNotFoundErrorCase.alt,
     ){

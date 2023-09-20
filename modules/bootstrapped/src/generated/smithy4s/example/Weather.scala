@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -97,7 +96,7 @@ object WeatherOperation {
     def endpoint: smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = GetCurrentTime
   }
   object GetCurrentTime extends smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCurrentTime"))
+    val schema: OperationSchema[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCurrentTime"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetCurrentTimeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
@@ -109,9 +108,9 @@ object WeatherOperation {
     def endpoint: smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = GetCity
   }
   object GetCity extends smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCity"))
+    val schema: OperationSchema[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCity"))
       .withInput(GetCityInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(GetCityError)
+      .withError(GetCityError.errorSchema)
       .withOutput(GetCityOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
     def wrap(input: GetCityInput) = GetCity(input)
@@ -128,7 +127,7 @@ object WeatherOperation {
       case value: GetCityError.NoSuchResourceCase => visitor.noSuchResource(value.noSuchResource)
     }
   }
-  object GetCityError extends Errorable.Companion[GetCityError] {
+  object GetCityError extends ErrorSchema.Companion[GetCityError] {
 
     def noSuchResource(noSuchResource: NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
 
@@ -155,7 +154,7 @@ object WeatherOperation {
       }
     }
 
-    implicit val schema: UnionSchema[GetCityError] = union(
+    implicit val schema: Schema[GetCityError] = union(
       GetCityError.NoSuchResourceCase.alt,
     ){
       _.$ordinal
@@ -174,7 +173,7 @@ object WeatherOperation {
     def endpoint: smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = GetForecast
   }
   object GetForecast extends smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
-    def schema: OperationSchema[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetForecast"))
+    val schema: OperationSchema[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetForecast"))
       .withInput(GetForecastInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetForecastOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
@@ -186,7 +185,7 @@ object WeatherOperation {
     def endpoint: smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = ListCities
   }
   object ListCities extends smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
-    def schema: OperationSchema[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ListCities"))
+    val schema: OperationSchema[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ListCities"))
       .withInput(ListCitiesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ListCitiesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Paginated(inputToken = None, outputToken = None, items = Some(smithy.api.NonEmptyString("items")), pageSize = None), smithy.api.Readonly())

@@ -108,7 +108,7 @@ object Transformation {
             val endpoint = service.endpoint(op)
             val thrower: E => Throwable = endpoint.error match {
               case None =>
-                // This case should not happen, as an endpoint without an errorable means the operation's error type is `Nothing`
+                // This case should not happen, as an endpoint without an errorschema means the operation's error type is `Nothing`
                 _ => new RuntimeException("Error coercion problem")
               case Some(value) => value.unliftError(_)
             }

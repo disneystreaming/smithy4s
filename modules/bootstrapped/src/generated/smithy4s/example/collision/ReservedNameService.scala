@@ -88,7 +88,7 @@ object ReservedNameServiceOperation {
     def endpoint: smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing] = Set
   }
   object Set extends smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[SetInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Set"))
+    val schema: OperationSchema[SetInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Set"))
       .withInput(SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204))
@@ -100,7 +100,7 @@ object ReservedNameServiceOperation {
     def endpoint: smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing] = List
   }
   object List extends smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[ListInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "List"))
+    val schema: OperationSchema[ListInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "List"))
       .withInput(ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/"), code = 204))
@@ -112,7 +112,7 @@ object ReservedNameServiceOperation {
     def endpoint: smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing] = Map
   }
   object Map extends smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[MapInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Map"))
+    val schema: OperationSchema[MapInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Map"))
       .withInput(MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/map/"), code = 204))
@@ -124,7 +124,7 @@ object ReservedNameServiceOperation {
     def endpoint: smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing] = Option
   }
   object Option extends smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing] {
-    def schema: OperationSchema[OptionInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Option"))
+    val schema: OperationSchema[OptionInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Option"))
       .withInput(OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/"), code = 204))

@@ -82,11 +82,11 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
   private type GenericAlt = schema.Alt[Any, _]
   private val alts =
     ExtraErrorOperation.error.toVector.flatMap(
-      _.schema.alternatives.asInstanceOf[Vector[GenericAlt]]
+      _.alternatives.asInstanceOf[Vector[GenericAlt]]
     )
   private val altsExtra =
     ExtraErrorOperation.error.toVector.flatMap(
-      _.schema.alternatives
+      _.alternatives
         .asInstanceOf[Vector[GenericAlt]]
     )
 

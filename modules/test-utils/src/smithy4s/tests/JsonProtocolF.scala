@@ -91,10 +91,10 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
         val decoderE: Document.Decoder[F[Nothing]] =
           ep.error match {
-            case Some(errorableE) =>
+            case Some(errorschemaE) =>
               Document.Decoder
-                .fromSchema(errorableE.schema)
-                .map(e => F.raiseError(errorableE.unliftError(e)))
+                .fromSchema(errorschemaE.schema)
+                .map(e => F.raiseError(errorschemaE.unliftError(e)))
             case None =>
               new Document.Decoder[F[Nothing]] {
                 def decode(
@@ -134,8 +134,8 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
     implicit val encoderO = Document.Encoder.fromSchema(endpoint.output)
     implicit val encoderE: Document.Encoder[E] =
       endpoint.error match {
-        case Some(errorableE) =>
-          Document.Encoder.fromSchema(errorableE.schema)
+        case Some(errorschemaE) =>
+          Document.Encoder.fromSchema(errorschemaE.schema)
         case None =>
           new Document.Encoder[E] {
             def encode(e: E): Document = Document.DNull
