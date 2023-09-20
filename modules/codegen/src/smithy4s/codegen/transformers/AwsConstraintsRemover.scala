@@ -20,31 +20,44 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.neighbor.NeighborProvider
+import software.amazon.smithy.model.neighbor.Walker
+import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.model.traits.LengthTrait
+import software.amazon.smithy.model.traits.PatternTrait
+import software.amazon.smithy.model.traits.RangeTrait
+
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 /** A preprocessor that removes constraints from specifications of AWS. */
 class AwsConstraintsRemover extends ProjectionTransformer {
 
   override def getName: String = AwsConstraintsRemover.name
 
-  private val constraintsToRemove = List("length", "range", "pattern")
+  private val traitToRemove =
+    Set(LengthTrait.ID, RangeTrait.ID, PatternTrait.ID)
   private val awsNamespacePrefix = "com.amazonaws"
 
   override def transform(context: TransformContext): Model = {
+    val model = context.getModel()
+    val walker: Walker = new Walker(
+      NeighborProvider.cached(NeighborProvider.of(model))
+    )
+    val awsOperations = model
+      .getOperationShapes()
+      .asScala
+      .filter(_.getId().getNamespace().startsWith(awsNamespacePrefix))
+
+    val awsOutputShapes =
+      awsOperations.flatMap(_.getOutput().toScala.toSet).map(model.expectShape)
+    val awsOutputConnectedShapes: Set[ShapeId] =
+      awsOutputShapes.flatMap(walker.walkShapeIds(_).asScala).toSet
+
     val transformer = context.getTransformer()
     transformer.removeTraitsIf(
       context.getModel(),
       (shape, t) => {
-        val shapeName = t.toShapeId().getName()
-        val isOperation = shape.isOperationShape()
-        val isInAwsNamespace =
-          shape.getId.getNamespace.startsWith(awsNamespacePrefix)
-
-        if (isOperation && isInAwsNamespace ) {
-          val np = NeighborProvider.of(context.getModel())
-          val neighbors = np.getNeighbors(shape).asScala.toList
-        }
-        ???
+        traitToRemove(t.toShapeId) && awsOutputConnectedShapes(shape.getId())
       }
     )
   }
