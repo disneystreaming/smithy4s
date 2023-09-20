@@ -18,8 +18,7 @@ package smithy4s.capability
 
 import smithy4s.kinds.PolyFunction
 
-trait MonadThrowLike[F[_]] {
-  def pure[A](a: A): F[A]
+trait MonadThrowLike[F[_]] extends Zipper[F] {
   def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
   def raiseError[A](e: Throwable): F[A]
   def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A]

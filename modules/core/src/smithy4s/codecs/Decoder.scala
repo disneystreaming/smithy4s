@@ -118,14 +118,4 @@ object Decoder {
     }
   }
 
-  implicit def covariantZipper[F[_]: Covariant, Message]
-      : Covariant[Decoder[F, Message, *]] =
-    new Covariant[Decoder[F, Message, *]] {
-      def map[A, B](fa: Decoder[F, Message, A])(f: A => B) =
-        new Decoder[F, Message, B] {
-          def decode(message: Message): F[B] =
-            Covariant[F].map(fa.decode(message))(f)
-        }
-    }
-
 }

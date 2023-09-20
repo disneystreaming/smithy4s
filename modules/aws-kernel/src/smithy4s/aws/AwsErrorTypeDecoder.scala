@@ -23,7 +23,6 @@ import smithy4s.http.HttpDiscriminator
 import smithy4s.codecs.BlobDecoder
 import smithy4s.http.HttpResponse
 import smithy4s.http.CaseInsensitive
-import smithy4s.capability.Covariant
 
 // scalafmt: { maxColumn: 120 }
 object AwsErrorTypeDecoder {
@@ -32,7 +31,7 @@ object AwsErrorTypeDecoder {
 
   private[aws] def fromResponse[F[_]](
       bodyDecoders: BlobDecoder.Compiler
-  )(implicit F: MonadThrowLike[F], C: Covariant[F]): HttpResponse[Blob] => F[HttpDiscriminator] = {
+  )(implicit F: MonadThrowLike[F]): HttpResponse[Blob] => F[HttpDiscriminator] = {
     val decoder = bodyDecoders.fromSchema(AwsErrorType.bodySchema)
     (response: HttpResponse[Blob]) =>
       val maybeTypeHeader: Option[String] =
@@ -54,7 +53,7 @@ object AwsErrorTypeDecoder {
             case Right((code, tpe)) => F.pure(AwsErrorType(None, code, tpe))
           }
       }
-      C.map(errorTypeF)(_.discriminator)
+      F.map(errorTypeF)(_.discriminator)
   }
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#operation-error-serialization

@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext
   * The encoding here is specialised towards the traversal of sequences,
   * which is something that's done heavily in this codebase.
   */
-trait Zipper[F[_]] {
+trait Zipper[F[_]] extends Covariant[F] {
   def pure[A](a: A): F[A]
 
   def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A]
@@ -34,6 +34,11 @@ trait Zipper[F[_]] {
   def zipMap[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] =
     zipMapAll(IndexedSeq(fa, fb).asInstanceOf[IndexedSeq[F[Any]]])(seq =>
       f(seq(0).asInstanceOf[A], seq(1).asInstanceOf[B])
+    )
+
+  override def map[A, B](fa: F[A])(f: A => B): F[B] =
+    zipMapAll(IndexedSeq(fa.asInstanceOf[F[Any]]))(seq =>
+      f(seq(0).asInstanceOf[A])
     )
 
 }

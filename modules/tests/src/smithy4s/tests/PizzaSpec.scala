@@ -27,6 +27,7 @@ import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
 import smithy4s.http.HttpPayloadError
+import smithy4s.codecs._
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
@@ -359,7 +360,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case HttpPayloadError(smithy4s.codecs.PayloadPath(List()), _, _) =>
+        case HttpPayloadError(PayloadPath(List()), _, _) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")

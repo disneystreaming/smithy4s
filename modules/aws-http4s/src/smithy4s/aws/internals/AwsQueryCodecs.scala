@@ -23,6 +23,7 @@ import alloy.UrlFormName
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
+import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.http.internals.StaticUrlFormElements
@@ -31,7 +32,6 @@ import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
 import smithy4s.schema.OperationSchema
 import smithy4s.schema.ErrorSchema
-import smithy4s.capability._
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
@@ -95,7 +95,7 @@ private[aws] object AwsQueryCodecs {
       }
     }
 
-  def make[F[_]: MonadThrowLike: Covariant: Zipper](
+  def make[F[_]: MonadThrowLike](
       version: String
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 

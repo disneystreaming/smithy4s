@@ -25,15 +25,13 @@ import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
 import smithy4s.codecs.Decoder
 import smithy4s.codecs.PayloadError
-import smithy4s.capability.Covariant
-import smithy4s.capability.Zipper
 
 // scalafmt: {maxColumn = 120}
 object HttpUnaryServerCodecs {
 
-  def builder[F[_]: Covariant: MonadThrowLike: Zipper]: Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
+  def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
     HttpUnaryClientCodecsBuilderImpl[F, HttpRequest[Blob], HttpResponse[Blob]](
-      baseResponse = _ => MonadThrowLike[F].raiseError(new Exception("Undefined base response")),
+      baseResponse = _ => F.raiseError(new Exception("Undefined base response")),
       requestBodyDecoders = BlobDecoder.noop,
       successResponseBodyEncoders = BlobEncoder.noop,
       errorResponseBodyEncoders = BlobEncoder.noop,
@@ -43,8 +41,8 @@ object HttpUnaryServerCodecs {
       writeEmptyStructs = _ => false,
       errorTypeHeaders = Nil,
       responseMediaType = "text/plain",
-      requestTransformation = MonadThrowLike[F].pure(_),
-      responseTransformation = MonadThrowLike[F].pure(_)
+      requestTransformation = F.pure(_),
+      responseTransformation = F.pure(_)
     )
 
   trait Builder[F[_], Request, Response] {
@@ -76,7 +74,7 @@ object HttpUnaryServerCodecs {
       errorTypeHeaders: List[String],
       requestTransformation: Request => F[HttpRequest[Blob]],
       responseTransformation: HttpResponse[Blob] => F[Response]
-  )(implicit C: Covariant[F], F: MonadThrowLike[F], Z: Zipper[F])
+  )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
 
     def withBaseResponse(f: OperationSchema[_, _, _, _, _] => F[HttpResponse[Blob]]): Builder[F, Request, Response] =
@@ -194,10 +192,10 @@ object HttpUnaryServerCodecs {
             inputDecoders.fromSchema(endpoint.input, inputDecoderCache)
           val base = baseResponse(endpoint)
 
-          def encodeOutput(o: O) = Covariant[F].map(base)(outputW.write(_, o))
-          def encodeError(e: E) = Covariant[F].map(base)(errorW.write(_, e))
+          def encodeOutput(o: O) = F.map(base)(outputW.write(_, o))
+          def encodeError(e: E) = F.map(base)(errorW.write(_, e))
           def httpContractErrorEncoder(e: HttpContractError) =
-            Covariant[F].map(base)(httpContractErrorWriters.write(_, e).withStatusCode(400))
+            F.map(base)(httpContractErrorWriters.write(_, e).withStatusCode(400))
           def throwableEncoders(throwable: Throwable): F[HttpResponse[Blob]] =
             throwable match {
               case e: HttpContractError => httpContractErrorEncoder(e)

@@ -30,8 +30,6 @@ import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
 import smithy4s.schema.OperationSchema
 import smithy4s.schema.ErrorSchema
-import smithy4s.capability.Covariant
-import smithy4s.capability.Zipper
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsEcsQueryCodecs {
@@ -95,7 +93,7 @@ private[aws] object AwsEcsQueryCodecs {
       .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
   }
 
-  def make[F[_]: MonadThrowLike: Zipper: Covariant](
+  def make[F[_]: MonadThrowLike](
       version: String
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 

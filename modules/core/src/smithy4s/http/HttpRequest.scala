@@ -22,7 +22,6 @@ import smithy4s.capability.Covariant
 import smithy4s.schema._
 import smithy4s.codecs.{Decoder => GenericDecoder}
 import smithy4s.capability.MonadThrowLike
-import smithy4s.capability.Zipper
 
 final case class HttpRequest[+A](
     method: HttpMethod,
@@ -107,7 +106,7 @@ object HttpRequest {
 
   object Decoder {
 
-    def restSchemaCompiler[F[_]: MonadThrowLike: Zipper, Body](
+    def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoders: CachedSchemaCompiler[Metadata.Decoder],
         bodyDecoders: CachedSchemaCompiler[GenericDecoder[F, Body, *]],
         drainBody: Option[HttpRequest[Body] => F[Unit]]
@@ -119,9 +118,7 @@ object HttpRequest {
       )
     }
 
-    private[smithy4s] def restSchemaCompilerAux[F[
-        _
-    ]: MonadThrowLike: Zipper, Body](
+    private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
         metadataDecoders: CachedSchemaCompiler[Metadata.Decoder],
         responseDecoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         drainBody: HttpRequest[Body] => F[Unit]

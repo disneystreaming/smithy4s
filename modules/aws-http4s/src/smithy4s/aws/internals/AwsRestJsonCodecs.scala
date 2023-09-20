@@ -18,17 +18,17 @@ package smithy4s.aws
 package internals
 
 import smithy4s.Blob
+import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.json.Json
-import smithy4s.capability._
 
 // scalafmt: {maxColumn = 120}
 private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: MonadThrowLike: Covariant: Zipper](
+  def make[F[_]: MonadThrowLike](
       contentType: String
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
