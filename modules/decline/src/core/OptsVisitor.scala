@@ -129,7 +129,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   }
 
   private def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val reader = smithy4s.json.Json.payloadCodecs.readers.fromSchema(schema)
+    val reader = smithy4s.json.Json.payloadCodecs.decoders.fromSchema(schema)
 
     s =>
       reader

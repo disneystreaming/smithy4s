@@ -20,7 +20,7 @@ package http
 import smithy.api.HttpPayload
 import smithy4s.PartialData
 import smithy4s.capability.Zipper
-import smithy4s.codecs.Reader
+import smithy4s.codecs.Decoder
 import smithy4s.codecs.Writer
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
@@ -151,20 +151,20 @@ object HttpRestSchema {
     }
 
   /**
-    * A compiler for Reader that abides by REST-semantics :
+    * A compiler for Decoder that abides by REST-semantics :
     * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
     * `httpStatusCode` ... are decoded from the corresponding metadata.
     *
     * The rest is decoded from the body.
     */
   // scalafmt: {maxColumn = 120}
-  def combineReaderCompilers[F[_]: Zipper, Message](
-      metadataDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
-      bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
+  def combineDecoderCompilers[F[_]: Zipper, Message](
+      metadataDecoderCompiler: CachedSchemaCompiler[Decoder[F, Message, *]],
+      bodyDecoderCompiler: CachedSchemaCompiler[Decoder[F, Message, *]],
       drainBody: Message => F[Unit]
-  ): CachedSchemaCompiler[Reader[F, Message, *]] =
-    new CachedSchemaCompiler[Reader[F, Message, *]] {
-      val zipper = Zipper[Reader[F, Message, *]]
+  ): CachedSchemaCompiler[Decoder[F, Message, *]] =
+    new CachedSchemaCompiler[Decoder[F, Message, *]] {
+      val zipper = Zipper[Decoder[F, Message, *]]
 
       type MetadataCache = metadataDecoderCompiler.Cache
       type BodyCache = bodyDecoderCompiler.Cache
@@ -185,15 +185,15 @@ object HttpRestSchema {
             // but we still decoding Unit from the body to drain the message.
             val metadataDecoder =
               metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
-            val bodyDrain = Reader.lift(drainBody)
+            val bodyDrain = Decoder.lift(drainBody)
             zipper.zipMap(bodyDrain, metadataDecoder) { case (_, data) => data }
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
             bodyDecoderCompiler.fromSchema(bodySchema, cache._2)
           case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
-            val metadataDecoder: Reader[F, Message, PartialData[A]] =
+            val metadataDecoder: Decoder[F, Message, PartialData[A]] =
               metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
-            val bodyDecoder: Reader[F, Message, PartialData[A]] =
+            val bodyDecoder: Decoder[F, Message, PartialData[A]] =
               bodyDecoderCompiler.fromSchema(bodySchema, cache._2)
             zipper.zipMap(metadataDecoder, bodyDecoder)(
               PartialData.unsafeReconcile(_, _)

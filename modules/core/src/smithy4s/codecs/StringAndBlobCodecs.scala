@@ -23,7 +23,7 @@ import smithy4s.capability.Zipper._
 
 object StringAndBlobCodecs {
 
-  object readers extends CachedSchemaCompiler.Optional.Impl[BlobDecoder] {
+  object decoders extends CachedSchemaCompiler.Optional.Impl[BlobDecoder] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
@@ -53,8 +53,8 @@ object StringAndBlobCodecs {
         hints: Hints,
         tag: Primitive[P]
     ): MaybeBlobDecoder[P] = tag match {
-      case PString => Some(stringReader)
-      case PBlob   => Some(blobReader)
+      case PString => Some(stringDecoder)
+      case PBlob   => Some(blobDecoder)
       case _       => None
     }
 
@@ -68,7 +68,7 @@ object StringAndBlobCodecs {
       tag match {
         case EnumTag.ClosedStringEnum =>
           Some(new BlobDecoder[E] {
-            def read(blob: Blob): Either[PayloadError, E] = {
+            def decode(blob: Blob): Either[PayloadError, E] = {
               val str = blob.toUTF8String
               values.find(_.stringValue == str) match {
                 case Some(enumValue) => Right(enumValue.value)
@@ -85,7 +85,7 @@ object StringAndBlobCodecs {
           })
         case EnumTag.OpenStringEnum(processUnknown) =>
           Some(new BlobDecoder[E] {
-            def read(blob: Blob): Either[PayloadError, E] = {
+            def decode(blob: Blob): Either[PayloadError, E] = {
               val str = blob.toUTF8String
               val result: E = values
                 .find(_.stringValue == str)
@@ -108,11 +108,11 @@ object StringAndBlobCodecs {
         schema: Schema[A],
         refinement: Refinement[A, B]
     ): MaybeBlobDecoder[B] =
-      self(schema).map(readerA =>
+      self(schema).map(decoderA =>
         new BlobDecoder[B] {
-          def read(blob: Blob): Either[PayloadError, B] =
-            readerA
-              .read(blob)
+          def decode(blob: Blob): Either[PayloadError, B] =
+            decoderA
+              .decode(blob)
               .flatMap(refinement.asFunction(_).left.map { error =>
                 PayloadError(
                   PayloadPath.root,
@@ -126,11 +126,11 @@ object StringAndBlobCodecs {
     override def option[A](
         schema: Schema[A]
     ): MaybeBlobDecoder[Option[A]] =
-      self(schema).map(readerA =>
+      self(schema).map(decoderA =>
         new BlobDecoder[Option[A]] {
-          def read(blob: Blob): Either[PayloadError, Option[A]] =
+          def decode(blob: Blob): Either[PayloadError, Option[A]] =
             if (blob.isEmpty) Right(None)
-            else readerA.read(blob).map(a => Some(a))
+            else decoderA.decode(blob).map(a => Some(a))
         }
       )
   }
@@ -192,9 +192,9 @@ object StringAndBlobCodecs {
       )
   }
 
-  private val stringReader: BlobDecoder[String] = {
+  private val stringDecoder: BlobDecoder[String] = {
     new BlobDecoder[String] {
-      def read(blob: Blob): Either[PayloadError, String] = Right(
+      def decode(blob: Blob): Either[PayloadError, String] = Right(
         blob.toUTF8String
       )
     }
@@ -203,9 +203,9 @@ object StringAndBlobCodecs {
   private val stringWriter: PayloadWriter[String] =
     Writer.encodeBy(Blob(_))
 
-  private val blobReader: BlobDecoder[Blob] = {
+  private val blobDecoder: BlobDecoder[Blob] = {
     new BlobDecoder[Blob] {
-      def read(blob: Blob): Either[PayloadError, Blob] = Right(
+      def decode(blob: Blob): Either[PayloadError, Blob] = Right(
         blob
       )
     }

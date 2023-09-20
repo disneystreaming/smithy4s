@@ -49,7 +49,7 @@ private[aws] object AwsEcsQueryCodecs {
 
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
   private val discriminatorReaders =
-    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+    Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   def operationPreprocessor(
       version: String
@@ -100,8 +100,8 @@ private[aws] object AwsEcsQueryCodecs {
     HttpUnaryClientCodecs.builder
       .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
-      .withSuccessBodyDecoders(Xml.readers)
-      .withErrorBodyDecoders(Xml.readers)
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(Xml.decoders)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))

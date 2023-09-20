@@ -60,13 +60,13 @@ object Xml {
   def writeToString[A: Schema](a: A): Option[String] =
     writeToStringStream[A](a).compile.last
 
-  val readers: BlobDecoder.Compiler = new BlobDecoder.Compiler {
+  val decoders: BlobDecoder.Compiler = new BlobDecoder.Compiler {
     type Cache = XmlDocument.Decoder.Cache
     def createCache(): Cache = XmlDocument.Decoder.createCache()
     def fromSchema[A](schema: Schema[A], cache: Cache): BlobDecoder[A] = {
       val xmlDocumentDecoder = XmlDocument.Decoder.fromSchema(schema, cache)
       new BlobDecoder[A] {
-        def read(blob: Blob): Either[PayloadError, A] =
+        def decode(blob: Blob): Either[PayloadError, A] =
           parseXmlDocument(blob)
             .flatMap(xmlDocumentDecoder.decode(_))
             .leftMap { case XmlDecodeError(xPath, message) =>

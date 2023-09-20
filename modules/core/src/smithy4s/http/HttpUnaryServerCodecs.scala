@@ -23,7 +23,7 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.Writer
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
-import smithy4s.codecs.Reader
+import smithy4s.codecs.Decoder
 import smithy4s.codecs.PayloadError
 
 // scalafmt: {maxColumn = 120}
@@ -138,13 +138,13 @@ object HttpUnaryServerCodecs {
       }
 
       val inputDecoders: CachedSchemaCompiler[HttpRequest.Decoder[F, Blob, *]] = {
-        val httpBodyDecoders: CachedSchemaCompiler[Reader[F, Blob, *]] = {
+        val httpBodyDecoders: CachedSchemaCompiler[Decoder[F, Blob, *]] = {
           val decoders: BlobDecoder.Compiler = if (rawStringsAndBlobPayloads) {
             CachedSchemaCompiler
-              .getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, requestBodyDecoders)
+              .getOrElse(smithy4s.codecs.StringAndBlobCodecs.decoders, requestBodyDecoders)
           } else requestBodyDecoders
           decoders.mapK(
-            Reader
+            Decoder
               .of[Blob]
               .liftPolyFunction(
                 MonadThrowLike
@@ -202,7 +202,7 @@ object HttpUnaryServerCodecs {
               case e                    => F.raiseError(e)
             }
 
-          new UnaryServerCodecs(inputDecoder.read, encodeError, throwableEncoders, encodeOutput)
+          new UnaryServerCodecs(inputDecoder.decode, encodeError, throwableEncoders, encodeOutput)
             .transformRequest(requestTransformation)
             .transformResponse(responseTransformation)
         }

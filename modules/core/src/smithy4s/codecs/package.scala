@@ -30,19 +30,19 @@ package object codecs {
     }
   }
 
-  type BlobDecoder[A] = Reader[Either[PayloadError, *], Blob, A]
+  type BlobDecoder[A] = Decoder[Either[PayloadError, *], Blob, A]
   object BlobDecoder {
     type Compiler = CachedSchemaCompiler[BlobDecoder]
     val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobDecoder] {
-      def fromSchema[A](schema: Schema[A]) = Reader.lift(_ =>
+      def fromSchema[A](schema: Schema[A]) = Decoder.lift(_ =>
         Left(PayloadError(PayloadPath.root, "nothing", "always failing"))
       )
     }
   }
 
-  type PayloadReader[A] = Reader[Either[PayloadError, *], Blob, A]
-  object PayloadReader {
-    type CachedCompiler = CachedSchemaCompiler[PayloadReader]
+  type PayloadDecoder[A] = Decoder[Either[PayloadError, *], Blob, A]
+  object PayloadDecoder {
+    type CachedCompiler = CachedSchemaCompiler[PayloadDecoder]
   }
 
   type PayloadWriter[A] = Writer[Any, Blob, A]

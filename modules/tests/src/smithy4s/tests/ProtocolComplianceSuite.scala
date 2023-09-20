@@ -129,7 +129,7 @@ abstract class ProtocolComplianceSuite
       bytes: Array[Byte],
       codecApi: BlobDecoder.Compiler
   ): Document = {
-    val codec: PayloadReader[Document] = codecApi.fromSchema(Schema.document)
+    val codec: PayloadDecoder[Document] = codecApi.fromSchema(Schema.document)
     codec
       .decode(Blob(bytes))
       .getOrElse(sys.error("unable to decode smithy model into document"))

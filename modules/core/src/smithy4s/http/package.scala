@@ -16,14 +16,14 @@
 
 package smithy4s
 
-import smithy4s.codecs.Reader
+import smithy4s.codecs.Decoder
 
 package object http {
 
   val errorTypeHeader = "X-Error-Type"
   val amazonErrorTypeHeader = "X-Amzn-Errortype"
 
-  type HttpPayloadReader[A] = Reader[Either[HttpContractError, *], Blob, A]
+  type HttpPayloadDecoder[A] = Decoder[Either[HttpContractError, *], Blob, A]
 
   type PathParams = Map[String, String]
   type HttpMediaType = HttpMediaType.Type

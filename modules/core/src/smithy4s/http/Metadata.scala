@@ -138,8 +138,6 @@ case class Metadata(
 }
 
 object Metadata {
-  private[smithy4s] type Reader[A] =
-    smithy4s.codecs.Reader[Either[MetadataError, *], Metadata, A]
   private[smithy4s] type Writer[A] =
     smithy4s.codecs.Writer[Any, Metadata, A]
 
@@ -167,27 +165,18 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Decoder[A] { self =>
-    def decode(metadata: Metadata): Either[MetadataError, A]
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[MetadataError, *], Metadata, A]
 
-    final def toReader: Reader[A] =
-      new Reader[A] {
-        def read(metadata: Metadata): Either[MetadataError, A] =
-          self.decode(metadata)
-      }
-  }
+  implicit def decoderFromSchema[A: Schema]: Decoder[A] =
+    Decoder.derivedImplicitInstance
 
   object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
     type Compiler = CachedSchemaCompiler[Decoder]
-
-    // scalafmt: {maxColumn = 120}
-    def toReaderK: PolyFunction[Decoder, Reader] =
-      new PolyFunction[Decoder, Reader] {
-        def apply[A](decoder: Decoder[A]): Reader[A] =
-          decoder.toReader
-      }
   }
-  private[smithy4s] object AwsDecoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+
+  private[smithy4s] object AwsDecoder
+      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
       extends CachedSchemaCompiler.DerivingImpl[Decoder] {

@@ -54,13 +54,13 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
   ): XmlDecoder[C[A]] = {
     val xmlName = getXmlName(member.hints, "member")
     val isFlattened = hints.has(XmlFlattened)
-    val memberReader = compile(member)
+    val memberDecoder = compile(member)
     new XmlDecoder[C[A]] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
           case XmlCursor.SingleNode(history, node) =>
-            memberReader
+            memberDecoder
               .decode(
                 XmlCursor.SingleNode(history.appendIndex(0), node)
               )
@@ -68,7 +68,7 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
           case XmlCursor.Nodes(history, nodes) =>
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
-                memberReader.decode(
+                memberDecoder.decode(
                   XmlCursor.SingleNode(history.appendIndex(index), elem)
                 )
               }
@@ -140,7 +140,7 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): XmlDecoder[S] = {
-    def fieldReader[A](field: Field[S, A]): XmlDecoder[A] = {
+    def fieldDecoder[A](field: Field[S, A]): XmlDecoder[A] = {
       val decoderWithAnyDefaultValue = field.getDefaultValue match {
         case None => compile(field.schema)
         case Some(defaultValue) =>
@@ -151,10 +151,10 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
       if (isAttribute) decoderWithAnyDefaultValue.attribute(xmlName)
       else decoderWithAnyDefaultValue.down(xmlName)
     }
-    val readers = fields.map(fieldReader(_))
+    val decoders = fields.map(fieldDecoder(_))
     new XmlDecoder[S] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, S] =
-        readers.traverse(_.decode(cursor)).map(make)
+        decoders.traverse(_.decode(cursor)).map(make)
     }
   }
 

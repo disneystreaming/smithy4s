@@ -19,7 +19,7 @@ package http
 
 import smithy4s.client.UnaryClientCodecs
 import smithy4s.codecs.{BlobEncoder, BlobDecoder}
-import smithy4s.codecs.{Reader, Writer}
+import smithy4s.codecs.{Decoder, Writer}
 import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
@@ -141,12 +141,12 @@ object HttpUnaryClientCodecs {
         Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
 
       def responseDecoders(blobDecoders: BlobDecoder.Compiler) = {
-        val httpBodyDecoders: CachedSchemaCompiler[Reader[F, Blob, *]] = {
+        val httpBodyDecoders: CachedSchemaCompiler[Decoder[F, Blob, *]] = {
           val decoders: BlobDecoder.Compiler = if (rawStringsAndBlobPayloads) {
-            CachedSchemaCompiler.getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, blobDecoders)
+            CachedSchemaCompiler.getOrElse(smithy4s.codecs.StringAndBlobCodecs.decoders, blobDecoders)
           } else blobDecoders
           decoders.mapK(
-            Reader
+            Decoder
               .of[Blob]
               .liftPolyFunction(
                 MonadThrowLike
@@ -206,7 +206,7 @@ object HttpUnaryClientCodecs {
               errorDiscriminator,
               toStrict
             )
-          new UnaryClientCodecs(inputEncoder, errorDecoder.read, outputDecoder.read)
+          new UnaryClientCodecs(inputEncoder, errorDecoder.decode, outputDecoder.decode)
             .transformRequest[Request](requestTransformation)
             .transformResponse[Response](responseTransformation)
         }
