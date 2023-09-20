@@ -127,10 +127,10 @@ abstract class ProtocolComplianceSuite
 
   def decodeDocument(
       bytes: Array[Byte],
-      codecApi: PayloadCodec.CachedCompiler
+      codecApi: BlobDecoder.Compiler
   ): Document = {
-    val codec: PayloadCodec[Document] = codecApi.fromSchema(Schema.document)
-    codec.reader
+    val codec: PayloadReader[Document] = codecApi.fromSchema(Schema.document)
+    codec
       .decode(Blob(bytes))
       .getOrElse(sys.error("unable to decode smithy model into document"))
 
@@ -151,7 +151,7 @@ abstract class ProtocolComplianceSuite
               case Right(expectations) => expectations
               case Left(throwable) =>
                 Expectations.Helpers.failure(
-                  s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+                  s"unexpected error when running test ${throwable.getMessage}: \n $throwable"
                 )
             }
         }

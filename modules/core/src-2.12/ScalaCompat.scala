@@ -28,4 +28,9 @@ private[smithy4s] trait ScalaCompat {
     private def opt[A](a: => A): Option[A] = try { Some(a) }
     catch { case scala.util.control.NonFatal(_) => None }
   }
+
+  // ArraySeq.unsafeWrapArray does not seem to exist in Scala 2.12
+  private[smithy4s] def unsafeWrapArray[A](array: Array[A]): IndexedSeq[A] =
+    array.toIndexedSeq
+
 }

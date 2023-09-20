@@ -37,15 +37,15 @@ object Printer {
     new Printer[F, I, O] {
       private val outCodec = writers.fromSchema(endpoint.output)
 
-      private val errCodec = endpoint.errorable.map { e =>
-        (writers.fromSchema(e.error), e)
+      private val errCodec = endpoint.error.map { e =>
+        (writers.fromSchema(e.schema), e)
       }
 
       def printInput(input: I): F[Unit] = Applicative[F].unit
 
       def printError(error: Throwable): F[Unit] = errCodec
-        .flatMap { case (err, errorable) =>
-          errorable.liftError(error).map { e =>
+        .flatMap { case (err, errorschema) =>
+          errorschema.liftError(error).map { e =>
             err.encode(e).toUTF8String
           }
         }

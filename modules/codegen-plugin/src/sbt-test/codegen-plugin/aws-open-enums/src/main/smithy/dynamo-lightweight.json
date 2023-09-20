@@ -1,0 +1,16 @@
+{
+  "smithy": "2.0",
+  "shapes": {
+    "com.amazonaws.dynamodb#TestEnum": {
+      "type": "enum",
+      "members": {
+        "FOO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "foo"
+          }
+        }
+      }
+    }
+  }
+}

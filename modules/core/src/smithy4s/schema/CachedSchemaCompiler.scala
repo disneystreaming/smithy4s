@@ -96,6 +96,13 @@ object CachedSchemaCompiler { outer =>
     def createCache(): Cache = CompilationCache.make[Aux]
   }
 
+  abstract class Uncached[F[_]] extends CachedSchemaCompiler[F] {
+    type Cache = Any
+    def createCache(): Cache = ()
+    override final def fromSchema[A](schema: Schema[A], cache: Cache): F[A] =
+      fromSchema(schema)
+  }
+
   abstract class DerivingImpl[F[_]] extends Impl[F] {
     private val globalCache: Cache = createCache()
     implicit def derivedImplicitInstance[A](implicit

@@ -53,12 +53,7 @@ object HttpRestSchema {
   // format: on
 
   def apply[A](
-      fullSchema: Schema[A],
-      // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to ensure that
-      // body producer is retained even in the case where a top-level struct
-      // input is empty. They need that to happen so that a body is produced to
-      // which the Action and Version metadata can be added.
-      writeEmptyStructs: Boolean
+      fullSchema: Schema[A]
   ): HttpRestSchema[A] = {
 
     def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
@@ -78,8 +73,7 @@ object HttpRestSchema {
             OnlyMetadata(schema)
           case NoMatch() =>
             fullSchema match {
-              case Schema.StructSchema(_, _, fields, make)
-                  if !writeEmptyStructs && fields.isEmpty =>
+              case Schema.StructSchema(_, _, fields, make) if fields.isEmpty =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }
@@ -102,7 +96,7 @@ object HttpRestSchema {
   def combineWriterCompilers[Message](
       metadataEncoderCompiler: Writer.CachedCompiler[Message, Message],
       bodyEncoderCompiler: Writer.CachedCompiler[Message, Message],
-      writeEmptyStructs: Boolean = false
+      writeEmptyStructs: Schema[_] => Boolean
   ): Writer.CachedCompiler[Message, Message] =
     new Writer.CachedCompiler[Message, Message] {
 
@@ -121,10 +115,18 @@ object HttpRestSchema {
           fullSchema: Schema[A],
           cache: Cache
       ): Writer[Message, Message, A] = {
-        HttpRestSchema(fullSchema, writeEmptyStructs) match {
+        val emptySchema =
+          Schema.unit.withId(fullSchema.shapeId).addHints(fullSchema.hints)
+        val emptyBodyEncoder =
+          bodyEncoderCompiler.fromSchema(emptySchema).contramap((_: A) => ())
+        HttpRestSchema(fullSchema) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
-            metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
+            val metadataEncoder =
+              metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
+            if (writeEmptyStructs(fullSchema)) {
+              emptyBodyEncoder.pipe(metadataEncoder)
+            } else metadataEncoder
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
             bodyEncoderCompiler.fromSchema(bodySchema, cache._2)
@@ -142,7 +144,7 @@ object HttpRestSchema {
             // `@httpHeader("Content-Type")` for instance)
             bodyEncoder.pipe(metadataEncoder)
           case HttpRestSchema.Empty(_) =>
-            Writer.noop
+            if (writeEmptyStructs(fullSchema)) emptyBodyEncoder else Writer.noop
           // format: on
         }
       }
@@ -158,7 +160,8 @@ object HttpRestSchema {
   // scalafmt: {maxColumn = 120}
   def combineReaderCompilers[F[_]: Zipper, Message](
       metadataDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
-      bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]]
+      bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Message, *]],
+      drainBody: Message => F[Unit]
   ): CachedSchemaCompiler[Reader[F, Message, *]] =
     new CachedSchemaCompiler[Reader[F, Message, *]] {
       val zipper = Zipper[Reader[F, Message, *]]
@@ -176,15 +179,14 @@ object HttpRestSchema {
 
       def fromSchema[A](fullSchema: Schema[A], cache: Cache) = {
         // writeEmptyStructs is not relevant for reading.
-        HttpRestSchema(fullSchema, writeEmptyStructs = false) match {
+        HttpRestSchema(fullSchema) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata,
             // but we still decoding Unit from the body to drain the message.
             val metadataDecoder =
               metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
-            val bodyDecoder =
-              bodyDecoderCompiler.fromSchema(Schema.unit, cache._2)
-            zipper.zipMap(bodyDecoder, metadataDecoder) { case (_, data) => data }
+            val bodyDrain = Reader.lift(drainBody)
+            zipper.zipMap(bodyDrain, metadataDecoder) { case (_, data) => data }
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
             bodyDecoderCompiler.fromSchema(bodySchema, cache._2)

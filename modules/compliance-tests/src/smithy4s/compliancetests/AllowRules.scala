@@ -86,7 +86,7 @@ case class Glob(glob: String) {
 }
 
 object Glob {
-  val schema = Schema.string.biject[Glob](Glob(_), (_: Glob).glob)
+  val schema = Schema.string.biject[Glob](Glob(_))(_.glob)
 }
 
 case class AllowRule(

@@ -1,3 +1,19 @@
+// /*
+//  *  Copyright 2021-2022 Disney Streaming
+//  *
+//  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+//  *  you may not use this file except in compliance with the License.
+//  *  You may obtain a copy of the License at
+//  *
+//  *     https://disneystreaming.github.io/TOST-1.0.txt
+//  *
+//  *  Unless required by applicable law or agreed to in writing, software
+//  *  distributed under the License is distributed on an "AS IS" BASIS,
+//  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  *  See the License for the specific language governing permissions and
+//  *  limitations under the License.
+//  */
+
 package smithy4s.http4s
 
 import cats.effect.IO
@@ -17,7 +33,7 @@ import smithy4s.example.{
   PizzaAdminServiceGen
 }
 import smithy4s.kinds.PolyFunction5
-import smithy4s.{Endpoint, Hints, Service}
+import smithy4s.Service
 import weaver.SimpleIOSuite
 
 object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
@@ -36,24 +52,21 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
       HelloWorldAuthServiceGen.Endpoint
     ] {
       def apply[I, E, O, SI, SO](
-          op: HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO]
+          endpoint: HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO]
       ): HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO] = {
-        if (op.name == "SayWorld") {
-          Endpoint.Builder
-            .fromEndpoint(op)
-            .withHints(
-              Hints(
-                smithy.api.Http(
-                  method = smithy.api.NonEmptyString("GET"),
-                  uri = smithy.api.NonEmptyString("/yeap"),
-                  code = 200
-                ),
-                smithy.api.Readonly()
-              )
+        if (endpoint.name == "SayWorld") {
+          endpoint.mapSchema(
+            _.withHints(
+              smithy.api.Http(
+                method = smithy.api.NonEmptyString("GET"),
+                uri = smithy.api.NonEmptyString("/yeap"),
+                code = 200
+              ),
+              smithy.api.Readonly()
             )
-            .build
+          )
         } else {
-          op
+          endpoint
         }
       }
     }
@@ -72,7 +85,7 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
   }
 
   test(
-    "when an errorable is removed and the service raises an error, it behaves in the same way as any other throwable"
+    "when an errorschema is removed and the service raises an error, it behaves in the same way as any other throwable"
   ) {
     val serviceImpl: PizzaAdminService[IO] =
       new PizzaAdminService.Default[IO](IO.stub) {
@@ -91,12 +104,9 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
       PizzaAdminServiceGen.Endpoint
     ] {
       def apply[I, E, O, SI, SO](
-          op: PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO]
+          endpoint: PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO]
       ): PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO] =
-        Endpoint.Builder
-          .fromEndpoint(op)
-          .mapErrorable(_ => None)
-          .build
+        endpoint.mapSchema(_.withoutError)
     }
 
     val modifiedService = servicebuilder

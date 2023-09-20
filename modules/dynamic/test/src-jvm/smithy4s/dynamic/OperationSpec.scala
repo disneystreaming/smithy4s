@@ -62,7 +62,7 @@ class OperationSpec() extends DummyIO.Suite {
         val compiled = DynamicSchemaIndex.load(model)
 
         val endpoints = compiled.allServices.head.service.endpoints
-        val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))
+        val httpEndpoints = endpoints.map(e => HttpEndpoint.cast(e.schema))
 
         expect(
           httpEndpoints.forall(_.isRight)

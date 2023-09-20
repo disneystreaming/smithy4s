@@ -16,52 +16,42 @@
 
 package smithy4s.aws.kernel
 
-import scala.scalanative.unsafe
 import scala.scalanative.unsafe._
 
 @link("crypto")
-@unsafe.extern
+@extern
 object crypto {
 
-  /**
-    * Allocates, initializes and returns a digest context.
-    */
-  def EVP_MD_CTX_new(): Ptr[EVP_MD_CTX] = extern
+  final val EVP_MAX_MD_SIZE = 64
+
+  type EVP_MD
+  type ENGINE
 
   /**
     * @return EVP_MD structures for SHA256 digest algorithm.
     */
   def EVP_sha256(): Ptr[EVP_MD] = extern
 
-  def EVP_DigestInit(ctx: Ptr[EVP_MD_CTX], md: Ptr[EVP_MD]): Unit = extern
-
-  def EVP_DigestUpdate(
-      ctx: Ptr[EVP_MD_CTX],
-      data: Ptr[CSignedChar],
-      datalen: unsafe.CSize
+  def EVP_Digest(
+      data: Ptr[Byte],
+      count: CSize,
+      md: Ptr[Byte],
+      size: Ptr[CUnsignedInt],
+      `type`: Ptr[EVP_MD],
+      impl: Ptr[ENGINE]
   ): CInt = extern
 
-  def EVP_DigestFinal(
-      ctx: Ptr[EVP_MD_CTX],
-      res: Ptr[CUnsignedChar],
-      reslen: Ptr[CUnsignedInt]
-  ): Unit = extern
-
   def HMAC(
-      md: Ptr[EVP_MD],
-      key: CString,
-      keylen: CSSize,
-      data: Ptr[CSignedChar],
-      datalen: CSize,
-      res: Ptr[CUnsignedChar],
-      reslen: Ptr[CUnsignedInt]
-  ): Unit = extern
+      evp_md: Ptr[EVP_MD],
+      key: Ptr[Byte],
+      key_len: Int,
+      d: Ptr[Byte],
+      n: CSize,
+      md: Ptr[Byte],
+      md_len: Ptr[CUnsignedInt]
+  ): Ptr[CUnsignedChar] = extern
+
+  def ERR_get_error(): CUnsignedLong = extern
+  def ERR_reason_error_string(e: CUnsignedLong): CString = extern
 
 }
-
-/**
-  * The EVP_MD type is a structure for digest method implementation
-  */
-trait EVP_MD {}
-
-trait EVP_MD_CTX {}

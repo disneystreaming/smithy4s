@@ -18,7 +18,7 @@ object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
   )
 
   implicit val schema: Schema[KeyNotFoundError] = struct(
-    string.required[KeyNotFoundError]("message", _.message).addHints(smithy.api.Required()),
+    string.required[KeyNotFoundError]("message", _.message),
   ){
     KeyNotFoundError.apply
   }.withId(id).addHints(hints)

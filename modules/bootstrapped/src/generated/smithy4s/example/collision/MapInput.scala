@@ -15,7 +15,7 @@ object MapInput extends ShapeTag.Companion[MapInput] {
   )
 
   implicit val schema: Schema[MapInput] = struct(
-    MyMap.underlyingSchema.required[MapInput]("value", _.value).addHints(smithy.api.Required()),
+    MyMap.underlyingSchema.required[MapInput]("value", _.value),
   ){
     MapInput.apply
   }.withId(id).addHints(hints)

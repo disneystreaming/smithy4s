@@ -39,8 +39,7 @@ class JsonCodecApiTests extends FunSuite {
       Json.jsoniter.withHintMask(HintMask.empty)
     )
 
-    val codec = capi.fromSchema(schemaWithJsonName)
-    val encoded = codec.writer.encode("test")
+    val encoded = capi.writers.fromSchema(schemaWithJsonName).encode("test")
 
     assertEquals(encoded, Blob("""{"a":"test"}"""))
   }
@@ -56,8 +55,8 @@ class JsonCodecApiTests extends FunSuite {
             .required[String]("a", identity)
         )(identity)
 
-    val codec = Json.payloadCodecs.fromSchema(schemaWithRequiredField)
-    val decoded = codec.reader.decode(Blob("{}"))
+    val codec = Json.payloadReaders.fromSchema(schemaWithRequiredField)
+    val decoded = codec.decode(Blob("{}"))
 
     assert(decoded.isLeft)
   }
@@ -76,8 +75,8 @@ class JsonCodecApiTests extends FunSuite {
       Json.jsoniter.withExplicitDefaultsEncoding(true)
     )
 
-    val codec = capi.fromSchema(schemaWithJsonName)
-    val encoded = codec.writer.encode(None)
+    val codec = capi.writers.fromSchema(schemaWithJsonName)
+    val encoded = codec.encode(None)
 
     assertEquals(encoded, Blob("""{"a":null}"""))
   }
@@ -98,8 +97,8 @@ class JsonCodecApiTests extends FunSuite {
             .optional[Option[String]]("a", identity)
         )(identity)
 
-      val codec = capi.fromSchema(schemaWithJsonName)
-      val decoded = codec.reader.decode(Blob("""{"a":null}"""))
+      val codec = capi.readers.fromSchema(schemaWithJsonName)
+      val decoded = codec.decode(Blob("""{"a":null}"""))
 
       assertEquals(decoded, Right(None))
     }

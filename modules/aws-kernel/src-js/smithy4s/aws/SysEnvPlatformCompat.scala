@@ -17,12 +17,17 @@
 package smithy4s.aws.kernel
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
+
+import SysEnvPlatformCompat._
 
 trait SysEnvPlatformCompat {
-  def readEnvVar(envVar: String): Option[String] = {
-    js.Dynamic.global.process.env
-      .selectDynamic(envVar)
-      .asInstanceOf[js.UndefOr[String]]
-      .toOption
-  }
+  def readEnvVar(envVar: String): Option[String] =
+    processEnv.get(envVar)
+}
+
+object SysEnvPlatformCompat {
+  @js.native
+  @JSImport("process", "env")
+  private def processEnv: js.Dictionary[String] = js.native
 }

@@ -23,9 +23,16 @@ import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
-import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
-import smithy4s.http4s.internals.SmithyHttp4sRouter
+import smithy4s.interopcats._
 import smithy4s.kinds._
+import smithy4s.client.UnaryClientCompiler
+import smithy4s.http.HttpUnaryServerRouter
+import smithy4s.http4s.internals.Http4sToSmithy4sClient
+import smithy4s.http4s.kernel.{toSmithy4sHttpMethod, pathParamsKey}
+import org.http4s.HttpApp
+import org.http4s.Request
+import org.http4s.Response
+import cats.data.OptionT
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -52,7 +59,7 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
-      ServerEndpointMiddleware.noop[F]
+      Endpoint.Middleware.noop
     )
   }
 
@@ -70,7 +77,7 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         PartialFunction.empty,
-        ServerEndpointMiddleware.noop[F]
+        Endpoint.Middleware.noop
       )
 
   }
@@ -82,7 +89,8 @@ abstract class SimpleProtocolBuilder[P](
       client: Client[F],
       val service: smithy4s.Service[Alg],
       uri: Uri = uri"http://localhost:8080",
-      middleware: ClientEndpointMiddleware[F] = ClientEndpointMiddleware.noop[F]
+      middleware: ClientEndpointMiddleware[F] =
+        Endpoint.Middleware.noop[Client[F]]
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =
@@ -101,13 +109,16 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          SmithyHttp4sReverseRouter.impl[Alg, F](
-            uri,
-            service,
-            client,
-            simpleProtocolCodecs.makeClientCodecs[F],
-            middleware
-          )
+          service.impl {
+            UnaryClientCompiler(
+              service,
+              client,
+              (client: Client[F]) => Http4sToSmithy4sClient(client),
+              simpleProtocolCodecs.makeClientCodecs[F](uri),
+              middleware,
+              (response: Response[F]) => response.status.isSuccess
+            )
+          }
         }
     }
   }
@@ -178,15 +189,24 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sRouter[Alg, service.Operation, F](
-            service,
-            service.toPolyFunction[Kind1[F]#toKind5](impl),
-            simpleProtocolCodecs.makeServerCodecs[F], {
-              val errorHandler =
-                ServerEndpointMiddleware.flatMapErrors(errorTransformation)
-              errorHandler |+| middleware |+| errorHandler
-            }
-          ).routes
+          val errorHandler =
+            ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+          val finalMiddleware =
+            errorHandler.andThen(middleware).andThen(errorHandler)
+          val router = HttpUnaryServerRouter(service)(
+            impl,
+            simpleProtocolCodecs.makeServerCodecs[F],
+            finalMiddleware.biject(_.run)(HttpApp(_)),
+            getMethod =
+              (request: Request[F]) => toSmithy4sHttpMethod(request.method),
+            getPathSegments = (request: Request[F]) =>
+              request.uri.path.segments.map(_.decoded()),
+            addDecodedPathParams = (request: Request[F], pathParams) =>
+              request.withAttribute(pathParamsKey, pathParams)
+          )
+          HttpRoutes(
+            router.andThen(OptionT.fromOption(_).flatMap(OptionT.liftF(_)))
+          )
         }
 
     def resource: Resource[F, HttpRoutes[F]] =

@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
@@ -78,17 +78,11 @@ object HelloWorldServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] = SayWorld
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "SayWorld")
-    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[World] = World.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200),
-      smithy.api.Readonly(),
-    )
+    val schema: OperationSchema[Unit, Nothing, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.hello", "SayWorld"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit) = SayWorld()
-    override val errorable: Option[Nothing] = None
   }
 }
 

@@ -26,7 +26,9 @@ import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.{Alt, EnumTag, EnumValue, Field}
+import smithy4s.schema.ErrorSchema
 import DynamicLambdas._
+import smithy4s.schema.Schema
 
 private[dynamic] object Compiler {
 
@@ -408,23 +410,24 @@ private[dynamic] object Compiler {
             )
           )
       }
-      val errorableLazy = errorUnionLazy.map(
-        _.map(DynamicErrorable(_).asInstanceOf[Errorable[Any]])
+      val errorschemaLazy = errorUnionLazy.map(
+        _.map(DynamicErrorSchema(_).asInstanceOf[ErrorSchema[Any]])
       )
 
       for {
         inputSchema <- getSchema(input).map(_.addHints(InputOutput.Input.widen))
-        errorable <- errorableLazy
+        errorschema <- errorschemaLazy
         outputSchema <- getSchema(output).map(
           _.addHints(InputOutput.Output.widen)
         )
       } yield {
         DynamicEndpoint(
-          id,
-          inputSchema,
-          outputSchema,
-          errorable,
-          allHints(shape.traits)
+          Schema
+            .operation(id)
+            .withInput(inputSchema)
+            .withOutput(outputSchema)
+            .withErrorOption(errorschema)
+            .withHints(allHints(shape.traits))
         )
       }
     }

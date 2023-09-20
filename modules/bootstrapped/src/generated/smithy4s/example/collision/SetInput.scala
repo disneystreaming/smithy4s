@@ -15,7 +15,7 @@ object SetInput extends ShapeTag.Companion[SetInput] {
   )
 
   implicit val schema: Schema[SetInput] = struct(
-    MySet.underlyingSchema.required[SetInput]("set", _.set).addHints(smithy.api.Required()),
+    MySet.underlyingSchema.required[SetInput]("set", _.set),
   ){
     SetInput.apply
   }.withId(id).addHints(hints)

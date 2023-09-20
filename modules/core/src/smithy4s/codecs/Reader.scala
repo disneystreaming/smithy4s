@@ -57,6 +57,47 @@ trait Reader[F[_], -Message, A] { self =>
 
 object Reader {
 
+  def lift[F[_], Message, A](
+      f: Message => F[A]
+  ): Reader[F, Message, A] = new Reader[F, Message, A] {
+    def read(message: Message): F[A] = f(message)
+  }
+
+  def decodeStatic[F[_], A](fa: F[A]): Reader[F, Any, A] =
+    new Reader[F, Any, A] {
+      def read(message: Any): F[A] = fa
+    }
+
+  def of[Message]: PartiallyAppliedReaderBuilder[Message] =
+    new PartiallyAppliedReaderBuilder[Message]()
+
+  class PartiallyAppliedReaderBuilder[Message](
+      private val dummy: Boolean = true
+  ) extends AnyVal {
+    def liftPolyFunction[F[_], G[_]](
+        fk: PolyFunction[F, G]
+    ): PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] =
+      new PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] {
+        def apply[A](fa: Reader[F, Message, A]): Reader[G, Message, A] =
+          fa.mapK(fk)
+      }
+  }
+
+  def in[F[_]]: PartiallyAppliedReaderBuilderF[F] =
+    new PartiallyAppliedReaderBuilderF[F]
+
+  class PartiallyAppliedReaderBuilderF[F[_]](private val dummy: Boolean = true)
+      extends AnyVal {
+    def composeK[To, From](
+        f: From => To
+    ): PolyFunction[Reader[F, To, *], Reader[F, From, *]] =
+      new PolyFunction[Reader[F, To, *], Reader[F, From, *]] {
+        def apply[A](fa: Reader[F, To, A]): Reader[F, From, A] =
+          fa.compose(f)
+      }
+
+  }
+
   implicit def readerZipper[F[_]: Zipper, Message]
       : Zipper[Reader[F, Message, *]] = new Zipper[Reader[F, Message, *]] {
     def pure[A](a: A): Reader[F, Message, A] = new Reader[F, Message, A] {
@@ -75,30 +116,5 @@ object Reader {
       }
     }
   }
-
-  def identity[F[_]: Zipper, A]: Reader[F, A, A] = new Reader[F, A, A] {
-    def read(message: A): F[A] = Zipper[F].pure(message)
-  }
-
-  def decodeStatic[F[_], A](fa: F[A]): Reader[F, Any, A] =
-    new Reader[F, Any, A] {
-      def read(message: Any): F[A] = fa
-    }
-
-  def composeK[F[_], Message, Message2](
-      f: Message2 => Message
-  ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
-    new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
-      def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
-        fa.compose(f)
-    }
-
-  def liftPolyFunction[Message, F[_], G[_]](
-      fk: PolyFunction[F, G]
-  ): PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] =
-    new PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] {
-      def apply[A](fa: Reader[F, Message, A]): Reader[G, Message, A] =
-        fa.mapK(fk)
-    }
 
 }

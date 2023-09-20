@@ -14,7 +14,7 @@ object TestDiscriminatedInput extends ShapeTag.Companion[TestDiscriminatedInput]
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[TestDiscriminatedInput] = struct(
-    string.required[TestDiscriminatedInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    string.required[TestDiscriminatedInput]("key", _.key).addHints(smithy.api.HttpLabel()),
   ){
     TestDiscriminatedInput.apply
   }.withId(id).addHints(hints)

@@ -16,8 +16,8 @@ object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[AddMenuItemResult] = struct(
-    string.required[AddMenuItemResult]("itemId", _.itemId).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
-    timestamp.required[AddMenuItemResult]("added", _.added).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required(), smithy.api.HttpHeader("X-ADDED-AT")),
+    string.required[AddMenuItemResult]("itemId", _.itemId).addHints(smithy.api.HttpPayload()),
+    timestamp.required[AddMenuItemResult]("added", _.added).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpHeader("X-ADDED-AT")),
   ){
     AddMenuItemResult.apply
   }.withId(id).addHints(hints)

@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait RecursiveInputServiceGen[F[_, _, _, _, _]] {
@@ -76,17 +76,11 @@ object RecursiveInputServiceOperation {
     def endpoint: smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] = RecursiveInputOperation
   }
   object RecursiveInputOperation extends smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInputOperation")
-    val input: Schema[RecursiveInput] = RecursiveInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200),
-      smithy.api.Idempotent(),
-    )
+    val schema: OperationSchema[RecursiveInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RecursiveInputOperation"))
+      .withInput(RecursiveInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200), smithy.api.Idempotent())
     def wrap(input: RecursiveInput) = RecursiveInputOperation(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

@@ -24,16 +24,10 @@ trait CryptoPlatformCompat {
   def binaryFromString(str: String): Binary = Buffer.from(str, utf8)
 
   def toHexString(binary: Binary): String =
-    binary
-      .entries()
-      .toIterator
-      .flatMap(_.lastOption)
-      .map(n => f"$n%02x")
-      .mkString
+    binary.toString("hex")
 
-  def sha256HexDigest(message: Array[Byte]): String = {
+  def sha256HexDigest(message: Array[Byte]): String =
     this.sha256HexDigest(new String(message))
-  }
 
   def sha256HexDigest(message: String): String = {
     val hash = Crypto.createHash(sha256)
@@ -50,9 +44,9 @@ trait CryptoPlatformCompat {
 }
 
 object CryptoPlatformCompat {
-  val sha256 = "sha256"
-  val utf8 = "UTF-8"
-  val hex = "hex"
-  val binary = "binary"
-  val ascii = "ascii"
+  final val sha256 = "sha256"
+  final val utf8 = "UTF-8"
+  final val hex = "hex"
+  final val binary = "binary"
+  final val ascii = "ascii"
 }

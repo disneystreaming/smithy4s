@@ -5,11 +5,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Timestamp
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 /** Just a dummy service to ensure that the rendered services compile
@@ -84,17 +84,11 @@ object DummyServiceOperation {
     def endpoint: smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing] = Dummy
   }
   object Dummy extends smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "Dummy")
-    val input: Schema[Queries] = Queries.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200),
-      smithy.api.Readonly(),
-    )
+    val schema: OperationSchema[Queries, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Dummy"))
+      .withInput(Queries.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Readonly())
     def wrap(input: Queries) = Dummy(input)
-    override val errorable: Option[Nothing] = None
   }
   final case class DummyPath(input: PathParams) extends DummyServiceOperation[PathParams, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[PathParams, Nothing, Unit, Nothing, Nothing] = impl.dummyPath(input.str, input.int, input.ts1, input.ts2, input.ts3, input.ts4, input.b, input.ie)
@@ -102,17 +96,11 @@ object DummyServiceOperation {
     def endpoint: smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] = DummyPath
   }
   object DummyPath extends smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "DummyPath")
-    val input: Schema[PathParams] = PathParams.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200),
-      smithy.api.Readonly(),
-    )
+    val schema: OperationSchema[PathParams, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyPath"))
+      .withInput(PathParams.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200), smithy.api.Readonly())
     def wrap(input: PathParams) = DummyPath(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

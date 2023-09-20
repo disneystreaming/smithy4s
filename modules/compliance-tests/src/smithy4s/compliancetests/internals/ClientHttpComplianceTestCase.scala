@@ -228,9 +228,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     def toResponse[I, E, O, SE, SO, A](
         endpoint: service.Endpoint[I, E, O, SE, SO]
     ) = {
-      endpoint.errorable.toList
-        .flatMap { errorable =>
-          errorable.error.alternatives.flatMap { errorAlt =>
+      endpoint.error.toList
+        .flatMap { errorschema =>
+          errorschema.alternatives.flatMap { errorAlt =>
             errorAlt.schema.hints
               .get(HttpResponseTests)
               .toList
@@ -245,7 +245,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        errorable
+                        errorschema
                       )
                   )
                 )

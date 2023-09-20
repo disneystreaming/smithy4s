@@ -80,7 +80,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     implicit val schema: smithy4s.Schema[IntList] = recursive(
       struct(
-        int.required[IntList]("head", _.head).addHints(smithy.api.Required()),
+        int.required[IntList]("head", _.head),
         IntList.schema.optional[IntList]("tail", _.tail)
       ) {
         IntList.apply

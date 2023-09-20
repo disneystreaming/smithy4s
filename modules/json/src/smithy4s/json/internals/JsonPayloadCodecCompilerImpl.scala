@@ -18,6 +18,7 @@ package smithy4s
 package json
 package internals
 
+import smithy4s.schema.CachedSchemaCompiler
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig => JsoniterReaderConfig
 }
@@ -47,22 +48,36 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   ): JsonPayloadCodecCompiler =
     copy(jsoniterWriterConfig = jsoniterWriterConfig)
 
-  type Cache = jsoniterCodecCompiler.Cache
-  def createCache(): Cache = jsoniterCodecCompiler.createCache()
+  def writers: CachedSchemaCompiler[PayloadWriter] =
+    new CachedSchemaCompiler[PayloadWriter] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-  def fromSchema[A](schema: Schema[A], cache: Cache): PayloadCodec[A] = {
-    val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-    val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
-    val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      Blob(
-        writeToArray(value, jsoniterWriterConfig)(jcodec)
-      )
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadWriter[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        Writer.encodeBy { (value: A) =>
+          Blob(
+            writeToArray(value, jsoniterWriterConfig)(jcodec)
+          )
+        }
+      }
+      def fromSchema[A](schema: Schema[A]): PayloadWriter[A] =
+        fromSchema(schema, createCache())
     }
-    ReaderWriter(reader, writer)
-  }
 
-  def fromSchema[A](schema: Schema[A]): PayloadCodec[A] =
-    fromSchema(schema, createCache())
+  def readers: CachedSchemaCompiler[PayloadReader] =
+    new CachedSchemaCompiler[PayloadReader] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
+
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadReader[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        new JsonPayloadReader(jcodec)
+      }
+
+      def fromSchema[A](schema: Schema[A]): PayloadReader[A] =
+        fromSchema(schema, createCache())
+    }
 
   private class JsonPayloadReader[A](jcodec: JsonCodec[A])
       extends PayloadReader[A] {

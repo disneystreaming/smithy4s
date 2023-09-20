@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
+  fs2,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
@@ -373,7 +374,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.9.1",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.5"
+      "io.get-coursier" %% "coursier" % "2.1.7"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -656,7 +657,7 @@ lazy val fs2 = projectMatrix
  */
 lazy val `http4s-kernel` = projectMatrix
   .in(file("modules/http4s-kernel"))
-  .dependsOn(core)
+  .dependsOn(core, cats)
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
@@ -675,6 +676,7 @@ lazy val http4s = projectMatrix
   .dependsOn(
     `http4s-kernel`,
     json,
+    fs2,
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",

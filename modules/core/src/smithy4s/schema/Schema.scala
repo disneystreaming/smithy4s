@@ -86,7 +86,7 @@ sealed trait Schema[A]{
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
   final def biject[B](bijection: Bijection[A, B]) : Schema[B] = Schema.bijection(this, bijection)
-  final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
+  final def biject[B](to: A => B)(from: B => A) : Schema[B] = Schema.bijection(this, to, from)
   final def option: Schema[Option[A]] = Schema.option(this)
 
   final def isOption: Boolean = this match {
@@ -142,6 +142,11 @@ sealed trait Schema[A]{
     * Checks whether a schema is Unit or an empty structure
     */
   final def isUnit: Boolean = this.shapeId == ShapeId("smithy.api", "Unit")
+
+  /**
+    * Turns this schema into an error schema.
+    */
+  final def error(unlift: A => Throwable)(lift: PartialFunction[Throwable, A]) : ErrorSchema[A] = ErrorSchema(this, lift.lift, unlift)
 
 }
 
@@ -287,4 +292,16 @@ object Schema {
     def default[A] : Option[A] = None
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
   }
+
+  def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =
+    OperationSchema[Unit, Nothing, Unit, Nothing, Nothing](
+      id,
+      Hints.empty,
+      Schema.unit,
+      None,
+      Schema.unit,
+      None,
+      None
+    )
+
 }
