@@ -16,8 +16,9 @@
 
 package smithy4s
 
-import _root_.fs2.Stream
+import fs2.Stream
 
+// scalafmt: {maxColumn = 120}
 package object interopfs2 {
 
   type ByteStreamEncoder[F[_], A] =

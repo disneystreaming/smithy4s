@@ -19,9 +19,11 @@ package smithy4s.json
 import smithy4s.Document
 import smithy4s.Blob
 import smithy4s.codecs.PayloadError
-import smithy4s.codecs.PayloadCodec
 import smithy4s.schema.Schema
 import com.github.plokhotnyuk.jsoniter_scala.core._
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.PayloadReader
 
 object Json {
 
@@ -35,9 +37,8 @@ object Json {
     * result in memory leaks.
     */
   def read[A: Schema](blob: Blob): Either[PayloadError, A] = {
-    payloadCodecs
-      .fromSchema(Schema[A], payloadCodecsGlobalCache)
-      .reader
+    payloadReaders
+      .fromSchema(Schema[A], payloadReadersGlobalCache)
       .decode(blob)
   }
 
@@ -50,9 +51,8 @@ object Json {
     * When writing interpreters, please prefer using the [[payloadCodecs]] object.
     */
   def writeBlob[A: Schema](a: A): Blob = {
-    payloadCodecs
-      .fromSchema(Schema[A], payloadCodecsGlobalCache)
-      .writer
+    payloadWriters
+      .fromSchema(Schema[A], payloadWritersGlobalCache)
       .encode(a)
   }
 
@@ -67,8 +67,8 @@ object Json {
   def writePrettyString[A: Schema](a: A): String = {
     payloadCodecs
       .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))
+      .writers
       .fromSchema(Schema[A])
-      .writer
       .encode(a)
       .toUTF8String
   }
@@ -77,35 +77,35 @@ object Json {
     * Parses a [[smithy4s.Document]] from a [[smithy4s.Blob]] containing a Json payload.
     */
   def readDocument(blob: Blob): Either[PayloadError, Document] = {
-    documentCodecs.reader.read(blob)
+    documentReader.read(blob)
   }
 
   /**
     * Parses a [[smithy4s.Document]] from a [[String]] containing a Json payload.
     */
   def readDocument(string: String): Either[PayloadError, Document] = {
-    documentCodecs.reader.read(Blob(string))
+    documentReader.read(Blob(string))
   }
 
   /**
     * Parses a [[smithy4s.Document]] from a [[Array[Byte]]] containing a Json payload.
     */
   def readDocument(bytes: Array[Byte]): Either[PayloadError, Document] = {
-    documentCodecs.reader.read(Blob(bytes))
+    documentReader.read(Blob(bytes))
   }
 
   /**
     * Writes a [[smithy4s.Document]] into a binary Blob.
     */
   def writeDocumentAsBlob(document: Document): Blob = {
-    documentCodecs.writer.encode(document)
+    documentWriter.encode(document)
   }
 
   /**
     * Writes a [[smithy4s.Document]] into a pretty string with a 2-spaces indentation
     */
   def writeDocumentAsPrettyString(document: Document): String = {
-    prettyDocumentCodecs.writer.encode(document).toUTF8String
+    prettyDocumentWriters.encode(document).toUTF8String
   }
 
   /**
@@ -128,15 +128,26 @@ object Json {
   val payloadCodecs: JsonPayloadCodecCompiler =
     internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler
 
-  private val payloadCodecsGlobalCache = payloadCodecs.createCache()
+  private[smithy4s] val payloadWriters: CachedSchemaCompiler[PayloadWriter] =
+    payloadCodecs.writers
 
-  private val documentCodecs: PayloadCodec[Document] =
-    payloadCodecs.fromSchema(Schema.document)
+  private[smithy4s] val payloadReaders: CachedSchemaCompiler[PayloadReader] =
+    payloadCodecs.readers
 
-  private val prettyDocumentCodecs: PayloadCodec[Document] = {
+  private val payloadWritersGlobalCache = payloadWriters.createCache()
+  private val payloadReadersGlobalCache = payloadReaders.createCache()
+
+  private val documentWriter: PayloadWriter[Document] =
+    payloadWriters.fromSchema(Schema.document)
+
+  private val documentReader: PayloadReader[Document] =
+    payloadReaders.fromSchema(Schema.document)
+
+  private val prettyDocumentWriters: PayloadWriter[Document] = {
     import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
     payloadCodecs
       .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))
+      .writers
       .fromSchema(Schema.document)
   }
 

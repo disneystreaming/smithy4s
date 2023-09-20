@@ -17,6 +17,8 @@
 package smithy4s.schema
 
 import smithy4s.ShapeTag
+import smithy4s.Hints
+import smithy4s.kinds.PolyFunction
 
 /**
   * An ErrorSchema is similar to a UnionSchema in that it exposes `alternatives` and `ordinal` values,
@@ -32,8 +34,23 @@ case class ErrorSchema[E] private[smithy4s] (
     unliftError: E => Throwable
 ) {
 
-  final def mapSchema(f: Schema[E] => Schema[E]): ErrorSchema[E] =
-    copy(schema = f(schema))
+  def transformHintsLocally(f: Hints => Hints): ErrorSchema[E] = {
+    val newSchema = schema match {
+      case u: Schema.UnionSchema[E] =>
+        u.copy(alternatives = u.alternatives.map(_.transformHintsLocally(f)))
+      case other => other.transformHintsLocally(f)
+    }
+    copy(schema = newSchema)
+  }
+
+  def transformHintsTransitively(f: Hints => Hints): ErrorSchema[E] = {
+    val newSchema = schema match {
+      case u: Schema.UnionSchema[E] =>
+        u.copy(alternatives = u.alternatives.map(_.transformHintsLocally(f)))
+      case other => other.transformHintsLocally(f)
+    }
+    copy(schema = newSchema)
+  }
 
   final val ordinal: E => Int = schema match {
     case u: Schema.UnionSchema[E] => u.ordinal
@@ -63,5 +80,21 @@ object ErrorSchema {
     def errorSchema: ErrorSchema[E] =
       ErrorSchema(schema, liftError, unliftError)
   }
+
+  def transformHintsLocallyK(
+      f: Hints => Hints
+  ): PolyFunction[ErrorSchema, ErrorSchema] =
+    new PolyFunction[ErrorSchema, ErrorSchema] {
+      def apply[E](errorSchema: ErrorSchema[E]): ErrorSchema[E] =
+        errorSchema.transformHintsLocally(f)
+    }
+
+  def transformHintsTransitivelyK(
+      f: Hints => Hints
+  ): PolyFunction[ErrorSchema, ErrorSchema] =
+    new PolyFunction[ErrorSchema, ErrorSchema] {
+      def apply[E](errorSchema: ErrorSchema[E]): ErrorSchema[E] =
+        errorSchema.transformHintsLocally(f)
+    }
 
 }

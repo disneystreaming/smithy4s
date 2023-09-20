@@ -73,6 +73,45 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
 
 object Endpoint {
 
+  trait Middleware[A] { self =>
+    def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A
+    final def biject[B](to: A => B)(from: B => A): Middleware[B] = new Middleware[B] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): B => B =
+        self.prepare(service)(endpoint).compose(from).andThen(to)
+    }
+
+    final def andThen(other: Middleware[A]): Middleware[A] =
+      new Middleware[A] {
+        def prepare[Alg[_[_, _, _, _, _]]](
+            service: Service[Alg]
+        )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
+          self
+            .prepare(service)(endpoint)
+            .andThen(other.prepare(service)(endpoint))
+      }
+
+  }
+// format: on
+
+  object Middleware {
+
+    trait Simple[Construct] extends Middleware[Construct] {
+      def prepareWithHints(serviceHints: Hints, endpointHints: Hints): Construct => Construct
+
+      final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Construct => Construct =
+        prepareWithHints(service.hints, endpoint.hints)
+    }
+
+    def noop[Construct]: Middleware[Construct] =
+      new Middleware[Construct] {
+        override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+            endpoint: service.Endpoint[_, _, _, _, _]
+        ): Construct => Construct = identity
+      }
+
+  }
   def apply[Op[_, _, _, _, _], I, E, O, SI, SO](
       operationSchema: OperationSchema[I, E, O, SI, SO],
       wrapFunction: I => Op[I, E, O, SI, SO]

@@ -31,6 +31,7 @@ sealed trait SchemaPartition[A]
 
 object SchemaPartition {
 
+
   // format: off
   /**
     * Indicates that all fields of a schema matched a condition.
@@ -86,9 +87,7 @@ object SchemaPartition {
 
             if (payload) {
               fields.zipWithIndex
-                .find { case (schemaField, _) =>
-                  keep(schemaField)
-                }
+                .find { case (schemaField, _) => keep(schemaField) }
                 .map { case (allowedField, index) =>
                   val remainingFields =
                     fields.zipWithIndex.filterNot(_._2 == index)

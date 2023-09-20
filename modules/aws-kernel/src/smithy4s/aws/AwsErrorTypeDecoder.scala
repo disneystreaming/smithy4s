@@ -16,28 +16,28 @@
 
 package smithy4s.aws
 
-import cats.MonadThrow
-import cats.syntax.all._
+import smithy4s.Blob
+import smithy4s.capability.MonadThrowLike
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
 import smithy4s.http.HttpDiscriminator
-import org.typelevel.ci.CIString
-import smithy4s.schema._
-import smithy4s.http4s.kernel._
-import org.http4s._
+import smithy4s.codecs.BlobDecoder
+import smithy4s.http.HttpResponse
+import smithy4s.http.CaseInsensitive
 
+// scalafmt: { maxColumn: 120 }
 object AwsErrorTypeDecoder {
 
-  private val errorTypeHeader = CIString(`X-Amzn-Errortype`)
+  private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
 
   private[aws] def fromResponse[F[_]](
-      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]]
-  )(implicit F: MonadThrow[F]): Response[F] => F[Option[HttpDiscriminator]] = {
-    val decoder = decoderCompiler.fromSchema(AwsErrorType.schema)
-    (response: Response[F]) =>
-      val maybeTypeHeader =
+      bodyDecoders: BlobDecoder.Compiler
+  )(implicit F: MonadThrowLike[F]): HttpResponse[Blob] => F[HttpDiscriminator] = {
+    val decoder = bodyDecoders.fromSchema(AwsErrorType.bodySchema)
+    (response: HttpResponse[Blob]) =>
+      val maybeTypeHeader: Option[String] =
         response.headers
           .get(errorTypeHeader)
-          .map(_.head.value)
+          .flatMap(_.headOption)
       val errorTypeF = maybeTypeHeader match {
         case Some(typeHeader) =>
           F.pure(
@@ -48,9 +48,12 @@ object AwsErrorTypeDecoder {
             )
           )
         case None =>
-          decoder.read(response)
+          decoder.read(response.body) match {
+            case Left(error)        => F.raiseError(error)
+            case Right((code, tpe)) => F.pure(AwsErrorType(None, code, tpe))
+          }
       }
-      errorTypeF.map(_.discriminator)
+      F.map(errorTypeF)(_.discriminator)
   }
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#operation-error-serialization
@@ -59,7 +62,7 @@ object AwsErrorTypeDecoder {
       code: Option[String],
       typeHeader: Option[String]
   ) {
-    def discriminator: Option[HttpDiscriminator] = {
+    def discriminator: HttpDiscriminator = {
       __type
         .orElse(code)
         .orElse(typeHeader)
@@ -72,26 +75,23 @@ object AwsErrorTypeDecoder {
           else withoutColumn
         }
         .map(HttpDiscriminator.NameOnly(_))
+        .getOrElse(HttpDiscriminator.Undetermined)
     }
   }
 
   private[aws] object AwsErrorType {
 
-    protected[aws] val schema: smithy4s.Schema[AwsErrorType] = {
+    private[aws] type Body = (Option[String], Option[String])
+
+    protected[aws] val bodySchema: smithy4s.Schema[Body] = {
       import smithy4s.schema.Schema._
 
       val __typeField = string
-        .optional[AwsErrorType]("__type", _.__type)
+        .optional[Body]("__type", _._1)
       val codeField = string
-        .optional[AwsErrorType]("code", _.code)
+        .optional[Body]("code", _._2)
         .addHints(smithy.api.XmlName("Code"))
-      val typeHeader =
-        string
-          .optional[AwsErrorType]("typeHeader", _.typeHeader)
-          .addHints(
-            smithy.api.HttpHeader(`X-Amzn-Errortype`)
-          )
-      struct(__typeField, codeField, typeHeader)(AwsErrorType.apply)
+      struct(__typeField, codeField)((_, _))
     }
   }
 

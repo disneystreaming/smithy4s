@@ -28,7 +28,6 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-    ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
@@ -59,7 +58,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[C[A]] = {
     val memberEncoder = compile(member)
     val maybeKey =
-      if (ignoreUrlFormFlattened || hints.has[UrlFormFlattened]) None
+      if (hints.has[UrlFormFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
     collection =>

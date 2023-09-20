@@ -20,160 +20,96 @@ package internals
 import _root_.aws.protocols.AwsQueryError
 import alloy.UrlFormFlattened
 import alloy.UrlFormName
-import cats.effect.Concurrent
-import cats.syntax.all._
-import fs2.compression.Compression
-import org.http4s.EntityEncoder
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
-import smithy4s.codecs.PayloadPath
+import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs.Writer
 import smithy4s.http._
-import smithy4s.http4s.kernel._
-import smithy4s.kinds.PolyFunction
-import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.http.internals.StaticUrlFormElements
+import smithy4s.kinds.PolyFunction5
+import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
 import smithy4s.schema.OperationSchema
+import smithy4s.schema.ErrorSchema
 
+// scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
 
-  def make[F[_]: Concurrent: Compression](
-      version: String
-  ): UnaryClientCodecs.Make[F] =
-    new UnaryClientCodecs.Make[F] {
-      def apply[I, E, O, SI, SO](
-          operation: OperationSchema[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](
-          operation.hints,
-          // To fulfil the requirement of
-          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298.
-          retainUserEncoding = false
-        )
-        val requestEncoderCompilersWithCompression = transformEncoders(
-          requestEncoderCompilers[F](
-            ignoreUrlFormFlattened = false,
-            capitalizeStructAndUnionMemberNames = false,
-            action = operation.id.name,
-            version = version
-          )
-        )
+  private[aws] val inputEncoders = {
+    UrlForm
+      .Encoder(capitalizeStructAndUnionMemberNames = false)
+      .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
+  }
 
-        val responseTag = operation.id.name + "Response"
-        val resultTag = operation.id.name + "Result"
-        val responseDecoderCompilers =
-          AwsXmlCodecs
-            .responseDecoderCompilers[F]
-            .contramapSchema(
-              Schema.transformHintsLocallyK(
-                _ ++ Hints(XmlStartingPath(List(responseTag, resultTag)))
-              )
-            )
-        val errorDecoderCompilers = AwsXmlCodecs
-          .responseDecoderCompilers[F]
-          .contramapSchema(
-            Schema.transformHintsLocallyK(
-              _ ++ Hints(XmlStartingPath(List("ErrorResponse", "Error")))
-            )
-          )
-        // Takes the `@awsQueryError` trait into consideration to decide how to
-        // discriminate error responses.
-        val errorNameMapping: (String => String) = operation.error match {
-          case None =>
-            identity[String]
+  // Takes the `@awsQueryError` trait into consideration to decide how to
+  // discriminate error responses.
+  private[aws] val addDiscriminator = (_: Hints).expand { (awsQueryError: AwsQueryError) =>
+    smithy4s.http.internals.ErrorDiscriminatorValue(awsQueryError.code)
+  }
 
-          case Some(err) =>
-            val mapping = err.alternatives.flatMap { alt =>
-              val shapeName = alt.schema.shapeId.name
-              alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
-            }.toMap
-            errorCode => mapping.getOrElse(errorCode, errorCode)
+  // The name of the endpoint and version of the service must be added to the body
+  private[aws] def addOperationInfo(operationName: String, version: String) = (hints: Hints) =>
+    hints.add(StaticUrlFormElements(List(("Action" -> operationName), ("Version" -> version))))
+
+  // The actual error payloads are nested under two layers of XML
+  private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
+  private val discriminatorReaders =
+    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+
+  // The AWS protocol works in terms of XmlFlattened and XmlName hints,
+  // even for the input side, which is most definitely _not_ XML. Partly
+  // because that seems odd, but mostly so that the URL form support can
+  // be completely agnostic of AWS protocol details, they work with their
+  // own more appropriately named hints - which is what necessitates the
+  // translation here.
+  private val xmlToUrlFormHints = (hints: Hints) =>
+    hints
+      .expand((_: XmlFlattened) => UrlFormFlattened())
+      .expand((xmlName: XmlName) => UrlFormName(xmlName.value))
+
+  private def operationPreprocessor(version: String): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](operation: OperationSchema[I, E, O, SI, SO]): OperationSchema[I, E, O, SI, SO] = {
+
+        val inputTransformation = {
+          val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints }
+          val local = Schema.transformHintsLocallyK(addOperationInfo(operation.id.name, version))
+          transitive.andThen(local)
         }
-        val errorDiscriminator = AwsErrorTypeDecoder
-          .fromResponse(errorDecoderCompilers)
-          .andThen(_.map(_.map {
-            case HttpDiscriminator.NameOnly(name) =>
-              HttpDiscriminator.NameOnly(errorNameMapping(name))
-            case other =>
-              other
-          }))
 
-        val make = UnaryClientCodecs.Make[F](
-          input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
-          error = errorDecoderCompilers,
-          errorDiscriminator = errorDiscriminator
-        )
-        make.apply(operation)
+        def errorTransformation = ErrorSchema.transformHintsLocallyK {
+          addDiscriminator.andThen(addErrorStartingPath)
+        }
+
+        val outputTransformation = Schema.transformHintsLocallyK {
+          val responseTag = operation.id.name + "Response"
+          val resultTag = operation.id.name + "Result"
+          (_: Hints).add(XmlStartingPath(List(responseTag, resultTag)))
+        }
+
+        operation
+          .mapInput(inputTransformation(_))
+          .mapOutput(outputTransformation(_))
+          .mapError(errorTransformation(_))
       }
     }
 
-  def requestEncoderCompilers[F[_]: Concurrent](
-      ignoreUrlFormFlattened: Boolean,
-      capitalizeStructAndUnionMemberNames: Boolean,
-      action: String,
+  def make[F[_]: MonadThrowLike](
       version: String
-  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
-    val urlFormEntityEncoderCompilers = UrlForm
-      .Encoder(
-        ignoreUrlFormFlattened = ignoreUrlFormFlattened,
-        capitalizeStructAndUnionMemberNames =
-          capitalizeStructAndUnionMemberNames
-      )
-      .mapK(
-        new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-          def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-            urlFormEntityEncoder[F].contramap(a =>
-              UrlForm(
-                List(
-                  UrlForm.FormData(PayloadPath("Action"), Some(action)),
-                  UrlForm.FormData(PayloadPath("Version"), Some(version))
-                ) ++ fa.encode(a).values
-              )
-            )
-        }
-      )
-    RequestEncoder
-      .restSchemaCompiler[F](
-        metadataEncoderCompiler = Metadata.AwsEncoder,
-        entityEncoderCompiler = urlFormEntityEncoderCompilers,
-        // We have to set this so that a body is produced even in the case where
-        // a top-level struct input is empty. If it wasn't then the contramap
-        // above wouldn't have the required effect because there would be no
-        // UrlForm to add Action and Version to (literally no UrlForm value -
-        // not just an empty one).
-        writeEmptyStructs = true
-      )
-      .contramapSchema(
-        // The AWS protocol works in terms of XmlFlattened and XmlName hints,
-        // even for the input side, which is most definitely _not_ XML. Partly
-        // because that seems odd, but mostly so that the URL form support can
-        // be completely agnostic of AWS protocol details, they work with their
-        // own more appropriately named hints - which is what necessitates the
-        // translation here.
-        Schema.transformHintsTransitivelyK { hints =>
-          def translateFlattened(hints: Hints): Hints =
-            hints.memberHints.get(XmlFlattened) match {
-              case Some(_) => hints.addMemberHints(UrlFormFlattened())
-              case None    => hints
-            }
-          def translateName(hints: Hints): Hints =
-            hints.memberHints.get(XmlName) match {
-              case Some(XmlName(name)) =>
-                hints.addMemberHints(UrlFormName(name))
-              case None => hints
-            }
-          (translateFlattened _ andThen translateName _)(hints)
-        }
-      )
-  }
+  ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
-  private def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] =
-    EntityEncoders.fromHttpMediaWriter(
-      HttpMediaTyped(
-        HttpMediaType("application/x-www-form-urlencoded"),
-        (_: Any, urlForm: UrlForm) => Blob(urlForm.render)
-      )
-    )
+    HttpUnaryClientCodecs.builder
+      .withOperationPreprocessor(operationPreprocessor(version))
+      .withBodyEncoders(inputEncoders)
+      .withSuccessBodyDecoders(Xml.readers)
+      .withErrorBodyDecoders(Xml.readers)
+      .withMetadataEncoders(Metadata.AwsEncoder)
+      .withMetadataDecoders(Metadata.AwsDecoder)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
+      .withWriteEmptyStructs(_ => true)
+      .withRequestMediaType("application/x-www-form-urlencoded")
+
+  }
 
 }
