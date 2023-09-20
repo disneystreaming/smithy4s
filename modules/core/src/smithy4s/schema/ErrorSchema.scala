@@ -23,7 +23,8 @@ import smithy4s.ShapeTag
   * and therefore can be manipulated similarly to UnionSchemas.
   *
   * Additionally, it carries functions to go from E to Throwable and vice-versa. This is used by
-  * interpreters to
+  * interpreters to inject data into error channels of effect types, or to recover data from
+  * an error-channel prior to serialisation.
   */
 case class ErrorSchema[E](
     schema: Schema[E],
