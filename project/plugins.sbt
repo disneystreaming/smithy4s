@@ -1,5 +1,5 @@
 // format: off
-addSbtPlugin("ch.epfl.scala"        % "sbt-scalafix"                  % "0.10.4")
+addSbtPlugin("ch.epfl.scala"        % "sbt-scalafix"                  % "0.11.1")
 addSbtPlugin("org.scala-js"         % "sbt-scalajs"                   % "1.13.2")
 addSbtPlugin("com.github.sbt"       % "sbt-pgp"                       % "2.2.1")
 addSbtPlugin("com.github.sbt"       % "sbt-dynver"                    % "5.0.1")

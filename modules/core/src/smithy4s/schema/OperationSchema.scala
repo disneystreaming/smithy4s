@@ -18,13 +18,11 @@ package smithy4s
 
 package schema
 
-import smithy4s.Errorable
-
-final case class OperationSchema[I, E, O, SI, SO](
+final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     id: ShapeId,
     hints: Hints,
     input: Schema[I],
-    error: Option[Errorable[E]],
+    error: Option[ErrorSchema[E]],
     output: Schema[O],
     streamedInput: Option[StreamingSchema[SI]],
     streamedOutput: Option[StreamingSchema[SO]]
@@ -61,18 +59,18 @@ final case class OperationSchema[I, E, O, SI, SO](
     copy(output = f(output))
 
   def withError[E2](
-      error: Errorable[E2]
+      error: ErrorSchema[E2]
   ): OperationSchema[I, E2, O, SI, SO] = copy(error = Some(error))
 
   def withoutError[E2 <: E]: OperationSchema[I, E2, O, SI, SO] =
     copy(error = None)
 
   def withErrorOption[E2](
-      error: Option[Errorable[E2]]
+      error: Option[ErrorSchema[E2]]
   ): OperationSchema[I, E2, O, SI, SO] = copy(error = error)
 
   def mapError[E2](
-      f: Errorable[E] => Errorable[E2]
+      f: ErrorSchema[E] => ErrorSchema[E2]
   ): OperationSchema[I, E2, O, SI, SO] = copy(error = error.map(f))
 
   def withStreamedInput[SI2](

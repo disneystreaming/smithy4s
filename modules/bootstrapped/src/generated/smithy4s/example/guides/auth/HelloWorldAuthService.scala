@@ -1,7 +1,6 @@
 package smithy4s.example.guides.auth
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -9,8 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -90,9 +89,9 @@ object HelloWorldAuthServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = SayWorld
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "SayWorld"))
+    val schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "SayWorld"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(SayWorldError)
+      .withError(SayWorldError.errorSchema)
       .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit) = SayWorld()
@@ -109,7 +108,7 @@ object HelloWorldAuthServiceOperation {
       case value: SayWorldError.NotAuthorizedErrorCase => visitor.notAuthorizedError(value.notAuthorizedError)
     }
   }
-  object SayWorldError extends Errorable.Companion[SayWorldError] {
+  object SayWorldError extends ErrorSchema.Companion[SayWorldError] {
 
     def notAuthorizedError(notAuthorizedError: NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
 
@@ -136,7 +135,7 @@ object HelloWorldAuthServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[SayWorldError] = union(
+    implicit val schema: Schema[SayWorldError] = union(
       SayWorldError.NotAuthorizedErrorCase.alt,
     ){
       _.$ordinal
@@ -156,9 +155,9 @@ object HelloWorldAuthServiceOperation {
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = HealthCheck
   }
   object HealthCheck extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "HealthCheck"))
+    val schema: OperationSchema[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.auth", "HealthCheck"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(HealthCheckError)
+      .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit) = HealthCheck()
@@ -175,7 +174,7 @@ object HelloWorldAuthServiceOperation {
       case value: HealthCheckError.NotAuthorizedErrorCase => visitor.notAuthorizedError(value.notAuthorizedError)
     }
   }
-  object HealthCheckError extends Errorable.Companion[HealthCheckError] {
+  object HealthCheckError extends ErrorSchema.Companion[HealthCheckError] {
 
     def notAuthorizedError(notAuthorizedError: NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
 
@@ -202,7 +201,7 @@ object HelloWorldAuthServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[HealthCheckError] = union(
+    implicit val schema: Schema[HealthCheckError] = union(
       HealthCheckError.NotAuthorizedErrorCase.alt,
     ){
       _.$ordinal

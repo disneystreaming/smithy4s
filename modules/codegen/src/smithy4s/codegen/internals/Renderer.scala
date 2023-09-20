@@ -560,12 +560,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         opNameRef,
         ext = line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(opObjectName)}]"
       )(
-        line"""def schema: $OperationSchema_[${op.renderAlgParams(
+        line"""val schema: $OperationSchema_[${op.renderAlgParams(
           opObjectName
         )}] = $Schema_.operation($ShapeId_("$ns", "$opName"))""",
         indent(
           line".withInput(${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen))",
-          Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef})"),
+          Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
           line".withOutput(${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen))",
           op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
@@ -805,7 +805,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case field =>
       line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
   }
-  private def renderErrorableMethods(errorName: NameRef, errors: List[Type]): Lines = {
+  private def renderErrorSchemaMethods(errorName: NameRef, errors: List[Type]): Lines = {
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
     lines(
       block(
@@ -850,13 +850,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
-      obj(name, line"$Errorable_[${NameRef(name.name)}]")(
+      obj(name, line"$ErrorSchema_.Companion[${NameRef(name.name)}]")(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
         block(
-          line"val schema: $unionSchema_[$name] ="
+          line"val schema: $Schema_[$name] ="
         )(
           members.map { case (altName, tpe) =>
             line"""val ${altVal(
@@ -871,7 +871,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
           )
         ),
-        renderErrorableMethods(NameRef(name.name), members.map(_._2))
+        renderErrorSchemaMethods(NameRef(name.name), members.map(_._2))
       )
     )
   }
@@ -1009,7 +1009,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       tpe
     }
 
-    val companionTpe = if (error) line"$Errorable_.Companion[$name]" else line"$ShapeTag_.Companion[$name]"
+    val companionTpe = if (error) line"$ErrorSchema_.Companion[$name]" else line"$ShapeTag_.Companion[$name]"
 
     val mixinLines = mixins.map(m => line"$m")
     val mixinExtends = mixinLines.intercalate(line" with ")
@@ -1139,9 +1139,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         locally {
           val union =
-            if (error)
-              line"implicit val schema: $unionSchema_[$name] = $union_"
-            else if (recursive)
+            if (recursive)
               line"implicit val schema: $Schema_[$name] = $recursive_($union_"
             else
               line"implicit val schema: $Schema_[$name] = $union_"
@@ -1160,7 +1158,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
             .appendToLast(if (recursive) ")" else "")
         },
-        renderErrorableMethods(name, types).when(error),
+        renderErrorSchemaMethods(name, types).when(error),
         renderTypeclasses(hints, name)
       )
     )

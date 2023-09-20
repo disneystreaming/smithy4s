@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy4s.schema._
+import schema.ErrorSchema
 
 /**
   * A representation of a smithy operation.
@@ -31,7 +32,7 @@ import smithy4s.schema._
   * This type carries references to the Schemas of the various types involved,
   * allowing to compile corresponding codecs.
   *
-  * Optionally, an endpoint can have an `Errorable` which allows for matching
+  * Optionally, an endpoint can have an `ErrorSchema` which allows for matching
   * throwables against the errors the operation knows about (which form an ADT
   * in the Scala representation)
   *
@@ -56,14 +57,14 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
   final def hints: Hints = schema.hints
   final def input: Schema[I] = schema.input
   final def output: Schema[O] = schema.output
-  final def error: Option[Errorable[E]] = schema.error
+  final def error: Option[ErrorSchema[E]] = schema.error
   @deprecated("Use .error instead", since = "0.18")
-  final def errorable: Option[Errorable[E]] = schema.error
+  final def errorschema: Option[ErrorSchema[E]] = schema.error
   final def streamedInput: Option[StreamingSchema[SI]] = schema.streamedInput
   final def streamedOutput: Option[StreamingSchema[SO]] = schema.streamedOutput
 
   object Error {
-    def unapply(throwable: Throwable): Option[(Errorable[E], E)] =
+    def unapply(throwable: Throwable): Option[(ErrorSchema[E], E)] =
       error.flatMap { err =>
         err.liftError(throwable).map(err -> _)
       }

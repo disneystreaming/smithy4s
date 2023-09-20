@@ -1,7 +1,6 @@
 package smithy4s.example.imp
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -11,8 +10,8 @@ import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.ErrorSchema
 import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
@@ -85,9 +84,9 @@ object ImportServiceOperation {
     def endpoint: smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = ImportOperation
   }
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
-    def schema: OperationSchema[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.import_test", "ImportOperation"))
+    val schema: OperationSchema[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.import_test", "ImportOperation"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withError(ImportOperationError)
+      .withError(ImportOperationError.errorSchema)
       .withOutput(OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
     def wrap(input: Unit) = ImportOperation()
@@ -104,7 +103,7 @@ object ImportServiceOperation {
       case value: ImportOperationError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
     }
   }
-  object ImportOperationError extends Errorable.Companion[ImportOperationError] {
+  object ImportOperationError extends ErrorSchema.Companion[ImportOperationError] {
 
     def notFoundError(notFoundError: NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
 
@@ -131,7 +130,7 @@ object ImportServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[ImportOperationError] = union(
+    implicit val schema: Schema[ImportOperationError] = union(
       ImportOperationError.NotFoundErrorCase.alt,
     ){
       _.$ordinal

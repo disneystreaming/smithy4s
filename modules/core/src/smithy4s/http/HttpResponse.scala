@@ -16,7 +16,6 @@
 
 package smithy4s.http
 
-import smithy4s.Errorable
 import smithy4s.codecs.{Reader, Writer}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
@@ -24,6 +23,7 @@ import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.capability.MonadThrowLike
 import smithy4s.Blob
+import smithy4s.schema.ErrorSchema
 
 final case class HttpResponse[+A](
     statusCode: Int,
@@ -101,11 +101,11 @@ object HttpResponse {
 
     private[http] def forError[Body, E](
         errorTypeHeaders: List[String],
-        maybeErrorable: Option[Errorable[E]],
+        maybeErrorable: Option[ErrorSchema[E]],
         encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
     ): Encoder[Body, E] = maybeErrorable match {
-      case Some(errorable) =>
-        forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
+      case Some(errorschema) =>
+        forErrorAux(errorTypeHeaders, errorschema, encoderCompiler)
       case None => Writer.noop
     }
 
@@ -128,12 +128,11 @@ object HttpResponse {
 
     private def forErrorAux[Body, E](
         errorTypeHeaders: List[String],
-        errorable: Errorable[E],
+        errorSchema: ErrorSchema[E],
         encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
     ): Encoder[Body, E] = {
-      val errorUnionSchema = errorable.schema
       val dispatcher =
-        Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
+        Alt.Dispatcher(errorSchema.alternatives, errorSchema.ordinal)
       val precompiler = new Alt.Precompiler[Encoder[Body, *]] {
         def apply[Err](
             label: String,
@@ -202,14 +201,14 @@ object HttpResponse {
     * the correct alternative, based on some discriminator.
     */
     private[http] def forError[F[_]: MonadThrowLike, Body, E](
-        maybeErrorable: Option[Errorable[E]],
+        maybeErrorSchema: Option[ErrorSchema[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         discriminate: HttpResponse[Body] => F[HttpDiscriminator],
         toStrict: Body => F[(Body, Blob)]
     ): Decoder[F, Body, E] =
       discriminating(
         discriminate,
-        HttpErrorSelector(maybeErrorable, decoderCompiler),
+        HttpErrorSelector(maybeErrorSchema, decoderCompiler),
         toStrict
       )
 
@@ -219,14 +218,14 @@ object HttpResponse {
     * then upcasts the error as a throwable
     */
     private[http] def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
-        maybeErrorable: Option[Errorable[E]],
+        maybeErrorSchema: Option[ErrorSchema[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         discriminate: HttpResponse[Body] => F[HttpDiscriminator],
         toStrict: Body => F[(Body, Blob)]
     ): Decoder[F, Body, Throwable] =
       discriminating(
         discriminate,
-        HttpErrorSelector.asThrowable(maybeErrorable, decoderCompiler),
+        HttpErrorSelector.asThrowable(maybeErrorSchema, decoderCompiler),
         toStrict
       )
 

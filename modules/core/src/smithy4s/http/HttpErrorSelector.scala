@@ -21,6 +21,7 @@ import smithy.api.Error
 import smithy4s.schema.Alt
 import smithy.api.HttpError
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.ErrorSchema
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
 
@@ -34,17 +35,17 @@ object HttpErrorSelector {
     * Given a vector of alternatives, and a schema compiler, selects the decoder
     * associated to the given discriminator.
     *
-    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param maybeErrorSchema: the ErrorSchema instance associated to an operation
     * @param compiler: the compiler for a given decoder
     */
   def apply[F[_]: Covariant, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Option[F[E]] = maybeErrorable match {
+  ): HttpDiscriminator => Option[F[E]] = maybeErrorSchema match {
     case None => _ => None
-    case Some(errorable) =>
+    case Some(errorschema) =>
       new HttpErrorSelector[F, E](
-        errorable.schema.alternatives,
+        errorschema.alternatives,
         compiler
       )
   }
@@ -54,19 +55,19 @@ object HttpErrorSelector {
     * associated to the given discriminator, and maps it so that it lifts
     * a throwable
     *
-    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param maybeErrorSchema: the ErrorSchema instance associated to an operation
     * @param compiler: the compiler for a given decoder
     */
   def asThrowable[F[_]: Covariant, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Option[F[Throwable]] = maybeErrorable match {
+  ): HttpDiscriminator => Option[F[Throwable]] = maybeErrorSchema match {
     case None => _ => None
-    case Some(errorable) =>
+    case Some(errorschema) =>
       new HttpErrorSelector[F, E](
-        errorable.schema.alternatives,
+        errorschema.alternatives,
         compiler
-      ).andThen(_.map(Covariant[F].map(_)(errorable.unliftError)))
+      ).andThen(_.map(Covariant[F].map(_)(errorschema.unliftError)))
   }
 
 }
