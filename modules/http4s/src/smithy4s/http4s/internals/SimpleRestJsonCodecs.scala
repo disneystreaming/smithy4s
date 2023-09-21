@@ -54,7 +54,7 @@ private[http4s] class SimpleRestJsonCodecs(
     jsonCodecs.writers
 
   private val payloadDecoders =
-    jsonCodecs.readers
+    jsonCodecs.decoders
 
   // Adding X-Amzn-Errortype as well to facilitate interop with Amazon-issued code-generators.
   private val errorHeaders = List(

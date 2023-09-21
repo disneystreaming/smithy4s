@@ -20,6 +20,7 @@ import smithy4s.kinds._
 import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.schema._
+import smithy4s.codecs.{Decoder => GenericDecoder}
 import smithy4s.capability.MonadThrowLike
 
 final case class HttpRequest[+A](
@@ -49,7 +50,8 @@ final case class HttpRequest[+A](
 object HttpRequest {
   private[http] type Encoder[Body, A] =
     Writer[HttpRequest[Body], HttpRequest[Body], A]
-  private[http] type Decoder[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
+  private[http] type Decoder[F[_], Body, A] =
+    smithy4s.codecs.Decoder[F, HttpRequest[Body], A]
 
   implicit val reqCovariant: Covariant[HttpRequest] =
     new Covariant[HttpRequest] {
@@ -106,12 +108,12 @@ object HttpRequest {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoders: CachedSchemaCompiler[Metadata.Decoder],
-        bodyReaders: CachedSchemaCompiler[Reader[F, Body, *]],
+        bodyDecoders: CachedSchemaCompiler[GenericDecoder[F, Body, *]],
         drainBody: Option[HttpRequest[Body] => F[Unit]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       restSchemaCompilerAux(
         metadataDecoders,
-        bodyReaders.mapK { extractBody[F, Body] },
+        bodyDecoders.mapK { extractBody[F, Body] },
         drainBody.getOrElse(_ => MonadThrowLike[F].pure(()))
       )
     }
@@ -123,12 +125,10 @@ object HttpRequest {
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         metadataDecoders.mapK(
-          Metadata.Decoder.toReaderK.andThen(
-            extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
-          )
+          extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
         )
 
-      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
+      HttpRestSchema.combineDecoderCompilers[F, HttpRequest[Body]](
         restMetadataCompiler,
         responseDecoderCompiler,
         drainBody
@@ -138,14 +138,14 @@ object HttpRequest {
 
   private def extractMetadata[F[_]](
       liftToF: PolyFunction[Either[MetadataError, *], F]
-  ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
-    Reader
+  ): PolyFunction[Metadata.Decoder, Decoder[F, Any, *]] =
+    GenericDecoder
       .in[Either[MetadataError, *]]
       .composeK((_: HttpRequest[Any]).toMetadata)
-      .andThen(Reader.of[HttpRequest[Any]].liftPolyFunction(liftToF))
+      .andThen(GenericDecoder.of[HttpRequest[Any]].liftPolyFunction(liftToF))
 
   private[smithy4s] def extractBody[F[_], Body]
-      : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
-    Reader.in[F].composeK(_.body)
+      : PolyFunction[GenericDecoder[F, Body, *], Decoder[F, Body, *]] =
+    GenericDecoder.in[F].composeK(_.body)
 
 }

@@ -29,7 +29,7 @@ private[aws] object AwsRestXmlCodecs {
 
   def make[F[_]: MonadThrowLike](): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
 
-    val errorReaders = Xml.readers.contramapSchema(
+    val errorDecoders = Xml.decoders.contramapSchema(
       smithy4s.schema.Schema.transformHintsLocallyK(
         _.addMemberHints(XmlStartingPath(List("ErrorResponse", "Error")))
       )
@@ -37,9 +37,9 @@ private[aws] object AwsRestXmlCodecs {
 
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(Xml.writers)
-      .withSuccessBodyDecoders(Xml.readers)
-      .withErrorBodyDecoders(errorReaders)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(errorReaders))
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(errorDecoders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(errorDecoders))
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads

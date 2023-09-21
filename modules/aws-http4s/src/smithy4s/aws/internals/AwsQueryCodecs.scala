@@ -54,8 +54,8 @@ private[aws] object AwsQueryCodecs {
 
   // The actual error payloads are nested under two layers of XML
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
-  private val discriminatorReaders =
-    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+  private val discriminatorDecoders =
+    Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   // The AWS protocol works in terms of XmlFlattened and XmlName hints,
   // even for the input side, which is most definitely _not_ XML. Partly
@@ -102,11 +102,11 @@ private[aws] object AwsQueryCodecs {
     HttpUnaryClientCodecs.builder
       .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
-      .withSuccessBodyDecoders(Xml.readers)
-      .withErrorBodyDecoders(Xml.readers)
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(Xml.decoders)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
 

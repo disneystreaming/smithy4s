@@ -39,7 +39,7 @@ private[aws] object AwsJsonCodecs {
         .withHintMask(hintMask)
     )
 
-  private[aws] val jsonReaders = jsonPayloadCodecs.readers
+  private[aws] val jsonDecoders = jsonPayloadCodecs.decoders
   private[aws] val jsonWriters = jsonPayloadCodecs.writers
 
   def make[F[_]: MonadThrowLike](
@@ -47,9 +47,9 @@ private[aws] object AwsJsonCodecs {
   ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(jsonWriters)
-      .withSuccessBodyDecoders(jsonReaders)
-      .withErrorBodyDecoders(jsonReaders)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonReaders))
+      .withSuccessBodyDecoders(jsonDecoders)
+      .withErrorBodyDecoders(jsonDecoders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonDecoders))
       .withRequestMediaType(contentType)
   }
 

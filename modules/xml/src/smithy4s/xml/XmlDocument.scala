@@ -104,11 +104,10 @@ object XmlDocument {
     * A Decoder aims at decoding documents. As such, it is not meant to be a compositional construct, because
     * documents cannot be nested under other documents. This aims at decoding top-level XML payloads.
     */
-  trait Decoder[A] {
-    def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A]
-  }
+  type Decoder[A] = smithy4s.codecs.Decoder[Either[XmlDecodeError, *], XmlDocument, A]
 
-  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+  implicit def decoderFromSchema[A: Schema]: Decoder[A] = Decoder.derivedImplicitInstance
+  object Decoder extends CachedSchemaCompiler.DerivingImpl[Decoder] {
     protected override type Aux[A] = XmlDecoder[A]
     def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] = {
       val startingPath: List[XmlQName] = getStartingPath(schema)

@@ -16,7 +16,8 @@
 
 package smithy4s.http
 
-import smithy4s.codecs.{Reader, Writer}
+import smithy4s.codecs.{Decoder => GenericDecoder}
+import smithy4s.codecs.Writer
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Alt
@@ -70,7 +71,8 @@ final case class HttpResponse[+A](
 object HttpResponse {
   private[http] type Encoder[Body, A] =
     Writer[HttpResponse[Body], HttpResponse[Body], A]
-  private[http] type Decoder[F[_], Body, A] = Reader[F, HttpResponse[Body], A]
+  private[http] type Decoder[F[_], Body, A] =
+    smithy4s.codecs.Decoder[F, HttpResponse[Body], A]
 
   private[http] def isStatusCodeSuccess(statusCode: Int): Boolean =
     100 <= statusCode && statusCode <= 399
@@ -168,7 +170,7 @@ object HttpResponse {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        bodyDecoderCompiler: CachedSchemaCompiler[Reader[F, Body, *]],
+        bodyDecoderCompiler: CachedSchemaCompiler[GenericDecoder[F, Body, *]],
         drainBody: Option[HttpResponse[Body] => F[Unit]]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] =
       restSchemaCompilerAux(
@@ -179,19 +181,17 @@ object HttpResponse {
 
     private[smithy4s] def restSchemaCompilerAux[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-        responseReaders: CachedSchemaCompiler[Decoder[F, Body, *]],
+        responseDecoders: CachedSchemaCompiler[Decoder[F, Body, *]],
         drainBody: HttpResponse[Body] => F[Unit]
     ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
       val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         metadataDecoderCompiler.mapK(
-          Metadata.Decoder.toReaderK.andThen(
-            extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
-          )
+          extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
         )
 
-      HttpRestSchema.combineReaderCompilers[F, HttpResponse[Body]](
+      HttpRestSchema.combineDecoderCompilers[F, HttpResponse[Body]](
         restMetadataCompiler,
-        responseReaders,
+        responseDecoders,
         drainBody
       )
     }
@@ -239,12 +239,12 @@ object HttpResponse {
         toStrict: Body => F[(Body, Blob)]
     )(implicit F: MonadThrowLike[F]): Decoder[F, Body, E] =
       new Decoder[F, Body, E] {
-        def read(response: HttpResponse[Body]): F[E] = {
+        def decode(response: HttpResponse[Body]): F[E] = {
           F.flatMap(toStrict(response.body)) { case (strictBody, bodyBlob) =>
             val strictResponse = response.copy(body = strictBody)
             F.flatMap(discriminate(strictResponse)) { discriminator =>
               select(discriminator) match {
-                case Some(decoder) => decoder.read(strictResponse)
+                case Some(decoder) => decoder.decode(strictResponse)
                 case None =>
                   F.raiseError(
                     smithy4s.http.UnknownErrorResponse(
@@ -263,14 +263,14 @@ object HttpResponse {
 
   private def extractMetadata[F[_]](
       liftToF: PolyFunction[Either[MetadataError, *], F]
-  ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
-    Reader
+  ): PolyFunction[Metadata.Decoder, Decoder[F, Any, *]] =
+    GenericDecoder
       .in[Either[MetadataError, *]]
       .composeK((_: HttpResponse[Any]).toMetadata)
-      .andThen(Reader.of[HttpResponse[Any]].liftPolyFunction(liftToF))
+      .andThen(GenericDecoder.of[HttpResponse[Any]].liftPolyFunction(liftToF))
 
   private[smithy4s] def extractBody[F[_], Body]
-      : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
-    Reader.in[F].composeK(_.body)
+      : PolyFunction[GenericDecoder[F, Body, *], Decoder[F, Body, *]] =
+    GenericDecoder.in[F].composeK(_.body)
 
 }

@@ -44,13 +44,13 @@ private[aws] object AwsRestJsonCodecs {
       if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
     val jsonWriters = jsonPayloadCodecs.writers.mapK { Writer.addingTo[Any].andThenK(nullToEmptyObject) }
-    val jsonReaders = jsonPayloadCodecs.readers
+    val jsonDecoders = jsonPayloadCodecs.decoders
 
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(jsonWriters)
-      .withSuccessBodyDecoders(jsonReaders)
-      .withErrorBodyDecoders(jsonReaders)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonReaders))
+      .withSuccessBodyDecoders(jsonDecoders)
+      .withErrorBodyDecoders(jsonDecoders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonDecoders))
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads

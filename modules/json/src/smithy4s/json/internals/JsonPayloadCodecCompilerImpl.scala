@@ -65,23 +65,23 @@ private[json] case class JsonPayloadCodecCompilerImpl(
         fromSchema(schema, createCache())
     }
 
-  def readers: CachedSchemaCompiler[PayloadReader] =
-    new CachedSchemaCompiler[PayloadReader] {
+  def decoders: CachedSchemaCompiler[PayloadDecoder] =
+    new CachedSchemaCompiler[PayloadDecoder] {
       type Cache = jsoniterCodecCompiler.Cache
       def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadReader[A] = {
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] = {
         val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-        new JsonPayloadReader(jcodec)
+        new JsonPayloadDecoder(jcodec)
       }
 
-      def fromSchema[A](schema: Schema[A]): PayloadReader[A] =
+      def fromSchema[A](schema: Schema[A]): PayloadDecoder[A] =
         fromSchema(schema, createCache())
     }
 
-  private class JsonPayloadReader[A](jcodec: JsonCodec[A])
-      extends PayloadReader[A] {
-    def read(blob: Blob): Either[PayloadError, A] = {
+  private class JsonPayloadDecoder[A](jcodec: JsonCodec[A])
+      extends PayloadDecoder[A] {
+    def decode(blob: Blob): Either[PayloadError, A] = {
       val nonEmpty =
         if (blob.isEmpty) "{}".getBytes
         else blob.toArray

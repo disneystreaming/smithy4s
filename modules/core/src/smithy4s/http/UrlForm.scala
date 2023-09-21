@@ -159,9 +159,8 @@ private[smithy4s] object UrlForm {
   private def AlphaNum = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toSet
   private def SubDelims = "!$&'()*+,;=".toSet
 
-  private[smithy4s] trait Decoder[A] {
-    def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
-  }
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[UrlFormDecodeError, *], UrlForm, A]
 
   object Decoder {
     def apply(
