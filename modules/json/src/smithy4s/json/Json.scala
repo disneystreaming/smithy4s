@@ -22,7 +22,7 @@ import smithy4s.codecs.PayloadError
 import smithy4s.schema.Schema
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.PayloadEncoder
 import smithy4s.codecs.PayloadDecoder
 
 object Json {
@@ -51,8 +51,8 @@ object Json {
     * When writing interpreters, please prefer using the [[payloadCodecs]] object.
     */
   def writeBlob[A: Schema](a: A): Blob = {
-    payloadWriters
-      .fromSchema(Schema[A], payloadWritersGlobalCache)
+    payloadEncoders
+      .fromSchema(Schema[A], payloadEncodersGlobalCache)
       .encode(a)
   }
 
@@ -128,22 +128,22 @@ object Json {
   val payloadCodecs: JsonPayloadCodecCompiler =
     internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler
 
-  private[smithy4s] val payloadWriters: CachedSchemaCompiler[PayloadWriter] =
+  private[smithy4s] val payloadEncoders: CachedSchemaCompiler[PayloadEncoder] =
     payloadCodecs.writers
 
   private[smithy4s] val payloadDecoders: CachedSchemaCompiler[PayloadDecoder] =
     payloadCodecs.decoders
 
-  private val payloadWritersGlobalCache = payloadWriters.createCache()
+  private val payloadEncodersGlobalCache = payloadEncoders.createCache()
   private val payloadDecodersGlobalCache = payloadDecoders.createCache()
 
-  private val documentWriter: PayloadWriter[Document] =
-    payloadWriters.fromSchema(Schema.document)
+  private val documentWriter: PayloadEncoder[Document] =
+    payloadEncoders.fromSchema(Schema.document)
 
   private val documentDecoder: PayloadDecoder[Document] =
     payloadDecoders.fromSchema(Schema.document)
 
-  private val prettyDocumentWriters: PayloadWriter[Document] = {
+  private val prettyDocumentWriters: PayloadEncoder[Document] = {
     import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
     payloadCodecs
       .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))

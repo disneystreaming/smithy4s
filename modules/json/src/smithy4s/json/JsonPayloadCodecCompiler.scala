@@ -22,7 +22,7 @@ import smithy4s.schema.CachedSchemaCompiler
 import com.github.plokhotnyuk.jsoniter_scala.core.{ReaderConfig => JsoniterReaderConfig}
 import com.github.plokhotnyuk.jsoniter_scala.core.{WriterConfig => JsoniterWriterConfig}
 import smithy4s.codecs.PayloadDecoder
-import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.PayloadEncoder
 
 trait JsonPayloadCodecCompiler {
 
@@ -46,6 +46,6 @@ trait JsonPayloadCodecCompiler {
   def withJsoniterWriterConfig(jsoniterWriterConfig: JsoniterWriterConfig): JsonPayloadCodecCompiler
 
   def decoders: CachedSchemaCompiler[PayloadDecoder]
-  def writers: CachedSchemaCompiler[PayloadWriter]
+  def writers: CachedSchemaCompiler[PayloadEncoder]
 
 }

@@ -17,7 +17,6 @@
 package smithy4s.http
 
 import smithy4s.kinds._
-import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.schema._
 import smithy4s.codecs.{Decoder => GenericDecoder}
@@ -48,8 +47,8 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
-  private[http] type Encoder[Body, A] =
-    Writer[HttpRequest[Body], HttpRequest[Body], A]
+  private[http] type Writer[Body, A] =
+    smithy4s.codecs.Writer[HttpRequest[Body], A]
   private[http] type Decoder[F[_], Body, A] =
     smithy4s.codecs.Decoder[F, HttpRequest[Body], A]
 
@@ -58,15 +57,16 @@ object HttpRequest {
       def map[A, B](req: HttpRequest[A])(f: A => B): HttpRequest[B] = req.map(f)
     }
 
-  private[http] object Encoder {
+  private[http] object Writer {
 
     def restSchemaCompiler[Body](
         metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]],
+        bodyEncoders: CachedSchemaCompiler[Writer[Body, *]],
         writeEmptyStructs: Schema[_] => Boolean
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val metadataCompiler =
-        metadataEncoders.mapK(fromMetadataEncoderK[Body])
+    ): CachedSchemaCompiler[Writer[Body, *]] = {
+      val metadataCompiler = metadataEncoders.mapK(
+        smithy4s.codecs.Encoder.pipeToWriterK(metadataWriter[Body])
+      )
       HttpRestSchema.combineWriterCompilers(
         metadataCompiler,
         bodyEncoders,
@@ -76,7 +76,7 @@ object HttpRequest {
 
     def fromHttpEndpoint[Body, I](
         httpEndpoint: HttpEndpoint[I]
-    ): Encoder[Body, I] = new Encoder[Body, I] {
+    ): Writer[Body, I] = new Writer[Body, I] {
       def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
         val path = httpEndpoint.path(input)
         val staticQueries = httpEndpoint.staticQueryParams
@@ -88,19 +88,13 @@ object HttpRequest {
       }
     }
 
-    private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
+    private def metadataWriter[Body]: Writer[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
         val newUri =
           oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
-
-    private def fromMetadataEncoderK[Body]
-        : PolyFunction[Metadata.Encoder, Encoder[Body, *]] =
-      Metadata.Encoder.toWriterK
-        .widen[Writer[HttpRequest[Body], Metadata, *]]
-        .andThen(Writer.pipeDataK(metadataEncoder[Body]))
 
   }
 

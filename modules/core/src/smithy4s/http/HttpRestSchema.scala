@@ -94,55 +94,55 @@ object HttpRestSchema {
     * of the data is encoded as http body.
     */
   def combineWriterCompilers[Message](
-      metadataEncoderCompiler: Writer.CachedCompiler[Message, Message],
-      bodyEncoderCompiler: Writer.CachedCompiler[Message, Message],
+      metadataWriters: Writer.CachedCompiler[Message],
+      bodyWriters: Writer.CachedCompiler[Message],
       writeEmptyStructs: Schema[_] => Boolean
-  ): Writer.CachedCompiler[Message, Message] =
-    new Writer.CachedCompiler[Message, Message] {
+  ): Writer.CachedCompiler[Message] =
+    new Writer.CachedCompiler[Message] {
 
-      type MetadataCache = metadataEncoderCompiler.Cache
-      type BodyCache = bodyEncoderCompiler.Cache
+      type MetadataCache = metadataWriters.Cache
+      type BodyCache = bodyWriters.Cache
       type Cache = (MetadataCache, BodyCache)
       def createCache(): Cache = {
-        val mCache = metadataEncoderCompiler.createCache()
-        val bCache = bodyEncoderCompiler.createCache()
+        val mCache = metadataWriters.createCache()
+        val bCache = bodyWriters.createCache()
         (mCache, bCache)
       }
-      def fromSchema[A](schema: Schema[A]): Writer[Message, Message, A] =
+      def fromSchema[A](schema: Schema[A]): Writer[Message, A] =
         fromSchema(schema, createCache())
 
       def fromSchema[A](
           fullSchema: Schema[A],
           cache: Cache
-      ): Writer[Message, Message, A] = {
+      ): Writer[Message, A] = {
         val emptySchema =
           Schema.unit.withId(fullSchema.shapeId).addHints(fullSchema.hints)
         val emptyBodyEncoder =
-          bodyEncoderCompiler.fromSchema(emptySchema).contramap((_: A) => ())
+          bodyWriters.fromSchema(emptySchema).contramap((_: A) => ())
         HttpRestSchema(fullSchema) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             val metadataEncoder =
-              metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
+              metadataWriters.fromSchema(metadataSchema, cache._1)
             if (writeEmptyStructs(fullSchema)) {
-              emptyBodyEncoder.pipe(metadataEncoder)
+              emptyBodyEncoder.combine(metadataEncoder)
             } else metadataEncoder
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
-            bodyEncoderCompiler.fromSchema(bodySchema, cache._2)
+            bodyWriters.fromSchema(bodySchema, cache._2)
           case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
-            val metadataEncoder =
-              metadataEncoderCompiler
+            val metadataWriter =
+              metadataWriters
                 .fromSchema(metadataSchema, cache._1)
                 .contramap[A](PartialData.Total(_))
-            val bodyEncoder =
-              bodyEncoderCompiler
+            val bodyWriter =
+              bodyWriters
                 .fromSchema(bodySchema, cache._2)
                 .contramap[A](PartialData.Total(_))
             // The order matters here, as the metadata encoder might override headers
             // that would be set with body encoders (if a smithy member is annotated with
             // `@httpHeader("Content-Type")` for instance)
-            bodyEncoder.pipe(metadataEncoder)
+            bodyWriter.combine(metadataWriter)
           case HttpRestSchema.Empty(_) =>
             if (writeEmptyStructs(fullSchema)) emptyBodyEncoder else Writer.noop
           // format: on

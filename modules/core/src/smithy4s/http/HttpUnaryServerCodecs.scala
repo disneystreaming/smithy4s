@@ -104,15 +104,15 @@ object HttpUnaryServerCodecs {
       copy(responseTransformation = responseTransformation.andThen(F.flatMap(_)(f)))
 
     def build(): UnaryServerCodecs.Make[F, Request, Response] = {
-      val setBody: HttpResponse.Encoder[Blob, Blob] = Writer.lift((res, blob) => res.copy(body = blob))
-      val setBodyK = Writer.pipeDataK[HttpResponse[Blob], Blob](setBody)
+      val setBody: HttpResponse.Writer[Blob, Blob] = Writer.lift((res, blob) => res.copy(body = blob))
+      val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[HttpResponse[Blob], Blob](setBody)
 
-      val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpResponse.Encoder[Blob, *]] {
-        def fromSchema[A](schema: Schema[A]): HttpResponse.Encoder[Blob, A] = {
+      val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpResponse.Writer[Blob, *]] {
+        def fromSchema[A](schema: Schema[A]): HttpResponse.Writer[Blob, A] = {
           val mt = if (rawStringsAndBlobPayloads) {
             HttpMediaType.fromSchema(schema).map(_.value).getOrElse(responseMediaType)
           } else responseMediaType
-          new HttpResponse.Encoder[Blob, A] {
+          new HttpResponse.Writer[Blob, A] {
             def write(request: HttpResponse[Blob], value: A): HttpResponse[Blob] =
               if (request.body.isEmpty) request
               else request.withContentType(mt)
@@ -121,13 +121,13 @@ object HttpUnaryServerCodecs {
       }
 
       def responseEncoders(blobEncoders: BlobEncoder.Compiler) = {
-        val httpBodyWriters: CachedSchemaCompiler[HttpResponse.Encoder[Blob, *]] = if (rawStringsAndBlobPayloads) {
+        val httpBodyWriters: CachedSchemaCompiler[HttpResponse.Writer[Blob, *]] = if (rawStringsAndBlobPayloads) {
           val finalBodyEncoders = CachedSchemaCompiler
-            .getOrElse(smithy4s.codecs.StringAndBlobCodecs.writers, successResponseBodyEncoders)
+            .getOrElse(smithy4s.codecs.StringAndBlobCodecs.encoders, successResponseBodyEncoders)
           finalBodyEncoders.mapK(setBodyK)
         } else successResponseBodyEncoders.mapK(setBodyK)
 
-        val httpMediaWriters: CachedSchemaCompiler[HttpResponse.Encoder[Blob, *]] =
+        val httpMediaWriters: CachedSchemaCompiler[HttpResponse.Writer[Blob, *]] =
           Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
 
         metadataEncoders match {
@@ -183,8 +183,8 @@ object HttpUnaryServerCodecs {
                 else identity
               outputEncoders
                 .fromSchema(endpoint.output, outputEncoderCache)
-                .compose[HttpResponse[Blob]](preProcess)
-                .andThen[HttpResponse[Blob]](postProcessResponse)
+                .compose(preProcess)
+                .andThen(postProcessResponse)
             case None => outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
           }
           val errorW = HttpResponse.Encoder.forError(errorTypeHeaders, endpoint.error, errorEncoders)

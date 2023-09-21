@@ -20,13 +20,11 @@ import smithy4s.schema.CachedSchemaCompiler
 
 package object codecs {
 
-  type Encoder[Out, A] = Writer[Any, Out, A]
-
   type BlobEncoder[A] = Encoder[Blob, A]
   object BlobEncoder {
     type Compiler = CachedSchemaCompiler[BlobEncoder]
     val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobEncoder] {
-      def fromSchema[A](schema: Schema[A]) = Writer.encodeBy(_ => Blob.empty)
+      def fromSchema[A](schema: Schema[A]) = Encoder.static(Blob.empty)
     }
   }
 
@@ -45,9 +43,9 @@ package object codecs {
     type CachedCompiler = CachedSchemaCompiler[PayloadDecoder]
   }
 
-  type PayloadWriter[A] = Writer[Any, Blob, A]
-  object PayloadWriter {
-    type CachedCompiler = CachedSchemaCompiler[PayloadWriter]
+  type PayloadEncoder[A] = Encoder[Blob, A]
+  object PayloadEncoder {
+    type CachedCompiler = CachedSchemaCompiler[PayloadEncoder]
   }
 
 }

@@ -26,7 +26,6 @@ import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
-import smithy4s.codecs._
 
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
@@ -35,7 +34,6 @@ import java.nio.CharBuffer
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.BitSet
 import scala.collection.mutable
-import smithy4s.kinds.PolyFunction
 
 private[smithy4s] final case class UrlForm(values: List[UrlForm.FormData]) {
 
@@ -187,9 +185,7 @@ private[smithy4s] object UrlForm {
       }
   }
 
-  trait Encoder[A] {
-    def encode(a: A): UrlForm
-  }
+  type Encoder[A] = smithy4s.codecs.Encoder[UrlForm, A]
 
   object Encoder {
     def apply(
@@ -222,10 +218,5 @@ private[smithy4s] object UrlForm {
         }
       }
 
-    val toWriterK: PolyFunction[Encoder, Writer[Any, UrlForm, *]] =
-      new PolyFunction[Encoder, Writer[Any, UrlForm, *]] {
-        def apply[A](fa: Encoder[A]): Writer[Any, UrlForm, A] =
-          Writer.encodeBy(fa.encode(_))
-      }
   }
 }

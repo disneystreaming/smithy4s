@@ -20,36 +20,39 @@ import smithy4s.kinds._
 import smithy4s.capability.Covariant
 import smithy4s.capability.Zipper
 
-trait Decoder[F[_], -Message, A] { self =>
+/**
+  * An abstraction that codifies the action of reading data from some input.
+  */
+trait Decoder[F[_], -In, A] { self =>
 
-  def decode(message: Message): F[A]
+  def decode(in: In): F[A]
 
-  final def mapK[G[_]](fk: PolyFunction[F, G]): Decoder[G, Message, A] =
-    new Decoder[G, Message, A] {
-      def decode(message: Message): G[A] = fk(self.decode(message))
+  final def mapK[G[_]](fk: PolyFunction[F, G]): Decoder[G, In, A] =
+    new Decoder[G, In, A] {
+      def decode(in: In): G[A] = fk(self.decode(in))
     }
 
-  final def compose[Message2](
-      f: Message2 => Message
-  ): Decoder[F, Message2, A] =
-    new Decoder[F, Message2, A] {
-      def decode(message: Message2): F[A] = self.decode(f(message))
+  final def compose[In2](
+      f: In2 => In
+  ): Decoder[F, In2, A] =
+    new Decoder[F, In2, A] {
+      def decode(in: In2): F[A] = self.decode(f(in))
     }
 
   final def map[B](
       f: A => B
-  )(implicit C: Covariant[F]): Decoder[F, Message, B] =
-    new Decoder[F, Message, B] {
-      def decode(message: Message): F[B] = C.map(self.decode(message))(f)
+  )(implicit C: Covariant[F]): Decoder[F, In, B] =
+    new Decoder[F, In, B] {
+      def decode(in: In): F[B] = C.map(self.decode(in))(f)
     }
 
-  final def narrow[M2 <: Message]: Decoder[F, M2, A] =
+  final def narrow[M2 <: In]: Decoder[F, M2, A] =
     self.asInstanceOf[Decoder[F, M2, A]]
 
-  final def sequence(implicit Z: Zipper[F]): Decoder[F, Seq[Message], Seq[A]] =
-    new Decoder[F, Seq[Message], Seq[A]] {
-      def decode(messages: Seq[Message]): F[Seq[A]] =
-        Z.zipMapAll(messages.map(self.decode).asInstanceOf[IndexedSeq[F[Any]]])(
+  final def sequence(implicit Z: Zipper[F]): Decoder[F, Seq[In], Seq[A]] =
+    new Decoder[F, Seq[In], Seq[A]] {
+      def decode(ins: Seq[In]): F[Seq[A]] =
+        Z.zipMapAll(ins.map(self.decode).asInstanceOf[IndexedSeq[F[Any]]])(
           _.asInstanceOf[Seq[A]]
         )
     }
@@ -58,28 +61,28 @@ trait Decoder[F[_], -Message, A] { self =>
 
 object Decoder {
 
-  def lift[F[_], Message, A](
-      f: Message => F[A]
-  ): Decoder[F, Message, A] = new Decoder[F, Message, A] {
-    def decode(message: Message): F[A] = f(message)
+  def lift[F[_], In, A](
+      f: In => F[A]
+  ): Decoder[F, In, A] = new Decoder[F, In, A] {
+    def decode(in: In): F[A] = f(in)
   }
 
-  def decodeStatic[F[_], A](fa: F[A]): Decoder[F, Any, A] =
+  def static[F[_], A](fa: F[A]): Decoder[F, Any, A] =
     new Decoder[F, Any, A] {
-      def decode(message: Any): F[A] = fa
+      def decode(in: Any): F[A] = fa
     }
 
-  def of[Message]: PartiallyAppliedDecoderBuilder[Message] =
-    new PartiallyAppliedDecoderBuilder[Message]()
+  def of[In]: PartiallyAppliedDecoderBuilder[In] =
+    new PartiallyAppliedDecoderBuilder[In]()
 
-  class PartiallyAppliedDecoderBuilder[Message](
+  class PartiallyAppliedDecoderBuilder[In](
       private val dummy: Boolean = true
   ) extends AnyVal {
     def liftPolyFunction[F[_], G[_]](
         fk: PolyFunction[F, G]
-    ): PolyFunction[Decoder[F, Message, *], Decoder[G, Message, *]] =
-      new PolyFunction[Decoder[F, Message, *], Decoder[G, Message, *]] {
-        def apply[A](fa: Decoder[F, Message, A]): Decoder[G, Message, A] =
+    ): PolyFunction[Decoder[F, In, *], Decoder[G, In, *]] =
+      new PolyFunction[Decoder[F, In, *], Decoder[G, In, *]] {
+        def apply[A](fa: Decoder[F, In, A]): Decoder[G, In, A] =
           fa.mapK(fk)
       }
   }
@@ -99,23 +102,23 @@ object Decoder {
 
   }
 
-  implicit def decoderZipper[F[_]: Zipper, Message]
-      : Zipper[Decoder[F, Message, *]] = new Zipper[Decoder[F, Message, *]] {
-    def pure[A](a: A): Decoder[F, Message, A] = new Decoder[F, Message, A] {
-      def decode(message: Message): F[A] = Zipper[F].pure(a)
-    }
+  implicit def decoderZipper[F[_]: Zipper, In]: Zipper[Decoder[F, In, *]] =
+    new Zipper[Decoder[F, In, *]] {
+      def pure[A](a: A): Decoder[F, In, A] = new Decoder[F, In, A] {
+        def decode(in: In): F[A] = Zipper[F].pure(a)
+      }
 
-    def zipMapAll[A](seq: IndexedSeq[Decoder[F, Message, Any]])(
-        f: IndexedSeq[Any] => A
-    ): Decoder[F, Message, A] = new Decoder[F, Message, A] {
-      def decode(message: Message): F[A] = {
-        Zipper[F].zipMapAll(
-          seq
-            .asInstanceOf[IndexedSeq[Decoder[F, Message, Any]]]
-            .map(_.decode(message))
-        )(f)
+      def zipMapAll[A](seq: IndexedSeq[Decoder[F, In, Any]])(
+          f: IndexedSeq[Any] => A
+      ): Decoder[F, In, A] = new Decoder[F, In, A] {
+        def decode(in: In): F[A] = {
+          Zipper[F].zipMapAll(
+            seq
+              .asInstanceOf[IndexedSeq[Decoder[F, In, Any]]]
+              .map(_.decode(in))
+          )(f)
+        }
       }
     }
-  }
 
 }

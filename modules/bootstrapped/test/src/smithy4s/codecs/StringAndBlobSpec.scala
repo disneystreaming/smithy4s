@@ -27,12 +27,12 @@ class StringAndBlobSpec() extends munit.FunSuite {
   object DummyDecoderCompiler
       extends CachedSchemaCompiler.Impl[PayloadDecoder] {
     def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] =
-      Decoder.decodeStatic(Left(error): Either[PayloadError, A])
+      Decoder.static(Left(error): Either[PayloadError, A])
   }
 
-  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadWriter] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadWriter[A] =
-      Writer.encodeStatic(Blob.empty): Encoder[Blob, A]
+  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadEncoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] =
+      Encoder.static(Blob.empty): Encoder[Blob, A]
 
   }
 
@@ -40,8 +40,8 @@ class StringAndBlobSpec() extends munit.FunSuite {
     StringAndBlobCodecs.decoders,
     DummyDecoderCompiler
   )
-  val stringsAndBlobsWriters = CachedSchemaCompiler.getOrElse(
-    StringAndBlobCodecs.writers,
+  val stringsAndBlobsEncoders = CachedSchemaCompiler.getOrElse(
+    StringAndBlobCodecs.encoders,
     DummyWriterCompiler
   )
 
@@ -50,7 +50,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
       data: A,
       expectedEncoded: Blob
   ): Unit = {
-    val writer = stringsAndBlobsWriters.fromSchema(schema)
+    val writer = stringsAndBlobsEncoders.fromSchema(schema)
     val decoder = stringsAndBlobsDecoders.fromSchema(schema)
     val result = writer.encode(data)
     val roundTripped = decoder.decode(result)
@@ -99,7 +99,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
   }
 
   test("Delegates to some other codec when neither strings not bytes") {
-    val writer = stringsAndBlobsWriters.fromSchema(Schema.int)
+    val writer = stringsAndBlobsEncoders.fromSchema(Schema.int)
     val decoder = stringsAndBlobsDecoders.fromSchema(Schema.int)
     val result = writer.encode(1)
     val roundTripped = decoder.decode(result)

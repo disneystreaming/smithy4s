@@ -24,7 +24,6 @@ import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.http.internals.StaticUrlFormElements
 import smithy4s.kinds.PolyFunction5
@@ -39,7 +38,7 @@ private[aws] object AwsQueryCodecs {
   private[aws] val inputEncoders = {
     UrlForm
       .Encoder(capitalizeStructAndUnionMemberNames = false)
-      .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
+      .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
   }
 
   // Takes the `@awsQueryError` trait into consideration to decide how to
