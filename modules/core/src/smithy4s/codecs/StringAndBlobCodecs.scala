@@ -31,7 +31,7 @@ object StringAndBlobCodecs {
       StringAndBlobReaderVisitor(schema)
   }
 
-  object writers extends CachedSchemaCompiler.Optional.Impl[BlobEncoder] {
+  object encoders extends CachedSchemaCompiler.Optional.Impl[BlobEncoder] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
@@ -146,7 +146,7 @@ object StringAndBlobCodecs {
         hints: Hints,
         tag: Primitive[P]
     ): MaybeBlobEncoder[P] = tag match {
-      case PString => Some(stringWriter)
+      case PString => Some(stringEncoder)
       case PBlob   => Some(blobWriter)
       case _       => None
     }
@@ -160,9 +160,9 @@ object StringAndBlobCodecs {
     ): MaybeBlobEncoder[E] = {
       tag match {
         case EnumTag.ClosedStringEnum =>
-          Some(stringWriter.contramap(total(_: E).stringValue))
+          Some(stringEncoder.contramap(total(_: E).stringValue))
         case EnumTag.OpenStringEnum(_) =>
-          Some(stringWriter.contramap(total(_: E).stringValue))
+          Some(stringEncoder.contramap(total(_: E).stringValue))
         case _ => None
       }
     }
@@ -184,7 +184,7 @@ object StringAndBlobCodecs {
     ): MaybeBlobEncoder[Option[A]] =
       self(schema).map(writerA =>
         new BlobEncoder[Option[A]] {
-          def write(any: Any, maybeA: Option[A]): Blob = maybeA match {
+          def encode(maybeA: Option[A]): Blob = maybeA match {
             case Some(a) => writerA.encode(a)
             case None    => Blob.empty
           }
@@ -200,8 +200,8 @@ object StringAndBlobCodecs {
     }
   }
 
-  private val stringWriter: PayloadWriter[String] =
-    Writer.encodeBy(Blob(_))
+  private val stringEncoder: PayloadEncoder[String] =
+    Encoder.lift(Blob(_))
 
   private val blobDecoder: BlobDecoder[Blob] = {
     new BlobDecoder[Blob] {
@@ -212,5 +212,5 @@ object StringAndBlobCodecs {
   }
 
   private val blobWriter: BlobEncoder[Blob] =
-    Writer.encodeBy(identity)
+    Encoder.lift(identity)
 }

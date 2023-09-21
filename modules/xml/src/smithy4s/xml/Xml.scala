@@ -83,8 +83,8 @@ object Xml {
     def createCache(): Cache = XmlDocument.Encoder.createCache()
     def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {
       val xmlDocumentEncoder = XmlDocument.Encoder.fromSchema(schema, cache)
-      new BlobEncoder[A] {
-        def write(input: Any, a: A): smithy4s.Blob = Blob {
+      (a: A) =>
+        Blob {
           XmlDocument.documentEventifier
             .eventify(xmlDocumentEncoder.encode(a))
             .through(render(collapseEmpty = false))
@@ -92,7 +92,6 @@ object Xml {
             .compile
             .to(Collector.supportsArray(Array))
         }
-      }
     }
     def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
       fromSchema(schema, createCache())

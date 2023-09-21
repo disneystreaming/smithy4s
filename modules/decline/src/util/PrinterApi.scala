@@ -62,7 +62,7 @@ object PrinterApi {
   )
 
   def useCodec[F[_]: Console: Applicative](
-      codec: PayloadWriter.CachedCompiler
+      codec: PayloadEncoder.CachedCompiler
   ): PrinterApi[F] =
     new PrinterApi[F] {
 

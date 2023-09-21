@@ -69,8 +69,8 @@ final case class HttpResponse[+A](
 }
 
 object HttpResponse {
-  private[http] type Encoder[Body, A] =
-    Writer[HttpResponse[Body], HttpResponse[Body], A]
+  private[http] type Writer[Body, A] =
+    smithy4s.codecs.Writer[HttpResponse[Body], A]
   private[http] type Decoder[F[_], Body, A] =
     smithy4s.codecs.Decoder[F, HttpResponse[Body], A]
 
@@ -81,7 +81,7 @@ object HttpResponse {
 
     private[http] def fromHttpEndpoint[Body, I](
         httpEndpoint: HttpEndpoint[I]
-    ): Encoder[Body, I] = new Encoder[Body, I] {
+    ): Writer[Body, I] = new Writer[Body, I] {
       def write(response: HttpResponse[Body], input: I): HttpResponse[Body] = {
         response.copy(statusCode = httpEndpoint.code)
       }
@@ -89,11 +89,12 @@ object HttpResponse {
 
     private[http] def restSchemaCompiler[Body](
         metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoders: CachedSchemaCompiler[Encoder[Body, *]],
+        bodyEncoders: CachedSchemaCompiler[Writer[Body, *]],
         writeEmptyStructs: Schema[_] => Boolean
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val metadataCompiler =
-        metadataEncoders.mapK(fromMetadataEncoderK[Body])
+    ): CachedSchemaCompiler[Writer[Body, *]] = {
+      val metadataCompiler = metadataEncoders.mapK(
+        smithy4s.codecs.Encoder.pipeToWriterK(metadataWriter[Body])
+      )
       HttpRestSchema.combineWriterCompilers(
         metadataCompiler,
         bodyEncoders,
@@ -104,14 +105,14 @@ object HttpResponse {
     private[http] def forError[Body, E](
         errorTypeHeaders: List[String],
         maybeErrorable: Option[ErrorSchema[E]],
-        encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
-    ): Encoder[Body, E] = maybeErrorable match {
+        encoderCompiler: CachedSchemaCompiler[Writer[Body, *]]
+    ): Writer[Body, E] = maybeErrorable match {
       case Some(errorschema) =>
         forErrorAux(errorTypeHeaders, errorschema, encoderCompiler)
       case None => Writer.noop
     }
 
-    private def metadataEncoder[Body]: Encoder[Body, Metadata] = {
+    private def metadataWriter[Body]: Writer[Body, Metadata] = {
       (resp: HttpResponse[Body], meta: Metadata) =>
         val statusCode =
           meta.statusCode
@@ -122,24 +123,18 @@ object HttpResponse {
           .addHeaders(meta.headers)
     }
 
-    private def fromMetadataEncoderK[Body]
-        : PolyFunction[Metadata.Encoder, Encoder[Body, *]] =
-      Metadata.Encoder.toWriterK
-        .widen[Writer[HttpResponse[Body], Metadata, *]]
-        .andThen(Writer.pipeDataK(metadataEncoder[Body]))
-
     private def forErrorAux[Body, E](
         errorTypeHeaders: List[String],
         errorSchema: ErrorSchema[E],
-        encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
-    ): Encoder[Body, E] = {
+        encoderCompiler: CachedSchemaCompiler[Writer[Body, *]]
+    ): Writer[Body, E] = {
       val dispatcher =
         Alt.Dispatcher(errorSchema.alternatives, errorSchema.ordinal)
-      val precompiler = new Alt.Precompiler[Encoder[Body, *]] {
+      val precompiler = new Alt.Precompiler[Writer[Body, *]] {
         def apply[Err](
             label: String,
             errorSchema: Schema[Err]
-        ): Encoder[Body, Err] = new Encoder[Body, Err] {
+        ): Writer[Body, Err] = new Writer[Body, Err] {
           val errorEncoder =
             encoderCompiler.fromSchema(
               errorSchema,

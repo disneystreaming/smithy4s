@@ -48,20 +48,19 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   ): JsonPayloadCodecCompiler =
     copy(jsoniterWriterConfig = jsoniterWriterConfig)
 
-  def writers: CachedSchemaCompiler[PayloadWriter] =
-    new CachedSchemaCompiler[PayloadWriter] {
+  def writers: CachedSchemaCompiler[PayloadEncoder] =
+    new CachedSchemaCompiler[PayloadEncoder] {
       type Cache = jsoniterCodecCompiler.Cache
       def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadWriter[A] = {
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] = {
         val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-        Writer.encodeBy { (value: A) =>
+        (value: A) =>
           Blob(
             writeToArray(value, jsoniterWriterConfig)(jcodec)
           )
-        }
       }
-      def fromSchema[A](schema: Schema[A]): PayloadWriter[A] =
+      def fromSchema[A](schema: Schema[A]): PayloadEncoder[A] =
         fromSchema(schema, createCache())
     }
 
