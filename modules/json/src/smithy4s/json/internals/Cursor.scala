@@ -22,7 +22,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
 import smithy4s.codecs._
 
-private[internals] class Cursor private () {
+private[internals] class Cursor private[internals] () {
   private[this] var indexStack: Array[Int] = new Array[Int](8)
   private[this] var labelStack: Array[String] = new Array[String](8)
   private[this] var top: Int = _
@@ -65,7 +65,12 @@ private[internals] class Cursor private () {
     top += 1
   }
 
-  def pop(): Unit = top -= 1
+  def pop(): Unit = {
+    if (top > 0) {
+      top -= 1
+    }
+    labelStack(top) = null
+  }
 
   def payloadError[A](codec: JCodec[A], message: String): Nothing =
     throw new PayloadError(getPath(Nil), codec.expecting, message)
@@ -78,7 +83,9 @@ private[internals] class Cursor private () {
     throw new PayloadError(path, expecting, "Missing required field")
   }
 
-  private def getPath(segments: List[PayloadPath.Segment]): PayloadPath = {
+  private[internals] def getPath(
+      segments: List[PayloadPath.Segment]
+  ): PayloadPath = {
     var top = this.top
     var list = segments
     while (top > 0) {
