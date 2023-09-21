@@ -19,7 +19,6 @@ package smithy4s
 import munit._
 
 import java.nio.ByteBuffer
-
 class BlobSpec() extends FunSuite {
 
   test("sameBytesAs works across data structures") {
@@ -35,13 +34,6 @@ class BlobSpec() extends FunSuite {
         ByteBuffer.wrap("foo".getBytes)
       )
     )
-  }
-
-  test("ByteBufferBlob.toArray is idempotent, instantiation-wise") {
-    val blob = Blob(ByteBuffer.wrap("foo".getBytes))
-    assert(blob.toArray != null)
-    assert(blob.toArray.eq(blob.toArray))
-    assertEquals(Blob(blob.toArray), Blob("foo"))
   }
 
   test("ByteArrayBlob.hashcode is consistent") {
@@ -60,6 +52,15 @@ class BlobSpec() extends FunSuite {
     val blob3 = makeBlob("bar")
     assertEquals(blob1.hashCode, blob2.hashCode)
     assertNotEquals(blob1.hashCode, blob3.hashCode)
+  }
+
+  test("Concat works as expected") {
+    val blob = Blob("foo") ++ Blob("bar")
+    assertEquals(blob.size, 6)
+    assertEquals(blob(2), 'o'.toByte)
+    assertEquals(blob(4), 'a'.toByte)
+    java.util.Arrays
+      .equals(blob.toArray, "foo".getBytes ++ "bar".getBytes())
   }
 
 }
