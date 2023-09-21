@@ -25,71 +25,128 @@ import scala.jdk.CollectionConverters._
 final class AwsConstraintsRemoverSpec extends munit.FunSuite {
   import smithy4s.codegen.internals.TestUtils._
 
-  test("Remove length trait") {
-    val example =
+  test("Remove length, range, pattern trait") {
+    val dummyServices =
       """
         |$version: "2"
         |
-        |namespace com.amazonaws.kinesis.service
+        |namespace com.amazonaws.dummy.service
         |
-        |operation GetOutput {
-        | output: com.amazonaws.kinesis#Long,
+        |operation GetLong {
+        | output: com.amazonaws.dummy#Long,
+        |}
+        |operation GetStringChecked {
+        | output: com.amazonaws.dummy#StringChecked,
+        |}
+        |operation GetStringLength {
+        | output: com.amazonaws.dummy#StringLength,
         |}
         |""".stripMargin
-    val kinesis =
+    val dummy =
       """
         |$version: "2"
         |
-        |namespace com.amazonaws.kinesis
+        |namespace com.amazonaws.dummy
         |
         |@range(min: 1, max: 10)
         |long Long
+        |
+        |@pattern("^[A-Za-z]+$")
+        |string StringChecked
+        |
+        |@length(min: 1, max: 10)
+        |string StringLength
         |""".stripMargin
-    val originalModel = loadModel(example, kinesis)
+    val originalModel = loadModel(dummyServices, dummy)
     val transformed = new AwsConstraintsRemover().transform(
       TransformContext.builder().model(originalModel).build()
     )
 
-    val before = originalModel
-      .expectShape(ShapeId.from("com.amazonaws.kinesis#Long"))
-      .getAllTraits()
-      .asScala
-      .get(ShapeId.from("smithy.api#range"))
+    Seq(
+      "com.amazonaws.dummy#Long" -> "smithy.api#range",
+      "com.amazonaws.dummy#StringChecked" -> "smithy.api#pattern",
+      "com.amazonaws.dummy#StringLength" -> "smithy.api#length"
+    ).foreach { case (sId, tId) =>
+      val before = originalModel
+        .expectShape(ShapeId.from(sId))
+        .getAllTraits()
+        .asScala
+        .get(ShapeId.from(tId))
 
-    val after = transformed
-      .expectShape(ShapeId.from("com.amazonaws.kinesis#Long"))
-      .getAllTraits()
-      .asScala
-      .get(ShapeId.from("smithy.api#range"))
+      val after = transformed
+        .expectShape(ShapeId.from(sId))
+        .getAllTraits()
+        .asScala
+        .get(ShapeId.from(tId))
 
-    assert(before.isDefined)
-    assert(after.isEmpty)
+      assert(
+        before.isDefined,
+        s"The trait $tId was not defined on $sId before the transformation"
+      )
+      assert(
+        after.isEmpty,
+        s"The trait $tId was defined on $sId after the transformation"
+      )
+    }
 
     val generatedCode = TestUtils.generateScalaCode(transformed)
+    println(generatedCode.keySet)
 
-    val actualCode = generatedCode("com.amazonaws.kinesis.Long")
-
-    val expected =
-      """|package com.amazonaws.kinesis
-         |
-         |import smithy4s.Hints
-         |import smithy4s.Newtype
-         |import smithy4s.Schema
-         |import smithy4s.ShapeId
-         |import smithy4s.schema.Schema.bijection
-         |import smithy4s.schema.Schema.long
-         |
-         |object Long extends Newtype[scala.Long] {
-         |  val id: ShapeId = ShapeId("com.amazonaws.kinesis", "Long")
-         |  val hints: Hints = Hints(
-         |    smithy.api.Box(),
-         |  )
-         |  val underlyingSchema: Schema[scala.Long] = long.withId(id).addHints(hints)
-         |  implicit val schema: Schema[Long] = bijection(underlyingSchema, asBijection)
-         |}
-         |""".stripMargin
-
-    assertEquals(actualCode, expected)
+    Seq(
+      "com.amazonaws.dummy.Long" -> """|package com.amazonaws.dummy
+                                       |
+                                       |import smithy4s.Hints
+                                       |import smithy4s.Newtype
+                                       |import smithy4s.Schema
+                                       |import smithy4s.ShapeId
+                                       |import smithy4s.schema.Schema.bijection
+                                       |import smithy4s.schema.Schema.long
+                                       |
+                                       |object Long extends Newtype[scala.Long] {
+                                       |  val id: ShapeId = ShapeId("com.amazonaws.dummy", "Long")
+                                       |  val hints: Hints = Hints(
+                                       |    smithy.api.Box(),
+                                       |  )
+                                       |  val underlyingSchema: Schema[scala.Long] = long.withId(id).addHints(hints)
+                                       |  implicit val schema: Schema[Long] = bijection(underlyingSchema, asBijection)
+                                       |}
+                                       |""".stripMargin,
+      "com.amazonaws.dummy.StringChecked" -> """|package com.amazonaws.dummy
+                                                |
+                                                |import smithy4s.Hints
+                                                |import smithy4s.Newtype
+                                                |import smithy4s.Schema
+                                                |import smithy4s.ShapeId
+                                                |import smithy4s.schema.Schema.bijection
+                                                |import smithy4s.schema.Schema.string
+                                                |
+                                                |object StringChecked extends Newtype[String] {
+                                                |  val id: ShapeId = ShapeId("com.amazonaws.dummy", "StringChecked")
+                                                |  val hints: Hints = Hints.empty
+                                                |  val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
+                                                |  implicit val schema: Schema[StringChecked] = bijection(underlyingSchema, asBijection)
+                                                |}
+                                                |""".stripMargin,
+      "com.amazonaws.dummy.StringLength" -> """|package com.amazonaws.dummy
+                                               |
+                                               |import smithy4s.Hints
+                                               |import smithy4s.Newtype
+                                               |import smithy4s.Schema
+                                               |import smithy4s.ShapeId
+                                               |import smithy4s.schema.Schema.bijection
+                                               |import smithy4s.schema.Schema.string
+                                               |
+                                               |object StringLength extends Newtype[String] {
+                                               |  val id: ShapeId = ShapeId("com.amazonaws.dummy", "StringLength")
+                                               |  val hints: Hints = Hints.empty
+                                               |  val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
+                                               |  implicit val schema: Schema[StringLength] = bijection(underlyingSchema, asBijection)
+                                               |}
+                                               |""".stripMargin
+    ).foreach { case (sId, expected) =>
+      val actualCode = generatedCode(sId)
+      assertEquals(actualCode, expected)
+    }
   }
 
 }
