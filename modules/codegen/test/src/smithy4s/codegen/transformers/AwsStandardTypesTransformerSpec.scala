@@ -351,20 +351,6 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
     )
   }
 
-  private def loadModel(namespaces: String*): Model = {
-    val assembler = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-
-    namespaces
-      .foldLeft(assembler) { case (a, model) =>
-        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
-      }
-      .assemble()
-      .unwrap()
-  }
-
   def prettyPrint(model: Model): String = {
     Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
   }
