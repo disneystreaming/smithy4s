@@ -54,6 +54,26 @@ Added convenient methods for working with unions including projectors for each u
 
 See https://github.com/disneystreaming/smithy4s/pull/1144
 
+# 0.17.19
+
+This release brings in a smithy-model update, which resolves some issues that would've prevented code generation from succeeding. #1164
+
+# 0.17.18
+
+Fixes a `ClassCastException` in document encoding in #1161
+
+# 0.17.17
+
+More permissive test for HEAD requests in #1157
+
+# 0.17.16
+
+Fixes a bug where HEAD responses contained an empty {} in the body (where there should be no body present). #1149
+
+# 0.17.15
+
+Updates to fix compile errors when intEnum shapes are used as traits. #1139
+
 # 0.17.14
 
 * Only transform AWS shapes named after standard shapes in [#1127](https://github.com/disneystreaming/smithy4s/pull/1127)

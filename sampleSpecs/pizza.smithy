@@ -334,8 +334,7 @@ operation Reservation {
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {
-    input: EchoInput
-    // this operation must NOT have any errors
+    input: EchoInput// this operation must NOT have any errors
     errors: []
 }
 

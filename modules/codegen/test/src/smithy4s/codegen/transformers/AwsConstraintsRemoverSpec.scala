@@ -90,7 +90,7 @@ final class AwsConstraintsRemoverSpec extends munit.FunSuite {
     }
 
     val generatedCode = TestUtils.generateScalaCode(transformed)
-    
+
     Seq(
       "com.amazonaws.dummy.Long" -> """|package com.amazonaws.dummy
                                        |

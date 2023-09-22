@@ -119,4 +119,5 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
 
   def optionalOutput(): IO[OptionalOutputOutput] =
     IO.pure(OptionalOutputOutput(None))
+
 }
