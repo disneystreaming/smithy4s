@@ -2,16 +2,18 @@
 sidebar_label: AWS
 ---
 
-**WARNING: THIS IS EXPERIMENTAL, DO NOT NOT EXPECT PRODUCTION READINESS**
+**WARNING: READ THE FOLLOWING, AND USE WITH CAUTION**
 
-Smithy4s provides functions to create AWS clients from generated code. At the time of writing this, smithy4s is only able to derive clients for AWS services.
+Smithy4s provides functions to create AWS clients from generated code. As of 0.18, Smithy4s supports (at least partially) all AWS protocols that are publicly documented.
 
-At the time of writing this, Smithy4s supports a subset of the [protocols](https://awslabs.github.io/smithy/1.0/spec/aws/index.html?highlight=aws%20protocols#aws-protocols) that AWS uses in their services.
+Our implementation of the AWS protocols is tested against the official [compliance-tests](https://github.com/smithy-lang/smithy/tree/main/smithy-aws-protocol-tests/model), which gives us a reasonable level of confidence that most of the (de)serialisation logic is correct involved when communicating with AWS is correct. Our implementation of the AWS signature algorithm.
+(which allows AWS to authenticate requests) is tested against the Java implementation used by the official AWS SDK.
 
-The supported protocols are :
+### What is missing ?
 
-* AWS Json 1.0
-* AWS Json 1.1
+* streaming operations (such as S3 `putObject`, `getObject`, or Kinesis' `subscribeToShard`) are currently unsupported.
+* [service-specific customisations](https://smithy.io/2.0/aws/customizations/index.html)  are currently unsupported.
+* **users should not use smithy4s to talk to AWS S3**
 
 ### Where to find the specs ?
 
