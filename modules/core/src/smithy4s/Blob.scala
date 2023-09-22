@@ -126,7 +126,6 @@ object Blob {
   def slice(bytes: Array[Byte], offset: Int, size: Int): Blob = new ArraySliceBlob(bytes, offset, size)
   def view(buffer: ByteBuffer): Blob = new ByteBufferBlob(buffer)
   def queue(blobs: Queue[Blob], size: Int) = new QueueBlob(blobs, size)
-  def concat(blobs: Blob*): Blob = new QueueBlob(Queue.from(blobs), blobs.map(_.size).sum)
 
   final class ByteBufferBlob private[smithy4s] (val buf: ByteBuffer) extends Blob {
     def apply(i: Int) = buf.get(i.toInt)
