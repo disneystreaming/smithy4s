@@ -1,16 +1,14 @@
 package com.amazonaws.dynamodb
 
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.Schema.UnionSchema
+import smithy4s.schema.ErrorSchema
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -122,45 +120,24 @@ object DynamoDBOperation {
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints")
-    val input: Schema[DescribeEndpointsRequest] = DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[DescribeEndpointsResponse] = DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"),
-    )
+    val schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
+      .withInput(DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
     def wrap(input: DescribeEndpointsRequest) = DescribeEndpoints(input)
-    override val errorable: Option[Nothing] = None
   }
   final case class ListTables(input: ListTablesInput) extends DynamoDBOperation[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = impl.listTables(input.exclusiveStartTableName, input.limit)
     def ordinal = 1
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = ListTables
   }
-  object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] with Errorable[ListTablesError] {
-    val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTables")
-    val input: Schema[ListTablesInput] = ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ListTablesOutput] = ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      aws.api.ClientDiscoveredEndpoint(required = false),
-      smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"),
-      smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))),
-    )
+  object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
+    val schema: OperationSchema[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "ListTables"))
+      .withInput(ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(ListTablesError.errorSchema)
+      .withOutput(ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(aws.api.ClientDiscoveredEndpoint(required = false), smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"), smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))))
     def wrap(input: ListTablesInput) = ListTables(input)
-    override val errorable: Option[Errorable[ListTablesError]] = Some(this)
-    val error: UnionSchema[ListTablesError] = ListTablesError.schema
-    def liftError(throwable: Throwable): Option[ListTablesError] = throwable match {
-      case e: InternalServerError => Some(ListTablesError.InternalServerErrorCase(e))
-      case e: InvalidEndpointException => Some(ListTablesError.InvalidEndpointExceptionCase(e))
-      case _ => None
-    }
-    def unliftError(e: ListTablesError): Throwable = e match {
-      case ListTablesError.InternalServerErrorCase(e) => e
-      case ListTablesError.InvalidEndpointExceptionCase(e) => e
-    }
   }
   sealed trait ListTablesError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ListTablesError = this
@@ -176,7 +153,7 @@ object DynamoDBOperation {
       case value: ListTablesError.InvalidEndpointExceptionCase => visitor.invalidEndpointException(value.invalidEndpointException)
     }
   }
-  object ListTablesError extends ShapeTag.Companion[ListTablesError] {
+  object ListTablesError extends ErrorSchema.Companion[ListTablesError] {
 
     def internalServerError(internalServerError: InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
     def invalidEndpointException(invalidEndpointException: InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
@@ -212,11 +189,20 @@ object DynamoDBOperation {
       }
     }
 
-    implicit val schema: UnionSchema[ListTablesError] = union(
+    implicit val schema: Schema[ListTablesError] = union(
       ListTablesError.InternalServerErrorCase.alt,
       ListTablesError.InvalidEndpointExceptionCase.alt,
     ){
       _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[ListTablesError] = throwable match {
+      case e: InternalServerError => Some(ListTablesError.InternalServerErrorCase(e))
+      case e: InvalidEndpointException => Some(ListTablesError.InvalidEndpointExceptionCase(e))
+      case _ => None
+    }
+    def unliftError(e: ListTablesError): Throwable = e match {
+      case ListTablesError.InternalServerErrorCase(e) => e
+      case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
   }
 }

@@ -16,7 +16,7 @@ object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
   )
 
   implicit val schema: Schema[GetWeatherInput] = struct(
-    string.required[GetWeatherInput]("city", _.city).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    string.required[GetWeatherInput]("city", _.city).addHints(smithy.api.HttpLabel()),
   ){
     GetWeatherInput.apply
   }.withId(id).addHints(hints)

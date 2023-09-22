@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.2"
+    val jsoniterScalaVersion = "2.23.4"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.36.0"
+    val smithyVersion = "1.38.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -46,7 +46,7 @@ object Dependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.5"
+    val circeVersion = "0.14.6"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -60,7 +60,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.8.0"
+    val fs2Version = "3.9.2"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -75,7 +75,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.1"
+    val millVersion = "0.11.4"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -145,10 +145,10 @@ object Dependencies {
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.7"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.3.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.47"
   }

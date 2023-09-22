@@ -58,12 +58,12 @@ class ServiceBuilderSpec extends FunSuite {
     val mapper =
       new PolyFunction5[FooServiceGen.Endpoint, FooServiceGen.Endpoint] {
         def apply[I, E, O, SI, SO](
-            op: FooServiceGen.Endpoint[I, E, O, SI, SO]
+            endpoint: FooServiceGen.Endpoint[I, E, O, SI, SO]
         ): FooServiceGen.Endpoint[I, E, O, SI, SO] =
-          Endpoint.Builder
-            .fromEndpoint(op)
-            .withId(ShapeId("smithy4s.example", "operation1"))
-            .build
+          endpoint
+            .mapSchema {
+              _.withId(ShapeId("smithy4s.example", "operation1"))
+            }
       }
     val newService = builder
       .mapEndpointEach(mapper)

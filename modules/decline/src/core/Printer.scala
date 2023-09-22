@@ -20,7 +20,7 @@ import cats.Applicative
 import cats.effect.std.Console
 import cats.implicits._
 import smithy4s.Endpoint
-import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.PayloadEncoder
 
 trait Printer[F[_], -I, -O] {
   def printInput(input: I): F[Unit]
@@ -32,20 +32,20 @@ object Printer {
 
   def fromCodecs[F[_]: Console: Applicative, Op[_, _, _, _, _], I, O](
       endpoint: Endpoint[Op, I, _, O, _, _],
-      writers: PayloadWriter.CachedCompiler
+      writers: PayloadEncoder.CachedCompiler
   ): Printer[F, I, O] =
     new Printer[F, I, O] {
       private val outCodec = writers.fromSchema(endpoint.output)
 
-      private val errCodec = endpoint.errorable.map { e =>
-        (writers.fromSchema(e.error), e)
+      private val errCodec = endpoint.error.map { e =>
+        (writers.fromSchema(e.schema), e)
       }
 
       def printInput(input: I): F[Unit] = Applicative[F].unit
 
       def printError(error: Throwable): F[Unit] = errCodec
-        .flatMap { case (err, errorable) =>
-          errorable.liftError(error).map { e =>
+        .flatMap { case (err, errorschema) =>
+          errorschema.liftError(error).map { e =>
             err.encode(e).toUTF8String
           }
         }

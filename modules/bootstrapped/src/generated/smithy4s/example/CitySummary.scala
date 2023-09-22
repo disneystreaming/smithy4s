@@ -16,8 +16,8 @@ object CitySummary extends ShapeTag.Companion[CitySummary] {
   )
 
   implicit val schema: Schema[CitySummary] = struct(
-    CityId.schema.required[CitySummary]("cityId", _.cityId).addHints(smithy.api.Required()),
-    string.required[CitySummary]("name", _.name).addHints(smithy.api.Required()),
+    CityId.schema.required[CitySummary]("cityId", _.cityId),
+    string.required[CitySummary]("name", _.name),
   ){
     CitySummary.apply
   }.withId(id).addHints(hints)

@@ -17,12 +17,12 @@
 package smithy4s
 package http
 
-import smithy4s.http.internals.MetaEncode._
-import smithy4s.http.internals.SchemaVisitorMetadataWriter
-import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
-import smithy4s.schema.CompilationCache
+import smithy4s.http.internals.MetaEncode._
+import smithy4s.http.internals.SchemaVisitorMetadataReader
+import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.CompilationCache
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -137,6 +137,7 @@ case class Metadata(
 }
 
 object Metadata {
+
   def fold[A](i: Iterable[A])(f: A => Metadata): Metadata =
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
 
@@ -148,6 +149,9 @@ object Metadata {
 
   def encode[A](a: A)(implicit encoder: Encoder[A]): Metadata =
     encoder.encode(a)
+
+  implicit def encoderFromSchema[A: Schema]: Encoder[A] =
+    Encoder.derivedImplicitInstance
 
   /**
     * If possible, decode the data from fields that are bound to http metadata.
@@ -161,11 +165,16 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Decoder[A] {
-    def decode(metadata: Metadata): Either[MetadataError, A]
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[MetadataError, *], Metadata, A]
+
+  implicit def decoderFromSchema[A: Schema]: Decoder[A] =
+    Decoder.derivedImplicitInstance
+
+  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
+    type Compiler = CachedSchemaCompiler[Decoder]
   }
 
-  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false)
   private[smithy4s] object AwsDecoder
       extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
@@ -200,11 +209,11 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Encoder[A] {
-    def encode(a: A): Metadata
-  }
+  type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
-  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false)
+  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
+    type Compiler = CachedSchemaCompiler[Encoder]
+  }
   private[smithy4s] object AwsEncoder
       extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 

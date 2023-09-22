@@ -52,7 +52,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |  ){
          |    Test.apply
          |  }.withId(id).addHints(hints)
@@ -94,7 +94,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |    string.optional[Test]("one", _.one),
          |  ){
          |    Test.apply
@@ -136,7 +136,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.optional[Test]("one", _.one),
          |  ){

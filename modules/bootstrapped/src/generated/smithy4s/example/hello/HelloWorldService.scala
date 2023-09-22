@@ -1,17 +1,15 @@
 package smithy4s.example.hello
 
 import smithy4s.Endpoint
-import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.Schema.UnionSchema
+import smithy4s.schema.ErrorSchema
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -82,28 +80,13 @@ object HelloWorldServiceOperation {
     def ordinal = 0
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Hello
   }
-  object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] with Errorable[HelloError] {
-    val id: ShapeId = ShapeId("smithy4s.example.hello", "Hello")
-    val input: Schema[Person] = Person.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Greeting] = Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200),
-      smithy.api.Tags(List("testOperationTag")),
-    )
+  object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] {
+    val schema: OperationSchema[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.hello", "Hello"))
+      .withInput(Person.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withError(HelloError.errorSchema)
+      .withOutput(Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200), smithy.api.Tags(List("testOperationTag")))
     def wrap(input: Person) = Hello(input)
-    override val errorable: Option[Errorable[HelloError]] = Some(this)
-    val error: UnionSchema[HelloError] = HelloError.schema
-    def liftError(throwable: Throwable): Option[HelloError] = throwable match {
-      case e: GenericServerError => Some(HelloError.GenericServerErrorCase(e))
-      case e: SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: HelloError): Throwable = e match {
-      case HelloError.GenericServerErrorCase(e) => e
-      case HelloError.SpecificServerErrorCase(e) => e
-    }
   }
   sealed trait HelloError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HelloError = this
@@ -119,7 +102,7 @@ object HelloWorldServiceOperation {
       case value: HelloError.SpecificServerErrorCase => visitor.specificServerError(value.specificServerError)
     }
   }
-  object HelloError extends ShapeTag.Companion[HelloError] {
+  object HelloError extends ErrorSchema.Companion[HelloError] {
 
     def genericServerError(genericServerError: GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
     def specificServerError(specificServerError: SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
@@ -155,11 +138,20 @@ object HelloWorldServiceOperation {
       }
     }
 
-    implicit val schema: UnionSchema[HelloError] = union(
+    implicit val schema: Schema[HelloError] = union(
       HelloError.GenericServerErrorCase.alt,
       HelloError.SpecificServerErrorCase.alt,
     ){
       _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[HelloError] = throwable match {
+      case e: GenericServerError => Some(HelloError.GenericServerErrorCase(e))
+      case e: SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: HelloError): Throwable = e match {
+      case HelloError.GenericServerErrorCase(e) => e
+      case HelloError.SpecificServerErrorCase(e) => e
     }
   }
 }

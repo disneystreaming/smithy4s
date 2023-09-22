@@ -18,21 +18,15 @@ package smithy4s
 package dynamic
 package internals
 
+import smithy4s.schema.OperationSchema
+
 private[internals] case class DynamicEndpoint(
-    id: ShapeId,
-    input: Schema[DynData],
-    output: Schema[DynData],
-    override val errorable: Option[Errorable[DynData]],
-    hints: Hints
+    schema: OperationSchema[DynData, DynData, DynData, Nothing, Nothing]
 ) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
 
   def wrap(
       input: DynData
   ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
     DynamicOp(id, input)
-
-  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
-
-  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
 
 }

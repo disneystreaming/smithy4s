@@ -17,187 +17,99 @@
 package smithy4s.codecs
 
 import smithy4s.schema._
-import smithy4s.kinds.PolyFunction
 import smithy4s.capability.EncoderK
 
 /**
-  * An abstraction that codifies the notion of writing a piece of data into an output,
-  * provided some contextual information.
+  * An abstraction that codifies the notion of modifying a message with some additional information.
   *
   * This has two input channels:
-  *   * one for contextual information (In)
+  *   * one for the message that is being modified (Message)
   *   * one for the actual data (A)
   *
   * This is particularly useful for http requests/responses, where different subsets of data
   * have a different impact on different locations of the http message : some fields may
   * impact headers, some fields may impact the http body, other things that are driven from
-  * static information (smithy traits) may lead to a transformation of the message. In this situation,
-  * the Input and Output channels are of the same type.
+  * static information (smithy traits) may lead to a transformation of the message.
   *
   * Having the ability to decompose the notion of encoding a piece of data into different
   * writers that can be composed together is powerful and helps centralising some complexity
   * in third-party agnostic code.
   *
-  * @tparam In : some input channel used as context to write data. When set to Any, the implication
-  *   is that the data produces some output on its own
-  * @tparam Out: the output channel in which the data is written.
+  * @tparam Message: some data being modified with the added information contained by A.
   * @tparam A: the type of data that is being written into the output channel
   */
 // scalafmt: {maxColumn = 120}
-trait Writer[-In, +Out, -A] { self =>
+trait Writer[Message, -A] { self =>
 
   /**
     * Symbolises the action of writing some content `A` into an output `Out`, provided some context `In`
     */
-  def write(input: In, a: A): Out
+  def write(message: Message, a: A): Message
 
-  /**
-    * When the data `A` is sufficient to produce the output, anything can be used as a context input.
-    * Therefore, traditional encoders (like Json/Xml) can be modelled as Writers with type `In == Any`
-    *
-    * This method is a short-hand for encoding the data without the caller forced to pass a dummy input.
-    */
-  def encode[In0 <: In](a: A)(implicit ev: Any =:= In0): Out =
-    write(ev.apply(()), a)
+  def combine[A0 <: A](other: Writer[Message, A0]): Writer[Message, A0] = new Writer[Message, A0] {
+    def write(message: Message, a: A0): Message = other.write(self.write(message, a), a)
+  }
+
+  def compose(f: Message => Message): Writer[Message, A] = (m, a) => self.write(f(m), a)
+
+  def andThen(f: Message => Message): Writer[Message, A] = (m, a) => f(self.write(m, a))
 
   /**
     * Contramap the data which this writer works. The writer is a contravariant-functor on `A`.
     */
-  final def contramap[B](f: B => A): Writer[In, Out, B] =
-    new Writer[In, Out, B] {
-      def write(message: In, b: B): Out =
-        self.write(message: In, f(b))
+  final def contramap[B](f: B => A): Writer[Message, B] =
+    new Writer[Message, B] {
+      def write(message: Message, b: B): Message =
+        self.write(message, f(b))
     }
 
   /**
-    * Transforms the Output type
-    */
-  final def andThen[Out0](
-      f: Out => Out0
-  ): Writer[In, Out0, A] =
-    new Writer[In, Out0, A] {
-      def write(message: In, a: A): Out0 = f(self.write(message, a))
-    }
-
-  /**
-    * Transforms the context Input type
-    */
-  final def compose[In0](
-      f: In0 => In
-  ): Writer[In0, Out, A] =
-    new Writer[In0, Out, A] {
-      def write(message: In0, a: A): Out = self.write(f(message), a)
-    }
-
-  /**
-    * Connects this writer's output channel to the contextual input channel of another writer.
-    */
-  def pipe[Out0, A0 <: A](other: Writer[Out, Out0, A0]): Writer[In, Out0, A0] =
-    new Writer[In, Out0, A0] {
-      def write(message: In, a: A0): Out0 =
-        other.write(self.write(message, a), a)
-    }
-
-  /**
-    * Connects this writer's output channel to the data channel of another writer. This is useful
-    * for connecting an encoder into a larger writer.
-    */
-  def pipeData[Message <: In, Out0 >: Out](other: Writer[Message, Message, Out]): Writer[Message, Message, A] =
-    new Writer[Message, Message, A] {
-      def write(message: Message, a: A): Message = other.write(message, self.write(message, a))
-    }
+   * Transforms a writer into an Encoder by supplying an initial value.
+   */
+  final def toEncoder(initial: Message): Encoder[Message, A] = new Encoder[Message, A] {
+    def encode(a: A): Message = self.write(initial, a)
+  }
 
 }
 
 object Writer {
 
-  type CachedCompiler[In, Out] = CachedSchemaCompiler[Writer[In, Out, *]]
+  def combineCompilers[Message](
+      left: CachedSchemaCompiler[Writer[Message, *]],
+      right: CachedSchemaCompiler[Writer[Message, *]]
+  ): CachedSchemaCompiler[Writer[Message, *]] = new CachedSchemaCompiler[Writer[Message, *]] {
 
-  /**
-    * Creates an encoder (a writer that takes any input) from a function.
-    */
-  def encodeBy[A, Message](f: A => Message): Encoder[Message, A] =
-    new Encoder[Message, A] {
-      def write(message: Any, a: A): Message = f(a)
+    type Cache = (left.Cache, right.Cache)
+    def createCache(): Cache = (left.createCache(), right.createCache())
+    def fromSchema[A](schema: Schema[A]): Writer[Message, A] =
+      fromSchema(schema, createCache())
+    def fromSchema[A](schema: Schema[A], cache: Cache): Writer[Message, A] = {
+      val first: Writer[Message, A] = left.fromSchema(schema, cache._1)
+      val second: Writer[Message, A] = right.fromSchema(schema, cache._2)
+      first.combine(second)
     }
 
+  }
+
+  type CachedCompiler[Message] = CachedSchemaCompiler[Writer[Message, *]]
+
   /**
-    * Creates an encoder (a writer that takes any input) from a static output.
+    * Creates an writer from a function.
     */
-  def encodeStatic[Message](message: Message): Encoder[Message, Any] =
-    new Encoder[Message, Any] {
-      def write(in: Any, a: Any): Message = message
-    }
+  def lift[Message, A](f: (Message, A) => Message): Writer[Message, A] = f(_, _)
 
   /**
     * Creates a writer that returns its input as its output, without taking
     * the data into consideration
     */
-  def noop[Message]: Writer[Message, Message, Any] =
-    new Writer[Message, Message, Any] {
-      def write(message: Message, a: Any): Message = message
-    }
-
-  /**
-    * Lifts an Output transformation as a higher-kinded function that
-    * operates on writers.
-    */
-  def andThenK[In, Out, Out0](
-      f: Out => Out0
-  ): PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] =
-    new PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] {
-      def apply[A](fa: Writer[In, Out, A]): Writer[In, Out0, A] =
-        fa.andThen(f)
-    }
-
-  /**
-    * Lifts an Output transformation as a higher-kinded function that
-    * operates on writers.
-    */
-  def andThenK_[Message](
-      f: Message => Message
-  ): PolyFunction[Writer[Message, Message, *], Writer[Message, Message, *]] =
-    andThenK(f)
-
-  /**
-    * Lifts an Input transformation as a higher-kinded function that
-    * operates on writers.
-    */
-  def composeK[In0, In, Out](
-      f: In0 => In
-  ): PolyFunction[Writer[In, Out, *], Writer[In0, Out, *]] =
-    new PolyFunction[Writer[In, Out, *], Writer[In0, Out, *]] {
-      def apply[A](fa: Writer[In, Out, A]): Writer[In0, Out, A] =
-        fa.compose(f)
-    }
-
-  /**
-    * Lifts an Input transformation as a higher-kinded function that
-    * operates on writers, when the Input and Output are of the same type.
-    */
-  def composeK_[Message](
-      f: Message => Message
-  ): PolyFunction[Writer[Message, Message, *], Writer[Message, Message, *]] =
-    composeK(f)
-
-  /**
-    * Lifts an piping transformation that connects the output channel of a writer
-    * to the data channel of another writer.
-    */
-  def pipeDataK[Message, Out](
-      other: Writer[Message, Message, Out]
-  ): PolyFunction[Writer[Message, Out, *], Writer[Message, Message, *]] =
-    new PolyFunction[Writer[Message, Out, *], Writer[Message, Message, *]] {
-      def apply[A](writer: Writer[Message, Out, A]): Writer[Message, Message, A] =
-        writer.pipeData(other)
-    }
+  def noop[Message]: Writer[Message, Any] = (message, _) => message
 
   // format: off
-  implicit def writerEncoderK[In, Out]: EncoderK[Writer[In, Out, *], In => Out] =
-    new EncoderK[Writer[In, Out, *], In => Out] {
-      def apply[A](fa: Writer[In, Out, A], a: A): In => Out = fa.write(_, a)
-      def absorb[A](f: A => (In => Out)): Writer[In, Out, A] = new Writer[In, Out, A] {
-        def write(message: In, a: A): Out = f(a)(message)
+  implicit def writerEncoderK[Message]: EncoderK[Writer[Message, *], Message => Message] =
+    new EncoderK[Writer[Message, *], Message => Message] {
+      def apply[A](fa: Writer[Message, A], a: A): Message => Message = fa.write(_, a)
+      def absorb[A](f: A => (Message => Message)): Writer[Message, A] = new Writer[Message, A]{
+        def write(message: Message, a: A): Message = f(a)(message)
       }
     }
   // format: on

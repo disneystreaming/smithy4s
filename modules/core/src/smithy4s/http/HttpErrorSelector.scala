@@ -21,6 +21,7 @@ import smithy.api.Error
 import smithy4s.schema.Alt
 import smithy.api.HttpError
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.ErrorSchema
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
 
@@ -34,17 +35,17 @@ object HttpErrorSelector {
     * Given a vector of alternatives, and a schema compiler, selects the decoder
     * associated to the given discriminator.
     *
-    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param maybeErrorSchema: the ErrorSchema instance associated to an operation
     * @param compiler: the compiler for a given decoder
     */
   def apply[F[_]: Covariant, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Option[F[E]] = maybeErrorable match {
+  ): HttpDiscriminator => Option[F[E]] = maybeErrorSchema match {
     case None => _ => None
-    case Some(errorable) =>
+    case Some(errorschema) =>
       new HttpErrorSelector[F, E](
-        errorable.error.alternatives,
+        errorschema.alternatives,
         compiler
       )
   }
@@ -54,19 +55,19 @@ object HttpErrorSelector {
     * associated to the given discriminator, and maps it so that it lifts
     * a throwable
     *
-    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param maybeErrorSchema: the ErrorSchema instance associated to an operation
     * @param compiler: the compiler for a given decoder
     */
   def asThrowable[F[_]: Covariant, E](
-      maybeErrorable: Option[Errorable[E]],
+      maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Option[F[Throwable]] = maybeErrorable match {
+  ): HttpDiscriminator => Option[F[Throwable]] = maybeErrorSchema match {
     case None => _ => None
-    case Some(errorable) =>
+    case Some(errorschema) =>
       new HttpErrorSelector[F, E](
-        errorable.error.alternatives,
+        errorschema.alternatives,
         compiler
-      ).andThen(_.map(Covariant[F].map(_)(errorable.unliftError)))
+      ).andThen(_.map(Covariant[F].map(_)(errorschema.unliftError)))
   }
 
 }
@@ -82,7 +83,7 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
       def compileAlt[A](alt: Alt[E, A]): F[E] = {
         val schema = alt.schema
         // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
-        // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+        // This is because the "compile body encoder" method can trigger a transformation of hints, which
         // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
         val cache = compiler.createCache()
         val errorCodec: F[A] = compiler.fromSchema(schema, cache)
@@ -110,7 +111,13 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
     .toMap[ShapeId, Alt[E, _]]
 
   private val byName = alts
-    .map(alt => alt.schema.shapeId.name -> alt)
+    .map { alt =>
+      val errorName = alt.schema.hints
+        .get(internals.ErrorDiscriminatorValue)
+        .map(_.name)
+        .getOrElse(alt.schema.shapeId.name)
+      errorName -> alt
+    }
     .toMap[String, Alt[E, _]]
 
   // build a map: status code to alternative
@@ -169,6 +176,7 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
       case StatusCode(int) => byStatusCode(int)
+      case Undetermined    => None
     }
   }
 }

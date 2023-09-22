@@ -273,7 +273,17 @@ object Boilerplate {
       -   final def andThen[H[${`_.._`}]](other: PolyFunction$suffix[G, H]): PolyFunction$suffix[F, H] = new PolyFunction$suffix[F, H]{
       -      def apply[${`A..N`}](fa: F[${`A..N`}]): H[${`A..N`}] = other(self(fa))
       -   }
+      -
+      -   final def compose[H[${`_.._`}]](other: PolyFunction$suffix[H, F]): PolyFunction$suffix[H, G] = new PolyFunction$suffix[H, G]{
+      -      def apply[${`A..N`}](ha: H[${`A..N`}]): G[${`A..N`}] = self(other(ha))
+      -   }
+      -
+      -   final def narrow[F0[${`a..n`}] <: F[${`a..n`}]]: PolyFunction$suffix[F0, G] = this.asInstanceOf[PolyFunction$suffix[F0, G]]
+      -
+      -   final def widen[G0[${`a..n`}] >: G[${`a..n`}]]: PolyFunction$suffix[F, G0] = this.asInstanceOf[PolyFunction$suffix[F, G0]]
+      -
       -}
+      -
       -object PolyFunction$suffix{
       -  type From[F[${`_.._`}]] = {
       -    type Algebra[G[${`_.._`}]] = PolyFunction$suffix[F, G]

@@ -16,7 +16,7 @@ object RangeCheck extends ShapeTag.Companion[RangeCheck] {
   )
 
   implicit val schema: Schema[RangeCheck] = struct(
-    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty).addHints(smithy.api.Required()),
+    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty),
   ){
     RangeCheck.apply
   }.withId(id).addHints(hints)

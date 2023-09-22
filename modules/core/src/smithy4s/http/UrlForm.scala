@@ -157,9 +157,8 @@ private[smithy4s] object UrlForm {
   private def AlphaNum = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toSet
   private def SubDelims = "!$&'()*+,;=".toSet
 
-  private[smithy4s] trait Decoder[A] {
-    def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
-  }
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[UrlFormDecodeError, *], UrlForm, A]
 
   object Decoder {
     def apply(
@@ -186,13 +185,10 @@ private[smithy4s] object UrlForm {
       }
   }
 
-  trait Encoder[A] {
-    def encode(a: A): UrlForm
-  }
+  type Encoder[A] = smithy4s.codecs.Encoder[UrlForm, A]
 
   object Encoder {
     def apply(
-        ignoreUrlFormFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
@@ -201,14 +197,26 @@ private[smithy4s] object UrlForm {
             schema: Schema[A],
             cache: Cache
         ): Encoder[A] = {
+          val maybeStaticUrlFormData =
+            schema.hints.get(internals.StaticUrlFormElements).map {
+              _.elements.map { case (key, value) =>
+                UrlForm.FormData(PayloadPath(key), Some(value))
+              }
+            }
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
-            ignoreUrlFormFlattened,
             capitalizeStructAndUnionMemberNames
           )
           val urlFormDataEncoder = schemaVisitor(schema)
-          value => UrlForm(urlFormDataEncoder.encode(value))
+          maybeStaticUrlFormData match {
+            case Some(staticUrlFormData) =>
+              value =>
+                UrlForm(staticUrlFormData ++ urlFormDataEncoder.encode(value))
+            case None => value => UrlForm(urlFormDataEncoder.encode(value))
+          }
+
         }
       }
+
   }
 }

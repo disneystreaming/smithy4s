@@ -16,33 +16,36 @@
 
 package smithy4s
 
-import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 
 package object codecs {
 
-  type Encoder[Out, A] = Writer[Any, Out, A]
-
-  type PayloadReader[A] = Reader[Either[PayloadError, *], Blob, A]
-  object PayloadReader {
-    type CachedCompiler = CachedSchemaCompiler[PayloadReader]
+  type BlobEncoder[A] = Encoder[Blob, A]
+  object BlobEncoder {
+    type Compiler = CachedSchemaCompiler[BlobEncoder]
+    val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobEncoder] {
+      def fromSchema[A](schema: Schema[A]) = Encoder.static(Blob.empty)
+    }
   }
 
-  type PayloadWriter[A] = Writer[Any, Blob, A]
-  object PayloadWriter {
-    type CachedCompiler = CachedSchemaCompiler[PayloadWriter]
+  type BlobDecoder[A] = Decoder[Either[PayloadError, *], Blob, A]
+  object BlobDecoder {
+    type Compiler = CachedSchemaCompiler[BlobDecoder]
+    val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobDecoder] {
+      def fromSchema[A](schema: Schema[A]) = Decoder.lift(_ =>
+        Left(PayloadError(PayloadPath.root, "nothing", "always failing"))
+      )
+    }
   }
 
-  type PayloadCodec[A] = ReaderWriter[PayloadReader, PayloadWriter, A]
+  type PayloadDecoder[A] = Decoder[Either[PayloadError, *], Blob, A]
+  object PayloadDecoder {
+    type CachedCompiler = CachedSchemaCompiler[PayloadDecoder]
+  }
 
-  object PayloadCodec {
-    type CachedCompiler = CachedSchemaCompiler[PayloadCodec]
-
-    val readerK: PolyFunction[PayloadCodec, PayloadReader] =
-      ReaderWriter.readerK[PayloadReader, PayloadWriter]
-
-    val writerK: PolyFunction[PayloadCodec, PayloadWriter] =
-      ReaderWriter.writerK[PayloadReader, PayloadWriter]
+  type PayloadEncoder[A] = Encoder[Blob, A]
+  object PayloadEncoder {
+    type CachedCompiler = CachedSchemaCompiler[PayloadEncoder]
   }
 
 }

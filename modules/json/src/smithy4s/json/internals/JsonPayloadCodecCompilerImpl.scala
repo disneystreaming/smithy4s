@@ -18,6 +18,7 @@ package smithy4s
 package json
 package internals
 
+import smithy4s.schema.CachedSchemaCompiler
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig => JsoniterReaderConfig
 }
@@ -47,26 +48,39 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   ): JsonPayloadCodecCompiler =
     copy(jsoniterWriterConfig = jsoniterWriterConfig)
 
-  type Cache = jsoniterCodecCompiler.Cache
-  def createCache(): Cache = jsoniterCodecCompiler.createCache()
+  def writers: CachedSchemaCompiler[PayloadEncoder] =
+    new CachedSchemaCompiler[PayloadEncoder] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-  def fromSchema[A](schema: Schema[A], cache: Cache): PayloadCodec[A] = {
-    val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-    val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
-    val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      Blob(
-        writeToArray(value, jsoniterWriterConfig)(jcodec)
-      )
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        (value: A) =>
+          Blob(
+            writeToArray(value, jsoniterWriterConfig)(jcodec)
+          )
+      }
+      def fromSchema[A](schema: Schema[A]): PayloadEncoder[A] =
+        fromSchema(schema, createCache())
     }
-    ReaderWriter(reader, writer)
-  }
 
-  def fromSchema[A](schema: Schema[A]): PayloadCodec[A] =
-    fromSchema(schema, createCache())
+  def decoders: CachedSchemaCompiler[PayloadDecoder] =
+    new CachedSchemaCompiler[PayloadDecoder] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-  private class JsonPayloadReader[A](jcodec: JsonCodec[A])
-      extends PayloadReader[A] {
-    def read(blob: Blob): Either[PayloadError, A] = {
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        new JsonPayloadDecoder(jcodec)
+      }
+
+      def fromSchema[A](schema: Schema[A]): PayloadDecoder[A] =
+        fromSchema(schema, createCache())
+    }
+
+  private class JsonPayloadDecoder[A](jcodec: JsonCodec[A])
+      extends PayloadDecoder[A] {
+    def decode(blob: Blob): Either[PayloadError, A] = {
       val nonEmpty =
         if (blob.isEmpty) "{}".getBytes
         else blob.toArray

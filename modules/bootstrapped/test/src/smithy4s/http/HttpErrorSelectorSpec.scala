@@ -37,7 +37,7 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
     def fromSchema[A](schema: Schema[A]): ShapeId = schema.shapeId
 
   }
-  val selector = HttpErrorSelector(ErrorHandlingOperation.errorable, compiler)
+  val selector = HttpErrorSelector(ErrorHandlingOperation.error, compiler)
 
   test("pick exact x-error-type - shapeId") {
     val result = selector(HttpDiscriminator.FullId(EHNotFound.id))
@@ -81,10 +81,14 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
 
   private type GenericAlt = schema.Alt[Any, _]
   private val alts =
-    ErrorHandlingOperation.error.alternatives.asInstanceOf[Vector[GenericAlt]]
+    ExtraErrorOperation.error.toVector.flatMap(
+      _.alternatives.asInstanceOf[Vector[GenericAlt]]
+    )
   private val altsExtra =
-    ExtraErrorOperation.error.alternatives
-      .asInstanceOf[Vector[GenericAlt]]
+    ExtraErrorOperation.error.toVector.flatMap(
+      _.alternatives
+        .asInstanceOf[Vector[GenericAlt]]
+    )
 
   val amendedSelector = new HttpErrorSelector(alts ++ altsExtra, compiler)
 

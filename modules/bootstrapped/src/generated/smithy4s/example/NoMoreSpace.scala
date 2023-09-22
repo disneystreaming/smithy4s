@@ -24,7 +24,7 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   )
 
   implicit val schema: Schema[NoMoreSpace] = struct(
-    string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required()),
+    string.required[NoMoreSpace]("message", _.message),
     Foo.schema.optional[NoMoreSpace]("foo", _.foo),
   ){
     NoMoreSpace.apply

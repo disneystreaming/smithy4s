@@ -363,10 +363,10 @@ object XmlCodecSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = Schema.recursive {
         val bar =
           Foo.schema
-            .biject[Foo.Bar](Foo.Bar(_), (_: Foo.Bar).foo)
+            .biject[Foo.Bar](Foo.Bar(_))((_: Foo.Bar).foo)
             .oneOf[Foo]("bar")
         val baz =
-          int.biject[Foo.Baz](Foo.Baz(_), (_: Foo.Baz).int).oneOf[Foo]("baz")
+          int.biject[Foo.Baz](Foo.Baz(_))((_: Foo.Baz).int).oneOf[Foo]("baz")
         union(bar, baz) {
           case _: Foo.Bar => 0
           case _: Foo.Baz => 1

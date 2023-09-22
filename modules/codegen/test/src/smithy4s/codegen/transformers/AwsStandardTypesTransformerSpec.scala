@@ -87,7 +87,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |  val hints: Hints = Hints.empty
         |
         |  implicit val schema: Schema[TestStructure] = struct(
-        |    int.required[TestStructure]("i", _.i).addHints(smithy.api.Required()),
+        |    int.required[TestStructure]("i", _.i),
         |    Date.schema.optional[TestStructure]("d", _.d),
         |    Long.schema.optional[TestStructure]("l", _.l),
         |  ){
@@ -349,20 +349,6 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         .getShape(ShapeId.from("com.amazonaws.dynamodb#BackupArn"))
         .isPresent
     )
-  }
-
-  private def loadModel(namespaces: String*): Model = {
-    val assembler = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-
-    namespaces
-      .foldLeft(assembler) { case (a, model) =>
-        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
-      }
-      .assemble()
-      .unwrap()
   }
 
   def prettyPrint(model: Model): String = {

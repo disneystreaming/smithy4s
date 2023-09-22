@@ -19,7 +19,7 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
   )
 
   implicit val schema: Schema[NotAuthorizedError] = struct(
-    string.required[NotAuthorizedError]("message", _.message).addHints(smithy.api.Required()),
+    string.required[NotAuthorizedError]("message", _.message),
   ){
     NotAuthorizedError.apply
   }.withId(id).addHints(hints)
