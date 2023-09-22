@@ -11,7 +11,11 @@ object AwsServiceList {
     val summary = getSummary()
     val supportedProtocols = Set(
       AwsJson1_0.id.name,
-      AwsJson1_1.id.name
+      AwsJson1_1.id.name,
+      RestJson1.id.name,
+      RestXml.id.name,
+      AwsQuery.id.name,
+      Ec2Query.id.name
     )
     val (supported, unsupported) =
       summary.artifacts.partition(a => supportedProtocols(a.protocol))
