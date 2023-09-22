@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
@@ -76,16 +76,11 @@ object ReservedNameOverrideServiceOperation {
     def endpoint: smithy4s.Endpoint[ReservedNameOverrideServiceOperation,SetOpInput, Nothing, Unit, Nothing, Nothing] = SetOp
   }
   object SetOp extends smithy4s.Endpoint[ReservedNameOverrideServiceOperation,SetOpInput, Nothing, Unit, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example.reservedNameOverride", "SetOp")
-    val input: Schema[SetOpInput] = SetOpInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
-    )
+    val schema: OperationSchema[SetOpInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.reservedNameOverride", "SetOp"))
+      .withInput(SetOpInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204))
     def wrap(input: SetOpInput) = SetOp(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 
