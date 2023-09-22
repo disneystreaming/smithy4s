@@ -23,10 +23,16 @@ import java.nio.charset.StandardCharsets
 import java.io.OutputStream
 
 // scalafmt: {maxColumn = 120}
+/**
+  * A Blob represents an arbitrary piece of binary data that fits in memory.
+  *
+  * Its underlying data structure enables several types of layouts, as well as efficient concatenation.
+  */
 sealed trait Blob {
 
   def apply(i: Int): Byte
   def size: Int
+  def isEmpty: Boolean
 
   def foreach(f: Byte => Unit) = {
     var i = 0
@@ -38,6 +44,9 @@ sealed trait Blob {
     while (i < size) { f(apply(i), i); i += 1 }
   }
 
+  def toArraySliceBlob: Blob.ArraySliceBlob =
+    new Blob.ArraySliceBlob(toArrayUnsafe, 0, size)
+
   def toArray: Array[Byte] = {
     val result = Array.ofDim[Byte](size)
     foreachWithIndex((b, i) => result(i) = b)
@@ -45,7 +54,6 @@ sealed trait Blob {
   }
 
   def toArrayUnsafe: Array[Byte] = toArray
-  def isEmpty: Boolean
 
   def sameBytesAs(other: Blob): Boolean = {
     size == other.size && {
@@ -109,70 +117,23 @@ sealed trait Blob {
 
 object Blob {
 
-  val empty: Blob = new Blob.ByteArrayBlob(Array.emptyByteArray)
+  val empty: Blob = new Blob.ArraySliceBlob(Array.emptyByteArray, 0, 0)
 
-  def apply(bytes: Array[Byte]): Blob = new ByteArrayBlob(bytes)
-  def apply(buffer: ByteBuffer): Blob = new ByteBufferBlob(buffer)
-  def apply(string: String): Blob = new ByteArrayBlob(
-    string.getBytes(StandardCharsets.UTF_8)
-  )
+  def apply(bytes: Array[Byte]): Blob = new ArraySliceBlob(bytes, 0, bytes.length)
+  def apply(string: String): Blob = apply(string.getBytes(StandardCharsets.UTF_8))
+  def apply(buffer: ByteBuffer): Blob = view(buffer.duplicate())
 
-  final class ByteArrayBlob(val arr: Array[Byte]) extends Blob {
+  def slice(bytes: Array[Byte], offset: Int, size: Int): Blob = new ArraySliceBlob(bytes, offset, size)
+  def view(buffer: ByteBuffer): Blob = new ByteBufferBlob(buffer)
+  def queue(blobs: Queue[Blob], size: Int) = new QueueBlob(blobs, size)
+  def concat(blobs: Blob*): Blob = new QueueBlob(Queue.from(blobs), blobs.map(_.size).sum)
 
-    def apply(i: Int) = arr(i.toInt)
-
-    override def asByteBuffer(start: Int, size: Int): ByteBuffer =
-      asByteBufferUnsafe(start, size).asReadOnlyBuffer()
-
-    override def asByteBufferUnsafe(start: Int, size: Int): ByteBuffer = {
-      val b = ByteBuffer.wrap(arr, start.toInt, size)
-      if (start == 0 && size == arr.length) b
-      else b.slice()
-    }
-
-    override def copyToArray(xs: Array[Byte], start: Int, offset: Int, size: Int): Unit =
-      System.arraycopy(arr, offset.toInt, xs, start, size)
-
-    override def copyToStream(s: OutputStream, offset: Int, size: Int): Unit =
-      s.write(arr, offset.toInt, size.toInt)
-
-    override def copyToBuffer(buffer: ByteBuffer, offset: Int, size: Int): Int = {
-      val toCopy = buffer.remaining.min(size)
-      buffer.put(arr, offset.toInt, toCopy)
-      toCopy
-    }
-
-    override def toArray: Array[Byte] = {
-      val newArray = Array.ofDim[Byte](arr.length)
-      arr.copyToArray(newArray, 0, arr.length)
-      newArray
-    }
-    override def toArrayUnsafe: Array[Byte] = arr
-
-    override def isEmpty: Boolean = arr.isEmpty
-    override def size: Int = arr.length
-
-    override def toString = {
-      s"ByteArrayBlob[${Base64.getEncoder().encodeToString(arr)}]"
-    }
-
-    override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ByteArrayBlob] &&
-      java.util.Arrays.equals(arr, other.asInstanceOf[ByteArrayBlob].arr)
-    }
-
-    override def hashCode(): Int = {
-      var hashCode = 0
-      var i = 0
-      while (i < arr.length) {
-        hashCode += arr(i).hashCode()
-        i += 1
-      }
-      hashCode
-    }
-  }
-  final class ByteBufferBlob(val buf: ByteBuffer) extends Blob {
+  final class ByteBufferBlob private[smithy4s] (val buf: ByteBuffer) extends Blob {
     def apply(i: Int) = buf.get(i.toInt)
+
+    override def toArraySliceBlob: ArraySliceBlob = if (buf.hasArray()) {
+      new ArraySliceBlob(buf.array, buf.arrayOffset, size)
+    } else super.toArraySliceBlob
 
     override def copyToArray(xs: Array[Byte], start: Int, offset: Int, size: Int): Unit = {
       val n = buf.duplicate()
@@ -208,7 +169,7 @@ object Blob {
       toCopy
     }
 
-    override def toString = s"ByteBufferBlob[${buf.toString()}]"
+    override def toString = s"ByteBufferBlob(...)"
     override def isEmpty: Boolean = !buf.hasRemaining()
     override def size: Int = buf.remaining()
     override def hashCode = buf.hashCode()
@@ -219,23 +180,29 @@ object Blob {
     }
   }
 
-  final class ArraySliceBlob(val arr: Array[Byte], val offset: Int, val length: Int) extends Blob {
+  final class ArraySliceBlob private[smithy4s] (val arr: Array[Byte], val offset: Int, val length: Int) extends Blob {
+
+    override def toArraySliceBlob: ArraySliceBlob = this
 
     require(
       offset >= 0 && offset <= arr.size && length >= 0 && length <= arr.size && offset + length <= arr.size
     )
     def apply(i: Int): Byte =
-      if (i >= length) throw new IndexOutOfBoundsException()
-      else arr((offset + i).toInt)
+      if ((offset + i) >= length) throw new IndexOutOfBoundsException()
+      else arr(offset + i)
 
     def size: Int = length
     def isEmpty: Boolean = (length == 0)
 
     override def toArray: Array[Byte] = {
       val result = Array.ofDim[Byte](length)
-      arr.copyToArray(arr, offset, length)
+      arr.copyToArray(result, offset, length)
       result
     }
+
+    override def toArrayUnsafe: Array[Byte] = if (arr.length == length && offset == 0) arr else toArray
+
+    override def toString(): String = s"ArraySliceBlob(..., $offset, $length)"
 
     override def hashCode(): Int = {
       import util.hashing.MurmurHash3
@@ -282,6 +249,8 @@ object Blob {
       }
     }
     def isEmpty: Boolean = size == 0
+
+    override def toString(): String = s"QueueBlob(..., $size)"
   }
 
 }

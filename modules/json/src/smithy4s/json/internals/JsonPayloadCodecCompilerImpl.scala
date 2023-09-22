@@ -86,8 +86,13 @@ private[json] case class JsonPayloadCodecCompilerImpl(
           if (blob.isEmpty) readFromString("{}", jsoniterReaderConfig)(jcodec)
           else
             blob match {
-              case b: Blob.ByteArrayBlob =>
-                readFromArray(b.arr, jsoniterReaderConfig)(jcodec)
+              case b: Blob.ArraySliceBlob =>
+                readFromSubArray(
+                  b.arr,
+                  b.offset,
+                  b.offset + b.size,
+                  jsoniterReaderConfig
+                )(jcodec)
               case b: Blob.ByteBufferBlob =>
                 readFromByteBuffer(b.buf, jsoniterReaderConfig)(jcodec)
               case other =>
