@@ -60,13 +60,13 @@ object Xml {
   def writeToString[A: Schema](a: A): Option[String] =
     writeToStringStream[A](a).compile.last
 
-  val readers: BlobDecoder.Compiler = new BlobDecoder.Compiler {
+  val decoders: BlobDecoder.Compiler = new BlobDecoder.Compiler {
     type Cache = XmlDocument.Decoder.Cache
     def createCache(): Cache = XmlDocument.Decoder.createCache()
     def fromSchema[A](schema: Schema[A], cache: Cache): BlobDecoder[A] = {
       val xmlDocumentDecoder = XmlDocument.Decoder.fromSchema(schema, cache)
       new BlobDecoder[A] {
-        def read(blob: Blob): Either[PayloadError, A] =
+        def decode(blob: Blob): Either[PayloadError, A] =
           parseXmlDocument(blob)
             .flatMap(xmlDocumentDecoder.decode(_))
             .leftMap { case XmlDecodeError(xPath, message) =>
@@ -83,8 +83,8 @@ object Xml {
     def createCache(): Cache = XmlDocument.Encoder.createCache()
     def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {
       val xmlDocumentEncoder = XmlDocument.Encoder.fromSchema(schema, cache)
-      new BlobEncoder[A] {
-        def write(input: Any, a: A): smithy4s.Blob = Blob {
+      (a: A) =>
+        Blob {
           XmlDocument.documentEventifier
             .eventify(xmlDocumentEncoder.encode(a))
             .through(render(collapseEmpty = false))
@@ -92,7 +92,6 @@ object Xml {
             .compile
             .to(Collector.supportsArray(Array))
         }
-      }
     }
     def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
       fromSchema(schema, createCache())

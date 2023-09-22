@@ -48,7 +48,7 @@ object AwsErrorTypeDecoder {
             )
           )
         case None =>
-          decoder.read(response.body) match {
+          decoder.decode(response.body) match {
             case Left(error)        => F.raiseError(error)
             case Right((code, tpe)) => F.pure(AwsErrorType(None, code, tpe))
           }

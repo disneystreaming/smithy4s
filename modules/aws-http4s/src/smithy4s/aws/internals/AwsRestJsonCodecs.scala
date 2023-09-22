@@ -19,7 +19,6 @@ package internals
 
 import smithy4s.Blob
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.json.Json
 
@@ -43,14 +42,14 @@ private[aws] object AwsRestJsonCodecs {
     def nullToEmptyObject(blob: Blob): Blob =
       if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
-    val jsonWriters = jsonPayloadCodecs.writers.mapK { Writer.addingTo[Any].andThenK(nullToEmptyObject) }
-    val jsonReaders = jsonPayloadCodecs.readers
+    val jsonWriters = jsonPayloadCodecs.writers.mapK { smithy4s.codecs.Encoder.andThenK(nullToEmptyObject) }
+    val jsonDecoders = jsonPayloadCodecs.decoders
 
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(jsonWriters)
-      .withSuccessBodyDecoders(jsonReaders)
-      .withErrorBodyDecoders(jsonReaders)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonReaders))
+      .withSuccessBodyDecoders(jsonDecoders)
+      .withErrorBodyDecoders(jsonDecoders)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonDecoders))
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads

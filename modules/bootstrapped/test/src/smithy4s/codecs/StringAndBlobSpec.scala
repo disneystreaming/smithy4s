@@ -24,23 +24,24 @@ import smithy4s.schema.CachedSchemaCompiler
 class StringAndBlobSpec() extends munit.FunSuite {
 
   val error = PayloadError(PayloadPath.root, "error", "error")
-  object DummyReaderCompiler extends CachedSchemaCompiler.Impl[PayloadReader] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadReader[A] =
-      Reader.decodeStatic(Left(error): Either[PayloadError, A])
+  object DummyDecoderCompiler
+      extends CachedSchemaCompiler.Impl[PayloadDecoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] =
+      Decoder.static(Left(error): Either[PayloadError, A])
   }
 
-  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadWriter] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadWriter[A] =
-      Writer.encodeStatic(Blob.empty): Encoder[Blob, A]
+  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadEncoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] =
+      Encoder.static(Blob.empty): Encoder[Blob, A]
 
   }
 
-  val stringsAndBlobsReaders = CachedSchemaCompiler.getOrElse(
-    StringAndBlobCodecs.readers,
-    DummyReaderCompiler
+  val stringsAndBlobsDecoders = CachedSchemaCompiler.getOrElse(
+    StringAndBlobCodecs.decoders,
+    DummyDecoderCompiler
   )
-  val stringsAndBlobsWriters = CachedSchemaCompiler.getOrElse(
-    StringAndBlobCodecs.writers,
+  val stringsAndBlobsEncoders = CachedSchemaCompiler.getOrElse(
+    StringAndBlobCodecs.encoders,
     DummyWriterCompiler
   )
 
@@ -49,10 +50,10 @@ class StringAndBlobSpec() extends munit.FunSuite {
       data: A,
       expectedEncoded: Blob
   ): Unit = {
-    val writer = stringsAndBlobsWriters.fromSchema(schema)
-    val reader = stringsAndBlobsReaders.fromSchema(schema)
+    val writer = stringsAndBlobsEncoders.fromSchema(schema)
+    val decoder = stringsAndBlobsDecoders.fromSchema(schema)
     val result = writer.encode(data)
-    val roundTripped = reader.read(result)
+    val roundTripped = decoder.decode(result)
     expect.same(result, expectedEncoded)
     expect.same(Right(data), roundTripped)
   }
@@ -98,10 +99,10 @@ class StringAndBlobSpec() extends munit.FunSuite {
   }
 
   test("Delegates to some other codec when neither strings not bytes") {
-    val writer = stringsAndBlobsWriters.fromSchema(Schema.int)
-    val reader = stringsAndBlobsReaders.fromSchema(Schema.int)
+    val writer = stringsAndBlobsEncoders.fromSchema(Schema.int)
+    val decoder = stringsAndBlobsDecoders.fromSchema(Schema.int)
     val result = writer.encode(1)
-    val roundTripped = reader.read(result)
+    val roundTripped = decoder.decode(result)
     val expectedRoundTripped =
       Left(PayloadError(PayloadPath.root, "error", "error"))
     expect.same(result, Blob.empty)

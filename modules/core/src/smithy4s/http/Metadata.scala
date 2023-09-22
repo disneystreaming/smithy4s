@@ -21,7 +21,6 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
-import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.CompilationCache
 
@@ -138,10 +137,6 @@ case class Metadata(
 }
 
 object Metadata {
-  private[smithy4s] type Reader[A] =
-    smithy4s.codecs.Reader[Either[MetadataError, *], Metadata, A]
-  private[smithy4s] type Writer[A] =
-    smithy4s.codecs.Writer[Any, Metadata, A]
 
   def fold[A](i: Iterable[A])(f: A => Metadata): Metadata =
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
@@ -155,6 +150,9 @@ object Metadata {
   def encode[A](a: A)(implicit encoder: Encoder[A]): Metadata =
     encoder.encode(a)
 
+  implicit def encoderFromSchema[A: Schema]: Encoder[A] =
+    Encoder.derivedImplicitInstance
+
   /**
     * If possible, decode the data from fields that are bound to http metadata.
     */
@@ -167,27 +165,18 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Decoder[A] { self =>
-    def decode(metadata: Metadata): Either[MetadataError, A]
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[MetadataError, *], Metadata, A]
 
-    final def toReader: Reader[A] =
-      new Reader[A] {
-        def read(metadata: Metadata): Either[MetadataError, A] =
-          self.decode(metadata)
-      }
-  }
+  implicit def decoderFromSchema[A: Schema]: Decoder[A] =
+    Decoder.derivedImplicitInstance
 
   object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
     type Compiler = CachedSchemaCompiler[Decoder]
-
-    // scalafmt: {maxColumn = 120}
-    def toReaderK: PolyFunction[Decoder, Reader] =
-      new PolyFunction[Decoder, Reader] {
-        def apply[A](decoder: Decoder[A]): Reader[A] =
-          decoder.toReader
-      }
   }
-  private[smithy4s] object AwsDecoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+
+  private[smithy4s] object AwsDecoder
+      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
       extends CachedSchemaCompiler.DerivingImpl[Decoder] {
@@ -220,22 +209,13 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Encoder[A] { self =>
-    def encode(a: A): Metadata
-
-    final def toWriter: Writer[A] = smithy4s.codecs.Writer.encodeBy(encode)
-  }
+  type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
   object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
     type Compiler = CachedSchemaCompiler[Encoder]
-
-    // scalafmt: {maxColumn = 120}
-    def toWriterK: PolyFunction[Encoder, Writer] =
-      new PolyFunction[Encoder, Writer] {
-        def apply[A](fa: Encoder[A]): Writer[A] = fa.toWriter
-      }
   }
-  private[smithy4s] object AwsEncoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
+  private[smithy4s] object AwsEncoder
+      extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)
       extends CachedSchemaCompiler.DerivingImpl[Encoder] {

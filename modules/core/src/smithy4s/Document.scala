@@ -117,13 +117,11 @@ object Document {
 
   }
 
-  trait Decoder[A] { self =>
-    def decode(document: Document): Either[PayloadError, A]
-    def map[B](f: A => B): Decoder[B] = new Decoder[B] {
-      def decode(document: Document): Either[PayloadError, B] =
-        self.decode(document).map(f)
-    }
-  }
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[PayloadError, *], Document, A]
+
+  implicit def decoderFromSchema[A: Schema]: Decoder[A] =
+    Decoder.derivedImplicitInstance
 
   object Decoder extends CachedSchemaCompiler.DerivingImpl[Decoder] {
 

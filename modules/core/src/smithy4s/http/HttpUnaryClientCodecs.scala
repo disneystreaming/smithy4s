@@ -19,7 +19,8 @@ package http
 
 import smithy4s.client.UnaryClientCodecs
 import smithy4s.codecs.{BlobEncoder, BlobDecoder}
-import smithy4s.codecs.{Reader, Writer}
+import smithy4s.codecs.{Decoder}
+import smithy4s.codecs.Writer
 import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
@@ -108,21 +109,20 @@ object HttpUnaryClientCodecs {
       copy(responseTransformation = f.andThen(F.flatMap(_)(responseTransformation)))
 
     def build(): UnaryClientCodecs.Make[F, Request, Response] = {
-      val setBody: HttpRequest.Encoder[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
-      val setBodyK = Writer
-        .pipeDataK[HttpRequest[Blob], Blob](setBody)
+      val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
+      val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[HttpRequest[Blob], Blob](setBody)
 
-      val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Encoder[Blob, *]] {
-        def fromSchema[A](schema: Schema[A]): HttpRequest.Encoder[Blob, A] = {
+      val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Writer[Blob, *]] {
+        def fromSchema[A](schema: Schema[A]): HttpRequest.Writer[Blob, A] = {
           val maybeRawMediaType = HttpMediaType.fromSchema(schema).map(_.value)
           maybeRawMediaType match {
             case Some(mt) =>
-              new HttpRequest.Encoder[Blob, A] {
+              new HttpRequest.Writer[Blob, A] {
                 def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
                   request.withContentType(mt)
               }
             case None =>
-              new HttpRequest.Encoder[Blob, A] {
+              new HttpRequest.Writer[Blob, A] {
                 def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
                   if (request.body.isEmpty) request
                   else request.withContentType(requestMediaType)
@@ -131,22 +131,22 @@ object HttpUnaryClientCodecs {
         }
       }
 
-      val httpBodyWriters: CachedSchemaCompiler[HttpRequest.Encoder[Blob, *]] = if (rawStringsAndBlobPayloads) {
+      val httpBodyWriters: CachedSchemaCompiler[HttpRequest.Writer[Blob, *]] = if (rawStringsAndBlobPayloads) {
         val finalBodyEncoders = CachedSchemaCompiler
-          .getOrElse(smithy4s.codecs.StringAndBlobCodecs.writers, requestBodyEncoders)
+          .getOrElse(smithy4s.codecs.StringAndBlobCodecs.encoders, requestBodyEncoders)
         finalBodyEncoders.mapK(setBodyK)
       } else requestBodyEncoders.mapK(setBodyK)
 
-      val httpMediaWriter: CachedSchemaCompiler[HttpRequest.Encoder[Blob, *]] =
+      val httpMediaWriter: CachedSchemaCompiler[HttpRequest.Writer[Blob, *]] =
         Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
 
       def responseDecoders(blobDecoders: BlobDecoder.Compiler) = {
-        val httpBodyDecoders: CachedSchemaCompiler[Reader[F, Blob, *]] = {
+        val httpBodyDecoders: CachedSchemaCompiler[Decoder[F, Blob, *]] = {
           val decoders: BlobDecoder.Compiler = if (rawStringsAndBlobPayloads) {
-            CachedSchemaCompiler.getOrElse(smithy4s.codecs.StringAndBlobCodecs.readers, blobDecoders)
+            CachedSchemaCompiler.getOrElse(smithy4s.codecs.StringAndBlobCodecs.decoders, blobDecoders)
           } else blobDecoders
           decoders.mapK(
-            Reader
+            Decoder
               .of[Blob]
               .liftPolyFunction(
                 MonadThrowLike
@@ -164,7 +164,7 @@ object HttpUnaryClientCodecs {
 
       val inputEncoders = metadataEncoders match {
         case Some(mEncoders) =>
-          HttpRequest.Encoder.restSchemaCompiler(mEncoders, httpMediaWriter, writeEmptyStructs)
+          HttpRequest.Writer.restSchemaCompiler(mEncoders, httpMediaWriter, writeEmptyStructs)
         case None => httpMediaWriter
       }
       val outputDecoders = responseDecoders(successResponseBodyDecoders)
@@ -180,14 +180,14 @@ object HttpUnaryClientCodecs {
         ): UnaryClientCodecs[F, Request, Response, I, E, O] = {
           val endpoint = operationPreprocessor(originalEndpoint)
 
-          val inputWriter: HttpRequest.Encoder[Blob, I] =
+          val inputWriter: HttpRequest.Writer[Blob, I] =
             HttpEndpoint.cast(endpoint).toOption match {
               case Some(httpEndpoint) => {
                 val httpInputEncoder =
-                  HttpRequest.Encoder.fromHttpEndpoint[Blob, I](httpEndpoint)
+                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint)
                 val requestEncoder =
                   inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
-                httpInputEncoder.pipe(requestEncoder)
+                httpInputEncoder.combine(requestEncoder)
               }
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
@@ -206,7 +206,7 @@ object HttpUnaryClientCodecs {
               errorDiscriminator,
               toStrict
             )
-          new UnaryClientCodecs(inputEncoder, errorDecoder.read, outputDecoder.read)
+          new UnaryClientCodecs(inputEncoder, errorDecoder.decode, outputDecoder.decode)
             .transformRequest[Request](requestTransformation)
             .transformResponse[Response](responseTransformation)
         }

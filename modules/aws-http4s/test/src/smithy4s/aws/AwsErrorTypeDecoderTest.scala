@@ -36,7 +36,7 @@ object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
 
   val fromJsonResponse =
     AwsErrorTypeDecoder.fromResponse[IO](
-      smithy4s.aws.internals.AwsJsonCodecs.jsonReaders
+      smithy4s.aws.internals.AwsJsonCodecs.jsonDecoders
     )
 
   val responseBase = HttpResponse(404, Map.empty, Blob.empty)

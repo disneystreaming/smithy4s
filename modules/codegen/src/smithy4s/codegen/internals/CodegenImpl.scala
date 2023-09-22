@@ -158,6 +158,6 @@ private[codegen] object CodegenImpl { self =>
   }
 
   private def withAwsTypeTransformer(transformers: List[String]): List[String] =
-    transformers :+ AwsStandardTypesTransformer.name :+ OpenEnumTransformer.name
+    transformers :+ AwsConstraintsRemover.name :+ AwsStandardTypesTransformer.name :+ OpenEnumTransformer.name
 
 }

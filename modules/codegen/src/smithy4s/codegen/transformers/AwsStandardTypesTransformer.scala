@@ -139,9 +139,7 @@ object AwsStandardTypesTransformer {
     ): MemberShape.Builder =
       if (condition)(mutation(builder)) else builder
 
-    def copyDefaultTrait(
-        shape: Shape
-    ): MemberShape.Builder = {
+    def copyDefaultTrait(shape: Shape): MemberShape.Builder = {
       val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
       defaultTraitOpt.fold(builder)(builder.addTrait(_))
     }

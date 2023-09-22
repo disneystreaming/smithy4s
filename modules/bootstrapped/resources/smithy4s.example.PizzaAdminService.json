@@ -154,8 +154,7 @@
                         "name": "aa",
                         "in": "path",
                         "schema": {
-                            "type": "integer",
-                            "format": "int32"
+                            "$ref": "#/components/schemas/EnumResult"
                         },
                         "required": true
                     }
@@ -531,6 +530,14 @@
                     }
                 }
             },
+            "EnumResult": {
+                "type": "integer",
+                "format": "int32",
+                "enum": [
+                    1,
+                    2
+                ]
+            },
             "FallbackErrorResponseContent": {
                 "type": "object",
                 "properties": {
@@ -604,8 +611,7 @@
                 "type": "object",
                 "properties": {
                     "result": {
-                        "type": "integer",
-                        "format": "int32"
+                        "$ref": "#/components/schemas/EnumResult"
                     }
                 },
                 "required": [

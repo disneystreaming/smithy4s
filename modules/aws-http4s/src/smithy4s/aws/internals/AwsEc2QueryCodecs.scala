@@ -23,7 +23,6 @@ import alloy.UrlFormFlattened
 import smithy.api.XmlName
 import smithy4s._
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.kinds.PolyFunction5
 import smithy4s.xml.Xml
@@ -48,8 +47,8 @@ private[aws] object AwsEcsQueryCodecs {
   private val flattenAll = (_: Hints).add(UrlFormFlattened())
 
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
-  private val discriminatorReaders =
-    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+  private val discriminatorDecoders =
+    Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   def operationPreprocessor(
       version: String
@@ -90,7 +89,7 @@ private[aws] object AwsEcsQueryCodecs {
   private[aws] val inputEncoders = {
     UrlForm
       .Encoder(capitalizeStructAndUnionMemberNames = true)
-      .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
+      .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
   }
 
   def make[F[_]: MonadThrowLike](
@@ -100,11 +99,11 @@ private[aws] object AwsEcsQueryCodecs {
     HttpUnaryClientCodecs.builder
       .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
-      .withSuccessBodyDecoders(Xml.readers)
-      .withErrorBodyDecoders(Xml.readers)
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(Xml.decoders)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
   }

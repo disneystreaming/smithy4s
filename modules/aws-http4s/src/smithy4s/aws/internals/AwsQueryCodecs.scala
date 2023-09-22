@@ -24,7 +24,6 @@ import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s._
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.Writer
 import smithy4s.http._
 import smithy4s.http.internals.StaticUrlFormElements
 import smithy4s.kinds.PolyFunction5
@@ -39,7 +38,7 @@ private[aws] object AwsQueryCodecs {
   private[aws] val inputEncoders = {
     UrlForm
       .Encoder(capitalizeStructAndUnionMemberNames = false)
-      .mapK { UrlForm.Encoder.toWriterK.andThen(Writer.addingTo[Any].andThenK(form => Blob(form.render))) }
+      .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
   }
 
   // Takes the `@awsQueryError` trait into consideration to decide how to
@@ -54,8 +53,8 @@ private[aws] object AwsQueryCodecs {
 
   // The actual error payloads are nested under two layers of XML
   private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("ErrorResponse", "Error")))
-  private val discriminatorReaders =
-    Xml.readers.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+  private val discriminatorDecoders =
+    Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
 
   // The AWS protocol works in terms of XmlFlattened and XmlName hints,
   // even for the input side, which is most definitely _not_ XML. Partly
@@ -102,11 +101,11 @@ private[aws] object AwsQueryCodecs {
     HttpUnaryClientCodecs.builder
       .withOperationPreprocessor(operationPreprocessor(version))
       .withBodyEncoders(inputEncoders)
-      .withSuccessBodyDecoders(Xml.readers)
-      .withErrorBodyDecoders(Xml.readers)
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(Xml.decoders)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withMetadataDecoders(Metadata.AwsDecoder)
-      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorReaders))
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
 
