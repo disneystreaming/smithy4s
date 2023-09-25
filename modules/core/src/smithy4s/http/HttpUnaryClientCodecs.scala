@@ -44,7 +44,8 @@ object HttpUnaryClientCodecs {
       writeEmptyStructs = _ => false,
       requestMediaType = "text/plain",
       requestTransformation = F.pure(_),
-      responseTransformation = F.pure(_)
+      responseTransformation = F.pure(_),
+      hostPrefixInjection = true
     )
 
   trait Builder[F[_], Request, Response] {
@@ -61,6 +62,7 @@ object HttpUnaryClientCodecs {
     def withRequestMediaType(mediaType: String): Builder[F, Request, Response]
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
+    def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response]
     def build(): UnaryClientCodecs.Make[F, Request, Response]
   }
 
@@ -77,7 +79,8 @@ object HttpUnaryClientCodecs {
       writeEmptyStructs: Schema[_] => Boolean,
       requestMediaType: String,
       requestTransformation: HttpRequest[Blob] => F[Request],
-      responseTransformation: Response => F[HttpResponse[Blob]]
+      responseTransformation: Response => F[HttpResponse[Blob]],
+      hostPrefixInjection: Boolean
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
     def withOperationPreprocessor(fk: PolyFunction5[OperationSchema, OperationSchema]): Builder[F, Request, Response] =
@@ -107,6 +110,8 @@ object HttpUnaryClientCodecs {
       copy(requestTransformation = requestTransformation.andThen(F.flatMap(_)(f)))
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0] =
       copy(responseTransformation = f.andThen(F.flatMap(_)(responseTransformation)))
+
+    def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response] = copy(hostPrefixInjection = enabled)
 
     def build(): UnaryClientCodecs.Make[F, Request, Response] = {
       val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
@@ -192,7 +197,10 @@ object HttpUnaryClientCodecs {
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
 
-          val inputEncoder = (i: I) => F.map(baseRequest(endpoint))(inputWriter.write(_, i))
+          val prefixedInputWriter: HttpRequest.Writer[Blob, I] =
+            if (hostPrefixInjection) inputWriter.combine(HttpRequest.Writer.hostPrefix(endpoint)) else inputWriter
+
+          val inputEncoder = (i: I) => F.map(baseRequest(endpoint))(prefixedInputWriter.write(_, i))
 
           val outputDecoder: HttpResponse.Decoder[F, Blob, O] =
             outputDecoders.fromSchema(endpoint.output, outputDecoderCache)

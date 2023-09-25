@@ -96,6 +96,28 @@ object HttpRequest {
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
+    private[http] def hostPrefix[Body, I](
+        httpEndpoint: OperationSchema[I, _, _, _, _]
+    ): Writer[Body, I] = {
+      HostPrefix(httpEndpoint) match {
+        case Some(prefixEncoder) =>
+          new Writer[Body, I] {
+            def write(
+                request: HttpRequest[Body],
+                input: I
+            ): HttpRequest[Body] = {
+              val hostPrefix = prefixEncoder.write(List.empty, input)
+              val oldUri = request.uri
+              val newUri =
+                oldUri.copy(host = s"${hostPrefix.mkString("")}.${oldUri.host}")
+              request.copy(uri = newUri)
+            }
+          }
+        case None =>
+          (r, _) => r
+      }
+    }
+
   }
 
   object Decoder {
