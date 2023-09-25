@@ -36,18 +36,9 @@ object SmithyBuildJson {
   }
 
   def merge(
-      current: String,
-      imports: Seq[String],
-      dependencies: Seq[String],
-      repositories: Seq[String]
+      json1: String,
+      json2: String
   ): String = {
-    SmithyBuild.merge(
-      current,
-      SmithyBuild(
-        version = "1.0",
-        imports,
-        SmithyBuildMaven(dependencies, repositories)
-      )
-    )
+    SmithyBuild.merge(json1, json2)
   }
 }

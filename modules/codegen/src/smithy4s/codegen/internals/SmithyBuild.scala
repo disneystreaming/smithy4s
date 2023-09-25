@@ -27,9 +27,10 @@ object SmithyBuild {
   private[internals] implicit val codecs: ReadWriter[SmithyBuild] = macroRW
   def writeJson(sb: SmithyBuild): String = write(sb, indent = 4)
 
-  def merge(content: String, sb: SmithyBuild): String = {
-    val json = read[ujson.Value](content)
-    val merged = mergeJs(json, writeJs(sb))
+  def merge(json1: String, json2: String): String = {
+    val j1 = read[ujson.Value](json1)
+    val j2 = read[ujson.Value](json2)
+    val merged = mergeJs(j1, j2)
     val finalJs = removeArrayDuplicates(merged)
     finalJs.render(indent = 4)
   }
