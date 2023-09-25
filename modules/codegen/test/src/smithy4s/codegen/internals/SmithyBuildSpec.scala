@@ -17,6 +17,32 @@
 package smithy4s.codegen.internals
 
 final class SmithyBuildSpec extends munit.FunSuite {
+  test("generate json") {
+    val actual = SmithyBuild.writeJson(
+      SmithyBuild(
+        "1.0",
+        List("src/"),
+        SmithyBuildMaven(List("dep"), List("repo"))
+      )
+    )
+    assertEquals(
+      actual,
+      """|{
+         |    "version": "1.0",
+         |    "imports": [
+         |        "src/"
+         |    ],
+         |    "maven": {
+         |        "dependencies": [
+         |            "dep"
+         |        ],
+         |        "repositories": [
+         |            "repo"
+         |        ]
+         |    }
+         |}""".stripMargin
+    )
+  }
 
   test("merge two json") {
     val actual = SmithyBuild.merge(
@@ -30,7 +56,15 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |  "custom": "attribute"
          |}
          |""".stripMargin,
-      SmithyBuild("2", Seq.empty, SmithyBuildMaven(Seq("dep1"), Seq.empty))
+      """|{
+         |  "version": "1.0",
+         |  "imports": ["src/main/smithy"],
+         |  "maven": {
+         |    "dependencies": ["dep1"],
+         |    "repositories": []
+         |  }
+         |}
+         |""".stripMargin
     )
     assertEquals(
       actual,
