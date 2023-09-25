@@ -52,13 +52,9 @@ object HostPrefixSchemaVisitor
       total: E => EnumValue[E]
   ): MaybeHostPrefixEncode[E] =
     tag match {
-      case EnumTag.ClosedIntEnum => default
-      case EnumTag.ClosedStringEnum =>
-        maybeStr.map(_.contramap(total(_).stringValue))
+      case EnumTag.IntEnum() => default
       case _ =>
-        throw new RuntimeException(
-          "BOOM"
-        ) // TODO: Handle open int and string enums
+        maybeStr.map(_.contramap(total(_).stringValue))
     }
 
   override def struct[S](
