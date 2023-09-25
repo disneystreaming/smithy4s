@@ -22,7 +22,10 @@ lazy val root = project
       expectedLines.foreach { expected =>
         require(
           content.contains(expected),
-          s"Could not find `$expected in the generate file."
+          s"""|Could not find `$expected in the generate file:
+              |
+              |$content
+              |""".stripMargin
         )
       }
       ()
