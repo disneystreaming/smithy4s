@@ -153,13 +153,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val smithy4sGeneratedSmithyBuildFile =
       taskKey[File](
-        "smithy4sGeneratedSmithyBuild written to smithy-build.json at the root of the project"
-      )
-
-    val smithy4sGeneratedSmithyBuildMerge =
-      taskKey[File](
         "smithy4sGeneratedSmithyBuild merged with the existing smithy-build.json." +
-          "If the file does not exists, this behaves like smithy4sGeneratedSmithyBuild"
+          "If the file does not exists, this behaves like smithy4sGeneratedSmithyBuild." +
+          "The final value is written to smithy4sSmithyBuildFile"
       )
 
     val Smithy4s =
@@ -281,18 +277,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       makeSmithyBuild(config, None).value
     },
     // disable parallelism to avoid concurrently writing to file
-    config / smithy4sGeneratedSmithyBuildMerge / aggregate := false,
-    config / smithy4sGeneratedSmithyBuildMerge := makeSmithyBuildMerge(
+    config / smithy4sGeneratedSmithyBuildFile / aggregate := false,
+    config / smithy4sGeneratedSmithyBuildFile := makeSmithyBuildMerge(
       config
     ).value,
-    // disable parallelism to avoid concurrently writing to file
-    config / smithy4sGeneratedSmithyBuildFile / aggregate := false,
-    config / smithy4sGeneratedSmithyBuildFile := {
-      val target =
-        (LocalRootProject.project / baseDirectory).value / "smithy-build.json"
-      IO.write(target, (config / smithy4sGeneratedSmithyBuild).value)
-      target
-    },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
