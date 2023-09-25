@@ -141,13 +141,26 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Generated smithy files"
       )
 
+    val smithy4sSmithyBuildFile =
+      settingKey[File](
+        "Location of the smithy-build.json file. Defaults at the root of the project: `./smithy-build.json`."
+      )
+
     val smithy4sGeneratedSmithyBuild =
       taskKey[String](
         "Derive a smithy-build.json file from the project configuration"
       )
 
     val smithy4sGeneratedSmithyBuildFile =
-      taskKey[File]("smithy4sGeneratedSmithyBuild written to a file")
+      taskKey[File](
+        "smithy4sGeneratedSmithyBuild written to smithy-build.json at the root of the project"
+      )
+
+    val smithy4sGeneratedSmithyBuildMerge =
+      taskKey[File](
+        "smithy4sGeneratedSmithyBuild merged with the existing smithy-build.json." +
+          "If the file does not exists, this behaves like smithy4sGeneratedSmithyBuild"
+      )
 
     val Smithy4s =
       config("smithy4s").describedAs(
@@ -263,23 +276,22 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val generateOptics = (config / smithy4sRenderOptics).value
       cached((wildcardArg, generateOptics))
     },
+    config / smithy4sSmithyBuildFile := (LocalRootProject.project / baseDirectory).value / "smithy-build.json",
     config / smithy4sGeneratedSmithyBuild := {
-      val baseDir = baseDirectory.value
-      val sourceManagedDir = (config / sourceManaged).value
-
-      val scalaBin = (config / scalaBinaryVersion).?.value
-      val deps = (config / libraryDependencies).value
-        .filter(_.configurations.exists(_.contains(Smithy4s.name)))
-        .flatMap(moduleIdEncode(_, scalaBin))
-      val imports = (config / smithy4sInputDirs).value
-        .collect(prepareInputDirs(baseDir, sourceManagedDir))
-      val repositories = externalResolvers.value.collect(prepareResolvers)
-      SmithyBuildJson.toJson(imports, deps, repositories)
+      makeSmithyBuild(config, None).value
     },
+    // disable parallelism to avoid concurrently writing to file
+    config / smithy4sGeneratedSmithyBuildMerge / aggregate := false,
+    config / smithy4sGeneratedSmithyBuildMerge := makeSmithyBuildMerge(
+      config
+    ).value,
+    // disable parallelism to avoid concurrently writing to file
+    config / smithy4sGeneratedSmithyBuildFile / aggregate := false,
     config / smithy4sGeneratedSmithyBuildFile := {
-      val out = baseDirectory.value / "smithy-build.json"
-      IO.write(out, (config / smithy4sGeneratedSmithyBuild).value)
-      out
+      val target =
+        (LocalRootProject.project / baseDirectory).value / "smithy-build.json"
+      IO.write(target, (config / smithy4sGeneratedSmithyBuild).value)
+      target
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
@@ -315,6 +327,50 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         BuildInfo.alloyOrg % "alloy-core" % BuildInfo.alloyVersion % Smithy4s
       )
     )
+
+  private def makeSmithyBuildMerge(
+      config: Configuration
+  ): Def.Initialize[Task[File]] = Def.taskDyn {
+    val sbFile = (config / smithy4sSmithyBuildFile).value
+    if (sbFile.exists()) {
+      Def.task {
+        val content = makeSmithyBuild(
+          config,
+          Some(IO.readLines(sbFile).mkString)
+        ).value
+        IO.write(sbFile, content)
+        sbFile
+      }
+    } else {
+      Def.task {
+        val content = makeSmithyBuild(config, None).value
+        IO.write(sbFile, content)
+        sbFile
+      }
+    }
+  }
+
+  private def makeSmithyBuild(
+      config: Configuration,
+      currentContent: Option[String]
+  ): Def.Initialize[Task[String]] = Def.task {
+    val baseDir = baseDirectory.value
+    val sourceManagedDir = (config / sourceManaged).value
+
+    val scalaBin = (config / scalaBinaryVersion).?.value
+    val deps = (config / libraryDependencies).value
+      .filter(_.configurations.exists(_.contains(Smithy4s.name)))
+      .flatMap(moduleIdEncode(_, scalaBin))
+    val imports = (config / smithy4sInputDirs).value
+      .collect(prepareInputDirs(baseDir, sourceManagedDir))
+    val repositories = externalResolvers.value.collect(prepareResolvers)
+
+    currentContent
+      .map { content =>
+        SmithyBuildJson.merge(content, imports, deps, repositories)
+      }
+      .getOrElse(SmithyBuildJson.toJson(imports, deps, repositories))
+  }
 
   private def prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root

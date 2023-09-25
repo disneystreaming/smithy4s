@@ -20,12 +20,29 @@ import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
 
 object SmithyBuildJson {
+
   def toJson(
       imports: Seq[String],
       dependencies: Seq[String],
       repositories: Seq[String]
   ): String = {
     SmithyBuild.writeJson(
+      SmithyBuild(
+        version = "1.0",
+        imports,
+        SmithyBuildMaven(dependencies, repositories)
+      )
+    )
+  }
+
+  def merge(
+      current: String,
+      imports: Seq[String],
+      dependencies: Seq[String],
+      repositories: Seq[String]
+  ): String = {
+    SmithyBuild.merge(
+      current,
       SmithyBuild(
         version = "1.0",
         imports,

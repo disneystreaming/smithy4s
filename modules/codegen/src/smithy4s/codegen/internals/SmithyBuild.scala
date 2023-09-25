@@ -26,6 +26,49 @@ final case class SmithyBuild(
 object SmithyBuild {
   private[internals] implicit val codecs: ReadWriter[SmithyBuild] = macroRW
   def writeJson(sb: SmithyBuild): String = write(sb, indent = 4)
+
+  def merge(content: String, sb: SmithyBuild): String = {
+    val json = read[ujson.Value](content)
+    val merged = mergeJs(json, writeJs(sb))
+    val finalJs = removeArrayDuplicates(merged)
+    finalJs.render(indent = 4)
+  }
+
+  private def removeArrayDuplicates(js: ujson.Value): ujson.Value = {
+    js match {
+      case ujson.Obj(obj1) =>
+        ujson.Obj.from(
+          obj1.toList.map { case (key, value) =>
+            key -> removeArrayDuplicates(value)
+          }
+        )
+      case (arr1: ujson.Arr) => arr1.arr.distinct
+      case x                 => x
+    }
+  }
+
+  private def mergeJs(
+      v1: ujson.Value,
+      v2: ujson.Value
+  ): ujson.Value = {
+    (v1, v2) match {
+      case (ujson.Obj(obj1), ujson.Obj(obj2)) =>
+        val result = obj2.foldLeft(obj1.toMap) {
+          case (elements, (key, value2)) =>
+            val value = elements.get(key) match {
+              case None =>
+                value2
+              case Some(value1) =>
+                mergeJs(value1, value2)
+            }
+            elements.updated(key, value)
+        }
+        ujson.Obj.from(result)
+      case (arr1: ujson.Arr, arr2: ujson.Arr) =>
+        ujson.Arr(arr1.arr ++ arr2.arr)
+      case (_, _) => v1
+    }
+  }
 }
 
 final case class SmithyBuildMaven(
