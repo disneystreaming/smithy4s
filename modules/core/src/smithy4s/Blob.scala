@@ -151,7 +151,7 @@ object Blob {
       asByteBufferUnsafe(offset, size).asReadOnlyBuffer()
 
     override def asByteBufferUnsafe(offset: Int, size: Int): ByteBuffer = {
-      val b = buf
+      val b = buf.duplicate()
       if (offset == 0 && b.position() == 0 && size == b.remaining()) b
       else {
         b.position(offset.toInt)
@@ -160,7 +160,7 @@ object Blob {
       }
     }
 
-    override def asByteBufferUnsafe: ByteBuffer = buf
+    override def asByteBufferUnsafe: ByteBuffer = buf.duplicate()
 
     override def copyToBuffer(buffer: ByteBuffer, offset: Int, size: Int): Int = {
       val toCopy = buffer.remaining.min(size)
@@ -186,9 +186,12 @@ object Blob {
     require(
       offset >= 0 && offset <= arr.size && length >= 0 && length <= arr.size && offset + length <= arr.size
     )
-    def apply(i: Int): Byte =
-      if ((offset + i) >= length) throw new IndexOutOfBoundsException()
-      else arr(offset + i)
+
+    def apply(i: Int): Byte = {
+      if (i >= length) {
+        throw new IndexOutOfBoundsException()
+      } else arr(offset + i)
+    }
 
     def size: Int = length
     def isEmpty: Boolean = (length == 0)
@@ -224,11 +227,11 @@ object Blob {
 
   final class QueueBlob private[smithy4s] (val blobs: Queue[Blob], val size: Int) extends Blob {
     def apply(i: Int): Byte = {
-      if (i > size) throw new IndexOutOfBoundsException()
+      if (i >= size) throw new IndexOutOfBoundsException()
       else {
         var localIndex = i
         var (currentHead, currentTail) = blobs.dequeue
-        while (localIndex > currentHead.size) {
+        while (localIndex >= currentHead.size) {
           localIndex = localIndex - currentHead.size
           val dq = currentTail.dequeue
           currentHead = dq._1

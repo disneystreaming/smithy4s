@@ -19,6 +19,7 @@ package smithy4s
 import munit._
 
 import java.nio.ByteBuffer
+import java.io.ByteArrayOutputStream
 class BlobSpec() extends FunSuite {
 
   test("sameBytesAs works across data structures") {
@@ -61,6 +62,98 @@ class BlobSpec() extends FunSuite {
     assertEquals(blob(4), 'a'.toByte)
     java.util.Arrays
       .equals(blob.toArray, "foo".getBytes ++ "bar".getBytes())
+  }
+
+  val all = List(
+    "Queue" -> (Blob("foo") ++ Blob("bar")),
+    "Array" -> Blob("foobar"),
+    "Buffer" -> Blob(ByteBuffer.wrap("foobar".getBytes()))
+  )
+
+  for {
+    x <- all
+    y <- all
+  } {
+    test(s"${x._1} and ${y._1} : same bytes") {
+      assert(x._2.sameBytesAs(y._2))
+    }
+  }
+
+  all.foreach { case (name, data) =>
+    test(s"$name: size") {
+      assertEquals(data.size, 6)
+    }
+
+    test(s"$name: index access") {
+      assertEquals(data(2), 'o'.toByte)
+    }
+
+    test(s"$name: out of bounds access") {
+      try {
+        val _ = data(6)
+        fail("expected exception")
+      } catch {
+        case _: IndexOutOfBoundsException => ()
+      }
+    }
+
+    test(s"$name: utf8String") {
+      assertEquals(data.toUTF8String, "foobar")
+    }
+
+    test(s"$name: toArraySliceBlob") {
+      assertEquals[Blob, Blob](
+        data.toArraySliceBlob,
+        Blob.slice("foobar".getBytes(), 0, 6)
+      )
+    }
+
+    test(s"$name: copyToArray") {
+      val target = Array.fill[Byte](6)(0)
+      data.copyToArray(target, 0, 0, data.size)
+      assert(target.sameElements("foobar".getBytes()))
+    }
+
+    test(s"$name: copyToBuffer") {
+      val target = ByteBuffer.wrap(Array.fill[Byte](6)(0))
+      data.copyToBuffer(target, 0, data.size)
+      assert(target.array.sameElements("foobar".getBytes()))
+    }
+
+    test(s"$name: copyToStream") {
+      val stream = new ByteArrayOutputStream()
+      try {
+        data.copyToStream(stream, 0, data.size)
+        assert(stream.toByteArray().sameElements("foobar".getBytes()))
+      } finally {
+        stream.close()
+      }
+    }
+  }
+
+  test("asByteBufferUnsafe") {
+    val arr = "Hello, world!".getBytes
+    assert(arr eq Blob.view(ByteBuffer.wrap(arr)).asByteBufferUnsafe.array)
+    assert(
+      arr eq Blob.view(ByteBuffer.wrap(arr)).asByteBufferUnsafe.array
+    )
+  }
+
+  test("asByteBufferUnsafe has independent position+limit") {
+    val bv = Blob.view(ByteBuffer.wrap("Hello, world!".getBytes))
+    val bb1 = bv.asByteBufferUnsafe
+    assertEquals(bb1.position(), 0)
+    assertEquals(bb1.limit(), 13)
+    val bb2 = bv.asByteBufferUnsafe
+    bb2.position(1)
+    bb2.limit(2)
+    assertEquals(bb1.position(), 0)
+    assertEquals(bb1.limit(), 13)
+  }
+
+  test("Array slice: access") {
+    val slice = Blob.slice("foobar".getBytes(), 1, 4)
+    assert(slice.sameBytesAs(Blob("ooba")))
   }
 
 }
