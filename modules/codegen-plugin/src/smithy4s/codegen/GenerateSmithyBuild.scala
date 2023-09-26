@@ -105,8 +105,6 @@ private[codegen] object GenerateSmithyBuild {
   ): PartialFunction[File, String] = {
     // exclude files that are under sourceManaged
     case file =>
-      println(file)
-      println(base)
       file.relativeTo(base) match {
         case None        => file.getAbsolutePath()
         case Some(value) => value.toString()
