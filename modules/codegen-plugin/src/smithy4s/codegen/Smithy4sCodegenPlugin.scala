@@ -141,23 +141,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Generated smithy files"
       )
 
-    val smithy4sSmithyBuildFile =
-      settingKey[File](
-        "Location of the smithy-build.json file. Defaults at the root of the project: `./smithy-build.json`."
-      )
-
-    val smithy4sGeneratedSmithyBuild =
-      taskKey[String](
-        "Derive a smithy-build.json file from the project configuration"
-      )
-
-    val smithy4sGeneratedSmithyBuildFile =
-      taskKey[File](
-        "smithy4sGeneratedSmithyBuild merged with the existing smithy-build.json." +
-          "If the file does not exists, this behaves like smithy4sGeneratedSmithyBuild." +
-          "The final value is written to smithy4sSmithyBuildFile"
-      )
-
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -272,13 +255,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val generateOptics = (config / smithy4sRenderOptics).value
       cached((wildcardArg, generateOptics))
     },
-    config / smithy4sSmithyBuildFile := (LocalRootProject.project / baseDirectory).value / "smithy-build.json",
-    config / smithy4sGeneratedSmithyBuild := {
-      makeSmithyBuild(config).value
-    },
-    config / smithy4sGeneratedSmithyBuildFile := makeSmithyBuildMerge(
-      config
-    ).value,
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
@@ -314,60 +290,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
     )
 
-  private def makeSmithyBuildMerge(
-      config: Configuration
-  ): Def.Initialize[Task[File]] = Def.task {
-    val sbFile = (config / smithy4sSmithyBuildFile).value
+  override lazy val globalSettings: Seq[Def.Setting[_]] = List(
+    commands += GenerateSmithyBuild.command
+  )
 
-    val smithyBuildJson = makeSmithyBuild(config).value
-
-    synchronized {
-      val existingContent =
-        if (sbFile.exists()) Some(IO.readLines(sbFile).mkString)
-        else None
-
-      val finalContent = existingContent
-        .filter(_.trim.nonEmpty)
-        .map(SmithyBuildJson.merge(_, smithyBuildJson))
-        .getOrElse(smithyBuildJson)
-      IO.write(sbFile, finalContent)
-    }
-
-    sbFile
-  }
-
-  private def makeSmithyBuild(
-      config: Configuration
-  ): Def.Initialize[Task[String]] = Def.task {
-    val baseDir = baseDirectory.value
-
-    val scalaBin = (config / scalaBinaryVersion).?.value
-    val deps = (config / libraryDependencies).value
-      .filter(_.configurations.exists(_.contains(Smithy4s.name)))
-      .flatMap(moduleIdEncode(_, scalaBin))
-    val imports = (config / smithy4sInputDirs).value
-      .collect(prepareInputDirs(baseDir))
-    val repositories = externalResolvers.value.collect(prepareResolvers)
-
-    SmithyBuildJson.toJson(imports, deps, repositories)
-  }
-
-  private val prepareResolvers: PartialFunction[Resolver, String] = {
-    case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root
-  }
-
-  private def prepareInputDirs(
-      base: File
-  ): PartialFunction[File, String] = {
-    // exclude files that are under sourceManaged
-    case file =>
-      file.relativeTo(base) match {
-        case None        => file.getAbsolutePath()
-        case Some(value) => value.toString()
-      }
-  }
-
-  private def moduleIdEncode(
+  private[codegen] def moduleIdEncode(
       moduleId: ModuleID,
       scalaBinaryVersion: Option[String]
   ): List[String] = {

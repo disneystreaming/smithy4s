@@ -13,5 +13,5 @@ $ exists foo/target/scala-2.13/src_managed/main/scala/foodir/FooDir.scala
 $ copy-file a.scala foo/src/main/scala/a.scala
 > bar/run
 
-> Compile / smithy4sGeneratedSmithyBuildFile
+> generateSmithyBuildJson
 > checkSmithyBuild

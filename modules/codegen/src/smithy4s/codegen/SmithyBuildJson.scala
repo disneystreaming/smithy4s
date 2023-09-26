@@ -19,6 +19,24 @@ package smithy4s.codegen
 import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
 
+private[codegen] final case class SmithyBuildData(
+    imports: Seq[String],
+    deps: Seq[String],
+    repos: Seq[String]
+) {
+  def addAll(
+      imports: Seq[String],
+      deps: Seq[String],
+      repos: Seq[String]
+  ): SmithyBuildData = {
+    SmithyBuildData(
+      this.imports ++ imports,
+      this.deps ++ deps,
+      this.repos ++ repos
+    )
+  }
+}
+
 object SmithyBuildJson {
 
   def toJson(
