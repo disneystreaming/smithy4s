@@ -99,7 +99,7 @@ object HttpRequest {
     private[http] def hostPrefix[Body, I](
         httpEndpoint: OperationSchema[I, _, _, _, _]
     ): Writer[Body, I] = {
-      HostPrefix(httpEndpoint) match {
+      HttpHostPrefix(httpEndpoint) match {
         case Some(prefixEncoder) =>
           new Writer[Body, I] {
             def write(
@@ -109,7 +109,7 @@ object HttpRequest {
               val hostPrefix = prefixEncoder.write(List.empty, input)
               val oldUri = request.uri
               val newUri =
-                oldUri.copy(host = s"${hostPrefix.mkString("")}.${oldUri.host}")
+                oldUri.copy(host = s"${hostPrefix.mkString}${oldUri.host}")
               request.copy(uri = newUri)
             }
           }

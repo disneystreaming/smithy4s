@@ -20,7 +20,7 @@ import smithy4s.http.internals.HostPrefixSchemaVisitor
 import smithy4s.codecs.Writer
 import smithy4s.schema.OperationSchema
 
-object HostPrefix {
+object HttpHostPrefix {
   def apply[I, E, O, SI, SO](
       endpoint: OperationSchema[I, E, O, SI, SO]
   ): Option[Writer[List[String], I]] = {

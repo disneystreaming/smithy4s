@@ -22,22 +22,22 @@ import smithy4s.codecs.Writer
 import HostPrefixSegment._
 
 object HostPrefixSchemaVisitor
-    extends SchemaVisitor[MaybeHostPrefixEncode]
-    with SchemaVisitor.Default[MaybeHostPrefixEncode] {
+    extends SchemaVisitor[MaybeHostPrefixEncoder]
+    with SchemaVisitor.Default[MaybeHostPrefixEncoder] {
   self =>
 
-  private val str: HostPrefixEncode[String] =
+  private val str: HostPrefixEncoder[String] =
     smithy4s.codecs.Writer.lift((_, a: String) => List(a))
 
-  private val maybeStr: MaybeHostPrefixEncode[String] = Some(str)
+  private val maybeStr: MaybeHostPrefixEncoder[String] = Some(str)
 
-  def default[A]: MaybeHostPrefixEncode[A] = None
+  def default[A]: MaybeHostPrefixEncoder[A] = None
 
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): MaybeHostPrefixEncode[P] = {
+  ): MaybeHostPrefixEncoder[P] = {
     tag match {
       case Primitive.PString => maybeStr
       case _                 => default
@@ -50,7 +50,7 @@ object HostPrefixSchemaVisitor
       tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MaybeHostPrefixEncode[E] =
+  ): MaybeHostPrefixEncoder[E] =
     tag match {
       case EnumTag.IntEnum() => default
       case _ =>
@@ -62,26 +62,26 @@ object HostPrefixSchemaVisitor
       hints: Hints,
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): MaybeHostPrefixEncode[S] = {
-    def toHostPrefixEncoder[A](
+  ): MaybeHostPrefixEncoder[S] = {
+    def toHostPrefixEncoderr[A](
         field: Field[S, A]
-    ): HostPrefixEncode[S] =
+    ): HostPrefixEncoder[S] =
       self(field.schema)
         .map(_.contramap(field.get))
         .getOrElse(Writer.constant(List.empty))
-    def compile1(path: HostPrefixSegment): HostPrefixEncode[S] =
+    def compile1(path: HostPrefixSegment): HostPrefixEncoder[S] =
       path match {
         case Static(value) => Writer.constant(List(value))
         case HostLabel(value) =>
           fields
             .find(_.label == value)
-            .map(field => toHostPrefixEncoder(field))
+            .map(field => toHostPrefixEncoderr(field))
             .getOrElse(Writer.constant(List.empty))
       }
 
     def compileHostPrefix(
         hostPrefixSegments: Vector[HostPrefixSegment]
-    ): Vector[HostPrefixEncode[S]] =
+    ): Vector[HostPrefixEncoder[S]] =
       hostPrefixSegments.map(compile1(_))
 
     hints.get[smithy.api.Endpoint].map { endpointHint =>
@@ -97,14 +97,14 @@ object HostPrefixSchemaVisitor
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): MaybeHostPrefixEncode[B] = {
+  ): MaybeHostPrefixEncoder[B] = {
     self(schema).map(_.contramap(bijection.from))
   }
 
   override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): MaybeHostPrefixEncode[B] = {
+  ): MaybeHostPrefixEncoder[B] = {
     self(schema).map(_.contramap(refinement.from))
   }
 

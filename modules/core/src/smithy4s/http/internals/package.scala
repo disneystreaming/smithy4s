@@ -24,9 +24,10 @@ package object internals {
   private[http] type HttpCode[A] = A => Option[Int]
   private[http] val httpHints = HintMask(HttpBinding)
 
-  private[internals] type HostPrefixEncode[A] =
+  private[internals] type HostPrefixEncoder[A] =
     smithy4s.codecs.Writer[List[String], A]
-  private[internals] type MaybeHostPrefixEncode[A] = Option[HostPrefixEncode[A]]
+  private[internals] type MaybeHostPrefixEncoder[A] =
+    Option[HostPrefixEncoder[A]]
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {
