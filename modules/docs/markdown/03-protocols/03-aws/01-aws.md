@@ -83,5 +83,5 @@ Below you'll find a generated summary of the maven coordinates for the AWS speci
 that the version of the spec might not be the latest one. Refer yourself to [this repo](https://github.com/disneystreaming/aws-sdk-smithy-specs) to get the latest version of the specs.
 
 ```scala mdoc:passthrough
-docs.AwsServiceList.renderServiceList()
+smithy4s.aws.docs.AwsServiceList.renderServiceList()
 ```

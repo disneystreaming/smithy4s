@@ -102,6 +102,11 @@ See https://github.com/disneystreaming/smithy4s/pull/993
 
 The `smithy4s-xml` now exists, containing utilities to parse XML blobs into the generated data classes, and render XML from the generated data classes. This serde logic abides by the rules described in the the official [smithy documentation](https://smithy.io/2.0/spec/protocol-traits.html?highlight=xml#xml-bindings).
 
+### application/x-www-form-urlencoded support
+
+The `smithy4s-core` now contains utilities to parse [application/x-www-form-urlencoded](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) payloads into the generated data classes, and render those payloads same payloads the generated data classes. This encoding allows for a few customisation, driven by [alloy traits](https://github.com/disneystreaming/alloy#alloyurlformflattened).
+
+See https://github.com/disneystreaming/smithy4s/pull/1113
 # 0.17.19
 
 This release brings in a smithy-model update, which resolves some issues that would've prevented code generation from succeeding. #1164

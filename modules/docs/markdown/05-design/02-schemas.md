@@ -306,4 +306,118 @@ Regarding the `underlyingSchema` value in the companion object of `IntList`, you
 
 ### Enumerations
 
-**TODO** (waiting for smithy 2.0 which changes the syntax)
+Smithy allows for two types of enumerations : string and integer enumerations.
+
+Additionally, smithy4s supports specifying whether an operation is open or closed. An open enumeration allows
+for holding unknown values, whereas a closed one is strictly limited to a set of specified values. This brings
+the total number of possible "flavours" of enumerations to 4, which is reified via a `smithy4s.schema.EnumTag` ADT
+that comprises 4 different cases : one for each combination between `[open, closed]` and `[int, string]`.
+
+Enumerations are typically modelled as Algebraic Data types. Each case of an enumeration is associated with both a String and Int value. In the case of `intEnum`, the string value is the name of the case. In the case of a normal (string) `enum`, the integer value is the index of the case in the list.
+
+Additionally, each enumeration case holds its own hints.
+
+#### Closed enumerations
+
+Given this smithy code :
+
+```kotlin
+namespace example
+
+intEnum Numbers {
+  ONE = 1
+  TWO = 2
+}
+```
+
+The corresponding generated Scala-code is :
+
+```scala
+sealed abstract class Numbers(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+  override type EnumType = Numbers
+  override val value: String = _value
+  override val name: String = _name
+  override val intValue: Int = _intValue
+  override val hints: Hints = _hints
+  override def enumeration: Enumeration[EnumType] = Numbers
+  @inline final def widen: Numbers = this
+}
+object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
+  val id: ShapeId = ShapeId("smithy4s.example", "Numbers")
+
+  val hints: Hints = Hints.empty
+
+  case object ONE extends Numbers("ONE", "ONE", 1, Hints())
+  case object TWO extends Numbers("TWO", "TWO", 2, Hints())
+
+  val values: List[Numbers] = List(
+    ONE,
+    TWO,
+  )
+  val tag: EnumTag[Numbers] = EnumTag.ClosedIntEnum
+  implicit val schema: Schema[Numbers] = enumeration(tag, values).withId(id).addHints(hints)
+}
+```
+
+#### Open enumeration
+
+Given this smithy code :
+
+```kotlin
+namespace example
+
+use alloy#openEnum
+
+@openEnum
+intEnum OpenNums {
+  ONE = 1
+  TWO = 2
+}
+```
+
+The corresponding generated Scala-code is :
+
+```scala
+package smithy4s.example
+
+import smithy4s.Enumeration
+import smithy4s.Hints
+import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
+import smithy4s.schema.Schema.enumeration
+
+sealed abstract class OpenNums(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+  override type EnumType = OpenNums
+  override val value: String = _value
+  override val name: String = _name
+  override val intValue: Int = _intValue
+  override val hints: Hints = _hints
+  override def enumeration: Enumeration[EnumType] = OpenNums
+  @inline final def widen: OpenNums = this
+}
+object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] {
+  val id: ShapeId = ShapeId("smithy4s.example", "OpenNums")
+
+  val hints: Hints = Hints(
+    alloy.OpenEnum(),
+  )
+
+  case object ONE extends OpenNums("ONE", "ONE", 1, Hints())
+  case object TWO extends OpenNums("TWO", "TWO", 2, Hints())
+  final case class $Unknown(int: Int) extends OpenNums("$Unknown", "$Unknown", int, Hints.empty)
+
+  val $unknown: Int => OpenNums = $Unknown(_)
+
+  val values: List[OpenNums] = List(
+    ONE,
+    TWO,
+  )
+  val tag: EnumTag[OpenNums] = EnumTag.OpenIntEnum($unknown)
+  implicit val schema: Schema[OpenNums] = enumeration(tag, values).withId(id).addHints(hints)
+}
+```
+
+As you can see, the main difference between the two is the presence of an `final case class $Unknown` ADT member
+in the open enumeration, which allows to capture values that are not defined in the specification.
