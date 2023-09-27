@@ -43,6 +43,23 @@ libraryDependencies ++= Seq(
 )
 ```
 
+### Mill
+
+In `build.sc`
+
+```scala
+import $ivy.`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSION@`
+import smithy4s.codegen.mill._
+
+object foo extends Smithy4sModule {
+  override def scalaVersion = "2.13.10"
+  override def ivyDeps = Agg(
+    ivy"com.disneystreaming.smithy4s::smithy4s-aws-http4s:${smithy4sVersion()}",
+  )
+  override def smithy4sAwsSpecs: T[Seq[String]] = T(Seq(AWS.dynamodb))
+}
+```
+
 
 ## Example usage
 
