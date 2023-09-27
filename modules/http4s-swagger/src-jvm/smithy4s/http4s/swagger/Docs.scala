@@ -49,7 +49,7 @@ private[smithy4s] abstract class Docs[F[_]](
   private val validSpecs = ids.map(toSwaggerUrl).map(_._1).toList
   private val specsUrls = ids.map(toSwaggerUrl).map(_._2)
 
-  val actualPath: Path = Uri.Path.unsafeFromString("/" + path)
+  private val actualPath: Path = Uri.Path.unsafeFromString("/" + path)
 
   object DocPath {
     def unapply(p: Path): Boolean = {
