@@ -20,6 +20,7 @@ import munit._
 
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
+import scala.util.Using
 class BlobSpec() extends FunSuite {
 
   test("sameBytesAs works across data structures") {
@@ -89,12 +90,7 @@ class BlobSpec() extends FunSuite {
     }
 
     test(s"$name: out of bounds access") {
-      try {
-        val _ = data(6)
-        fail("expected exception")
-      } catch {
-        case _: IndexOutOfBoundsException => ()
-      }
+      intercept[IndexOutOfBoundsException] { data(6) }
     }
 
     test(s"$name: utf8String") {
@@ -121,12 +117,9 @@ class BlobSpec() extends FunSuite {
     }
 
     test(s"$name: copyToStream") {
-      val stream = new ByteArrayOutputStream()
-      try {
+      Using.resource(new ByteArrayOutputStream()) { stream =>
         data.copyToStream(stream, 0, data.size)
         assert(stream.toByteArray().sameElements("foobar".getBytes()))
-      } finally {
-        stream.close()
       }
     }
   }
