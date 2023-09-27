@@ -19,13 +19,14 @@ package http4s
 package swagger
 
 import cats.data.NonEmptyList
+import cats.data.OptionT
 import cats.effect.Sync
+import org.http4s.HttpRoutes
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
+import org.http4s.headers.Host
 import org.http4s.headers.Location
-import org.http4s.HttpRoutes
 import org.webjars.WebJarAssetLocator
-import cats.data.OptionT
 
 private[smithy4s] abstract class Docs[F[_]](
     ids: NonEmptyList[HasId],
@@ -59,9 +60,32 @@ private[smithy4s] abstract class Docs[F[_]](
       }
     }
   }
+
+  private def fromReqToReclaimedUri(req: Request[F]): Option[Uri] = {
+    for {
+      isSecure <- req.isSecure
+      auth <- req.uri.authority.orElse(
+        req.headers
+          .get[Host]
+          .map(h =>
+            Uri.Authority(None, host = Uri.RegName(h.host), port = h.port)
+          )
+      )
+    } yield {
+      val scheme =
+        if (isSecure) Uri.Scheme.https
+        else Uri.Scheme.http
+      req.uri.copy(authority = Some(auth), scheme = Some(scheme))
+    }
+  }
+
   def routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case r @ GET -> DocPath() if r.uri.query.isEmpty =>
-      Found(Location(Uri(path = actualPath / "index.html")))
+      val finalUri = fromReqToReclaimedUri(r) match {
+        case None      => Uri(path = actualPath / "index.html")
+        case Some(uri) => uri.withPath(uri.path / "index.html")
+      }
+      Found(Location(finalUri))
 
     case request @ GET -> `actualPath` / `specsPath` / jsonSpec
         if validSpecs.contains(jsonSpec) =>
