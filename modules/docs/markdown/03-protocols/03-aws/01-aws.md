@@ -15,18 +15,6 @@ Our implementation of the AWS protocols is tested against the official [complian
 * [service-specific customisations](https://smithy.io/2.0/aws/customizations/index.html)  are currently unsupported.
 * **users should not use smithy4s to talk to AWS S3**
 
-### Where to find the specs ?
-
-* SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
-* Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
-
-The version corresponds to the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
-
-AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
-
-The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them
-to maven central to lower the barrier of entry.
-
 ### Note on pre-built artifacts
 
 We (the Smithy4s maintainers) **do not** intend to publish pre-generated artifacts containing the AWS clients, there's a lot of nuance there and maintainance burden that we do not have the capacity to assume. In particular, backward binary compatibility of the generated code is impossible to guarantee at this time.
@@ -38,14 +26,23 @@ We (the Smithy4s maintainers) **do not** intend to publish pre-generated artifac
 In `build.sbt`
 
 ```scala
-import smithy4s.codegen.BuildInfo._
+libraryDependencies ++= Seq(
+  "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
+)
+// The `AWS` object contains a list of references to artifacts that contain specifications to AWS services.
+smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
+```
 
+Alternatively, the following is also valid :
+
+```scala
 libraryDependencies ++= Seq(
   // version sourced from the plugin
   "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
   "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "@AWS_SPEC_VERSION@" % Smithy4s
 )
 ```
+
 
 ## Example usage
 
@@ -76,6 +73,18 @@ object Main extends IOApp.Simple {
 }
 
 ```
+
+## Note on where to find the AWS specifications
+
+* SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
+* Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
+
+The version corresponds to the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
+
+AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
+
+The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them
+to maven central to lower the barrier of entry.
 
 ## Service summary
 

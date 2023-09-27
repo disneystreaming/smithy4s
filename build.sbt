@@ -379,7 +379,12 @@ lazy val codegen = projectMatrix
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
-    bloopEnabled := true
+    bloopEnabled := true,
+    Compile / sourceGenerators += {
+      sourceManaged
+        .map(AwsBoilerplate.generate(_))
+        .taskValue,
+    }
   )
 
 /**

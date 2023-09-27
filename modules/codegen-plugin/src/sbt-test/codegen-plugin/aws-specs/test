@@ -1,0 +1,3 @@
+# check if smithy4sCodegen works
+> smithy4sCodegen
+$ exists target/scala-2.13/src_managed/main/scala/com/amazonaws/dynamodb/AttributeValue.scala
