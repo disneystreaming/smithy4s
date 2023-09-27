@@ -61,6 +61,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     }
 
+    val resolvedHostPrefix =
+      testCase.resolvedHost
+        .zip(testCase.host)
+        .map { case (resolved, host) => resolved.split(host)(0) }
+
+    val resolvedHostAssert =
+      request.uri.host
+        .map(_.value)
+        .zip(resolvedHostPrefix)
+        .map { case (a, b) =>
+          assert.contains(a, b, "resolved host test :").pure[F]
+        }
+        .toList
+
     val receivedPathSegments =
       request.uri.path.segments.map(_.decoded())
     val expectedPathSegments =
@@ -87,7 +101,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       "method test :"
     )
     val ioAsserts: List[F[ComplianceResult]] =
-      bodyAssert +: (List(
+      bodyAssert +: (resolvedHostAssert ++ List(
         assert.testCase.checkHeaders(testCase, request.headers),
         pathAssert,
         queryAssert,

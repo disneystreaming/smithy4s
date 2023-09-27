@@ -99,6 +99,11 @@ object Writer {
   def lift[Message, A](f: (Message, A) => Message): Writer[Message, A] = f(_, _)
 
   /**
+    * Creates a writer which returns a constant value
+    */
+  def constant[Message](m: Message): Writer[Message, Any] = (_, _) => m
+
+  /**
     * Creates a writer that returns its input as its output, without taking
     * the data into consideration
     */

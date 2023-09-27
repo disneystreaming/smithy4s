@@ -36,7 +36,8 @@ import smithy4s.http.HttpMethod
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
-    val explicitDefaultsEncoding: Boolean
+    val explicitDefaultsEncoding: Boolean,
+    val hostPrefixInjection: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
@@ -94,6 +95,7 @@ private[http4s] class SimpleRestJsonCodecs(
       .withRequestMediaType("application/json")
       .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
       .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
+      .withHostPrefixInjection(hostPrefixInjection)
       .build()
 
   }
