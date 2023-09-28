@@ -17,12 +17,13 @@
 package smithy4s.http4s.swagger
 
 import cats.effect.IO
+import com.comcast.ip4s._
 import org.http4s._
 import org.http4s.implicits._
 import org.typelevel.ci.CIString
-import weaver._
 import smithy4s.HasId
 import smithy4s.ShapeId
+import weaver._
 
 object DocsSpec extends SimpleIOSuite {
 
@@ -95,6 +96,32 @@ object DocsSpec extends SimpleIOSuite {
       app.run(request).map { response =>
         expect(response.status == Status.Ok)
       }
+    }
+  }
+
+  test(s"GET http://localhost:8080/docs redirects to with absolute uri") {
+    val socket = SocketAddress(ip"127.0.0.1", port"8080")
+    val dummyConnection = Request.Connection(socket, socket, secure = false)
+    val path = "docs"
+    val baseUri = uri"http://localhost:8080"
+    val app = docs(path).orNotFound
+    val request =
+      Request[IO](
+        method = Method.GET,
+        uri = baseUri / path
+      )
+        .withAttribute(Request.Keys.ConnectionInfo, dummyConnection)
+    app.run(request).map { response =>
+      val redirectUri = response.headers
+        .get(CIString("Location"))
+        .map(_.head)
+        .map(_.value)
+
+      expect(response.status == Status.Found) and
+        expect.eql(
+          redirectUri,
+          Some((baseUri / path / "index.html").renderString)
+        )
     }
   }
 
