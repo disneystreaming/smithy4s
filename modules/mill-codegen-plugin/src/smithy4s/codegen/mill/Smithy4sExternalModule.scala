@@ -21,81 +21,48 @@ import mill.define.ExternalModule
 import mill.define.Target
 import coursier.maven.MavenRepository
 import smithy4s.codegen.SmithyBuildJson
-import smithy4s.codegen.SmithyBuildData
 import mill.define.Command
 import mill.api.PathRef
 
 object Smithy4sExternalModule extends ExternalModule {
   lazy val millDiscover = mill.define.Discover[this.type]
 
-  def generateSmithyBuildJson(ev: Evaluator): Command[PathRef] =
-    Target.command {
-      val rootPath = ev.rootModule.millModuleBasePath.value
-      val s4sModules = ev.rootModule.millInternal.modules
-        .collect { case s: Smithy4sModule => s }
+  def generateSmithyBuildJson(ev: Evaluator): Command[PathRef] = {
+    val rootPath = ev.rootModule.millModuleBasePath.value
+    val s4sModules = ev.rootModule.millInternal.modules
+      .collect { case s: Smithy4sModule => s }
 
-      def extractImports(m: Smithy4sModule): Seq[String] = {
-        ev
-          .evalOrThrow()(m.smithy4sInputDirs)
-          .map(p => p.path.relativeTo(rootPath))
-          .map(_.toString)
-          .distinct
-      }
+    val depsTask = Target
+      .traverse(s4sModules)(_.smithy4sAllDeps)
+      .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)).distinct)
 
-      def extractDeps(m: Smithy4sModule): Seq[String] = {
-        ev
-          .evalOrThrow()(m.smithy4sAllDeps)
-          .map(Smithy4sModule.depIdEncode)
-          .toSeq
-          .flatten
-          .distinct
-      }
-
-      def extractRepos(m: Smithy4sModule): Seq[String] = {
-        ev
-          .evalOrThrow()(m.repositoriesTask)
-          .collect {
-            case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
-              r.root
-          }
-          .distinct
-      }
-
-      s4sModules.foldLeft(SmithyBuildData(Seq.empty, Seq.empty, Seq.empty)) {
-        case (gsb, module) =>
-          gsb.addAll(
-            extractImports(module),
-            extractDeps(module),
-            extractRepos(module)
-          )
-      }
-
-      val deps = ev
-        .evalOrThrow()(s4sModules.map(_.smithy4sAllDeps))
-        .flatMap(_.flatMap(Smithy4sModule.depIdEncode))
-        .distinct
-      val repos = ev
-        .evalOrThrow()(s4sModules.map(_.repositoriesTask))
-        .flatMap(_.collect {
+    val reposTask = Target
+      .traverse(s4sModules)(_.repositoriesTask)
+      .map {
+        _.flatten.collect {
           case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
             r.root
-        })
-        .distinct
-      val imports = ev
-        .evalOrThrow()(s4sModules.map(_.smithy4sInputDirs))
-        .flatMap(
-          _.map(p => p.path.relativeTo(rootPath))
-            .map(_.toString)
-        )
-        .distinct
+        }.distinct
+      }
 
-      val json = SmithyBuildJson.toJson(imports, deps, repos)
+    val importsTask = Target
+      .traverse(s4sModules)(_.smithy4sInputDirs)
+      .map(
+        _.flatten
+          .map(p => p.path.relativeTo(rootPath))
+          .map(rp => "./" + rp.toString)
+          .distinct
+      )
+
+    Target.command {
+      val json = SmithyBuildJson.toJson(importsTask(), depsTask(), reposTask())
       val target = rootPath / "smithy-build.json"
       val content = if (os.exists(target)) {
         val content = os.read(target)
         SmithyBuildJson.merge(content, json)
       } else json
-      os.write.over(target, content)
+      os.write.over(target, content, createFolders = true)
       PathRef(target)
     }
+  }
 }
