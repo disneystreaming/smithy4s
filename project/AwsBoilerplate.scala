@@ -2,11 +2,7 @@ import sbt._
 import scala.annotation.tailrec
 import java.net.URLClassLoader
 import scala.jdk.CollectionConverters._
-import sjsonnew._
-import sjsonnew.:*:
-import sjsonnew.BasicJsonProtocol._
 import scala.io.Source
-import sjsonnew.shaded.scalajson.ast.JValue
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import scala.collection.immutable
@@ -77,14 +73,6 @@ object AwsBoilerplate {
   }
 
   private case class Module(service: String, name: String)
-  private type GenModule = String :*: String :*: LNil
-  private object Module {
-    implicit val jsonFormat: IsoLList.Aux[Module, GenModule] =
-      LList.iso[Module, GenModule](
-        { (m: Module) => ("service", m.service) :*: ("name", m.name) :*: LNil },
-        { case (_, service) :*: (_, name) :*: LNil => Module(service, name) }
-      )
-  }
 
   private case class Summary(artifacts: Vector[Module])
 
