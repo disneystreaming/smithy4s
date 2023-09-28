@@ -16,6 +16,8 @@
 
 package smithy4s.codegen.internals
 
+import smithy4s.codegen.SmithyBuildJson
+
 final class SmithyBuildSpec extends munit.FunSuite {
   test("generate json") {
     val actual = SmithyBuild.writeJson(
@@ -45,7 +47,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
   }
 
   test("merge two json") {
-    val actual = SmithyBuild.merge(
+    val actual = SmithyBuildJson.merge(
       """|{
          |  "version": "1.0",
          |  "imports": ["src/main/smithy"],

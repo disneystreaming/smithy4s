@@ -20,6 +20,24 @@ import sbt._
 import sbt.Keys._
 import Smithy4sCodegenPlugin.autoImport._
 
+private final case class SmithyBuildData(
+    imports: Seq[String],
+    deps: Seq[String],
+    repos: Seq[String]
+) {
+  def addAll(
+      imports: Seq[String],
+      deps: Seq[String],
+      repos: Seq[String]
+  ): SmithyBuildData = {
+    SmithyBuildData(
+      this.imports ++ imports,
+      this.deps ++ deps,
+      this.repos ++ repos
+    )
+  }
+}
+
 private[codegen] object GenerateSmithyBuild {
 
   lazy val command = Command.command(

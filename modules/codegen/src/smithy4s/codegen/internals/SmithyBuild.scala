@@ -14,68 +14,25 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.internals
+package smithy4s.codegen
+package internals
 
 import upickle.default._
 
-final case class SmithyBuild(
+private[internals] final case class SmithyBuild(
     version: String,
     imports: Seq[String],
     maven: SmithyBuildMaven
 )
-object SmithyBuild {
-  private[internals] implicit val codecs: ReadWriter[SmithyBuild] = macroRW
+private[codegen] object SmithyBuild {
+  implicit val codecs: ReadWriter[SmithyBuild] = macroRW
   def writeJson(sb: SmithyBuild): String = write(sb, indent = 4)
-
-  def merge(json1: String, json2: String): String = {
-    val j1 = read[ujson.Value](json1)
-    val j2 = read[ujson.Value](json2)
-    val merged = mergeJs(j1, j2)
-    val finalJs = removeArrayDuplicates(merged)
-    finalJs.render(indent = 4)
-  }
-
-  private def removeArrayDuplicates(js: ujson.Value): ujson.Value = {
-    js match {
-      case ujson.Obj(obj1) =>
-        ujson.Obj.from(
-          obj1.toList.map { case (key, value) =>
-            key -> removeArrayDuplicates(value)
-          }
-        )
-      case (arr1: ujson.Arr) => arr1.arr.distinct
-      case x                 => x
-    }
-  }
-
-  private def mergeJs(
-      v1: ujson.Value,
-      v2: ujson.Value
-  ): ujson.Value = {
-    (v1, v2) match {
-      case (ujson.Obj(obj1), ujson.Obj(obj2)) =>
-        val result = obj2.foldLeft(obj1.toMap) {
-          case (elements, (key, value2)) =>
-            val value = elements.get(key) match {
-              case None =>
-                value2
-              case Some(value1) =>
-                mergeJs(value1, value2)
-            }
-            elements.updated(key, value)
-        }
-        ujson.Obj.from(result)
-      case (arr1: ujson.Arr, arr2: ujson.Arr) =>
-        ujson.Arr(arr1.arr ++ arr2.arr)
-      case (_, _) => v1
-    }
-  }
 }
 
-final case class SmithyBuildMaven(
+private[internals] final case class SmithyBuildMaven(
     dependencies: Seq[String],
     repositories: Seq[String]
 )
-object SmithyBuildMaven {
-  private[internals] implicit val codecs: ReadWriter[SmithyBuildMaven] = macroRW
+private[codegen] object SmithyBuildMaven {
+  implicit val codecs: ReadWriter[SmithyBuildMaven] = macroRW
 }
