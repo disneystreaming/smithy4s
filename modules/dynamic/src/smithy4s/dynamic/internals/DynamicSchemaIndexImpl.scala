@@ -24,10 +24,10 @@ private[internals] class DynamicSchemaIndexImpl(
     schemaMap: Map[ShapeId, Schema[DynData]]
 ) extends DynamicSchemaIndex {
 
-  def allServices: List[DynamicSchemaIndex.ServiceWrapper] =
-    serviceMap.values.toList
-  def allSchemas: Vector[Schema[_]] =
-    schemaMap.values.toVector
+  def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper] =
+    serviceMap.values
+  def allSchemas: Iterable[Schema[_]] =
+    schemaMap.values
 
   def getSchema(
       shapeId: ShapeId

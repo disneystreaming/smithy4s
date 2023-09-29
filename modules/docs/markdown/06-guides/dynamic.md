@@ -106,7 +106,7 @@ The entrypoint to loading models is `DynamicSchemaIndex`.
 
 ```scala mdoc
 import smithy4s.dynamic.DynamicSchemaIndex
-val dsi = DynamicSchemaIndex.loadModel(model).toTry.get
+val dsi = DynamicSchemaIndex.loadModel(model)
 ```
 
 For alternative ways to load a DSI, see `DynamicSchemaIndex.load`.
