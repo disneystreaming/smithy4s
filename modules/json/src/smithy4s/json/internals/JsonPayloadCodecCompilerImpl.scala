@@ -81,12 +81,23 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   private class JsonPayloadDecoder[A](jcodec: JsonCodec[A])
       extends PayloadDecoder[A] {
     def decode(blob: Blob): Either[PayloadError, A] = {
-      val nonEmpty =
-        if (blob.isEmpty) "{}".getBytes
-        else blob.toArray
       try {
         Right {
-          readFromArray(nonEmpty, jsoniterReaderConfig)(jcodec)
+          if (blob.isEmpty) readFromString("{}", jsoniterReaderConfig)(jcodec)
+          else
+            blob match {
+              case b: Blob.ArraySliceBlob =>
+                readFromSubArray(
+                  b.arr,
+                  b.offset,
+                  b.offset + b.size,
+                  jsoniterReaderConfig
+                )(jcodec)
+              case b: Blob.ByteBufferBlob =>
+                readFromByteBuffer(b.buf, jsoniterReaderConfig)(jcodec)
+              case other =>
+                readFromArray(other.toArray, jsoniterReaderConfig)(jcodec)
+            }
         }
       } catch {
         case e: PayloadError => Left(e)

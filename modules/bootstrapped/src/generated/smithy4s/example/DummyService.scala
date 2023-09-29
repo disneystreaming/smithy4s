@@ -19,6 +19,7 @@ trait DummyServiceGen[F[_, _, _, _, _]] {
   self =>
 
   def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, on: Option[OpenNums] = None, ons: Option[OpenNumsStr] = None, slm: Option[Map[String, String]] = None): F[Queries, Nothing, Unit, Nothing, Nothing]
+  def dummyHostPrefix(label1: String, label2: String, label3: HostLabelEnum): F[HostLabelInput, Nothing, Unit, Nothing, Nothing]
   def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): F[PathParams, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](this)
@@ -42,6 +43,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
 
   val endpoints: Vector[smithy4s.Endpoint[DummyServiceOperation, _, _, _, _, _]] = Vector(
     DummyServiceOperation.Dummy,
+    DummyServiceOperation.DummyHostPrefix,
     DummyServiceOperation.DummyPath,
   )
 
@@ -68,10 +70,12 @@ object DummyServiceOperation {
 
   object reified extends DummyServiceGen[DummyServiceOperation] {
     def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, on: Option[OpenNums] = None, ons: Option[OpenNumsStr] = None, slm: Option[Map[String, String]] = None) = Dummy(Queries(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm))
+    def dummyHostPrefix(label1: String, label2: String, label3: HostLabelEnum) = DummyHostPrefix(HostLabelInput(label1, label2, label3))
     def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = DummyPath(PathParams(str, int, ts1, ts2, ts3, ts4, b, ie))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DummyServiceGen[P], f: PolyFunction5[P, P1]) extends DummyServiceGen[P1] {
     def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, on: Option[OpenNums] = None, ons: Option[OpenNumsStr] = None, slm: Option[Map[String, String]] = None) = f[Queries, Nothing, Unit, Nothing, Nothing](alg.dummy(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm))
+    def dummyHostPrefix(label1: String, label2: String, label3: HostLabelEnum) = f[HostLabelInput, Nothing, Unit, Nothing, Nothing](alg.dummyHostPrefix(label1, label2, label3))
     def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = f[PathParams, Nothing, Unit, Nothing, Nothing](alg.dummyPath(str, int, ts1, ts2, ts3, ts4, b, ie))
   }
 
@@ -90,9 +94,21 @@ object DummyServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Readonly())
     def wrap(input: Queries) = Dummy(input)
   }
+  final case class DummyHostPrefix(input: HostLabelInput) extends DummyServiceOperation[HostLabelInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[HostLabelInput, Nothing, Unit, Nothing, Nothing] = impl.dummyHostPrefix(input.label1, input.label2, input.label3)
+    def ordinal = 1
+    def endpoint: smithy4s.Endpoint[DummyServiceOperation,HostLabelInput, Nothing, Unit, Nothing, Nothing] = DummyHostPrefix
+  }
+  object DummyHostPrefix extends smithy4s.Endpoint[DummyServiceOperation,HostLabelInput, Nothing, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[HostLabelInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyHostPrefix"))
+      .withInput(HostLabelInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Endpoint(hostPrefix = smithy.api.NonEmptyString("foo.{label1}--abc{label2}.{label3}.secure.")))
+    def wrap(input: HostLabelInput) = DummyHostPrefix(input)
+  }
   final case class DummyPath(input: PathParams) extends DummyServiceOperation[PathParams, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[PathParams, Nothing, Unit, Nothing, Nothing] = impl.dummyPath(input.str, input.int, input.ts1, input.ts2, input.ts3, input.ts4, input.b, input.ie)
-    def ordinal = 1
+    def ordinal = 2
     def endpoint: smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] = DummyPath
   }
   object DummyPath extends smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] {
