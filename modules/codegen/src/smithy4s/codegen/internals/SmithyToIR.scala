@@ -107,10 +107,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   def toIRVisitor(
       renderAdtMemberStructures: Boolean
-  ): ShapeVisitor[Option[Decl]] =
-    new ShapeVisitor[Option[Decl]] {
+  ): ShapeVisitor.Default[Option[Decl]] =
+    new ShapeVisitor.Default[Option[Decl]] {
 
-      private def getDefault(shape: Shape): Option[Decl] = {
+      override protected def getDefault(shape: Shape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
 
         val recursive = hints.exists {
@@ -151,48 +151,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
 
-      override def blobShape(x: BlobShape): Option[Decl] = getDefault(x)
-
-      override def booleanShape(x: BooleanShape): Option[Decl] = getDefault(x)
-
-      override def listShape(x: ListShape): Option[Decl] = getDefault(x)
-
-      @annotation.nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Option[Decl] = getDefault(x)
-
-      override def mapShape(x: MapShape): Option[Decl] = getDefault(x)
-
-      override def byteShape(x: ByteShape): Option[Decl] = getDefault(x)
-
-      override def shortShape(x: ShortShape): Option[Decl] = getDefault(x)
-
-      override def integerShape(x: IntegerShape): Option[Decl] = getDefault(x)
-
-      override def longShape(x: LongShape): Option[Decl] = getDefault(x)
-
-      override def floatShape(x: FloatShape): Option[Decl] = getDefault(x)
-
-      override def documentShape(x: DocumentShape): Option[Decl] = getDefault(x)
-
-      override def doubleShape(x: DoubleShape): Option[Decl] = getDefault(x)
-
-      override def bigIntegerShape(x: BigIntegerShape): Option[Decl] =
-        getDefault(x)
-
-      override def bigDecimalShape(x: BigDecimalShape): Option[Decl] =
-        getDefault(x)
-
-      override def operationShape(x: OperationShape): Option[Decl] = getDefault(
-        x
-      )
-
-      override def resourceShape(x: ResourceShape): Option[Decl] = getDefault(x)
-
       override def memberShape(x: MemberShape): Option[Decl] = None
-
-      override def timestampShape(x: TimestampShape): Option[Decl] = getDefault(
-        x
-      )
 
       private def doFieldsMatch(
           mixinId: ShapeId,
