@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 final case class UnauthorizedError(reason: String) extends Throwable {
 }
+
 object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnauthorizedError")
 

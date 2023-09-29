@@ -11,6 +11,7 @@ import smithy4s.schema.Schema.struct
 final case class ComplexError(value: Int, message: String, details: Option[ErrorDetails] = None) extends Throwable {
   override def getMessage(): String = message
 }
+
 object ComplexError extends ShapeTag.Companion[ComplexError] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "ComplexError")
 

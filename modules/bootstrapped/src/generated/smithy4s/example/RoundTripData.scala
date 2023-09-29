@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class RoundTripData(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None)
+
 object RoundTripData extends ShapeTag.Companion[RoundTripData] {
   val id: ShapeId = ShapeId("smithy4s.example", "RoundTripData")
 

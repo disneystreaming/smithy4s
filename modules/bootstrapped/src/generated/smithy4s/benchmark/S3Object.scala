@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class S3Object(id: String, owner: String, attributes: Attributes, data: Blob)
+
 object S3Object extends ShapeTag.Companion[S3Object] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "S3Object")
 

@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class AddMenuItemResult(itemId: String, added: Timestamp)
+
 object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
   val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemResult")
 

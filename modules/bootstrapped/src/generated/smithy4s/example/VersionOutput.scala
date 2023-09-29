@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class VersionOutput(version: String)
+
 object VersionOutput extends ShapeTag.Companion[VersionOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "VersionOutput")
 

@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.float
 import smithy4s.schema.Schema.struct
 
 final case class MenuItem(food: Food, price: Float)
+
 object MenuItem extends ShapeTag.Companion[MenuItem] {
   val id: ShapeId = ShapeId("smithy4s.example", "MenuItem")
 

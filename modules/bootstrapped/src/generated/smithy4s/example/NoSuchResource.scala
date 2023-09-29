@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 final case class NoSuchResource(resourceType: String) extends Throwable {
 }
+
 object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoSuchResource")
 

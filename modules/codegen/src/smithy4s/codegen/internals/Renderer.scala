@@ -683,6 +683,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             classBody
           }
       },
+      newline,
       obj(product.nameRef, shapeTag(product.nameRef))(
         renderId(shapeId),
         newline,

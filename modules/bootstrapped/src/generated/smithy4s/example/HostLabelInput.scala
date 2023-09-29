@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HostLabelInput(label1: String, label2: String, label3: HostLabelEnum)
+
 object HostLabelInput extends ShapeTag.Companion[HostLabelInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "HostLabelInput")
 

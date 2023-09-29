@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ReservationOutput(message: String)
+
 object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ReservationOutput")
 

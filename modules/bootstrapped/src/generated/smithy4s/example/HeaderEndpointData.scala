@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HeaderEndpointData(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None)
+
 object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
   val id: ShapeId = ShapeId("smithy4s.example", "HeaderEndpointData")
 

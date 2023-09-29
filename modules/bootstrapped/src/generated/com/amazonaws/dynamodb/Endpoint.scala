@@ -15,6 +15,7 @@ import smithy4s.schema.Schema.struct
   *   <p>Endpoint cache time to live (TTL) value.</p>
   */
 final case class Endpoint(address: String, cachePeriodInMinutes: Long = 0L)
+
 object Endpoint extends ShapeTag.Companion[Endpoint] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "Endpoint")
 

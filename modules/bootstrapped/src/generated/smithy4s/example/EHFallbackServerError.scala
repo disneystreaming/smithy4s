@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 final case class EHFallbackServerError(message: Option[String] = None) extends Throwable {
   override def getMessage(): String = message.orNull
 }
+
 object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHFallbackServerError")
 

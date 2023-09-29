@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class ListPublishersOutput(publishers: List[PublisherId])
+
 object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListPublishersOutput")
 

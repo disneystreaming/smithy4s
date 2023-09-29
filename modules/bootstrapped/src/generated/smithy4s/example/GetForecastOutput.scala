@@ -8,6 +8,7 @@ import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 final case class GetForecastOutput(forecast: Option[ForecastResult] = None)
+
 object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetForecastOutput")
 

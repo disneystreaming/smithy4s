@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
 
 final case class IntList(head: Int, tail: Option[smithy4s.example.IntList] = None)
+
 object IntList extends ShapeTag.Companion[IntList] {
   val id: ShapeId = ShapeId("smithy4s.example", "IntList")
 

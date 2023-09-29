@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 final case class SimpleError(expected: Int) extends Throwable {
 }
+
 object SimpleError extends ShapeTag.Companion[SimpleError] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SimpleError")
 

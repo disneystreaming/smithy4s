@@ -13,6 +13,7 @@ import smithy4s.schema.Schema.struct
 final case class InternalServerError(message: Option[ErrorMessage] = None) extends Throwable {
   override def getMessage(): String = message.map(_.value).orNull
 }
+
 object InternalServerError extends ShapeTag.Companion[InternalServerError] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InternalServerError")
 
