@@ -8,6 +8,7 @@ import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 final case class OpticsStructure(two: Option[OpticsEnum] = None)
+
 object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpticsStructure")
 

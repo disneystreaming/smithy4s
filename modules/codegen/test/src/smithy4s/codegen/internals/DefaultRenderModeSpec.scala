@@ -44,6 +44,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(one: Option[String], two: String, three: String)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
@@ -87,6 +88,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(two: String, three: String, one: Option[String] = None)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
@@ -130,6 +132,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(three: String, two: String = "test", one: Option[String] = None)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |

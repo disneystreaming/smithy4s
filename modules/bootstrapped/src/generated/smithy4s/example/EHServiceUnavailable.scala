@@ -11,6 +11,7 @@ import smithy4s.schema.Schema.struct
 final case class EHServiceUnavailable(message: Option[String] = None) extends NoStackTrace {
   override def getMessage(): String = message.orNull
 }
+
 object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHServiceUnavailable")
 

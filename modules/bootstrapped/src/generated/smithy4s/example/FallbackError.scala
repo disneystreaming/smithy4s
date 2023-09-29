@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 final case class FallbackError(error: String) extends Throwable {
 }
+
 object FallbackError extends ShapeTag.Companion[FallbackError] {
   val id: ShapeId = ShapeId("smithy4s.example", "FallbackError")
 

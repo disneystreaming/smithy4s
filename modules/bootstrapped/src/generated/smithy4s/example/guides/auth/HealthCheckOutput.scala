@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HealthCheckOutput(message: String)
+
 object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckOutput")
 

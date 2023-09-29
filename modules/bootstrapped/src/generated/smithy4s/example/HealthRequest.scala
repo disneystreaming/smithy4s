@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HealthRequest(query: Option[String] = None)
+
 object HealthRequest extends ShapeTag.Companion[HealthRequest] {
   val id: ShapeId = ShapeId("smithy4s.example", "HealthRequest")
 

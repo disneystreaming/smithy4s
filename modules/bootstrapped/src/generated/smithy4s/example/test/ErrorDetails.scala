@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class ErrorDetails(date: Timestamp, location: String)
+
 object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "ErrorDetails")
 

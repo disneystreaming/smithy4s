@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class SendStringInput(key: String, bucketName: String, body: String)
+
 object SendStringInput extends ShapeTag.Companion[SendStringInput] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "SendStringInput")
 

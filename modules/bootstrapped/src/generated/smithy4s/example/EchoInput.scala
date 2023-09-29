@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class EchoInput(pathParam: String, body: EchoBody, queryParam: Option[String] = None)
+
 object EchoInput extends ShapeTag.Companion[EchoInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "EchoInput")
 

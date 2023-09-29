@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class TestDiscriminatedOutput(data: Option[PayloadData] = None)
+
 object TestDiscriminatedOutput extends ShapeTag.Companion[TestDiscriminatedOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminatedOutput")
 

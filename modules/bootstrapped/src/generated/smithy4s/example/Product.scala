@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 final case class Product()
+
 object Product extends ShapeTag.Companion[Product] {
   val id: ShapeId = ShapeId("smithy4s.example", "Product")
 

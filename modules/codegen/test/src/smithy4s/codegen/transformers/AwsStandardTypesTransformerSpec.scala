@@ -81,6 +81,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |final case class TestStructure(i: Int, d: Option[Date] = None, l: Option[Long] = None)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
@@ -132,27 +133,28 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     assertEquals(
       structureCode,
-      """|package test
-         |
-         |import smithy4s.Hints
-         |import smithy4s.Schema
-         |import smithy4s.ShapeId
-         |import smithy4s.ShapeTag
-         |import smithy4s.schema.Schema.string
-         |import smithy4s.schema.Schema.struct
-         |
-         |final case class TestStructure(s: Option[String] = None)
-         |object TestStructure extends ShapeTag.Companion[TestStructure] {
-         |  val id: ShapeId = ShapeId("test", "TestStructure")
-         |
-         |  val hints: Hints = Hints.empty
-         |
-         |  implicit val schema: Schema[TestStructure] = struct(
-         |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
-         |  ){
-         |    TestStructure.apply
-         |  }.withId(id).addHints(hints)
-         |}""".stripMargin
+      """package test
+        |
+        |import smithy4s.Hints
+        |import smithy4s.Schema
+        |import smithy4s.ShapeId
+        |import smithy4s.ShapeTag
+        |import smithy4s.schema.Schema.string
+        |import smithy4s.schema.Schema.struct
+        |
+        |final case class TestStructure(s: Option[String] = None)
+        |
+        |object TestStructure extends ShapeTag.Companion[TestStructure] {
+        |  val id: ShapeId = ShapeId("test", "TestStructure")
+        |
+        |  val hints: Hints = Hints.empty
+        |
+        |  implicit val schema: Schema[TestStructure] = struct(
+        |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
+        |  ){
+        |    TestStructure.apply
+        |  }.withId(id).addHints(hints)
+        |}""".stripMargin
     )
   }
 
@@ -203,6 +205,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |final case class TestStructure(i: Int = 5)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |

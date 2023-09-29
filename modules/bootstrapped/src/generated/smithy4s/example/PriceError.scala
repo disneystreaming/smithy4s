@@ -11,6 +11,7 @@ import smithy4s.schema.Schema.struct
 final case class PriceError(message: String, code: Int) extends Throwable {
   override def getMessage(): String = message
 }
+
 object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
 

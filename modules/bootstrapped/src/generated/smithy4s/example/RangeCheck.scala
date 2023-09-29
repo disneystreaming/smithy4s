@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
 final case class RangeCheck(qty: Int)
+
 object RangeCheck extends ShapeTag.Companion[RangeCheck] {
   val id: ShapeId = ShapeId("smithy4s.example", "RangeCheck")
 

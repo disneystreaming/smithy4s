@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 final case class RandomOtherServerErrorWithCode(message: Option[String] = None) extends Throwable {
   override def getMessage(): String = message.orNull
 }
+
 object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServerErrorWithCode] {
   val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherServerErrorWithCode")
 

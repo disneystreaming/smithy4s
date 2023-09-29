@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 final case class GenericServerError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
+
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericServerError")
 

@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class AddMenuItemRequest(restaurant: String, menuItem: MenuItem)
+
 object AddMenuItemRequest extends ShapeTag.Companion[AddMenuItemRequest] {
   val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemRequest")
 

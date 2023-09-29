@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class CreateObjectInput(key: String, bucketName: String, payload: S3Object)
+
 object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "CreateObjectInput")
 

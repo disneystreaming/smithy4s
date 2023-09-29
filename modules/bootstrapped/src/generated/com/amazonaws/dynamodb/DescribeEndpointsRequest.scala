@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 final case class DescribeEndpointsRequest()
+
 object DescribeEndpointsRequest extends ShapeTag.Companion[DescribeEndpointsRequest] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest")
 

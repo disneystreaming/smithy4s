@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 final case class Serializable()
+
 object Serializable extends ShapeTag.Companion[Serializable] {
   val id: ShapeId = ShapeId("smithy4s.example", "Serializable")
 

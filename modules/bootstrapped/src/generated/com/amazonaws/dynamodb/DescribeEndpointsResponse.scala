@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
   *   <p>List of endpoints.</p>
   */
 final case class DescribeEndpointsResponse(endpoints: List[Endpoint])
+
 object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsResponse] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse")
 

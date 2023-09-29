@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class DefaultOrderingTest(three: String, one: Int = 1, two: Option[String] = None)
+
 object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultOrderingTest")
 

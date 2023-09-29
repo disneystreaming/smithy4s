@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class GetCurrentTimeOutput(time: Timestamp)
+
 object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetCurrentTimeOutput")
 
