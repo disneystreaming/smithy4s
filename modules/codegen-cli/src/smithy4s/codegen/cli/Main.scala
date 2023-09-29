@@ -43,7 +43,7 @@ object Main {
         .parse(args.toList)
         .map {
           case Smithy4sCommand.Generate(args) =>
-            val res = Codegen.processSpecs(args)
+            val res = Codegen.generateToDisk(args)
             if (res.isEmpty) {
               // Printing to stderr because we print generated files path to stdout
               Console.err.println(

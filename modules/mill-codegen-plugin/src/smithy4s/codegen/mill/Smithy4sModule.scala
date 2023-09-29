@@ -212,7 +212,7 @@ trait Smithy4sModule extends ScalaModule {
       localJars = allLocalJars
     )
 
-    Smithy4s.processSpecs(args)
+    Smithy4s.generateToDisk(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
 

@@ -16,16 +16,19 @@
 
 package smithy4s.codegen
 
-object Codegen {
-
-  def generate(args: CodegenArgs): CodegenResult =
-    internals.CodegenImpl.generate(args)
-
-  def generateToDisk(args: CodegenArgs): Set[os.Path] = {
-    internals.CodegenImpl.write(generate(args))
+sealed trait CodegenEntry {
+  def toPath: os.Path = this match {
+    case CodegenEntry.FromMemory(path, _) => path
+    case CodegenEntry.FromDisk(path, _)   => path
   }
-
-  def dumpModel(args: DumpModelArgs): String =
-    internals.CodegenImpl.dumpModel(args)
-
 }
+
+object CodegenEntry {
+  case class FromMemory(path: os.Path, content: String) extends CodegenEntry
+  case class FromDisk(path: os.Path, sourceFile: os.Path) extends CodegenEntry
+}
+
+final case class CodegenResult(
+    sources: Seq[CodegenEntry],
+    resources: Seq[CodegenEntry]
+)
