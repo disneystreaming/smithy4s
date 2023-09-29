@@ -14,20 +14,22 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.mill
+package smithy4s.codegen
 
-import mill.eval.Evaluator
-import mill.define.ExternalModule
-import mill.define.Target
+import _root_.{mill => mmill}
 import coursier.maven.MavenRepository
+import mmill.api.PathRef
+import mmill.define.Command
+import mmill.define.ExternalModule
+import mmill.define.Target
+import mmill.eval.Evaluator
 import smithy4s.codegen.SmithyBuildJson
-import mill.define.Command
-import mill.api.PathRef
+import smithy4s.codegen.mill.Smithy4sModule
 
-object Smithy4sExternalModule extends ExternalModule {
-  lazy val millDiscover = mill.define.Discover[this.type]
+object LSP extends ExternalModule {
+  lazy val millDiscover = mmill.define.Discover[this.type]
 
-  def generateSmithyBuildJson(ev: Evaluator): Command[PathRef] = {
+  def updateConfig(ev: Evaluator): Command[PathRef] = {
     val rootPath = ev.rootModule.millModuleBasePath.value
     val s4sModules = ev.rootModule.millInternal.modules
       .collect { case s: Smithy4sModule => s }

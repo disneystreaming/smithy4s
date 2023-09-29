@@ -23,9 +23,7 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
       testKit.staticTestEvaluator(root)(FullName("config-gets-generated"))
 
     val result = ev(
-      smithy4s.codegen.mill.Smithy4sExternalModule.generateSmithyBuildJson(
-        ev.evaluator
-      )
+      smithy4s.codegen.LSP.updateConfig(ev.evaluator)
     ).map(_._1)
 
     assertEquals(

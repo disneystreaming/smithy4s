@@ -41,11 +41,12 @@ private final case class SmithyBuildData(
 private[codegen] object GenerateSmithyBuild {
 
   lazy val command = Command.command(
-    "generateSmithyBuildJson",
+    "smithy4sUpdateLSPConfig",
     briefHelp =
       "Write a smithy-build.json file from the modules' configuration.",
     detail =
-      """|Export the configuration from all modules where Smithy4sCodegenPlugin is enabled""".stripMargin
+      """|Export the configuration from all modules where Smithy4sCodegenPlugin is enabled into a smithy-build.sjon
+         |file. If a file already exists, the content will be merged with the existing file. If not, a new file is written.""".stripMargin
   ) { s =>
     val extracted = Project.extract(s)
 
