@@ -53,12 +53,26 @@ final class UnaryServerCodecs[F[_], Request, Response, I, E, O](
 
 object UnaryServerCodecs {
 
-  type For[F[_], Request, Response] = {
-    type toKind5[I, E, O, SI, SO] =
-      UnaryServerCodecs[F, Request, Response, I, E, O]
-  }
+  trait Make[F[_], Request, Response] { self =>
+    def apply[I, E, O, SI, SO](
+        schema: OperationSchema[I, E, O, SI, SO]
+    ): UnaryServerCodecs[F, Request, Response, I, E, O]
 
-  type Make[F[_], Request, Response] =
-    smithy4s.kinds.PolyFunction5[OperationSchema, For[F, Request, Response]#toKind5]
+    final def transformResponse[Response1](
+        f: Response => F[Response1]
+    )(implicit F: MonadThrowLike[F]): Make[F, Request, Response1] = new Make[F, Request, Response1] {
+      def apply[I, E, O, SI, SO](
+          schema: OperationSchema[I, E, O, SI, SO]
+      ): UnaryServerCodecs[F, Request, Response1, I, E, O] = self(schema).transformResponse(f)
+    }
+
+    final def transformRequest[Request0](
+        f: Request0 => F[Request]
+    )(implicit F: MonadThrowLike[F]): Make[F, Request0, Response] = new Make[F, Request0, Response] {
+      def apply[I, E, O, SI, SO](
+          schema: OperationSchema[I, E, O, SI, SO]
+      ): UnaryServerCodecs[F, Request0, Response, I, E, O] = self(schema).transformRequest(f)
+    }
+  }
 
 }
