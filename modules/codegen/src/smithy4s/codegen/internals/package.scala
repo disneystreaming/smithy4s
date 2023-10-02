@@ -35,8 +35,6 @@ import scala.jdk.CollectionConverters._
 
 package object internals {
 
-  val SMITHY4S_DEPENDENCIES = "smithy4sDependencies"
-
   val uuidShapeId = ShapeId.from("alloy#UUID")
 
   private[internals] type LinesWithValue = WithValue.ToLinesWithValue[_]
