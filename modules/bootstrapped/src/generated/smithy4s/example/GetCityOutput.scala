@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetCityOutput(name: String, coordinates: CityCoordinates)
+
 object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetCityOutput")
 

@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ErrorHandlingOperationOutput(out: Option[String] = None)
+
 object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOperationOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationOutput")
 

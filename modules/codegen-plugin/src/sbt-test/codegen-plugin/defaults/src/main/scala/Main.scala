@@ -32,5 +32,5 @@ object Main extends App {
   def buildSchemaIndex() = Model.assembler().assemble().unwrap()
 
   val model = buildSchemaIndex()
-  DynamicSchemaIndex.loadModel(model).toTry.get
+  DynamicSchemaIndex.loadModel(model)
 }

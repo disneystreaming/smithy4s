@@ -290,7 +290,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
     )
 
-  private def moduleIdEncode(
+  override lazy val globalSettings: Seq[Def.Setting[_]] = List(
+    commands += GenerateSmithyBuild.command
+  )
+
+  private[codegen] def moduleIdEncode(
       moduleId: ModuleID,
       scalaBinaryVersion: Option[String]
   ): List[String] = {

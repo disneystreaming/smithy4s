@@ -32,6 +32,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   final case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne {
     def $ordinal: Int = 0
   }
+
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
 

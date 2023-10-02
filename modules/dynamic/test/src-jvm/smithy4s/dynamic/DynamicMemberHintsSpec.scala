@@ -32,7 +32,6 @@ class DynamicMemberHintsSpec() extends DummyIO.Suite {
 
     val dsi = DynamicSchemaIndex
       .loadModel(model)
-      .getOrElse(sys.error("Couldn't load model"))
 
     dsi
       .getSchema(shapeId)

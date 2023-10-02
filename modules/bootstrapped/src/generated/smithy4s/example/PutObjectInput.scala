@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 /** A key and bucket is always required for putting a new file in a bucket */
 final case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
+
 object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 

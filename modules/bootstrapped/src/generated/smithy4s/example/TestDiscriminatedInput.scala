@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class TestDiscriminatedInput(key: String)
+
 object TestDiscriminatedInput extends ShapeTag.Companion[TestDiscriminatedInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminatedInput")
 

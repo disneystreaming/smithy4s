@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class GetMenuResult(menu: Map[String, MenuItem])
+
 object GetMenuResult extends ShapeTag.Companion[GetMenuResult] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetMenuResult")
 

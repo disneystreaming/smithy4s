@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 final case class UnknownServerError(errorCode: UnknownServerErrorCode, description: Option[String] = None, stateHash: Option[String] = None) extends Throwable {
 }
+
 object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnknownServerError")
 

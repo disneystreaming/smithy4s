@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
 final case class CustomCodeInput(code: Int)
+
 object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeInput")
 

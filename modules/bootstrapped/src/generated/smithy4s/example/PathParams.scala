@@ -12,6 +12,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class PathParams(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers)
+
 object PathParams extends ShapeTag.Companion[PathParams] {
   val id: ShapeId = ShapeId("smithy4s.example", "PathParams")
 

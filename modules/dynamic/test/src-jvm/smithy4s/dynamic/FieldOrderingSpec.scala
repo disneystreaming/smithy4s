@@ -40,10 +40,7 @@ class FieldOrderingSpec extends munit.ScalaCheckSuite {
       val struct = structBuilder.build()
       val union = unionBuilder.build()
       val model = Model.builder().addShapes(struct, union).build()
-      val schemaIndex = DynamicSchemaIndex
-        .loadModel(model)
-        .toOption
-        .get
+      val schemaIndex = DynamicSchemaIndex.loadModel(model)
 
       for {
         id <- List("Foo", "Bar")

@@ -12,6 +12,7 @@ import smithy4s.schema.Schema.struct
   *   The string case is there because.
   */
 final case class GetFooOutput(foo: Option[Foo] = None)
+
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetFooOutput")
 

@@ -23,11 +23,11 @@ package dynamic
   * without requiring code generation.
   */
 trait DynamicSchemaIndex {
-  def allServices: List[DynamicSchemaIndex.ServiceWrapper]
+  def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper]
   def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
     allServices.find(_.service.id == shapeId)
 
-  def allSchemas: Vector[Schema[_]]
+  def allSchemas: Iterable[Schema[_]]
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
 
   def metadata: Map[String, Document]

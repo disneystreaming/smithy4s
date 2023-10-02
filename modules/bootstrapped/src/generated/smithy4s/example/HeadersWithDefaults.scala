@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HeadersWithDefaults(dflt: String = "test")
+
 object HeadersWithDefaults extends ShapeTag.Companion[HeadersWithDefaults] {
   val id: ShapeId = ShapeId("smithy4s.example", "HeadersWithDefaults")
 

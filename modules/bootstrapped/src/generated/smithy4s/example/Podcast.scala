@@ -42,6 +42,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   final case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
     def $ordinal: Int = 0
   }
+
   object Video extends ShapeTag.Companion[Video] {
     val id: ShapeId = ShapeId("smithy4s.example", "Video")
 
@@ -66,6 +67,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   final case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
     def $ordinal: Int = 1
   }
+
   object Audio extends ShapeTag.Companion[Audio] {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
 

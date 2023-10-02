@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class SetOpInput(set: Set)
+
 object SetOpInput extends ShapeTag.Companion[SetOpInput] {
   val id: ShapeId = ShapeId("smithy4s.example.reservedNameOverride", "SetOpInput")
 

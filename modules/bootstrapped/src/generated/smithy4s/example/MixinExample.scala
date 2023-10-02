@@ -11,6 +11,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class MixinExample(a: Option[String] = None, b: Option[Int] = None, c: Option[Long] = None, d: Option[Boolean] = None) extends CommonFieldsOne with CommonFieldsTwo
+
 object MixinExample extends ShapeTag.Companion[MixinExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinExample")
 

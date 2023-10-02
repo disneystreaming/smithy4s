@@ -20,6 +20,7 @@ import smithy4s.schema.Schema.struct
   *         there are no more table names to be retrieved.</p>
   */
 final case class ListTablesOutput(tableNames: Option[List[TableName]] = None, lastEvaluatedTableName: Option[TableName] = None)
+
 object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesOutput")
 

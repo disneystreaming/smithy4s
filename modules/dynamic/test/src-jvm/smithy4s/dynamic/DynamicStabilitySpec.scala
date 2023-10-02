@@ -108,7 +108,6 @@ class DynamicStabilitySpec extends FunSuite {
 
     def parseAndLoad() = DynamicSchemaIndex
       .loadModel(model)
-      .getOrElse(sys.error("Couldn't load model"))
 
     // We are testing that loading a schema several times and running
     // it through a cached visitor does actually hit the cache.

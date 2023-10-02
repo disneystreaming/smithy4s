@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.struct
 
 final case class Permission(read: Option[Boolean] = None, write: Option[Boolean] = None, directory: Option[Boolean] = None)
+
 object Permission extends ShapeTag.Companion[Permission] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "Permission")
 

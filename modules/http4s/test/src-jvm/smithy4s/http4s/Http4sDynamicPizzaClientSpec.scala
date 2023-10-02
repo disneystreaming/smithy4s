@@ -33,11 +33,7 @@ class DynamicHttpProxy(client: Client[IO]) {
 
   val dynamicServiceIO =
     parseSampleSpec("pizza.smithy")
-      .flatMap { model =>
-        DynamicSchemaIndex
-          .loadModel(model)
-          .liftTo[IO]
-      }
+      .map(DynamicSchemaIndex.loadModel)
       .map { index =>
         index
           .getService(ShapeId("smithy4s.example", "PizzaAdminService"))

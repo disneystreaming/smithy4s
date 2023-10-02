@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class Creds(user: Option[String] = None, key: Option[String] = None)
+
 object Creds extends ShapeTag.Companion[Creds] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "Creds")
 

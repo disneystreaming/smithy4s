@@ -47,6 +47,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType {
     def $ordinal: Int = 1
   }
+
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 

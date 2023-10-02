@@ -15,6 +15,7 @@ import smithy4s.schema.Schema.struct
 final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }
+
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
 

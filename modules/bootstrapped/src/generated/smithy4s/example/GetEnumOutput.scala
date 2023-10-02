@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetEnumOutput(result: Option[String] = None)
+
 object GetEnumOutput extends ShapeTag.Companion[GetEnumOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetEnumOutput")
 

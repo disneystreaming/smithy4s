@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "imports": ["src/main/smithy"],
+  "maven": {
+    "dependencies": ["software.amazon.smithy:smithy-waiters:1.38.0"],
+    "repositories": []
+  },
+  "custom": "attribute"
+}
