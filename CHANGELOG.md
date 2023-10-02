@@ -34,10 +34,12 @@ As a result, the **smithy4s-json** module has been rewritten. In particular, the
 
 ### AWS SDK support.
 
-Smithy4s' coverage of the AWS protocols has increased drastically. Now, the vast majority of services and operations are supported. This does mean that Smithy4s can effectively be used as a cross-platform AWS SDK, delegating to `http4s` for transport.
+Smithy4s' coverage of the AWS protocols has increased drastically. Now, the vast majority of services and operations are supported. This does mean that Smithy4s can effectively be used as a cross-platform AWS SDK (with caveats), delegating to `http4s` for transport.
 
+The Smithy4s build plugins now also come with utilities to facilitate the code-generation from AWS service specifications.
 
-This however comes with a caveat, please refer yourself to the relevant [documentation page](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws).
+Please refer yourself to the relevant [documentation page](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws).
+
 
 ### Mill
 

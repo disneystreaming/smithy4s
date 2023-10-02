@@ -37,6 +37,8 @@ import mill.scalalib.CrossVersion.Full
 
 trait Smithy4sModule extends ScalaModule {
 
+  val AWS = smithy4s.codegen.AwsSpecs
+
   /** Input directory for .smithy files */
   def smithy4sInputDirs: Target[Seq[PathRef]] = T.sources {
     Seq(PathRef(millSourcePath / "smithy"))
@@ -114,11 +116,26 @@ trait Smithy4sModule extends ScalaModule {
     }
   }
 
+  def smithy4sAwsSpecs: T[Seq[String]] = T {
+    Seq.empty[String]
+  }
+
+  def smithy4sAwsSpecsVersion: T[String] = T {
+    AWS.knownVersion
+  }
+
+  def smithy4sAwsSpecDependencies: T[Agg[Dep]] = T {
+    val org = AWS.org
+    val version = smithy4sAwsSpecsVersion()
+    smithy4sAwsSpecs().map { artifactName => ivy"$org:$artifactName:$version" }
+  }
+
   def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
     val bind = bindDependency()
     transitiveIvyDeps() ++
       smithy4sTransitiveIvyDeps().map(bind) ++
-      smithy4sExternallyTrackedIvyDeps().map(bind)
+      smithy4sExternallyTrackedIvyDeps().map(bind) ++
+      smithy4sAwsSpecDependencies().map(bind)
   }
 
   def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {

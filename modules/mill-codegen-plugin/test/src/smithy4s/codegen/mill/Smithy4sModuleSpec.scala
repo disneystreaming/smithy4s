@@ -348,6 +348,24 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   }
 
+  test("codegen with aws specs") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.10"
+      override def ivyDeps = Agg(coreDep)
+      override def smithy4sAwsSpecs: T[Seq[String]] = T(
+        Seq(AWS.dynamodb)
+      )
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName("codegen-with-aws-specs"))
+
+    taskWorks(foo.smithy4sCodegen, ev)
+    checkFileExist(
+      ev.outPath / "smithy4sOutputDir.dest" / "scala" / "com" / "amazonaws" / "dynamodb" / "AttributeValue.scala",
+      shouldExist = true
+    )
+  }
+
   private def compileWorks(
       sm: ScalaModule,
       testEvaluator: testKit.TestEvaluator
