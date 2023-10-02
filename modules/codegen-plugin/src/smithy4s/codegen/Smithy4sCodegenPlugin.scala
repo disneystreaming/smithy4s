@@ -445,7 +445,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
               val resPaths = smithy4s.codegen.Codegen
-                .processSpecs(args)
+                .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {
