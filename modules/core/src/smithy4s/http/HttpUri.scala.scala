@@ -20,7 +20,10 @@ final case class HttpUri(
     scheme: HttpUriScheme,
     host: String,
     port: Option[Int],
-    path: Seq[String],
+    /**
+      * A sequence of URL-decoded URI segment.
+      */
+    path: IndexedSeq[String],
     queryParams: Map[String, Seq[String]],
     /**
       * Field allowing to store decoded path parameters alongside an http request,

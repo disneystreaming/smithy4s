@@ -66,7 +66,7 @@ package object kernel {
       uriScheme,
       uri.host.map(_.renderString).getOrElse("localhost"),
       uri.port,
-      uri.path.segments.map(_.encoded),
+      uri.path.segments.map(_.decoded()),
       getQueryParams(uri),
       pathParams
     )
@@ -95,7 +95,7 @@ package object kernel {
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 
-  private[smithy4s] def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
+  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
     Uri(
       path = path,

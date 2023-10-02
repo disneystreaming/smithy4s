@@ -76,7 +76,7 @@ object AwsClient {
             scheme = HttpUriScheme.Https,
             host = s"$endpointPrefix.$region.amazonaws.com",
             port = None,
-            path = Seq.empty,
+            path = IndexedSeq.empty,
             queryParams = Map.empty,
             pathParams = None
           )
