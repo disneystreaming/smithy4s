@@ -24,8 +24,10 @@ sealed trait CodegenEntry {
 }
 
 object CodegenEntry {
-  case class FromMemory(path: os.Path, content: String) extends CodegenEntry
-  case class FromDisk(path: os.Path, sourceFile: os.Path) extends CodegenEntry
+  case class FromMemory(targetPath: os.Path, content: String)
+      extends CodegenEntry
+  case class FromDisk(targetPath: os.Path, sourcePath: os.Path)
+      extends CodegenEntry
 }
 
 final case class CodegenResult(
