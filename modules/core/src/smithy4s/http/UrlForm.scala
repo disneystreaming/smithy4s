@@ -35,7 +35,7 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
-private[smithy4s] final case class UrlForm(values: List[UrlForm.FormData]) {
+final case class UrlForm(values: List[UrlForm.FormData]) {
 
   def render: String = {
     val builder = new mutable.StringBuilder
@@ -50,7 +50,7 @@ private[smithy4s] final case class UrlForm(values: List[UrlForm.FormData]) {
   }
 }
 
-private[smithy4s] object UrlForm {
+object UrlForm {
 
   final case class FormData(path: PayloadPath, maybeValue: Option[String]) {
 
@@ -81,7 +81,9 @@ private[smithy4s] object UrlForm {
   }
 
   // This is based on http4s' own equivalent, but simplified for our use case.
-  def parse(urlFormString: String): Either[UrlFormDecodeError, UrlForm] = {
+  private[smithy4s] def parse(
+      urlFormString: String
+  ): Either[UrlFormDecodeError, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
     val outputBuilder = List.newBuilder[UrlForm.FormData]

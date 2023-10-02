@@ -372,6 +372,7 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.9.1",
+      "com.lihaoyi" %% "upickle" % "3.1.0",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "io.get-coursier" %% "coursier" % "2.1.7"
@@ -379,7 +380,12 @@ lazy val codegen = projectMatrix
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
-    bloopEnabled := true
+    bloopEnabled := true,
+    Compile / sourceGenerators += {
+      sourceManaged
+        .map(AwsBoilerplate.generate(_))
+        .taskValue,
+    }
   )
 
 /**

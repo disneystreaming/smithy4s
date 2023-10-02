@@ -14,22 +14,25 @@
  *  limitations under the License.
  */
 
-package smithy4s.json.internals
+package smithy4s.codegen
+package internals
 
-import munit._
-import smithy4s.codecs.PayloadPath
+import upickle.default._
 
-final class CursorSpec extends FunSuite {
+private[internals] final case class SmithyBuild(
+    version: String,
+    imports: Seq[String],
+    maven: SmithyBuildMaven
+)
+private[codegen] object SmithyBuild {
+  implicit val codecs: ReadWriter[SmithyBuild] = macroRW
+  def writeJson(sb: SmithyBuild): String = write(sb, indent = 4)
+}
 
-  test("check push / pop accuracy") {
-    val c = new Cursor()
-    c.push("test")
-    c.pop()
-    c.push(1)
-    assertEquals(
-      c.getPath(List.empty),
-      PayloadPath(List(PayloadPath.Segment(1)))
-    )
-  }
-
+private[internals] final case class SmithyBuildMaven(
+    dependencies: Seq[String],
+    repositories: Seq[String]
+)
+private[codegen] object SmithyBuildMaven {
+  implicit val codecs: ReadWriter[SmithyBuildMaven] = macroRW
 }

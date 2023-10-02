@@ -16,6 +16,9 @@ addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.1")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.3")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "1.5.11")
 
-libraryDependencies ++= Seq("com.lihaoyi" %% "os-lib" % "0.8.1")
+libraryDependencies ++= Seq(
+  "com.lihaoyi" %% "os-lib" % "0.8.1",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.23.4"
+)
 
 addDependencyTreePlugin
