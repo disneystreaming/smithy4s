@@ -37,7 +37,7 @@ import fs2.Chunk
 // scalafmt: { maxColumn = 120}
 package object kernel {
 
-  private[smithy4s] def toSmithy4sHttpRequest[F[_]: Concurrent](req: Request[F]): F[Smithy4sHttpRequest[Blob]] = {
+  def toSmithy4sHttpRequest[F[_]: Concurrent](req: Request[F]): F[Smithy4sHttpRequest[Blob]] = {
     val pathParams = req.attributes.lookup(pathParamsKey)
     val uri = toSmithy4sHttpUri(req.uri, pathParams)
     val headers = getHeaders(req)
@@ -47,7 +47,7 @@ package object kernel {
     }
   }
 
-  private[smithy4s] def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
+  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
     val method = unsafeFromSmithy4sHttpMethod(req.method)
     val headers = toHeaders(req.headers)
     val updatedHeaders = req.body.size match {
@@ -57,7 +57,7 @@ package object kernel {
     Request(method, fromSmithy4sHttpUri(req.uri), headers = updatedHeaders, body = toStream(req.body))
   }
 
-  private[smithy4s] def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
+  def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
     val uriScheme = uri.scheme match {
       case Some(Uri.Scheme.http) => Smithy4sHttpUriScheme.Http
       case _                     => Smithy4sHttpUriScheme.Https
@@ -72,17 +72,7 @@ package object kernel {
     )
   }
 
-  private[smithy4s] def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
-    val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
-    Uri(
-      path = path,
-      authority = Some(Uri.Authority(host = Uri.RegName(uri.host), port = uri.port))
-    ).withMultiValueQueryParams(uri.queryParams)
-  }
-
-  private[smithy4s] def fromSmithy4sHttpResponse[F[_]](
-      res: Smithy4sHttpResponse[Blob]
-  ): Response[F] = {
+  def fromSmithy4sHttpResponse[F[_]](res: Smithy4sHttpResponse[Blob]): Response[F] = {
     val status = Status.fromInt(res.statusCode) match {
       case Right(value) => value
       case Left(e)      => throw e
@@ -97,13 +87,20 @@ package object kernel {
     Response(status, headers = updatedHeaders, body = toStream(res.body))
   }
 
-  private[smithy4s] def toSmithy4sHttpResponse[F[_]: Concurrent](
-      res: Response[F]
-  ): F[Smithy4sHttpResponse[Blob]] = collectBytes(res.body).map { blob =>
-    val headers = res.headers.headers
-      .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
-      .toMap
-    Smithy4sHttpResponse(res.status.code, headers, blob)
+  def toSmithy4sHttpResponse[F[_]: Concurrent](res: Response[F]): F[Smithy4sHttpResponse[Blob]] =
+    collectBytes(res.body).map { blob =>
+      val headers = res.headers.headers
+        .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
+        .toMap
+      Smithy4sHttpResponse(res.status.code, headers, blob)
+    }
+
+  private[smithy4s] def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
+    val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
+    Uri(
+      path = path,
+      authority = Some(Uri.Authority(host = Uri.RegName(uri.host), port = uri.port))
+    ).withMultiValueQueryParams(uri.queryParams)
   }
 
   /**

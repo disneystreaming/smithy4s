@@ -26,7 +26,7 @@ import org.http4s.headers.`Content-Length`
 
 // inspired from:
 // https://github.com/http4s/http4s/blob/v0.23.19/client/shared/src/main/scala/org/http4s/client/middleware/GZip.scala
-object GzipRequestCompression {
+private[smithy4s] object GzipRequestCompression {
   val DefaultBufferSize = 32 * 1024
 
   def apply[F[_]: Compression](
