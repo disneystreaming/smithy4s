@@ -40,6 +40,10 @@ The Smithy4s build plugins now also come with utilities to facilitate the code-g
 
 Please refer yourself to the relevant [documentation page](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws).
 
+### Build plugins
+
+Smithy has support in IDE via the smithy-language-server. The language server uses a configuration file to understand your project. In 0.18, our build plugins for `sbt` and `mill` can generate that configuration file for you. Use the following commands depending on the build tool you use, for `sbt`: `sbt smithy4sUpdateLSPConfig` and for `mill`: `mill smithy4s.codegen.LSP/updateConfig`.
+
 
 ### Mill
 
