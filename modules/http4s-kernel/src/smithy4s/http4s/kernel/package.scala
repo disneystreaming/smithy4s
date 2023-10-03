@@ -59,9 +59,10 @@ package object kernel {
 
   def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
     val uriScheme = uri.scheme match {
-      case Some(Uri.Scheme.http) => Smithy4sHttpUriScheme.Http
-      case _                     => Smithy4sHttpUriScheme.Https
+      case Some(Uri.Scheme.https) => Smithy4sHttpUriScheme.Https
+      case _                      => Smithy4sHttpUriScheme.Http
     }
+
     Smithy4sHttpUri(
       uriScheme,
       uri.host.map(_.renderString).getOrElse("localhost"),
