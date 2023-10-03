@@ -11,6 +11,6 @@ We also provide a [VS Code extension](https://marketplace.visualstudio.com/items
 
 You can configure your language server using a `smithy-build.json` at the root of the workspace. The smithy4s plugins have a task to generate that file according to your modules configuration.
 
-For sbt: `sbt smithy4sUpdateLSPConfig` and mill: `mill smithy4s.codegen.LSP/`.
+For sbt: `sbt smithy4sUpdateLSPConfig` and mill: `mill smithy4s.codegen.LSP/updateConfig`.
 
 If you already have a file, it will merge the existing file with the generated configuration.
