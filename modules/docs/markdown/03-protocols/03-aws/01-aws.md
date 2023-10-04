@@ -6,14 +6,13 @@ sidebar_label: AWS
 
 Smithy4s provides functions to create AWS clients from generated code. As of 0.18, Smithy4s supports (at least partially) all AWS protocols that are publicly documented.
 
-Our implementation of the AWS protocols is tested against the official [compliance-tests](https://github.com/smithy-lang/smithy/tree/main/smithy-aws-protocol-tests/model), which gives us a reasonable level of confidence that most of the (de)serialisation logic is correct involved when communicating with AWS is correct. Our implementation of the AWS signature algorithm.
-(which allows AWS to authenticate requests) is tested against the Java implementation used by the official AWS SDK.
+Our implementation of the AWS protocols is tested against the official [compliance-tests](https://github.com/smithy-lang/smithy/tree/main/smithy-aws-protocol-tests/model), which gives us a reasonable level of confidence that most of the (de)serialisation logic involved when communicating with AWS is correct. Our implementation of the AWS signature algorithm (which is required for AWS to authenticate requests) is tested against the Java implementation used by the official AWS SDK.
 
 ### What is missing ?
 
 * streaming operations (such as S3 `putObject`, `getObject`, or Kinesis' `subscribeToShard`) are currently unsupported.
 * [service-specific customisations](https://smithy.io/2.0/aws/customizations/index.html)  are currently unsupported.
-* **users should not use smithy4s to talk to AWS S3**
+* **users should not use smithy4s to get data into/out of AWS S3**
 
 ### Note on pre-built artifacts
 
@@ -100,8 +99,7 @@ The version corresponds to the latest release in this repo: [aws-sdk-smithy-spec
 
 AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
 
-The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them
-to maven central to lower the barrier of entry.
+The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them to maven central to lower the barrier of entry.
 
 ## Service summary
 
