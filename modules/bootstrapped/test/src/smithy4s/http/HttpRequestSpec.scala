@@ -30,7 +30,7 @@ final class HttpRequestSpec extends FunSuite {
       HttpUriScheme.Https,
       "example.com",
       None,
-      Seq.empty,
+      IndexedSeq.empty,
       Map.empty,
       None
     )

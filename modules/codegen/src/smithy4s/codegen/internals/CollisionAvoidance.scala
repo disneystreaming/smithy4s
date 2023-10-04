@@ -257,7 +257,18 @@ private[internals] object CollisionAvoidance {
     "var",
     "while",
     "with",
-    "yield"
+    "yield",
+    // For below, see https://github.com/disneystreaming/smithy4s/issues/1238
+    // Treating all methods from java.lang.Object as reserved
+    "clone",
+    "equals",
+    "finalize",
+    "getClass",
+    "hashCode",
+    "notify",
+    "notifyAll",
+    "toString",
+    "wait"
   )
 
   class Names() {

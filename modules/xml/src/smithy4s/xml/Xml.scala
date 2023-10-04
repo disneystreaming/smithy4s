@@ -78,7 +78,7 @@ object Xml {
       fromSchema(schema, createCache())
   }
 
-  val writers: BlobEncoder.Compiler = new BlobEncoder.Compiler {
+  val encoders: BlobEncoder.Compiler = new BlobEncoder.Compiler {
     type Cache = XmlDocument.Encoder.Cache
     def createCache(): Cache = XmlDocument.Encoder.createCache()
     def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {

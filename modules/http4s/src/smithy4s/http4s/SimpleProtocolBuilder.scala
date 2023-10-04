@@ -33,6 +33,7 @@ import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
 import cats.data.OptionT
+import smithy4s.http4s.kernel.toSmithy4sHttpUri
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -199,8 +200,8 @@ abstract class SimpleProtocolBuilder[P](
             finalMiddleware.biject(_.run)(HttpApp(_)),
             getMethod =
               (request: Request[F]) => toSmithy4sHttpMethod(request.method),
-            getPathSegments = (request: Request[F]) =>
-              request.uri.path.segments.map(_.decoded()),
+            getUri =
+              (request: Request[F]) => toSmithy4sHttpUri(request.uri, None),
             addDecodedPathParams = (request: Request[F], pathParams) =>
               request.withAttribute(pathParamsKey, pathParams)
           )

@@ -67,7 +67,7 @@ object Json {
   def writePrettyString[A: Schema](a: A): String = {
     payloadCodecs
       .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))
-      .writers
+      .encoders
       .fromSchema(Schema[A])
       .encode(a)
       .toUTF8String
@@ -129,7 +129,7 @@ object Json {
     internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler
 
   private[smithy4s] val payloadEncoders: CachedSchemaCompiler[PayloadEncoder] =
-    payloadCodecs.writers
+    payloadCodecs.encoders
 
   private[smithy4s] val payloadDecoders: CachedSchemaCompiler[PayloadDecoder] =
     payloadCodecs.decoders
@@ -147,7 +147,7 @@ object Json {
     import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
     payloadCodecs
       .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))
-      .writers
+      .encoders
       .fromSchema(Schema.document)
   }
 

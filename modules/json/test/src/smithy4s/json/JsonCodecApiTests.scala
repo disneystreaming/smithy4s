@@ -39,7 +39,7 @@ class JsonCodecApiTests extends FunSuite {
       Json.jsoniter.withHintMask(HintMask.empty)
     )
 
-    val encoded = capi.writers.fromSchema(schemaWithJsonName).encode("test")
+    val encoded = capi.encoders.fromSchema(schemaWithJsonName).encode("test")
 
     assertEquals(encoded, Blob("""{"a":"test"}"""))
   }
@@ -75,7 +75,7 @@ class JsonCodecApiTests extends FunSuite {
       Json.jsoniter.withExplicitDefaultsEncoding(true)
     )
 
-    val codec = capi.writers.fromSchema(schemaWithJsonName)
+    val codec = capi.encoders.fromSchema(schemaWithJsonName)
     val encoded = codec.encode(None)
 
     assertEquals(encoded, Blob("""{"a":null}"""))

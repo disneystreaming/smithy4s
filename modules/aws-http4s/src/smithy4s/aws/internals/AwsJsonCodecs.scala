@@ -40,7 +40,7 @@ private[aws] object AwsJsonCodecs {
     )
 
   private[aws] val jsonDecoders = jsonPayloadCodecs.decoders
-  private[aws] val jsonWriters = jsonPayloadCodecs.writers
+  private[aws] val jsonWriters = jsonPayloadCodecs.encoders
 
   def make[F[_]: MonadThrowLike](
       contentType: String
