@@ -20,6 +20,8 @@ package object example {
   val ObjectService = ObjectServiceGen
   type NameCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
   val NameCollision = NameCollisionGen
+  type ObjectCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[ObjectCollisionGen, F]
+  val ObjectCollision = ObjectCollisionGen
   type DummyService[F[_]] = smithy4s.kinds.FunctorAlgebra[DummyServiceGen, F]
   val DummyService = DummyServiceGen
   type EmptyService[F[_]] = smithy4s.kinds.FunctorAlgebra[EmptyServiceGen, F]
