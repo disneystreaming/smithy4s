@@ -52,7 +52,7 @@ private[http4s] class SimpleRestJsonCodecs(
 
   // val mediaType = HttpMediaType("application/json")
   private val payloadEncoders: BlobEncoder.Compiler =
-    jsonCodecs.writers
+    jsonCodecs.encoders
 
   private val payloadDecoders =
     jsonCodecs.decoders

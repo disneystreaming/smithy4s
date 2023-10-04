@@ -42,7 +42,7 @@ class JsonBenchmark {
   val codecs =
     Json.payloadCodecs
       .withJsoniterCodecCompiler(Json.jsoniter.withHintMask(HintMask.empty))
-  val jsonWriter = codecs.writers.fromSchema(schema)
+  val jsonWriter = codecs.encoders.fromSchema(schema)
   val jsonReader = codecs.decoders.fromSchema(schema)
 
   val original = s3objectGen(Gen.Parameters.default, Seed(2048)).get

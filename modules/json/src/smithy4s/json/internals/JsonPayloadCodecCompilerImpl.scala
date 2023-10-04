@@ -48,7 +48,7 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   ): JsonPayloadCodecCompiler =
     copy(jsoniterWriterConfig = jsoniterWriterConfig)
 
-  def writers: CachedSchemaCompiler[PayloadEncoder] =
+  def encoders: CachedSchemaCompiler[PayloadEncoder] =
     new CachedSchemaCompiler[PayloadEncoder] {
       type Cache = jsoniterCodecCompiler.Cache
       def createCache(): Cache = jsoniterCodecCompiler.createCache()

@@ -46,6 +46,6 @@ trait JsonPayloadCodecCompiler {
   def withJsoniterWriterConfig(jsoniterWriterConfig: JsoniterWriterConfig): JsonPayloadCodecCompiler
 
   def decoders: CachedSchemaCompiler[PayloadDecoder]
-  def writers: CachedSchemaCompiler[PayloadEncoder]
+  def encoders: CachedSchemaCompiler[PayloadEncoder]
 
 }

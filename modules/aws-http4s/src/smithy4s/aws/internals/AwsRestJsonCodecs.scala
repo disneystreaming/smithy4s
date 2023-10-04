@@ -42,7 +42,7 @@ private[aws] object AwsRestJsonCodecs {
     def nullToEmptyObject(blob: Blob): Blob =
       if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
-    val jsonWriters = jsonPayloadCodecs.writers.mapK { smithy4s.codecs.Encoder.andThenK(nullToEmptyObject) }
+    val jsonWriters = jsonPayloadCodecs.encoders.mapK { smithy4s.codecs.Encoder.andThenK(nullToEmptyObject) }
     val jsonDecoders = jsonPayloadCodecs.decoders
 
     HttpUnaryClientCodecs.builder
