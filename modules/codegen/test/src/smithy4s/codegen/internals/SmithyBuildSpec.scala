@@ -80,9 +80,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |            "oterh",
          |            "dep1"
          |        ],
-         |        "repositories": [
-         |            
-         |        ]
+         |        "repositories": []
          |    },
          |    "custom": "attribute"
          |}""".stripMargin
