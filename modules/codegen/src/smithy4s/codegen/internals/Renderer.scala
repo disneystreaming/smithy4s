@@ -230,7 +230,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       skipMemberDocs: Boolean = false
   ): Lines = {
     def atLiteral(s: String) = s.replace("@", "{@literal @}")
-    def dollarLiteral(s: String) = s.replace("$", "$$")
+    def dollarLiteral(s: String) = s.replace("$", "`$`")
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>

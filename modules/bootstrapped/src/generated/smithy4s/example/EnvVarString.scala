@@ -7,9 +7,9 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-/** This is meant to be used with $${ENV_VAR}
+/** This is meant to be used with `$`{ENV_VAR}
   * @param member
-  *   This is meant to be used with $$ENV_VAR
+  *   This is meant to be used with `$`ENV_VAR
   */
 final case class EnvVarString(member: Option[String] = None)
 
