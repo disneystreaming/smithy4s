@@ -1,4 +1,10 @@
-# 0.18.0 (in progress)
+# 0.18.1
+
+## Open enum support in Dynamic module
+
+In 0.18.0, support was added for [open enums](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/open-enums) in smithy4s-generated code. This release extends that support to runtime (dynamic) schemas.
+
+# 0.18.0
 
 ## Behavioural changes
 
