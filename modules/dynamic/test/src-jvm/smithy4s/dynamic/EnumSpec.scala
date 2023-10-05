@@ -16,7 +16,6 @@
 
 package smithy4s.dynamic
 
-import munit.FunSuite
 import smithy4s.ShapeId
 import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
@@ -25,7 +24,7 @@ import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.schema.Schema
 
-class EnumSpec extends FunSuite {
+class EnumSpec extends DummyIO.Suite {
   val model = """
     $version: "2"
     namespace example
