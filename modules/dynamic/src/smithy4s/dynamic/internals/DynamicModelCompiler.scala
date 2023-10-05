@@ -168,18 +168,11 @@ private[dynamic] object Compiler {
         shapeId: ShapeId,
         traits: Map[IdRef, Document],
         lSchema: Eval[Schema[A]]
-    ): Unit =
-      updateWithHints(shapeId, allHints(traits), lSchema)
-
-    private def updateWithHints[A](
-        shapeId: ShapeId,
-        hints: Hints,
-        lSchema: Eval[Schema[A]]
     ): Unit = {
       schemaMap += (shapeId -> lSchema.map { sch =>
         sch
           .withId(shapeId)
-          .addHints(hints)
+          .addHints(allHints(traits))
           .asInstanceOf[Schema[DynData]]
       })
     }
@@ -189,12 +182,6 @@ private[dynamic] object Compiler {
         traits: Map[IdRef, Document],
         schema: Schema[A]
     ): Unit = update(shapeId, traits, Eval.now(schema))
-
-    private def updateWithHints[A](
-        shapeId: ShapeId,
-        hints: Hints,
-        lSchema: Schema[A]
-    ): Unit = updateWithHints(shapeId, hints, Eval.now(lSchema))
 
     def default: Unit = ()
 
@@ -332,13 +319,10 @@ private[dynamic] object Compiler {
 
         update(id, shape.traits, theEnum)
       } else {
-        val theEnum = intEnumeration(values.apply, valueList)
-
-        updateWithHints(
-          id, {
-            allHints(shape.traits)
-          },
-          theEnum
+        update(
+          id,
+          shape.traits,
+          intEnumeration(values, valueList)
         )
       }
     }
@@ -369,11 +353,10 @@ private[dynamic] object Compiler {
                 hints = Hints.empty
               )
           }
-          val fromOrdinal = values(_: Int)
           update(
             id,
             shape.traits,
-            enumeration(fromOrdinal, EnumTag.ClosedStringEnum, values)
+            stringEnumeration(values, values)
           )
         }
         case _ => update(id, shape.traits, string)
