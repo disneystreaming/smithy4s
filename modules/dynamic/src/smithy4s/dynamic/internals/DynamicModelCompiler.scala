@@ -256,9 +256,33 @@ private[dynamic] object Compiler {
             )
           }
 
-      val theEnum = stringEnumeration(values, values)
+      if (shape.traits.contains(IdRef("alloy#openEnum"))) {
+        // the runtime representation of normal enums is Int, but for open enums it's String to support arbitrary unknown values.
+        val mappedValues = values.map(_.map(_.asLeft[String]))
 
-      update(id, shape.traits, theEnum)
+        val theEnum = enumeration[Either[Int, String]](
+          _.fold(
+            mappedValues,
+            unknownValueString =>
+              EnumValue(
+                stringValue = unknownValueString,
+                intValue = -1,
+                value = unknownValueString.asRight[Int],
+                name = "$Unknown",
+                hints = Hints.empty
+              )
+          ),
+          EnumTag.OpenStringEnum(_.asRight[Int]),
+          mappedValues
+        )
+
+        update(id, shape.traits, theEnum)
+      } else {
+        val theEnum = stringEnumeration(values, values)
+
+        update(id, shape.traits, theEnum)
+      }
+
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
@@ -289,14 +313,34 @@ private[dynamic] object Compiler {
 
       val valueList = values.map(_._2).toList.sortBy(_.intValue)
 
-      val theEnum = intEnumeration(values.apply, valueList)
+      if (shape.traits.contains(IdRef("alloy#openEnum"))) {
+        val theEnum = enumeration[Int](
+          v =>
+            values.getOrElse(
+              v,
+              EnumValue(
+                stringValue = v.toString,
+                intValue = v,
+                value = v,
+                name = "$Unknown",
+                hints = Hints.empty
+              )
+            ),
+          EnumTag.OpenIntEnum(identity),
+          valueList
+        )
 
-      updateWithHints(
-        id, {
-          allHints(shape.traits)
-        },
-        theEnum
-      )
+        update(id, shape.traits, theEnum)
+      } else {
+        val theEnum = intEnumeration(values.apply, valueList)
+
+        updateWithHints(
+          id, {
+            allHints(shape.traits)
+          },
+          theEnum
+        )
+      }
     }
 
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =

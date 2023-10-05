@@ -24,6 +24,9 @@ case class EnumValue[E](
     name: String,
     hints: Hints
 ) {
+  def map[A](f: E => A): EnumValue[A] =
+    copy(value = f(value))
+
   def transformHints(f: Hints => Hints): EnumValue[E] =
     copy(hints = f(hints))
 }

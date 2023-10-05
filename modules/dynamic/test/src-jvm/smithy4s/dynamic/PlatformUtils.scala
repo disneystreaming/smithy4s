@@ -34,6 +34,10 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
       SModel
         .assembler()
         .addUnparsedModel("dynamic.smithy", string)
+        .addImport(
+          // Alloy open enums
+          getClass().getClassLoader.getResource("META-INF/smithy/enums.smithy")
+        )
         .assemble()
         .unwrap()
     )

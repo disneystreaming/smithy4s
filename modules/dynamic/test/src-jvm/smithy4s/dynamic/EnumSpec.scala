@@ -60,6 +60,18 @@ class EnumSpec extends DummyIO.Suite {
       @deprecated ICE,
       FIRE
     }
+
+    @alloy#openEnum
+    enum OpenStringEnum {
+      ICE,
+      FIRE
+    }
+
+    @alloy#openEnum
+    intEnum OpenIntEnum {
+      ICE = 42,
+      FIRE = 10
+    }
   """
 
   val compiled = Utils.compile(model)
@@ -228,5 +240,37 @@ class EnumSpec extends DummyIO.Suite {
         )
       )
     )
+  }
+
+  test("Smithy 2.0 open string enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "OpenStringEnum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromString("not a known value"))
+    }
+  }
+
+  test("Smithy 2.0 open int enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "OpenIntEnum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromInt(52))
+    }
+  }
+
+  private def decodeEncodeCheck[A](schema: Schema[A])(input: Document) = {
+    val decoded = Document.Decoder
+      .fromSchema(schema)
+      .decode(input)
+      .toTry
+      .get
+
+    val encoded = Document.Encoder.fromSchema(schema).encode(decoded)
+
+    assertEquals(encoded, input)
   }
 }
