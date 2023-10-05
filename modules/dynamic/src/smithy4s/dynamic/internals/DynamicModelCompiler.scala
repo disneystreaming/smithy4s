@@ -243,11 +243,19 @@ private[dynamic] object Compiler {
             )
           }
 
-      if (shape.traits.contains(IdRef("alloy#openEnum"))) {
+      update(id, shape.traits, makeStringEnum(id, values, shape.traits))
+    }
+
+    private def makeStringEnum(
+        id: ShapeId,
+        values: List[EnumValue[Int]],
+        traits: Map[IdRef, Document]
+    ) = {
+      if (traits.contains(IdRef("alloy#openEnum"))) {
         // the runtime representation of normal enums is Int, but for open enums it's String to support arbitrary unknown values.
         val mappedValues = values.map(_.map(_.asLeft[String]))
 
-        val theEnum = enumeration[Either[Int, String]](
+        enumeration[Either[Int, String]](
           _.fold(
             mappedValues,
             unknownValueString =>
@@ -262,13 +270,8 @@ private[dynamic] object Compiler {
           EnumTag.OpenStringEnum(_.asRight[Int]),
           mappedValues
         )
-
-        update(id, shape.traits, theEnum)
-      } else {
-        val theEnum = stringEnumeration(values, values)
-
-        update(id, shape.traits, theEnum)
-      }
+      } else
+        stringEnumeration(values, values)
 
     }
 
@@ -356,7 +359,7 @@ private[dynamic] object Compiler {
           update(
             id,
             shape.traits,
-            stringEnumeration(values, values)
+            makeStringEnum(id, values, shape.traits)
           )
         }
         case _ => update(id, shape.traits, string)

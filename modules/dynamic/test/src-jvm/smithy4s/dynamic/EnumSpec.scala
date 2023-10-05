@@ -72,6 +72,13 @@ class EnumSpec extends DummyIO.Suite {
       ICE = 42,
       FIRE = 10
     }
+
+    @enum([
+      { value: "Vanilla" },
+      { value: "Ice" }
+    ])
+    @alloy#openEnum
+    string Open10Enum
   """
 
   val compiled = Utils.compile(model)
@@ -259,6 +266,16 @@ class EnumSpec extends DummyIO.Suite {
         .getOrElse(fail("Error: shape missing"))
 
       decodeEncodeCheck(schema)(Document.fromInt(52))
+    }
+  }
+
+  test("Smithy 1.0 open string enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "Open10Enum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromString("not a known value"))
     }
   }
 
