@@ -65,3 +65,6 @@ version
 .bsp
 
 .direnv
+
+#smithy cli metadata
+build/smithy/classpath.json
