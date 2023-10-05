@@ -229,17 +229,22 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       skipMemberDocs: Boolean = false
   ): Lines = {
+    def atLiteral(s: String) = s.replace("@", "{@literal @}")
+    def dollarLiteral(s: String) = s.replace("$", "$$")
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] =
-          doc.docLines.map(_.replace("@", "{@literal @}"))
+          doc.docLines
+            .map(atLiteral)
+            .map(dollarLiteral)
         val memberDocs: List[String] =
           if (skipMemberDocs) List.empty
           else
             doc.memberDocLines.flatMap { case (memberName, text) =>
               s"@param $memberName" :: text
-                .map(_.replace("@", "{@literal @}"))
+                .map(atLiteral)
+                .map(dollarLiteral)
                 .map("  " + _)
             }.toList
 

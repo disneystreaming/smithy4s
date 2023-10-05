@@ -11,6 +11,11 @@ string AString
 string AnotherString
 
 structure AStructure {
-
     astring: AString = "\"Hello World\" with \"quotes\""
+}
+
+@documentation("This is meant to be used with ${ENV_VAR}")
+structure EnvVarString {
+    @documentation("This is meant to be used with $ENV_VAR")
+    member: String
 }
