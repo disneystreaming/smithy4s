@@ -683,6 +683,7 @@ lazy val http4s = projectMatrix
     `http4s-kernel`,
     json,
     fs2,
+    bootstrapped % "test->compile",
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
