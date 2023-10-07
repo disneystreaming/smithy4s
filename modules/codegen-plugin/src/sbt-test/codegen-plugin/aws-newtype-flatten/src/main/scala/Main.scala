@@ -44,5 +44,9 @@ object Main extends App {
     )
   )
 
+  // Ensuring that the AwsConstraintsRemover transformer was applied correctly
+  // after the flattening, by removing constraints from any type involved in operation
+  // outputs.
+  assert(!TableName.hints.has(smithy.api.Pattern))
 
 }
