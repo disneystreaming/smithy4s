@@ -1,5 +1,5 @@
 # check if smithy4sCodegen works
-> compile
+> run
 
 # This new type was not flattened because it has range constraints
 $ exists  smithy_output/com/amazonaws/dynamodb/ListTablesInputLimit.scala
