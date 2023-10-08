@@ -4,6 +4,11 @@
 
 In 0.18.0, support was added for [open enums](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/open-enums) in smithy4s-generated code. This release extends that support to runtime (dynamic) schemas.
 
+## Fixed a bug preventing a model pre-processor from being exercised
+
+This model-preprocessor aims at removing constraints from output types in AWS specs (as AWS doesn't seem to respect said constraints)
+https://github.com/disneystreaming/smithy4s/pull/1251
+
 # 0.18.0
 
 ## Behavioural changes
