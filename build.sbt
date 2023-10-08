@@ -683,6 +683,7 @@ lazy val http4s = projectMatrix
     `http4s-kernel`,
     json,
     fs2,
+    bootstrapped % "test->compile",
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
@@ -774,7 +775,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core, complianceTests, dynamic, bootstrapped)
+  .dependsOn(core, complianceTests, dynamic)
   .settings(
     libraryDependencies ++= {
       Seq(
@@ -784,7 +785,12 @@ lazy val tests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )
-    }
+    },
+    Compile / allowedNamespaces := Seq("smithy4s.example"),
+    Compile / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy"
+    ),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
