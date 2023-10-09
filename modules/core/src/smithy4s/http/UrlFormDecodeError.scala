@@ -20,7 +20,7 @@ package http
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.internals.UrlFormCursor
 
-private[http] final case class UrlFormDecodeError(
+final case class UrlFormDecodeError(
     path: PayloadPath,
     message: String
 ) extends Throwable {
