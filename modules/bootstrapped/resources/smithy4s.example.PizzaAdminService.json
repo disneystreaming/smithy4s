@@ -386,7 +386,8 @@
                         "headers": {
                             "X-ADDED-AT": {
                                 "schema": {
-                                    "type": "number"
+                                    "type": "string",
+                                    "format": "epoch-seconds"
                                 },
                                 "required": true
                             }
