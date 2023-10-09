@@ -81,7 +81,7 @@ object UrlForm {
   }
 
   // This is based on http4s' own equivalent, but simplified for our use case.
-  private[smithy4s] def parse(
+  def parse(
       urlFormString: String
   ): Either[UrlFormDecodeError, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
