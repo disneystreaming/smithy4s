@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
+/** Represents data that was encoded using the `application/x-www-form-urlencoded` format. */
 final case class UrlForm(values: List[UrlForm.FormData]) {
 
   def render: String = {
@@ -80,10 +81,11 @@ object UrlForm {
     }
   }
 
-  // This is based on http4s' own equivalent, but simplified for our use case.
-  private[smithy4s] def parse(
+  /** Parses a `application/x-www-form-urlencoded` formatted String into a [[UrlForm]]. */
+  def parse(
       urlFormString: String
   ): Either[UrlFormDecodeError, UrlForm] = {
+    // This is based on http4s' own equivalent, but simplified for our use case.
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
     val outputBuilder = List.newBuilder[UrlForm.FormData]
@@ -163,6 +165,8 @@ object UrlForm {
     smithy4s.codecs.Decoder[Either[UrlFormDecodeError, *], UrlForm, A]
 
   object Decoder {
+
+    /** Constructs a [[Decoder]] that decodes [[UrlForm]]s into custom data. Can be configured using `@alloyurlformname`. */
     def apply(
         ignoreUrlFormFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
@@ -190,6 +194,8 @@ object UrlForm {
   type Encoder[A] = smithy4s.codecs.Encoder[UrlForm, A]
 
   object Encoder {
+
+    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloyurlformname`. */
     def apply(
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Encoder] =
@@ -219,6 +225,5 @@ object UrlForm {
 
         }
       }
-
   }
 }
