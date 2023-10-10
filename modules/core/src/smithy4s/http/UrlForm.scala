@@ -165,6 +165,7 @@ object UrlForm {
     smithy4s.codecs.Decoder[Either[UrlFormDecodeError, *], UrlForm, A]
 
   object Decoder {
+
     /** Constructs a [[Decoder]] that decodes [[UrlForm]]s into custom data. Can be configured using `@alloyurlformname`. */
     def apply(
         ignoreUrlFormFlattened: Boolean,
@@ -193,6 +194,7 @@ object UrlForm {
   type Encoder[A] = smithy4s.codecs.Encoder[UrlForm, A]
 
   object Encoder {
+
     /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloyurlformname`. */
     def apply(
         capitalizeStructAndUnionMemberNames: Boolean
