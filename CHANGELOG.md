@@ -9,6 +9,11 @@ In 0.18.0, support was added for [open enums](https://disneystreaming.github.io/
 This model-preprocessor aims at removing constraints from output types in AWS specs (as AWS doesn't seem to respect said constraints)
 https://github.com/disneystreaming/smithy4s/pull/1251
 
+## Expose UrlForm.parse and UrlFormDecodeError
+
+In 0.18.0, support was added for `application/x-www-form-urlencoded` data. But, many of its related constructs were private, they are now public for users to access them directly.
+https://github.com/disneystreaming/smithy4s/pull/1254
+
 # 0.18.0
 
 ## Behavioural changes
