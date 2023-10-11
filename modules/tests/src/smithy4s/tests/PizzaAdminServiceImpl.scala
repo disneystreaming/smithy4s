@@ -120,4 +120,10 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
   def optionalOutput(): IO[OptionalOutputOutput] =
     IO.pure(OptionalOutputOutput(None))
 
+  def headRequest(): cats.effect.IO[HeadRequestOutput] =
+    IO.pure(HeadRequestOutput("test"))
+
+  def noContentRequest(): cats.effect.IO[Unit] =
+    IO.pure(())
+
 }

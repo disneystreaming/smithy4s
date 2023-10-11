@@ -183,6 +183,24 @@
                 }
             }
         },
+        "/head-request": {
+            "head": {
+                "operationId": "HeadRequest",
+                "responses": {
+                    "200": {
+                        "description": "HeadRequest 200 response",
+                        "headers": {
+                            "Test": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "required": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/headers/": {
             "post": {
                 "operationId": "HeaderEndpoint",
@@ -279,6 +297,16 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/no-content": {
+            "get": {
+                "operationId": "NoContentRequest",
+                "responses": {
+                    "204": {
+                        "description": "NoContentRequest 204 response"
                     }
                 }
             }
