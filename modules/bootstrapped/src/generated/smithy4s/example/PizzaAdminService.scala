@@ -29,6 +29,8 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   def reservation(name: String, town: Option[String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
   def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): F[EchoInput, Nothing, Unit, Nothing, Nothing]
   def optionalOutput(): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing]
+  def headRequest(): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing]
+  def noContentRequest(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
 }
@@ -62,6 +64,8 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     PizzaAdminServiceOperation.Reservation,
     PizzaAdminServiceOperation.Echo,
     PizzaAdminServiceOperation.OptionalOutput,
+    PizzaAdminServiceOperation.HeadRequest,
+    PizzaAdminServiceOperation.NoContentRequest,
   )
 
   def input[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -110,6 +114,8 @@ object PizzaAdminServiceOperation {
     def reservation(name: String, town: Option[String] = None) = Reservation(ReservationInput(name, town))
     def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = Echo(EchoInput(pathParam, body, queryParam))
     def optionalOutput() = OptionalOutput()
+    def headRequest() = HeadRequest()
+    def noContentRequest() = NoContentRequest()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PizzaAdminServiceGen[P], f: PolyFunction5[P, P1]) extends PizzaAdminServiceGen[P1] {
     def addMenuItem(restaurant: String, menuItem: MenuItem) = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
@@ -124,6 +130,8 @@ object PizzaAdminServiceOperation {
     def reservation(name: String, town: Option[String] = None) = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
     def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
     def optionalOutput() = f[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing](alg.optionalOutput())
+    def headRequest() = f[Unit, Nothing, HeadRequestOutput, Nothing, Nothing](alg.headRequest())
+    def noContentRequest() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.noContentRequest())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PizzaAdminServiceGen[P]): PolyFunction5[PizzaAdminServiceOperation, P] = new PolyFunction5[PizzaAdminServiceOperation, P] {
@@ -662,6 +670,32 @@ object PizzaAdminServiceOperation {
       .withOutput(OptionalOutputOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/optional-output"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit) = OptionalOutput()
+  }
+  final case class HeadRequest() extends PizzaAdminServiceOperation[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = impl.headRequest()
+    def ordinal = 12
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = HeadRequest
+  }
+  object HeadRequest extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeadRequest"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(HeadRequestOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("HEAD"), uri = smithy.api.NonEmptyString("/head-request"), code = 200), smithy.api.Readonly())
+    def wrap(input: Unit) = HeadRequest()
+  }
+  final case class NoContentRequest() extends PizzaAdminServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.noContentRequest()
+    def ordinal = 13
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = NoContentRequest
+  }
+  object NoContentRequest extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "NoContentRequest"))
+      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/no-content"), code = 204), smithy.api.Readonly())
+    def wrap(input: Unit) = NoContentRequest()
   }
 }
 
