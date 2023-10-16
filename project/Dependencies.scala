@@ -71,7 +71,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.9.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.9.1")
   }
 
   object Mill {
