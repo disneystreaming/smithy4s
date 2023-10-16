@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import scala.runtime.ScalaRunTime
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -7,6 +8,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 case class MyOpError() extends Throwable {
+  override def toString(): String = ScalaRunTime._toString(this)
 }
 
 object MyOpError extends ShapeTag.Companion[MyOpError] {
