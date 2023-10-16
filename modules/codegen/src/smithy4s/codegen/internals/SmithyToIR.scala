@@ -472,37 +472,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     !paths.isEmpty()
   }
 
-  private def addedTraits(
-      traits: java.util.Collection[Trait]
-  ): ShapeVisitor[Shape] =
-    new ShapeVisitor[Shape] {
-      //format: off
-      def blobShape(x: BlobShape): Shape = x.toBuilder().addTraits(traits).build()
-      def booleanShape(x: BooleanShape): Shape = x.toBuilder().addTraits(traits).build()
-      def listShape(x: ListShape): Shape = x.toBuilder().addTraits(traits).build()
-      @nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Shape = x.toBuilder().addTraits(traits).build()
-      def mapShape(x: MapShape): Shape = x.toBuilder().addTraits(traits).build()
-      def byteShape(x: ByteShape): Shape = x.toBuilder().addTraits(traits).build()
-      def shortShape(x: ShortShape): Shape = x.toBuilder().addTraits(traits).build()
-      def integerShape(x: IntegerShape): Shape = x.toBuilder().addTraits(traits).build()
-      def longShape(x: LongShape): Shape = x.toBuilder().addTraits(traits).build()
-      def floatShape(x: FloatShape): Shape = x.toBuilder().addTraits(traits).build()
-      def documentShape(x: DocumentShape): Shape = x.toBuilder().addTraits(traits).build()
-      def doubleShape(x: DoubleShape): Shape = x.toBuilder().addTraits(traits).build()
-      def bigIntegerShape(x: BigIntegerShape): Shape = x.toBuilder().addTraits(traits).build()
-      def bigDecimalShape(x: BigDecimalShape): Shape = x.toBuilder().addTraits(traits).build()
-      def operationShape(x: OperationShape): Shape = x.toBuilder().addTraits(traits).build()
-      def resourceShape(x: ResourceShape): Shape = x.toBuilder().addTraits(traits).build()
-      def serviceShape(x: ServiceShape): Shape = x.toBuilder().addTraits(traits).build()
-      def stringShape(x: StringShape): Shape = x.toBuilder().addTraits(traits).build()
-      def structureShape(x: StructureShape): Shape = x.toBuilder().addTraits(traits).build()
-      def unionShape(x: UnionShape): Shape = x.toBuilder().addTraits(traits).build()
-      def memberShape(x: MemberShape): Shape = x.toBuilder().addTraits(traits).build()
-      def timestampShape(x: TimestampShape): Shape = x.toBuilder().addTraits(traits).build()
-      //format: on
-    }
-
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
       // See https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html?highlight=primitiveboolean#prelude-shapes
@@ -783,10 +752,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       def memberShape(x: MemberShape): Option[Type] =
         model.getShape(x.getTarget()).asScala.flatMap { shape =>
-          shape
-            .accept(
-              addedTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
-            )
+          val builder =
+            (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
+
+          builder
+            .addTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
+
+          builder
+            .build()
             .accept(this)
         }
 
