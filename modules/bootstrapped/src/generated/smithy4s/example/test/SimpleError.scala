@@ -1,5 +1,6 @@
 package smithy4s.example.test
 
+import scala.runtime.ScalaRunTime
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -8,6 +9,7 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
 final case class SimpleError(expected: Int) extends Throwable {
+  override def toString(): String = ScalaRunTime._toString(this)
 }
 
 object SimpleError extends ShapeTag.Companion[SimpleError] {

@@ -1,5 +1,6 @@
 package smithy4s.example.error
 
+import scala.runtime.ScalaRunTime
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -8,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class NotFoundError(error: Option[String] = None) extends Throwable {
+  override def toString(): String = ScalaRunTime._toString(this)
 }
 
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
