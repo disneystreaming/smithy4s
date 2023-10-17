@@ -200,7 +200,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / internalDependencyAsJars).value.map(_.data)
     },
     config / smithy4sExplicitCodegenOnlyDependencies := {
-      transitiveLibraryDependencies(config).value
+      transitiveLibraryDependencies.value
         .filter(
           _.configurations.exists(_.contains(Smithy4s.name))
         )
@@ -373,13 +373,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       getJars(dependenciesTask.value.map(_.withConfigurations(None)))
     }
 
-  def transitiveLibraryDependencies(
-      config: Configuration
-  ): Def.Initialize[Task[Seq[ModuleID]]] = {
+  def transitiveLibraryDependencies: Def.Initialize[Task[Seq[ModuleID]]] = {
     val make = new ScopeFilter.Make {}
     import make.{inDependencies => inDeps, _}
     val selectDeps = ScopeFilter(inDeps(ThisProject, includeRoot = true))
-    val allDeps = (config / libraryDependencies).?.all(selectDeps)
+    val allDeps = libraryDependencies.?.all(selectDeps)
     Def
       .taskDyn(
         allDeps.map(_.flatMap(_.getOrElse(Seq.empty)))
