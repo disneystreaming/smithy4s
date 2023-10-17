@@ -1,3 +1,9 @@
+# 0.18.2
+
+## Override `toString` on error shapes
+
+Default `toString` implementation on `Throwable` prints the class name, instead, we decided to rely on the case class `toString` implementation.
+
 # 0.18.1
 
 ## Open enum support in Dynamic module
