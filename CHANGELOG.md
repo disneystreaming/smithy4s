@@ -1,3 +1,9 @@
+# 0.17.21
+
+## Override `toString` on error shapes
+
+Default `toString` implementation on `Throwable` prints the class name, instead, we decided to rely on the case class `toString` implementation.
+
 # 0.17.20
 
 * Add empty line separating generated case classes from their companion objects in [#1175](https://github.com/disneystreaming/smithy4s/pull/1175)
