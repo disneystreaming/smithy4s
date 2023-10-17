@@ -188,11 +188,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
-    smithy4sAwsSpecs := Seq.empty,
-    smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
-    Compile / smithy4sAwsSpecDependencies := {
-      val version = (smithy4sAwsSpecsVersion).value
-      (smithy4sAwsSpecs).value.map { case artifactName =>
+    config / smithy4sAwsSpecs := Seq.empty,
+    config / smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
+    config / smithy4sAwsSpecDependencies := {
+      val version = (config / smithy4sAwsSpecsVersion).value
+      (config / smithy4sAwsSpecs).value.map { case artifactName =>
         smithy4s.codegen.AwsSpecs.org % artifactName % version
       }
     },
@@ -200,7 +200,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / internalDependencyAsJars).value.map(_.data)
     },
     config / smithy4sExplicitCodegenOnlyDependencies := {
-      transitiveLibraryDependencies.value
+      transitiveLibraryDependencies(config).value
         .filter(
           _.configurations.exists(_.contains(Smithy4s.name))
         )
@@ -373,11 +373,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       getJars(dependenciesTask.value.map(_.withConfigurations(None)))
     }
 
-  def transitiveLibraryDependencies: Def.Initialize[Task[Seq[ModuleID]]] = {
+  def transitiveLibraryDependencies(
+      config: Configuration
+  ): Def.Initialize[Task[Seq[ModuleID]]] = {
     val make = new ScopeFilter.Make {}
     import make.{inDependencies => inDeps, _}
     val selectDeps = ScopeFilter(inDeps(ThisProject, includeRoot = true))
-    val allDeps = libraryDependencies.?.all(selectDeps)
+    val allDeps = (config / libraryDependencies).?.all(selectDeps)
     Def
       .taskDyn(
         allDeps.map(_.flatMap(_.getOrElse(Seq.empty)))
