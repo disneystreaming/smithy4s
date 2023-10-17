@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
   "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
 )
 // The `AWS` object contains a list of references to artifacts that contain specifications to AWS services.
-smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
+(Compile / smithy4sAwsSpecs) ++= Seq(AWS.dynamodb)
 ```
 
 Alternatively, the following is also valid :
