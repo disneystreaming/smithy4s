@@ -37,6 +37,7 @@ object AwsInstanceMetadata {
     val expirationField =
       timestamp
         .required[AwsInstanceMetadata]("Expiration", _.expiration)
+        // 'Expiration' is in date-time format https://repost.aws/questions/QUgcf1EIOPS7GZNboeAiyO9Q/renewing-aws-credentials
         .addHints(TimestampFormat.DATE_TIME.widen)
     val secretAccessKeyField =
       string.required[AwsInstanceMetadata]("SecretAccessKey", _.accessKeyId)

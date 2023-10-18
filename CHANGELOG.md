@@ -1,3 +1,7 @@
+# 0.18.3
+
+* Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
+
 # 0.18.1
 
 ## Open enum support in Dynamic module
