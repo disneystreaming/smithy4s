@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class DefaultInMixinUsageTest(one: String = "test") extends DefaultInMixinTest
+
 object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultInMixinUsageTest")
 

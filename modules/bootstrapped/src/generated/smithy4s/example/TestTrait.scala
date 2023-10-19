@@ -12,6 +12,7 @@ import smithy4s.schema.Schema.struct
   *   Except for preview orders, these don't have an ID 
   */
 final case class TestTrait(orderType: Option[OrderType] = None)
+
 object TestTrait extends ShapeTag.Companion[TestTrait] {
   val id: ShapeId = ShapeId("smithy4s.example", "testTrait")
 

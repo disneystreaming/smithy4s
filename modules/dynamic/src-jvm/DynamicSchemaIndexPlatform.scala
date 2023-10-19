@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package smithy4s.dynamic
 
-import smithy4s.codecs.PayloadError
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model.transform.ModelTransformer
 
@@ -28,14 +27,17 @@ private[dynamic] trait DynamicSchemaIndexPlatform {
     */
   def loadModel(
       model: software.amazon.smithy.model.Model
-  ): Either[PayloadError, DynamicSchemaIndex] = {
+  ): DynamicSchemaIndex = {
     val flattenedModel =
       ModelTransformer.create().flattenAndRemoveMixins(model);
     val node = ModelSerializer.builder().build.serialize(flattenedModel)
     val document = NodeToDocument(node)
     smithy4s.Document
       .decode[smithy4s.dynamic.model.Model](document)
-      .map(load(_))
+      .map(load(_)) match {
+      case Left(error)  => throw error
+      case Right(value) => value
+    }
   }
 
 }

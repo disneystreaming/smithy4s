@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
 import smithy4s.http.HttpPayloadError
-import smithy4s.codecs._
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
@@ -351,6 +350,47 @@ abstract class PizzaSpec
     expect(matchResult == None)
   }
 
+  routerTest("Response to a HEAD request should have empty body") {
+    (client, uri, log) =>
+      for {
+        res <- client.send[String](
+          HEAD((uri / "head-request")),
+          log
+        )
+      } yield {
+        val (code, headers, body) = res
+        // There may be other headers, but this one should definitely exist.
+        // In general, content-length and content-type headers should be omitted
+        // but we won't fail the test if they aren't since the HTTP Spec is
+        // fairly vague and thus permissive in this area.
+        val expectedHeaders = Map(
+          "Test" -> List("test")
+        )
+        val containsAllExpectedHeaders =
+          expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
+        expect.same(code, 200) &&
+        expect.same(body, "") &&
+        expect(
+          containsAllExpectedHeaders,
+          s"Expected to find all of $expectedHeaders inside of $headers"
+        )
+      }
+  }
+
+  routerTest("204 no content response should have empty body") {
+    (client, uri, log) =>
+      for {
+        res <- client.send[String](
+          GET((uri / "no-content")),
+          log
+        )
+      } yield {
+        val (code, _, body) = res
+        expect.same(code, 204) &&
+        expect.same(body, "")
+      }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(
@@ -360,7 +400,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case HttpPayloadError(PayloadPath(List()), _, _) =>
+        case HttpPayloadError(smithy4s.codecs.PayloadPath(List()), _, _) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")

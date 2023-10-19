@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -346,6 +346,24 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       shouldExist = false
     )
 
+  }
+
+  test("codegen with aws specs") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.10"
+      override def ivyDeps = Agg(coreDep)
+      override def smithy4sAwsSpecs: T[Seq[String]] = T(
+        Seq(AWS.dynamodb)
+      )
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName("codegen-with-aws-specs"))
+
+    taskWorks(foo.smithy4sCodegen, ev)
+    checkFileExist(
+      ev.outPath / "smithy4sOutputDir.dest" / "scala" / "com" / "amazonaws" / "dynamodb" / "AttributeValue.scala",
+      shouldExist = true
+    )
   }
 
   private def compileWorks(

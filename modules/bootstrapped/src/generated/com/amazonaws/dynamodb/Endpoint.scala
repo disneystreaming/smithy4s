@@ -15,6 +15,7 @@ import smithy4s.schema.Schema.struct
   *   <p>Endpoint cache time to live (TTL) value.</p>
   */
 final case class Endpoint(address: String, cachePeriodInMinutes: Long = 0L)
+
 object Endpoint extends ShapeTag.Companion[Endpoint] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "Endpoint")
 
@@ -23,8 +24,8 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
   )
 
   implicit val schema: Schema[Endpoint] = struct(
-    string.required[Endpoint]("Address", _.address).addHints(smithy.api.Documentation("<p>IP address of the endpoint.</p>"), smithy.api.Required()),
-    long.required[Endpoint]("CachePeriodInMinutes", _.cachePeriodInMinutes).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required(), smithy.api.Documentation("<p>Endpoint cache time to live (TTL) value.</p>")),
+    string.required[Endpoint]("Address", _.address).addHints(smithy.api.Documentation("<p>IP address of the endpoint.</p>")),
+    long.required[Endpoint]("CachePeriodInMinutes", _.cachePeriodInMinutes).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Documentation("<p>Endpoint cache time to live (TTL) value.</p>")),
   ){
     Endpoint.apply
   }.withId(id).addHints(hints)

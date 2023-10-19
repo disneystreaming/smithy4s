@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,6 +56,21 @@ private[internals] object assert {
           case (Right(a), Right(b)) =>
             fail(s"JSONs are not equal: result json: $a \n testcase json:  $b")
         }
+    }
+  }
+
+  def contains(
+      result: String,
+      expected: String,
+      prefix: String = ""
+  ): ComplianceResult = {
+    if (result.contains(expected)) {
+      success
+    } else {
+      fail(
+        s"$prefix the result value: ${pprint.apply(result)} did not contain the expected TestCase value ${pprint
+          .apply(expected)}."
+      )
     }
   }
 

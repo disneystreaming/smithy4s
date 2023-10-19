@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,18 @@ object HttpDiscriminator {
   final case class FullId(shapeId: ShapeId) extends HttpDiscriminator
   final case class NameOnly(name: String) extends HttpDiscriminator
   final case class StatusCode(int: Int) extends HttpDiscriminator
+  case object Undetermined extends HttpDiscriminator
   // format: on
+
+  def fromResponse(
+      discriminatingHeaderNames: List[String],
+      response: HttpResponse[Any]
+  ): HttpDiscriminator =
+    fromStatusOrHeader(
+      discriminatingHeaderNames,
+      response.statusCode,
+      response.headers
+    )
 
   def fromMetadata(
       discriminatingHeaderNames: List[String],

@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class EncryptionMetadata(system: Option[String] = None, credentials: Option[Creds] = None, partial: Option[Boolean] = None)
+
 object EncryptionMetadata extends ShapeTag.Companion[EncryptionMetadata] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "EncryptionMetadata")
 

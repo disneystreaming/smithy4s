@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package smithy4s.dynamic
 
-import munit.FunSuite
 import smithy4s.ShapeId
 import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
@@ -25,7 +24,7 @@ import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.schema.Schema
 
-class EnumSpec extends FunSuite {
+class EnumSpec extends DummyIO.Suite {
   val model = """
     $version: "2"
     namespace example
@@ -61,6 +60,25 @@ class EnumSpec extends FunSuite {
       @deprecated ICE,
       FIRE
     }
+
+    @alloy#openEnum
+    enum OpenStringEnum {
+      ICE,
+      FIRE
+    }
+
+    @alloy#openEnum
+    intEnum OpenIntEnum {
+      ICE = 42,
+      FIRE = 10
+    }
+
+    @enum([
+      { value: "Vanilla" },
+      { value: "Ice" }
+    ])
+    @alloy#openEnum
+    string Open10Enum
   """
 
   val compiled = Utils.compile(model)
@@ -229,5 +247,47 @@ class EnumSpec extends FunSuite {
         )
       )
     )
+  }
+
+  test("Smithy 2.0 open string enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "OpenStringEnum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromString("not a known value"))
+    }
+  }
+
+  test("Smithy 2.0 open int enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "OpenIntEnum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromInt(52))
+    }
+  }
+
+  test("Smithy 1.0 open string enums can be decoded to UNKNOWN") {
+    compiled.map { index =>
+      val schema = index
+        .getSchema(ShapeId("example", "Open10Enum"))
+        .getOrElse(fail("Error: shape missing"))
+
+      decodeEncodeCheck(schema)(Document.fromString("not a known value"))
+    }
+  }
+
+  private def decodeEncodeCheck[A](schema: Schema[A])(input: Document) = {
+    val decoded = Document.Decoder
+      .fromSchema(schema)
+      .decode(input)
+      .toTry
+      .get
+
+    val encoded = Document.Encoder.fromSchema(schema).encode(decoded)
+
+    assertEquals(encoded, input)
   }
 }

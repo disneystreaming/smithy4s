@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package smithy4s
 package json
 package internals
 
+import smithy4s.schema.CachedSchemaCompiler
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig => JsoniterReaderConfig
 }
@@ -47,32 +48,56 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   ): JsonPayloadCodecCompiler =
     copy(jsoniterWriterConfig = jsoniterWriterConfig)
 
-  type Cache = jsoniterCodecCompiler.Cache
-  def createCache(): Cache = jsoniterCodecCompiler.createCache()
+  def encoders: CachedSchemaCompiler[PayloadEncoder] =
+    new CachedSchemaCompiler[PayloadEncoder] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-  def fromSchema[A](schema: Schema[A], cache: Cache): PayloadCodec[A] = {
-    val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-    val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
-    val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      Blob(
-        writeToArray(value, jsoniterWriterConfig)(jcodec)
-      )
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        (value: A) =>
+          Blob(
+            writeToArray(value, jsoniterWriterConfig)(jcodec)
+          )
+      }
+      def fromSchema[A](schema: Schema[A]): PayloadEncoder[A] =
+        fromSchema(schema, createCache())
     }
-    ReaderWriter(reader, writer)
-  }
 
-  def fromSchema[A](schema: Schema[A]): PayloadCodec[A] =
-    fromSchema(schema, createCache())
+  def decoders: CachedSchemaCompiler[PayloadDecoder] =
+    new CachedSchemaCompiler[PayloadDecoder] {
+      type Cache = jsoniterCodecCompiler.Cache
+      def createCache(): Cache = jsoniterCodecCompiler.createCache()
 
-  private class JsonPayloadReader[A](jcodec: JsonCodec[A])
-      extends PayloadReader[A] {
-    def read(blob: Blob): Either[PayloadError, A] = {
-      val nonEmpty =
-        if (blob.isEmpty) "{}".getBytes
-        else blob.toArray
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] = {
+        val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
+        new JsonPayloadDecoder(jcodec)
+      }
+
+      def fromSchema[A](schema: Schema[A]): PayloadDecoder[A] =
+        fromSchema(schema, createCache())
+    }
+
+  private class JsonPayloadDecoder[A](jcodec: JsonCodec[A])
+      extends PayloadDecoder[A] {
+    def decode(blob: Blob): Either[PayloadError, A] = {
       try {
         Right {
-          readFromArray(nonEmpty, jsoniterReaderConfig)(jcodec)
+          if (blob.isEmpty) readFromString("{}", jsoniterReaderConfig)(jcodec)
+          else
+            blob match {
+              case b: Blob.ArraySliceBlob =>
+                readFromSubArray(
+                  b.arr,
+                  b.offset,
+                  b.offset + b.size,
+                  jsoniterReaderConfig
+                )(jcodec)
+              case b: Blob.ByteBufferBlob =>
+                readFromByteBuffer(b.buf, jsoniterReaderConfig)(jcodec)
+              case other =>
+                readFromArray(other.toArray, jsoniterReaderConfig)(jcodec)
+            }
         }
       } catch {
         case e: PayloadError => Left(e)

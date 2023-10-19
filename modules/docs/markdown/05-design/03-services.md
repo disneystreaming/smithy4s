@@ -134,7 +134,7 @@ trait Service[Final[_[_, _, _, _, _]]] {
 }
 ```
 
-Implementations of such interfaces are code-generated. This implies that any smithy `Service` shape gets translated as a finally-encoded interface, but also as an initially-encoded `GADT`
+Implementations of such interfaces are typically code-generated. This implies that any smithy `Service` shape gets translated as a finally-encoded interface, but also as an initially-encoded `GADT`
 
 ## The high-level philosophy of Smithy4s
 
@@ -180,20 +180,28 @@ The flows described above are merely conceptual, and do not account for the opti
 The `smithy4s.Endpoint` abstraction ties a specific operation to the various schemas that are tied to it.
 
 ```scala
-trait Endpoint[Initial[_, _, _, _, _], I, E, O, SI, SO] {
-  def shapeId: ShapeId
-  def hints: Hints
-  def input: Schema[I]
-  def output: Schema[O]
-  def streamedInput: StreamingSchema[SI]
-  def streamedOutput: StreamingSchema[SO]
-  def wrap(input: I): Initial[I, E, O, SI, SO]
-
-  def errorable: Option[Errorable[E]]
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
+  def schema: OperationSchema[I, E, O, SI, SO]
+  def wrap(input: I): Op[I, E, O, SI, SO]
 }
 ```
 
-Endpoints are not type-classes. Instead, the `Endpoint` trait is extended by the companion object of each member of the `GADT` forming the initial-encoding of the service interface. So, going back to our `KVStore`, the corresponding sealed-trait would look like this :
+where `smithy4s.schema.OperationSchema` is a product of all schemas involved in an specific operation.
+
+```scala
+final case class OperationSchema[I, E, O, SI, SO](
+    id: ShapeId,
+    hints: Hints,
+    input: Schema[I],
+    error: Option[ErrorSchema[E]],
+    output: Schema[O],
+    streamedInput: Option[StreamingSchema[SI]],
+    streamedOutput: Option[StreamingSchema[SO]]
+) {
+
+```
+
+Endpoints are not type-classes. Instead, an `Endpoint` instance is provided by the companion object of each member of the `GADT` forming the initial-encoding of the service interface. So, going back to our `KVStore`, the corresponding sealed-trait would look like this :
 
 ```scala
 sealed trait KVStoreOp[Input, Error, Output, StreamedInput, StreamedOutput]
@@ -203,13 +211,19 @@ and the `put` operation would look like :
 
 ```scala
 case class Put(input: PutRequest) extends KVStoreOp[PutRequest, PutError, PutResult, Nothing, Nothing]
-object Put extends Endpoint[KVStoreOp, PutRequest, PutError, PutResult, Nothing, Nothing] with Errorable[PutError]{
+object Put extends Endpoint[KVStoreOp, PutRequest, PutError, PutResult, Nothing, Nothing] {
   val input = PutRequest.input
-  val output = PutRequest.input
+  val output = PutRequest.schema
   val streamedInput = SteamingSchema.nothing
   val streamedOutput = StreamingSchema.nothing
   val errorable: Option[Errorable[PutResult]] = this
   // ...
+  val schema: OperationSchema[PutRequest, PutError, PutResult, Nothing, Nothing] =
+    Schema.operation(ShapeId("namespace", "Put"))
+      .withInput(PutRequest.schema)
+      .withError(PutError.errorSchema)
+      .withOutput(PutResult.schema)
+    def wrap(input: PutRequest) = Put(input)
 }
 ```
 
@@ -219,14 +233,14 @@ As stated previously, Smithy4s generates a coproduct type for each operation, wh
 
 As a result, it is important for Smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the wire. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
 
-Therefore, when a smithy operation has `errors` defined, the corresponding `smithy4s.Endpoint` also extends the `Errorable` interface, which looks like this :
+Therefore, when a smithy operation has `errors` defined, the corresponding `smithy4s.schema.OperationSchema` references a `smithy4s.schema.ErrorSchema`, which looks like this :
 
 ```scala
-trait Errorable[E] {
-  def error: UnionSchema[E]
-  def liftError(throwable: Throwable): Option[E]
-  def unliftError(e: E): Throwable
-}
+case class ErrorSchema[E] private[smithy4s] (
+    schema: Schema[E],
+    liftError: Throwable => Option[E],
+    unliftError: E => Throwable
+)
 ```
 
 ## Services and endpoints
@@ -276,13 +290,21 @@ Each `@http` occurrence get translated to a scala value in the `Hints` associate
 Therefore, the `Service` abstraction needs to be enriched with the following methods :
 
 ```scala
-trait Service[Final[_[_, _, _, _, _]], Initial[_, _, _, _, _]] {
+trait Service[Final[_[_, _, _, _, _]]] {
+
+  type Initial[_, _, _, _, _]
+
   // ...
 
   // useful for server-side
-  def endpoints: List[Endpoint[Initial, _, _, _, _, _]]
+  def endpoints: IndexedSeq[Endpoint[Initial, _, _, _, _, _]]
   // useful for client-side
-  def endpoint[I, E, O, SI, SO](op: Initial[I, E, O, SI, SO]): (I, Endpoint[Initial, I, E, O, SI, SO])
+
+  // provides the index of the endpoint associated to the operation
+  def ordinal[I, E, O, SI, SO](op: Initial[I, E, O, SI, SO]): Int
+  // extracts the input value out of a reified operation
+  def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
+
 }
 ```
 

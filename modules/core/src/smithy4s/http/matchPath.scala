@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,31 +19,11 @@ package smithy4s.http
 import scala.annotation.tailrec
 
 import PathSegment._
-
-object matchPath {
-
-  def make(str: String): Array[String] =
-    if (str == "" || str == "/")
-      Array()
-    else {
-      val segments = str.split("/", -1)
-      val length = segments.length
-      // .head/.last is safe because split always returns non-empty array
-      val start = if (segments.head.isEmpty()) 1 else 0
-      val end =
-        if (length > 1 && segments.last.isEmpty()) length - 1 else length
-      if (start > 0 || end < length) segments.slice(start, end)
-      else segments
-    }
-
-  private def compareStrings(left: String, right: String): Boolean = {
-    (left.hashCode() == right.hashCode()) &&
-    left == right
-  }
+object matchPath extends smithy4s.ScalaCompat {
 
   def apply(
       path: List[PathSegment],
-      received: Array[String]
+      received: IndexedSeq[String]
   ): Option[Map[String, String]] = {
     val size = received.length
     @tailrec
@@ -75,6 +55,27 @@ object matchPath {
         case _ => None
       }
     matchPathAux(path, 0, Map.empty, List.empty)
+  }
+
+  private[http] def make(str: String): IndexedSeq[String] =
+    if (str == "" || str == "/")
+      IndexedSeq.empty
+    else {
+      val segments = str.split("/", -1)
+      val length = segments.length
+      // .head/.last is safe because split always returns non-empty array
+      val start = if (segments.head.isEmpty()) 1 else 0
+      val end =
+        if (length > 1 && segments.last.isEmpty()) length - 1 else length
+      val resultArray =
+        if (start > 0 || end < length) segments.slice(start, end)
+        else segments
+      unsafeWrapArray(resultArray)
+    }
+
+  private def compareStrings(left: String, right: String): Boolean = {
+    (left.hashCode() == right.hashCode()) &&
+    left == right
   }
 
 }

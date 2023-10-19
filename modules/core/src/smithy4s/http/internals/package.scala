@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ package object internals {
   private[internals] type AwsHeaderSplitter[A] = Option[String => Seq[String]]
   private[http] type HttpCode[A] = A => Option[Int]
   private[http] val httpHints = HintMask(HttpBinding)
+
+  private[internals] type HostPrefixEncoder[A] =
+    smithy4s.codecs.Writer[List[String], A]
+  private[internals] type MaybeHostPrefixEncoder[A] =
+    Option[HostPrefixEncoder[A]]
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {
@@ -92,6 +97,27 @@ package object internals {
     else if (str.startsWith("{") && str.endsWith("}"))
       Some(PathSegment.label(str.substring(1, str.length() - 1)))
     else Some(PathSegment.static(str))
+  }
+
+  private[http] def hostPrefixSegments(
+      str: String
+  ): Vector[HostPrefixSegment] = {
+    // example input: "foo.{bar}--{baz}abcd{test}.com" produces the following
+    // output: Vector(static(foo.), label(bar), static(--), label(baz), static(abcd), label(test), static(.com))
+    str
+      .split('{')
+      .toList
+      .flatMap(_.split("}", 2).toList match {
+        case "" :: Nil     => Nil
+        case static :: Nil => HostPrefixSegment.static(static) :: Nil
+        case label :: "" :: Nil =>
+          HostPrefixSegment.label(label) :: Nil
+        case label :: static :: Nil =>
+          HostPrefixSegment
+            .label(label) :: HostPrefixSegment.static(static) :: Nil
+        case _ => Nil
+      })
+      .toVector
   }
 
 }

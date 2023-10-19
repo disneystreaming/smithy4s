@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,10 +21,18 @@ import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
-import smithy4s.aws.internals.AwsQueryCodecs
+import org.http4s.Response
+import org.http4s.client.Client
+import smithy4s.Blob
 import smithy4s.aws.internals._
+import smithy4s.http._
+import smithy4s.client.UnaryClientCompiler
+import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
+import smithy4s.interopcats._
+import smithy4s.http.HttpMethod
 
+// scalafmt: { maxColumn = 120 }
 object AwsClient {
 
   def apply[Alg[_[_, _, _, _, _]], F[_]: Async: Compression](
@@ -57,56 +65,86 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
-    private def interpreter[F[_]: Async: Compression](
+    private def compiler[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
-    ): service.FunctorInterpreter[F] = {
-      val clientCodecs: UnaryClientCodecs.Make[F] = awsProtocol match {
-        case AwsProtocol.AWS_EC2_QUERY(_) =>
-          AwsEcsQueryCodecs.make[F](version = service.version)
+    ): service.FunctorEndpointCompiler[F] = {
 
-        case AwsProtocol.AWS_JSON_1_0(_) =>
-          AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
-
-        case AwsProtocol.AWS_JSON_1_1(_) =>
-          AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
-
-        case AwsProtocol.AWS_QUERY(_) =>
-          AwsQueryCodecs.make[F](version = service.version)
-
-        case AwsProtocol.AWS_REST_JSON_1(_) =>
-          AwsRestJsonCodecs.make[F]("application/json")
-
-        case AwsProtocol.AWS_REST_XML(_) =>
-          AwsXmlCodecs.make[F]()
-      }
-      service.functorInterpreter {
-        new service.FunctorEndpointCompiler[F] {
-          def apply[I, E, O, SI, SO](
-              endpoint: service.Endpoint[I, E, O, SI, SO]
-          ): I => F[O] =
-            new AwsUnaryEndpoint(
-              service.id,
-              service.hints,
-              awsService,
-              awsEnv,
-              endpoint,
-              clientCodecs
-            )
+      def baseRequest(endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
+        awsEnv.region.map { region =>
+          val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
+          val baseUri = HttpUri(
+            scheme = HttpUriScheme.Https,
+            host = s"$endpointPrefix.$region.amazonaws.com",
+            port = None,
+            path = IndexedSeq.empty,
+            queryParams = Map.empty,
+            pathParams = None
+          )
+          // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
+          HttpRequest(HttpMethod.POST, baseUri, Map.empty, Blob.empty)
         }
       }
+
+      val clientCodecsBuilder: HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] =
+        awsProtocol match {
+          case AwsProtocol.AWS_EC2_QUERY(_) =>
+            AwsEcsQueryCodecs.make[F](version = service.version)
+
+          case AwsProtocol.AWS_JSON_1_0(_) =>
+            AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
+
+          case AwsProtocol.AWS_JSON_1_1(_) =>
+            AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
+
+          case AwsProtocol.AWS_QUERY(_) =>
+            // TODO retain user encoding when applying compression
+            AwsQueryCodecs.make[F](version = service.version)
+
+          case AwsProtocol.AWS_REST_JSON_1(_) =>
+            AwsRestJsonCodecs.make[F]("application/json")
+
+          case AwsProtocol.AWS_REST_XML(_) =>
+            AwsRestXmlCodecs.make[F]()
+        }
+
+      val compression = awsProtocol match {
+        case AwsProtocol.AWS_EC2_QUERY(_) => compressionMiddleware[F](false)
+        case AwsProtocol.AWS_QUERY(_)     => compressionMiddleware[F](false)
+        case _                            => compressionMiddleware[F](true)
+      }
+
+      val clientCodecs = clientCodecsBuilder
+        .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
+        .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
+        .withBaseRequest(baseRequest)
+        .build()
+
+      val middleware =
+        AwsSigning.middleware(awsEnv).andThen(compression).andThen(Md5CheckSum.middleware[F])
+
+      UnaryClientCompiler(
+        service,
+        awsEnv.httpClient,
+        (client: Client[F]) => Http4sToSmithy4sClient(client),
+        clientCodecs,
+        middleware,
+        (response: Response[F]) => response.status.isSuccess
+      )
     }
 
     def build[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.Impl[F] =
-      service.fromPolyFunction(interpreter[F](awsEnv))
+      service.impl(compiler[F](awsEnv))
 
-    def buildFull[F[_]: Async: Compression](
-        awsEnv: AwsEnvironment[F]
-    ): AwsClient[Alg, F] =
-      service.fromPolyFunction(
-        interpreter[F](awsEnv).andThen(AwsCall.liftEffect[F])
-      )
+    // TODO : uncomment below when we start supporting streaming.
+
+    // def buildFull[F[_]: Async: Compression](
+    //     awsEnv: AwsEnvironment[F]
+    // ): AwsClient[Alg, F] =
+    //   service.fromPolyFunction(
+    //     service.functorInterpreter(compiler[F](awsEnv)).andThen(AwsCall.liftEffect[F])
+    //   )
   }
 
 }

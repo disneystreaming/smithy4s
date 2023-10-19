@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class MixinOptionalMemberOverride(a: String)
+
 object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMemberOverride] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinOptionalMemberOverride")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[MixinOptionalMemberOverride] = struct(
-    string.required[MixinOptionalMemberOverride]("a", _.a).addHints(smithy.api.Required()),
+    string.required[MixinOptionalMemberOverride]("a", _.a),
   ){
     MixinOptionalMemberOverride.apply
   }.withId(id).addHints(hints)

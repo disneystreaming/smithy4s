@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class HealthResponse(status: String)
+
 object HealthResponse extends ShapeTag.Companion[HealthResponse] {
   val id: ShapeId = ShapeId("smithy4s.example", "HealthResponse")
 
@@ -16,7 +17,7 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
   )
 
   implicit val schema: Schema[HealthResponse] = struct(
-    string.required[HealthResponse]("status", _.status).addHints(smithy.api.Required()),
+    string.required[HealthResponse]("status", _.status),
   ){
     HealthResponse.apply
   }.withId(id).addHints(hints)

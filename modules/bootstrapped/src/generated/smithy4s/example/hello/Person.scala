@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class Person(name: String, town: Option[String] = None)
+
 object Person extends ShapeTag.Companion[Person] {
   val id: ShapeId = ShapeId("smithy4s.example.hello", "Person")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Person] = struct(
-    string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel()),
     string.optional[Person]("town", _.town).addHints(smithy.api.HttpQuery("town")),
   ){
     Person.apply

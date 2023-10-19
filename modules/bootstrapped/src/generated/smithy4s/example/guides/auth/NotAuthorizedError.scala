@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 final case class NotAuthorizedError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
+
 object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
   val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError")
 
@@ -19,7 +20,7 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
   )
 
   implicit val schema: Schema[NotAuthorizedError] = struct(
-    string.required[NotAuthorizedError]("message", _.message).addHints(smithy.api.Required()),
+    string.required[NotAuthorizedError]("message", _.message),
   ){
     NotAuthorizedError.apply
   }.withId(id).addHints(hints)

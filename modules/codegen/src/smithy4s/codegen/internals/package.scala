@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 package object internals {
-
-  val SMITHY4S_DEPENDENCIES = "smithy4sDependencies"
 
   val uuidShapeId = ShapeId.from("alloy#UUID")
 

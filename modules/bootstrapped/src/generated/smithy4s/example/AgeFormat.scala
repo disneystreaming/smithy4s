@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 final case class AgeFormat()
+
 object AgeFormat extends ShapeTag.Companion[AgeFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "ageFormat")
 

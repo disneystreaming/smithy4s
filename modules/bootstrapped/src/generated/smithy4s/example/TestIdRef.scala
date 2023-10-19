@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class TestIdRef(test: Option[ShapeId] = None, test2: Option[TestIdRefTwo] = None)
+
 object TestIdRef extends ShapeTag.Companion[TestIdRef] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestIdRef")
 

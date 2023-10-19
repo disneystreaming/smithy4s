@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class TestInput(pathParam: String, body: TestBody, queryParam: Option[String] = None)
+
 object TestInput extends ShapeTag.Companion[TestInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestInput")
 
@@ -21,8 +22,8 @@ object TestInput extends ShapeTag.Companion[TestInput] {
   }
 
   implicit val schema: Schema[TestInput] = struct(
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
-    TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
+    string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.HttpLabel()),
+    TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload()),
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
   ){
     TestInput.apply

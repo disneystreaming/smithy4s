@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 package smithy4s.aws.kernel
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Uint8Array
 import scala.scalajs.js.annotation.JSGlobal
 
 @js.native
-trait Buffer extends js.Any {
+@JSGlobal
+class Buffer extends Uint8Array(js.native: Int) {
   def toString(encoding: String = null): String = js.native
-  def entries(): js.Iterator[js.Array[Int]] = js.native
 }
 
 @js.native

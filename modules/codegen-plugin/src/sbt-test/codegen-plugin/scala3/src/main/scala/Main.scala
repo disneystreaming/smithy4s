@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ object Main extends App {
   val knownError1 = BadRequest("foo")
   val knownError2 = InternalServerError("bar")
   val unknownError = new RuntimeException("baz")
-  assert(serviceOps.ErrorOp.liftError(unknownError) == None)
-  assert(serviceOps.ErrorOp.liftError(knownError1) == Some(knownError1))
-  assert(serviceOps.ErrorOp.liftError(knownError2) == Some(knownError2))
-  assert(serviceOps.ErrorOp.unliftError(knownError1) == knownError1)
+  assert(serviceOps.ErrorOpError.liftError(unknownError) == None)
+  assert(serviceOps.ErrorOpError.liftError(knownError1) == Some(knownError1))
+  assert(serviceOps.ErrorOpError.liftError(knownError2) == Some(knownError2))
+  assert(serviceOps.ErrorOpError.unliftError(knownError1) == knownError1)
 }

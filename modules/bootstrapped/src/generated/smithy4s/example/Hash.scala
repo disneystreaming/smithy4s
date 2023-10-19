@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
 final case class Hash()
+
 object Hash extends ShapeTag.Companion[Hash] {
   val id: ShapeId = ShapeId("smithy4s.example", "hash")
 

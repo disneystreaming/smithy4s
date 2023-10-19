@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,17 @@
 package smithy4s.aws.kernel
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
+
+import SysEnvPlatformCompat._
 
 trait SysEnvPlatformCompat {
-  def readEnvVar(envVar: String): Option[String] = {
-    js.Dynamic.global.process.env
-      .selectDynamic(envVar)
-      .asInstanceOf[js.UndefOr[String]]
-      .toOption
-  }
+  def readEnvVar(envVar: String): Option[String] =
+    processEnv.get(envVar)
+}
+
+object SysEnvPlatformCompat {
+  @js.native
+  @JSImport("process", "env")
+  private def processEnv: js.Dictionary[String] = js.native
 }

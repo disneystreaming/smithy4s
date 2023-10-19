@@ -6,10 +6,10 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ServiceProduct
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 
 trait ExampleServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -104,14 +104,10 @@ object ExampleServiceOperation {
     def endpoint: smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = ExampleOperation
   }
   object ExampleOperation extends smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperation")
-    val input: Schema[ExampleOperationInput] = ExampleOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ExampleOperationOutput] = ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val schema: OperationSchema[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.product", "ExampleOperation"))
+      .withInput(ExampleOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
     def wrap(input: ExampleOperationInput) = ExampleOperation(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

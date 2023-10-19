@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ object Transformation {
         val interpreter = new PolyFunction5[service.Operation, Kind2[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
             val endpoint = service.endpoint(op)
-            val catcher: Throwable => Option[E] = endpoint.errorable match {
+            val catcher: Throwable => Option[E] = endpoint.error match {
               case None => PartialFunction.empty[Throwable, Option[E]]
               case Some(value) => value.liftError(_)
             }
@@ -106,9 +106,9 @@ object Transformation {
         val interpreter = new PolyFunction5[service.Operation, Kind1[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[O] = {
             val endpoint = service.endpoint(op)
-            val thrower: E => Throwable = endpoint.errorable match {
+            val thrower: E => Throwable = endpoint.error match {
               case None =>
-                // This case should not happen, as an endpoint without an errorable means the operation's error type is `Nothing`
+                // This case should not happen, as an endpoint without an errorschema means the operation's error type is `Nothing`
                 _ => new RuntimeException("Error coercion problem")
               case Some(value) => value.unliftError(_)
             }

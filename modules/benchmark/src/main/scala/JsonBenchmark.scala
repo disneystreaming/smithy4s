@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ class JsonBenchmark {
   val codecs =
     Json.payloadCodecs
       .withJsoniterCodecCompiler(Json.jsoniter.withHintMask(HintMask.empty))
-  val jsonCodec = codecs.fromSchema(schema)
+  val jsonWriter = codecs.encoders.fromSchema(schema)
+  val jsonReader = codecs.decoders.fromSchema(schema)
 
   val original = s3objectGen(Gen.Parameters.default, Seed(2048)).get
 
@@ -56,10 +57,8 @@ class JsonBenchmark {
   @Benchmark
   def measureSmithy4sJson(): Unit = {
     val bytes =
-      jsonCodec.writer
-        .encode(original)
-        .toArray
+      jsonWriter.encode(original).toArray
     val _ =
-      jsonCodec.reader.decode(Blob(bytes))
+      jsonReader.decode(Blob(bytes))
   }
 }

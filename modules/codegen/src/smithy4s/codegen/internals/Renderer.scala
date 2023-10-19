@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -229,17 +229,22 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       skipMemberDocs: Boolean = false
   ): Lines = {
+    def atLiteral(s: String) = s.replace("@", "{@literal @}")
+    def dollarLiteral(s: String) = s.replace("$", "`$`")
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] =
-          doc.docLines.map(_.replace("@", "{@literal @}"))
+          doc.docLines
+            .map(atLiteral)
+            .map(dollarLiteral)
         val memberDocs: List[String] =
           if (skipMemberDocs) List.empty
           else
             doc.memberDocLines.flatMap { case (memberName, text) =>
               s"@param $memberName" :: text
-                .map(_.replace("@", "{@literal @}"))
+                .map(atLiteral)
+                .map(dollarLiteral)
                 .map("  " + _)
             }.toList
 
@@ -492,6 +497,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
+  // scalafmt: { maxColumn = 120}
   private def renderOperation(
       serviceName: String,
       op: Operation,
@@ -504,16 +510,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opObjectName = serviceName + "Operation"
     val opName = op.name
     val opNameRef = NameRef(opName)
+    val opErrorDef = NameDef(opName + "Error")
     val traitName = NameRef(s"${serviceName}Operation")
     val input =
       if (op.input == Type.unit) "" else "input"
-    val errorName =
-      if (op.errors.isEmpty) line"Nothing"
-      else line"${NameRef({ op.name + "Error" })}"
-
-    val errorable = if (op.errors.nonEmpty) {
-      line" with $Errorable_[$errorName]"
-    } else Line.empty
 
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
@@ -528,27 +528,27 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       List.empty
     )
 
-    val renderedErrorUnion = errorUnion.foldMap {
-      case union @ Union(shapeId, _, alts, mixin, recursive, hints) =>
-        if (compilationUnit.rendererConfig.errorsAsScala3Unions)
-          renderErrorAsScala3Union(
-            shapeId,
-            union.nameRef,
-            alts,
-            recursive,
-            hints
-          )
-        else
-          renderUnion(
-            shapeId,
-            union.nameRef,
-            alts,
-            mixin,
-            recursive,
-            hints,
-            error = true
-          )
+    val renderedErrorUnion = errorUnion.foldMap { case union @ Union(shapeId, _, alts, mixin, recursive, hints) =>
+      if (compilationUnit.rendererConfig.errorsAsScala3Unions)
+        renderErrorAsScala3Union(
+          shapeId,
+          union.nameRef,
+          alts,
+          recursive,
+          hints
+        )
+      else
+        renderUnion(
+          shapeId,
+          union.nameRef,
+          alts,
+          mixin,
+          recursive,
+          hints,
+          error = true
+        )
     }
+    val ns = op.shapeId.getNamespace()
 
     lines(
       block(
@@ -563,33 +563,33 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       ),
       obj(
         opNameRef,
-        ext =
-          line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(opObjectName)}]$errorable"
+        ext = line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(opObjectName)}]"
       )(
-        renderId(op.shapeId),
-        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
-        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen)",
-        renderStreamingSchemaVal("streamedInput", op.streamedInput),
-        renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
-        renderHintsVal(op.hints),
-        line"def wrap(input: ${op.input}) = ${opNameRef}($input)",
-        renderErrorable(op)
+        line"""val schema: $OperationSchema_[${op.renderAlgParams(
+          opObjectName
+        )}] = $Schema_.operation($ShapeId_("$ns", "$opName"))""",
+        indent(
+          line".withInput(${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen))",
+          Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
+          line".withOutput(${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen))",
+          op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
+          op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
+          Option(op.hints).filter(_.nonEmpty).map(h => line".withHints(${memberHints(h)})")
+        ),
+        line"def wrap(input: ${op.input}) = ${opNameRef}($input)"
       ),
       renderedErrorUnion
     )
   }
 
-  private def renderStreamingSchemaVal(
-      valName: String,
-      sField: Option[StreamingField]
-  ): Line = sField match {
-    case Some(StreamingField(name, tpe, hints)) =>
-      val mh =
-        if (hints.isEmpty) Line.empty
-        else line".addHints(${memberHints(hints)})"
-      line"""val $valName: $StreamingSchema_[${tpe}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
-    case None =>
-      line"""val $valName: $StreamingSchema_[Nothing] = $StreamingSchema_.nothing"""
+  private def renderStreamingSchema(
+      sField: StreamingField
+  ): Line = {
+    import sField._
+    val mh =
+      if (hints.isEmpty) Line.empty
+      else line".addHints(${memberHints(hints)})"
+    line"""$StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
   }
 
   private def renderProtocol(name: NameRef, hints: List[Hint]): Lines = {
@@ -690,6 +690,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             classBody
           }
       },
+      newline,
       obj(product.nameRef, shapeTag(product.nameRef))(
         renderId(shapeId),
         newline,
@@ -733,16 +734,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .args(renderedFields)
               .block(
                 line"arr => new ${product.nameRef}".args(
-                  fields.zipWithIndex.map {
-                    case (Field(_, _, tpe, fieldKind, _), idx) =>
-                      val scalaTpe = line"$tpe"
-                      val wrappedType = fieldKind match {
-                        case FieldKind.Required  => scalaTpe
-                        case FieldKind.Optional  => Line.optional(scalaTpe)
-                        case FieldKind.Removable => Line.removable(scalaTpe)
-                      }
+                  fields.zipWithIndex.map { case (Field(_, _, tpe, fieldKind, _), idx) =>
+                    val scalaTpe = line"$tpe"
+                    val wrappedType = fieldKind match {
+                      case FieldKind.Required  => scalaTpe
+                      case FieldKind.Optional  => Line.optional(scalaTpe)
+                      case FieldKind.Removable => Line.removable(scalaTpe)
+                    }
 
-                      line"arr($idx).asInstanceOf[$wrappedType]"
+                    line"arr($idx).asInstanceOf[$wrappedType]"
                   }
                 )
               )
@@ -811,8 +811,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderGetMessage(field: Field) = field match {
-    case field
-        if field.tpe.isResolved && field.fieldKind == FieldKind.Required =>
+    case field if field.tpe.isResolved && field.fieldKind == FieldKind.Required =>
       line"override def getMessage(): $string_ = ${field.name}"
     case field if field.tpe.isResolved =>
       line"override def getMessage(): $string_ = ${field.name}.orNull"
@@ -821,42 +820,33 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case field =>
       line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
   }
-
-  private def renderErrorable(op: Operation): Lines = {
-    val errorName = NameRef(op.name + "Error")
+  private def renderErrorSchemaMethods(errorName: NameRef, errors: List[Type]): Lines = {
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
-    if (op.errors.isEmpty)
-      lines(
-        line"override val errorable: $option[Nothing] = None"
-      )
-    else
-      lines(
-        line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
-        line"val error: $unionSchema_[$errorName] = $errorName.schema",
+    lines(
+      block(
+        line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
+      ) {
+        if (scala3Unions) {
+          List(
+            line"case e: $errorName => $some(e)",
+            line"case _ => $none"
+          )
+        } else {
+          errors.collect { case Type.Ref(pkg, name) =>
+            line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
+          } ++ List(line"case _ => $none")
+        }
+      },
+      if (scala3Unions) line"def unliftError(e: $errorName): Throwable = e"
+      else
         block(
-          line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
+          line"def unliftError(e: $errorName): Throwable = e match"
         ) {
-          if (scala3Unions) {
-            List(
-              line"case e: $errorName => $some(e)",
-              line"case _ => $none"
-            )
-          } else {
-            op.errors.collect { case Type.Ref(pkg, name) =>
-              line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
-            } ++ List(line"case _ => $none")
+          errors.collect { case Type.Ref(_, name) =>
+            line"case $errorName.${name}Case(e) => e"
           }
-        },
-        if (scala3Unions) line"def unliftError(e: $errorName): Throwable = e"
-        else
-          block(
-            line"def unliftError(e: $errorName): Throwable = e match"
-          ) {
-            op.errors.collect { case Type.Ref(_, name) =>
-              line"case $errorName.${name}Case(e) => e"
-            }
-          }
-      )
+        }
+    )
   }
 
   private def renderErrorAsScala3Union(
@@ -867,23 +857,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ) = {
     // Only Alts with UnionMember.TypeCase are valid for errors
-    val members = alts.collect {
-      case Alt(altName, _, UnionMember.TypeCase(tpe), _) => altName -> tpe
+    val members = alts.collect { case Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
+      altName -> tpe
     }
     def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
-      line"type ${NameDef(name.name)} = ${members
-        .map { case (_, tpe) => line"$tpe" }
-        .intercalate(line" | ")}",
-      obj(name)(
+      line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
+      obj(name, line"$ErrorSchema_.Companion[${NameRef(name.name)}]")(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
         block(
-          line"val schema: $unionSchema_[$name] ="
+          line"val schema: $Schema_[$name] ="
         )(
           members.map { case (altName, tpe) =>
             line"""val ${altVal(
@@ -897,7 +885,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"case _: $altName => $index"
             }
           )
-        )
+        ),
+        renderErrorSchemaMethods(NameRef(name.name), members.map(_._2))
       )
     )
   }
@@ -1031,6 +1020,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNames = alts.map(caseName(name, _))
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
+    val types = alts.map(_.member).collect { case UnionMember.TypeCase(tpe) =>
+      tpe
+    }
+
+    val companionTpe = if (error) line"$ErrorSchema_.Companion[$name]" else line"$ShapeTag_.Companion[$name]"
 
     val mixinLines = mixins.map(m => line"$m")
     val mixinExtends = mixinLines.intercalate(line" with ")
@@ -1089,7 +1083,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         accept
       ),
-      obj(name, line"${shapeTag(name)}")(
+      obj(name, companionTpe)(
         newline,
         alts.map(smartConstructor),
         newline,
@@ -1157,11 +1151,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         newline,
         visitor,
-        newline, {
+        newline,
+        locally {
           val union =
-            if (error)
-              line"implicit val schema: $unionSchema_[$name] = $union_"
-            else if (recursive)
+            if (recursive)
               line"implicit val schema: $Schema_[$name] = $recursive_($union_"
             else
               line"implicit val schema: $Schema_[$name] = $union_"
@@ -1180,6 +1173,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
             .appendToLast(if (recursive) ")" else "")
         },
+        renderErrorSchemaMethods(name, types).when(error),
         renderTypeclasses(hints, name)
       )
     )
@@ -1546,9 +1540,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
-      case Primitive.String => renderStringLiteral
-      case Primitive.Byte   => b => line"${b.toString}"
+      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.String     => renderStringLiteral
+      case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
         ba =>
           val blob = NameRef("smithy4s", "Blob")

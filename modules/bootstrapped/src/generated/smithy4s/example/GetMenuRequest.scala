@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetMenuRequest(restaurant: String)
+
 object GetMenuRequest extends ShapeTag.Companion[GetMenuRequest] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetMenuRequest")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetMenuRequest] = struct(
-    string.required[GetMenuRequest]("restaurant", _.restaurant).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    string.required[GetMenuRequest]("restaurant", _.restaurant).addHints(smithy.api.HttpLabel()),
   ){
     GetMenuRequest.apply
   }.withId(id).addHints(hints)

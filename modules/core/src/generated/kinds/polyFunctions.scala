@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,17 @@ trait PolyFunction[F[_], G[_]]{ self =>
    final def andThen[H[_]](other: PolyFunction[G, H]): PolyFunction[F, H] = new PolyFunction[F, H]{
       def apply[A0](fa: F[A0]): H[A0] = other(self(fa))
    }
+
+   final def compose[H[_]](other: PolyFunction[H, F]): PolyFunction[H, G] = new PolyFunction[H, G]{
+      def apply[A0](ha: H[A0]): G[A0] = self(other(ha))
+   }
+
+   final def narrow[F0[a0] <: F[a0]]: PolyFunction[F0, G] = this.asInstanceOf[PolyFunction[F0, G]]
+
+   final def widen[G0[a0] >: G[a0]]: PolyFunction[F, G0] = this.asInstanceOf[PolyFunction[F, G0]]
+
 }
+
 object PolyFunction{
   type From[F[_]] = {
     type Algebra[G[_]] = PolyFunction[F, G]
@@ -49,7 +59,17 @@ trait PolyFunction2[F[_, _], G[_, _]]{ self =>
    final def andThen[H[_, _]](other: PolyFunction2[G, H]): PolyFunction2[F, H] = new PolyFunction2[F, H]{
       def apply[A0, A1](fa: F[A0, A1]): H[A0, A1] = other(self(fa))
    }
+
+   final def compose[H[_, _]](other: PolyFunction2[H, F]): PolyFunction2[H, G] = new PolyFunction2[H, G]{
+      def apply[A0, A1](ha: H[A0, A1]): G[A0, A1] = self(other(ha))
+   }
+
+   final def narrow[F0[a0, a1] <: F[a0, a1]]: PolyFunction2[F0, G] = this.asInstanceOf[PolyFunction2[F0, G]]
+
+   final def widen[G0[a0, a1] >: G[a0, a1]]: PolyFunction2[F, G0] = this.asInstanceOf[PolyFunction2[F, G0]]
+
 }
+
 object PolyFunction2{
   type From[F[_, _]] = {
     type Algebra[G[_, _]] = PolyFunction2[F, G]
@@ -72,7 +92,17 @@ trait PolyFunction5[F[_, _, _, _, _], G[_, _, _, _, _]]{ self =>
    final def andThen[H[_, _, _, _, _]](other: PolyFunction5[G, H]): PolyFunction5[F, H] = new PolyFunction5[F, H]{
       def apply[A0, A1, A2, A3, A4](fa: F[A0, A1, A2, A3, A4]): H[A0, A1, A2, A3, A4] = other(self(fa))
    }
+
+   final def compose[H[_, _, _, _, _]](other: PolyFunction5[H, F]): PolyFunction5[H, G] = new PolyFunction5[H, G]{
+      def apply[A0, A1, A2, A3, A4](ha: H[A0, A1, A2, A3, A4]): G[A0, A1, A2, A3, A4] = self(other(ha))
+   }
+
+   final def narrow[F0[a0, a1, a2, a3, a4] <: F[a0, a1, a2, a3, a4]]: PolyFunction5[F0, G] = this.asInstanceOf[PolyFunction5[F0, G]]
+
+   final def widen[G0[a0, a1, a2, a3, a4] >: G[a0, a1, a2, a3, a4]]: PolyFunction5[F, G0] = this.asInstanceOf[PolyFunction5[F, G0]]
+
 }
+
 object PolyFunction5{
   type From[F[_, _, _, _, _]] = {
     type Algebra[G[_, _, _, _, _]] = PolyFunction5[F, G]

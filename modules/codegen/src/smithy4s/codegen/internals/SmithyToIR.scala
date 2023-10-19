@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -107,10 +107,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   def toIRVisitor(
       renderAdtMemberStructures: Boolean
-  ): ShapeVisitor[Option[Decl]] =
-    new ShapeVisitor[Option[Decl]] {
+  ): ShapeVisitor.Default[Option[Decl]] =
+    new ShapeVisitor.Default[Option[Decl]] {
 
-      private def getDefault(shape: Shape): Option[Decl] = {
+      override protected def getDefault(shape: Shape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
 
         val recursive = hints.exists {
@@ -151,48 +151,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
 
-      override def blobShape(x: BlobShape): Option[Decl] = getDefault(x)
-
-      override def booleanShape(x: BooleanShape): Option[Decl] = getDefault(x)
-
-      override def listShape(x: ListShape): Option[Decl] = getDefault(x)
-
-      @annotation.nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Option[Decl] = getDefault(x)
-
-      override def mapShape(x: MapShape): Option[Decl] = getDefault(x)
-
-      override def byteShape(x: ByteShape): Option[Decl] = getDefault(x)
-
-      override def shortShape(x: ShortShape): Option[Decl] = getDefault(x)
-
-      override def integerShape(x: IntegerShape): Option[Decl] = getDefault(x)
-
-      override def longShape(x: LongShape): Option[Decl] = getDefault(x)
-
-      override def floatShape(x: FloatShape): Option[Decl] = getDefault(x)
-
-      override def documentShape(x: DocumentShape): Option[Decl] = getDefault(x)
-
-      override def doubleShape(x: DoubleShape): Option[Decl] = getDefault(x)
-
-      override def bigIntegerShape(x: BigIntegerShape): Option[Decl] =
-        getDefault(x)
-
-      override def bigDecimalShape(x: BigDecimalShape): Option[Decl] =
-        getDefault(x)
-
-      override def operationShape(x: OperationShape): Option[Decl] = getDefault(
-        x
-      )
-
-      override def resourceShape(x: ResourceShape): Option[Decl] = getDefault(x)
-
       override def memberShape(x: MemberShape): Option[Decl] = None
-
-      override def timestampShape(x: TimestampShape): Option[Decl] = getDefault(
-        x
-      )
 
       private def doFieldsMatch(
           mixinId: ShapeId,
@@ -514,37 +473,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     !paths.isEmpty()
   }
 
-  private def addedTraits(
-      traits: java.util.Collection[Trait]
-  ): ShapeVisitor[Shape] =
-    new ShapeVisitor[Shape] {
-      //format: off
-      def blobShape(x: BlobShape): Shape = x.toBuilder().addTraits(traits).build()
-      def booleanShape(x: BooleanShape): Shape = x.toBuilder().addTraits(traits).build()
-      def listShape(x: ListShape): Shape = x.toBuilder().addTraits(traits).build()
-      @nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Shape = x.toBuilder().addTraits(traits).build()
-      def mapShape(x: MapShape): Shape = x.toBuilder().addTraits(traits).build()
-      def byteShape(x: ByteShape): Shape = x.toBuilder().addTraits(traits).build()
-      def shortShape(x: ShortShape): Shape = x.toBuilder().addTraits(traits).build()
-      def integerShape(x: IntegerShape): Shape = x.toBuilder().addTraits(traits).build()
-      def longShape(x: LongShape): Shape = x.toBuilder().addTraits(traits).build()
-      def floatShape(x: FloatShape): Shape = x.toBuilder().addTraits(traits).build()
-      def documentShape(x: DocumentShape): Shape = x.toBuilder().addTraits(traits).build()
-      def doubleShape(x: DoubleShape): Shape = x.toBuilder().addTraits(traits).build()
-      def bigIntegerShape(x: BigIntegerShape): Shape = x.toBuilder().addTraits(traits).build()
-      def bigDecimalShape(x: BigDecimalShape): Shape = x.toBuilder().addTraits(traits).build()
-      def operationShape(x: OperationShape): Shape = x.toBuilder().addTraits(traits).build()
-      def resourceShape(x: ResourceShape): Shape = x.toBuilder().addTraits(traits).build()
-      def serviceShape(x: ServiceShape): Shape = x.toBuilder().addTraits(traits).build()
-      def stringShape(x: StringShape): Shape = x.toBuilder().addTraits(traits).build()
-      def structureShape(x: StructureShape): Shape = x.toBuilder().addTraits(traits).build()
-      def unionShape(x: UnionShape): Shape = x.toBuilder().addTraits(traits).build()
-      def memberShape(x: MemberShape): Shape = x.toBuilder().addTraits(traits).build()
-      def timestampShape(x: TimestampShape): Shape = x.toBuilder().addTraits(traits).build()
-      //format: on
-    }
-
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
       // See https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html?highlight=primitiveboolean#prelude-shapes
@@ -825,10 +753,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       def memberShape(x: MemberShape): Option[Type] =
         model.getShape(x.getTarget()).asScala.flatMap { shape =>
-          shape
-            .accept(
-              addedTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
-            )
+          val builder =
+            (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
+
+          builder
+            .addTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
+
+          builder
+            .build()
             .accept(this)
         }
 
@@ -1032,7 +964,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
-      nonConstraintNonMetaTraits.map(unfoldTrait) ++
+      nonConstraintNonMetaTraits
+        .filterNot(_.toShapeId == RequiredTrait.ID)
+        .map(unfoldTrait) ++
       maybeTypeclassesHint(shape)
   }
 
@@ -1292,7 +1226,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
-      // Enumeration (enum trait)
+      // Enumeration (Enum Trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =
           e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get

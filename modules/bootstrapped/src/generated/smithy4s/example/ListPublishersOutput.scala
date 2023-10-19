@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class ListPublishersOutput(publishers: List[PublisherId])
+
 object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListPublishersOutput")
 
@@ -15,7 +16,7 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
   )
 
   implicit val schema: Schema[ListPublishersOutput] = struct(
-    PublishersList.underlyingSchema.required[ListPublishersOutput]("publishers", _.publishers).addHints(smithy.api.Required()),
+    PublishersList.underlyingSchema.required[ListPublishersOutput]("publishers", _.publishers),
   ){
     ListPublishersOutput.apply
   }.withId(id).addHints(hints)

@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GreetInput(name: String)
+
 object GreetInput extends ShapeTag.Companion[GreetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetInput")
 
@@ -16,7 +17,7 @@ object GreetInput extends ShapeTag.Companion[GreetInput] {
   )
 
   implicit val schema: Schema[GreetInput] = struct(
-    string.required[GreetInput]("name", _.name).addHints(smithy.api.Required()),
+    string.required[GreetInput]("name", _.name),
   ){
     GreetInput.apply
   }.withId(id).addHints(hints)

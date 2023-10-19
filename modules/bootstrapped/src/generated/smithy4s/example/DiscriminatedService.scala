@@ -5,10 +5,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.OperationSchema
 
 trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -75,17 +75,11 @@ object DiscriminatedServiceOperation {
     def endpoint: smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = TestDiscriminated
   }
   object TestDiscriminated extends smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
-    val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminated")
-    val input: Schema[TestDiscriminatedInput] = TestDiscriminatedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[TestDiscriminatedOutput] = TestDiscriminatedOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200),
-      smithy.api.Readonly(),
-    )
+    val schema: OperationSchema[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TestDiscriminated"))
+      .withInput(TestDiscriminatedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withOutput(TestDiscriminatedOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200), smithy.api.Readonly())
     def wrap(input: TestDiscriminatedInput) = TestDiscriminated(input)
-    override val errorable: Option[Nothing] = None
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,123 +19,184 @@ package http
 
 import smithy4s.codecs.PayloadPath
 import smithy4s.codecs.PayloadPath.Segment
+import smithy4s.http.internals.UrlFormCursor
+import smithy4s.http.internals.UrlFormDataDecoder
+import smithy4s.http.internals.UrlFormDataDecoderSchemaVisitor
 import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 
+import java.io.UnsupportedEncodingException
+import java.net.URLDecoder
 import java.net.URLEncoder
+import java.nio.CharBuffer
 import java.nio.charset.StandardCharsets
+import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
-private[smithy4s] final case class UrlForm(
-    formData: UrlForm.FormData.MultipleValues
-) {
+/** Represents data that was encoded using the `application/x-www-form-urlencoded` format. */
+final case class UrlForm(values: List[UrlForm.FormData]) {
+
   def render: String = {
     val builder = new mutable.StringBuilder
-    formData.writeTo(builder)
+    val lastIndex = values.size - 1
+    var i = 0
+    for (value <- values) {
+      value.writeTo(builder)
+      if (i < lastIndex) builder.append('&')
+      i += 1
+    }
     builder.result()
   }
 }
 
-private[smithy4s] object UrlForm {
+object UrlForm {
 
-  sealed trait FormData extends Product with Serializable {
-    def prepend(segment: PayloadPath.Segment): FormData
-    def toPathedValues: Vector[FormData.PathedValue]
-    def widen: FormData = this
-    def writeTo(builder: mutable.StringBuilder): Unit
+  final case class FormData(path: PayloadPath, maybeValue: Option[String]) {
+
+    def prepend(segment: PayloadPath.Segment): FormData =
+      copy(path.prepend(segment), maybeValue)
+
+    def writeTo(builder: mutable.StringBuilder): Unit = {
+      val lastIndex = path.segments.size - 1
+      var i = 0
+      for (segment <- path.segments) {
+        builder.append(segment match {
+          case Segment.Label(label) =>
+            URLEncoder.encode(label, StandardCharsets.UTF_8.name())
+
+          case Segment.Index(index) =>
+            index
+        })
+        if (i < lastIndex) builder.append('.')
+        i += 1
+      }
+      builder.append('=')
+      maybeValue.foreach(value =>
+        builder.append(
+          URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+        )
+      )
+    }
   }
-  object FormData {
-    case object Empty extends FormData {
 
-      override def prepend(segment: PayloadPath.Segment): FormData = this
+  /** Parses a `application/x-www-form-urlencoded` formatted String into a [[UrlForm]]. */
+  def parse(
+      urlFormString: String
+  ): Either[UrlFormDecodeError, UrlForm] = {
+    // This is based on http4s' own equivalent, but simplified for our use case.
+    val inputBuffer = CharBuffer.wrap(urlFormString)
+    val encodedTermBuilder = new StringBuilder(capacity = 32)
+    val outputBuilder = List.newBuilder[UrlForm.FormData]
 
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+    var state: State = Key
+    var error: UrlFormDecodeError = null
+    var key: String = null
 
-      override def writeTo(builder: mutable.StringBuilder): Unit = ()
-
+    def endPair(): Unit = {
+      appendPair()
+      state = Key
     }
 
-    // TODO: Rename as Value, replace uses by PathedValue?
-    final case class SimpleValue(string: String) extends FormData {
+    def appendPair(): Unit = if (state == Key) {
+      outputBuilder += UrlForm.FormData(
+        PayloadPath.parse(decodeTerm(encodedTermBuilder.result())),
+        maybeValue = None
+      )
+      encodedTermBuilder.clear()
+    } else {
+      outputBuilder += UrlForm.FormData(
+        PayloadPath.parse(decodeTerm(key)),
+        Some(decodeTerm(encodedTermBuilder.result()))
+      )
+      key = null
+      encodedTermBuilder.clear()
+    }
 
-      override def prepend(segment: PayloadPath.Segment): PathedValue =
-        PathedValue(PayloadPath(segment), maybeValue = Some(string))
-
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val _ = builder.append(
-          URLEncoder.encode(string, StandardCharsets.UTF_8.name())
-        )
+    def decodeTerm(str: String): String =
+      try URLDecoder.decode(str, StandardCharsets.UTF_8.name())
+      catch {
+        case _: UnsupportedEncodingException => ""
       }
 
-    }
-
-    object PathedValue {
-      def apply(path: PayloadPath, value: String): PathedValue =
-        PathedValue(path, maybeValue = Some(value))
-    }
-
-    final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
-        extends FormData {
-
-      override def prepend(segment: PayloadPath.Segment): PathedValue =
-        copy(path.prepend(segment), maybeValue)
-
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val lastIndex = path.segments.size - 1
-        var i = 0
-        for (segment <- path.segments) {
-          builder.append(segment match {
-            case Segment.Label(label) =>
-              URLEncoder.encode(label, StandardCharsets.UTF_8.name())
-
-            case Segment.Index(index) =>
-              index
-          })
-          if (i < lastIndex) builder.append('.')
-          i += 1
-        }
-        builder.append('=')
-        maybeValue.foreach(value =>
-          builder.append(
-            URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+    while (error == null && inputBuffer.hasRemaining)
+      inputBuffer.get() match {
+        case '&' => endPair()
+        case '=' =>
+          if (state == Value) encodedTermBuilder.append('=')
+          else {
+            state = Value
+            key = encodedTermBuilder.result()
+            encodedTermBuilder.clear()
+          }
+        case char if QueryChars.contains(char.toInt) =>
+          encodedTermBuilder.append(char)
+        case char =>
+          error = UrlFormDecodeError(
+            PayloadPath.root,
+            s"Invalid char while splitting key/value pairs: '$char'"
           )
-        )
       }
+
+    if (error != null) Left(error)
+    else {
+      appendPair()
+      Right(UrlForm(outputBuilder.result()))
     }
+  }
 
-    // TODO: Rename as Values?
-    final case class MultipleValues(values: Vector[PathedValue])
-        extends FormData {
+  private sealed trait State
+  private case object Key extends State
+  private case object Value extends State
 
-      override def prepend(segment: PayloadPath.Segment): MultipleValues =
-        copy(values.map(_.prepend(segment)))
+  // These are the characters that are allowed unquoted within a query string as
+  // defined in https://datatracker.ietf.org/doc/html/rfc3986#appendix-A.
+  private val QueryChars: BitSet = BitSet(
+    (Pchar ++ "/?".toSet - '&' - '=').map(_.toInt).toSeq: _*
+  )
 
-      override def toPathedValues: Vector[FormData.PathedValue] = values
+  private def Pchar = Unreserved ++ SubDelims ++ ":@%".toSet
+  private def Unreserved = "-._~".toSet ++ AlphaNum
+  private def AlphaNum = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toSet
+  private def SubDelims = "!$&'()*+,;=".toSet
 
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val lastIndex = values.size - 1
-        var i = 0
-        for (value <- values) {
-          value.writeTo(builder)
-          if (i < lastIndex) builder.append('&')
-          i += 1
+  type Decoder[A] =
+    smithy4s.codecs.Decoder[Either[UrlFormDecodeError, *], UrlForm, A]
+
+  object Decoder {
+
+    /** Constructs a [[Decoder]] that decodes [[UrlForm]]s into custom data. Can be configured using `@alloyurlformname`. */
+    def apply(
+        ignoreUrlFormFlattened: Boolean,
+        capitalizeStructAndUnionMemberNames: Boolean
+    ): CachedSchemaCompiler[Decoder] =
+      new CachedSchemaCompiler.Impl[Decoder] {
+        protected override type Aux[A] = UrlFormDataDecoder[A]
+        override def fromSchema[A](
+            schema: Schema[A],
+            cache: Cache
+        ): Decoder[A] = {
+          val schemaVisitor = new UrlFormDataDecoderSchemaVisitor(
+            cache,
+            ignoreUrlFormFlattened,
+            capitalizeStructAndUnionMemberNames
+          )
+          val urlFormDataDecoder = schemaVisitor(schema)
+          urlForm =>
+            urlFormDataDecoder.decode(
+              UrlFormCursor(PayloadPath.root, urlForm.values)
+            )
         }
       }
-    }
   }
 
-  trait Encoder[A] {
-    def encode(a: A): UrlForm
-  }
+  type Encoder[A] = smithy4s.codecs.Encoder[UrlForm, A]
+
   object Encoder {
+
+    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloyurlformname`. */
     def apply(
-        ignoreXmlFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
@@ -144,19 +205,24 @@ private[smithy4s] object UrlForm {
             schema: Schema[A],
             cache: Cache
         ): Encoder[A] = {
-          val schemaVisitor =
-            new UrlFormDataEncoderSchemaVisitor(
-              cache,
-              ignoreXmlFlattened,
-              capitalizeStructAndUnionMemberNames
-            )
+          val maybeStaticUrlFormData =
+            schema.hints.get(internals.StaticUrlFormElements).map {
+              _.elements.map { case (key, value) =>
+                UrlForm.FormData(PayloadPath(key), Some(value))
+              }
+            }
+          val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
+            cache,
+            capitalizeStructAndUnionMemberNames
+          )
           val urlFormDataEncoder = schemaVisitor(schema)
-          (value: A) =>
-            UrlForm(
-              UrlForm.FormData.MultipleValues(
-                urlFormDataEncoder.encode(value).toPathedValues
-              )
-            )
+          maybeStaticUrlFormData match {
+            case Some(staticUrlFormData) =>
+              value =>
+                UrlForm(staticUrlFormData ++ urlFormDataEncoder.encode(value))
+            case None => value => UrlForm(urlFormDataEncoder.encode(value))
+          }
+
         }
       }
   }

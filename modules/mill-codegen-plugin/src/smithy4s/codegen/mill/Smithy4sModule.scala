@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,24 +37,26 @@ import mill.scalalib.CrossVersion.Full
 
 trait Smithy4sModule extends ScalaModule {
 
+  val AWS = smithy4s.codegen.AwsSpecs
+
   /** Input directory for .smithy files */
-  protected def smithy4sInputDirs: Target[Seq[PathRef]] = T.sources {
+  def smithy4sInputDirs: Target[Seq[PathRef]] = T.sources {
     Seq(PathRef(millSourcePath / "smithy"))
   }
 
-  protected def smithy4sOutputDir: T[PathRef] = T {
+  def smithy4sOutputDir: T[PathRef] = T {
     PathRef(T.ctx().dest / "scala")
   }
 
-  protected def smithy4sResourceOutputDir: T[PathRef] = T {
+  def smithy4sResourceOutputDir: T[PathRef] = T {
     PathRef(T.ctx().dest / "resources")
   }
 
-  protected def smithy4sGeneratedSmithyMetadataFile: T[PathRef] = T {
+  def smithy4sGeneratedSmithyMetadataFile: T[PathRef] = T {
     PathRef(T.ctx().dest / "smithy" / "generated-metadata.smithy")
   }
 
-  protected def generateOpenApiSpecs: T[Boolean] = true
+  def generateOpenApiSpecs: T[Boolean] = true
 
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
@@ -72,16 +74,8 @@ trait Smithy4sModule extends ScalaModule {
 
   override def manifest: T[JarManifest] = T {
     val m = super.manifest()
-    val deps = smithy4sIvyDeps().iterator.toList.flatMap { d =>
-      val mod = d.dep.module
-      val org = mod.organization.value
-      val name = mod.name.value
-      val version = d.dep.version
-      d.cross match {
-        case Binary(_)      => List(s"$org::$name:$version")
-        case Constant(_, _) => List(s"$org:$name:$version")
-        case Full(_)        => Nil
-      }
+    val deps = smithy4sIvyDeps().iterator.toList.flatMap {
+      Smithy4sModule.depIdEncode
     }
     if (deps.nonEmpty) {
       m.add(SMITHY4S_DEPENDENCIES -> deps.mkString(","))
@@ -122,11 +116,26 @@ trait Smithy4sModule extends ScalaModule {
     }
   }
 
+  def smithy4sAwsSpecs: T[Seq[String]] = T {
+    Seq.empty[String]
+  }
+
+  def smithy4sAwsSpecsVersion: T[String] = T {
+    AWS.knownVersion
+  }
+
+  def smithy4sAwsSpecDependencies: T[Agg[Dep]] = T {
+    val org = AWS.org
+    val version = smithy4sAwsSpecsVersion()
+    smithy4sAwsSpecs().map { artifactName => ivy"$org:$artifactName:$version" }
+  }
+
   def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
     val bind = bindDependency()
     transitiveIvyDeps() ++
       smithy4sTransitiveIvyDeps().map(bind) ++
-      smithy4sExternallyTrackedIvyDeps().map(bind)
+      smithy4sExternallyTrackedIvyDeps().map(bind) ++
+      smithy4sAwsSpecDependencies().map(bind)
   }
 
   def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {
@@ -212,7 +221,7 @@ trait Smithy4sModule extends ScalaModule {
       localJars = allLocalJars
     )
 
-    Smithy4s.processSpecs(args)
+    Smithy4s.generateToDisk(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
 
@@ -227,4 +236,18 @@ trait Smithy4sModule extends ScalaModule {
   }
 
   override def localClasspath = super.localClasspath() :+ generatedResources()
+}
+
+object Smithy4sModule {
+  def depIdEncode(dep: Dep): Option[String] = {
+    val mod = dep.dep.module
+    val org = mod.organization.value
+    val name = mod.name.value
+    val version = dep.dep.version
+    dep.cross match {
+      case Binary(_)      => Some(s"$org::$name:$version")
+      case Constant(_, _) => Some(s"$org:$name:$version")
+      case Full(_)        => None
+    }
+  }
 }

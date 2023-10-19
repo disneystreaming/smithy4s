@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,10 +110,13 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
 
   val service: Service[Alg] = this
   def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]]
+
   def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
   def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
+
   def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
     endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
+
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
@@ -196,4 +199,82 @@ object Service {
     final def toPolyFunction[P[_, _, _, _, _]](algebra: PolyFunction5[Op, P]): PolyFunction5[Op, P] = algebra
     final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]): PolyFunction5[Op, G] = algebra.andThen(function)
   }
+
+  object Builder {
+    def fromService[Alg[_[_, _, _, _, _]]](
+        service: Service[Alg]
+    ): Builder[Alg, service.Operation] =
+      new Builder[Alg, service.Operation](service, service.endpoints, service.id, service.version, service.hints)
+  }
+
+  final case class Builder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] private(
+      private val base: Service.Aux[Alg, Op],
+      private val baseEndpoints: IndexedSeq[Endpoint[Op, _, _, _, _, _]],
+      private val baseId: ShapeId,
+      private val baseVersion: String,
+      private val baseHints: Hints,
+  ) {
+
+    def mapEndpointEach(
+        mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
+    ): Builder[Alg, Op] = {
+      // note: this may not be possible to inline because of a Scala 3 issue.
+      // https://github.com/lampepfl/dotty/issues/18401
+      def handle[I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]): Endpoint[Op, I, E, O, SI, SO] =
+        mapper(endpoint)
+
+      copy(
+        baseEndpoints = baseEndpoints.map(handle(_))
+      )
+    }
+
+    def withId(id: ShapeId): Builder[Alg, Op ] = copy(baseId = id)
+
+    def mapId(f: ShapeId => ShapeId): Builder[Alg, Op] =
+      copy(baseId = f(baseId))
+
+    def withVersion(version: String): Builder[Alg, Op] = copy(baseVersion = version)
+
+    def mapVersion(f: String => String): Builder[Alg, Op] =
+      copy(baseVersion = f(baseVersion))
+
+    def withHints(hints: Hints): Builder[Alg, Op] =
+      copy(baseHints = hints)
+
+    def mapHints(f: Hints => Hints): Builder[Alg, Op] =
+      copy(baseHints = f(baseHints))
+
+    def build: Service.Aux[Alg, Op] = new Service[Alg] {
+
+      override type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO]
+
+      override val endpoints: IndexedSeq[Endpoint[_, _, _, _, _]] = baseEndpoints
+
+      override val id: ShapeId = baseId
+
+      override val version: String = baseVersion
+
+      override val hints: Hints = baseHints
+
+      override val reified: Alg[Operation] = base.reified
+
+      override def ordinal[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): Int = base.ordinal(op)
+
+      override def input[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): I = base.input(op)
+
+      override def fromPolyFunction[P[_, _, _, _, _]](
+          function: PolyFunction5[Operation, P]
+      ): Alg[P] = base.fromPolyFunction(function)
+
+      override def toPolyFunction[P[_, _, _, _, _]](
+          algebra: Alg[P]
+      ): PolyFunction5[Operation, P] = base.toPolyFunction(algebra)
+
+      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
+          alg: Alg[F],
+          function: PolyFunction5[F, G]
+      ): Alg[G] = base.mapK5(alg, function)
+    }
+  }
+
 }

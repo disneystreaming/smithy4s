@@ -10,13 +10,14 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
 final case class Patchable(a: Int, b: Option[Int] = None, c: Removable[Int] = absent)
+
 object Patchable extends ShapeTag.Companion[Patchable] {
   val id: ShapeId = ShapeId("smithy4s.example", "Patchable")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Patchable] = struct(
-    int.required[Patchable]("a", _.a).addHints(smithy.api.Required()),
+    int.required[Patchable]("a", _.a),
     int.optional[Patchable]("b", _.b),
     int.removable[Patchable]("c", _.c).addHints(alloy.Nullable()),
   ){

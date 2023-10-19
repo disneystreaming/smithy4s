@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
 
 final case class RecursiveInput(hello: Option[smithy4s.example.RecursiveInput] = None)
+
 object RecursiveInput extends ShapeTag.Companion[RecursiveInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInput")
 

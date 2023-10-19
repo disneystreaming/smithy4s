@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,25 +18,6 @@ package smithy4s
 package http4s
 
 import org.http4s.client.Client
-import cats.kernel.Monoid
-
-// format: off
-trait ClientEndpointMiddleware[F[_]] {
-  self =>
-  def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-      endpoint: Endpoint[service.Operation, _, _, _, _, _]
-  ): Client[F] => Client[F]
-
-  def andThen(other: ClientEndpointMiddleware[F]): ClientEndpointMiddleware[F] =
-    new ClientEndpointMiddleware[F] {
-      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-          endpoint: Endpoint[service.Operation, _, _, _, _, _]
-      ): Client[F] => Client[F] =
-        self.prepare(service)(endpoint).andThen(other.prepare(service)(endpoint))
-    }
-
-}
-// format: on
 
 object ClientEndpointMiddleware {
 
@@ -52,28 +33,4 @@ object ClientEndpointMiddleware {
       prepareWithHints(service.hints, endpoint.hints)
   }
 
-  def noop[F[_]]: ClientEndpointMiddleware[F] =
-    new ClientEndpointMiddleware[F] {
-      override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-          endpoint: Endpoint[service.Operation, _, _, _, _, _]
-      ): Client[F] => Client[F] = identity
-    }
-
-  implicit def monoidClientEndpointMiddleware[F[_]]
-      : Monoid[ClientEndpointMiddleware[F]] =
-    new Monoid[ClientEndpointMiddleware[F]] {
-      def combine(
-          a: ClientEndpointMiddleware[F],
-          b: ClientEndpointMiddleware[F]
-      ): ClientEndpointMiddleware[F] =
-        a.andThen(b)
-
-      val empty: ClientEndpointMiddleware[F] =
-        new ClientEndpointMiddleware[F] {
-          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-              endpoint: Endpoint[service.Operation, _, _, _, _, _]
-          ): Client[F] => Client[F] =
-            identity
-        }
-    }
 }

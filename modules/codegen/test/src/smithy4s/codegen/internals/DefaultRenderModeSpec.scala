@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(one: Option[String], two: String, three: String)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
@@ -52,7 +53,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |  ){
          |    Test.apply
          |  }.withId(id).addHints(hints)
@@ -87,6 +88,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(two: String, three: String, one: Option[String] = None)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
@@ -94,7 +96,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |    string.optional[Test]("one", _.one),
          |  ){
          |    Test.apply
@@ -130,13 +132,14 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.struct
          |
          |final case class Test(three: String, two: String = "test", one: Option[String] = None)
+         |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
          |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
-         |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),
+         |    string.required[Test]("three", _.three),
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.optional[Test]("one", _.one),
          |  ){

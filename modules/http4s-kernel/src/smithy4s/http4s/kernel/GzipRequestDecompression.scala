@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import scala.util.control.NoStackTrace
 
 // inspired from:
 // https://github.com/http4s/http4s/blob/v0.23.19/server/shared/src/main/scala/org/http4s/server/middleware/GZip.scala
-object GzipRequestDecompression {
+private[smithy4s] object GzipRequestDecompression {
   val DefaultBufferSize = 32 * 1024
 
   def apply[F[_]: MonadCancelThrow: Compression](

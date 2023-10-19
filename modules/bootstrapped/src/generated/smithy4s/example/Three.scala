@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class Three(three: String)
+
 object Three extends ShapeTag.Companion[Three] {
   val id: ShapeId = ShapeId("smithy4s.example", "Three")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Three] = struct(
-    string.required[Three]("three", _.three).addHints(smithy.api.Required()),
+    string.required[Three]("three", _.three),
   ){
     Three.apply
   }.withId(id).addHints(hints)

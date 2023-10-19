@@ -1,6 +1,71 @@
-# 0.18.0 (in progress)
+# 0.18.3
+
+* Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
+
+# 0.18.2
+
+## Expose UrlForm.parse and UrlFormDecodeError
+
+In 0.18.0, support was added for `application/x-www-form-urlencoded` data. But, many of its related constructs were private, they are now public for users to access them directly.
+https://github.com/disneystreaming/smithy4s/pull/1254
+
+# 0.18.1
+
+## Open enum support in Dynamic module
+
+In 0.18.0, support was added for [open enums](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/open-enums) in smithy4s-generated code. This release extends that support to runtime (dynamic) schemas.
+
+## Fixed a bug preventing a model pre-processor from being exercised
+
+This model-preprocessor aims at removing constraints from output types in AWS specs (as AWS doesn't seem to respect said constraints)
+https://github.com/disneystreaming/smithy4s/pull/1251
+
+# 0.18.0
 
 ## Behavioural changes
+
+The default timestamp format in Json serialisation is now `EPOCH_SECONDS`. This change is motivated by a desire to align with AWS and to improve
+our compatibility with their tooling. Timestamps shapes (or members pointing to timestamp shapes) now will need to be annotated with `@timestampFormat("DATE_TIME")`
+in order to retrieve the previous behaviour.
+
+## Significant rewrite of the abstractions.
+
+The abstractions that power smithy4s have been overhauled to facilitate integration with other protocols than simpleRestJson and other http libraries than http4s.
+Many levels of the library has been impacted in significant ways, which is likely to break a great many third-party integrations. The amount of breaking
+changes is too large to list exhaustively, therefore only a highlight is provided in this changelog.
+
+* `smithy4s.schema.Field` is no longer a GADT differentiating from required/optional fields. There is now a `smithy4s.schema.Schema.OptionSchema` GADT member instead, which was required to support some traits.
+* `smithy4s.schema.Schema.UnionSchema` now references an ordinal function, as opposed to the previous dispatch function.
+* `smithy4s.Endpoint` now contains a `smithy4s.schema.OperationSchema`, which is a construct gathering all schemas related to an operation.
+* `smithy4s.Service` now allows to get an ordinal value out of a reified operation, thus making it easier to dispatch it to the correct handler.
+* `smithy4s.Service` now contains some methods for instantiation of services from an endpoint compilers.
+* Two new packages in `core` have appeared : `smithy4s.server` and `smithy4s.client`, each containing protocol-agnostic constructs that aim at taking care of some of the complexity of integrating libraries/protocols with smithy4s.
+* A `smithy4s.capability.MonadThrowLike` and `smith4s.capability.Zipper` types have been created, unlocking the writing of generic functions that benefits integrations
+with various third-party libraries.
+* `smithy4s.http.HttpRequest` and `smithy4s.http.HttpResponse` types have been created.
+* `smithy4s.http.HttpUnaryClientCodecs` and `smithy4s.http.HttpUnaryServerCodecs` are new constructs that aim at facilitating the integration of http-protocols. In particular, they take care of a fair amount of complexity related to handling `smithy.api#http*` traits (including the reconciliation of data coming from http metadata and http bodies).
+* Overall, the amount of code in the `smithy4s-http4s` module has drastically diminished, as the constructs necessary for the generalisation of the http-related logic have been created. We (maintainers) love http4s, and are not planning on publicly maintaining any other integration, but we are responsible for other integrations in our work ecosystem. Therefore, generalising what we can makes our jobs easier, but also should allow for third parties to have an easier time integrating their http-libraries of choice with Smithy4s.
+
+### Highlight : schema partitioning
+
+The most ground-breaking change of 0.18, which is crucial for how things are now implemented, is the addition of a `smithy4s.schema.SchemaPartition` utility that allow to split schemas into sub-schemas that each take care of the subset of the data. This mechanism allows to completely decouple the (de)serialisation of http bodies from the decoding of http metadata. This means, for instance, that JSON serialisation no longer has to be aware of traits such as `httpHeader`, `httpQuery`, `httpLabel`. This greatly facilitates the integration of other serialisation technologies (XML, URL Form, etc) as these no longer has to contain convoluted logic related to which fields should be skipped during (de)-serialisation.
+
+As a result, the **smithy4s-json** module has been rewritten. In particular, the code it contains is now held in the `smithy4s.json` package, since it is no longer coupled with http-semantics. The `smithy4s.json.Json` object has also been created to provide high-level methods facilitating the encoding/decoding of generated types into json, which is helpful for a number of usecases that fall out of the server/client bindings.
+
+## Features
+
+### AWS SDK support.
+
+Smithy4s' coverage of the AWS protocols has increased drastically. Now, the vast majority of services and operations are supported. This does mean that Smithy4s can effectively be used as a cross-platform AWS SDK (with caveats), delegating to `http4s` for transport.
+
+The Smithy4s build plugins now also come with utilities to facilitate the code-generation from AWS service specifications.
+
+Please refer yourself to the relevant [documentation page](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws).
+
+### Build plugins
+
+Smithy has support in IDE via the smithy-language-server. The language server uses a configuration file to understand your project. In 0.18, our build plugins for `sbt` and `mill` can generate that configuration file for you. Use the following commands depending on the build tool you use, for `sbt`: `sbt smithy4sUpdateLSPConfig` and for `mill`: `mill smithy4s.codegen.LSP/updateConfig`.
+
 
 ### Mill
 
@@ -34,7 +99,8 @@ See https://github.com/disneystreaming/smithy4s/pull/912
 
 ### smithy4s.Blob
 
-`smithy4s.ByteArray` has been deprecated in favor of `smithy4s.Blob`.
+`smithy4s.ByteArray` has been deprecated in favor of `smithy4s.Blob`. This new type is more flexible, in that it can be backed by byte arrays and byte buffers alike.
+Additionally, it allows for O(1) concatenation. This change is motivated by a desire to ease integration with third party libraries whilst reducing the need of copies of binary data.
 
 ### Smithy4s Optics Instances
 
@@ -54,6 +120,46 @@ Added convenient methods for working with unions including projectors for each u
 
 See https://github.com/disneystreaming/smithy4s/pull/1144
 
+### Sparse collections
+
+The `sparse` trait is now supported, allowing for the modelling of collections with null values. Its presence leads to the code-generation of `List[Option[A]]` and `Map[String, Option[A]]`.
+
+See https://github.com/disneystreaming/smithy4s/pull/993
+
+### Xml support
+
+The `smithy4s-xml` now exists, containing utilities to parse XML blobs into the generated data classes, and render XML from the generated data classes. This serde logic abides by the rules described in the the official [smithy documentation](https://smithy.io/2.0/spec/protocol-traits.html?highlight=xml#xml-bindings).
+
+### application/x-www-form-urlencoded support
+
+The `smithy4s-core` now contains utilities to parse [application/x-www-form-urlencoded](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) payloads into the generated data classes, and render those payloads same payloads the generated data classes. This encoding allows for a few customisation, driven by [alloy traits](https://github.com/disneystreaming/alloy#alloyurlformflattened).
+
+See https://github.com/disneystreaming/smithy4s/pull/1113
+
+# 0.17.20
+
+* Add empty line separating generated case classes from their companion objects in [#1175](https://github.com/disneystreaming/smithy4s/pull/1175)
+
+# 0.17.19
+
+This release brings in a smithy-model update, which resolves some issues that would've prevented code generation from succeeding. [#1164](https://github.com/disneystreaming/smithy4s/pull/1164)
+
+# 0.17.18
+
+Fixes a `ClassCastException` in document encoding in [#1161](https://github.com/disneystreaming/smithy4s/pull/1161)
+
+# 0.17.17
+
+More permissive test for HEAD requests in [#1157](https://github.com/disneystreaming/smithy4s/pull/1157)
+
+# 0.17.16
+
+Fixes a bug where HEAD responses contained an empty {} in the body (where there should be no body present). [#1149](https://github.com/disneystreaming/smithy4s/pull/1149)
+
+# 0.17.15
+
+Updates to fix compile errors when intEnum shapes are used as traits. [#1139](https://github.com/disneystreaming/smithy4s/pull/1139)
+
 # 0.17.14
 
 * Only transform AWS shapes named after standard shapes in [#1127](https://github.com/disneystreaming/smithy4s/pull/1127)
@@ -68,7 +174,7 @@ See https://github.com/disneystreaming/smithy4s/pull/1144
 
 * Remove reserved types in https://github.com/disneystreaming/smithy4s/pull/1052
 
-Remove a legacy mechanism of dealing with name conflicts in generated types. Fixes #1051
+Remove a legacy mechanism of dealing with name conflicts in generated types. Fixes [#1051](https://github.com/disneystreaming/smithy4s/issues/1051)
 
 * Flatten AWS newtypes in https://github.com/disneystreaming/smithy4s/pull/1110
 

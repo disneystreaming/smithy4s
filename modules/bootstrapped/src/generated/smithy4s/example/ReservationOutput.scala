@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ReservationOutput(message: String)
+
 object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ReservationOutput")
 
@@ -16,7 +17,7 @@ object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
   )
 
   implicit val schema: Schema[ReservationOutput] = struct(
-    string.required[ReservationOutput]("message", _.message).addHints(smithy.api.Required()),
+    string.required[ReservationOutput]("message", _.message),
   ){
     ReservationOutput.apply
   }.withId(id).addHints(hints)

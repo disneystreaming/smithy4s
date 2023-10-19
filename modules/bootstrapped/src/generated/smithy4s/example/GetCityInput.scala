@@ -8,6 +8,7 @@ import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 final case class GetCityInput(cityId: CityId)
+
 object GetCityInput extends ShapeTag.Companion[GetCityInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetCityInput")
 
@@ -18,7 +19,7 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
   }
 
   implicit val schema: Schema[GetCityInput] = struct(
-    CityId.schema.required[GetCityInput]("cityId", _.cityId).addHints(smithy.api.Required()),
+    CityId.schema.required[GetCityInput]("cityId", _.cityId),
   ){
     GetCityInput.apply
   }.withId(id).addHints(hints)

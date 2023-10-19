@@ -57,13 +57,14 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
+  fs2,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
   decline,
   codegenPlugin,
   benchmark,
-  sandbox,
+  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -371,14 +372,20 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.9.1",
+      "com.lihaoyi" %% "upickle" % "3.1.3",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.5"
+      "io.get-coursier" %% "coursier" % "2.1.7"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
-    bloopEnabled := true
+    bloopEnabled := true,
+    Compile / sourceGenerators += {
+      sourceManaged
+        .map(AwsBoilerplate.generate(_))
+        .taskValue,
+    }
   )
 
 /**
@@ -656,7 +663,7 @@ lazy val fs2 = projectMatrix
  */
 lazy val `http4s-kernel` = projectMatrix
   .in(file("modules/http4s-kernel"))
-  .dependsOn(core)
+  .dependsOn(core, cats)
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
@@ -675,6 +682,8 @@ lazy val http4s = projectMatrix
   .dependsOn(
     `http4s-kernel`,
     json,
+    fs2,
+    bootstrapped % "test->compile",
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
@@ -696,6 +705,9 @@ lazy val http4s = projectMatrix
         Dependencies.Alloy.`protocol-tests` % Test
       )
     },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.example.guides.auth"
+    ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
@@ -763,7 +775,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core, complianceTests, dynamic, bootstrapped)
+  .dependsOn(core, complianceTests, dynamic)
   .settings(
     libraryDependencies ++= {
       Seq(
@@ -773,7 +785,12 @@ lazy val tests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )
-    }
+    },
+    Compile / allowedNamespaces := Seq("smithy4s.example"),
+    Compile / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy"
+    ),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -850,7 +867,8 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.test",
       "smithy4s.example.package",
       "weather",
-      "smithy4s.example.product"
+      "smithy4s.example.product",
+      "smithy4s.example.reservedNameOverride"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"
@@ -910,8 +928,8 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val sandbox = projectMatrix
-  .in(file("modules/sandbox"))
+lazy val `aws-sandbox` = projectMatrix
+  .in(file("modules/aws-sandbox"))
   .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
@@ -922,14 +940,14 @@ lazy val sandbox = projectMatrix
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
-    ) ++ scala3MigrationOption(scalaVersion.value),
+    ),
     smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
       "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
-      Dependencies.slf4jNop
+      Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true
   )

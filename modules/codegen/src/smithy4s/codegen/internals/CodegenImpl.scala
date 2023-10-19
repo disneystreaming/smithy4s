@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,19 +18,18 @@ package smithy4s.codegen
 package internals
 
 import alloy.openapi._
-import smithy4s.codegen.transformers.AwsStandardTypesTransformer
+import smithy4s.codegen.CodegenEntry.FromDisk
+import smithy4s.codegen.CodegenEntry.FromMemory
+import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
-
-import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
 
+import scala.jdk.CollectionConverters._
+
 private[codegen] object CodegenImpl { self =>
 
-  def processSpecs(
-      args: CodegenArgs
-  ): Set[os.Path] = {
-
+  def generate(args: CodegenArgs): CodegenResult = {
     val (classloader, model): (ClassLoader, Model) = internals.ModelLoader.load(
       args.specs.map(_.toIO).toSet,
       args.dependencies,
@@ -46,8 +45,7 @@ private[codegen] object CodegenImpl { self =>
       val scalaFiles = codegenResult.map { case (relPath, result) =>
         val fileName = result.name + ".scala"
         val scalaFile = (args.output / relPath / fileName)
-        os.write.over(scalaFile, result.content, createFolders = true)
-        scalaFile
+        CodegenEntry.FromMemory(scalaFile, result.content)
       }
       val generatedNamespaces = codegenResult.map(_._2.namespace).distinct
       // when args.specs and generatedNamespaces are empty
@@ -60,7 +58,7 @@ private[codegen] object CodegenImpl { self =>
           args.specs,
           generatedNamespaces
         )
-      } else List.empty
+      } else List.empty[CodegenEntry]
       (scalaFiles, resources)
     } else (List.empty, List.empty)
 
@@ -69,12 +67,40 @@ private[codegen] object CodegenImpl { self =>
         case OpenApiConversionResult(_, serviceId, outputString) =>
           val name = serviceId.getNamespace() + "." + serviceId.getName()
           val openapiFile = (args.resourceOutput / (name + ".json"))
-          os.write.over(openapiFile, outputString, createFolders = true)
-          openapiFile
+          CodegenEntry.FromMemory(openapiFile, outputString)
       }
     } else List.empty
 
-    (scalaFiles ++ openApiFiles ++ smithyResources).toSet
+    CodegenResult(
+      sources = scalaFiles,
+      resources = openApiFiles ++ smithyResources
+    )
+  }
+
+  def write(result: CodegenResult): Set[os.Path] = {
+    def entryToDisk(entry: CodegenEntry): Unit = entry match {
+      case FromMemory(path, content) =>
+        os.write.over(path, content, createFolders = true)
+        ()
+      case FromDisk(path, sourceFile) =>
+        os.copy.over(
+          from = sourceFile,
+          to = path,
+          replaceExisting = true,
+          createFolders = true
+        )
+    }
+
+    val sourcesPaths = result.sources.map { e =>
+      entryToDisk(e)
+      e.toPath
+    }
+    val resourcesPaths = result.resources.map { e =>
+      entryToDisk(e)
+      e.toPath
+    }
+
+    (sourcesPaths ++ resourcesPaths).toSet
   }
 
   private[internals] def generate(
@@ -158,6 +184,6 @@ private[codegen] object CodegenImpl { self =>
   }
 
   private def withAwsTypeTransformer(transformers: List[String]): List[String] =
-    transformers :+ AwsStandardTypesTransformer.name
+    transformers :+ AwsConstraintsRemover.name :+ AwsStandardTypesTransformer.name :+ OpenEnumTransformer.name
 
 }

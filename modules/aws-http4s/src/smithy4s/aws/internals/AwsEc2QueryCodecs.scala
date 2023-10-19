@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,129 +17,95 @@
 package smithy4s.aws
 package internals
 
-import _root_.aws.protocols.AwsQueryError
 import _root_.aws.protocols.Ec2QueryName
-import cats.effect.Concurrent
-import cats.syntax.all._
-import fs2.compression.Compression
+import alloy.UrlFormName
+import alloy.UrlFormFlattened
 import smithy.api.XmlName
-import smithy4s.Endpoint
+import smithy4s._
+import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
-import smithy4s.http4s.kernel._
+import smithy4s.kinds.PolyFunction5
+import smithy4s.xml.Xml
+import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.schema.OperationSchema
+import smithy4s.schema.ErrorSchema
 
+// scalafmt: { maxColumn = 120}
 private[aws] object AwsEcsQueryCodecs {
 
-  def make[F[_]: Concurrent: Compression](
+  // These are set to fulfil the requirements of
+  // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+  private val xmlToUrlFormHints = (hints: Hints) =>
+    hints match {
+      case Ec2QueryName.hint(ec2QueryName) => hints.addMemberHints(UrlFormName(ec2QueryName.value))
+      case XmlName.hint(xmlName)           => hints.addMemberHints(UrlFormName(xmlName.value.capitalize))
+      case _                               => hints
+    }
+
+  // All collections are encoded supposed to be using the flattened encoding. We simply modify the schema transitively
+  // to add the hint to all layers, for simplicity.
+  private val flattenAll = (_: Hints).add(UrlFormFlattened())
+
+  private val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
+  private val discriminatorDecoders =
+    Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+
+  def operationPreprocessor(
       version: String
-  ): UnaryClientCodecs.Make[F] =
-    new UnaryClientCodecs.Make[F] {
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
       def apply[I, E, O, SI, SO](
-          endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = {
-        val requestEncoderCompilers = AwsQueryCodecs
-          .requestEncoderCompilers[F](
-            // These are set to fulfil the requirements of
-            // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-            // without UrlFormDataEncoderSchemaVisitor having to be more aware
-            // than necessary of these protocol quirks (having it be aware of
-            // XmlName and XmlFlattened already feels like too much - perhaps in
-            // a future change UrlFormDataEncoderSchemaVisitor can work with
-            // better-named hints, and we can use this same transformation
-            // approach in AwsQueryCodecs to translate the AWS XML hints to
-            // those new hints).
-            ignoreXmlFlattened = true,
-            capitalizeStructAndUnionMemberNames = true,
-            action = endpoint.id.name,
-            version = version
-          )
-          .contramapSchema(
-            // This pre-processing works in collaboration with the passing of
-            // the capitalizeStructAndUnionMemberNames flags to
-            // UrlFormDataEncoderSchemaVisitor.
-            smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
-              hints.memberHints.get(Ec2QueryName) match {
-                case Some(ec2QueryName) =>
-                  hints.addMemberHints(
-                    XmlName(ec2QueryName.value)
-                  )
+          operation: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] = {
 
-                case None =>
-                  hints.memberHints.get(XmlName) match {
-                    case Some(xmlName) =>
-                      hints.addMemberHints(
-                        XmlName(xmlName.value.capitalize)
-                      )
+        import AwsQueryCodecs.{addOperationInfo, addDiscriminator}
 
-                    case None =>
-                      hints
-                  }
-              }
-            )
-          )
-        val transformEncoders = applyCompression[F](
-          endpoint.hints,
-          // To fulfil the requirement of
-          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/ec2Query/requestCompression.smithy#L152-L298.
-          retainUserEncoding = false
-        )
-        val requestEncoderCompilersWithCompression = transformEncoders(
-          requestEncoderCompilers
-        )
-
-        val responseTag = endpoint.name + "Response"
-        val responseDecoderCompilers =
-          AwsXmlCodecs
-            .responseDecoderCompilers[F]
-            .contramapSchema(
-              smithy4s.schema.Schema.transformHintsLocallyK(
-                _ ++ smithy4s.Hints(
-                  smithy4s.xml.internals.XmlStartingPath(
-                    List(responseTag)
-                  )
-                )
-              )
-            )
-        val errorDecoderCompilers = AwsXmlCodecs
-          .responseDecoderCompilers[F]
-          .contramapSchema(
-            smithy4s.schema.Schema.transformHintsLocallyK(
-              _ ++ smithy4s.Hints(
-                smithy4s.xml.internals.XmlStartingPath(
-                  List("Response", "Errors", "Error")
-                )
-              )
-            )
-          )
-
-        // Takes the `@awsQueryError` trait into consideration to decide how to
-        // discriminate error responses.
-        val errorNameMapping: (String => String) = endpoint.errorable match {
-          case None =>
-            identity[String]
-
-          case Some(err) =>
-            val mapping = err.error.alternatives.flatMap { alt =>
-              val shapeName = alt.schema.shapeId.name
-              alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
-            }.toMap
-            (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
+        val inputTransformation = {
+          val transitive = Schema.transformHintsTransitivelyK { xmlToUrlFormHints.andThen(flattenAll) }
+          val local = Schema.transformHintsLocallyK(addOperationInfo(operation.id.name, version))
+          transitive.andThen(local)
         }
-        val errorDiscriminator = AwsErrorTypeDecoder
-          .fromResponse(errorDecoderCompilers)
-          .andThen(_.map(_.map {
-            case HttpDiscriminator.NameOnly(name) =>
-              HttpDiscriminator.NameOnly(errorNameMapping(name))
-            case other => other
-          }))
 
-        val make = UnaryClientCodecs.Make[F](
-          input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
-          error = errorDecoderCompilers,
-          errorDiscriminator = errorDiscriminator
-        )
-        make.apply(endpoint)
+        def errorTransformation =
+          ErrorSchema.transformHintsLocallyK {
+            addDiscriminator.andThen(addErrorStartingPath)
+          }
+
+        val outputTransformation = Schema.transformHintsLocallyK {
+          val responseTag = operation.id.name + "Response"
+          (_: Hints).add(XmlStartingPath(List(responseTag)))
+        }
+
+        operation
+          .mapInput(inputTransformation(_))
+          .mapOutput(outputTransformation(_))
+          .mapError(errorTransformation(_))
       }
     }
+
+  // These are set to fulfil the requirements of
+  // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+  // without UrlFormDataEncoderSchemaVisitor having to be more aware than necessary of these protocol quirks.
+  private[aws] val inputEncoders = {
+    UrlForm
+      .Encoder(capitalizeStructAndUnionMemberNames = true)
+      .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
+  }
+
+  def make[F[_]: MonadThrowLike](
+      version: String
+  ): HttpUnaryClientCodecs.Builder[F, HttpRequest[Blob], HttpResponse[Blob]] = {
+
+    HttpUnaryClientCodecs.builder
+      .withOperationPreprocessor(operationPreprocessor(version))
+      .withBodyEncoders(inputEncoders)
+      .withSuccessBodyDecoders(Xml.decoders)
+      .withErrorBodyDecoders(Xml.decoders)
+      .withMetadataEncoders(Metadata.AwsEncoder)
+      .withMetadataDecoders(Metadata.AwsDecoder)
+      .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
+      .withWriteEmptyStructs(_ => true)
+      .withRequestMediaType("application/x-www-form-urlencoded")
+  }
 
 }

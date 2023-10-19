@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
 
   object autoImport {
+    val AWS = smithy4s.codegen.AwsSpecs
+
     val smithy4sCodegen =
       taskKey[Seq[File]](
         "Generate .scala and other files from smithy specs (.smithy or .json files)"
@@ -150,6 +152,21 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       settingKey[List[String]](
         "List of transformer names that should be applied to the model prior to codegen"
       )
+
+    val smithy4sAwsSpecsVersion =
+      settingKey[String](
+        "Known version of the AWS specifications, produced by https://github.com/disneystreaming/aws-sdk-smithy-specs"
+      )
+
+    val smithy4sAwsSpecs =
+      settingKey[Seq[String]]("Aws modules to load")
+
+    val smithy4sAwsSpecDependencies =
+      taskKey[Seq[ModuleID]](
+        List(
+          "List of modules containing AWS specifications that should be added to the classpath used by Smithy4s during code-generation"
+        ).mkString(" ")
+      )
   }
 
   import autoImport._
@@ -166,10 +183,19 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / sourceDirectory).value / "smithy",
       (config / sourceManaged).value / "smithy"
     ),
+    config / unmanagedSourceDirectories ++= (config / smithy4sInputDirs).value,
     config / smithy4sOutputDir := (config / sourceManaged).value / "scala",
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    smithy4sAwsSpecs := Seq.empty,
+    smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
+    Compile / smithy4sAwsSpecDependencies := {
+      val version = (smithy4sAwsSpecsVersion).value
+      (smithy4sAwsSpecs).value.map { case artifactName =>
+        smithy4s.codegen.AwsSpecs.org % artifactName % version
+      }
+    },
     config / smithy4sInternalDependenciesAsJars := {
       (config / internalDependencyAsJars).value.map(_.data)
     },
@@ -195,7 +221,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sAllExternalDependencies := {
       val all = (config / smithy4sNormalExternalDependencies).value ++
         (config / smithy4sExplicitCodegenOnlyDependencies).value ++
-        (config / smithy4sExternallyTrackedDependencies).value
+        (config / smithy4sExternallyTrackedDependencies).value ++
+        (config / smithy4sAwsSpecDependencies).value
       all.distinct
     },
     config / smithy4sAllDependenciesAsJars := {
@@ -290,7 +317,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
     )
 
-  private def moduleIdEncode(
+  override lazy val globalSettings: Seq[Def.Setting[_]] = List(
+    commands += GenerateSmithyBuild.command
+  )
+
+  private[codegen] def moduleIdEncode(
       moduleId: ModuleID,
       scalaBinaryVersion: Option[String]
   ): List[String] = {
@@ -415,7 +446,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
               val resPaths = smithy4s.codegen.Codegen
-                .processSpecs(args)
+                .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {

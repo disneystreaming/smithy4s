@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class SayHelloPayload(result: String)
+
 object SayHelloPayload extends ShapeTag.Companion[SayHelloPayload] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloPayload")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[SayHelloPayload] = struct(
-    string.required[SayHelloPayload]("result", _.result).addHints(smithy.api.Required()),
+    string.required[SayHelloPayload]("result", _.result),
   ){
     SayHelloPayload.apply
   }.withId(id).addHints(hints)

@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class PackedInput(key: String)
+
 object PackedInput extends ShapeTag.Companion[PackedInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PackedInput")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[PackedInput] = struct(
-    string.required[PackedInput]("key", _.key).addHints(smithy.api.Required()),
+    string.required[PackedInput]("key", _.key),
   ){
     PackedInput.apply
   }.withId(id).addHints(hints)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import smithy4s.schema._
 import smithy4s.schema.Schema._
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
+import smithy4s.capability.MonadThrowLike
+import smithy4s.kinds.PolyFunction
 
 sealed trait HttpContractError
     extends Throwable
@@ -34,6 +36,9 @@ object HttpContractError {
       payloadError.expected,
       payloadError.message
     )
+
+  def fromPayloadErrorK[F[_]: MonadThrowLike]: PolyFunction[F, F] =
+    MonadThrowLike.mapErrorK[F] { case e: PayloadError => fromPayloadError(e) }
 
   val schema: Schema[HttpContractError] = {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")

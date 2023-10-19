@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ private[smithy4s] trait ScalaCompat {
     catch { case scala.util.control.NonFatal(_) => None }
   }
 
-  private[smithy4s] implicit final class MapOps[K, V](val map: Map[K, V]) {
-    def mapToValues[W](f: V => W): Map[K, W] = map.mapValues(f)
-  }
+  // ArraySeq.unsafeWrapArray does not seem to exist in Scala 2.12
+  private[smithy4s] def unsafeWrapArray[A](array: Array[A]): IndexedSeq[A] =
+    array.toIndexedSeq
 
 }

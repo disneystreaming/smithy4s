@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -257,7 +257,18 @@ private[internals] object CollisionAvoidance {
     "var",
     "while",
     "with",
-    "yield"
+    "yield",
+    // For below, see https://github.com/disneystreaming/smithy4s/issues/1238
+    // Treating all methods from java.lang.Object as reserved
+    "clone",
+    "equals",
+    "finalize",
+    "getClass",
+    "hashCode",
+    "notify",
+    "notifyAll",
+    "toString",
+    "wait"
   )
 
   class Names() {
@@ -271,17 +282,17 @@ private[internals] object CollisionAvoidance {
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
     val Schema_ = NameRef("smithy4s", "Schema")
+    val OperationSchema_ = NameRef("smithy4s.schema", "OperationSchema")
     val FunctorAlgebra_ = NameRef("smithy4s.kinds", "FunctorAlgebra")
     val BiFunctorAlgebra_ = NameRef("smithy4s.kinds", "BiFunctorAlgebra")
-    val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
+    val StreamingSchema_ = NameRef("smithy4s.schema", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
     val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")
-    val Errorable_ = NameRef("smithy4s", "Errorable")
-    val unionSchema_ = NameRef("smithy4s.schema.Schema", "UnionSchema")
+    val ErrorSchema_ = NameRef("smithy4s.schema", "ErrorSchema")
     val union_ = NameRef("smithy4s.schema.Schema", "union")
     val recursive_ = NameRef("smithy4s.schema.Schema", "recursive")
     val enumeration_ = NameRef("smithy4s.schema.Schema", "enumeration")

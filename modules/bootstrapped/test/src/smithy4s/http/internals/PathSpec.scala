@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ class PathSpec() extends munit.FunSuite {
   test("parse static query params from DummyPath") {
     val httpEndpoint = HttpEndpoint
       .cast(
-        DummyPath
+        DummyPath.schema
       )
       .toOption
       .get
@@ -101,7 +101,7 @@ class PathSpec() extends munit.FunSuite {
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
       .cast(
-        DummyPath
+        DummyPath.schema
       )
       .toTry
       .get

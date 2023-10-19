@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -94,6 +94,13 @@ object CachedSchemaCompiler { outer =>
       fromSchema(schema, CompilationCache.nop[Aux])
 
     def createCache(): Cache = CompilationCache.make[Aux]
+  }
+
+  abstract class Uncached[F[_]] extends CachedSchemaCompiler[F] {
+    type Cache = Any
+    def createCache(): Cache = ()
+    override final def fromSchema[A](schema: Schema[A], cache: Cache): F[A] =
+      fromSchema(schema)
   }
 
   abstract class DerivingImpl[F[_]] extends Impl[F] {

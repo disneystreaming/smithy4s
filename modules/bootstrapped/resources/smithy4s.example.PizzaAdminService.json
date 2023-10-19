@@ -154,8 +154,7 @@
                         "name": "aa",
                         "in": "path",
                         "schema": {
-                            "type": "integer",
-                            "format": "int32"
+                            "$ref": "#/components/schemas/EnumResult"
                         },
                         "required": true
                     }
@@ -178,6 +177,24 @@
                                 "schema": {
                                     "$ref": "#/components/schemas/UnknownServerErrorResponseContent"
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/head-request": {
+            "head": {
+                "operationId": "HeadRequest",
+                "responses": {
+                    "200": {
+                        "description": "HeadRequest 200 response",
+                        "headers": {
+                            "Test": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "required": true
                             }
                         }
                     }
@@ -280,6 +297,16 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/no-content": {
+            "get": {
+                "operationId": "NoContentRequest",
+                "responses": {
+                    "204": {
+                        "description": "NoContentRequest 204 response"
                     }
                 }
             }
@@ -387,7 +414,8 @@
                         "headers": {
                             "X-ADDED-AT": {
                                 "schema": {
-                                    "type": "number"
+                                    "type": "string",
+                                    "format": "epoch-seconds"
                                 },
                                 "required": true
                             }
@@ -531,6 +559,14 @@
                     }
                 }
             },
+            "EnumResult": {
+                "type": "integer",
+                "format": "int32",
+                "enum": [
+                    1,
+                    2
+                ]
+            },
             "FallbackErrorResponseContent": {
                 "type": "object",
                 "properties": {
@@ -604,8 +640,7 @@
                 "type": "object",
                 "properties": {
                     "result": {
-                        "type": "integer",
-                        "format": "int32"
+                        "$ref": "#/components/schemas/EnumResult"
                     }
                 },
                 "required": [

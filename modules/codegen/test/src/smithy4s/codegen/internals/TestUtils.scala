@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -85,6 +85,20 @@ object TestUtils {
         Assertions.fail("Multiple lines match the code section pattern")
       case Nil => Assertions.fail("No line matches the code section pattern")
     }
+  }
+
+  def loadModel(namespaces: String*): Model = {
+    val assembler = Model
+      .assembler()
+      .disableValidation()
+      .discoverModels()
+
+    namespaces
+      .foldLeft(assembler) { case (a, model) =>
+        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
+      }
+      .assemble()
+      .unwrap()
   }
 
 }

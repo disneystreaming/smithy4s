@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class PayloadData(testBiggerUnion: Option[TestBiggerUnion] = None)
+
 object PayloadData extends ShapeTag.Companion[PayloadData] {
   val id: ShapeId = ShapeId("smithy4s.example", "PayloadData")
 

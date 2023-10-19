@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,13 +81,14 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |final case class TestStructure(i: Int, d: Option[Date] = None, l: Option[Long] = None)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
         |  val hints: Hints = Hints.empty
         |
         |  implicit val schema: Schema[TestStructure] = struct(
-        |    int.required[TestStructure]("i", _.i).addHints(smithy.api.Required()),
+        |    int.required[TestStructure]("i", _.i),
         |    Date.schema.optional[TestStructure]("d", _.d),
         |    Long.schema.optional[TestStructure]("l", _.l),
         |  ){
@@ -132,27 +133,28 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     assertEquals(
       structureCode,
-      """|package test
-         |
-         |import smithy4s.Hints
-         |import smithy4s.Schema
-         |import smithy4s.ShapeId
-         |import smithy4s.ShapeTag
-         |import smithy4s.schema.Schema.string
-         |import smithy4s.schema.Schema.struct
-         |
-         |final case class TestStructure(s: Option[String] = None)
-         |object TestStructure extends ShapeTag.Companion[TestStructure] {
-         |  val id: ShapeId = ShapeId("test", "TestStructure")
-         |
-         |  val hints: Hints = Hints.empty
-         |
-         |  implicit val schema: Schema[TestStructure] = struct(
-         |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
-         |  ){
-         |    TestStructure.apply
-         |  }.withId(id).addHints(hints)
-         |}""".stripMargin
+      """package test
+        |
+        |import smithy4s.Hints
+        |import smithy4s.Schema
+        |import smithy4s.ShapeId
+        |import smithy4s.ShapeTag
+        |import smithy4s.schema.Schema.string
+        |import smithy4s.schema.Schema.struct
+        |
+        |final case class TestStructure(s: Option[String] = None)
+        |
+        |object TestStructure extends ShapeTag.Companion[TestStructure] {
+        |  val id: ShapeId = ShapeId("test", "TestStructure")
+        |
+        |  val hints: Hints = Hints.empty
+        |
+        |  implicit val schema: Schema[TestStructure] = struct(
+        |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
+        |  ){
+        |    TestStructure.apply
+        |  }.withId(id).addHints(hints)
+        |}""".stripMargin
     )
   }
 
@@ -203,6 +205,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |import smithy4s.schema.Schema.struct
         |
         |final case class TestStructure(i: Int = 5)
+        |
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
@@ -349,20 +352,6 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         .getShape(ShapeId.from("com.amazonaws.dynamodb#BackupArn"))
         .isPresent
     )
-  }
-
-  private def loadModel(namespaces: String*): Model = {
-    val assembler = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-
-    namespaces
-      .foldLeft(assembler) { case (a, model) =>
-        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
-      }
-      .assemble()
-      .unwrap()
   }
 
   def prettyPrint(model: Model): String = {

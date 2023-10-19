@@ -17,6 +17,7 @@ import org.scalajs.linker.interface.ModuleKind
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import com.github.sbt.git.SbtGit.git
 import bloop.integrations.sbt.BloopKeys.bloopGenerate
+import java.time.OffsetDateTime
 
 sealed trait Platform
 case object JSPlatform extends Platform
@@ -28,9 +29,9 @@ case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
-  val Scala212 = "2.12.17"
+  val Scala212 = "2.12.18"
   val Scala213 = "2.13.10"
-  val Scala3 = "3.3.0"
+  val Scala3 = "3.3.1"
 
   object autoImport {
     // format: off
@@ -326,23 +327,25 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     Compile / packageBin / publishArtifact := false
   )
 
+  lazy val thisYear = OffsetDateTime.now().getYear()
+
   lazy val headerSettings = Seq(
     headerLicense := Some(
       HeaderLicense.Custom(
-        """| Copyright 2021-2022 Disney Streaming
-           |
-           | Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
-           | you may not use this file except in compliance with the License.
-           | You may obtain a copy of the License at
-           |
-           |    https://disneystreaming.github.io/TOST-1.0.txt
-           |
-           | Unless required by applicable law or agreed to in writing, software
-           | distributed under the License is distributed on an "AS IS" BASIS,
-           | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-           | See the License for the specific language governing permissions and
-           | limitations under the License.
-           |""".stripMargin
+        s"""| Copyright 2021-$thisYear Disney Streaming
+            |
+            | Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+            | you may not use this file except in compliance with the License.
+            | You may obtain a copy of the License at
+            |
+            |    https://disneystreaming.github.io/TOST-1.0.txt
+            |
+            | Unless required by applicable law or agreed to in writing, software
+            | distributed under the License is distributed on an "AS IS" BASIS,
+            | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+            | See the License for the specific language governing permissions and
+            | limitations under the License.
+            |""".stripMargin
       )
     )
   )

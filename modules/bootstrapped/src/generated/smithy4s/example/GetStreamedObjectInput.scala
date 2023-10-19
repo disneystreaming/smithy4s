@@ -8,13 +8,14 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetStreamedObjectInput(key: String)
+
 object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetStreamedObjectInput")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetStreamedObjectInput] = struct(
-    string.required[GetStreamedObjectInput]("key", _.key).addHints(smithy.api.Required()),
+    string.required[GetStreamedObjectInput]("key", _.key),
   ){
     GetStreamedObjectInput.apply
   }.withId(id).addHints(hints)

@@ -8,14 +8,15 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetCityOutput(name: String, coordinates: CityCoordinates)
+
 object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetCityOutput")
 
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetCityOutput] = struct(
-    string.required[GetCityOutput]("name", _.name).addHints(smithy.api.Required()),
-    CityCoordinates.schema.required[GetCityOutput]("coordinates", _.coordinates).addHints(smithy.api.Required()),
+    string.required[GetCityOutput]("name", _.name),
+    CityCoordinates.schema.required[GetCityOutput]("coordinates", _.coordinates),
   ){
     GetCityOutput.apply
   }.withId(id).addHints(hints)

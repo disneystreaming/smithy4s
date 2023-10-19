@@ -1,1 +1,3 @@
 smithy4s.codegen.transformers.AwsStandardTypesTransformer
+smithy4s.codegen.transformers.AwsConstraintsRemover
+smithy4s.codegen.transformers.OpenEnumTransformer

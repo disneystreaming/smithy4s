@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ListCitiesInput(nextToken: Option[String] = None, pageSize: Option[Int] = None)
+
 object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListCitiesInput")
 

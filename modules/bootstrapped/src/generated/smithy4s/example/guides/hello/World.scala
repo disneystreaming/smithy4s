@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class World(message: String = "World !")
+
 object World extends ShapeTag.Companion[World] {
   val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "World")
 

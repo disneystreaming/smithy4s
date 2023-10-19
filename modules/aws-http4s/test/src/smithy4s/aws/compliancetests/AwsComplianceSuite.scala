@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,10 +73,10 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
-  val jsonPayloadCodecs =
+  val jsonDecoders =
     smithy4s.json.Json.payloadCodecs.withJsoniterCodecCompiler {
       smithy4s.json.Json.jsoniter.withMapOrderPreservation(true)
-    }
+    }.decoders
 
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
@@ -87,7 +87,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, jsonPayloadCodecs))
+        .map(decodeDocument(_, jsonDecoders))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

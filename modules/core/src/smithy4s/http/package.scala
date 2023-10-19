@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,20 +16,14 @@
 
 package smithy4s
 
-import smithy4s.codecs.Reader
-import smithy4s.codecs.ReaderWriter
-import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.Decoder
 
 package object http {
 
   val errorTypeHeader = "X-Error-Type"
   val amazonErrorTypeHeader = "X-Amzn-Errortype"
 
-  type HttpPayloadReader[A] = Reader[Either[HttpContractError, *], Blob, A]
-  type HttpPayloadCodec[A] = ReaderWriter[HttpPayloadReader, PayloadWriter, A]
-  type HttpMediaReader[A] = HttpMediaTyped[HttpPayloadReader, A]
-  type HttpMediaWriter[A] = HttpMediaTyped[PayloadWriter, A]
-  type HttpMediaCodec[A] = HttpMediaTyped[HttpPayloadCodec, A]
+  type HttpPayloadDecoder[A] = Decoder[Either[HttpContractError, *], Blob, A]
 
   type PathParams = Map[String, String]
   type HttpMediaType = HttpMediaType.Type
@@ -47,7 +41,7 @@ package object http {
   ] = httpMatch(
     service,
     method,
-    pathSegments = matchPath.make(path).toVector
+    pathSegments = matchPath.make(path)
   )
 
   /**
@@ -57,7 +51,7 @@ package object http {
   final def httpMatch[Alg[_[_, _, _, _, _]]](
       service: Service[Alg],
       method: http.HttpMethod,
-      pathSegments: Vector[String]
+      pathSegments: IndexedSeq[String]
   ): Option[
     (
         service.Endpoint[_, _, _, _, _],
@@ -66,11 +60,12 @@ package object http {
     )
   ] = {
     service.endpoints.iterator
+      .map(ep => ep -> ep.schema)
       .map {
-        case endpoint @ http.HttpEndpoint(httpEndpoint)
+        case (endpoint, http.HttpEndpoint(httpEndpoint))
             if httpEndpoint.method == method =>
           httpEndpoint
-            .matches(pathSegments.toArray)
+            .matches(pathSegments)
             .map(metadata => (endpoint, httpEndpoint, metadata))
         case _ => None
       }

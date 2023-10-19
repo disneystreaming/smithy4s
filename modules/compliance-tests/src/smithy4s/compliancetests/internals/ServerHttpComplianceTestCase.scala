@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
+import smithy4s.schema._
+import smithy4s.{Document, Hints, Service, ShapeId}
 import smithy4s.kinds._
 
 import scala.concurrent.duration._
@@ -242,30 +243,27 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   private def prepareService[I, E, O, SE, SO](
       endpoint: originalService.Endpoint[I, E, O, SE, SO]
   ): (Service.Reflective[NoInputOp], Request[F]) = {
-    val amendedEndpoint =
-        // format: off
-        new smithy4s.Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
-          def hints: smithy4s.Hints = {
-            val newHttp = smithy.api.Http(
-              method = smithy.api.NonEmptyString("GET"),
-              uri = smithy.api.NonEmptyString("/")
-            )
-            val code = endpoint.hints.get[smithy.api.Http].map(_.code).getOrElse(newHttp.code)
-            Hints(newHttp.copy(code = code))
-          }
-          def id: smithy4s.ShapeId = ShapeId("custom", "endpoint")
-          def input: smithy4s.Schema[Unit] = smithy4s.Schema.unit
-          def output: smithy4s.Schema[O] = endpoint.output
-          def streamedInput: smithy4s.StreamingSchema[Nothing] =
-            smithy4s.StreamingSchema.NoStream
-          def streamedOutput: smithy4s.StreamingSchema[Nothing] =
-            smithy4s.StreamingSchema.NoStream
-          def wrap(input: Unit): NoInputOp[Unit, E, O, Nothing, Nothing] =
-            NoInputOp()
+    val newHints = {
+      val newHttp = smithy.api.Http(
+        method = smithy.api.NonEmptyString("GET"),
+        uri = smithy.api.NonEmptyString("/")
+      )
+      val code =
+        endpoint.hints.get[smithy.api.Http].map(_.code).getOrElse(newHttp.code)
+      Hints(newHttp.copy(code = code))
+    }
+    val amendedOperation =
+      Schema
+        .operation(ShapeId("custom", "endpoint"))
+        .withHints(newHints)
+        .withOutput(endpoint.output)
+        .withErrorOption(endpoint.error)
 
-          override def errorable: Option[Errorable[E]] = endpoint.errorable
-        }
-        // format: on
+    val amendedEndpoint =
+      smithy4s.Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing](
+        amendedOperation,
+        (_: Unit) => NoInputOp()
+      )
     val request = Request[F](Method.GET, Uri.unsafeFromString("/"))
     val amendedService =
       // format: off
@@ -285,9 +283,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     def toResponse[I, E, O, SE, SO](
         endpoint: originalService.Endpoint[I, E, O, SE, SO]
     ) = {
-      endpoint.errorable.toList
-        .flatMap { errorable =>
-          errorable.error.alternatives.flatMap { errorAlt =>
+      endpoint.error.toList
+        .flatMap { errorschema =>
+          errorschema.alternatives.flatMap { errorAlt =>
             errorAlt.schema.hints
               .get(HttpResponseTests)
               .toList
@@ -302,7 +300,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        errorable
+                        errorschema
                       )
                   )
                 )

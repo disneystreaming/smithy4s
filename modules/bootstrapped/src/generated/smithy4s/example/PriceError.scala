@@ -11,6 +11,7 @@ import smithy4s.schema.Schema.struct
 final case class PriceError(message: String, code: Int) extends Throwable {
   override def getMessage(): String = message
 }
+
 object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
 
@@ -19,8 +20,8 @@ object PriceError extends ShapeTag.Companion[PriceError] {
   )
 
   implicit val schema: Schema[PriceError] = struct(
-    string.required[PriceError]("message", _.message).addHints(smithy.api.Required()),
-    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE"), smithy.api.Required()),
+    string.required[PriceError]("message", _.message),
+    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE")),
   ){
     PriceError.apply
   }.withId(id).addHints(hints)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package smithy4s.json
 
-import smithy4s.codecs.PayloadCodec
 import smithy4s.schema.CachedSchemaCompiler
 
 // scalafmt: {maxColumn = 120}
 import com.github.plokhotnyuk.jsoniter_scala.core.{ReaderConfig => JsoniterReaderConfig}
 import com.github.plokhotnyuk.jsoniter_scala.core.{WriterConfig => JsoniterWriterConfig}
+import smithy4s.codecs.PayloadDecoder
+import smithy4s.codecs.PayloadEncoder
 
-trait JsonPayloadCodecCompiler extends CachedSchemaCompiler[PayloadCodec] {
+trait JsonPayloadCodecCompiler {
 
   /**
     * Changes the jsoniter codec compiler that backs this compiler. This can be used
@@ -43,5 +44,8 @@ trait JsonPayloadCodecCompiler extends CachedSchemaCompiler[PayloadCodec] {
     * @return
     */
   def withJsoniterWriterConfig(jsoniterWriterConfig: JsoniterWriterConfig): JsonPayloadCodecCompiler
+
+  def decoders: CachedSchemaCompiler[PayloadDecoder]
+  def encoders: CachedSchemaCompiler[PayloadEncoder]
 
 }

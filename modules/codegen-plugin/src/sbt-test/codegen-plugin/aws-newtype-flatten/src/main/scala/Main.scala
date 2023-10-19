@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,5 +44,9 @@ object Main extends App {
     )
   )
 
+  // Ensuring that the AwsConstraintsRemover transformer was applied correctly
+  // after the flattening, by removing constraints from any type involved in operation
+  // outputs.
+  assert(!TableName.hints.has(smithy.api.Pattern))
 
 }

@@ -20,6 +20,8 @@ service PizzaAdminService {
         Reservation
         Echo
         OptionalOutput
+        HeadRequest,
+        NoContentRequest
     ]
 }
 
@@ -334,8 +336,7 @@ operation Reservation {
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {
-    input: EchoInput
-    // this operation must NOT have any errors
+    input: EchoInput// this operation must NOT have any errors
     errors: []
 }
 
@@ -365,3 +366,19 @@ operation OptionalOutput {
         body: String
     }
 }
+
+@http(method: "HEAD", uri: "/head-request")
+@readonly
+operation HeadRequest {
+    output: HeadRequestOutput
+}
+
+structure HeadRequestOutput {
+    @httpHeader("Test")
+    @required
+    test: String
+}
+
+@http(method: "GET", uri: "/no-content", code: 204)
+@readonly
+operation NoContentRequest {}

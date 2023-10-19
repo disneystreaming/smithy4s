@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,24 +18,26 @@ package smithy4s.dynamic
 
 import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.loader.ModelAssembler
-import cats.syntax.all._
 import DummyIO._
 
 private[dynamic] trait PlatformUtils { self: Utils.type =>
 
   def compile(string: String): IO[DynamicSchemaIndex] =
-    parse(string).map(DynamicSchemaIndex.loadModel).flatMap(_.liftTo[IO])
+    parse(string).map(DynamicSchemaIndex.loadModel)
 
   def compileSampleSpec(string: String): IO[DynamicSchemaIndex] =
     parseSampleSpec(string)
       .map(DynamicSchemaIndex.loadModel)
-      .flatMap(_.liftTo[IO])
 
   private def parse(string: String): IO[SModel] =
     IO(
       SModel
         .assembler()
         .addUnparsedModel("dynamic.smithy", string)
+        .addImport(
+          // Alloy open enums
+          getClass().getClassLoader.getResource("META-INF/smithy/enums.smithy")
+        )
         .assemble()
         .unwrap()
     )

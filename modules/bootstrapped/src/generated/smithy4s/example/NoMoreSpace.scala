@@ -15,6 +15,7 @@ import smithy4s.schema.Schema.struct
 final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }
+
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
 
@@ -24,7 +25,7 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   )
 
   implicit val schema: Schema[NoMoreSpace] = struct(
-    string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required()),
+    string.required[NoMoreSpace]("message", _.message),
     Foo.schema.optional[NoMoreSpace]("foo", _.foo),
   ){
     NoMoreSpace.apply

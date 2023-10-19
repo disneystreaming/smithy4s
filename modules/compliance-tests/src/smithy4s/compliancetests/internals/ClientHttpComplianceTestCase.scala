@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,6 +61,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     }
 
+    val resolvedHostPrefix =
+      testCase.resolvedHost
+        .zip(testCase.host)
+        .map { case (resolved, host) => resolved.split(host)(0) }
+
+    val resolvedHostAssert =
+      request.uri.host
+        .map(_.value)
+        .zip(resolvedHostPrefix)
+        .map { case (a, b) =>
+          assert.contains(a, b, "resolved host test :").pure[F]
+        }
+        .toList
+
     val receivedPathSegments =
       request.uri.path.segments.map(_.decoded())
     val expectedPathSegments =
@@ -87,7 +101,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       "method test :"
     )
     val ioAsserts: List[F[ComplianceResult]] =
-      bodyAssert +: (List(
+      bodyAssert +: (resolvedHostAssert ++ List(
         assert.testCase.checkHeaders(testCase, request.headers),
         pathAssert,
         queryAssert,
@@ -228,9 +242,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     def toResponse[I, E, O, SE, SO, A](
         endpoint: service.Endpoint[I, E, O, SE, SO]
     ) = {
-      endpoint.errorable.toList
-        .flatMap { errorable =>
-          errorable.error.alternatives.flatMap { errorAlt =>
+      endpoint.error.toList
+        .flatMap { errorschema =>
+          errorschema.alternatives.flatMap { errorAlt =>
             errorAlt.schema.hints
               .get(HttpResponseTests)
               .toList
@@ -245,7 +259,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        errorable
+                        errorschema
                       )
                   )
                 )

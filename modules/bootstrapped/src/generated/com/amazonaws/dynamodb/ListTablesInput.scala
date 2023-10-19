@@ -15,6 +15,7 @@ import smithy4s.schema.Schema.struct
   *   <p>A maximum number of table names to return. If this parameter is not specified, the limit is 100.</p>
   */
 final case class ListTablesInput(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None)
+
 object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesInput")
 

@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GetWeatherOutput(weather: String)
+
 object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
   val id: ShapeId = ShapeId("weather", "GetWeatherOutput")
 
@@ -16,7 +17,7 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
   )
 
   implicit val schema: Schema[GetWeatherOutput] = struct(
-    string.required[GetWeatherOutput]("weather", _.weather).addHints(smithy.api.Required()),
+    string.required[GetWeatherOutput]("weather", _.weather),
   ){
     GetWeatherOutput.apply
   }.withId(id).addHints(hints)

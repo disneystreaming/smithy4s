@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ package dynamic
   * without requiring code generation.
   */
 trait DynamicSchemaIndex {
-  def allServices: List[DynamicSchemaIndex.ServiceWrapper]
+  def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper]
   def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
     allServices.find(_.service.id == shapeId)
 
-  def allSchemas: Vector[Schema[_]]
+  def allSchemas: Iterable[Schema[_]]
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
 
   def metadata: Map[String, Document]

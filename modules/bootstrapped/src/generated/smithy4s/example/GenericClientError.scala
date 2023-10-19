@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 final case class GenericClientError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
+
 object GenericClientError extends ShapeTag.Companion[GenericClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericClientError")
 
@@ -19,7 +20,7 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
   )
 
   implicit val schema: Schema[GenericClientError] = struct(
-    string.required[GenericClientError]("message", _.message).addHints(smithy.api.Required()),
+    string.required[GenericClientError]("message", _.message),
   ){
     GenericClientError.apply
   }.withId(id).addHints(hints)

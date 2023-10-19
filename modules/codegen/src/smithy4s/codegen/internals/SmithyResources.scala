@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import os.RelPath
+import smithy4s.codegen.BuildInfo
+import smithy4s.codegen.CodegenEntry
 
 /**
   * This construct aims at adding metadata information to the classpath to let Smithy4s
@@ -31,7 +33,7 @@ private[smithy4s] object SmithyResources {
       resourceOutputFolder: os.Path,
       specs: List[os.Path],
       namespaces: List[String]
-  ): List[os.Path] = {
+  ): List[CodegenEntry] = {
 
     val localSmithyFiles = specs.flatMap { spec =>
       if (os.isDir(spec))
@@ -42,44 +44,34 @@ private[smithy4s] object SmithyResources {
 
     val smithyFolder = resourceOutputFolder / "META-INF" / "smithy"
     val trackingFile = smithyFolder / s"smithy4s.tracking.smithy"
+
     val smithy4sVersion = BuildInfo.version
     val nsString = namespaces.map(ns => s""""$ns"""").mkString(", ")
     val content = s"""|$$version: "2.0"
                       |
                       |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
                       |""".stripMargin
+    val trackingFileEntry = CodegenEntry.FromMemory(trackingFile, content)
 
     val metadataFile = smithyFolder / "manifest"
-
-    val metadataFileContent =
+    val metadataFileRelPaths =
       (trackingFile :: localSmithyFiles).flatMap {
         case f if os.isDir(f) =>
           os.walk(f).filter(os.isFile(_)).map(_.relativeTo(f))
         case f => RelPath(f.last) :: Nil
       }.distinct
 
-    os.write.over(
+    val metadataFileEntry = CodegenEntry.FromMemory(
       metadataFile,
-      metadataFileContent.mkString(System.lineSeparator()),
-      createFolders = true
+      metadataFileRelPaths.mkString(System.lineSeparator())
     )
 
-    os.write.over(trackingFile, content, createFolders = true)
-
-    localSmithyFiles
-      .foreach { path =>
-        os.copy.over(
-          from = path,
-          to = smithyFolder / path.last,
-          replaceExisting = true,
-          createFolders = true
-        )
+    val localSmithyFilesEntries = localSmithyFiles
+      .map { path =>
+        CodegenEntry.FromDisk(smithyFolder / path.last, path)
       }
 
-    val allProducedFiles =
-      metadataFile :: metadataFileContent.map(_.resolveFrom(smithyFolder))
-
-    allProducedFiles
+    localSmithyFilesEntries :+ metadataFileEntry :+ trackingFileEntry
   }
 
 }

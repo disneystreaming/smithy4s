@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 final case class MapInput(value: Map[String, String])
+
 object MapInput extends ShapeTag.Companion[MapInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "MapInput")
 
@@ -15,7 +16,7 @@ object MapInput extends ShapeTag.Companion[MapInput] {
   )
 
   implicit val schema: Schema[MapInput] = struct(
-    MyMap.underlyingSchema.required[MapInput]("value", _.value).addHints(smithy.api.Required()),
+    MyMap.underlyingSchema.required[MapInput]("value", _.value),
   ){
     MapInput.apply
   }.withId(id).addHints(hints)

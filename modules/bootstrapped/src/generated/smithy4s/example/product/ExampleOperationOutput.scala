@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ExampleOperationOutput(b: String)
+
 object ExampleOperationOutput extends ShapeTag.Companion[ExampleOperationOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperationOutput")
 
@@ -16,7 +17,7 @@ object ExampleOperationOutput extends ShapeTag.Companion[ExampleOperationOutput]
   )
 
   implicit val schema: Schema[ExampleOperationOutput] = struct(
-    string.required[ExampleOperationOutput]("b", _.b).addHints(smithy.api.Required()),
+    string.required[ExampleOperationOutput]("b", _.b),
   ){
     ExampleOperationOutput.apply
   }.withId(id).addHints(hints)

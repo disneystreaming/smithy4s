@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class ValidationChecks(str: Option[String] = None, lst: Option[List[String]] = None, int: Option[Int] = None)
+
 object ValidationChecks extends ShapeTag.Companion[ValidationChecks] {
   val id: ShapeId = ShapeId("smithy4s.example", "ValidationChecks")
 

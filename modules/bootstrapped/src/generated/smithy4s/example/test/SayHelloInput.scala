@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class SayHelloInput(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None)
+
 object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloInput")
 

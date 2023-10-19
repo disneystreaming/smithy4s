@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ package smithy4s
   * This `Hints` interface is a container for hints.
   *
   * Under the hood, the hints are composed of two maps : one for member-level hints,
-  * one for target-level hints.
+  * one for target-level hints. Member-level hints typically hold values corresponding
+  * to member traits, whereas target hints hold values corresponding to normal data shapes.
   */
 trait Hints {
   def isEmpty: Boolean
@@ -69,6 +70,11 @@ trait Hints {
   )
 
   /**
+   *  Add hints to the member level
+   */
+  final def add(hints: Hint*): Hints = addMemberHints(hints: _*)
+
+  /**
     * Add hints to the target-level.
     */
   def addTargetHints(hints: Hints): Hints
@@ -76,7 +82,9 @@ trait Hints {
   /**
     * Add hints to the target-level.
     */
-  def addTargetHints(hints: Hint*): Hints = addTargetHints(Hints(hints: _*))
+  final def addTargetHints(hints: Hint*): Hints = addTargetHints(
+    Hints(hints: _*)
+  )
 
   /**
     * Provides an instance of hints containing only the member-level hints.
@@ -87,6 +95,16 @@ trait Hints {
     * Provides an instance of hints containing only the target-level hints.
     */
   def targetHints: Hints
+
+  /**
+   * Adds a new hint provided a specific hint is present
+   */
+  final def expand[A, B](f: A => Hint)(implicit key: ShapeTag[A]): Hints =
+    get(key) match {
+      case Some(a) => addMemberHints(f(a))
+      case None    => this
+    }
+
 }
 
 object Hints {

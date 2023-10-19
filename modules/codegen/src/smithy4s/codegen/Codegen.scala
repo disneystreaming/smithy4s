@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package smithy4s.codegen
 
 object Codegen {
 
-  def processSpecs(
-      args: CodegenArgs
-  ): Set[os.Path] = internals.CodegenImpl.processSpecs(args)
+  def generate(args: CodegenArgs): CodegenResult =
+    internals.CodegenImpl.generate(args)
 
-  def dumpModel(
-      args: DumpModelArgs
-  ): String = internals.CodegenImpl.dumpModel(args)
+  def generateToDisk(args: CodegenArgs): Set[os.Path] = {
+    internals.CodegenImpl.write(generate(args))
+  }
+
+  def dumpModel(args: DumpModelArgs): String =
+    internals.CodegenImpl.dumpModel(args)
 
 }

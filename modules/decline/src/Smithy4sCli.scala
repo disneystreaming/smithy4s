@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
       endpoint: service.Endpoint[_, _, _, _, _]
   ): List[String] =
     HttpEndpoint
-      .cast(endpoint)
+      .cast(endpoint.schema)
       .toOption
       .map { httpEndpoint =>
         val path = endpoint.hints
@@ -100,14 +100,15 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
         ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-          val FO = printer.printInput(input) *>
-            service.toPolyFunction[Kind1[F]#toKind5](entrypoint.interpreter)(
-              endpoint.wrap(input)
-            )
+          val polyFunction =
+            service.toPolyFunction[Kind1[F]#toKind5](entrypoint.interpreter)
+          val FO = printer
+            .printInput(input)
+            .flatMap(_ => polyFunction(endpoint.wrap(input)))
 
           FO.flatMap(printer.printOutput)
             .onError {
-              case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+              case e if endpoint.error.flatMap(_.liftError(e)).nonEmpty =>
                 printer
                   .printError(e)
             }

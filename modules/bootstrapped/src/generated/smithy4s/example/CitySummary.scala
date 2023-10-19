@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class CitySummary(cityId: CityId, name: String)
+
 object CitySummary extends ShapeTag.Companion[CitySummary] {
   val id: ShapeId = ShapeId("smithy4s.example", "CitySummary")
 
@@ -16,8 +17,8 @@ object CitySummary extends ShapeTag.Companion[CitySummary] {
   )
 
   implicit val schema: Schema[CitySummary] = struct(
-    CityId.schema.required[CitySummary]("cityId", _.cityId).addHints(smithy.api.Required()),
-    string.required[CitySummary]("name", _.name).addHints(smithy.api.Required()),
+    CityId.schema.required[CitySummary]("cityId", _.cityId),
+    string.required[CitySummary]("name", _.name),
   ){
     CitySummary.apply
   }.withId(id).addHints(hints)

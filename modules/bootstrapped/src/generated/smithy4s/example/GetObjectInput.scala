@@ -18,6 +18,7 @@ import smithy4s.schema.Schema.struct
   *   Sent in the URI label named "bucketName".
   */
 final case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
+
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetObjectInput")
 
@@ -26,8 +27,8 @@ object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   )
 
   implicit val schema: Schema[GetObjectInput] = struct(
-    ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.Required(), smithy.api.Documentation("Sent in the URI label named \"key\".\nKey can also be seen as the filename\nIt is always required for a GET operation"), smithy.api.HttpLabel()),
-    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Required(), smithy.api.Documentation("Sent in the URI label named \"bucketName\"."), smithy.api.HttpLabel()),
+    ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.Documentation("Sent in the URI label named \"key\".\nKey can also be seen as the filename\nIt is always required for a GET operation"), smithy.api.HttpLabel()),
+    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Documentation("Sent in the URI label named \"bucketName\"."), smithy.api.HttpLabel()),
   ){
     GetObjectInput.apply
   }.withId(id).addHints(hints)
