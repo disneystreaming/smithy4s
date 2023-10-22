@@ -59,10 +59,10 @@ sealed trait PackedInputsServiceOperation[Input, Err, Output, StreamedInput, Str
 object PackedInputsServiceOperation {
 
   object reified extends PackedInputsServiceGen[PackedInputsServiceOperation] {
-    def packedInputOperation(input: PackedInput) = PackedInputOperation(input)
+    def packedInputOperation(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PackedInputsServiceGen[P], f: PolyFunction5[P, P1]) extends PackedInputsServiceGen[P1] {
-    def packedInputOperation(input: PackedInput) = f[PackedInput, Nothing, Unit, Nothing, Nothing](alg.packedInputOperation(input))
+    def packedInputOperation(input: PackedInput): P1[PackedInput, Nothing, Unit, Nothing, Nothing] = f[PackedInput, Nothing, Unit, Nothing, Nothing](alg.packedInputOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = new PolyFunction5[PackedInputsServiceOperation, P] {
@@ -70,7 +70,7 @@ object PackedInputsServiceOperation {
   }
   final case class PackedInputOperation(input: PackedInput) extends PackedInputsServiceOperation[PackedInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PackedInputsServiceGen[F]): F[PackedInput, Nothing, Unit, Nothing, Nothing] = impl.packedInputOperation(input)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing] = PackedInputOperation
   }
   object PackedInputOperation extends smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing] {
@@ -78,7 +78,7 @@ object PackedInputsServiceOperation {
       .withInput(PackedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints()
-    def wrap(input: PackedInput) = PackedInputOperation(input)
+    def wrap(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }
 }
 

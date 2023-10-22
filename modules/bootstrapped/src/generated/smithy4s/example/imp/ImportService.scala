@@ -68,10 +68,10 @@ sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedO
 object ImportServiceOperation {
 
   object reified extends ImportServiceGen[ImportServiceOperation] {
-    def importOperation() = ImportOperation()
+    def importOperation(): ImportOperation = ImportOperation()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]) extends ImportServiceGen[P1] {
-    def importOperation() = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
+    def importOperation(): P1[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = new PolyFunction5[ImportServiceOperation, P] {
@@ -79,7 +79,7 @@ object ImportServiceOperation {
   }
   final case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = ImportOperation
   }
@@ -89,7 +89,7 @@ object ImportServiceOperation {
       .withError(ImportOperationError.errorSchema)
       .withOutput(OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
-    def wrap(input: Unit) = ImportOperation()
+    def wrap(input: Unit): ImportOperation = ImportOperation()
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ImportOperationError = this

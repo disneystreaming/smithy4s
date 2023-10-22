@@ -60,10 +60,10 @@ sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, St
 object DiscriminatedServiceOperation {
 
   object reified extends DiscriminatedServiceGen[DiscriminatedServiceOperation] {
-    def testDiscriminated(key: String) = TestDiscriminated(TestDiscriminatedInput(key))
+    def testDiscriminated(key: String): TestDiscriminated = TestDiscriminated(TestDiscriminatedInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DiscriminatedServiceGen[P], f: PolyFunction5[P, P1]) extends DiscriminatedServiceGen[P1] {
-    def testDiscriminated(key: String) = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](alg.testDiscriminated(key))
+    def testDiscriminated(key: String): P1[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](alg.testDiscriminated(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = new PolyFunction5[DiscriminatedServiceOperation, P] {
@@ -71,7 +71,7 @@ object DiscriminatedServiceOperation {
   }
   final case class TestDiscriminated(input: TestDiscriminatedInput) extends DiscriminatedServiceOperation[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DiscriminatedServiceGen[F]): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = impl.testDiscriminated(input.key)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = TestDiscriminated
   }
   object TestDiscriminated extends smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
@@ -79,7 +79,7 @@ object DiscriminatedServiceOperation {
       .withInput(TestDiscriminatedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(TestDiscriminatedOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200), smithy.api.Readonly())
-    def wrap(input: TestDiscriminatedInput) = TestDiscriminated(input)
+    def wrap(input: TestDiscriminatedInput): TestDiscriminated = TestDiscriminated(input)
   }
 }
 

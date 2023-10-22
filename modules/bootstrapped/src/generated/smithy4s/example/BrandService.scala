@@ -59,10 +59,10 @@ sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object BrandServiceOperation {
 
   object reified extends BrandServiceGen[BrandServiceOperation] {
-    def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
+    def addBrands(brands: Option[List[String]] = None): AddBrands = AddBrands(AddBrandsInput(brands))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BrandServiceGen[P], f: PolyFunction5[P, P1]) extends BrandServiceGen[P1] {
-    def addBrands(brands: Option[List[String]] = None) = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
+    def addBrands(brands: Option[List[String]] = None): P1[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {
@@ -70,7 +70,7 @@ object BrandServiceOperation {
   }
   final case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] = AddBrands
   }
   object AddBrands extends smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
@@ -78,7 +78,7 @@ object BrandServiceOperation {
       .withInput(AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/brands"), code = 200))
-    def wrap(input: AddBrandsInput) = AddBrands(input)
+    def wrap(input: AddBrandsInput): AddBrands = AddBrands(input)
   }
 }
 

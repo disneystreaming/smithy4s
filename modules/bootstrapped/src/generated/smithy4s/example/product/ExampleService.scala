@@ -89,10 +89,10 @@ sealed trait ExampleServiceOperation[Input, Err, Output, StreamedInput, Streamed
 object ExampleServiceOperation {
 
   object reified extends ExampleServiceGen[ExampleServiceOperation] {
-    def exampleOperation(a: String) = ExampleOperation(ExampleOperationInput(a))
+    def exampleOperation(a: String): ExampleOperation = ExampleOperation(ExampleOperationInput(a))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ExampleServiceGen[P], f: PolyFunction5[P, P1]) extends ExampleServiceGen[P1] {
-    def exampleOperation(a: String) = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](alg.exampleOperation(a))
+    def exampleOperation(a: String): P1[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](alg.exampleOperation(a))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ExampleServiceGen[P]): PolyFunction5[ExampleServiceOperation, P] = new PolyFunction5[ExampleServiceOperation, P] {
@@ -100,14 +100,14 @@ object ExampleServiceOperation {
   }
   final case class ExampleOperation(input: ExampleOperationInput) extends ExampleServiceOperation[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ExampleServiceGen[F]): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = impl.exampleOperation(input.a)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = ExampleOperation
   }
   object ExampleOperation extends smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     val schema: OperationSchema[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.product", "ExampleOperation"))
       .withInput(ExampleOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: ExampleOperationInput) = ExampleOperation(input)
+    def wrap(input: ExampleOperationInput): ExampleOperation = ExampleOperation(input)
   }
 }
 

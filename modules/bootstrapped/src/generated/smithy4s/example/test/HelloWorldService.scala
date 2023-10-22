@@ -60,10 +60,10 @@ sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, Strea
 object HelloWorldServiceOperation {
 
   object reified extends HelloWorldServiceGen[HelloWorldServiceOperation] {
-    def hello(name: String) = Hello(HelloInput(name))
+    def hello(name: String): Hello = Hello(HelloInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def hello(name: String) = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](alg.hello(name))
+    def hello(name: String): P1[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](alg.hello(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {
@@ -71,7 +71,7 @@ object HelloWorldServiceOperation {
   }
   final case class Hello(input: HelloInput) extends HelloWorldServiceOperation[HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = impl.hello(input.name)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] = Hello
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
@@ -79,7 +79,7 @@ object HelloWorldServiceOperation {
       .withInput(HelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(HelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200))
-    def wrap(input: HelloInput) = Hello(input)
+    def wrap(input: HelloInput): Hello = Hello(input)
   }
 }
 

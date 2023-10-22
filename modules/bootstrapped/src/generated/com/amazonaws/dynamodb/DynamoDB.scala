@@ -103,12 +103,12 @@ sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput
 object DynamoDBOperation {
 
   object reified extends DynamoDBGen[DynamoDBOperation] {
-    def describeEndpoints() = DescribeEndpoints(DescribeEndpointsRequest())
-    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None) = ListTables(ListTablesInput(exclusiveStartTableName, limit))
+    def describeEndpoints(): DescribeEndpoints = DescribeEndpoints(DescribeEndpointsRequest())
+    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): ListTables = ListTables(ListTablesInput(exclusiveStartTableName, limit))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DynamoDBGen[P], f: PolyFunction5[P, P1]) extends DynamoDBGen[P1] {
-    def describeEndpoints() = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](alg.describeEndpoints())
-    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None) = f[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing](alg.listTables(exclusiveStartTableName, limit))
+    def describeEndpoints(): P1[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](alg.describeEndpoints())
+    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): P1[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = f[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing](alg.listTables(exclusiveStartTableName, limit))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DynamoDBGen[P]): PolyFunction5[DynamoDBOperation, P] = new PolyFunction5[DynamoDBOperation, P] {
@@ -116,7 +116,7 @@ object DynamoDBOperation {
   }
   final case class DescribeEndpoints(input: DescribeEndpointsRequest) extends DynamoDBOperation[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = impl.describeEndpoints()
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
@@ -124,11 +124,11 @@ object DynamoDBOperation {
       .withInput(DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
-    def wrap(input: DescribeEndpointsRequest) = DescribeEndpoints(input)
+    def wrap(input: DescribeEndpointsRequest): DescribeEndpoints = DescribeEndpoints(input)
   }
   final case class ListTables(input: ListTablesInput) extends DynamoDBOperation[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = impl.listTables(input.exclusiveStartTableName, input.limit)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = ListTables
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
@@ -137,7 +137,7 @@ object DynamoDBOperation {
       .withError(ListTablesError.errorSchema)
       .withOutput(ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(aws.api.ClientDiscoveredEndpoint(required = false), smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"), smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))))
-    def wrap(input: ListTablesInput) = ListTables(input)
+    def wrap(input: ListTablesInput): ListTables = ListTables(input)
   }
   sealed trait ListTablesError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ListTablesError = this

@@ -70,14 +70,14 @@ sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object HelloServiceOperation {
 
   object reified extends HelloServiceGen[HelloServiceOperation] {
-    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None) = SayHello(SayHelloInput(greeting, query, name))
-    def listen() = Listen()
-    def testPath(path: String) = TestPath(TestPathInput(path))
+    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): SayHello = SayHello(SayHelloInput(greeting, query, name))
+    def listen(): Listen = Listen()
+    def testPath(path: String): TestPath = TestPath(TestPathInput(path))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloServiceGen[P], f: PolyFunction5[P, P1]) extends HelloServiceGen[P1] {
-    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None) = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](alg.sayHello(greeting, query, name))
-    def listen() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.listen())
-    def testPath(path: String) = f[TestPathInput, Nothing, Unit, Nothing, Nothing](alg.testPath(path))
+    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): P1[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](alg.sayHello(greeting, query, name))
+    def listen(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.listen())
+    def testPath(path: String): P1[TestPathInput, Nothing, Unit, Nothing, Nothing] = f[TestPathInput, Nothing, Unit, Nothing, Nothing](alg.testPath(path))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloServiceGen[P]): PolyFunction5[HelloServiceOperation, P] = new PolyFunction5[HelloServiceOperation, P] {
@@ -85,7 +85,7 @@ object HelloServiceOperation {
   }
   final case class SayHello(input: SayHelloInput) extends HelloServiceOperation[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = impl.sayHello(input.greeting, input.query, input.name)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = SayHello
   }
   object SayHello extends smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] {
@@ -94,7 +94,7 @@ object HelloServiceOperation {
       .withError(SayHelloError.errorSchema)
       .withOutput(SayHelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "say_hello", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/", host = None, resolvedHost = None, authScheme = None, queryParams = Some(List("Hi=Hello%20there")), forbidQueryParams = None, requireQueryParams = None, headers = Some(Map("X-Greeting" -> "Hi")), forbidHeaders = None, requireHeaders = None, body = Some("{\"name\":\"Teddy\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("greeting" -> smithy4s.Document.fromString("Hi"), "name" -> smithy4s.Document.fromString("Teddy"), "query" -> smithy4s.Document.fromString("Hello there"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/"), code = 200), smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(id = "say_hello", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), code = 200, authScheme = None, headers = Some(Map("X-H1" -> "V1")), forbidHeaders = None, requireHeaders = None, body = Some("{\"result\":\"Hello!\"}"), bodyMediaType = None, params = Some(smithy4s.Document.obj("payload" -> smithy4s.Document.obj("result" -> smithy4s.Document.fromString("Hello!")), "header1" -> smithy4s.Document.fromString("V1"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))))
-    def wrap(input: SayHelloInput) = SayHello(input)
+    def wrap(input: SayHelloInput): SayHello = SayHello(input)
   }
   sealed trait SayHelloError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: SayHelloError = this
@@ -164,7 +164,7 @@ object HelloServiceOperation {
   }
   final case class Listen() extends HelloServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.listen()
-    def ordinal = 1
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[HelloServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = Listen
   }
@@ -173,11 +173,11 @@ object HelloServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "listen", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "GET", uri = "/listen", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = None, vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/listen"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = Listen()
+    def wrap(input: Unit): Listen = Listen()
   }
   final case class TestPath(input: TestPathInput) extends HelloServiceOperation[TestPathInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[TestPathInput, Nothing, Unit, Nothing, Nothing] = impl.testPath(input.path)
-    def ordinal = 2
+    def ordinal: Int = 2
     def endpoint: smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] = TestPath
   }
   object TestPath extends smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] {
@@ -185,7 +185,7 @@ object HelloServiceOperation {
       .withInput(TestPathInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "TestPath", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "GET", uri = "/test-path/sameValue", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("path" -> smithy4s.Document.fromString("sameValue"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test-path/{path}"), code = 200), smithy.api.Readonly())
-    def wrap(input: TestPathInput) = TestPath(input)
+    def wrap(input: TestPathInput): TestPath = TestPath(input)
   }
 }
 

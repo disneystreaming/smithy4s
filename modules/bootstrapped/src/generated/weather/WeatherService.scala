@@ -60,10 +60,10 @@ sealed trait WeatherServiceOperation[Input, Err, Output, StreamedInput, Streamed
 object WeatherServiceOperation {
 
   object reified extends WeatherServiceGen[WeatherServiceOperation] {
-    def getWeather(city: String) = GetWeather(GetWeatherInput(city))
+    def getWeather(city: String): GetWeather = GetWeather(GetWeatherInput(city))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherServiceGen[P], f: PolyFunction5[P, P1]) extends WeatherServiceGen[P1] {
-    def getWeather(city: String) = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
+    def getWeather(city: String): P1[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = new PolyFunction5[WeatherServiceOperation, P] {
@@ -71,7 +71,7 @@ object WeatherServiceOperation {
   }
   final case class GetWeather(input: GetWeatherInput) extends WeatherServiceOperation[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherServiceGen[F]): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = impl.getWeather(input.city)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = GetWeather
   }
   object GetWeather extends smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
@@ -79,7 +79,7 @@ object WeatherServiceOperation {
       .withInput(GetWeatherInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200))
-    def wrap(input: GetWeatherInput) = GetWeather(input)
+    def wrap(input: GetWeatherInput): GetWeather = GetWeather(input)
   }
 }
 

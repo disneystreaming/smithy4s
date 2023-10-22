@@ -71,12 +71,12 @@ sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, S
 object HelloWorldAuthServiceOperation {
 
   object reified extends HelloWorldAuthServiceGen[HelloWorldAuthServiceOperation] {
-    def sayWorld() = SayWorld()
-    def healthCheck() = HealthCheck()
+    def sayWorld(): SayWorld = SayWorld()
+    def healthCheck(): HealthCheck = HealthCheck()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldAuthServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldAuthServiceGen[P1] {
-    def sayWorld() = f[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing](alg.sayWorld())
-    def healthCheck() = f[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing](alg.healthCheck())
+    def sayWorld(): P1[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing](alg.sayWorld())
+    def healthCheck(): P1[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing](alg.healthCheck())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[P]): PolyFunction5[HelloWorldAuthServiceOperation, P] = new PolyFunction5[HelloWorldAuthServiceOperation, P] {
@@ -84,7 +84,7 @@ object HelloWorldAuthServiceOperation {
   }
   final case class SayWorld() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = impl.sayWorld()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = SayWorld
   }
@@ -94,7 +94,7 @@ object HelloWorldAuthServiceOperation {
       .withError(SayWorldError.errorSchema)
       .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = SayWorld()
+    def wrap(input: Unit): SayWorld = SayWorld()
   }
   sealed trait SayWorldError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: SayWorldError = this
@@ -150,7 +150,7 @@ object HelloWorldAuthServiceOperation {
   }
   final case class HealthCheck() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = impl.healthCheck()
-    def ordinal = 1
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = HealthCheck
   }
@@ -160,7 +160,7 @@ object HelloWorldAuthServiceOperation {
       .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = HealthCheck()
+    def wrap(input: Unit): HealthCheck = HealthCheck()
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HealthCheckError = this

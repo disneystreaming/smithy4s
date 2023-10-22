@@ -75,26 +75,26 @@ sealed trait ObjectCollisionOperation[Input, Err, Output, StreamedInput, Streame
 object ObjectCollisionOperation {
 
   object reified extends ObjectCollisionGen[ObjectCollisionOperation] {
-    def _clone() = Clone()
-    def _equals() = Equals()
-    def _finalize() = Finalize()
-    def _getClass() = GetClass()
-    def _hashCode() = HashCode()
-    def _notify() = Notify()
-    def _notifyAll() = NotifyAll()
-    def _toString() = ToString()
-    def _wait() = Wait()
+    def _clone(): Clone = Clone()
+    def _equals(): Equals = Equals()
+    def _finalize(): Finalize = Finalize()
+    def _getClass(): GetClass = GetClass()
+    def _hashCode(): HashCode = HashCode()
+    def _notify(): Notify = Notify()
+    def _notifyAll(): NotifyAll = NotifyAll()
+    def _toString(): ToString = ToString()
+    def _wait(): Wait = Wait()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectCollisionGen[P], f: PolyFunction5[P, P1]) extends ObjectCollisionGen[P1] {
-    def _clone() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._clone())
-    def _equals() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._equals())
-    def _finalize() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._finalize())
-    def _getClass() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._getClass())
-    def _hashCode() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._hashCode())
-    def _notify() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notify())
-    def _notifyAll() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notifyAll())
-    def _toString() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._toString())
-    def _wait() = f[Unit, Nothing, Unit, Nothing, Nothing](alg._wait())
+    def _clone(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._clone())
+    def _equals(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._equals())
+    def _finalize(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._finalize())
+    def _getClass(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._getClass())
+    def _hashCode(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._hashCode())
+    def _notify(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notify())
+    def _notifyAll(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notifyAll())
+    def _toString(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._toString())
+    def _wait(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._wait())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = new PolyFunction5[ObjectCollisionOperation, P] {
@@ -102,7 +102,7 @@ object ObjectCollisionOperation {
   }
   final case class Clone() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._clone()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Clone
   }
@@ -110,11 +110,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Clone"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Clone()
+    def wrap(input: Unit): Clone = Clone()
   }
   final case class Equals() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._equals()
-    def ordinal = 1
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Equals
   }
@@ -122,11 +122,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Equals"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Equals()
+    def wrap(input: Unit): Equals = Equals()
   }
   final case class Finalize() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._finalize()
-    def ordinal = 2
+    def ordinal: Int = 2
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Finalize
   }
@@ -134,11 +134,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Finalize"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Finalize()
+    def wrap(input: Unit): Finalize = Finalize()
   }
   final case class GetClass() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._getClass()
-    def ordinal = 3
+    def ordinal: Int = 3
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = GetClass
   }
@@ -146,11 +146,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetClass"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = GetClass()
+    def wrap(input: Unit): GetClass = GetClass()
   }
   final case class HashCode() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._hashCode()
-    def ordinal = 4
+    def ordinal: Int = 4
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = HashCode
   }
@@ -158,11 +158,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HashCode"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = HashCode()
+    def wrap(input: Unit): HashCode = HashCode()
   }
   final case class Notify() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._notify()
-    def ordinal = 5
+    def ordinal: Int = 5
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Notify
   }
@@ -170,11 +170,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Notify"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Notify()
+    def wrap(input: Unit): Notify = Notify()
   }
   final case class NotifyAll() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._notifyAll()
-    def ordinal = 6
+    def ordinal: Int = 6
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = NotifyAll
   }
@@ -182,11 +182,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "NotifyAll"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = NotifyAll()
+    def wrap(input: Unit): NotifyAll = NotifyAll()
   }
   final case class ToString() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._toString()
-    def ordinal = 7
+    def ordinal: Int = 7
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = ToString
   }
@@ -194,11 +194,11 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ToString"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = ToString()
+    def wrap(input: Unit): ToString = ToString()
   }
   final case class Wait() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl._wait()
-    def ordinal = 8
+    def ordinal: Int = 8
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Wait
   }
@@ -206,7 +206,7 @@ object ObjectCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Wait"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Wait()
+    def wrap(input: Unit): Wait = Wait()
   }
 }
 

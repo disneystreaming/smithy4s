@@ -62,10 +62,10 @@ sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, Strea
 object HelloWorldServiceOperation {
 
   object reified extends HelloWorldServiceGen[HelloWorldServiceOperation] {
-    def sayWorld() = SayWorld()
+    def sayWorld(): SayWorld = SayWorld()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def sayWorld() = f[Unit, Nothing, World, Nothing, Nothing](alg.sayWorld())
+    def sayWorld(): P1[Unit, Nothing, World, Nothing, Nothing] = f[Unit, Nothing, World, Nothing, Nothing](alg.sayWorld())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {
@@ -73,7 +73,7 @@ object HelloWorldServiceOperation {
   }
   final case class SayWorld() extends HelloWorldServiceOperation[Unit, Nothing, World, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Unit, Nothing, World, Nothing, Nothing] = impl.sayWorld()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] = SayWorld
   }
@@ -82,7 +82,7 @@ object HelloWorldServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = SayWorld()
+    def wrap(input: Unit): SayWorld = SayWorld()
   }
 }
 

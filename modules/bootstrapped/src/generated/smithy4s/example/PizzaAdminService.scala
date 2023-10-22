@@ -102,36 +102,36 @@ sealed trait PizzaAdminServiceOperation[Input, Err, Output, StreamedInput, Strea
 object PizzaAdminServiceOperation {
 
   object reified extends PizzaAdminServiceGen[PizzaAdminServiceOperation] {
-    def addMenuItem(restaurant: String, menuItem: MenuItem) = AddMenuItem(AddMenuItemRequest(restaurant, menuItem))
-    def getMenu(restaurant: String) = GetMenu(GetMenuRequest(restaurant))
-    def version() = Version()
-    def health(query: Option[String] = None) = Health(HealthRequest(query))
-    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None) = HeaderEndpoint(HeaderEndpointData(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
-    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None) = RoundTrip(RoundTripData(label, header, query, body))
-    def getEnum(aa: TheEnum) = GetEnum(GetEnumInput(aa))
-    def getIntEnum(aa: EnumResult) = GetIntEnum(GetIntEnumInput(aa))
-    def customCode(code: Int) = CustomCode(CustomCodeInput(code))
-    def reservation(name: String, town: Option[String] = None) = Reservation(ReservationInput(name, town))
-    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = Echo(EchoInput(pathParam, body, queryParam))
-    def optionalOutput() = OptionalOutput()
-    def headRequest() = HeadRequest()
-    def noContentRequest() = NoContentRequest()
+    def addMenuItem(restaurant: String, menuItem: MenuItem): AddMenuItem = AddMenuItem(AddMenuItemRequest(restaurant, menuItem))
+    def getMenu(restaurant: String): GetMenu = GetMenu(GetMenuRequest(restaurant))
+    def version(): Version = Version()
+    def health(query: Option[String] = None): Health = Health(HealthRequest(query))
+    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None): HeaderEndpoint = HeaderEndpoint(HeaderEndpointData(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
+    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): RoundTrip = RoundTrip(RoundTripData(label, header, query, body))
+    def getEnum(aa: TheEnum): GetEnum = GetEnum(GetEnumInput(aa))
+    def getIntEnum(aa: EnumResult): GetIntEnum = GetIntEnum(GetIntEnumInput(aa))
+    def customCode(code: Int): CustomCode = CustomCode(CustomCodeInput(code))
+    def reservation(name: String, town: Option[String] = None): Reservation = Reservation(ReservationInput(name, town))
+    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): Echo = Echo(EchoInput(pathParam, body, queryParam))
+    def optionalOutput(): OptionalOutput = OptionalOutput()
+    def headRequest(): HeadRequest = HeadRequest()
+    def noContentRequest(): NoContentRequest = NoContentRequest()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PizzaAdminServiceGen[P], f: PolyFunction5[P, P1]) extends PizzaAdminServiceGen[P1] {
-    def addMenuItem(restaurant: String, menuItem: MenuItem) = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
-    def getMenu(restaurant: String) = f[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing](alg.getMenu(restaurant))
-    def version() = f[Unit, Nothing, VersionOutput, Nothing, Nothing](alg.version())
-    def health(query: Option[String] = None) = f[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing](alg.health(query))
-    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None) = f[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing](alg.headerEndpoint(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
-    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None) = f[RoundTripData, Nothing, RoundTripData, Nothing, Nothing](alg.roundTrip(label, header, query, body))
-    def getEnum(aa: TheEnum) = f[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing](alg.getEnum(aa))
-    def getIntEnum(aa: EnumResult) = f[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing](alg.getIntEnum(aa))
-    def customCode(code: Int) = f[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing](alg.customCode(code))
-    def reservation(name: String, town: Option[String] = None) = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
-    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
-    def optionalOutput() = f[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing](alg.optionalOutput())
-    def headRequest() = f[Unit, Nothing, HeadRequestOutput, Nothing, Nothing](alg.headRequest())
-    def noContentRequest() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.noContentRequest())
+    def addMenuItem(restaurant: String, menuItem: MenuItem): P1[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
+    def getMenu(restaurant: String): P1[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = f[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing](alg.getMenu(restaurant))
+    def version(): P1[Unit, Nothing, VersionOutput, Nothing, Nothing] = f[Unit, Nothing, VersionOutput, Nothing, Nothing](alg.version())
+    def health(query: Option[String] = None): P1[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = f[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing](alg.health(query))
+    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None): P1[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = f[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing](alg.headerEndpoint(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
+    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): P1[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = f[RoundTripData, Nothing, RoundTripData, Nothing, Nothing](alg.roundTrip(label, header, query, body))
+    def getEnum(aa: TheEnum): P1[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = f[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing](alg.getEnum(aa))
+    def getIntEnum(aa: EnumResult): P1[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = f[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing](alg.getIntEnum(aa))
+    def customCode(code: Int): P1[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = f[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing](alg.customCode(code))
+    def reservation(name: String, town: Option[String] = None): P1[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
+    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): P1[EchoInput, Nothing, Unit, Nothing, Nothing] = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
+    def optionalOutput(): P1[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = f[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing](alg.optionalOutput())
+    def headRequest(): P1[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = f[Unit, Nothing, HeadRequestOutput, Nothing, Nothing](alg.headRequest())
+    def noContentRequest(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.noContentRequest())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PizzaAdminServiceGen[P]): PolyFunction5[PizzaAdminServiceOperation, P] = new PolyFunction5[PizzaAdminServiceOperation, P] {
@@ -139,7 +139,7 @@ object PizzaAdminServiceOperation {
   }
   final case class AddMenuItem(input: AddMenuItemRequest) extends PizzaAdminServiceOperation[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = impl.addMenuItem(input.restaurant, input.menuItem)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = AddMenuItem
   }
   object AddMenuItem extends smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
@@ -148,7 +148,7 @@ object PizzaAdminServiceOperation {
       .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
-    def wrap(input: AddMenuItemRequest) = AddMenuItem(input)
+    def wrap(input: AddMenuItemRequest): AddMenuItem = AddMenuItem(input)
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: AddMenuItemError = this
@@ -232,7 +232,7 @@ object PizzaAdminServiceOperation {
   }
   final case class GetMenu(input: GetMenuRequest) extends PizzaAdminServiceOperation[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = impl.getMenu(input.restaurant)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = GetMenu
   }
   object GetMenu extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
@@ -241,7 +241,7 @@ object PizzaAdminServiceOperation {
       .withError(GetMenuError.errorSchema)
       .withOutput(GetMenuResult.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu"), code = 200), smithy.api.Readonly())
-    def wrap(input: GetMenuRequest) = GetMenu(input)
+    def wrap(input: GetMenuRequest): GetMenu = GetMenu(input)
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetMenuError = this
@@ -339,7 +339,7 @@ object PizzaAdminServiceOperation {
   }
   final case class Version() extends PizzaAdminServiceOperation[Unit, Nothing, VersionOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, VersionOutput, Nothing, Nothing] = impl.version()
-    def ordinal = 2
+    def ordinal: Int = 2
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing] = Version
   }
@@ -348,11 +348,11 @@ object PizzaAdminServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(VersionOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/version"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = Version()
+    def wrap(input: Unit): Version = Version()
   }
   final case class Health(input: HealthRequest) extends PizzaAdminServiceOperation[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = impl.health(input.query)
-    def ordinal = 3
+    def ordinal: Int = 3
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Health
   }
   object Health extends smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
@@ -361,7 +361,7 @@ object PizzaAdminServiceOperation {
       .withError(HealthError.errorSchema)
       .withOutput(HealthResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
-    def wrap(input: HealthRequest) = Health(input)
+    def wrap(input: HealthRequest): Health = Health(input)
   }
   sealed trait HealthError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HealthError = this
@@ -417,7 +417,7 @@ object PizzaAdminServiceOperation {
   }
   final case class HeaderEndpoint(input: HeaderEndpointData) extends PizzaAdminServiceOperation[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = impl.headerEndpoint(input.uppercaseHeader, input.capitalizedHeader, input.lowercaseHeader, input.mixedHeader)
-    def ordinal = 4
+    def ordinal: Int = 4
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = HeaderEndpoint
   }
   object HeaderEndpoint extends smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
@@ -425,11 +425,11 @@ object PizzaAdminServiceOperation {
       .withInput(HeaderEndpointData.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(HeaderEndpointData.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/headers/"), code = 200))
-    def wrap(input: HeaderEndpointData) = HeaderEndpoint(input)
+    def wrap(input: HeaderEndpointData): HeaderEndpoint = HeaderEndpoint(input)
   }
   final case class RoundTrip(input: RoundTripData) extends PizzaAdminServiceOperation[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = impl.roundTrip(input.label, input.header, input.query, input.body)
-    def ordinal = 5
+    def ordinal: Int = 5
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = RoundTrip
   }
   object RoundTrip extends smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
@@ -437,11 +437,11 @@ object PizzaAdminServiceOperation {
       .withInput(RoundTripData.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(RoundTripData.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/roundTrip/{label}"), code = 200))
-    def wrap(input: RoundTripData) = RoundTrip(input)
+    def wrap(input: RoundTripData): RoundTrip = RoundTrip(input)
   }
   final case class GetEnum(input: GetEnumInput) extends PizzaAdminServiceOperation[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = impl.getEnum(input.aa)
-    def ordinal = 6
+    def ordinal: Int = 6
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = GetEnum
   }
   object GetEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
@@ -450,7 +450,7 @@ object PizzaAdminServiceOperation {
       .withError(GetEnumError.errorSchema)
       .withOutput(GetEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-enum/{aa}"), code = 200), smithy.api.Readonly())
-    def wrap(input: GetEnumInput) = GetEnum(input)
+    def wrap(input: GetEnumInput): GetEnum = GetEnum(input)
   }
   sealed trait GetEnumError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetEnumError = this
@@ -506,7 +506,7 @@ object PizzaAdminServiceOperation {
   }
   final case class GetIntEnum(input: GetIntEnumInput) extends PizzaAdminServiceOperation[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = impl.getIntEnum(input.aa)
-    def ordinal = 7
+    def ordinal: Int = 7
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = GetIntEnum
   }
   object GetIntEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
@@ -515,7 +515,7 @@ object PizzaAdminServiceOperation {
       .withError(GetIntEnumError.errorSchema)
       .withOutput(GetIntEnumOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-int-enum/{aa}"), code = 200), smithy.api.Readonly())
-    def wrap(input: GetIntEnumInput) = GetIntEnum(input)
+    def wrap(input: GetIntEnumInput): GetIntEnum = GetIntEnum(input)
   }
   sealed trait GetIntEnumError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetIntEnumError = this
@@ -571,7 +571,7 @@ object PizzaAdminServiceOperation {
   }
   final case class CustomCode(input: CustomCodeInput) extends PizzaAdminServiceOperation[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = impl.customCode(input.code)
-    def ordinal = 8
+    def ordinal: Int = 8
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = CustomCode
   }
   object CustomCode extends smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
@@ -580,7 +580,7 @@ object PizzaAdminServiceOperation {
       .withError(CustomCodeError.errorSchema)
       .withOutput(CustomCodeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/custom-code/{code}"), code = 200), smithy.api.Readonly())
-    def wrap(input: CustomCodeInput) = CustomCode(input)
+    def wrap(input: CustomCodeInput): CustomCode = CustomCode(input)
   }
   sealed trait CustomCodeError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: CustomCodeError = this
@@ -636,7 +636,7 @@ object PizzaAdminServiceOperation {
   }
   final case class Reservation(input: ReservationInput) extends PizzaAdminServiceOperation[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = impl.reservation(input.name, input.town)
-    def ordinal = 9
+    def ordinal: Int = 9
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Reservation
   }
   object Reservation extends smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
@@ -644,11 +644,11 @@ object PizzaAdminServiceOperation {
       .withInput(ReservationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ReservationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/book/{name}"), code = 200))
-    def wrap(input: ReservationInput) = Reservation(input)
+    def wrap(input: ReservationInput): Reservation = Reservation(input)
   }
   final case class Echo(input: EchoInput) extends PizzaAdminServiceOperation[EchoInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[EchoInput, Nothing, Unit, Nothing, Nothing] = impl.echo(input.pathParam, input.body, input.queryParam)
-    def ordinal = 10
+    def ordinal: Int = 10
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] = Echo
   }
   object Echo extends smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] {
@@ -656,11 +656,11 @@ object PizzaAdminServiceOperation {
       .withInput(EchoInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/echo/{pathParam}"), code = 200))
-    def wrap(input: EchoInput) = Echo(input)
+    def wrap(input: EchoInput): Echo = Echo(input)
   }
   final case class OptionalOutput() extends PizzaAdminServiceOperation[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = impl.optionalOutput()
-    def ordinal = 11
+    def ordinal: Int = 11
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = OptionalOutput
   }
@@ -669,11 +669,11 @@ object PizzaAdminServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(OptionalOutputOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/optional-output"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = OptionalOutput()
+    def wrap(input: Unit): OptionalOutput = OptionalOutput()
   }
   final case class HeadRequest() extends PizzaAdminServiceOperation[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = impl.headRequest()
-    def ordinal = 12
+    def ordinal: Int = 12
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = HeadRequest
   }
@@ -682,11 +682,11 @@ object PizzaAdminServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(HeadRequestOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("HEAD"), uri = smithy.api.NonEmptyString("/head-request"), code = 200), smithy.api.Readonly())
-    def wrap(input: Unit) = HeadRequest()
+    def wrap(input: Unit): HeadRequest = HeadRequest()
   }
   final case class NoContentRequest() extends PizzaAdminServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.noContentRequest()
-    def ordinal = 13
+    def ordinal: Int = 13
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = NoContentRequest
   }
@@ -695,7 +695,7 @@ object PizzaAdminServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/no-content"), code = 204), smithy.api.Readonly())
-    def wrap(input: Unit) = NoContentRequest()
+    def wrap(input: Unit): NoContentRequest = NoContentRequest()
   }
 }
 

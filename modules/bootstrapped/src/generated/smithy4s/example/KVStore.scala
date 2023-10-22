@@ -72,14 +72,14 @@ sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput]
 object KVStoreOperation {
 
   object reified extends KVStoreGen[KVStoreOperation] {
-    def get(key: String) = Get(Key(key))
-    def put(key: String, value: String) = Put(KeyValue(key, value))
-    def delete(key: String) = Delete(Key(key))
+    def get(key: String): Get = Get(Key(key))
+    def put(key: String, value: String): Put = Put(KeyValue(key, value))
+    def delete(key: String): Delete = Delete(Key(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: KVStoreGen[P], f: PolyFunction5[P, P1]) extends KVStoreGen[P1] {
-    def get(key: String) = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
-    def put(key: String, value: String) = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
-    def delete(key: String) = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
+    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
+    def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
+    def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = new PolyFunction5[KVStoreOperation, P] {
@@ -87,7 +87,7 @@ object KVStoreOperation {
   }
   final case class Get(input: Key) extends KVStoreOperation[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = impl.get(input.key)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Get
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
@@ -95,7 +95,7 @@ object KVStoreOperation {
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(GetError.errorSchema)
       .withOutput(Value.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Key) = Get(input)
+    def wrap(input: Key): Get = Get(input)
   }
   sealed trait GetError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetError = this
@@ -165,7 +165,7 @@ object KVStoreOperation {
   }
   final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = impl.put(input.key, input.value)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Put
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
@@ -173,7 +173,7 @@ object KVStoreOperation {
       .withInput(KeyValue.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(PutError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: KeyValue) = Put(input)
+    def wrap(input: KeyValue): Put = Put(input)
   }
   sealed trait PutError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: PutError = this
@@ -229,7 +229,7 @@ object KVStoreOperation {
   }
   final case class Delete(input: Key) extends KVStoreOperation[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = impl.delete(input.key)
-    def ordinal = 2
+    def ordinal: Int = 2
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Delete
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
@@ -237,7 +237,7 @@ object KVStoreOperation {
       .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(DeleteError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Key) = Delete(input)
+    def wrap(input: Key): Delete = Delete(input)
   }
   sealed trait DeleteError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: DeleteError = this

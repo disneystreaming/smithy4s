@@ -463,11 +463,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ) {
           ops.map {
             case op if op.input == Type.unit =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
+              line"def ${op.methodName}(${op.renderArgs}): ${op.name} = ${op.name}()"
             case op if op.hints.contains(Hint.PackedInputs) =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}(input)"
+              line"def ${op.methodName}(${op.renderArgs}): ${op.name} = ${op.name}(input)"
             case op =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input}(${op.renderParams}))"
+              line"def ${op.methodName}(${op.renderArgs}): ${op.name} = ${op.name}(${op.input}(${op.renderParams}))"
           }
         },
         block(
@@ -475,7 +475,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ) {
           ops.map { op =>
             val opName = op.methodName
-            line"def $opName(${op.renderArgs}) = f[${op
+            line"def $opName(${op.renderArgs}): P1[${op
+              .renderAlgParams(opTraitNameRef.name)}] = f[${op
               .renderAlgParams(opTraitNameRef.name)}](alg.$opName(${op.renderParams}))"
           }
         },
@@ -556,7 +557,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def ordinal = $ordinal",
+        line"def ordinal: Int = $ordinal",
         if (op.input == Type.unit) line"def input: Unit = ()" else Lines.empty,
         line"def endpoint: smithy4s.Endpoint[$traitName,${op
           .renderAlgParams(opObjectName)}] = $opNameRef"
@@ -576,7 +577,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
           Option(op.hints).filter(_.nonEmpty).map(h => line".withHints(${memberHints(h)})")
         ),
-        line"def wrap(input: ${op.input}) = ${opNameRef}($input)"
+        line"def wrap(input: ${op.input}): $opNameRef = ${opNameRef}($input)"
       ),
       renderedErrorUnion
     )

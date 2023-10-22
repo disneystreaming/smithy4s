@@ -63,10 +63,10 @@ sealed trait ErrorHandlingServiceOperation[Input, Err, Output, StreamedInput, St
 object ErrorHandlingServiceOperation {
 
   object reified extends ErrorHandlingServiceGen[ErrorHandlingServiceOperation] {
-    def errorHandlingOperation(in: Option[String] = None) = ErrorHandlingOperation(ErrorHandlingOperationInput(in))
+    def errorHandlingOperation(in: Option[String] = None): ErrorHandlingOperation = ErrorHandlingOperation(ErrorHandlingOperationInput(in))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ErrorHandlingServiceGen[P], f: PolyFunction5[P, P1]) extends ErrorHandlingServiceGen[P1] {
-    def errorHandlingOperation(in: Option[String] = None) = f[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing](alg.errorHandlingOperation(in))
+    def errorHandlingOperation(in: Option[String] = None): P1[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = f[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing](alg.errorHandlingOperation(in))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ErrorHandlingServiceGen[P]): PolyFunction5[ErrorHandlingServiceOperation, P] = new PolyFunction5[ErrorHandlingServiceOperation, P] {
@@ -74,7 +74,7 @@ object ErrorHandlingServiceOperation {
   }
   final case class ErrorHandlingOperation(input: ErrorHandlingOperationInput) extends ErrorHandlingServiceOperation[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceGen[F]): F[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = impl.errorHandlingOperation(input.in)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = ErrorHandlingOperation
   }
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
@@ -82,7 +82,7 @@ object ErrorHandlingServiceOperation {
       .withInput(ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(ErrorHandlingOperationError.errorSchema)
       .withOutput(ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: ErrorHandlingOperationInput) = ErrorHandlingOperation(input)
+    def wrap(input: ErrorHandlingOperationInput): ErrorHandlingOperation = ErrorHandlingOperation(input)
   }
   sealed trait ErrorHandlingOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ErrorHandlingOperationError = this
