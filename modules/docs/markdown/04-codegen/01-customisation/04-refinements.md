@@ -67,7 +67,7 @@ object Email {
     else Left("Email is not valid")
 
   // highlight-start
-  implicit val provider = Refinement.drivenBy[EmailFormat](
+  implicit val provider: RefinementProvider[EmailFormat, String, Email] = Refinement.drivenBy[EmailFormat](
     Email.apply, // Tells smithy4s how to create an Email (or get an error message) given a string
     (e: Email) => e.value // Tells smithy4s how to get a string from an Email
   )
@@ -158,7 +158,7 @@ object NonEmptyList {
     if (values.size > 0) Right(new NonEmptyList(values))
     else Left("List must not be empty.")
 
-  implicit def provider[A] = Refinement.drivenBy[NonEmptyListFormat](
+  implicit def provider[A]: RefinementProvider[NonEmptyListFormat, List[A], NonEmptyList[A]] = Refinement.drivenBy[NonEmptyListFormat](
     NonEmptyList.apply[A],
     (b: NonEmptyList[A]) => b.values
   )
