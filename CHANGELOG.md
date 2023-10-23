@@ -2,6 +2,12 @@
 
 * Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
 
+Resolves an issue in which AWS credentials would be decoded using the wrong timestamp format, affecting AWS clients on EC2/ECS.
+
+* Render explicit type annotations for some methods that were missing them in [#1272](https://github.com/disneystreaming/smithy4s/pull/1272)
+
+This resolves a problem in which type inference would have different results between Scala 2.13 and 3.x, causing an error on Scala 2.13 under the `-Xsource:3` flag.
+
 # 0.18.2
 
 ## Expose UrlForm.parse and UrlFormDecodeError

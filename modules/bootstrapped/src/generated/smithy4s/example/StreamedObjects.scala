@@ -62,12 +62,12 @@ sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, Streame
 object StreamedObjectsOperation {
 
   object reified extends StreamedObjectsGen[StreamedObjectsOperation] {
-    def putStreamedObject(key: String) = PutStreamedObject(PutStreamedObjectInput(key))
-    def getStreamedObject(key: String) = GetStreamedObject(GetStreamedObjectInput(key))
+    def putStreamedObject(key: String): PutStreamedObject = PutStreamedObject(PutStreamedObjectInput(key))
+    def getStreamedObject(key: String): GetStreamedObject = GetStreamedObject(GetStreamedObjectInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: StreamedObjectsGen[P], f: PolyFunction5[P, P1]) extends StreamedObjectsGen[P1] {
-    def putStreamedObject(key: String) = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject(key))
-    def getStreamedObject(key: String) = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject(key))
+    def putStreamedObject(key: String): P1[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject(key))
+    def getStreamedObject(key: String): P1[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = new PolyFunction5[StreamedObjectsOperation, P] {
@@ -75,7 +75,7 @@ object StreamedObjectsOperation {
   }
   final case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = impl.putStreamedObject(input.key)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = PutStreamedObject
   }
   object PutStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
@@ -83,11 +83,11 @@ object StreamedObjectsOperation {
       .withInput(PutStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withStreamedInput(StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))
-    def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
+    def wrap(input: PutStreamedObjectInput): PutStreamedObject = PutStreamedObject(input)
   }
   final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = impl.getStreamedObject(input.key)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = GetStreamedObject
   }
   object GetStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
@@ -95,7 +95,7 @@ object StreamedObjectsOperation {
       .withInput(GetStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetStreamedObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withStreamedOutput(StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))
-    def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
+    def wrap(input: GetStreamedObjectInput): GetStreamedObject = GetStreamedObject(input)
   }
 }
 

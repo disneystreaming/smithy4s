@@ -63,14 +63,14 @@ sealed trait LibraryOperation[Input, Err, Output, StreamedInput, StreamedOutput]
 object LibraryOperation {
 
   object reified extends LibraryGen[LibraryOperation] {
-    def listPublishers() = ListPublishers()
-    def getBook() = GetBook()
-    def buyBook() = BuyBook()
+    def listPublishers(): ListPublishers = ListPublishers()
+    def getBook(): GetBook = GetBook()
+    def buyBook(): BuyBook = BuyBook()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: LibraryGen[P], f: PolyFunction5[P, P1]) extends LibraryGen[P1] {
-    def listPublishers() = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](alg.listPublishers())
-    def getBook() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.getBook())
-    def buyBook() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.buyBook())
+    def listPublishers(): P1[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](alg.listPublishers())
+    def getBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.getBook())
+    def buyBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.buyBook())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = new PolyFunction5[LibraryOperation, P] {
@@ -78,7 +78,7 @@ object LibraryOperation {
   }
   final case class ListPublishers() extends LibraryOperation[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = impl.listPublishers()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = ListPublishers
   }
@@ -87,11 +87,11 @@ object LibraryOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
-    def wrap(input: Unit) = ListPublishers()
+    def wrap(input: Unit): ListPublishers = ListPublishers()
   }
   final case class GetBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.getBook()
-    def ordinal = 1
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = GetBook
   }
@@ -100,11 +100,11 @@ object LibraryOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
-    def wrap(input: Unit) = GetBook()
+    def wrap(input: Unit): GetBook = GetBook()
   }
   final case class BuyBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.buyBook()
-    def ordinal = 2
+    def ordinal: Int = 2
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = BuyBook
   }
@@ -112,7 +112,7 @@ object LibraryOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "BuyBook"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = BuyBook()
+    def wrap(input: Unit): BuyBook = BuyBook()
   }
 }
 

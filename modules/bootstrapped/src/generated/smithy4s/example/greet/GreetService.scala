@@ -58,10 +58,10 @@ sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object GreetServiceOperation {
 
   object reified extends GreetServiceGen[GreetServiceOperation] {
-    def greet(name: String) = Greet(GreetInput(name))
+    def greet(name: String): Greet = Greet(GreetInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: GreetServiceGen[P], f: PolyFunction5[P, P1]) extends GreetServiceGen[P1] {
-    def greet(name: String) = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
+    def greet(name: String): P1[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = new PolyFunction5[GreetServiceOperation, P] {
@@ -69,14 +69,14 @@ object GreetServiceOperation {
   }
   final case class Greet(input: GreetInput) extends GreetServiceOperation[GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: GreetServiceGen[F]): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = impl.greet(input.name)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Greet
   }
   object Greet extends smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     val schema: OperationSchema[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.greet", "Greet"))
       .withInput(GreetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GreetOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: GreetInput) = Greet(input)
+    def wrap(input: GreetInput): Greet = Greet(input)
   }
 }
 
