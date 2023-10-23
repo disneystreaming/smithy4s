@@ -137,6 +137,20 @@ class DocumentSpec() extends FunSuite {
     expect.same(roundTripped, Right(fooOrBar))
   }
 
+  test("untagged unions encoding".only) {
+    import smithy4s.example.CheckedOrUnchecked2
+    import Document._
+
+    val checked = CheckedOrUnchecked2.checked("value")
+    val document = Document.encode(checked)
+    val expectedDocument = fromString("value")
+
+    val roundTripped = Document.decode[CheckedOrUnchecked2](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, checked)
+  }
+
   test("discriminated unions encoding - empty structure alternative") {
     val fooOrBaz: Either[Foo, Baz] = Right(Baz())
 
