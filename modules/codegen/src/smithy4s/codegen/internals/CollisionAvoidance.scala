@@ -313,6 +313,7 @@ private[internals] object CollisionAvoidance {
     val Constant_ = NameDef("Constant")
     val Default_ = NameDef("Default")
     val const5_ = NameRef("smithy4s.kinds.toPolyFunction5", "const5")
+    val smithy4sThrowable = NameRef("smithy4s", "Smithy4sThrowable")
 
     // We reserve these keywords as they collide with types that the
     // users are bound to manipulate when using Smithy4s .

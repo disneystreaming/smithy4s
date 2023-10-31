@@ -4,11 +4,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class PriceError(message: String, code: Int) extends Throwable {
+final case class PriceError(message: String, code: Int) extends Smithy4sThrowable {
   override def getMessage(): String = message
 }
 

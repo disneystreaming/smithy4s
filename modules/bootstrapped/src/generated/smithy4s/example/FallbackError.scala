@@ -1,15 +1,14 @@
 package smithy4s.example
 
-import scala.runtime.ScalaRunTime
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class FallbackError(error: String) extends Throwable {
-  override def toString(): String = ScalaRunTime._toString(this)
+final case class FallbackError(error: String) extends Smithy4sThrowable {
 }
 
 object FallbackError extends ShapeTag.Companion[FallbackError] {
