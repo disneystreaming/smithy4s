@@ -121,8 +121,8 @@ object DynamoDBOperation {
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     val schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
-      .withInput(DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(DescribeEndpointsRequest.schema)
+      .withOutput(DescribeEndpointsResponse.schema)
       .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
     def wrap(input: DescribeEndpointsRequest): DescribeEndpoints = DescribeEndpoints(input)
   }
@@ -133,9 +133,9 @@ object DynamoDBOperation {
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     val schema: OperationSchema[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "ListTables"))
-      .withInput(ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(ListTablesInput.schema)
       .withError(ListTablesError.errorSchema)
-      .withOutput(ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(ListTablesOutput.schema)
       .withHints(aws.api.ClientDiscoveredEndpoint(required = false), smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"), smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))))
     def wrap(input: ListTablesInput): ListTables = ListTables(input)
   }

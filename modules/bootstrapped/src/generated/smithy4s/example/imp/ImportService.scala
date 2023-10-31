@@ -85,9 +85,9 @@ object ImportServiceOperation {
   }
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
     val schema: OperationSchema[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.import_test", "ImportOperation"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(unit)
       .withError(ImportOperationError.errorSchema)
-      .withOutput(OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(OpOutput.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
     def wrap(input: Unit): ImportOperation = ImportOperation()
   }

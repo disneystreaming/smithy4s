@@ -80,8 +80,8 @@ object DeprecatedServiceOperation {
   }
   object DeprecatedOperation extends smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DeprecatedOperation"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
       .withHints(smithy.api.Deprecated(message = None, since = None))
     def wrap(input: Unit): DeprecatedOperation = DeprecatedOperation()
   }

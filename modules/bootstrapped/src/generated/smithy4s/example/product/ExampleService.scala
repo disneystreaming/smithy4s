@@ -105,8 +105,8 @@ object ExampleServiceOperation {
   }
   object ExampleOperation extends smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     val schema: OperationSchema[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.product", "ExampleOperation"))
-      .withInput(ExampleOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(ExampleOperationInput.schema)
+      .withOutput(ExampleOperationOutput.schema)
     def wrap(input: ExampleOperationInput): ExampleOperation = ExampleOperation(input)
   }
 }

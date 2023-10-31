@@ -77,8 +77,8 @@ object ReservedNameOverrideServiceOperation {
   }
   object SetOp extends smithy4s.Endpoint[ReservedNameOverrideServiceOperation,SetOpInput, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[SetOpInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.reservedNameOverride", "SetOp"))
-      .withInput(SetOpInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(SetOpInput.schema)
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204))
     def wrap(input: SetOpInput): SetOp = SetOp(input)
   }
