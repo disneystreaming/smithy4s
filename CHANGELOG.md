@@ -1,5 +1,9 @@
 # 0.18.3
 
+* Support length/range constraints on structure fields targeting enums
+
+Although it's weird to allow it, it is actually supported in Smithy.
+
 * Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
 
 Resolves an issue in which AWS credentials would be decoded using the wrong timestamp format, affecting AWS clients on EC2/ECS.

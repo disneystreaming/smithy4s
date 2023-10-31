@@ -18,6 +18,7 @@ package smithy4s
 
 import smithy.api.Length
 import smithy.api.Pattern
+import smithy.api.Range
 
 /**
    * Given a constraint of type C, an RefinementProvider can produce a Refinement that
@@ -82,6 +83,12 @@ object RefinementProvider {
   implicit def mapLengthConstraint[K, V]: Simple[Length, Map[K, V]] =
     new LengthConstraint[Map[K, V]](_.size)
 
+  implicit def enumLengthConstraint[E <: Enumeration.Value]: Simple[Length, E] =
+    new LengthConstraint[E](e => e.value.size)
+
+  implicit def enumRangeConstraint[E <: Enumeration.Value]: Simple[Range, E] =
+    new RangeConstraint[E, Int](e => e.intValue)
+
   private class LengthConstraint[A](getLength: A => Int)
       extends SimpleImpl[Length, A] {
 
@@ -128,16 +135,15 @@ object RefinementProvider {
 
     }
 
-  implicit def numericRangeConstraints[N: Numeric]
-      : Simple[smithy.api.Range, N] = new SimpleImpl[smithy.api.Range, N] {
-
+  private class RangeConstraint[A, N: Numeric](getValue: A => N)
+      extends SimpleImpl[Range, A] {
     def get(
         range: smithy.api.Range
-    ): N => Either[String, Unit] = {
+    ): A => Either[String, Unit] = {
       val N = implicitly[Numeric[N]]
 
-      (n: N) =>
-        val value = BigDecimal(N.toDouble(n))
+      (a: A) =>
+        val value = BigDecimal(N.toDouble(getValue(a)))
         (range.min, range.max) match {
           case (Some(min), Some(max)) =>
             if (value >= min && value <= max) Right(())
@@ -161,6 +167,9 @@ object RefinementProvider {
         }
     }
   }
+
+  implicit def numericRangeConstraints[N: Numeric]
+      : Simple[smithy.api.Range, N] = new RangeConstraint[N, N](identity[N])
 
   // Lazy to avoid some pernicious recursive initialisation issue between
   // the ShapeId static object and the generated code that makes use of it,
