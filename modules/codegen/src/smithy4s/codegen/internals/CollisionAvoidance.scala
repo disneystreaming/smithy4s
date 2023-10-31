@@ -318,7 +318,6 @@ private[internals] object CollisionAvoidance {
     val option = NameRef("scala", "Option")
     val none = NameRef("scala", "None")
     val some = NameRef("scala", "Some")
-    val scalaRuntime = NameRef("scala.runtime", "ScalaRunTime")
 
   }
 

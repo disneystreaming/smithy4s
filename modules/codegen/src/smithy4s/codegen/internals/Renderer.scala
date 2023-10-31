@@ -533,18 +533,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val ext = mixins.map(m => line"$m").intercalate(line" with ")
           line" with $ext"
         } else Line.empty
-
-        val messageField = fields
-          .find { f =>
-            f.hints.contains_(Hint.ErrorMessage) ||
-            f.name === "message"
-          }
-          .filter {
-            _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
-          }
-
         block(line"$decl extends Throwable$mixinExtensions") {
-          messageField.fold(defaultThrowableGetMessage)(renderGetMessage)
+          fields
+            .find { f =>
+              f.hints.contains_(Hint.ErrorMessage) ||
+              f.name === "message"
+            }
+            .filter {
+              _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
+            }
+            .foldMap(renderGetMessage)
         }
       } else {
         val extendAdt = adtParent.map(t => line"$t").toList
@@ -664,10 +662,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       base
     )
   }
-
-  // Default toString on Throwable prints the classname, instead we use the case class toString.
-  private def defaultThrowableGetMessage =
-    line"override def toString(): $string_ = $scalaRuntime._toString(this)"
 
   private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
