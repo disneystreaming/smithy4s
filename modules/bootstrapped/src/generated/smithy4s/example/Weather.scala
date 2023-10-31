@@ -74,16 +74,16 @@ sealed trait WeatherOperation[Input, Err, Output, StreamedInput, StreamedOutput]
 object WeatherOperation {
 
   object reified extends WeatherGen[WeatherOperation] {
-    def getCurrentTime() = GetCurrentTime()
-    def getCity(cityId: CityId) = GetCity(GetCityInput(cityId))
-    def getForecast(cityId: CityId) = GetForecast(GetForecastInput(cityId))
-    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None) = ListCities(ListCitiesInput(nextToken, pageSize))
+    def getCurrentTime(): GetCurrentTime = GetCurrentTime()
+    def getCity(cityId: CityId): GetCity = GetCity(GetCityInput(cityId))
+    def getForecast(cityId: CityId): GetForecast = GetForecast(GetForecastInput(cityId))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): ListCities = ListCities(ListCitiesInput(nextToken, pageSize))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherGen[P], f: PolyFunction5[P, P1]) extends WeatherGen[P1] {
-    def getCurrentTime() = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](alg.getCurrentTime())
-    def getCity(cityId: CityId) = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](alg.getCity(cityId))
-    def getForecast(cityId: CityId) = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](alg.getForecast(cityId))
-    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None) = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
+    def getCurrentTime(): P1[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](alg.getCurrentTime())
+    def getCity(cityId: CityId): P1[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](alg.getCity(cityId))
+    def getForecast(cityId: CityId): P1[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](alg.getForecast(cityId))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): P1[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherGen[P]): PolyFunction5[WeatherOperation, P] = new PolyFunction5[WeatherOperation, P] {
@@ -91,7 +91,7 @@ object WeatherOperation {
   }
   final case class GetCurrentTime() extends WeatherOperation[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = impl.getCurrentTime()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = GetCurrentTime
   }
@@ -100,11 +100,11 @@ object WeatherOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetCurrentTimeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
-    def wrap(input: Unit) = GetCurrentTime()
+    def wrap(input: Unit): GetCurrentTime = GetCurrentTime()
   }
   final case class GetCity(input: GetCityInput) extends WeatherOperation[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = impl.getCity(input.cityId)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = GetCity
   }
   object GetCity extends smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
@@ -113,7 +113,7 @@ object WeatherOperation {
       .withError(GetCityError.errorSchema)
       .withOutput(GetCityOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
-    def wrap(input: GetCityInput) = GetCity(input)
+    def wrap(input: GetCityInput): GetCity = GetCity(input)
   }
   sealed trait GetCityError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetCityError = this
@@ -169,7 +169,7 @@ object WeatherOperation {
   }
   final case class GetForecast(input: GetForecastInput) extends WeatherOperation[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = impl.getForecast(input.cityId)
-    def ordinal = 2
+    def ordinal: Int = 2
     def endpoint: smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = GetForecast
   }
   object GetForecast extends smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
@@ -177,11 +177,11 @@ object WeatherOperation {
       .withInput(GetForecastInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(GetForecastOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Readonly())
-    def wrap(input: GetForecastInput) = GetForecast(input)
+    def wrap(input: GetForecastInput): GetForecast = GetForecast(input)
   }
   final case class ListCities(input: ListCitiesInput) extends WeatherOperation[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = impl.listCities(input.nextToken, input.pageSize)
-    def ordinal = 3
+    def ordinal: Int = 3
     def endpoint: smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = ListCities
   }
   object ListCities extends smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
@@ -189,7 +189,7 @@ object WeatherOperation {
       .withInput(ListCitiesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(ListCitiesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Paginated(inputToken = None, outputToken = None, items = Some(smithy.api.NonEmptyString("items")), pageSize = None), smithy.api.Readonly())
-    def wrap(input: ListCitiesInput) = ListCities(input)
+    def wrap(input: ListCitiesInput): ListCities = ListCities(input)
   }
 }
 

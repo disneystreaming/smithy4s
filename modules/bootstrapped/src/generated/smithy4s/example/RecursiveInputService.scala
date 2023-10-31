@@ -61,10 +61,10 @@ sealed trait RecursiveInputServiceOperation[Input, Err, Output, StreamedInput, S
 object RecursiveInputServiceOperation {
 
   object reified extends RecursiveInputServiceGen[RecursiveInputServiceOperation] {
-    def recursiveInputOperation(hello: Option[RecursiveInput] = None) = RecursiveInputOperation(RecursiveInput(hello))
+    def recursiveInputOperation(hello: Option[RecursiveInput] = None): RecursiveInputOperation = RecursiveInputOperation(RecursiveInput(hello))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: RecursiveInputServiceGen[P], f: PolyFunction5[P, P1]) extends RecursiveInputServiceGen[P1] {
-    def recursiveInputOperation(hello: Option[RecursiveInput] = None) = f[RecursiveInput, Nothing, Unit, Nothing, Nothing](alg.recursiveInputOperation(hello))
+    def recursiveInputOperation(hello: Option[RecursiveInput] = None): P1[RecursiveInput, Nothing, Unit, Nothing, Nothing] = f[RecursiveInput, Nothing, Unit, Nothing, Nothing](alg.recursiveInputOperation(hello))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: RecursiveInputServiceGen[P]): PolyFunction5[RecursiveInputServiceOperation, P] = new PolyFunction5[RecursiveInputServiceOperation, P] {
@@ -72,7 +72,7 @@ object RecursiveInputServiceOperation {
   }
   final case class RecursiveInputOperation(input: RecursiveInput) extends RecursiveInputServiceOperation[RecursiveInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: RecursiveInputServiceGen[F]): F[RecursiveInput, Nothing, Unit, Nothing, Nothing] = impl.recursiveInputOperation(input.hello)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] = RecursiveInputOperation
   }
   object RecursiveInputOperation extends smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] {
@@ -80,7 +80,7 @@ object RecursiveInputServiceOperation {
       .withInput(RecursiveInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200), smithy.api.Idempotent())
-    def wrap(input: RecursiveInput) = RecursiveInputOperation(input)
+    def wrap(input: RecursiveInput): RecursiveInputOperation = RecursiveInputOperation(input)
   }
 }
 

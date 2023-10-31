@@ -61,12 +61,12 @@ sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, Stream
 object BenchmarkServiceOperation {
 
   object reified extends BenchmarkServiceGen[BenchmarkServiceOperation] {
-    def createObject(key: String, bucketName: String, payload: S3Object) = CreateObject(CreateObjectInput(key, bucketName, payload))
-    def sendString(key: String, bucketName: String, body: String) = SendString(SendStringInput(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): CreateObject = CreateObject(CreateObjectInput(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String): SendString = SendString(SendStringInput(key, bucketName, body))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BenchmarkServiceGen[P], f: PolyFunction5[P, P1]) extends BenchmarkServiceGen[P1] {
-    def createObject(key: String, bucketName: String, payload: S3Object) = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
-    def sendString(key: String, bucketName: String, body: String) = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = new PolyFunction5[BenchmarkServiceOperation, P] {
@@ -74,7 +74,7 @@ object BenchmarkServiceOperation {
   }
   final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = impl.createObject(input.key, input.bucketName, input.payload)
-    def ordinal = 0
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] = CreateObject
   }
   object CreateObject extends smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
@@ -82,11 +82,11 @@ object BenchmarkServiceOperation {
       .withInput(CreateObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200))
-    def wrap(input: CreateObjectInput) = CreateObject(input)
+    def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
   }
   final case class SendString(input: SendStringInput) extends BenchmarkServiceOperation[SendStringInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[SendStringInput, Nothing, Unit, Nothing, Nothing] = impl.sendString(input.key, input.bucketName, input.body)
-    def ordinal = 1
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] = SendString
   }
   object SendString extends smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] {
@@ -94,7 +94,7 @@ object BenchmarkServiceOperation {
       .withInput(SendStringInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/simple/{bucketName}/{key}"), code = 200))
-    def wrap(input: SendStringInput) = SendString(input)
+    def wrap(input: SendStringInput): SendString = SendString(input)
   }
 }
 

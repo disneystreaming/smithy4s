@@ -18,6 +18,7 @@ package smithy4s
 package aws.kernel
 
 import smithy4s.schema.Schema._
+import smithy.api.TimestampFormat
 
 case class AwsInstanceMetadata(
     accessKeyId: String,
@@ -34,7 +35,10 @@ object AwsInstanceMetadata {
     val accessKeyIdField =
       string.required[AwsInstanceMetadata]("AccessKeyId", _.accessKeyId)
     val expirationField =
-      timestamp.required[AwsInstanceMetadata]("Expiration", _.expiration)
+      timestamp
+        .required[AwsInstanceMetadata]("Expiration", _.expiration)
+        // 'Expiration' is in date-time format https://repost.aws/questions/QUgcf1EIOPS7GZNboeAiyO9Q/renewing-aws-credentials
+        .addHints(TimestampFormat.DATE_TIME.widen)
     val secretAccessKeyField =
       string.required[AwsInstanceMetadata]("SecretAccessKey", _.accessKeyId)
     val tokenField =

@@ -63,10 +63,10 @@ sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, Strea
 object DeprecatedServiceOperation {
 
   object reified extends DeprecatedServiceGen[DeprecatedServiceOperation] {
-    def deprecatedOperation() = DeprecatedOperation()
+    def deprecatedOperation(): DeprecatedOperation = DeprecatedOperation()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DeprecatedServiceGen[P], f: PolyFunction5[P, P1]) extends DeprecatedServiceGen[P1] {
-    def deprecatedOperation() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.deprecatedOperation())
+    def deprecatedOperation(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.deprecatedOperation())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = new PolyFunction5[DeprecatedServiceOperation, P] {
@@ -74,7 +74,7 @@ object DeprecatedServiceOperation {
   }
   final case class DeprecatedOperation() extends DeprecatedServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.deprecatedOperation()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = DeprecatedOperation
   }
@@ -83,7 +83,7 @@ object DeprecatedServiceOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
       .withHints(smithy.api.Deprecated(message = None, since = None))
-    def wrap(input: Unit) = DeprecatedOperation()
+    def wrap(input: Unit): DeprecatedOperation = DeprecatedOperation()
   }
 }
 

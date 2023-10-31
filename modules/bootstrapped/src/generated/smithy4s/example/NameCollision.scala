@@ -65,12 +65,12 @@ sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedO
 object NameCollisionOperation {
 
   object reified extends NameCollisionGen[NameCollisionOperation] {
-    def myOp() = MyOp()
-    def endpoint() = Endpoint()
+    def myOp(): MyOp = MyOp()
+    def endpoint(): Endpoint = Endpoint()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
-    def myOp() = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp())
-    def endpoint() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint())
+    def myOp(): P1[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp())
+    def endpoint(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {
@@ -78,7 +78,7 @@ object NameCollisionOperation {
   }
   final case class MyOp() extends NameCollisionOperation[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
-    def ordinal = 0
+    def ordinal: Int = 0
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = MyOp
   }
@@ -87,7 +87,7 @@ object NameCollisionOperation {
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withError(MyOpError.errorSchema)
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = MyOp()
+    def wrap(input: Unit): MyOp = MyOp()
   }
   sealed trait MyOpError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: MyOpError = this
@@ -143,7 +143,7 @@ object NameCollisionOperation {
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
-    def ordinal = 1
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
   }
@@ -151,7 +151,7 @@ object NameCollisionOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
       .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
       .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
-    def wrap(input: Unit) = Endpoint()
+    def wrap(input: Unit): Endpoint = Endpoint()
   }
 }
 

@@ -1,8 +1,24 @@
+# 0.18.3
+
+* Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
+
+Resolves an issue in which AWS credentials would be decoded using the wrong timestamp format, affecting AWS clients on EC2/ECS.
+
+* Render explicit type annotations for some methods that were missing them in [#1272](https://github.com/disneystreaming/smithy4s/pull/1272)
+
+This resolves a problem in which type inference would have different results between Scala 2.13 and 3.x, causing an error on Scala 2.13 under the `-Xsource:3` flag.
+
+* Override `toString` on error shapes
+
+Default `toString` implementation on `Throwable` prints the class name, instead, we decided to rely on a custom `toString` implementation.
+
 # 0.18.2
 
-## Override `toString` on error shapes
+## Expose UrlForm.parse and UrlFormDecodeError
 
-Default `toString` implementation on `Throwable` prints the class name, instead, we decided to rely on the case class `toString` implementation.
+In 0.18.0, support was added for `application/x-www-form-urlencoded` data. But, many of its related constructs were private, they are now public for users to access them directly.
+https://github.com/disneystreaming/smithy4s/pull/1254
+
 
 # 0.18.1
 
@@ -14,11 +30,6 @@ In 0.18.0, support was added for [open enums](https://disneystreaming.github.io/
 
 This model-preprocessor aims at removing constraints from output types in AWS specs (as AWS doesn't seem to respect said constraints)
 https://github.com/disneystreaming/smithy4s/pull/1251
-
-## Expose UrlForm.parse and UrlFormDecodeError
-
-In 0.18.0, support was added for `application/x-www-form-urlencoded` data. But, many of its related constructs were private, they are now public for users to access them directly.
-https://github.com/disneystreaming/smithy4s/pull/1254
 
 # 0.18.0
 
