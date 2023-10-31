@@ -570,9 +570,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           opObjectName
         )}] = $Schema_.operation($ShapeId_("$ns", "$opName"))""",
         indent(
-          line".withInput(${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen))",
+          line".withInput(${op.input.schemaRef})",
           Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
-          line".withOutput(${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen))",
+          line".withOutput(${op.output.schemaRef})",
           op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
           Option(op.hints).filter(_.nonEmpty).map(h => line".withHints(${memberHints(h)})")
