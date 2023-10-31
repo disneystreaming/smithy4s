@@ -533,7 +533,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val ext = mixins.map(m => line"$m").intercalate(line" with ")
           line" with $ext"
         } else Line.empty
-        block(line"$decl extends Throwable$mixinExtensions") {
+        block(line"$decl extends $smithy4sThrowable$mixinExtensions") {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||

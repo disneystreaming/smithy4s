@@ -105,11 +105,13 @@ object ObjectServiceOperation {
     val error: UnionSchema[PutObjectError] = PutObjectError.schema
     def liftError(throwable: Throwable): Option[PutObjectError] = throwable match {
       case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
+      case e: ClientError => Some(PutObjectError.ClientErrorCase(e))
       case e: NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
       case _ => None
     }
     def unliftError(e: PutObjectError): Throwable = e match {
       case PutObjectError.ServerErrorCase(e) => e
+      case PutObjectError.ClientErrorCase(e) => e
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
@@ -122,12 +124,18 @@ object ObjectServiceOperation {
     val hints: Hints = Hints.empty
 
     case class ServerErrorCase(serverError: ServerError) extends PutObjectError
+    case class ClientErrorCase(clientError: ClientError) extends PutObjectError
     case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[PutObjectError]("ServerError")
+    }
+    object ClientErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[ClientErrorCase] = bijection(ClientError.schema.addHints(hints), ClientErrorCase(_), _.clientError)
+      val alt = schema.oneOf[PutObjectError]("ClientError")
     }
     object NoMoreSpaceCase {
       val hints: Hints = Hints.empty
@@ -137,9 +145,11 @@ object ObjectServiceOperation {
 
     implicit val schema: UnionSchema[PutObjectError] = union(
       ServerErrorCase.alt,
+      ClientErrorCase.alt,
       NoMoreSpaceCase.alt,
     ){
       case c: ServerErrorCase => ServerErrorCase.alt(c)
+      case c: ClientErrorCase => ClientErrorCase.alt(c)
       case c: NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
     }
   }
@@ -162,10 +172,12 @@ object ObjectServiceOperation {
     val error: UnionSchema[GetObjectError] = GetObjectError.schema
     def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
       case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
+      case e: ClientError => Some(GetObjectError.ClientErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetObjectError): Throwable = e match {
       case GetObjectError.ServerErrorCase(e) => e
+      case GetObjectError.ClientErrorCase(e) => e
     }
   }
   sealed trait GetObjectError extends scala.Product with scala.Serializable {
@@ -177,17 +189,25 @@ object ObjectServiceOperation {
     val hints: Hints = Hints.empty
 
     case class ServerErrorCase(serverError: ServerError) extends GetObjectError
+    case class ClientErrorCase(clientError: ClientError) extends GetObjectError
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }
+    object ClientErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[ClientErrorCase] = bijection(ClientError.schema.addHints(hints), ClientErrorCase(_), _.clientError)
+      val alt = schema.oneOf[GetObjectError]("ClientError")
+    }
 
     implicit val schema: UnionSchema[GetObjectError] = union(
       ServerErrorCase.alt,
+      ClientErrorCase.alt,
     ){
       case c: ServerErrorCase => ServerErrorCase.alt(c)
+      case c: ClientErrorCase => ClientErrorCase.alt(c)
     }
   }
 }

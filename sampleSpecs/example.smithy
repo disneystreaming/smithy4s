@@ -10,7 +10,7 @@ use smithy4s.meta#errorMessage
 @simpleRestJson
 service ObjectService {
   version: "1.0.0",
-  errors: [ServerError],
+  errors: [ServerError, ClientError],
   operations: [PutObject, GetObject]
 }
 
@@ -132,6 +132,15 @@ integer ObjectSize
 structure ServerError {
   message: String
 }
+
+@error("client")
+structure ClientError {
+  @required
+  code: Integer
+  @required
+  details: String
+}
+
 
 
 @error("server")

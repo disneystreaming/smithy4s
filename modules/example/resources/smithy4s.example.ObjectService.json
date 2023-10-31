@@ -51,6 +51,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "ClientError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "ServerError 500 response",
                         "content": {
@@ -111,6 +121,16 @@
                     "200": {
                         "description": "PutObject 200 response"
                     },
+                    "400": {
+                        "description": "ClientError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "ServerError 500 response",
                         "content": {
@@ -137,6 +157,22 @@
     },
     "components": {
         "schemas": {
+            "ClientErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "details": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "details"
+                ]
+            },
             "Foo": {
                 "description": "Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because.",
                 "oneOf": [

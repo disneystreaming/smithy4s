@@ -15,7 +15,9 @@
  */
 
 package smithy4s
+
 import munit._
+import smithy4s.example.ClientError
 import smithy4s.example.ServerErrorCustomMessage
 
 class ErrorMessageTraitSpec extends FunSuite {
@@ -26,6 +28,18 @@ class ErrorMessageTraitSpec extends FunSuite {
     val e = ServerErrorCustomMessage(Some("error message"))
 
     expect.eql(e.getMessage, "error message")
+    expect.eql(
+      e.toString,
+      "smithy4s.example.ServerErrorCustomMessage: error message"
+    )
+  }
+
+  test("Generated getMessage") {
+    val e = ClientError(400, "oopsy")
+
+    val expected = "smithy4s.example.ClientError(400, oopsy)"
+    expect.eql(e.getMessage, null)
+    expect.eql(e.toString, expected)
   }
 
 }
