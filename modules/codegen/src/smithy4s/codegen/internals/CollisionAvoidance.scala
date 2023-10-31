@@ -341,7 +341,6 @@ private[internals] object CollisionAvoidance {
     val some = NameRef("scala", "Some")
     val noStackTrace = NameRef("scala.util.control", "NoStackTrace")
     val throwable = NameRef("java.lang", "Throwable")
-    val scalaRuntime = NameRef("scala.runtime", "ScalaRunTime")
 
   }
 
