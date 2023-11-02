@@ -148,7 +148,7 @@ object Dependencies {
   val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.7.2"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.9.1"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.48"
   }
