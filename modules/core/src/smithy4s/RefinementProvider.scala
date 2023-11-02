@@ -40,9 +40,61 @@ trait RefinementProvider[C, A, B] { self =>
     }
 }
 
-object RefinementProvider {
+object RefinementProvider extends LowPriorityImplicits {
 
-  private abstract class SimpleImpl[C, A](implicit _tag: ShapeTag[C])
+  type Simple[C, A] = RefinementProvider[C, A, A]
+
+  implicit val stringLengthConstraint: Simple[Length, String] =
+    new LengthConstraint[String](_.length)
+
+  implicit val blobLengthConstraint: Simple[Length, Blob] =
+    new LengthConstraint[Blob](_.size)
+
+  implicit def iterableLengthConstraint[C[_], A](implicit
+      ev: C[A] <:< Iterable[A]
+  ): Simple[Length, C[A]] =
+    new LengthConstraint[C[A]](ca => ev(ca).size)
+
+  implicit def mapLengthConstraint[K, V]: Simple[Length, Map[K, V]] =
+    new LengthConstraint[Map[K, V]](_.size)
+
+  implicit val stringPatternConstraints: Simple[Pattern, String] =
+    new PatternConstraint[String](identity)
+
+  implicit def numericRangeConstraints[N: Numeric]
+      : Simple[smithy.api.Range, N] = new RangeConstraint[N, N](identity[N])
+
+  // Lazy to avoid some pernicious recursive initialisation issue between
+  // the ShapeId static object and the generated code that makes use of it,
+  // as the `IdRef` type is referenced here.
+  //
+  // The problem only occurs in JS/Native.
+  lazy implicit val idRefRefinement
+      : RefinementProvider[smithy.api.IdRef, String, ShapeId] =
+    Refinement.drivenBy[smithy.api.IdRef](
+      ShapeId.parse(_: String) match {
+        case None        => Left("Invalid ShapeId")
+        case Some(value) => Right(value)
+      },
+      (_: ShapeId).show
+    )
+}
+
+private[smithy4s] trait LowPriorityImplicits {
+
+  implicit def enumLengthConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Length, E, E] =
+    new LengthConstraint[E](e => e.value.size)
+
+  implicit def enumRangeConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Range, E, E] =
+    new RangeConstraint[E, Int](e => e.intValue)
+
+  implicit def enumPatternConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Pattern, E, E] =
+    new PatternConstraint[E](e => e.value)
+
+  protected abstract class SimpleImpl[C, A](implicit _tag: ShapeTag[C])
       extends RefinementProvider[C, A, A] {
 
     val tag: ShapeTag[C] = _tag
@@ -62,34 +114,12 @@ object RefinementProvider {
 
   }
 
-  type Simple[C, A] = RefinementProvider[C, A, A]
-
   implicit def isomorphismConstraint[C, A, A0](implicit
-      constraintOnA: Simple[C, A],
+      constraintOnA: RefinementProvider.Simple[C, A],
       iso: Bijection[A, A0]
-  ): Simple[C, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
+  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 
-  implicit val stringLengthConstraint: Simple[Length, String] =
-    new LengthConstraint[String](_.length)
-
-  implicit val blobLengthConstraint: Simple[Length, Blob] =
-    new LengthConstraint[Blob](_.size)
-
-  implicit def iterableLengthConstraint[C[_], A](implicit
-      ev: C[A] <:< Iterable[A]
-  ): Simple[Length, C[A]] =
-    new LengthConstraint[C[A]](ca => ev(ca).size)
-
-  implicit def mapLengthConstraint[K, V]: Simple[Length, Map[K, V]] =
-    new LengthConstraint[Map[K, V]](_.size)
-
-  implicit def enumLengthConstraint[E <: Enumeration.Value]: Simple[Length, E] =
-    new LengthConstraint[E](e => e.value.size)
-
-  implicit def enumRangeConstraint[E <: Enumeration.Value]: Simple[Range, E] =
-    new RangeConstraint[E, Int](e => e.intValue)
-
-  private class LengthConstraint[A](getLength: A => Int)
+  protected class LengthConstraint[A](getLength: A => Int)
       extends SimpleImpl[Length, A] {
 
     def get(lengthHint: Length): A => Either[String, Unit] = { (a: A) =>
@@ -118,24 +148,23 @@ object RefinementProvider {
     }
   }
 
-  implicit val stringPatternConstraints: Simple[Pattern, String] =
-    new SimpleImpl[Pattern, String] {
+  protected class PatternConstraint[E](getValue: E => String)
+      extends SimpleImpl[Pattern, E] {
 
-      def get(
-          pattern: Pattern
-      ): String => Either[String, Unit] = {
-        val regex = pattern.value.r
-        (input: String) =>
-          if (regex.findFirstIn(input).isDefined) Right(())
-          else
-            Left(
-              s"String '$input' does not match pattern '${pattern.value}'"
-            )
+    def get(pattern: Pattern): E => Either[String, Unit] = {
+      val regex = pattern.value.r
+      (input: E) => {
+        val value = getValue(input)
+        if (regex.findFirstIn(getValue(input)).isDefined) Right(())
+        else
+          Left(
+            s"String '$value' does not match pattern '${pattern.value}'"
+          )
       }
-
     }
+  }
 
-  private class RangeConstraint[A, N: Numeric](getValue: A => N)
+  protected class RangeConstraint[A, N: Numeric](getValue: A => N)
       extends SimpleImpl[Range, A] {
     def get(
         range: smithy.api.Range
@@ -168,21 +197,4 @@ object RefinementProvider {
     }
   }
 
-  implicit def numericRangeConstraints[N: Numeric]
-      : Simple[smithy.api.Range, N] = new RangeConstraint[N, N](identity[N])
-
-  // Lazy to avoid some pernicious recursive initialisation issue between
-  // the ShapeId static object and the generated code that makes use of it,
-  // as the `IdRef` type is referenced here.
-  //
-  // The problem only occurs in JS/Native.
-  lazy implicit val idRefRefinement
-      : RefinementProvider[smithy.api.IdRef, String, ShapeId] =
-    Refinement.drivenBy[smithy.api.IdRef](
-      ShapeId.parse(_: String) match {
-        case None        => Left("Invalid ShapeId")
-        case Some(value) => Right(value)
-      },
-      (_: ShapeId).show
-    )
 }
