@@ -1,6 +1,6 @@
 # 0.18.3
 
-* Support length/range constraints on structure fields targeting enums
+* Support constraint traits on members targeting enums
 
 Although it's weird to allow it, it is actually supported in Smithy.
 
