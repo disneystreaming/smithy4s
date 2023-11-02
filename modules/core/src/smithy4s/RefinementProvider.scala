@@ -78,23 +78,8 @@ object RefinementProvider extends LowPriorityImplicits {
       },
       (_: ShapeId).show
     )
-}
 
-private[smithy4s] trait LowPriorityImplicits {
-
-  implicit def enumLengthConstraint[E <: Enumeration.Value]
-      : RefinementProvider[Length, E, E] =
-    new LengthConstraint[E](e => e.value.size)
-
-  implicit def enumRangeConstraint[E <: Enumeration.Value]
-      : RefinementProvider[Range, E, E] =
-    new RangeConstraint[E, Int](e => e.intValue)
-
-  implicit def enumPatternConstraint[E <: Enumeration.Value]
-      : RefinementProvider[Pattern, E, E] =
-    new PatternConstraint[E](e => e.value)
-
-  protected abstract class SimpleImpl[C, A](implicit _tag: ShapeTag[C])
+  private[smithy4s] abstract class SimpleImpl[C, A](implicit _tag: ShapeTag[C])
       extends RefinementProvider[C, A, A] {
 
     val tag: ShapeTag[C] = _tag
@@ -114,12 +99,7 @@ private[smithy4s] trait LowPriorityImplicits {
 
   }
 
-  implicit def isomorphismConstraint[C, A, A0](implicit
-      constraintOnA: RefinementProvider.Simple[C, A],
-      iso: Bijection[A, A0]
-  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
-
-  protected class LengthConstraint[A](getLength: A => Int)
+  private[smithy4s] class LengthConstraint[A](getLength: A => Int)
       extends SimpleImpl[Length, A] {
 
     def get(lengthHint: Length): A => Either[String, Unit] = { (a: A) =>
@@ -148,7 +128,7 @@ private[smithy4s] trait LowPriorityImplicits {
     }
   }
 
-  protected class PatternConstraint[E](getValue: E => String)
+  private[smithy4s] class PatternConstraint[E](getValue: E => String)
       extends SimpleImpl[Pattern, E] {
 
     def get(pattern: Pattern): E => Either[String, Unit] = {
@@ -164,7 +144,7 @@ private[smithy4s] trait LowPriorityImplicits {
     }
   }
 
-  protected class RangeConstraint[A, N: Numeric](getValue: A => N)
+  private[smithy4s] class RangeConstraint[A, N: Numeric](getValue: A => N)
       extends SimpleImpl[Range, A] {
     def get(
         range: smithy.api.Range
@@ -196,5 +176,26 @@ private[smithy4s] trait LowPriorityImplicits {
         }
     }
   }
+
+}
+
+private[smithy4s] trait LowPriorityImplicits {
+
+  implicit def enumLengthConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Length, E, E] =
+    new RefinementProvider.LengthConstraint[E](e => e.value.size)
+
+  implicit def enumRangeConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Range, E, E] =
+    new RefinementProvider.RangeConstraint[E, Int](e => e.intValue)
+
+  implicit def enumPatternConstraint[E <: Enumeration.Value]
+      : RefinementProvider[Pattern, E, E] =
+    new RefinementProvider.PatternConstraint[E](e => e.value)
+
+  implicit def isomorphismConstraint[C, A, A0](implicit
+      constraintOnA: RefinementProvider.Simple[C, A],
+      iso: Bijection[A, A0]
+  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 
 }
