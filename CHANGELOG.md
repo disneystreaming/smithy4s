@@ -16,12 +16,17 @@ Resolves an issue in which AWS credentials would be decoded using the wrong time
 
 This resolves a problem in which type inference would have different results between Scala 2.13 and 3.x, causing an error on Scala 2.13 under the `-Xsource:3` flag.
 
+* Override `toString` on error shapes
+
+Default `toString` implementation on `Throwable` prints the class name, instead, we decided to rely on a custom `toString` implementation.
+
 # 0.18.2
 
 ## Expose UrlForm.parse and UrlFormDecodeError
 
 In 0.18.0, support was added for `application/x-www-form-urlencoded` data. But, many of its related constructs were private, they are now public for users to access them directly.
 https://github.com/disneystreaming/smithy4s/pull/1254
+
 
 # 0.18.1
 

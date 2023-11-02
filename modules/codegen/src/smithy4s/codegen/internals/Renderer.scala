@@ -659,7 +659,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val exception =
           if (hints.contains(Hint.NoStackTrace))
             noStackTrace
-          else throwable
+          else smithy4sThrowable
         val mixinExtensions = if (mixins.nonEmpty) {
           val ext = mixins.map(m => line"$m").intercalate(line" with ")
           line" with $ext"
