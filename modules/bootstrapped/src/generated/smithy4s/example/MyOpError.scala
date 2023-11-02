@@ -4,9 +4,10 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.constant
 
-final case class MyOpError() extends Throwable {
+final case class MyOpError() extends Smithy4sThrowable {
 }
 
 object MyOpError extends ShapeTag.Companion[MyOpError] {

@@ -84,9 +84,9 @@ object NameCollisionOperation {
   }
   object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "MyOp"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(unit)
       .withError(MyOpError.errorSchema)
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(unit)
     def wrap(input: Unit): MyOp = MyOp()
   }
   sealed trait MyOpError extends scala.Product with scala.Serializable { self =>
@@ -149,8 +149,8 @@ object NameCollisionOperation {
   }
   object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Endpoint = Endpoint()
   }
 }

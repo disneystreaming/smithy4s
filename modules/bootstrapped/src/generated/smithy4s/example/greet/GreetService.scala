@@ -74,8 +74,8 @@ object GreetServiceOperation {
   }
   object Greet extends smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     val schema: OperationSchema[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.greet", "Greet"))
-      .withInput(GreetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(GreetOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(GreetInput.schema)
+      .withOutput(GreetOutput.schema)
     def wrap(input: GreetInput): Greet = Greet(input)
   }
 }

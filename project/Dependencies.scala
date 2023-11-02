@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.5"
+    val jsoniterScalaVersion = "2.24.4"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.39.1"
+    val smithyVersion = "1.40.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -148,7 +148,7 @@ object Dependencies {
   val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.7.2"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.9.1"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.48"
   }

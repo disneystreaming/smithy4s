@@ -79,8 +79,8 @@ object HelloWorldServiceOperation {
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.hello", "SayWorld"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(World.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(World.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): SayWorld = SayWorld()
   }

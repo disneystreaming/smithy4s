@@ -85,8 +85,8 @@ object FooServiceOperation {
   }
   object GetFoo extends smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, GetFooOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetFoo"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(GetFooOutput.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200), smithy.api.Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""), smithy.api.Readonly())
     def wrap(input: Unit): GetFoo = GetFoo()
   }

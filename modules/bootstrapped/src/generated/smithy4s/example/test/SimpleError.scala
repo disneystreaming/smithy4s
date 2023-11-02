@@ -4,10 +4,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
-final case class SimpleError(expected: Int) extends Throwable {
+final case class SimpleError(expected: Int) extends Smithy4sThrowable {
 }
 
 object SimpleError extends ShapeTag.Companion[SimpleError] {

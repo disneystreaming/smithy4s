@@ -79,9 +79,9 @@ object ErrorHandlingServiceOperation {
   }
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
     val schema: OperationSchema[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ErrorHandlingOperation"))
-      .withInput(ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(ErrorHandlingOperationInput.schema)
       .withError(ErrorHandlingOperationError.errorSchema)
-      .withOutput(ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(ErrorHandlingOperationOutput.schema)
     def wrap(input: ErrorHandlingOperationInput): ErrorHandlingOperation = ErrorHandlingOperation(input)
   }
   sealed trait ErrorHandlingOperationError extends scala.Product with scala.Serializable { self =>
