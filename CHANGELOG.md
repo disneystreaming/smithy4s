@@ -1,5 +1,9 @@
 # 0.18.3
 
+* Support constraint traits on members targeting enums
+
+Although it's weird to allow it, it is actually supported in Smithy.
+
 * Tweak operation schema `*Input` and `*Output` functions
 
 Some schema visitor will adjust their behaviour if a shape is the input or the output of an operation. For this reason we have a `InputOutput` class with a `Input` and `Output` hint that you can add to schemas to adjust the behaviour. `OperationSchema` has functions to work on input schemas and output schemas of an operation. This change makes these functions automatically add the relevant hint.
