@@ -92,9 +92,9 @@ object KVStoreOperation {
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
     val schema: OperationSchema[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Get"))
-      .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(Key.schema)
       .withError(GetError.errorSchema)
-      .withOutput(Value.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(Value.schema)
     def wrap(input: Key): Get = Get(input)
   }
   sealed trait GetError extends scala.Product with scala.Serializable { self =>
@@ -170,9 +170,9 @@ object KVStoreOperation {
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
     val schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
-      .withInput(KeyValue.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(KeyValue.schema)
       .withError(PutError.errorSchema)
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(unit)
     def wrap(input: KeyValue): Put = Put(input)
   }
   sealed trait PutError extends scala.Product with scala.Serializable { self =>
@@ -234,9 +234,9 @@ object KVStoreOperation {
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Delete"))
-      .withInput(Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(Key.schema)
       .withError(DeleteError.errorSchema)
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(unit)
     def wrap(input: Key): Delete = Delete(input)
   }
   sealed trait DeleteError extends scala.Product with scala.Serializable { self =>

@@ -1,5 +1,13 @@
 # 0.18.3
 
+* Tweak operation schema `*Input` and `*Output` functions
+
+Some schema visitor will adjust their behaviour if a shape is the input or the output of an operation. For this reason we have a `InputOutput` class with a `Input` and `Output` hint that you can add to schemas to adjust the behaviour. `OperationSchema` has functions to work on input schemas and output schemas of an operation. This change makes these functions automatically add the relevant hint.
+
+* OptionDefaultVisitor supports bijection
+
+When the schema for the member of a structure is a bijection, and the structure is meant to be decoded from metadata (like http headers), optionality was disregarded. This was making optional member required when decoding.
+
 * Fixing AwsInstanceMetadata codec in [#1266](https://github.com/disneystreaming/smithy4s/pull/1266)
 
 Resolves an issue in which AWS credentials would be decoded using the wrong timestamp format, affecting AWS clients on EC2/ECS.

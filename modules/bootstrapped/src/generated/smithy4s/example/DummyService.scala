@@ -89,8 +89,8 @@ object DummyServiceOperation {
   }
   object Dummy extends smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Queries, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Dummy"))
-      .withInput(Queries.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(Queries.schema)
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Readonly())
     def wrap(input: Queries): Dummy = Dummy(input)
   }
@@ -101,8 +101,8 @@ object DummyServiceOperation {
   }
   object DummyHostPrefix extends smithy4s.Endpoint[DummyServiceOperation,HostLabelInput, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[HostLabelInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyHostPrefix"))
-      .withInput(HostLabelInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(HostLabelInput.schema)
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Endpoint(hostPrefix = smithy.api.NonEmptyString("foo.{label1}--abc{label2}.{label3}.secure.")))
     def wrap(input: HostLabelInput): DummyHostPrefix = DummyHostPrefix(input)
   }
@@ -113,8 +113,8 @@ object DummyServiceOperation {
   }
   object DummyPath extends smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[PathParams, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyPath"))
-      .withInput(PathParams.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(PathParams.schema)
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200), smithy.api.Readonly())
     def wrap(input: PathParams): DummyPath = DummyPath(input)
   }

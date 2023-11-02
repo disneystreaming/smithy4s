@@ -90,9 +90,9 @@ object HelloServiceOperation {
   }
   object SayHello extends smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] {
     val schema: OperationSchema[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.test", "SayHello"))
-      .withInput(SayHelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(SayHelloInput.schema)
       .withError(SayHelloError.errorSchema)
-      .withOutput(SayHelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(SayHelloOutput.schema)
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "say_hello", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/", host = None, resolvedHost = None, authScheme = None, queryParams = Some(List("Hi=Hello%20there")), forbidQueryParams = None, requireQueryParams = None, headers = Some(Map("X-Greeting" -> "Hi")), forbidHeaders = None, requireHeaders = None, body = Some("{\"name\":\"Teddy\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("greeting" -> smithy4s.Document.fromString("Hi"), "name" -> smithy4s.Document.fromString("Teddy"), "query" -> smithy4s.Document.fromString("Hello there"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/"), code = 200), smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(id = "say_hello", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), code = 200, authScheme = None, headers = Some(Map("X-H1" -> "V1")), forbidHeaders = None, requireHeaders = None, body = Some("{\"result\":\"Hello!\"}"), bodyMediaType = None, params = Some(smithy4s.Document.obj("payload" -> smithy4s.Document.obj("result" -> smithy4s.Document.fromString("Hello!")), "header1" -> smithy4s.Document.fromString("V1"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))))
     def wrap(input: SayHelloInput): SayHello = SayHello(input)
   }
@@ -170,8 +170,8 @@ object HelloServiceOperation {
   }
   object Listen extends smithy4s.Endpoint[HelloServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.test", "Listen"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "listen", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "GET", uri = "/listen", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = None, vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/listen"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): Listen = Listen()
   }
@@ -182,8 +182,8 @@ object HelloServiceOperation {
   }
   object TestPath extends smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[TestPathInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.test", "TestPath"))
-      .withInput(TestPathInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(TestPathInput.schema)
+      .withOutput(unit)
       .withHints(smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "TestPath", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "GET", uri = "/test-path/sameValue", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("path" -> smithy4s.Document.fromString("sameValue"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test-path/{path}"), code = 200), smithy.api.Readonly())
     def wrap(input: TestPathInput): TestPath = TestPath(input)
   }

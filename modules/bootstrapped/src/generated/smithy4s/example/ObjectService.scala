@@ -95,9 +95,9 @@ object ObjectServiceOperation {
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
     val schema: OperationSchema[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutObject"))
-      .withInput(PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(PutObjectInput.schema)
       .withError(PutObjectError.errorSchema)
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Idempotent())
     def wrap(input: PutObjectInput): PutObject = PutObject(input)
   }
@@ -174,9 +174,9 @@ object ObjectServiceOperation {
   }
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     val schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
-      .withInput(GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(GetObjectInput.schema)
       .withError(GetObjectError.errorSchema)
-      .withOutput(GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(GetObjectOutput.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetObjectInput): GetObject = GetObject(input)
   }

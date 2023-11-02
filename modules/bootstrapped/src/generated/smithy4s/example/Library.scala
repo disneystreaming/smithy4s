@@ -84,8 +84,8 @@ object LibraryOperation {
   }
   object ListPublishers extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ListPublishers"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(ListPublishersOutput.schema)
       .withHints(smithy.api.Readonly())
     def wrap(input: Unit): ListPublishers = ListPublishers()
   }
@@ -97,8 +97,8 @@ object LibraryOperation {
   }
   object GetBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetBook"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
       .withHints(smithy.api.Readonly())
     def wrap(input: Unit): GetBook = GetBook()
   }
@@ -110,8 +110,8 @@ object LibraryOperation {
   }
   object BuyBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "BuyBook"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): BuyBook = BuyBook()
   }
 }

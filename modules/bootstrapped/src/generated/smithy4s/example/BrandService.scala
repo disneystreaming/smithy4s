@@ -75,8 +75,8 @@ object BrandServiceOperation {
   }
   object AddBrands extends smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "AddBrands"))
-      .withInput(AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(AddBrandsInput.schema)
+      .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/brands"), code = 200))
     def wrap(input: AddBrandsInput): AddBrands = AddBrands(input)
   }

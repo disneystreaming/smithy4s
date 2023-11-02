@@ -75,8 +75,8 @@ object PackedInputsServiceOperation {
   }
   object PackedInputOperation extends smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[PackedInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PackedInputOperation"))
-      .withInput(PackedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(PackedInput.schema)
+      .withOutput(unit)
       .withHints()
     def wrap(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }

@@ -82,9 +82,9 @@ object HelloWorldServiceOperation {
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] {
     val schema: OperationSchema[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.hello", "Hello"))
-      .withInput(Person.schema.addHints(smithy4s.internals.InputOutput.Input.widen))
+      .withInput(Person.schema)
       .withError(HelloError.errorSchema)
-      .withOutput(Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withOutput(Greeting.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200), smithy.api.Tags(List("testOperationTag")))
     def wrap(input: Person): Hello = Hello(input)
   }

@@ -18,6 +18,8 @@ package smithy4s
 
 package schema
 
+import smithy4s.internals.InputOutput
+
 final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     id: ShapeId,
     hints: Hints,
@@ -43,20 +45,20 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     copy(hints = f(hints))
 
   def withInput[I2](input: Schema[I2]): OperationSchema[I2, E, O, SI, SO] =
-    copy(input = input)
+    copy(input = input.addHints(InputOutput.Input.widen))
 
   def mapInput[I2](
       f: Schema[I] => Schema[I2]
   ): OperationSchema[I2, E, O, SI, SO] =
-    copy(input = f(input))
+    withInput(f(input))
 
   def withOutput[O2](output: Schema[O2]): OperationSchema[I, E, O2, SI, SO] =
-    copy(output = output)
+    copy(output = output.addHints(InputOutput.Output.widen))
 
   def mapOutput[O2](
       f: Schema[O] => Schema[O2]
   ): OperationSchema[I, E, O2, SI, SO] =
-    copy(output = f(output))
+    withOutput(f(output))
 
   def withError[E2](
       error: ErrorSchema[E2]

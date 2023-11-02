@@ -108,8 +108,8 @@ object ObjectCollisionOperation {
   }
   object Clone extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Clone"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Clone = Clone()
   }
   final case class Equals() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -120,8 +120,8 @@ object ObjectCollisionOperation {
   }
   object Equals extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Equals"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Equals = Equals()
   }
   final case class Finalize() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -132,8 +132,8 @@ object ObjectCollisionOperation {
   }
   object Finalize extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Finalize"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Finalize = Finalize()
   }
   final case class GetClass() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -144,8 +144,8 @@ object ObjectCollisionOperation {
   }
   object GetClass extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetClass"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): GetClass = GetClass()
   }
   final case class HashCode() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -156,8 +156,8 @@ object ObjectCollisionOperation {
   }
   object HashCode extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HashCode"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): HashCode = HashCode()
   }
   final case class Notify() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -168,8 +168,8 @@ object ObjectCollisionOperation {
   }
   object Notify extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Notify"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Notify = Notify()
   }
   final case class NotifyAll() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -180,8 +180,8 @@ object ObjectCollisionOperation {
   }
   object NotifyAll extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "NotifyAll"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): NotifyAll = NotifyAll()
   }
   final case class ToString() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -192,8 +192,8 @@ object ObjectCollisionOperation {
   }
   object ToString extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ToString"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): ToString = ToString()
   }
   final case class Wait() extends ObjectCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -204,8 +204,8 @@ object ObjectCollisionOperation {
   }
   object Wait extends smithy4s.Endpoint[ObjectCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Wait"))
-      .withInput(unit.addHints(smithy4s.internals.InputOutput.Input.widen))
-      .withOutput(unit.addHints(smithy4s.internals.InputOutput.Output.widen))
+      .withInput(unit)
+      .withOutput(unit)
     def wrap(input: Unit): Wait = Wait()
   }
 }
