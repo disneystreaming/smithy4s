@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -14,7 +15,7 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
+    ShapeId("smithy.api", "documentation") -> Document.fromString("A key and bucket is always required for putting a new file in a bucket"),
   )
 
   implicit val schema: Schema[PutObjectInput] = struct(

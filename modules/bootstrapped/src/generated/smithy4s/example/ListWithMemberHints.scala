@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
@@ -14,6 +15,6 @@ import smithy4s.schema.Schema.string
 object ListWithMemberHints extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListWithMemberHints")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[String]] = list(string.addMemberHints(smithy.api.Documentation("listFoo"))).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[String]] = list(string.addMemberHints(ShapeId("smithy.api", "documentation") -> Document.fromString("listFoo"))).withId(id).addHints(hints)
   implicit val schema: Schema[ListWithMemberHints] = bijection(underlyingSchema, asBijection)
 }

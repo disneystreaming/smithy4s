@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -32,7 +33,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+    ShapeId("smithy.api", "documentation") -> Document.fromString("The most basics of services\nGetFoo is its only operation"),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -87,7 +88,7 @@ object FooServiceOperation {
     val schema: OperationSchema[Unit, Nothing, GetFooOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetFoo"))
       .withInput(unit)
       .withOutput(GetFooOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200), smithy.api.Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200), ShapeId("smithy.api", "documentation") -> Document.fromString("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""), smithy.api.Readonly())
     def wrap(input: Unit): GetFoo = GetFoo()
   }
 }

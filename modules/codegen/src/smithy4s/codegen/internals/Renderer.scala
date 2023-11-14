@@ -1367,7 +1367,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
+        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderRefinementParameter(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
       case Nullable(underlying) => line"${underlying.schemaRef}.option"
@@ -1443,14 +1443,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
       line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
     else
-      recursion
-        .cata(renderTypedNode)(hint.typedNode)
-        .runTopLevel
+      renderTypedNodeTree(hint.typedNode)
+
+  // Unconditional variant of `renderNativeHint`, always renders a "static binding" style of hint
+  private def renderTypedNodeTree(tn: Fix[TypedNode]) =
+    recursion
+      .cata(renderTypedNode)(tn)
+      .runTopLevel
+
+  private def renderRefinementParameter(hint: Hint.Native): Line =
+    renderTypedNodeTree(hint.typedNode)
 
   private def renderDefault(hint: Hint.Default): Line =
-    recursion
-      .cata(renderTypedNode)(hint.typedNode)
-      .runTopLevel
+    renderTypedNodeTree(hint.typedNode)
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
@@ -1492,7 +1497,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else {
       tags
         .map { tag =>
-          line".validated(${renderNativeHint(tag.native)})"
+          line".validated(${renderRefinementParameter(tag.native)})"
         }
         .intercalate(Line.empty)
     }

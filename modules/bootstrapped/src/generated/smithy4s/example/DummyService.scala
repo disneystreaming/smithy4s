@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -31,7 +32,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   val version: String = "0.0"
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
+    ShapeId("smithy.api", "documentation") -> Document.fromString("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

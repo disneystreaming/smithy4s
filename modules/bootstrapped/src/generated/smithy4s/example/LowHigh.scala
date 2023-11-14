@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Enumeration
 import smithy4s.Hints
 import smithy4s.Schema
@@ -28,9 +29,9 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
   val hints: Hints = Hints.empty
 
   /** low */
-  case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))
+  case object LOW extends LowHigh("Low", "LOW", 0, Hints(ShapeId("smithy.api", "documentation") -> Document.fromString("low")))
   /** high */
-  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(smithy.api.Documentation("high")))
+  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(ShapeId("smithy.api", "documentation") -> Document.fromString("high")))
 
   val values: List[LowHigh] = List(
     LOW,

@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
@@ -17,6 +18,6 @@ import smithy4s.schema.Schema.string
 object MapWithMemberHints extends Newtype[Map[String, Int]] {
   val id: ShapeId = ShapeId("smithy4s.example", "MapWithMemberHints")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[Map[String, Int]] = map(string.addMemberHints(smithy.api.Documentation("mapFoo")), int.addMemberHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Map[String, Int]] = map(string.addMemberHints(ShapeId("smithy.api", "documentation") -> Document.fromString("mapFoo")), int.addMemberHints(ShapeId("smithy.api", "documentation") -> Document.fromString("mapBar"), smithy.api.Deprecated(message = None, since = None))).withId(id).addHints(hints)
   implicit val schema: Schema[MapWithMemberHints] = bijection(underlyingSchema, asBijection)
 }

@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Document
 import smithy4s.Enumeration
 import smithy4s.Hints
 import smithy4s.Schema
@@ -23,7 +24,7 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("some docs here"),
+    ShapeId("smithy.api", "documentation") -> Document.fromString("some docs here"),
     smithy.api.Deprecated(message = None, since = None),
   )
 
