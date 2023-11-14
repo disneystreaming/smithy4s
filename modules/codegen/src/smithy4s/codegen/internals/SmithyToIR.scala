@@ -971,10 +971,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
 
-  implicit class ShapeExt(shape: Shape) {
-    def name = shape.getId().getName()
+  implicit class ToShapeIdExt(ts: ToShapeId) {
+    def name = ts.toShapeId().getName()
 
-    def namespace = shape.getId().getNamespace()
+    def namespace = ts.toShapeId().getNamespace()
+  }
+
+  implicit class ShapeExt(shape: Shape) {
 
     def tpe: Option[Type] = shape.accept(toType)
 
@@ -1174,7 +1177,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
     val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
-    Hint.Native(recursion.ana(unfoldNodeAndType)(nodeAndType))
+    Hint.Native(
+      recursion.ana(unfoldNodeAndType)(nodeAndType),
+      nodeAndType.node,
+      Type.Ref(tr.namespace, tr.name)
+    )
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =

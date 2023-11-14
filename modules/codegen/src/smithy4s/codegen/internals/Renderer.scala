@@ -18,7 +18,6 @@ package smithy4s.codegen
 package internals
 
 import cats.data.NonEmptyList
-import cats.data.Reader
 import cats.syntax.all._
 import smithy4s.codegen.internals.EnumTag.IntEnum
 import smithy4s.codegen.internals.EnumTag.StringEnum
@@ -1400,17 +1399,58 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
+  private def renderNodeAsDocument(node: Node): Line =
+    node.accept(new NodeVisitor[Line] { self =>
+      def arrayNode(x: ArrayNode): Line = {
+        val members = x.getElements().asScala.map(_.accept(this)).toList.intercalate(Line.comma)
+
+        line"$document_.array($members)"
+      }
+
+      def booleanNode(x: BooleanNode): Line =
+        line"$document_.fromBoolean(${x.getValue()})"
+
+      def nullNode(x: NullNode): Line =
+        line"$document_.nullDoc"
+
+      def numberNode(x: NumberNode): Line =
+        line"$document_.fromDouble(${x.getValue().doubleValue()})"
+
+      def objectNode(x: ObjectNode): Line = {
+        val members =
+          x.getMembers()
+            .asScala
+            .map { case (k, v) =>
+              line"${renderStringLiteral(k.getValue())} -> ${v.accept(this)}"
+            }
+            .toList
+            .intercalate(Line.comma)
+
+        line"""$document_.obj($members)"""
+      }
+
+      def stringNode(x: StringNode): Line =
+        line"$document_.fromString(${renderStringLiteral(x.getValue())})"
+    })
+
   private def renderNativeHint(hint: Hint.Native): Line =
-    recursion
-      .cata(renderTypedNode)(hint.typedNode)
-      .run(true)
-      ._2
+    // todo: here we should properly check if the trait in question is recursive
+    if (
+      Set(
+        Type.Ref("smithy.api", "documentation"),
+        Type.Ref("smithy.api", "trait")
+      ).contains(hint.tr)
+    )
+      line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
+    else
+      recursion
+        .cata(renderTypedNode)(hint.typedNode)
+        .runTopLevel
 
   private def renderDefault(hint: Hint.Default): Line =
     recursion
       .cata(renderTypedNode)(hint.typedNode)
-      .run(true)
-      ._2
+      .runTopLevel
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
@@ -1465,6 +1505,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   type InCollection = Boolean
 
   type Contextual[A] = cats.data.Reader[TopLevel, A]
+  object Contextual {
+    val ask: Contextual[TopLevel] = cats.data.Kleisli.ask
+  }
   type CString = Contextual[(InCollection, Line)]
 
   implicit class ContextualOps(val line: Line) {
@@ -1473,7 +1516,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   implicit class CStringOps(val str: CString) {
-    def runDefault = str.run(false)._2
+    def runDefault: Line = str.run(false)._2
+    def runTopLevel: Line = str.run(true)._2
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
@@ -1488,14 +1532,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case (name, FieldTN.OptionalNoneTN) => line"$name = $none"
       }
       line"${ref.show}(${fieldStrings.intercalate(Line.comma)})".write
+
     case NewTypeTN(ref, target) =>
-      Reader(topLevel => {
+      Contextual.ask.flatMap { topLevel =>
         val (wroteCollection, text) = target.run(topLevel)
         if (wroteCollection && !topLevel)
-          false -> text
+          text.write
         else
-          false -> line"${ref.show}($text)"
-      })
+          line"${ref.show}($text)".write
+      }
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write

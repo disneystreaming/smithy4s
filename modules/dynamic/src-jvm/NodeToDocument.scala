@@ -25,7 +25,7 @@ import java.util.function.BiConsumer
 object NodeToDocument {
 
   def apply(node: Node): Document =
-    return node.accept(new NodeVisitor[Document] { self =>
+    node.accept(new NodeVisitor[Document] { self =>
       def arrayNode(x: ArrayNode): Document =
         Document.array(x.getElements().asScala.map(_.accept(this)))
 
