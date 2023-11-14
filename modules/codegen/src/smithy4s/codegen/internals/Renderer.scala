@@ -1435,8 +1435,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderNativeHint(hint: Hint.Native): Line =
     if (hint.isRecursive)
+      // If the hint is recursive (in this context, it means that its "hint closure" contains a reference to the currently rendered shape)
+      // then we generate a "dynamic binding" style of hint, consisting of a (ShapeId, Document) pair.
+      // These hints are later decoded into proper values when hints are looked up by runtime code.
       line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
     else
+      // Otherwise, we generate a good old "static binding" style of hint, which is syntactically just a value of the runtime type of the hint.
       renderTypedNodeTree(hint.typedNode)
 
   // Unconditional variant of `renderNativeHint`, always renders a "static binding" style of hint
