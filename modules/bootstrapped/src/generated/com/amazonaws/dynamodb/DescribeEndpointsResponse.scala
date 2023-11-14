@@ -1,6 +1,5 @@
 package com.amazonaws.dynamodb
 
-import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -18,7 +17,7 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[DescribeEndpointsResponse] = struct(
-    Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(ShapeId("smithy.api", "documentation") -> Document.fromString("<p>List of endpoints.</p>")),
+    Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>")),
   ){
     DescribeEndpointsResponse.apply
   }.withId(id).addHints(hints)

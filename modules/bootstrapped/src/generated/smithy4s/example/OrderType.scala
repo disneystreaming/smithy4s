@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import OrderType.PreviewCaseAlt
-import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -40,7 +39,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
   val hints: Hints = Hints(
-    ShapeId("smithy.api", "documentation") -> Document.fromString("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
+    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
   final case class OnlineCase(online: OrderNumber) extends OrderType { final def $ordinal: Int = 0 }
@@ -53,7 +52,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints: Hints = Hints(
-      ShapeId("smithy.api", "documentation") -> Document.fromString("For an InStoreOrder a location ID isn\'t needed"),
+      smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     )
 
     val schema: Schema[InStoreOrder] = struct(

@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -14,7 +13,7 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
   val id: ShapeId = ShapeId("smithy4s.example", "SomeCollections")
 
   val hints: Hints = Hints(
-    ShapeId("smithy.api", "trait") -> Document.obj(),
+    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
   implicit val schema: Schema[SomeCollections] = recursive(struct(

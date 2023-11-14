@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -46,7 +45,7 @@ object Foo extends ShapeTag.Companion[Foo] {
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
   val hints: Hints = Hints(
-    ShapeId("smithy.api", "documentation") -> Document.fromString("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
+    smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
 
   final case class IntCase(int: Int) extends Foo { final def $ordinal: Int = 0 }
@@ -64,7 +63,7 @@ object Foo extends ShapeTag.Companion[Foo] {
   }
   object StrCase {
     val hints: Hints = Hints(
-      ShapeId("smithy.api", "documentation") -> Document.fromString("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
+      smithy.api.Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
     )
     val schema: Schema[Foo.StrCase] = bijection(string.addHints(hints), Foo.StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")

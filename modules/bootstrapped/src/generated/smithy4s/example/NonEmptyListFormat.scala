@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -13,7 +12,7 @@ object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyListFormat")
 
   val hints: Hints = Hints(
-    ShapeId("smithy.api", "trait") -> Document.obj("selector" -> Document.fromString("list")),
+    smithy.api.Trait(selector = Some("list"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
   implicit val schema: Schema[NonEmptyListFormat] = constant(NonEmptyListFormat()).withId(id).addHints(hints)

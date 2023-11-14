@@ -542,7 +542,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 if (refined.isParameterised) baseTypeParams else List.empty,
                 refined.getProviderImport().asScala,
                 base,
-                unfoldTrait(trt)
+                unfoldTrait(shape, trt)
               )
             case (trt, ExternalTypeInfo.StructurePatternInfo(pattern)) =>
               Type.ExternalType(
@@ -551,7 +551,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 List.empty,
                 Some("smithy4s.internals.StructurePatternRefinementProvider._"),
                 base,
-                unfoldTrait(trt)
+                unfoldTrait(shape, trt)
               )
           }
           .getOrElse(base)
@@ -870,9 +870,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .toList
   }
 
-  @annotation.nowarn(
-    "msg=class UniqueItemsTrait in package traits is deprecated"
-  )
   private def traitToHint(shape: Shape): PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
@@ -901,7 +898,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.GenerateOptics
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
-    case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case ConstraintTrait(tr) =>
+      Hint.Constraint(toTypeRef(tr), unfoldTrait(shape, tr))
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {
@@ -965,7 +963,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filterNot(_.toShapeId == RequiredTrait.ID)
-        .map(unfoldTrait) ++
+        .map(unfoldTrait(shape, _)) ++
       maybeTypeclassesHint(shape)
   }
 
@@ -1175,15 +1173,38 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       s"Unhandled trait binding:\ntype: $tpe\nvalue: ${Node.printJson(node)}"
   }
 
-  private def unfoldTrait(tr: Trait): Hint.Native = {
+  private def unfoldTrait(shape: Shape, tr: Trait): Hint.Native = {
     val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
     Hint.Native(
-      recursion.ana(unfoldNodeAndType)(nodeAndType),
-      nodeAndType.node,
-      Type.Ref(tr.namespace, tr.name)
+      typedNode = recursion.ana(unfoldNodeAndType)(nodeAndType),
+      rawNode = nodeAndType.node,
+      tr = Type.Ref(tr.namespace, tr.name),
+      isRecursive = isRecursiveTraitOf(shape.getId, tr.toShapeId(), Set.empty)
     )
   }
 
+  // returns true if there's a reference to `shape` in the trait closure of `id`.
+  private def isRecursiveTraitOf(
+      shape: ShapeId,
+      id: ToShapeId,
+      alreadyVisited: Set[ShapeId]
+  ): Boolean =
+    if (shape == id.toShapeId())
+      true
+    else {
+      val children =
+        model
+          .getShape(id.toShapeId())
+          .map(_.getAllTraits.values.asScala)
+          .orElseGet(() => Nil)
+          .map(_.toShapeId())
+          .toSet -- alreadyVisited - id.toShapeId()
+
+      val newVisited = alreadyVisited + shape ++ children
+
+      children
+        .exists(isRecursiveTraitOf(shape, _, newVisited))
+    }
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
     (layer.node, layer.tpe) match {
       // Struct

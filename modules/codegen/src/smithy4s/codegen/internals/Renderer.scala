@@ -1434,13 +1434,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     })
 
   private def renderNativeHint(hint: Hint.Native): Line =
-    // todo: here we should properly check if the trait in question is recursive
-    if (
-      Set(
-        Type.Ref("smithy.api", "documentation"),
-        Type.Ref("smithy.api", "trait")
-      ).contains(hint.tr)
-    )
+    if (hint.isRecursive)
       line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
     else
       renderTypedNodeTree(hint.typedNode)

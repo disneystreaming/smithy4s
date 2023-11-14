@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Document
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -33,7 +32,7 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   val version: String = "2006-03-01"
 
   val hints: Hints = Hints(
-    ShapeId("smithy.api", "documentation") -> Document.fromString("Provides weather forecasts."),
+    smithy.api.Documentation("Provides weather forecasts."),
     smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("nextToken")), outputToken = Some(smithy.api.NonEmptyString("nextToken")), items = None, pageSize = Some(smithy.api.NonEmptyString("pageSize"))),
   )
 
