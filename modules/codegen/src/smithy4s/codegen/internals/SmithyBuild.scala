@@ -31,8 +31,15 @@ private[codegen] object SmithyBuild {
 
 private[internals] final case class SmithyBuildMaven(
     dependencies: Seq[String],
-    repositories: Seq[String]
+    repositories: Seq[SmithyBuildMavenRepository]
 )
 private[codegen] object SmithyBuildMaven {
   implicit val codecs: ReadWriter[SmithyBuildMaven] = macroRW
+}
+
+private[internals] final case class SmithyBuildMavenRepository(
+    url: String
+)
+private[codegen] object SmithyBuildMavenRepository {
+  implicit val codecs: ReadWriter[SmithyBuildMavenRepository] = macroRW
 }

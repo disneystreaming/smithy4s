@@ -1,3 +1,7 @@
+# 0.18.4
+
+* Fix sbt `smithy4sUpdateLSPConfig` and mill `smithy4s.codegen.LSP/updateConfig` rendering of repositories.
+
 # 0.18.3
 
 * Support constraint traits on members targeting enums
