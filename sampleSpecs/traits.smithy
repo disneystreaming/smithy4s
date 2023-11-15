@@ -28,3 +28,20 @@ structure indirectRecursiveTrait1 {}
 @indirectRecursiveTrait0
 @indirectRecursiveTrait1
 structure nonRecursiveTraitReferencingOthers {}
+
+// TODO: this can't be generated because of https://github.com/disneystreaming/smithy4s/issues/1296
+// A trait that has direct recursive references to it via members.
+// @trait
+// structure directRecursiveViaMembersTrait {
+// @directRecursiveViaMembersTrait
+// member: String
+// }
+// 
+/// A trait that has indirect recursive references to it via members.
+@trait
+structure indirectRecursiveViaMembersTrait {
+    member: RecursiveMember
+}
+
+@indirectRecursiveViaMembersTrait
+structure RecursiveMember {}
