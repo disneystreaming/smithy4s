@@ -92,6 +92,7 @@ private[codegen] object GenerateSmithyBuild {
       .flatten
       .filter(_.configurations.exists(_.contains(Smithy4s.name)))
       .flatMap(Smithy4sCodegenPlugin.moduleIdEncode(_, scalaBin))
+      .distinct
   }
 
   private def extractRepos(
@@ -103,6 +104,7 @@ private[codegen] object GenerateSmithyBuild {
       .toList
       .flatten
       .collect(prepareResolvers)
+      .distinct
 
   private def extractImports(
       pr: ProjectRef,
@@ -114,6 +116,7 @@ private[codegen] object GenerateSmithyBuild {
       .toList
       .flatten
       .collect(prepareInputDirs(rootDir))
+      .distinct
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root
