@@ -138,20 +138,8 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 
 private[internals] object Line {
 
-  def required(line: Line, default: Option[Line]): Line = {
-    default match {
-      case None        => line
-      case Some(value) => line + Literal(" = ") + value
-    }
-  }
-
-  def optional(line: Line, default: Boolean = false): Line = {
-    val option =
-      NameRef("scala.Option").toLine + Literal("[") + line + Literal("]")
-    if (default)
-      option + Literal(" = ") + NameRef("scala.None")
-    else
-      option
+  def optional(line: Line): Line = {
+    NameRef("scala.Option").toLine + Literal("[") + line + Literal("]")
   }
 
   def apply(value: String): Line = Line(Chain.one(Literal(value)))

@@ -25,6 +25,7 @@ sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
   final def required[Struct]: PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
+  final def field[Struct]: PartiallyAppliedField[Struct, A] = new PartiallyAppliedField[Struct, A](this)
   final def optional[Struct]: PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
 
   final def oneOf[Union]: PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
@@ -267,6 +268,11 @@ object Schema {
 
   def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
   val tuple: PartiallyAppliedTuple = new PartiallyAppliedTuple(placeholder)
+
+  private [smithy4s] class PartiallyAppliedField[S, A](private val schema: Schema[A]) extends AnyVal {
+    def apply(label: String, get: S => A): Field[S, A] = Field(label, schema, get)
+  }
+
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => A): Field[S, A] = Field.required(label, schema, get)
   }

@@ -86,7 +86,8 @@ object JsoniterCodecCompiler {
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,
-      Default
+      Default,
+      Required
     )
 
 }

@@ -46,20 +46,34 @@ final case class Field[S, A](
 
   def isDefaultValue(a: A): Boolean = getDefaultValue.contains(a)
 
+  /**
+   * If the field is marked as required (using `smithy.api#required`) OR
+   * if the field value is different from its default, returns the value.
+   * Otherwise returns None.
+   */
   def getUnlessDefault(s: S): Option[A] = {
     val a = get(s)
-    getDefaultValue match {
-      case Some(`a`) => None
-      case _         => Some(a)
-    }
+    if (isRequired) Some(a)
+    else
+      getDefaultValue match {
+        case Some(`a`) => None
+        case _         => Some(a)
+      }
   }
 
+  /**
+   * Applies a side-effecting lambda if the field is marked as required (using `smithy.api#required`),
+   * OR if the field value is different from its default. Otherwise nothing happens.
+   */
   def foreachUnlessDefault(s: S)(f: A => Unit): Unit = {
     val a = get(s)
-    if (isDefaultValue(a)) () else f(a)
+    if (isDefaultValue(a) && !isRequired) () else f(a)
   }
 
   def hasDefaultValue: Boolean = getDefaultValue.isDefined
+  def isRequired: Boolean = hints.has(smithy.api.Required)
+
+  @deprecated("use !hasDefaultValue instead", since = "0.18.4")
   def isStrictlyRequired: Boolean = !hasDefaultValue
 
   def transformHintsLocally(f: Hints => Hints): Field[S, A] =

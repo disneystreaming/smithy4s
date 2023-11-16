@@ -358,4 +358,41 @@ class DocumentSpec() extends FunSuite {
     expect.same(decoded, Right(None))
 
   }
+
+  test(
+    "fields marked with @required and @default should always be encoded"
+  ) {
+    val requiredFieldSchema =
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("test", identity)
+            .addHints(smithy.api.Default(Document.fromString("default")))
+        )(identity)
+
+    val encoded = Document.Encoder
+      .fromSchema(requiredFieldSchema)
+      .encode("default")
+
+    expect.same(encoded, Document.obj("test" -> Document.fromString("default")))
+  }
+
+  test(
+    "fields marked with @default but not @required should be skipped during encoding when matching default"
+  ) {
+    val fieldSchema =
+      Schema
+        .struct[String](
+          Schema.string
+            .field[String]("test", identity)
+            .addHints(smithy.api.Default(Document.fromString("default")))
+        )(identity)
+
+    val encoded = Document.Encoder
+      .fromSchema(fieldSchema)
+      .encode("default")
+
+    expect.same(encoded, Document.obj())
+  }
+
 }
