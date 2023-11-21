@@ -1025,6 +1025,53 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
+    def getFieldsPlain = {
+      val noDefault =
+        if (defaultRenderMode == DefaultRenderMode.NoDefaults)
+          List(Hint.NoDefault)
+        else List.empty
+      val result = shape
+        .members()
+        .asScala
+        .filterNot(isStreaming)
+        .map { member =>
+          val default =
+            if (defaultRenderMode == DefaultRenderMode.Full)
+              maybeDefault(member)
+            else List.empty
+          val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
+            !member.tpe.exists(_.isExternal)
+          (
+            member.getMemberName(),
+            member.tpe,
+            member.hasTrait(classOf[RequiredTrait]) || defaultable,
+            default ++ noDefault // no call to hints(member)
+          )
+        }
+        .collect {
+          case (name, Some(tpe: Type.ExternalType), required, hints) =>
+            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            Field(name, tpe, required, newHints)
+          case (name, Some(tpe), required, hints) =>
+            Field(name, tpe, required, hints)
+        }
+        .toList
+
+      val hintsContainsDefault: Field => Boolean = f =>
+        f.hints.exists {
+          case _: Hint.Default => true
+          case _               => false
+        }
+
+      defaultRenderMode match {
+        case DefaultRenderMode.Full =>
+          result.sortBy(hintsContainsDefault).sortBy(!_.required)
+        case DefaultRenderMode.OptionOnly =>
+          result.sortBy(!_.required)
+        case DefaultRenderMode.NoDefaults => result
+      }
+    }
+
     def alts = {
       shape
         .members()
@@ -1183,8 +1230,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
-        val structFields = struct.fields
-        val fieldNames = struct.fields.map(_.name)
+        val structFields = struct.getFieldsPlain
+        val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, true, _) =>
             val node = map.get(realName).getOrElse {
