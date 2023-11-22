@@ -100,6 +100,26 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
+  private def fieldModifier(member: MemberShape): Field.Modifier = {
+    val hasRequired = member.hasTrait(classOf[RequiredTrait])
+    val defaultNode =
+      member.getTrait(classOf[DefaultTrait]).asScala.map(_.toNode)
+    val defaultTypedNode = defaultRenderMode match {
+      case DefaultRenderMode.Full       => maybeDefault(member).map(_.typedNode)
+      case DefaultRenderMode.OptionOnly => None
+      case DefaultRenderMode.NoDefaults => None
+    }
+
+    (hasRequired, defaultNode) match {
+      case (false, None) => Field.Modifier.NoModifier
+      case (true, None)  => Field.Modifier.RequiredMod
+      case (false, Some(node)) =>
+        Field.Modifier.DefaultMod(node, defaultTypedNode)
+      case (true, Some(node)) =>
+        Field.Modifier.RequiredDefaultMod(node, defaultTypedNode)
+    }
+  }
+
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
@@ -172,12 +192,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           fields
             .find(_.name == memberName)
             .forall { field =>
-              val memberOptional = !member.hasTrait(classOf[RequiredTrait])
-              val memberHasDefault = member.hasTrait(classOf[DefaultTrait])
-
-              // if member has no default and is optional, then the field must be optional
-              if (!memberHasDefault && memberOptional) !field.required
-              else field.required
+              field.modifier == fieldModifier(member)
             }
         }
       }
@@ -823,7 +838,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   // Captures the data representing the default value of a member shape.
-  private def maybeDefault(shape: MemberShape): List[Hint.Default] = {
+  private def maybeDefault(shape: MemberShape): Option[Hint.Default] = {
     val maybeTrait = shape.getTrait(classOf[DefaultTrait])
     if (maybeTrait.isPresent()) {
       val tr = maybeTrait.get()
@@ -835,17 +850,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _                    => Some(unfoldNodeAndType(nodeAndType))
         }
       }
+      val node = tr.toNode()
       val targetTpe = shape.getTarget.tpe.get
       // Constructing the initial value for the refold
       val nodeAndType = targetTpe match {
-        case Alias(_, _, tpe, true) => NodeAndType(tr.toNode(), tpe)
-        case _                      => NodeAndType(tr.toNode(), targetTpe)
+        case Alias(_, _, tpe, true) => NodeAndType(node, tpe)
+        case _                      => NodeAndType(node, targetTpe)
       }
       val maybeTree =
         recursion.anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
-      maybeTree.map(Hint.Default(_)).toList
+      maybeTree.map(Hint.Default(_))
     } else {
-      List.empty
+      None
     }
   }
 
@@ -990,37 +1006,44 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .map { member =>
           val default =
             if (defaultRenderMode == DefaultRenderMode.Full)
-              maybeDefault(member)
+              maybeDefault(member).toList
             else List.empty
-          val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
-            !member.tpe.exists(_.isExternal)
+          val modifier = fieldModifier(member)
           (
             member.getMemberName(),
             member.tpe,
-            member.hasTrait(classOf[RequiredTrait]) || defaultable,
+            modifier,
             hints(member) ++ default ++ noDefault
           )
         }
         .collect {
-          case (name, Some(tpe: Type.ExternalType), required, hints) =>
+          case (name, Some(tpe: Type.ExternalType), modifier, hints) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, required, newHints)
-          case (name, Some(tpe), required, hints) =>
-            Field(name, tpe, required, hints)
+            Field(name, tpe, modifier, newHints)
+          case (name, Some(tpe), modifier, hints) =>
+            Field(name, tpe, modifier, hints)
         }
         .toList
 
-      val hintsContainsDefault: Field => Boolean = f =>
-        f.hints.exists {
-          case _: Hint.Default => true
-          case _               => false
-        }
-
       defaultRenderMode match {
         case DefaultRenderMode.Full =>
-          result.sortBy(hintsContainsDefault).sortBy(!_.required)
+          result.sortBy {
+            _.modifier match {
+              case Field.Modifier.RequiredMod              => 0
+              case Field.Modifier.RequiredDefaultMod(_, _) => 1
+              case Field.Modifier.DefaultMod(_, _)         => 1
+              case Field.Modifier.NoModifier               => 2
+            }
+          }
         case DefaultRenderMode.OptionOnly =>
-          result.sortBy(!_.required)
+          result.sortBy {
+            _.modifier match {
+              case Field.Modifier.RequiredMod              => 0
+              case Field.Modifier.RequiredDefaultMod(_, _) => 0
+              case Field.Modifier.DefaultMod(_, _)         => 0
+              case Field.Modifier.NoModifier               => 1
+            }
+          }
         case DefaultRenderMode.NoDefaults => result
       }
     }
@@ -1172,9 +1195,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       s"Unhandled trait binding:\ntype: $tpe\nvalue: ${Node.printJson(node)}"
   }
 
+  private def unfoldNode(node: Node, shapeId: ShapeId): Fix[TypedNode] = {
+    val nodeAndType = NodeAndType(node, shapeId.tpe.get)
+    recursion.ana(unfoldNodeAndType)(nodeAndType)
+  }
+
   private def unfoldTrait(tr: Trait): Hint.Native = {
-    val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
-    Hint.Native(recursion.ana(unfoldNodeAndType)(nodeAndType))
+    Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
@@ -1186,22 +1213,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.fields
         val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, true, _) =>
-            val node = map.get(realName).getOrElse {
-              struct
-                .getMember(realName)
-                .get
-                .getTrait(classOf[DefaultTrait])
-                .get
-                .toNode
-            } // value or default must be present on required field
-            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(_, realName, tpe, false, _) =>
+          case Field(_, realName, tpe, Field.Modifier.NoModifier, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))
               case None => TypedNode.FieldTN.OptionalNoneTN
             }
+          case Field(_, realName, tpe, mod, _) =>
+            val node = map.get(realName).getOrElse {
+              mod.default.get
+            } // value or default must be present on required field
+            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
         }
         TypedNode.StructureTN(ref, fieldNames.zip(fields))
       // Union
