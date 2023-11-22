@@ -16,6 +16,7 @@
 
 package smithy4s.aws
 
+import cats.data.EitherT
 import cats.effect._
 import cats.effect.implicits._
 import cats.syntax.all._
@@ -121,11 +122,17 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
   def getProfileFromEnv: Option[String] =
     SysEnv.envValue(AWS_PROFILE).toOption
 
+  val AWS_EC2_METADATA_SERVICE_ENDPOINT =
+    "AWS_EC2_METADATA_SERVICE_ENDPOINT"
+
   val AWS_CONTAINER_CREDENTIALS_RELATIVE_URI =
     "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
 
   val AWS_EC2_METADATA_URI =
-    uri"http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+    path"/latest/meta-data/iam/security-credentials/"
+
+  val AWS_EC2_METADATA_BASE_URI =
+    uri"http://169.254.169.254"
 
   val AWS_ECS_METADATA_BASE_URI =
     uri"http://169.254.170.2"
@@ -135,12 +142,17 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
       networkTimeout: FiniteDuration
   ): F[AwsTemporaryCredentials] =
     for {
+      metadataService <- EitherT
+        .fromEither[F](SysEnv.envValue(AWS_EC2_METADATA_SERVICE_ENDPOINT))
+        .subflatMap(Uri.fromString(_))
+        .getOrElse(AWS_EC2_METADATA_BASE_URI)
+        .map(_.withPath(AWS_EC2_METADATA_URI))
       roleName <- httpClient
-        .expect[String](AWS_EC2_METADATA_URI)
+        .expect[String](metadataService)
         .timeout(networkTimeout)
       metadataRes <- httpClient
         .expect[AwsInstanceMetadata](
-          AWS_EC2_METADATA_URI.addSegment(roleName)
+          metadataService.addSegment(roleName)
         )
         .timeout(networkTimeout)
     } yield metadataRes
