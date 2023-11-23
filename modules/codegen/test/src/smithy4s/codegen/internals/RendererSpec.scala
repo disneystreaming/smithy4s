@@ -428,4 +428,22 @@ final class RendererSpec extends munit.FunSuite {
       contents.exists(_.contains("smithy.api.Documentation(s\"foo $$bar\")"))
     )
   }
+
+  test(
+    "string literal containing /* is rendered as a string with * escaped as &ast;"
+  ) {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@documentation("/*")
+                   |string MyString
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(contents.exists(_.contains("/** /&ast; */")))
+    assert(contents.exists(_.contains("""smithy.api.Documentation("/*")""")))
+  }
 }

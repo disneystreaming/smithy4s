@@ -129,7 +129,7 @@ private[internals] case class Field(
     name: String,
     realName: String,
     tpe: Type,
-    required: Boolean,
+    modifier: Field.Modifier,
     hints: List[Hint]
 )
 
@@ -141,13 +141,37 @@ private[internals] case class StreamingField(
 
 private[internals] object Field {
 
+  sealed trait Modifier {
+    def default: Option[Node] = this match {
+      case Modifier.RequiredDefaultMod(node, _) => Some(node)
+      case Modifier.DefaultMod(node, _)         => Some(node)
+      case Modifier.RequiredMod                 => None
+      case Modifier.NoModifier                  => None
+    }
+
+    def none: Boolean = this match {
+      case Modifier.RequiredDefaultMod(_, _) => false
+      case Modifier.DefaultMod(_, _)         => false
+      case Modifier.RequiredMod              => false
+      case Modifier.NoModifier               => true
+    }
+  }
+  object Modifier {
+    case object NoModifier extends Modifier
+    case object RequiredMod extends Modifier
+    case class RequiredDefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
+        extends Modifier
+    case class DefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
+        extends Modifier
+  }
+
   def apply(
       name: String,
       tpe: Type,
-      required: Boolean = true,
+      modifier: Modifier,
       hints: List[Hint] = Nil
   ): Field =
-    Field(name, name, tpe, required, hints)
+    Field(name, name, tpe, modifier, hints)
 
 }
 
