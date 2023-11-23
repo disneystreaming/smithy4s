@@ -1013,7 +1013,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             member.getMemberName(),
             member.tpe,
             modifier,
-            hintsExtractor(member)  ++ default ++ noDefault
+            hintsExtractor(member) ++ default ++ noDefault
           )
         }
         .collect {
