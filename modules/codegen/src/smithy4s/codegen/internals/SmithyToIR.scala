@@ -978,7 +978,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    def fields = {
+    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
@@ -998,7 +998,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             member.getMemberName(),
             member.tpe,
             member.hasTrait(classOf[RequiredTrait]) || defaultable,
-            hints(member) ++ default ++ noDefault
+            hintsExtractor(member) ++ default ++ noDefault
           )
         }
         .collect {
@@ -1025,52 +1025,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
-    def getFieldsPlain = {
-      val noDefault =
-        if (defaultRenderMode == DefaultRenderMode.NoDefaults)
-          List(Hint.NoDefault)
-        else List.empty
-      val result = shape
-        .members()
-        .asScala
-        .filterNot(isStreaming)
-        .map { member =>
-          val default =
-            if (defaultRenderMode == DefaultRenderMode.Full)
-              maybeDefault(member)
-            else List.empty
-          val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
-            !member.tpe.exists(_.isExternal)
-          (
-            member.getMemberName(),
-            member.tpe,
-            member.hasTrait(classOf[RequiredTrait]) || defaultable,
-            default ++ noDefault // no call to hints(member)
-          )
-        }
-        .collect {
-          case (name, Some(tpe: Type.ExternalType), required, hints) =>
-            val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, required, newHints)
-          case (name, Some(tpe), required, hints) =>
-            Field(name, tpe, required, hints)
-        }
-        .toList
+    /**
+      * Should be used when calculating schema for a structure.
+      *
+      * See https://github.com/disneystreaming/smithy4s/issues/1296 for details.
+      */
+    def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
 
-      val hintsContainsDefault: Field => Boolean = f =>
-        f.hints.exists {
-          case _: Hint.Default => true
-          case _               => false
-        }
-
-      defaultRenderMode match {
-        case DefaultRenderMode.Full =>
-          result.sortBy(hintsContainsDefault).sortBy(!_.required)
-        case DefaultRenderMode.OptionOnly =>
-          result.sortBy(!_.required)
-        case DefaultRenderMode.NoDefaults => result
-      }
-    }
+    /**
+      * Should be used only on the call site 
+      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait. 
+      */
+    def getFieldsPlain: List[Field] =
+      fieldsInternal(hintsExtractor = _ => List.empty)
 
     def alts = {
       shape
