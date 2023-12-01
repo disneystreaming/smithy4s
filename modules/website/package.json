@@ -16,7 +16,7 @@
   "dependencies": {
     "@docusaurus/core": "2.4.3",
     "@docusaurus/preset-classic": "2.4.3",
-    "docusaurus-lunr-search": "3.2.0",
+    "docusaurus-lunr-search": "3.3.0",
     "@mdx-js/react": "^1.6.21",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.1.0",
