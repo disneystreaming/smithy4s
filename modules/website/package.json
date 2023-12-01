@@ -19,7 +19,7 @@
     "docusaurus-lunr-search": "3.2.0",
     "@mdx-js/react": "^1.6.21",
     "clsx": "^2.0.0",
-    "prism-react-renderer": "^2.1.0",
+    "prism-react-renderer": "^2.3.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
