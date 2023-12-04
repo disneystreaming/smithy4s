@@ -229,6 +229,6 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   private def headersToMap(headers: Headers) = headers.headers.flatMap { h =>
-    Option.when(specHeaders.contains(h.name))(h.name -> h.value)
+    if (specHeaders.contains(h.name)) Some(h.name -> h.value) else None
   }.toMap
 }
