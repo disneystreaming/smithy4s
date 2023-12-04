@@ -14,6 +14,7 @@ import smithy4s.Document
 import org.http4s.client.Client
 import smithy4s.example.OperationInput
 import cats.effect.kernel.Deferred
+import smithy4s.schema.CompilationCache
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
@@ -106,6 +107,33 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       assert.same(
         Document.obj(
           "requiredWithDefault" -> Document.fromString("required-default"),
+          "requiredHeaderWithDefault" -> Document.fromString(
+            "required-header-with-default"
+          )
+        ),
+        result
+      )
+    )
+  }
+
+  test("document encoder - all default - explicit defaults encoding = true") {
+    val result = Document.Encoder
+      .fromSchema(
+        OperationOutput.schema,
+        CompilationCache.nop,
+        explicitDefaultsEncoding = true
+      )
+      .encode(OperationOutput())
+    IO.pure(
+      assert.same(
+        Document.obj(
+          "optional" -> Document.nullDoc,
+          "optionalHeader" -> Document.nullDoc,
+          "optionalWithDefault" -> Document.fromString("optional-default"),
+          "requiredWithDefault" -> Document.fromString("required-default"),
+          "optionalHeaderWithDefault" -> Document.fromString(
+            "optional-header-with-default"
+          ),
           "requiredHeaderWithDefault" -> Document.fromString(
             "required-header-with-default"
           )

@@ -105,9 +105,21 @@ object Document {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
+    ): Encoder[A] =
+      fromSchema(schema, cache, explicitDefaultsEncoding = false)
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache,
+        explicitDefaultsEncoding: Boolean
     ): Encoder[A] = {
       val makeEncoder =
-        schema.compile(new DocumentEncoderSchemaVisitor(cache))
+        schema.compile(
+          new DocumentEncoderSchemaVisitor(
+            cache,
+            explicitDefaultsEncoding = explicitDefaultsEncoding
+          )
+        )
       new Encoder[A] {
         def encode(a: A): Document = {
           makeEncoder.apply(a)
