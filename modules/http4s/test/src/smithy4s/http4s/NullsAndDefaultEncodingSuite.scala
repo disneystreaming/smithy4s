@@ -75,15 +75,13 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
         assert.same(
           Map(
             ci"optional-header-with-default" -> "optional-header-with-default",
-            ci"required-header-with-default" -> "required-header-with-default",
-            ci"optional-header" -> ""
+            ci"required-header-with-default" -> "required-header-with-default"
           ),
           request.headers
         ) && assert.same(
           Map(
             "optional-query-with-default" -> "optional-query-with-default",
-            "required-query-with-default" -> "required-query-with-default",
-            "optional-query" -> ""
+            "required-query-with-default" -> "required-query-with-default"
           ),
           request.query
         ) && assert.same(
@@ -189,10 +187,11 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       .resource
       .use { routes =>
         for {
-          (headers, body) <- run(
+          result <- run(
             routes,
             Request[IO](method = Method.POST, uri = uri"/operation/label")
           )
+          (headers, body) = result
         } yield TestResponse(headers, body)
       }
   }

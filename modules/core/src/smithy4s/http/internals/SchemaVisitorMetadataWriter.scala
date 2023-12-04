@@ -171,7 +171,10 @@ class SchemaVisitorMetadataWriter(
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
             if (explicitDefaultsEncoding)
-              updateFunction(metadata, field.get(s))
+              field.get(s) match {
+                case None => metadata
+                case _    => updateFunction(metadata, field.get(s))
+              }
             else
               field.getUnlessDefault(s) match {
                 case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
