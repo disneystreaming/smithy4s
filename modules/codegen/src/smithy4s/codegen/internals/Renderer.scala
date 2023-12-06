@@ -228,22 +228,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       skipMemberDocs: Boolean = false
   ): Lines = {
-    def atLiteral(s: String) = s.replace("@", "{@literal @}")
-    def dollarLiteral(s: String) = s.replace("$", "`$`")
+    val atLiteral: String => String = _.replace("@", "{@literal @}")
+    val dollarLiteral: String => String = _.replace("$", "`$`")
+    val slashStarLiteral: String => String = _.replace("/*", "/&ast;")
+
+    val literalReplacements: String => String =
+      atLiteral.andThen(dollarLiteral).andThen(slashStarLiteral)
+
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] =
           doc.docLines
-            .map(atLiteral)
-            .map(dollarLiteral)
+            .map(literalReplacements)
         val memberDocs: List[String] =
           if (skipMemberDocs) List.empty
           else
             doc.memberDocLines.flatMap { case (memberName, text) =>
               s"@param $memberName" :: text
-                .map(atLiteral)
-                .map(dollarLiteral)
+                .map(literalReplacements)
                 .map("  " + _)
             }.toList
 
@@ -633,8 +636,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
       val fieldType =
-        if (field.required) Line.required(line"${field.tpe}", None)
-        else Line.optional(line"${field.tpe}")
+        if (field.modifier.none) Line.optional(line"${field.tpe}")
+        else line"${field.tpe}"
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
     obj(product.nameRef.copy(name = "optics"))(lenses) ++
@@ -698,17 +701,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, required, hints) =>
-              val req = if (required) "required" else "optional"
+            fields.map { case Field(fieldName, realName, tpe, modifier, hints) =>
+              val fieldBuilder = modifier match {
+                case Field.Modifier.RequiredMod              => "required"
+                case Field.Modifier.RequiredDefaultMod(_, _) => "required"
+                case Field.Modifier.DefaultMod(_, _)         => "field"
+                case Field.Modifier.NoModifier               => "optional"
+              }
+
               if (hints.isEmpty) {
-                line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
+                line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
                 val memHints = memberHints(hints)
                 val addMemHints =
                   if (memHints.nonEmpty) line".addHints($memHints)"
                   else Line.empty
                 // format: off
-                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                 // format: on
               }
             }
@@ -728,10 +737,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .args(renderedFields)
               .block(
                 line"arr => new ${product.nameRef}".args(
-                  fields.zipWithIndex.map { case (Field(_, _, tpe, required, _), idx) =>
+                  fields.zipWithIndex.map { case (Field(_, _, tpe, mod, _), idx) =>
                     val scalaTpe = line"$tpe"
-                    val optional =
-                      if (required) scalaTpe else Line.optional(scalaTpe)
+                    val optional = if (mod.none) Line.optional(scalaTpe) else scalaTpe
 
                     line"arr($idx).asInstanceOf[$optional]"
                   }
@@ -801,15 +809,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def renderGetMessage(field: Field) = field match {
-    case field if field.tpe.isResolved && field.required =>
-      line"override def getMessage(): $string_ = ${field.name}"
-    case field if field.tpe.isResolved =>
-      line"override def getMessage(): $string_ = ${field.name}.orNull"
-    case field if field.required =>
-      line"override def getMessage(): $string_ = ${field.name}.value"
-    case field =>
-      line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
+  private def renderGetMessage(field: Field) = {
+    val hasModifier = !field.modifier.none
+    field match {
+      case field if field.tpe.isResolved && hasModifier =>
+        line"override def getMessage(): $string_ = ${field.name}"
+      case field if field.tpe.isResolved =>
+        line"override def getMessage(): $string_ = ${field.name}.orNull"
+      case field if hasModifier =>
+        line"override def getMessage(): $string_ = ${field.name}.value"
+      case field =>
+        line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
+    }
   }
   private def renderErrorSchemaMethods(errorName: NameRef, errors: List[Type]): Lines = {
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
@@ -1174,26 +1185,28 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       field: Field,
       noDefault: Boolean = false
   ): Line = {
-    field match {
-      case Field(name, _, tpe, required, hints) =>
-        val line = line"$tpe"
-        val tpeAndDefault = if (required) {
-          val maybeDefault = hints
-            .collectFirst { case d @ Hint.Default(_) => d }
-            .filterNot(_ => noDefault)
-            .map(renderDefault)
-
-          Line.required(line, maybeDefault)
-        } else {
-          Line.optional(
-            line,
-            !noDefault && !field.hints.contains(Hint.NoDefault)
-          )
-        }
-
-        line"$name: " + tpeAndDefault
+    import field._
+    val ` = ` = Literal(" = ")
+    val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
+    val tpeLine = line"$tpe"
+    val tpeAndDefault = if (shouldRenderDefault) {
+      field.modifier match {
+        case Field.Modifier.RequiredMod                          => tpeLine
+        case Field.Modifier.RequiredDefaultMod(_, Some(default)) => tpeLine + ` = ` + renderDefault(default)
+        case Field.Modifier.RequiredDefaultMod(_, None)          => tpeLine
+        case Field.Modifier.DefaultMod(_, Some(default))         => tpeLine + ` = ` + renderDefault(default)
+        case Field.Modifier.DefaultMod(_, None)                  => tpeLine
+        case Field.Modifier.NoModifier => Line.optional(tpeLine) + ` = ` + NameRef("scala.None")
+      }
+    } else if (field.modifier.none) {
+      Line.optional(tpeLine)
+    } else {
+      tpeLine
     }
+
+    line"$name: " + tpeAndDefault
   }
+
   private def renderArgs(fields: List[Field]): Line = fields
     .map { f =>
       deprecationAnnotation(f.hints).appendIf(_.nonEmpty)(Line.space) +
@@ -1445,8 +1458,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderRefinementParameter(hint: Hint.Native): Line =
     renderNativeHint(hint.typedNode)
 
-  private def renderDefault(hint: Hint.Default): Line =
-    renderNativeHint(hint.typedNode)
+  private def renderDefault(hint: Fix[TypedNode]): Line =
+    renderNativeHint(hint)
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native        => renderNativeHint(h.typedNode).some

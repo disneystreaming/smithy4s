@@ -1,3 +1,11 @@
+# 0.18.4
+
+* Changes the behaviour of `Field#getUnlessDefault` and `Field#foreachUnlessDefault` to always take the value into consideration when the `smithy.api#required` trait
+is present on the field. This leads to field values being always serialised even when their values match their defaults, as this abides by least-surprise-principle.
+
+* Fix sbt `smithy4sUpdateLSPConfig` and mill `smithy4s.codegen.LSP/updateConfig` rendering of repositories.
+
+
 # 0.18.3
 
 * Support constraint traits on members targeting enums

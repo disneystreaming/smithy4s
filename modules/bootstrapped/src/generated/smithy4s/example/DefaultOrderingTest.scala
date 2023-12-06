@@ -17,7 +17,7 @@ object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
 
   implicit val schema: Schema[DefaultOrderingTest] = struct(
     string.required[DefaultOrderingTest]("three", _.three),
-    int.required[DefaultOrderingTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
+    int.field[DefaultOrderingTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.optional[DefaultOrderingTest]("two", _.two),
   ){
     DefaultOrderingTest.apply

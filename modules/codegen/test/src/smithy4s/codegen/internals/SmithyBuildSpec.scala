@@ -24,7 +24,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       SmithyBuild(
         "1.0",
         List("src/"),
-        SmithyBuildMaven(List("dep"), List("repo"))
+        SmithyBuildMaven(List("dep"), List(SmithyBuildMavenRepository("repo")))
       )
     )
     assertEquals(
@@ -39,7 +39,9 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |            "dep"
          |        ],
          |        "repositories": [
-         |            "repo"
+         |            {
+         |                "url": "repo"
+         |            }
          |        ]
          |    }
          |}""".stripMargin

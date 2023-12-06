@@ -30,6 +30,8 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
                     |  two: String = "test"
                     |  @required
                     |  three: String
+                    |  @required
+                    |  four: String = "test"
                     |}
                     |""".stripMargin
 
@@ -43,7 +45,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.string
          |import smithy4s.schema.Schema.struct
          |
-         |final case class Test(one: Option[String], two: String, three: String)
+         |final case class Test(one: Option[String], two: String, three: String, four: String)
          |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
@@ -52,8 +54,9 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
-         |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
+         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |  ){
          |    Test.apply
          |  }.withId(id).addHints(hints)
@@ -74,6 +77,8 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
                     |  two: String = "test"
                     |  @required
                     |  three: String
+                    |  @required
+                    |  four: String = "test"
                     |}
                     |""".stripMargin
 
@@ -87,7 +92,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.string
          |import smithy4s.schema.Schema.struct
          |
-         |final case class Test(two: String, three: String, one: Option[String] = None)
+         |final case class Test(two: String, three: String, four: String, one: Option[String] = None)
          |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
@@ -95,8 +100,9 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
-         |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
+         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.optional[Test]("one", _.one),
          |  ){
          |    Test.apply
@@ -118,6 +124,8 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
                     |  two: String = "test"
                     |  @required
                     |  three: String
+                    |  @required
+                    |  four: String = "test"
                     |}
                     |""".stripMargin
 
@@ -131,7 +139,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |import smithy4s.schema.Schema.string
          |import smithy4s.schema.Schema.struct
          |
-         |final case class Test(three: String, two: String = "test", one: Option[String] = None)
+         |final case class Test(three: String, two: String = "test", four: String = "test", one: Option[String] = None)
          |
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
@@ -140,7 +148,8 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.required[Test]("three", _.three),
-         |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.optional[Test]("one", _.one),
          |  ){
          |    Test.apply
@@ -150,5 +159,4 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
 
     TestUtils.runTest(smithy, scalaCode)
   }
-
 }

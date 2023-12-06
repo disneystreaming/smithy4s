@@ -140,7 +140,7 @@ private[internals] object CollisionAvoidance {
       protectKeyword(uncapitalise(field.name)),
       field.name,
       modType(field.tpe),
-      field.required,
+      field.modifier,
       field.hints.map(modHint)
     )
   }

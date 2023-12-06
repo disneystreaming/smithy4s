@@ -584,4 +584,36 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  test(
+    "fields marked with @required and @default should always be encoded"
+  ) {
+    implicit val requiredFieldSchema: Schema[String] =
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("test", identity)
+            .addHints(smithy.api.Default(Document.fromString("default")))
+        )(identity)
+
+    val json = """{"test":"default"}"""
+    val result = writeToString[String]("default")
+    expect.same(result, json)
+  }
+
+  test(
+    "fields marked with @default but not @required should be skipped during encoding when matching default"
+  ) {
+    implicit val fieldSchema: Schema[String] =
+      Schema
+        .struct[String](
+          Schema.string
+            .field[String]("test", identity)
+            .addHints(smithy.api.Default(Document.fromString("default")))
+        )(identity)
+
+    val json = """{}"""
+    val result = writeToString[String]("default")
+    expect.same(result, json)
+  }
+
 }

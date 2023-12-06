@@ -28,6 +28,14 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
   test("config gets generated") {
     object root extends testKit.BaseModule {
       object foo extends Smithy4sModule {
+        override def repositoriesTask = T.task {
+          super.repositoriesTask() ++
+            Seq(
+              coursier.MavenRepository(
+                "https://some.corpo.example.com/artifactory"
+              )
+            )
+        }
         override def scalaVersion = "2.13.10"
         override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
         override def smithy4sIvyDeps = Agg(
@@ -61,7 +69,9 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
           |       "com.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",
           |       "software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
           |    ],
-          |    "repositories": []
+          |    "repositories": [
+          |       { "url": "https://some.corpo.example.com/artifactory" }
+          |    ]
           |  }
           |}
           |""".stripMargin

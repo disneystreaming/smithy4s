@@ -19,3 +19,9 @@ structure EnvVarString {
     @documentation("This is meant to be used with $ENV_VAR")
     member: String
 }
+
+@documentation("We should be able to use comments in documentation /* */")
+structure DocumentationComment {
+    @documentation("/*")
+    member: String
+}

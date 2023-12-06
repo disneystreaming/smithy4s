@@ -18,6 +18,7 @@ package smithy4s.codegen
 
 import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
+import smithy4s.codegen.internals.SmithyBuildMavenRepository
 import upickle.default._
 
 private[codegen] object SmithyBuildJson {
@@ -31,7 +32,10 @@ private[codegen] object SmithyBuildJson {
       SmithyBuild(
         version = "1.0",
         imports,
-        SmithyBuildMaven(dependencies, repositories)
+        SmithyBuildMaven(
+          dependencies,
+          repositories.map(SmithyBuildMavenRepository.apply)
+        )
       )
     )
   }
