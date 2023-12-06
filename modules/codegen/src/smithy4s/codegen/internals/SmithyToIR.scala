@@ -914,8 +914,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.GenerateOptics
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
-    case ConstraintTrait(tr) =>
-      Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {

@@ -1380,7 +1380,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderRefinementParameter(hint)})${maybeProviderImport
+        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
       case Nullable(underlying) => line"${underlying.schemaRef}.option"
@@ -1410,6 +1410,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Ref(_, name)         => Some(name)
       case _                         => None
     }
+  }
+
+  private def renderNativeHint(hint: Hint.Native): Line =
+    recursion
+      .cata(renderTypedNode)(hint.typedNode)
+      .runTopLevel
+
+  private def renderDynamicHint(hint: Hint.NativeDynamic): Line =
+    line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
+
+  private def renderDefault(hint: Fix[TypedNode]): Line =
+    recursion
+      .cata(renderTypedNode)(hint)
+      .runTopLevel
+
+  private def renderHint(hint: Hint): Option[Line] = hint match {
+    case h: Hint.Native        => renderNativeHint(h).some
+    case h: Hint.NativeDynamic => renderDynamicHint(h).some
+    case _                     => None
   }
 
   private def renderNodeAsDocument(node: Node): Line =
@@ -1446,27 +1465,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$document_.fromString(${renderStringLiteral(x.getValue())})"
     })
 
-  private def renderDynamicHint(hint: Hint.NativeDynamic): Line =
-    line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
-
-  // Unconditional variant of `renderNativeHint`, always renders a "static binding" style of hint
-  private def renderNativeHint(tn: Fix[TypedNode]) =
-    recursion
-      .cata(renderTypedNode)(tn)
-      .runTopLevel
-
-  private def renderRefinementParameter(hint: Hint.Native): Line =
-    renderNativeHint(hint.typedNode)
-
-  private def renderDefault(hint: Fix[TypedNode]): Line =
-    renderNativeHint(hint)
-
-  private def renderHint(hint: Hint): Option[Line] = hint match {
-    case h: Hint.Native        => renderNativeHint(h.typedNode).some
-    case h: Hint.NativeDynamic => renderDynamicHint(h).some
-    case _                     => None
-  }
-
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
@@ -1502,7 +1500,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else {
       tags
         .map { tag =>
-          line".validated(${renderRefinementParameter(tag.native)})"
+          line".validated(${renderNativeHint(tag.native)})"
         }
         .intercalate(Line.empty)
     }
