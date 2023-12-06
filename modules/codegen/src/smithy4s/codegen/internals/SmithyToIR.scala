@@ -53,7 +53,7 @@ private[codegen] object SmithyToIR {
     )
   }
 
-  private[codegen] def prettifyName(
+  def prettifyName(
       maybeSdkId: Option[String],
       shapeName: String
   ): String = {
@@ -62,11 +62,45 @@ private[codegen] object SmithyToIR {
       .getOrElse(shapeName)
   }
 
+  class RecursionIndex(model: Model) {
+
+    // returns true if there's a reference to `shape` in the trait closure of `id`.
+    def isRecursiveTraitOf(
+        shape: ShapeId,
+        id: ToShapeId
+    ): Boolean = {
+      def go(
+          shape: ShapeId,
+          id: ToShapeId,
+          alreadyVisited: Set[ShapeId]
+      ): Boolean =
+        shape == id.toShapeId() || {
+          val children =
+            model
+              .getShape(id.toShapeId())
+              .map[List[ToShapeId]](_.getAllTraits.values.asScala.toList)
+              .orElseGet(() => Nil)
+              .map(_.toShapeId())
+              .toSet -- alreadyVisited - id.toShapeId()
+
+          val newVisited = alreadyVisited + shape ++ children
+
+          children
+            .exists(go(shape, _, newVisited))
+        }
+
+      go(shape, id, Set.empty)
+    }
+
+  }
+
 }
 
 private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   val finder = PathFinder.create(model)
+
+  val recursionIndex = new SmithyToIR.RecursionIndex(model)
 
   val allShapes =
     model
@@ -1216,7 +1250,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     //
     // This is all done to prevent an initialization loop between the companion objects of these types, surfacing as a deadlock:
     // https://github.com/disneystreaming/smithy4s/issues/537
-    if (isRecursiveTraitOf(shape.getId, tr.toShapeId(), Set.empty))
+    if (recursionIndex.isRecursiveTraitOf(shape.getId, tr.toShapeId()))
       Hint.NativeDynamic(
         tr.toNode(),
         /* todo: use .toTypeRef */
@@ -1235,28 +1269,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
-  // returns true if there's a reference to `shape` in the trait closure of `id`.
-  private def isRecursiveTraitOf(
-      shape: ShapeId,
-      id: ToShapeId,
-      alreadyVisited: Set[ShapeId]
-  ): Boolean =
-    if (shape == id.toShapeId())
-      true
-    else {
-      val children =
-        model
-          .getShape(id.toShapeId())
-          .map[List[ToShapeId]](_.getAllTraits.values.asScala.toList)
-          .orElseGet(() => Nil)
-          .map(_.toShapeId())
-          .toSet -- alreadyVisited - id.toShapeId()
-
-      val newVisited = alreadyVisited + shape ++ children
-
-      children
-        .exists(isRecursiveTraitOf(shape, _, newVisited))
-    }
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
     (layer.node, layer.tpe) match {
       // Struct
