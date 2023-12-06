@@ -170,11 +170,16 @@ object Hints {
   }
 
   object Binding {
+    // Bindings that are statically known at compile time (i.e. codegen).
     final case class StaticBinding[A](key: ShapeTag[A], value: A)
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
     }
+
+    // These are _usually_ dynamically created at runtime (e.g. DynamicSchemaIndex).
+    // However, they're also used in a special-case of compile-time bindings: traits that recursively apply themselves (e.g. @trait -> @documentation -> @trait).
+    // See https://github.com/disneystreaming/smithy4s/pull/1295
     final case class DynamicBinding(keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()

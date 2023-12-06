@@ -292,13 +292,18 @@ private[internals] object Hint {
   ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
+
   // traits that get rendered generically
   case class Native(
-      typedNode: Fix[TypedNode],
-      rawNode: Node,
-      tr: Type.Ref,
-      isRecursive: Boolean
+      typedNode: Fix[TypedNode]
   ) extends Hint
+
+  // traits that get rendered generically as a dynamic Hint binding
+  case class NativeDynamic(
+      rawNode: Node,
+      tr: Type.Ref
+  ) extends Hint
+
   case object IntEnum extends Hint
   case object OpenEnum extends Hint
 

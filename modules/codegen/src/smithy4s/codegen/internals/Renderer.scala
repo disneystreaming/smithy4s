@@ -1433,34 +1433,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$document_.fromString(${renderStringLiteral(x.getValue())})"
     })
 
-  private def renderNativeHint(hint: Hint.Native): Line =
-    if (hint.isRecursive)
-      // If the hint is recursive (in this context, it means that its "hint closure" contains a reference to the currently rendered shape)
-      // then we generate a "dynamic binding" style of hint, consisting of a (ShapeId, Document) pair.
-      // These hints are later decoded into proper values when hints are looked up by runtime code.
-      //
-      // This is all done to prevent an initialization loop between the companion objects of these types, surfacing as a deadlock:
-      // https://github.com/disneystreaming/smithy4s/issues/537
-      line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
-    else
-      // Otherwise, we generate a good old "static binding" style of hint, which is syntactically just a value of the runtime type of the hint.
-      renderTypedNodeTree(hint.typedNode)
+  private def renderDynamicHint(hint: Hint.NativeDynamic): Line =
+    line"$ShapeId_(${renderStringLiteral(hint.tr.namespace)}, ${renderStringLiteral(hint.tr.name)}) -> ${renderNodeAsDocument(hint.rawNode)}"
 
   // Unconditional variant of `renderNativeHint`, always renders a "static binding" style of hint
-  private def renderTypedNodeTree(tn: Fix[TypedNode]) =
+  private def renderNativeHint(tn: Fix[TypedNode]) =
     recursion
       .cata(renderTypedNode)(tn)
       .runTopLevel
 
   private def renderRefinementParameter(hint: Hint.Native): Line =
-    renderTypedNodeTree(hint.typedNode)
+    renderNativeHint(hint.typedNode)
 
   private def renderDefault(hint: Hint.Default): Line =
-    renderTypedNodeTree(hint.typedNode)
+    renderNativeHint(hint.typedNode)
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
-    case h: Hint.Native => renderNativeHint(h).some
-    case _              => None
+    case h: Hint.Native        => renderNativeHint(h.typedNode).some
+    case h: Hint.NativeDynamic => renderDynamicHint(h).some
+    case _                     => None
   }
 
   def renderId(shapeId: ShapeId): Line = {

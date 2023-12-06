@@ -963,7 +963,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filterNot(_.toShapeId == RequiredTrait.ID)
-        .map(unfoldTrait(shape, _)) ++
+        .map(makeNativeHint(shape, _)) ++
       maybeTypeclassesHint(shape)
   }
 
@@ -1173,13 +1173,28 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       s"Unhandled trait binding:\ntype: $tpe\nvalue: ${Node.printJson(node)}"
   }
 
+  private def makeNativeHint(shape: Shape, tr: Trait): Hint = {
+    // If the hint is recursive (in this context, it means that its "hint closure" contains a reference to the currently rendered shape)
+    // then we generate a "dynamic binding" style of hint, consisting of a (ShapeId, Document) pair.
+    // These hints are later decoded into proper values when hints are looked up by runtime code.
+    //
+    // This is all done to prevent an initialization loop between the companion objects of these types, surfacing as a deadlock:
+    // https://github.com/disneystreaming/smithy4s/issues/537
+    if (isRecursiveTraitOf(shape.getId, tr.toShapeId(), Set.empty))
+      Hint.NativeDynamic(
+        tr.toNode(),
+        /* todo: use .toTypeRef */
+        Type.Ref(tr.namespace, tr.name)
+      )
+    // Otherwise, we generate a good old "static binding" style of hint, which is syntactically just a value of the runtime type of the hint.
+    else unfoldTrait(shape, tr)
+  }
+
   private def unfoldTrait(shape: Shape, tr: Trait): Hint.Native = {
     val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
+
     Hint.Native(
-      typedNode = recursion.ana(unfoldNodeAndType)(nodeAndType),
-      rawNode = nodeAndType.node,
-      tr = Type.Ref(tr.namespace, tr.name),
-      isRecursive = isRecursiveTraitOf(shape.getId, tr.toShapeId(), Set.empty)
+      typedNode = recursion.ana(unfoldNodeAndType)(nodeAndType)
     )
   }
 
@@ -1195,7 +1210,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       val children =
         model
           .getShape(id.toShapeId())
-          .map(_.getAllTraits.values.asScala)
+          .map[List[ToShapeId]](_.getAllTraits.values.asScala.toList)
           .orElseGet(() => Nil)
           .map(_.toShapeId())
           .toSet -- alreadyVisited - id.toShapeId()
