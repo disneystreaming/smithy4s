@@ -136,8 +136,14 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
       make: IndexedSeq[Any] => S
   ): UrlFormDataEncoder[S] = {
     def fieldEncoder[A](field: Field[S, A]): UrlFormDataEncoder[S] =
-      compile(field.schema)
-        .contramap(field.get)
+      new UrlFormDataEncoder[S] {
+        private val cachedEncoder = compile(field.schema)
+        override def encode(value: S): List[UrlForm.FormData] =
+          field
+            .getUnlessDefault(value)
+            .toList
+            .flatMap(cachedEncoder.encode)
+      }
         .prepend(getKey(field.hints, field.label))
     val encoders = fields.map(fieldEncoder(_))
     struct => encoders.toList.flatMap(_.encode(struct))
