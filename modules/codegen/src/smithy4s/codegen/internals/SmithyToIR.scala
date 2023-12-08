@@ -64,32 +64,53 @@ private[codegen] object SmithyToIR {
 
   class RecursionIndex(model: Model) {
 
+    private def edgesFrom(shapeId: ShapeId): List[ShapeId] =
+      model
+        .getShape(shapeId)
+        .map[List[ShapeId]] { shape =>
+          val traitsOfMembers = (shape
+            .getAllMembers()
+            .values()
+            .asScala
+            .map(_.getTarget())
+            .toSet - shapeId)
+            .flatMap(
+              model.getShape(_).map[Option[Shape]](_.some).orElseGet(() => none)
+            )
+            .flatMap(_.getAllTraits().values().asScala.map(_.toShapeId()))
+
+          (
+            shape.getAllTraits().keySet().asScala.toList
+              ++ traitsOfMembers
+          )
+        }
+        .orElseGet(() => Nil)
+
     // returns true if there's a reference to `shape` in the trait closure of `id`.
     def isRecursiveTraitOf(
-        shape: ShapeId,
+        shape: ToShapeId,
         id: ToShapeId
     ): Boolean = {
-      def go(
-          shape: ShapeId,
-          id: ToShapeId,
-          alreadyVisited: Set[ShapeId]
-      ): Boolean =
-        shape == id.toShapeId() || {
-          val children =
-            model
-              .getShape(id.toShapeId())
-              .map[List[ToShapeId]](_.getAllTraits.values.asScala.toList)
-              .orElseGet(() => Nil)
-              .map(_.toShapeId())
-              .toSet -- alreadyVisited - id.toShapeId()
+      // breadth-first search
+      def recurse(
+          id: ShapeId,
+          lookingFor: ShapeId,
+          seen: Set[ShapeId]
+      ): Boolean = {
+        val lhs = (edgesFrom(id).filterNot(seen)).contains(lookingFor)
+        lazy val rhs =
+          (edgesFrom(id)
+            .filterNot(seen))
+            .exists(recurse(_, lookingFor, seen + id))
 
-          val newVisited = alreadyVisited + shape ++ children
+        lhs || rhs
+      }
 
-          children
-            .exists(go(shape, _, newVisited))
-        }
-
-      go(shape, id, Set.empty)
+      shape.toShapeId == id.toShapeId || recurse(
+        id.toShapeId(),
+        shape.toShapeId(),
+        Set.empty
+      )
     }
 
   }

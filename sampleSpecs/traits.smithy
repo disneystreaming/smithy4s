@@ -44,3 +44,27 @@ structure indirectRecursiveViaMembersTrait {
 
 @indirectRecursiveViaMembersTrait
 structure RecursiveMember {}
+
+@trait
+@indirect1
+structure indirect0 {}
+
+@trait
+@indirect2
+structure indirect1 {}
+
+@trait
+@indirect0
+structure indirect2 {}
+
+@trait
+@traitWithMember(m: "foo")
+structure recursiveViaTraitMember {}
+
+@trait
+structure traitWithMember {
+    m: M
+}
+
+@recursiveViaTraitMember
+string M
