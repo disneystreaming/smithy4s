@@ -44,14 +44,19 @@ import scala.jdk.CollectionConverters._
 import Type.Alias
 import smithy4s.meta.TypeclassTrait
 
-private[codegen] object SmithyToIR {
+private[codegen] class SmithyToIR(model: Model) {
+  private val recursionIndex = new SmithyToIR.RecursionIndex(model)
 
-  def apply(model: Model, namespace: String): CompilationUnit = {
-    val smithyToIR = new SmithyToIR(model, namespace)
+  def translate(namespace: String): CompilationUnit = {
+    val smithyToIR = new SmithyToIRTranslator(model, recursionIndex, namespace)
+
     PostProcessor(
       CompilationUnit(namespace, smithyToIR.allDecls, smithyToIR.rendererConfig)
     )
   }
+}
+
+private[codegen] object SmithyToIR {
 
   def prettifyName(
       maybeSdkId: Option[String],
@@ -63,12 +68,23 @@ private[codegen] object SmithyToIR {
   }
 
   class RecursionIndex(model: Model) {
+    private val shapes =
+      model
+        .getShapeIds()
+        .asScala
+        .toList
+
+    private val traitEdges = shapes.flatMap { from =>
+      edgesFrom(from).map(from -> _)
+    }
+
+    private val tarjan = new TarjanSCC(shapes, traitEdges)
 
     private def edgesFrom(shapeId: ShapeId): List[ShapeId] =
       model
         .getShape(shapeId)
         .map[List[ShapeId]] { shape =>
-          val traitsOfMembers = (shape
+          val directTraitsOfMembers = (shape
             .getAllMembers()
             .values()
             .asScala
@@ -81,7 +97,7 @@ private[codegen] object SmithyToIR {
 
           (
             shape.getAllTraits().keySet().asScala.toList
-              ++ traitsOfMembers
+              ++ directTraitsOfMembers
           )
         }
         .orElseGet(() => Nil)
@@ -91,37 +107,93 @@ private[codegen] object SmithyToIR {
         shape: ToShapeId,
         id: ToShapeId
     ): Boolean = {
-      // breadth-first search
-      def recurse(
-          id: ShapeId,
-          lookingFor: ShapeId,
-          seen: Set[ShapeId]
-      ): Boolean = {
-        val lhs = (edgesFrom(id).filterNot(seen)).contains(lookingFor)
-        lazy val rhs =
-          (edgesFrom(id)
-            .filterNot(seen))
-            .exists(recurse(_, lookingFor, seen + id))
-
-        lhs || rhs
-      }
-
-      shape.toShapeId == id.toShapeId || recurse(
-        id.toShapeId(),
-        shape.toShapeId(),
-        Set.empty
-      )
+      tarjan.strongEdges.contains((shape.toShapeId(), id.toShapeId()))
     }
 
   }
 
 }
 
-private[codegen] class SmithyToIR(model: Model, namespace: String) {
+// todo move this somewhere, rewrite with human hands
+class TarjanSCC[N](nodes: Seq[N], edges: Seq[(N, N)]) {
+
+  private val adjacencyList: Map[N, Seq[N]] =
+    edges.groupBy(_._1).map { case (k, v) =>
+      (k, v.map(_._2))
+    }
+
+  private def getNeighbors(node: N): Seq[N] =
+    adjacencyList.getOrElse(node, Seq.empty)
+
+  import collection.mutable
+
+  private var index = 0
+  private val stack = mutable.Stack[N]()
+  private val indices = mutable.Map[N, Int]()
+  private val lowLinks = mutable.Map[N, Int]()
+  private val inStack = mutable.Set[N]()
+  private val result = mutable.ListBuffer[Seq[N]]()
+
+  private def strongConnect(v: N): Unit = {
+    indices(v) = index
+    lowLinks(v) = index
+    index += 1
+    stack.push(v)
+    inStack.add(v)
+
+    for (w <- getNeighbors(v))
+      if (!indices.contains(w)) {
+        strongConnect(w)
+        lowLinks(v) = math.min(lowLinks(v), lowLinks(w))
+      } else if (inStack.contains(w)) {
+        lowLinks(v) = math.min(lowLinks(v), indices(w))
+      }
+
+    if (lowLinks(v) == indices(v)) {
+      val component = mutable.ListBuffer[N]()
+      var w: N = null.asInstanceOf[N]
+      do {
+        w = stack.pop()
+        inStack.remove(w)
+        component += w
+      } while (w != v)
+      result += component.toSeq
+    }
+  }
+
+  val getSCC: Seq[Seq[N]] = {
+    for (v <- nodes)
+      if (!indices.contains(v)) {
+        strongConnect(v)
+      }
+    result.toSeq
+  }
+
+  private def isStrongEdge(edge: (N, N)): Boolean = {
+    val (b, a) = edge
+    getSCC.exists { x =>
+      // either x has a subsequence of (a,b)
+      // or x starts with b and ends with a
+      // this also works for single-elem xs
+      hasSubsequence(x.toList, List(a, b)) || (x.head == b && x.last == a)
+    }
+  }
+
+  private def hasSubsequence[A](
+      sup: List[A],
+      sub: List[A]
+  ): Boolean = sup.sliding(sub.size).exists(_ == sub)
+
+  val strongEdges: Set[(N, N)] = edges.toSet.filter(isStrongEdge)
+}
+
+private[codegen] class SmithyToIRTranslator(
+    model: Model,
+    recursionIndex: SmithyToIR.RecursionIndex,
+    namespace: String
+) { self =>
 
   val finder = PathFinder.create(model)
-
-  val recursionIndex = new SmithyToIR.RecursionIndex(model)
 
   val allShapes =
     model
@@ -186,7 +258,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     new ShapeVisitor.Default[Option[Decl]] {
 
       override protected def getDefault(shape: Shape): Option[Decl] = {
-        val hints = SmithyToIR.this.hints(shape)
+        val hints = self.hints(shape)
 
         val recursive = hints.exists {
           case Hint.Trait => true
@@ -253,7 +325,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
-        val hints = SmithyToIR.this.hints(shape)
+        val hints = self.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false
@@ -331,7 +403,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           if (shape.hasTrait(classOf[AdtTrait])) getMixins(shape)
           else List.empty
 
-        val hints = SmithyToIR.this.hints(shape)
+        val hints = self.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false

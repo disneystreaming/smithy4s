@@ -115,18 +115,6 @@ final class SmithyToIRSpec extends FunSuite {
     structure indirect2 {}
 
     @trait
-    @indirect1
-    structure indirect0 {}
-
-    @trait
-    @indirect2
-    structure indirect1 {}
-
-    @trait
-    @indirect0
-    structure indirect2 {}
-
-    @trait
     @traitWithMember(m: "foo")
     structure recursiveViaTraitMember {}
 

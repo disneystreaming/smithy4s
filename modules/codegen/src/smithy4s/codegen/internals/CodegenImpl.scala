@@ -157,8 +157,10 @@ private[codegen] object CodegenImpl { self =>
           .filterNot(alreadyGenerated)
     }
 
+    val smithyToIR = new SmithyToIR(model)
+
     filteredNamespaces.toList
-      .map { ns => SmithyToIR(model, ns) }
+      .map { smithyToIR.translate }
       .flatMap { cu =>
         val amended = CollisionAvoidance(cu)
         Renderer(amended)
