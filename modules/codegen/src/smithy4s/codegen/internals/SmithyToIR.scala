@@ -78,7 +78,8 @@ private[codegen] object SmithyToIR {
       edgesFrom(from).map(from -> _)
     }
 
-    private val tarjan = new TarjanSCC(shapes, traitEdges)
+    /* private  */
+    val tarjan = new TarjanSCC(shapes, traitEdges)
 
     private def edgesFrom(shapeId: ShapeId): List[ShapeId] =
       model
@@ -89,7 +90,7 @@ private[codegen] object SmithyToIR {
             .values()
             .asScala
             .map(_.getTarget())
-            .toSet - shapeId)
+            .toSet[ShapeId])
             .flatMap(
               model.getShape(_).map[Option[Shape]](_.some).orElseGet(() => none)
             )
@@ -169,22 +170,14 @@ class TarjanSCC[N](nodes: Seq[N], edges: Seq[(N, N)]) {
     result.toSeq
   }
 
-  private def isStrongEdge(edge: (N, N)): Boolean = {
-    val (b, a) = edge
-    getSCC.exists { x =>
-      // either x has a subsequence of (a,b)
-      // or x starts with b and ends with a
-      // this also works for single-elem xs
-      hasSubsequence(x.toList, List(a, b)) || (x.head == b && x.last == a)
+  private def isStrongEdge(from: N, to: N): Boolean = {
+    getSCC.exists { subgraph =>
+      subgraph.contains(from) &&
+      subgraph.contains(to)
     }
   }
 
-  private def hasSubsequence[A](
-      sup: List[A],
-      sub: List[A]
-  ): Boolean = sup.sliding(sub.size).exists(_ == sub)
-
-  val strongEdges: Set[(N, N)] = edges.toSet.filter(isStrongEdge)
+  val strongEdges: Set[(N, N)] = edges.toSet.filter((isStrongEdge _).tupled)
 }
 
 private[codegen] class SmithyToIRTranslator(

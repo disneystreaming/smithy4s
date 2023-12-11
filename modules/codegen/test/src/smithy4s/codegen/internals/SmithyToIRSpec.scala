@@ -137,20 +137,30 @@ final class SmithyToIRSpec extends FunSuite {
         mods: TestOptions => TestOptions = identity
     )(implicit
         loc: Location
-    ) =
+    ) = {
+      val actualFrom =
+        ShapeId.fromOptionalNamespace("smithy4s.example.traits", from)
+      val actualTo =
+        ShapeId.fromOptionalNamespace("smithy4s.example.traits", to)
+
       test(
-        mods(s"$from is ${if (expected) "" else "not "}recursive with $to")
+        mods(
+          s"$actualFrom is ${if (expected) "" else "not "}recursive with $actualTo"
+        )
       ) {
         assertEquals(
           isRecursiveTrait(
             model = model,
             index = index,
-            fromName = from,
-            toName = to
+            from = actualFrom,
+            to = actualTo
           ),
           expected
         )(loc, implicitly[Boolean <:< Boolean])
       }
+    }
+
+    println(index.tarjan.strongEdges)
 
     // format: off
     doTest("nonRecursiveTrait", "anotherNormalTrait", false)
@@ -164,19 +174,21 @@ final class SmithyToIRSpec extends FunSuite {
     doTest("indirect1", "indirect2", true)
     doTest("indirect2", "indirect0", true)
     doTest("recursiveViaTraitMember", "traitWithMember", true)
+
+    //stdlib traits
+    doTest("smithy.api#trait", "smithy.api#trait", true)
+    doTest("smithy.api#documentation", "smithy.api#documentation", true)
+    doTest("smithy.api#trait", "smithy.api#documentation", true)
+    doTest("smithy.api#documentation", "smithy.api#trait", true)
     // format: on
   }
 
   def isRecursiveTrait(
       model: Model,
       index: SmithyToIR.RecursionIndex,
-      fromName: String,
-      toName: String
+      from: ShapeId,
+      to: ShapeId
   ): Boolean = {
-    val ns = "smithy4s.example.traits"
-    val from = model.expectShape(ShapeId.fromParts(ns, fromName))
-    val to = model.expectShape(ShapeId.fromParts(ns, toName))
-
     index.isRecursiveTraitOf(from, to)
   }
 
