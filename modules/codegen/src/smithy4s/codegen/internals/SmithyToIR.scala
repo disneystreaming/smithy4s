@@ -108,7 +108,7 @@ private[codegen] object SmithyToIR {
         shape: ToShapeId,
         id: ToShapeId
     ): Boolean = {
-      tarjan.strongEdges.contains((shape.toShapeId(), id.toShapeId()))
+      tarjan.isStrongEdge(shape.toShapeId(), id.toShapeId())
     }
 
   }
@@ -170,14 +170,19 @@ class TarjanSCC[N](nodes: Seq[N], edges: Seq[(N, N)]) {
     result.toSeq
   }
 
-  private def isStrongEdge(from: N, to: N): Boolean = {
+  private def isStrong(from: N, to: N): Boolean = {
     getSCC.exists { subgraph =>
       subgraph.contains(from) &&
       subgraph.contains(to)
     }
   }
 
-  val strongEdges: Set[(N, N)] = edges.toSet.filter((isStrongEdge _).tupled)
+  private val strongEdgesPrecomputed: Set[(N, N)] =
+    edges.toSet.filter((isStrong _).tupled)
+
+  def isStrongEdge(from: N, to: N): Boolean = {
+    strongEdgesPrecomputed.contains((from, to))
+  }
 }
 
 private[codegen] class SmithyToIRTranslator(
