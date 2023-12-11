@@ -160,8 +160,6 @@ final class SmithyToIRSpec extends FunSuite {
       }
     }
 
-    println(index.tarjan.strongEdges)
-
     // format: off
     doTest("nonRecursiveTrait", "anotherNormalTrait", false)
     doTest("directRecursiveTrait", "directRecursiveTrait", true)
