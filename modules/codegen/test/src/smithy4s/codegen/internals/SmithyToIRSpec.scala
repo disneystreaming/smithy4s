@@ -52,6 +52,7 @@ final class SmithyToIRSpec extends FunSuite {
   }
 
   locally {
+    // todo try to read this from resources
     val modelText = """
     namespace smithy4s.example.traits
 

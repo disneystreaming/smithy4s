@@ -81,27 +81,30 @@ private[codegen] object SmithyToIR {
     /* private  */
     val tarjan = new TarjanSCC(shapes, traitEdges)
 
-    private def edgesFrom(shapeId: ShapeId): List[ShapeId] =
+    private def edgesFrom(shapeId: ShapeId): Set[ShapeId] =
       model
         .getShape(shapeId)
-        .map[List[ShapeId]] { shape =>
-          val directTraitsOfMembers = (shape
+        .map[Set[ShapeId]] { shape =>
+          val directTraitsOf =
+            (_: Shape).getAllTraits().values().asScala.map(_.toShapeId()).toSet
+
+          val shapeMemberTargets = shape
             .getAllMembers()
             .values()
             .asScala
             .map(_.getTarget())
-            .toSet[ShapeId])
+            .toSet[ShapeId]
             .flatMap(
               model.getShape(_).map[Option[Shape]](_.some).orElseGet(() => none)
             )
-            .flatMap(_.getAllTraits().values().asScala.map(_.toShapeId()))
 
-          (
-            shape.getAllTraits().keySet().asScala.toList
-              ++ directTraitsOfMembers
-          )
+          // For this recursion index, relationships are formed by the following:
+          // - traits of the current shape (e.g. for `@trait`: `@documentation`)
+          // - traits of the target shapes of the current shape's members.
+          directTraitsOf(shape) ++
+            shapeMemberTargets.flatMap(directTraitsOf)
         }
-        .orElseGet(() => Nil)
+        .orElseGet(() => Set.empty)
 
     // returns true if there's a reference to `shape` in the trait closure of `id`.
     def isRecursiveTraitOf(
