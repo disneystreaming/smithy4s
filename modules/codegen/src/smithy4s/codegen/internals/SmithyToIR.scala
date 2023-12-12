@@ -1407,6 +1407,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Primitive.Timestamp,
         java.time.Instant.ofEpochSecond(0)
       )
+    case (_, Primitive.Unit) =>
+      TypedNode.PrimitiveTN(
+        Primitive.Unit,
+        ()
+      )
     case other =>
       throw new NotImplementedError(s"Unsupported case: $other")
   }

@@ -446,4 +446,33 @@ final class RendererSpec extends munit.FunSuite {
     assert(contents.exists(_.contains("/** /&ast; */")))
     assert(contents.exists(_.contains("""smithy.api.Documentation("/*")""")))
   }
+
+  test("trait with subcomponent targeting smithy.api#Unit") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace input
+        |
+        |@trait
+        |union myTrait {
+        |    u: Unit
+        |}
+        |
+        |@myTrait(u: {
+        |
+        |})
+        |string Example
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains(
+          "sealed trait MyTrait extends scala.Product with scala.Serializable"
+        )
+      )
+    )
+  }
 }
