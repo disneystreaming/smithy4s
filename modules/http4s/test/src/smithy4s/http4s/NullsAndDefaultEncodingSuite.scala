@@ -231,7 +231,11 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
     val resources = for {
       promise <- Deferred[IO, Request[IO]].toResource
       httpClient: Client[IO] = Client(req =>
-        promise.complete(req).as(Response[IO]()).toResource
+        req
+          .toStrict(None)
+          .flatMap(promise.complete)
+          .as(Response[IO]())
+          .toResource
       )
       client <- SimpleRestJsonBuilder
         .withExplicitDefaultsEncoding(explicitDefaults)
@@ -241,8 +245,6 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
     } yield (promise, client)
     resources.use { case (promise, client) =>
       client.operation(input) >> promise.get.flatMap { req =>
-        val query =
-          req.uri.query.pairs.flatMap(kv => kv._2.map(kv._1 -> _)).toMap
         val labels = req.uri.path.segments
           .map(_.toString)
           .filterNot(_ == "operation")
@@ -250,7 +252,12 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
         req
           .as[Json]
           .map(body =>
-            TestRequest(headersToMap(req.headers), query, labels, body)
+            TestRequest(
+              headersToMap(req.headers),
+              queryToMap(req.uri.query),
+              labels,
+              body
+            )
           )
       }
     }
@@ -259,4 +266,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   private def headersToMap(headers: Headers) = headers.headers.flatMap { h =>
     if (specHeaders.contains(h.name)) Some(h.name -> h.value) else None
   }.toMap
+
+  private def queryToMap(query: Query) =
+    query.pairs.flatMap(kv => kv._2.map(kv._1 -> _)).toMap
 }
