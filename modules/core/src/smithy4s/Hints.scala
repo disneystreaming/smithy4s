@@ -137,7 +137,7 @@ object Hints {
     def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key.id).flatMap {
         case Binding.StaticBinding(k, value) =>
-          if (key.eq(k)) Some(value.asInstanceOf[A]) else None
+          if (key.eq(k)) Some(value.value.asInstanceOf[A]) else None
         case Binding.DynamicBinding(_, value) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
       }
