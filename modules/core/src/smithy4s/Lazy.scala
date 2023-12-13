@@ -25,6 +25,14 @@ final class Lazy[A](make: () => A) {
   }
 
   def map[B](f: A => B): Lazy[B] = new Lazy(() => f(make()))
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Lazy[_] => this.value == that.value
+    case _             => false
+  }
+
+  override def hashCode(): Int = value.hashCode()
+
 }
 
 object Lazy {
