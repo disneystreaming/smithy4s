@@ -170,7 +170,7 @@ object Hints {
   }
 
   object Binding {
-    final case class StaticBinding[A](key: ShapeTag[A], value: A)
+    final case class StaticBinding[A](key: ShapeTag[A], value: Lazy[A])
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
@@ -180,9 +180,9 @@ object Hints {
       override def toString = Document.obj(keyId.show -> value).toString()
     }
 
-    implicit def fromValue[A, AA <: A](value: AA)(implicit
+    implicit def fromValue[A, AA <: A](value: => AA)(implicit
         key: ShapeTag[A]
-    ): Binding = StaticBinding(key, value)
+    ): Binding = StaticBinding[A](key, Lazy(value))
 
     implicit def fromTuple(tup: (ShapeId, Document)): Binding =
       DynamicBinding(tup._1, tup._2)
