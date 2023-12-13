@@ -194,6 +194,8 @@ object Hints {
   }
 
   private def concat(lhs: Hints, rhs: Hints): Hints = (lhs, rhs) match {
+    case (LazyHints(lazyA), LazyHints(lazyB)) =>
+      LazyHints(Lazy(lazyA.value ++ lazyB.value))
     case (LazyHints(lazyA), _) => LazyHints(Lazy(lazyA.value ++ rhs))
     case (_, LazyHints(lazyB)) => LazyHints(Lazy(lhs ++ lazyB.value))
     case _ => {
