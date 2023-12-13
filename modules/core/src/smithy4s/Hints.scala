@@ -161,6 +161,13 @@ object Hints {
 
     override def toString(): String =
       s"Hints(${all.mkString(", ")})"
+
+    override def equals(obj: Any): Boolean = obj match {
+      case h: Hints => toMap == h.toMap
+      case _        => false
+    }
+
+    override def hashCode(): Int = toMap.hashCode()
   }
 
   private[smithy4s] final case class LazyHints(underlying: Lazy[Hints])
@@ -191,6 +198,10 @@ object Hints {
     override def memberHints: Hints = underlying.value.memberHints
 
     override def targetHints: Hints = underlying.value.targetHints
+
+    override def equals(obj: Any): Boolean = underlying.value.equals(obj)
+
+    override def hashCode(): Int = underlying.value.hashCode()
   }
 
   private def concat(lhs: Hints, rhs: Hints): Hints = (lhs, rhs) match {

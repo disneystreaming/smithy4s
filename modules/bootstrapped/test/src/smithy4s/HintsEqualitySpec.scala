@@ -27,4 +27,11 @@ class HintsEqualitySpec() extends FunSuite {
     assertEquals(hints1, hints2)
   }
 
+  test("the Hints construct is compared by map observation") {
+    val hints1 = Hints(smithy.api.Deprecated())
+    val hints2 = Hints.lazily(Hints(smithy.api.Deprecated()))
+
+    assertEquals(hints1, hints2)
+  }
+
 }

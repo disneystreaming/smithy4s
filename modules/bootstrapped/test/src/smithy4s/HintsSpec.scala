@@ -20,6 +20,7 @@ import smithy.api.HttpHeader
 import smithy.api.HttpLabel
 import munit._
 import smithy.api.Readonly
+import smithy.api.Required
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
@@ -81,4 +82,86 @@ class HintsSpec() extends FunSuite {
     assert(expanded1.has(Readonly))
   }
 
+  test("Hints#concat preserves laziness: two lazies") {
+    val (lazyA, evaledA) = makeLazyHints {
+      Hints(Required())
+    }
+
+    val (lazyB, evaledB) = makeLazyHints {
+      Hints(HttpLabel())
+    }
+
+    val result = lazyA ++ lazyB
+
+    assert(!evaledA())
+    assert(!evaledB())
+    assertEquals(
+      Hints(Required(), HttpLabel()),
+      result
+    )
+  }
+
+  test("Hints#concat preserves laziness: lazy LHS") {
+    val (lazyA, evaledA) = makeLazyHints {
+      Hints(Required())
+    }
+
+    val rhs = {
+      Hints(HttpLabel())
+    }
+
+    val result = lazyA ++ rhs
+
+    assert(!evaledA())
+    assertEquals(
+      Hints(Required(), HttpLabel()),
+      result
+    )
+  }
+
+  test("Hints#concat preserves laziness: lazy RHS") {
+    val lhs = {
+      Hints(Required())
+    }
+
+    val (lazyB, evaledB) = makeLazyHints {
+      Hints(HttpLabel())
+    }
+
+    val result = lhs ++ lazyB
+
+    assert(!evaledB())
+    assertEquals(
+      Hints(Required(), HttpLabel()),
+      result
+    )
+  }
+
+  test("Hints#concat: both sides eager") {
+    val lhs = {
+      Hints(Required())
+    }
+
+    val rhs = {
+      Hints(HttpLabel())
+    }
+
+    val result = lhs ++ rhs
+
+    assertEquals(
+      Hints(Required(), HttpLabel()),
+      result
+    )
+  }
+
+  private def makeLazyHints(hints: => Hints): (Hints, () => Boolean) = {
+    var evaled = false
+
+    val result = Hints.lazily {
+      evaled = true
+      hints
+    }
+
+    (result, () => evaled)
+  }
 }
