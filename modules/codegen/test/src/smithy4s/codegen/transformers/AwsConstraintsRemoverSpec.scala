@@ -103,8 +103,10 @@ final class AwsConstraintsRemoverSpec extends munit.FunSuite {
                                        |
                                        |object Long extends Newtype[scala.Long] {
                                        |  val id: ShapeId = ShapeId("com.amazonaws.dummy", "Long")
-                                       |  val hints: Hints = Hints(
-                                       |    smithy.api.Box(),
+                                       |  val hints: Hints = Hints.lazily(
+                                       |    Hints(
+                                       |      smithy.api.Box(),
+                                       |    )
                                        |  )
                                        |  val underlyingSchema: Schema[scala.Long] = long.withId(id).addHints(hints)
                                        |  implicit val schema: Schema[Long] = bijection(underlyingSchema, asBijection)
