@@ -20,8 +20,10 @@ sealed abstract class AudioEnum(_value: String, _name: String, _intValue: Int, _
 object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnum] {
   val id: ShapeId = ShapeId("smithy4s.example", "AudioEnum")
 
-  val hints: Hints = Hints(
-    smithy.api.MediaType("audio/mpeg3"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.MediaType("audio/mpeg3"),
+    )
   )
 
   case object GUITAR extends AudioEnum("guitar", "GUITAR", 0, Hints())

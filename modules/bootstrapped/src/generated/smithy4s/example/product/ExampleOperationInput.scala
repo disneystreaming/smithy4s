@@ -12,8 +12,10 @@ final case class ExampleOperationInput(a: String)
 object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperationInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Input(),
+    )
   )
 
   implicit val schema: Schema[ExampleOperationInput] = struct(

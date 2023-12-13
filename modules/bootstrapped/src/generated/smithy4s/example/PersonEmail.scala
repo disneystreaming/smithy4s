@@ -10,8 +10,10 @@ import smithy4s.schema.Schema.string
 
 object PersonEmail extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "PersonEmail")
-  val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy4s.example.Hash(),
+    )
   )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[PersonEmail] = bijection(underlyingSchema, asBijection)

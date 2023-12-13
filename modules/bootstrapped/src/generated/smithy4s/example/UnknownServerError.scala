@@ -14,9 +14,11 @@ final case class UnknownServerError(errorCode: UnknownServerErrorCode, descripti
 object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnknownServerError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(500),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.SERVER.widen,
+      smithy.api.HttpError(500),
+    )
   )
 
   implicit val schema: Schema[UnknownServerError] = struct(

@@ -14,8 +14,10 @@ final case class UnauthorizedError(reason: String) extends Smithy4sThrowable {
 object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnauthorizedError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.CLIENT.widen,
+    )
   )
 
   implicit val schema: Schema[UnauthorizedError] = struct(

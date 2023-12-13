@@ -15,9 +15,11 @@ final case class EHServiceUnavailable(message: Option[String] = None) extends No
 object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHServiceUnavailable")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(503),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.SERVER.widen,
+      smithy.api.HttpError(503),
+    )
   )
 
   implicit val schema: Schema[EHServiceUnavailable] = struct(

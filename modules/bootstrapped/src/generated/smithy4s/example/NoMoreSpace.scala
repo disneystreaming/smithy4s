@@ -20,9 +20,11 @@ final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends S
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(507),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.SERVER.widen,
+      smithy.api.HttpError(507),
+    )
   )
 
   implicit val schema: Schema[NoMoreSpace] = struct(

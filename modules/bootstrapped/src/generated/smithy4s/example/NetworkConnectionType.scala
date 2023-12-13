@@ -21,8 +21,10 @@ sealed abstract class NetworkConnectionType(_value: String, _name: String, _intV
 object NetworkConnectionType extends Enumeration[NetworkConnectionType] with ShapeTag.Companion[NetworkConnectionType] {
   val id: ShapeId = ShapeId("smithy4s.example", "NetworkConnectionType")
 
-  val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy4s.example.Hash(),
+    )
   )
 
   case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints())

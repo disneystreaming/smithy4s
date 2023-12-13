@@ -13,8 +13,10 @@ final case class RecursiveTraitStructure(name: Option[String] = None)
 object RecursiveTraitStructure extends ShapeTag.Companion[RecursiveTraitStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveTraitStructure")
 
-  val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    )
   )
 
   implicit val schema: Schema[RecursiveTraitStructure] = recursive(struct(

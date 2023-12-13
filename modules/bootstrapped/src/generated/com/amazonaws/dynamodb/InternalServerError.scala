@@ -18,9 +18,11 @@ final case class InternalServerError(message: Option[ErrorMessage] = None) exten
 object InternalServerError extends ShapeTag.Companion[InternalServerError] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InternalServerError")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("<p>An error occurred on the server side.</p>"),
-    smithy.api.Error.SERVER.widen,
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("<p>An error occurred on the server side.</p>"),
+      smithy.api.Error.SERVER.widen,
+    )
   )
 
   implicit val schema: Schema[InternalServerError] = struct(

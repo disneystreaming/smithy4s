@@ -20,8 +20,10 @@ sealed abstract class OpenNumsStr(_value: String, _name: String, _intValue: Int,
 object OpenNumsStr extends Enumeration[OpenNumsStr] with ShapeTag.Companion[OpenNumsStr] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenNumsStr")
 
-  val hints: Hints = Hints(
-    alloy.OpenEnum(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.OpenEnum(),
+    )
   )
 
   case object ONE extends OpenNumsStr("ONE", "ONE", 0, Hints())

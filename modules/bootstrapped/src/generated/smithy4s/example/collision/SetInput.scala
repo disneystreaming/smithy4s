@@ -11,8 +11,10 @@ final case class SetInput(set: Set[String])
 object SetInput extends ShapeTag.Companion[SetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "SetInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Input(),
+    )
   )
 
   implicit val schema: Schema[SetInput] = struct(

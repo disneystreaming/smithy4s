@@ -24,8 +24,10 @@ final case class ListTablesOutput(tableNames: Option[List[TableName]] = None, la
 object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesOutput")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
+    )
   )
 
   implicit val schema: Schema[ListTablesOutput] = struct(

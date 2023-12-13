@@ -15,9 +15,11 @@ final case class SpecificServerError(message: Option[String] = None) extends Smi
 object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
   val id: ShapeId = ShapeId("smithy4s.example.hello", "SpecificServerError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(599),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.SERVER.widen,
+      smithy.api.HttpError(599),
+    )
   )
 
   implicit val schema: Schema[SpecificServerError] = struct(

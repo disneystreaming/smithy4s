@@ -12,8 +12,10 @@ final case class HealthResponse(status: String)
 object HealthResponse extends ShapeTag.Companion[HealthResponse] {
   val id: ShapeId = ShapeId("smithy4s.example", "HealthResponse")
 
-  val hints: Hints = Hints(
-    smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromDouble(1.0d), "a" -> smithy4s.Document.fromDouble(2.0d))),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromDouble(1.0d), "a" -> smithy4s.Document.fromDouble(2.0d))),
+    )
   )
 
   implicit val schema: Schema[HealthResponse] = struct(

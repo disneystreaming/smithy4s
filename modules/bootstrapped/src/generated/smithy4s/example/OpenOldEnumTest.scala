@@ -20,8 +20,10 @@ sealed abstract class OpenOldEnumTest(_value: String, _name: String, _intValue: 
 object OpenOldEnumTest extends Enumeration[OpenOldEnumTest] with ShapeTag.Companion[OpenOldEnumTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenOldEnumTest")
 
-  val hints: Hints = Hints(
-    alloy.OpenEnum(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.OpenEnum(),
+    )
   )
 
   case object ONE extends OpenOldEnumTest("ONE", "ONE", 0, Hints())

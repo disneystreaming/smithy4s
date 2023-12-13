@@ -13,8 +13,10 @@ final case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: St
 object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
+    )
   )
 
   implicit val schema: Schema[PutObjectInput] = struct(

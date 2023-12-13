@@ -16,8 +16,10 @@ final case class DocumentationComment(member: Option[String] = None)
 object DocumentationComment extends ShapeTag.Companion[DocumentationComment] {
   val id: ShapeId = ShapeId("smithy4s.example", "DocumentationComment")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("We should be able to use comments in documentation /* */"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("We should be able to use comments in documentation /* */"),
+    )
   )
 
   implicit val schema: Schema[DocumentationComment] = struct(

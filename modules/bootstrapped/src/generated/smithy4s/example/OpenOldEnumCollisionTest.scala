@@ -20,8 +20,10 @@ sealed abstract class OpenOldEnumCollisionTest(_value: String, _name: String, _i
 object OpenOldEnumCollisionTest extends Enumeration[OpenOldEnumCollisionTest] with ShapeTag.Companion[OpenOldEnumCollisionTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenOldEnumCollisionTest")
 
-  val hints: Hints = Hints(
-    alloy.OpenEnum(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.OpenEnum(),
+    )
   )
 
   case object Unknown extends OpenOldEnumCollisionTest("unknown", "Unknown", 0, Hints())

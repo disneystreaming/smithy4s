@@ -21,8 +21,10 @@ sealed abstract class OpenIntEnumTest(_value: String, _name: String, _intValue: 
 object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Companion[OpenIntEnumTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenIntEnumTest")
 
-  val hints: Hints = Hints(
-    alloy.OpenEnum(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.OpenEnum(),
+    )
   )
 
   object optics {

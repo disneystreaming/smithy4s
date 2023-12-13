@@ -28,9 +28,11 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HelloWorldAuthService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-    smithy.api.HttpBearerAuth(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.SimpleRestJson(),
+      smithy.api.HttpBearerAuth(),
+    )
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

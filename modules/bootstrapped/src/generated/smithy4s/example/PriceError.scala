@@ -16,8 +16,10 @@ final case class PriceError(message: String, code: Int) extends Smithy4sThrowabl
 object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.CLIENT.widen,
+    )
   )
 
   implicit val schema: Schema[PriceError] = struct(

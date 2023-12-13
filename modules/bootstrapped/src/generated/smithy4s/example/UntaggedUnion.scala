@@ -28,8 +28,10 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "UntaggedUnion")
 
-  val hints: Hints = Hints(
-    alloy.Untagged(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.Untagged(),
+    )
   )
 
   final case class ThreeCase(three: Three) extends UntaggedUnion { final def $ordinal: Int = 0 }

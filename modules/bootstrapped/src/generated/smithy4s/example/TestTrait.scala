@@ -16,8 +16,10 @@ final case class TestTrait(orderType: Option[OrderType] = None)
 object TestTrait extends ShapeTag.Companion[TestTrait] {
   val id: ShapeId = ShapeId("smithy4s.example", "testTrait")
 
-  val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    )
   )
 
   implicit val schema: Schema[TestTrait] = recursive(struct(

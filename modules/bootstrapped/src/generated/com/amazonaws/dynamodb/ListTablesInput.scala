@@ -19,8 +19,10 @@ final case class ListTablesInput(exclusiveStartTableName: Option[TableName] = No
 object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
+    )
   )
 
   implicit val schema: Schema[ListTablesInput] = struct(

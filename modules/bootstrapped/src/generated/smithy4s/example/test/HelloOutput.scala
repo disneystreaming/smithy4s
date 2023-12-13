@@ -12,8 +12,10 @@ final case class HelloOutput(message: String)
 object HelloOutput extends ShapeTag.Companion[HelloOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloOutput")
 
-  val hints: Hints = Hints(
-    smithy.api.Output(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Output(),
+    )
   )
 
   implicit val schema: Schema[HelloOutput] = struct(

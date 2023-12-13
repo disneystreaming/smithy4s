@@ -22,9 +22,11 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("some docs here"),
-    smithy.api.Deprecated(message = None, since = None),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Documentation("some docs here"),
+      smithy.api.Deprecated(message = None, since = None),
+    )
   )
 
   @deprecated(message = "N/A", since = "N/A")

@@ -11,8 +11,10 @@ final case class SetOpInput(set: Set)
 object SetOpInput extends ShapeTag.Companion[SetOpInput] {
   val id: ShapeId = ShapeId("smithy4s.example.reservedNameOverride", "SetOpInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Input(),
+    )
   )
 
   implicit val schema: Schema[SetOpInput] = struct(

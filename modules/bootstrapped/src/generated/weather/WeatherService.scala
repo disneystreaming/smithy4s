@@ -23,8 +23,10 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   val id: ShapeId = ShapeId("weather", "WeatherService")
   val version: String = ""
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.SimpleRestJson(),
+    )
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

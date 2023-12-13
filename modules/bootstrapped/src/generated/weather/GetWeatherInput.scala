@@ -12,8 +12,10 @@ final case class GetWeatherInput(city: String)
 object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
   val id: ShapeId = ShapeId("weather", "GetWeatherInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Input(),
+    )
   )
 
   implicit val schema: Schema[GetWeatherInput] = struct(

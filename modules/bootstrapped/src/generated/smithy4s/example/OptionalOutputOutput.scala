@@ -12,8 +12,10 @@ final case class OptionalOutputOutput(body: Option[String] = None)
 object OptionalOutputOutput extends ShapeTag.Companion[OptionalOutputOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "OptionalOutputOutput")
 
-  val hints: Hints = Hints(
-    smithy.api.Output(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Output(),
+    )
   )
 
   implicit val schema: Schema[OptionalOutputOutput] = struct(

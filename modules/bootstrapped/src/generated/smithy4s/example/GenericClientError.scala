@@ -15,9 +15,11 @@ final case class GenericClientError(message: String) extends Smithy4sThrowable {
 object GenericClientError extends ShapeTag.Companion[GenericClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericClientError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(418),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.CLIENT.widen,
+      smithy.api.HttpError(418),
+    )
   )
 
   implicit val schema: Schema[GenericClientError] = struct(

@@ -114,6 +114,8 @@ object Hints {
   def apply(bindings: Hint*): Hints =
     fromSeq(bindings)
 
+  def lazily(underlying: => Hints): Hints = Hints.LazyHints(Lazy(underlying))
+
   def member(bindings: Hint*): Hints =
     Impl(memberHintsMap = mapFromSeq(bindings), targetHintsMap = Map.empty)
 
@@ -141,12 +143,8 @@ object Hints {
         case Binding.DynamicBinding(_, value) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
       }
-    def ++(other: Hints): Hints = {
-      Impl(
-        memberHintsMap = memberHintsMap ++ other.memberHintsMap,
-        targetHintsMap = targetHintsMap ++ other.targetHintsMap
-      )
-    }
+    def ++(other: Hints): Hints = concat(this, other)
+
     def targetHints: Hints = Impl(Map.empty, targetHintsMap)
     def memberHints: Hints = Impl(memberHintsMap, Map.empty)
     def addMemberHints(hints: Hints): Hints =
@@ -163,6 +161,47 @@ object Hints {
 
     override def toString(): String =
       s"Hints(${all.mkString(", ")})"
+  }
+
+  private[smithy4s] final case class LazyHints(underlying: Lazy[Hints])
+      extends Hints {
+    override def isEmpty: Boolean = underlying.value.isEmpty
+
+    override def all: Iterable[Binding] = underlying.value.all
+
+    override def memberHintsMap: Map[ShapeId, Binding] =
+      underlying.value.memberHintsMap
+
+    override def targetHintsMap: Map[ShapeId, Binding] =
+      underlying.value.targetHintsMap
+
+    override def toMap: Map[ShapeId, Binding] = underlying.value.toMap
+
+    override def get[A](implicit key: ShapeTag[A]): Option[A] =
+      underlying.value.get(key)
+
+    override def ++(other: Hints): Hints = concat(this, other)
+
+    override def addMemberHints(hints: Hints): Hints =
+      underlying.value.addMemberHints(hints)
+
+    override def addTargetHints(hints: Hints): Hints =
+      underlying.value.addTargetHints(hints)
+
+    override def memberHints: Hints = underlying.value.memberHints
+
+    override def targetHints: Hints = underlying.value.targetHints
+  }
+
+  private def concat(lhs: Hints, rhs: Hints): Hints = (lhs, rhs) match {
+    case (LazyHints(lazyA), _) => LazyHints(Lazy(lazyA.value ++ rhs))
+    case (_, LazyHints(lazyB)) => LazyHints(Lazy(lhs ++ lazyB.value))
+    case _ => {
+      Impl(
+        memberHintsMap = lhs.memberHintsMap ++ rhs.memberHintsMap,
+        targetHintsMap = lhs.targetHintsMap ++ rhs.targetHintsMap
+      )
+    }
   }
 
   sealed trait Binding extends Product with Serializable {

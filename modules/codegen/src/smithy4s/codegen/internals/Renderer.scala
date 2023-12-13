@@ -1447,10 +1447,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
-    val base = line"val hints: $Hints_ = $Hints_"
+    val lhs = line"val hints: $Hints_"
+
     hints.flatMap(renderHint) match {
-      case Nil  => lines(base + line".empty")
-      case args => base.args(args)
+      case Nil => lines(line"$lhs = $Hints_.empty")
+      case args =>
+        lines(
+          line"$lhs = $Hints_.lazily(",
+          indent(line"$Hints_".args(args)),
+          line")"
+        )
     }
   }
 

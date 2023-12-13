@@ -40,8 +40,10 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
   val id: ShapeId = ShapeId("smithy4s.example", "PizzaAdminService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.SimpleRestJson(),
+    )
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

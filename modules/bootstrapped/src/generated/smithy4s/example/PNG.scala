@@ -10,8 +10,10 @@ import smithy4s.schema.Schema.bytes
 
 object PNG extends Newtype[Blob] {
   val id: ShapeId = ShapeId("smithy4s.example", "PNG")
-  val hints: Hints = Hints(
-    smithy.api.MediaType("image/png"),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.MediaType("image/png"),
+    )
   )
   val underlyingSchema: Schema[Blob] = bytes.withId(id).addHints(hints)
   implicit val schema: Schema[PNG] = bijection(underlyingSchema, asBijection)

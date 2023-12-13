@@ -10,8 +10,10 @@ import smithy4s.schema.Schema.string
 @deprecated(message = "N/A", since = "N/A")
 object DeprecatedString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedString")
-  val hints: Hints = Hints(
-    smithy.api.Deprecated(message = None, since = None),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Deprecated(message = None, since = None),
+    )
   )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[DeprecatedString] = bijection(underlyingSchema, asBijection)

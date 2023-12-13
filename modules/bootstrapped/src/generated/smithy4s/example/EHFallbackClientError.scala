@@ -15,8 +15,10 @@ final case class EHFallbackClientError(message: Option[String] = None) extends N
 object EHFallbackClientError extends ShapeTag.Companion[EHFallbackClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHFallbackClientError")
 
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Error.CLIENT.widen,
+    )
   )
 
   implicit val schema: Schema[EHFallbackClientError] = struct(

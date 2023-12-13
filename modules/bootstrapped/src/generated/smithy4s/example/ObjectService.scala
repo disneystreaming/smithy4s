@@ -35,8 +35,10 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      alloy.SimpleRestJson(),
+    )
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

@@ -12,8 +12,10 @@ final case class ReservationInput(name: String, town: Option[String] = None)
 object ReservationInput extends ShapeTag.Companion[ReservationInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ReservationInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
+  val hints: Hints = Hints.lazily(
+    Hints(
+      smithy.api.Input(),
+    )
   )
 
   implicit val schema: Schema[ReservationInput] = struct(
