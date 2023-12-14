@@ -175,12 +175,16 @@ object Hints {
     def keyId: ShapeId
   }
 
-  object Binding {
-    final case class StaticBinding[A](
+  object Binding extends BindingPlatform {
+    def ordinal(b: Binding): Int = b match {
+      case _: Binding.StaticBinding[_] => 0
+      case _: Binding.DynamicBinding   => 1
+    }
+
+    final class StaticBinding[A](
         k: ShapeTag[A],
         private val v: Lazy[A]
-    ) extends Binding
-        with StaticBindingPlatform[A] {
+    ) extends Binding {
       override def keyId: ShapeId = key.id
       def key: ShapeTag[A] = k
       def value: A = v.value
@@ -209,26 +213,39 @@ object Hints {
       ): StaticBinding[A] =
         new StaticBinding(key, Lazy(value))
 
-      private[Binding] def copy$default$2(): A = value
+      private[Binding] def copy$default$1(): ShapeTag[A] = k
+      private[Binding] def copy$default$2(): A = v.value
 
       private[Binding] def _1: ShapeTag[A] = key
       private[Binding] def _2: A = value
-      // BINCOMPAT FOR 0.18 ENd
+
+      override def canEqual(that: Any): Boolean = that match {
+        case _: StaticBinding[_] => true
+        case _                   => false
+      }
+
+      override def productArity: Int = 2
+
+      override def productElement(n: Int): Any =
+        n match {
+          case 0 => key
+          case 1 => value
+          case _ => throw new IndexOutOfBoundsException(n.toString)
+        }
+
+      // BINCOMPAT FOR 0.18 END
 
     }
 
-    object StaticBinding {
+    object StaticBinding extends StaticBindingPlatform {
       // BINCOMPAT FOR 0.18 START
       def apply[A](key: ShapeTag[A], value: A): StaticBinding[A] =
         new StaticBinding[A](key, value)
 
       def unapply[A](
           binding: StaticBinding[A]
-      ): UnapplyPolyfill.Result[(ShapeTag[A], A), StaticBinding[A]] =
-        UnapplyPolyfill.Result(
-          (apply(_: ShapeTag[A], _: A)).tupled,
-          (binding.key, binding.value)
-        )
+      ): Option[(ShapeTag[A], Lazy[A])] =
+        Some((binding.key, binding.v))
 
       object UnapplyFull {
         def unapply[A <: AnyRef](
