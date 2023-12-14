@@ -184,7 +184,7 @@ object Hints {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
 
-      override def canEqual(that: Any): Boolean = that match {
+      override def equals(that: Any): Boolean = that match {
         case rhs: StaticBinding[_] =>
           Objects.equals(this.key, rhs.key) && Objects.equals(
             this.value,
