@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import java.util.Objects
+
 /**
   * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
@@ -124,6 +126,7 @@ object Hints {
     bindings.map {
       case b @ Binding.StaticBinding(k, _)  => k.id -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b
+      case null | _                         => sys.error("unreachable")
     }.toMap
   }
 
@@ -136,10 +139,13 @@ object Hints {
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key.id).flatMap {
-        case Binding.StaticBinding(k, value) =>
+        case Binding.StaticBinding.UnapplyFull(k, value) =>
           if (key.eq(k)) Some(value.value.asInstanceOf[A]) else None
         case Binding.DynamicBinding(_, value) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
+        // to satisfy the compiler, although this is unreachable
+        case null | _ =>
+          sys.error("impossible")
       }
     def ++(other: Hints): Hints = {
       Impl(
@@ -170,19 +176,79 @@ object Hints {
   }
 
   object Binding {
-    final case class StaticBinding[A](key: ShapeTag[A], value: Lazy[A])
-        extends Binding {
+    final case class StaticBinding[A](
+        k: ShapeTag[A],
+        private val v: Lazy[A]
+    ) extends Binding {
+
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
+
+      override def canEqual(that: Any): Boolean = that match {
+        case rhs: StaticBinding[_] =>
+          Objects.equals(this.key, rhs.key) && Objects.equals(
+            this.value,
+            rhs.value
+          )
+        case _ => false
+      }
+
+      override def hashCode(): Int =
+        Objects.hash(key, value.asInstanceOf[AnyRef])
+
+      // BINCOMPAT FOR 0.18 START
+      private[Binding] def this(key: ShapeTag[A], value: A) =
+        this(key, Lazy(value))
+      private[Binding] def value: A = v.value
+      private[Binding] def key: ShapeTag[A] = k
+
+      private[Binding] def copy(
+          key: ShapeTag[A],
+          value: A
+      ): StaticBinding[A] =
+        new StaticBinding(key, Lazy(value))
+
+      private[Binding] def copy$default$1(): ShapeTag[A] = k
+      private[Binding] def copy$default$2(): A = v.value
+
+      private[Binding] def _1: ShapeTag[A] = key
+      private[Binding] def _2: A = value
+      // BINCOMPAT FOR 0.18 ENd
+
     }
+
+    object StaticBinding {
+      def apply[A](key: ShapeTag[A], value: A): StaticBinding[A] =
+        new StaticBinding[A](key, value)
+
+      def unapply[A](
+          binding: StaticBinding[A]
+      ): UnapplyPolyfill.Result[(ShapeTag[A], A), StaticBinding[A]] =
+        UnapplyPolyfill.Result(
+          (apply(_: ShapeTag[A], _: A)).tupled,
+          (binding.key, binding.value)
+        )
+
+      object UnapplyFull {
+        def unapply[A <: AnyRef](
+            binding: StaticBinding[A]
+        ): Some[(ShapeTag[A], Lazy[A])] =
+          Some((binding.key, binding.v))
+      }
+    }
+
     final case class DynamicBinding(keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
     }
 
-    implicit def fromValue[A, AA <: A](value: => AA)(implicit
+    implicit def fromValueLazy[A, AA <: A](value: => AA)(implicit
         key: ShapeTag[A]
-    ): Binding = StaticBinding[A](key, Lazy(value))
+    ): Binding = new StaticBinding[A](key, Lazy[A](value))
+
+    private[smithy4s] def fromValue[A, AA <: A](value: AA)(implicit
+        key: ShapeTag[A]
+    ): Binding = fromValueLazy[A, AA](value)
 
     implicit def fromTuple(tup: (ShapeId, Document)): Binding =
       DynamicBinding(tup._1, tup._2)
