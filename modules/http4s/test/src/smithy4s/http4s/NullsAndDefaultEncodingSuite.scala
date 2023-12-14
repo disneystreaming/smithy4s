@@ -58,10 +58,16 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
             ci"required-header-with-default" -> "required-header-with-default"
           ),
           request.headers
-        ) && assert.same(
+        ) &&
+        assert.same(
           Map.empty,
           request.query
-        ) && assert.same(
+        ) &&
+        assert.same(
+          List("operation", "required-label-with-default"),
+          request.labels
+        ) &&
+        assert.same(
           Json.obj(
             "requiredWithDefault" -> Json.fromString("required-default")
           ),
@@ -86,7 +92,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
           ),
           request.query
         ) && assert.same(
-          List("required-label-with-default"),
+          List("operation", "required-label-with-default"),
           request.labels
         ) && assert.same(
           Json.obj(
@@ -247,7 +253,6 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       client.operation(input) >> promise.get.flatMap { req =>
         val labels = req.uri.path.segments
           .map(_.toString)
-          .filterNot(_ == "operation")
           .toList
         req
           .as[Json]
