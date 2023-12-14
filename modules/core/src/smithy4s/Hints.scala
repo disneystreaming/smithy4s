@@ -218,6 +218,7 @@ object Hints {
     }
 
     object StaticBinding {
+      // BINCOMPAT FOR 0.18 START
       def apply[A](key: ShapeTag[A], value: A): StaticBinding[A] =
         new StaticBinding[A](key, value)
 
@@ -235,6 +236,7 @@ object Hints {
         ): Some[(ShapeTag[A], Lazy[A])] =
           Some((binding.key, binding.v))
       }
+      // BINCOMPAT FOR 0.18 END
     }
 
     final case class DynamicBinding(keyId: ShapeId, value: Document)
