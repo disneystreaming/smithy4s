@@ -179,7 +179,8 @@ object Hints {
     final case class StaticBinding[A](
         k: ShapeTag[A],
         private val v: Lazy[A]
-    ) extends Binding {
+    ) extends Binding
+        with StaticBindingPlatform[A] {
       override def keyId: ShapeId = key.id
       def key: ShapeTag[A] = k
       def value: A = v.value
@@ -208,8 +209,7 @@ object Hints {
       ): StaticBinding[A] =
         new StaticBinding(key, Lazy(value))
 
-      private[Binding] def copy$default$1(): ShapeTag[A] = k
-      private[Binding] def copy$default$2(): A = v.value
+      private[Binding] def copy$default$2(): A = value
 
       private[Binding] def _1: ShapeTag[A] = key
       private[Binding] def _2: A = value
