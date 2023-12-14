@@ -139,7 +139,7 @@ object Hints {
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key.id).flatMap {
-        case Binding.StaticBinding.UnapplyFull(k, value) =>
+        case Binding.StaticBinding(k, value) =>
           if (key.eq(k)) Some(value.value.asInstanceOf[A]) else None
         case Binding.DynamicBinding(_, value) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
@@ -247,12 +247,6 @@ object Hints {
       ): Option[(ShapeTag[A], Lazy[A])] =
         Some((binding.key, binding.v))
 
-      object UnapplyFull {
-        def unapply[A <: AnyRef](
-            binding: StaticBinding[A]
-        ): Some[(ShapeTag[A], Lazy[A])] =
-          Some((binding.key, binding.v))
-      }
       // BINCOMPAT FOR 0.18 END
     }
 
