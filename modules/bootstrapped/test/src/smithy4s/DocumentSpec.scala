@@ -24,8 +24,7 @@ import munit._
 
 class DocumentSpec() extends FunSuite {
 
-  // fails with an SOE
-  test("Recursive document codecs should not blow up the stack".ignore) {
+  test("Recursive document codecs should not blow up the stack") {
     val recursive: IntList = IntList(1, Some(IntList(2, Some(IntList(3)))))
 
     val document = Document.encode(recursive)
