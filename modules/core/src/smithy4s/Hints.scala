@@ -180,8 +180,10 @@ object Hints {
         k: ShapeTag[A],
         private val v: Lazy[A]
     ) extends Binding {
-
       override def keyId: ShapeId = key.id
+      def key: ShapeTag[A] = k
+      def value: A = v.value
+
       override def toString: String = value.toString()
 
       override def equals(that: Any): Boolean = that match {
@@ -199,8 +201,6 @@ object Hints {
       // BINCOMPAT FOR 0.18 START
       private[Binding] def this(key: ShapeTag[A], value: A) =
         this(key, Lazy(value))
-      private[Binding] def value: A = v.value
-      private[Binding] def key: ShapeTag[A] = k
 
       private[Binding] def copy(
           key: ShapeTag[A],
