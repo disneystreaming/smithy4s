@@ -154,10 +154,10 @@ class SchemaVisitorJsonCodecPropertyTests()
         bigint.validated[Range](r)
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
-    hint match {
-      case Hints.Binding.StaticBinding(_, l: Length) => lengthGen(l)
-      case Hints.Binding.StaticBinding(_, r: Range)  => rangeGen(r)
-      case _ => Gen.const(int.asInstanceOf[Schema[Any]])
+    Hints(hint) match {
+      case Length.hint(l) => lengthGen(l)
+      case Range.hint(r)  => rangeGen(r)
+      case _              => Gen.const(int.asInstanceOf[Schema[Any]])
     }
   }
 
