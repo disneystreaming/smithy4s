@@ -10,7 +10,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.18.0"
+ThisBuild / mimaBaseVersion := "0.19.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
