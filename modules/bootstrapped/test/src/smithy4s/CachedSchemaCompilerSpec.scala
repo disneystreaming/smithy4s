@@ -37,4 +37,46 @@ class CachedSchemaCompilerSpec() extends FunSuite {
     assertEquals(x, 1)
   }
 
+  test(
+    "CachedSchemaCompiler.Impl memoization is stable through mapK"
+  ) {
+    var x = 0
+    val transformation = new smithy4s.kinds.PolyFunction[Option, Option] {
+      def apply[A](fa: Option[A]) = {
+        x += 1
+        fa
+      }
+    }
+    val compiler = new CachedSchemaCompiler.Impl[Option] {
+      def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): Option[A] = {
+        None
+      }
+    }.mapK(transformation)
+    val cache = compiler.createCache()
+    val _ = compiler.fromSchema(Schema.int, cache)
+    val _ = compiler.fromSchema(Schema.int, cache)
+    assertEquals(x, 1)
+  }
+
+  test(
+    "CachedSchemaCompiler.Impl memoization is stable through contramapSchema"
+  ) {
+    var x = 0
+    val transformation = new smithy4s.kinds.PolyFunction[Schema, Schema] {
+      def apply[A](fa: Schema[A]) = {
+        x += 1
+        fa
+      }
+    }
+    val compiler = new CachedSchemaCompiler.Impl[Option] {
+      def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): Option[A] = {
+        None
+      }
+    }.contramapSchema(transformation)
+    val cache = compiler.createCache()
+    val _ = compiler.fromSchema(Schema.int, cache)
+    val _ = compiler.fromSchema(Schema.int, cache)
+    assertEquals(x, 1)
+  }
+
 }
