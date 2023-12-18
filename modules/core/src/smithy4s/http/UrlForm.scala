@@ -173,9 +173,9 @@ object UrlForm {
     ): CachedSchemaCompiler[Decoder] =
       new CachedSchemaCompiler.Impl[Decoder] {
         protected override type Aux[A] = UrlFormDataDecoder[A]
-        override def fromSchema[A](
+        override def fromSchemaAux[A](
             schema: Schema[A],
-            cache: Cache
+            cache: AuxCache
         ): Decoder[A] = {
           val schemaVisitor = new UrlFormDataDecoderSchemaVisitor(
             cache,
@@ -201,9 +201,9 @@ object UrlForm {
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
         protected override type Aux[A] = UrlFormDataEncoder[A]
-        override def fromSchema[A](
+        override def fromSchemaAux[A](
             schema: Schema[A],
-            cache: Cache
+            cache: AuxCache
         ): Encoder[A] = {
           val maybeStaticUrlFormData =
             schema.hints.get(internals.StaticUrlFormElements).map {

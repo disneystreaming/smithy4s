@@ -15,34 +15,26 @@
  */
 
 package smithy4s
-package http
 
+import munit.FunSuite
 import smithy4s.schema._
 
-/**
-  * Typeclass construct allowing to retrieve the status code associated to a value.
-  */
-trait HttpStatusCode[A] {
+class CachedSchemaCompilerSpec() extends FunSuite {
 
-  def code(a: A, default: Int): Int
-
-}
-
-object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
-
-  def apply[A](implicit instance: HttpStatusCode[A]): HttpStatusCode[A] =
-    instance
-  type Aux[A] = internals.HttpCode[A]
-
-  def fromSchemaAux[A](
-      schema: Schema[A],
-      cache: AuxCache
-  ): HttpStatusCode[A] = {
-    val visitor = new internals.ErrorCodeSchemaVisitor(cache)
-    val go = schema.compile(visitor)
-    new HttpStatusCode[A] {
-      def code(a: A, default: Int): Int = go(a).getOrElse(default)
+  test(
+    "CachedSchemaCompiler.Impl memoizes the result of `fromSchemaAux`"
+  ) {
+    var x = 0
+    val compiler = new CachedSchemaCompiler.Impl[Option] {
+      def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): Option[A] = {
+        x += 1
+        None
+      }
     }
+    val cache = compiler.createCache()
+    val _ = compiler.fromSchema(Schema.int, cache)
+    val _ = compiler.fromSchema(Schema.int, cache)
+    assertEquals(x, 1)
   }
 
 }

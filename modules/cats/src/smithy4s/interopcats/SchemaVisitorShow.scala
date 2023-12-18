@@ -27,9 +27,9 @@ import smithy4s.schema.Alt.Precompiler
 
 object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
   protected type Aux[A] = Show[A]
-  def fromSchema[A](
+  def fromSchemaAux[A](
       schema: Schema[A],
-      cache: Cache
+      cache: AuxCache
   ): Show[A] = {
     schema.compile(new SchemaVisitorShow(cache))
   }

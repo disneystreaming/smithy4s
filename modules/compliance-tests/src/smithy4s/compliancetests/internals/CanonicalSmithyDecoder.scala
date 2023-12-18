@@ -47,9 +47,9 @@ object CanonicalSmithyDecoder {
 
     protected type Aux[A] = smithy4s.internals.DocumentDecoder[A]
 
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Decoder[A] = {
       val decodeFunction =
         schema.compile(new SmithyNodeDocumentDecoderSchemaVisitor(cache))

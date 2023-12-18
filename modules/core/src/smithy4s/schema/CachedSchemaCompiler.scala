@@ -88,12 +88,26 @@ object CachedSchemaCompiler { outer =>
 
   abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
     protected type Aux[_]
-    type Cache = CompilationCache[Aux]
+    type AuxCache = CompilationCache[Aux]
+    case class Cache(outer: CompilationCache[F], inner: AuxCache)
+
+    def fromSchemaAux[A](
+        schema: Schema[A],
+        innerCache: CompilationCache[Aux]
+    ): F[A]
 
     override final def fromSchema[A](schema: Schema[A]): F[A] =
-      fromSchema(schema, CompilationCache.nop[Aux])
+      fromSchema(
+        schema,
+        Cache(CompilationCache.nop[F], CompilationCache.nop[Aux])
+      )
 
-    def createCache(): Cache = CompilationCache.make[Aux]
+    override final def fromSchema[A](schema: Schema[A], cache: Cache) = {
+      cache.outer.getOrElseUpdate(schema, s => fromSchemaAux(s, cache.inner))
+    }
+
+    def createCache(): Cache =
+      Cache(CompilationCache.make[F], CompilationCache.make[Aux])
   }
 
   abstract class Uncached[F[_]] extends CachedSchemaCompiler[F] {

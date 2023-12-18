@@ -102,9 +102,9 @@ object Document {
 
     protected type Aux[A] = internals.DocumentEncoder[A]
 
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Encoder[A] = {
       val makeEncoder =
         schema.compile(new DocumentEncoderSchemaVisitor(cache))
@@ -127,9 +127,9 @@ object Document {
 
     protected type Aux[A] = internals.DocumentDecoder[A]
 
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Decoder[A] = {
       val decodeFunction =
         schema.compile(new DocumentDecoderSchemaVisitor(cache))
