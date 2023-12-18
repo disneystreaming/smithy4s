@@ -1,3 +1,7 @@
+# 0.19.0
+
+* Reworked the CachedSchemaCompiler construct to prevent memory leaks when using schema-based implicit derivation in dynamic methods.
+
 # 0.18.4
 
 * Changes the behaviour of `Field#getUnlessDefault` and `Field#foreachUnlessDefault` to always take the value into consideration when the `smithy.api#required` trait
