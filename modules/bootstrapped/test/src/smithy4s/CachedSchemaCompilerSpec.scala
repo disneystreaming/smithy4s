@@ -32,8 +32,8 @@ class CachedSchemaCompilerSpec() extends FunSuite {
       }
     }
     val cache = compiler.createCache()
-    val _ = compiler.fromSchema(Schema.int, cache)
-    val _ = compiler.fromSchema(Schema.int, cache)
+    discardResult(compiler.fromSchema(Schema.int, cache))
+    discardResult(compiler.fromSchema(Schema.int, cache))
     assertEquals(x, 1)
   }
 
@@ -53,8 +53,8 @@ class CachedSchemaCompilerSpec() extends FunSuite {
       }
     }.mapK(transformation)
     val cache = compiler.createCache()
-    val _ = compiler.fromSchema(Schema.int, cache)
-    val _ = compiler.fromSchema(Schema.int, cache)
+    discardResult(compiler.fromSchema(Schema.int, cache))
+    discardResult(compiler.fromSchema(Schema.int, cache))
     assertEquals(x, 1)
   }
 
@@ -74,9 +74,13 @@ class CachedSchemaCompilerSpec() extends FunSuite {
       }
     }.contramapSchema(transformation)
     val cache = compiler.createCache()
-    val _ = compiler.fromSchema(Schema.int, cache)
-    val _ = compiler.fromSchema(Schema.int, cache)
+    discardResult(compiler.fromSchema(Schema.int, cache))
+    discardResult(compiler.fromSchema(Schema.int, cache))
     assertEquals(x, 1)
+  }
+
+  private def discardResult[A](f: => A): Unit = {
+    val _ = f
   }
 
 }
