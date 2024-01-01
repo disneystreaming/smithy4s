@@ -89,7 +89,7 @@ jobs:
         run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
       - name: Upload compilation cache
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
