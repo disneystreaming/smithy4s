@@ -1145,22 +1145,20 @@ private[smithy4s] class SchemaVisitorJCodec(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): JCodec[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        handleIntEnum(shapeId, hints, values, total, tag)
-      case _ =>
-        handleEnum(shapeId, hints, values, total, tag)
+      case t: EnumTag.IntEnum[E] =>
+        handleIntEnum(shapeId, hints, values, t)
+      case t: EnumTag.StringEnum[E] =>
+        handleStringEnum(shapeId, hints, values, t)
     }
 
-  private def handleEnum[E](
+  private def handleStringEnum[E](
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
-      total: E => EnumValue[E],
-      tag: EnumTag[E]
+      tag: EnumTag.StringEnum[E]
   ): JCodec[E] = new JCodec[E] {
     private val nameMap: Map[String, E] =
       values.map(v => v.stringValue -> v.value).toMap
@@ -1191,7 +1189,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
-      out.writeVal(total(x).stringValue)
+      out.writeVal(tag.value(x))
 
     def decodeKey(in: JsonReader): E = {
       val str = in.readKeyAsString()
@@ -1199,24 +1197,23 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =
-      out.writeKey(total(x).stringValue)
+      out.writeKey(tag.value(x))
   }
 
   private def handleIntEnum[E](
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
-      total: E => EnumValue[E],
-      tag: EnumTag[E]
+      tag: EnumTag.IntEnum[E]
   ): JCodec[E] = new JCodec[E] {
-    private val ordinalMap: Map[Int, E] =
+    private val intValueMap: Map[Int, E] =
       values.map(v => v.intValue -> v.value).toMap
 
     private def fromOrdinal(v: Int): Option[E] =
-      ordinalMap.get(v)
+      intValueMap.get(v)
 
     private def fromOrdinalOpen(v: Int, unknown: Int => E): E =
-      ordinalMap.getOrElse(v, unknown(v))
+      intValueMap.getOrElse(v, unknown(v))
 
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
@@ -1238,7 +1235,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
-      out.writeVal(total(x).intValue)
+      out.writeVal(tag.value(x))
 
     def decodeKey(in: JsonReader): E = {
       val i = in.readKeyAsInt()
@@ -1246,7 +1243,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =
-      out.writeKey(total(x).intValue)
+      out.writeKey(tag.value(x))
   }
 
   override def option[A](schema: Schema[A]): JCodec[Option[A]] =

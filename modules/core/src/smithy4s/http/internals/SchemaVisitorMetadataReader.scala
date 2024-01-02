@@ -112,8 +112,7 @@ private[http] class SchemaVisitorMetadataReader(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MetaDecode[E] = {
     val intVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
     val stringVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
@@ -126,16 +125,16 @@ private[http] class SchemaVisitorMetadataReader(
       values.find(_.stringValue == string).map(_.value)
     }
     tag match {
-      case EnumTag.ClosedIntEnum =>
+      case EnumTag.IntEnum(_, None) =>
         MetaDecode.from(intVals)(str => handleInt(str.toIntOption))
-      case EnumTag.OpenIntEnum(unknown) =>
+      case EnumTag.IntEnum(_, Some(unknown)) =>
         MetaDecode.from(intVals) { string =>
           val maybeInt = string.toIntOption
           handleInt(maybeInt).orElse(maybeInt.map(unknown))
         }
-      case EnumTag.ClosedStringEnum =>
+      case EnumTag.StringEnum(_, None) =>
         MetaDecode.from(stringVals)(handleString)
-      case EnumTag.OpenStringEnum(unknown) =>
+      case EnumTag.StringEnum(_, Some(unknown)) =>
         MetaDecode.from(stringVals)(str =>
           Some(handleString(str).getOrElse(unknown(str)))
         )

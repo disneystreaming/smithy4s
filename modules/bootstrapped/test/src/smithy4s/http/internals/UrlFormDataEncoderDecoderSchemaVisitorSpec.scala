@@ -362,9 +362,9 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
   }
 
   pureTest("enumeration") {
-    sealed abstract class FooBar(val value: String, val intValue: Int)
+    sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
-      val name = value
+      val name = stringValue
       val hints = Hints.empty
       type EnumType = FooBar
       def enumeration: smithy4s.Enumeration[FooBar] = FooBar

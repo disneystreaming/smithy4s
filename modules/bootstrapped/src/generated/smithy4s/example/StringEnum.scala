@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class StringEnum(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class StringEnum(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = StringEnum
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = StringEnum
@@ -22,13 +21,12 @@ object StringEnum extends Enumeration[StringEnum] with ShapeTag.Companion[String
 
   val hints: Hints = Hints.empty
 
-  case object STRING extends StringEnum("string", "STRING", 0, Hints())
-  case object INTERESTING extends StringEnum("interesting", "INTERESTING", 1, Hints())
+  case object STRING extends StringEnum("STRING", "string", 0, Hints())
+  case object INTERESTING extends StringEnum("INTERESTING", "interesting", 1, Hints())
 
   val values: List[StringEnum] = List(
     STRING,
     INTERESTING,
   )
-  val tag: EnumTag[StringEnum] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[StringEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[StringEnum] = stringEnumeration(values).withId(id).addHints(hints)
 }

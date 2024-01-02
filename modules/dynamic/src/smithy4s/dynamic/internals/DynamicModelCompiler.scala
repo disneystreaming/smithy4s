@@ -216,7 +216,7 @@ private[dynamic] object Compiler {
       update(id, shape.traits, bytes)
 
     override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
-      val values: List[EnumValue[Int]] =
+      val values: List[EnumValue[String]] =
         shape.members.toList
           // Introducing arbitrary ordering for reproducible rendering.
           // Needs to happen before zipWithIndex so that intValue is also predictable.
@@ -237,7 +237,7 @@ private[dynamic] object Compiler {
             EnumValue(
               stringValue = stringValue,
               intValue = i,
-              value = i,
+              value = stringValue,
               name = name,
               hints = allHints(traits)
             )
@@ -248,31 +248,15 @@ private[dynamic] object Compiler {
 
     private def makeStringEnum(
         id: ShapeId,
-        values: List[EnumValue[Int]],
+        values: List[EnumValue[String]],
         traits: Map[IdRef, Document]
     ) = {
-      if (traits.contains(IdRef("alloy#openEnum"))) {
-        // the runtime representation of normal enums is Int, but for open enums it's String to support arbitrary unknown values.
-        val mappedValues = values.map(_.map(_.asLeft[String]))
-
-        enumeration[Either[Int, String]](
-          _.fold(
-            mappedValues,
-            unknownValueString =>
-              EnumValue(
-                stringValue = unknownValueString,
-                intValue = -1,
-                value = unknownValueString.asRight[Int],
-                name = "$Unknown",
-                hints = Hints.empty
-              )
-          ),
-          EnumTag.OpenStringEnum(_.asRight[Int]),
-          mappedValues
-        )
-      } else
-        stringEnumeration(values, values)
-
+      val unknown: Option[String => String] =
+        if (traits.contains(IdRef("alloy#openEnum"))) {
+          Some(identity[String])
+        } else None
+      val tag = EnumTag.StringEnum(identity[String], unknown)
+      enumeration(tag, values)
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
@@ -303,31 +287,14 @@ private[dynamic] object Compiler {
 
       val valueList = values.map(_._2).toList.sortBy(_.intValue)
 
-      if (shape.traits.contains(IdRef("alloy#openEnum"))) {
-        val theEnum = enumeration[Int](
-          v =>
-            values.getOrElse(
-              v,
-              EnumValue(
-                stringValue = v.toString,
-                intValue = v,
-                value = v,
-                name = "$Unknown",
-                hints = Hints.empty
-              )
-            ),
-          EnumTag.OpenIntEnum(identity),
-          valueList
-        )
+      val unknown: Option[Int => Int] =
+        if (shape.traits.contains(IdRef("alloy#openEnum"))) {
+          Some(identity[Int])
+        } else None
+      val tag = EnumTag.IntEnum(identity[Int], unknown)
+      val schema = enumeration(tag, valueList)
+      update(id, shape.traits, schema)
 
-        update(id, shape.traits, theEnum)
-      } else {
-        update(
-          id,
-          shape.traits,
-          intEnumeration(values, valueList)
-        )
-      }
     }
 
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
@@ -349,7 +316,7 @@ private[dynamic] object Compiler {
                 stringValue = value,
                 intValue = intValue,
                 // Using the intValue as a runtime value
-                value = intValue,
+                value = value,
                 name = enumDefinition.name
                   .map(_.value)
                   .getOrElse(value.toUpperCase()),

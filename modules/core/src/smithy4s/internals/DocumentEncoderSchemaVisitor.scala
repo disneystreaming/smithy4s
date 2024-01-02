@@ -166,14 +166,13 @@ class DocumentEncoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): DocumentEncoder[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        from(e => Document.fromInt(total(e).intValue))
-      case _ =>
-        from(e => DString(total(e).stringValue))
+      case EnumTag.IntEnum(value, _) =>
+        from(e => Document.fromInt(value(e)))
+      case EnumTag.StringEnum(value, _) =>
+        from(e => DString(value(e)))
     }
 
   override def struct[S](

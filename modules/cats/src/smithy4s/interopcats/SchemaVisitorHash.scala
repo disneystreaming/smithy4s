@@ -77,18 +77,14 @@ final class SchemaVisitorHash(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Hash[E] = {
-    implicit val enumValueHash: Hash[EnumValue[E]] =
-      tag match {
-        case EnumTag.IntEnum() =>
-          Hash[Int].contramap(_.intValue)
-        case _ =>
-          Hash[String].contramap(_.stringValue)
-      }
-
-    Hash[EnumValue[E]].contramap(total)
+    tag match {
+      case EnumTag.IntEnum(value, _) =>
+        Hash[Int].contramap(value)
+      case EnumTag.StringEnum(value, _) =>
+        Hash[String].contramap(value)
+    }
   }
 
   override def struct[S](

@@ -1,3 +1,7 @@
+# 0.19.0
+
+* Reworked enumerations / the EnumerationSchema to eliminate a OOM pitfall and improve ergonomics of SchemaVisitor
+
 # 0.18.5
 
 * When encoding to `application/x-www-form-urlencoded`, omit optional fields set to the field's default value.

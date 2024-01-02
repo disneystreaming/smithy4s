@@ -70,12 +70,15 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
       sampleStruct(
         "superpower",
-        stringEnumeration[Superpower](
-          {
-            case Fire  => fire
-            case Ice   => ice
-            case Water => water
-          },
+        enumeration[Superpower](
+          smithy4s.schema.EnumTag.StringEnum(
+            {
+              case Fire  => "FIRE"
+              case Ice   => "ICE"
+              case Water => "WATER"
+            },
+            None
+          ),
           List(
             fire,
             ice,

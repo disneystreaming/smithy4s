@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class LeftRight(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class LeftRight(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = LeftRight
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = LeftRight
@@ -22,13 +21,12 @@ object LeftRight extends Enumeration[LeftRight] with ShapeTag.Companion[LeftRigh
 
   val hints: Hints = Hints.empty
 
-  case object LEFT extends LeftRight("left", "LEFT", 0, Hints())
-  case object RIGHT extends LeftRight("right", "RIGHT", 1, Hints())
+  case object LEFT extends LeftRight("LEFT", "left", 0, Hints())
+  case object RIGHT extends LeftRight("RIGHT", "right", 1, Hints())
 
   val values: List[LeftRight] = List(
     LEFT,
     RIGHT,
   )
-  val tag: EnumTag[LeftRight] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[LeftRight] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[LeftRight] = stringEnumeration(values).withId(id).addHints(hints)
 }

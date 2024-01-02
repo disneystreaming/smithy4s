@@ -55,14 +55,14 @@ class HttpResponseCodeSchemaVisitor()
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): ResponseCodeExtractor[E] =
     tag match {
-      case EnumTag.IntEnum() if hints.has[smithy.api.HttpResponseCode] =>
+      case EnumTag.IntEnum(value, _)
+          if hints.has[smithy.api.HttpResponseCode] =>
         Contravariant[ResponseCodeExtractor].contramap(
           HttpResponseCodeSchemaVisitor.int
-        )(e => total(e).intValue)
+        )(value)
       case _ =>
         NoResponseCode
     }

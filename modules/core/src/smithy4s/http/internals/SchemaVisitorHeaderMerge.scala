@@ -64,11 +64,10 @@ object SchemaVisitorHeaderMerge
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): AwsMergeableHeader[E] = tag match {
-    case EnumTag.IntEnum() => Some((e: E) => total(e).intValue.toString())
-    case _                 => Some((e: E) => total(e).stringValue)
+    case EnumTag.IntEnum(value, _)    => Some(value(_).toString())
+    case EnumTag.StringEnum(value, _) => Some(value(_))
   }
 
 }

@@ -296,6 +296,13 @@ private[internals] object CollisionAvoidance {
     val union_ = NameRef("smithy4s.schema.Schema", "union")
     val recursive_ = NameRef("smithy4s.schema.Schema", "recursive")
     val enumeration_ = NameRef("smithy4s.schema.Schema", "enumeration")
+    val stringEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "stringEnumeration")
+    val intEnumeration_ = NameRef("smithy4s.schema.Schema", "intEnumeration")
+    val openStringEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "openStringEnumeration")
+    val openIntEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "openIntEnumeration")
     val constant_ = NameRef("smithy4s.schema.Schema", "constant")
     val struct_ = NameRef("smithy4s.schema.Schema", "struct")
     val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")

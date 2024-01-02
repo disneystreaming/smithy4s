@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class PizzaBase(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class PizzaBase(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = PizzaBase
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = PizzaBase
@@ -22,13 +21,12 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
 
   val hints: Hints = Hints.empty
 
-  case object CREAM extends PizzaBase("C", "CREAM", 0, Hints())
-  case object TOMATO extends PizzaBase("T", "TOMATO", 1, Hints())
+  case object CREAM extends PizzaBase("CREAM", "C", 0, Hints())
+  case object TOMATO extends PizzaBase("TOMATO", "T", 1, Hints())
 
   val values: List[PizzaBase] = List(
     CREAM,
     TOMATO,
   )
-  val tag: EnumTag[PizzaBase] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[PizzaBase] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[PizzaBase] = stringEnumeration(values).withId(id).addHints(hints)
 }

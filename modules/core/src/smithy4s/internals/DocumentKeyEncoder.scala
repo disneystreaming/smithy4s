@@ -91,13 +91,12 @@ object DocumentKeyEncoder {
           shapeId: ShapeId,
           hints: Hints,
           tag: EnumTag[E],
-          values: List[EnumValue[E]],
-          total: E => EnumValue[E]
+          values: List[EnumValue[E]]
       ): OptDocumentKeyEncoder[E] = tag match {
-        case EnumTag.IntEnum() =>
-          Some { a => total(a).intValue.toString }
-        case _ =>
-          Some { a => total(a).stringValue }
+        case EnumTag.IntEnum(value, _) =>
+          Some { a => value(a).toString }
+        case EnumTag.StringEnum(value, _) =>
+          Some { value(_) }
       }
 
       override def biject[A, B](

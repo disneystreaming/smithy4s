@@ -73,8 +73,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): SchemaDescriptionDetailedImpl[E] = {
     val vDesc = values.map(e => s""""${e.stringValue}"""").mkString(", ")
     SchemaDescriptionDetailedImpl.of(shapeId, s"enum($vDesc)")

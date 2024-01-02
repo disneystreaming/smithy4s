@@ -1227,15 +1227,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case EnumTag.IntEnum | EnumTag.OpenIntEnum => true
       case _                                     => false
     }
+    val enumSchemaMethod = (isOpen, isIntEnum) match {
+      case (false, false) => stringEnumeration_
+      case (true, false)  => openStringEnumeration_
+      case (false, true)  => intEnumeration_
+      case (true, true)   => openIntEnumeration_
+    }
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
+        line"sealed abstract class ${name.name}(_name: $string_, _stringValue: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
         line"override type EnumType = $name",
-        line"override val value: $string_ = _value",
         line"override val name: $string_ = _name",
+        line"override val stringValue: $string_ = _stringValue",
         line"override val intValue: $int_ = _intValue",
         line"override val hints: $Hints_ = _hints",
         line"override def enumeration: $Enumeration_[EnumType] = $name",
@@ -1254,7 +1260,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           lines(
             documentationAnnotation(hints),
             deprecationAnnotation(hints),
-            line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
+            line"""case object $valueName extends $name("${e.name}", "$value", $intValue, $valueHints)"""
           )
         },
         if (isOpen) {
@@ -1272,8 +1278,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"val values: $list[$name] = $list".args(
           values.map(_.name)
         ),
-        renderEnumTag(name, tag),
-        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
+        if (isOpen) {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values, $$unknown).withId(id).addHints(hints)"
+        } else {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values).withId(id).addHints(hints)"
+        },
         renderTypeclasses(hints, name)
       )
     )

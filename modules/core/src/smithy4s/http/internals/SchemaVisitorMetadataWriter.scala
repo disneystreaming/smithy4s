@@ -143,14 +143,13 @@ class SchemaVisitorMetadataWriter(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MetaEncode[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        StringValueMetaEncode(e => total(e).intValue.toString())
-      case _ =>
-        StringValueMetaEncode(e => total(e).stringValue)
+      case EnumTag.IntEnum(value, _) =>
+        StringValueMetaEncode(e => value(e).toString())
+      case EnumTag.StringEnum(value, _) =>
+        StringValueMetaEncode(value)
     }
 
   override def struct[S](

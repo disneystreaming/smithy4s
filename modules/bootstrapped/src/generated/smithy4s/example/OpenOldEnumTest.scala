@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.openStringEnumeration
 
-sealed abstract class OpenOldEnumTest(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class OpenOldEnumTest(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OpenOldEnumTest
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = OpenOldEnumTest
@@ -32,6 +31,5 @@ object OpenOldEnumTest extends Enumeration[OpenOldEnumTest] with ShapeTag.Compan
   val values: List[OpenOldEnumTest] = List(
     ONE,
   )
-  val tag: EnumTag[OpenOldEnumTest] = EnumTag.OpenStringEnum($unknown)
-  implicit val schema: Schema[OpenOldEnumTest] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OpenOldEnumTest] = openStringEnumeration(values, $unknown).withId(id).addHints(hints)
 }
