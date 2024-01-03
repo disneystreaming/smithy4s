@@ -1,3 +1,7 @@
+# 0.18.5
+
+* When encoding to `application/x-www-form-urlencoded`, omit optional fields set to the field's default value.
+
 # 0.18.4
 
 * Changes the behaviour of `Field#getUnlessDefault` and `Field#foreachUnlessDefault` to always take the value into consideration when the `smithy.api#required` trait
