@@ -24,7 +24,7 @@ object OpenOldEnumCollisionTest extends Enumeration[OpenOldEnumCollisionTest] wi
   )
 
   case object Unknown extends OpenOldEnumCollisionTest("Unknown", "unknown", 0, Hints())
-  final case class $Unknown(str: String) extends OpenOldEnumCollisionTest(str, "$Unknown", -1, Hints.empty)
+  final case class $Unknown(str: String) extends OpenOldEnumCollisionTest("$Unknown", str, -1, Hints.empty)
 
   val $unknown: String => OpenOldEnumCollisionTest = $Unknown(_)
 

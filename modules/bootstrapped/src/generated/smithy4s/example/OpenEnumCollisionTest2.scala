@@ -34,7 +34,7 @@ object OpenEnumCollisionTest2 extends Enumeration[OpenEnumCollisionTest2] with S
   case object ONE extends OpenEnumCollisionTest2("ONE", "ONE", 0, Hints())
   case object TWO extends OpenEnumCollisionTest2("TWO", "TWO", 1, Hints())
   case object THREE extends OpenEnumCollisionTest2("THREE", "unknown", 2, Hints())
-  final case class $Unknown(str: String) extends OpenEnumCollisionTest2(str, "$Unknown", -1, Hints.empty)
+  final case class $Unknown(str: String) extends OpenEnumCollisionTest2("$Unknown", str, -1, Hints.empty)
 
   val $unknown: String => OpenEnumCollisionTest2 = $Unknown(_)
 

@@ -25,7 +25,7 @@ object OpenNumsStr extends Enumeration[OpenNumsStr] with ShapeTag.Companion[Open
 
   case object ONE extends OpenNumsStr("ONE", "ONE", 0, Hints())
   case object TWO extends OpenNumsStr("TWO", "TWO", 1, Hints())
-  final case class $Unknown(str: String) extends OpenNumsStr(str, "$Unknown", -1, Hints.empty)
+  final case class $Unknown(str: String) extends OpenNumsStr("$Unknown", str, -1, Hints.empty)
 
   val $unknown: String => OpenNumsStr = $Unknown(_)
 

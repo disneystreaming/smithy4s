@@ -1269,7 +1269,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val intValue = if (isIntEnum) paramName else "-1"
           val stringValue = if (isIntEnum) "\"$Unknown\"" else paramName
           lines(
-            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, "$$Unknown", $intValue, Hints.empty)""",
+            line"""final case class $$Unknown($paramName: $paramType) extends $name("$$Unknown", $stringValue, $intValue, Hints.empty)""",
             newline,
             line"val $$unknown: $paramType => $name = $$Unknown(_)"
           )
