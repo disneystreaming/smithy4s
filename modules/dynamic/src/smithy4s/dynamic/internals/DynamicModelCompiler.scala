@@ -253,9 +253,9 @@ private[dynamic] object Compiler {
     ) = {
       val unknown: Option[String => String] =
         if (traits.contains(IdRef("alloy#openEnum"))) {
-          Some(identity[String])
+          Some(DynamicLambdas.StringIdentity)
         } else None
-      val tag = EnumTag.StringEnum(identity[String], unknown)
+      val tag = EnumTag.StringEnum(DynamicLambdas.StringIdentity, unknown)
       enumeration(tag, values)
     }
 
@@ -289,9 +289,9 @@ private[dynamic] object Compiler {
 
       val unknown: Option[Int => Int] =
         if (shape.traits.contains(IdRef("alloy#openEnum"))) {
-          Some(identity[Int])
+          Some(DynamicLambdas.IntIdentity)
         } else None
-      val tag = EnumTag.IntEnum(identity[Int], unknown)
+      val tag = EnumTag.IntEnum(DynamicLambdas.IntIdentity, unknown)
       val schema = enumeration(tag, valueList)
       update(id, shape.traits, schema)
 
