@@ -55,12 +55,12 @@ private[internals] final class SchemaVisitorPatternDecoder(
     val fromIntValue =
       values.map(e => BigDecimal(e.intValue) -> e.value).toMap
     tag match {
-      case EnumTag.OpenStringEnum(unknown) =>
+      case EnumTag.StringEnum(_, Some(unknown)) =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else unknown(value)
         )
-      case EnumTag.OpenIntEnum(unknown) =>
+      case EnumTag.IntEnum(_, Some(unknown)) =>
         PatternDecode.from(value =>
           if (fromIntValue.contains(BigDecimal(value)))
             fromIntValue(BigDecimal(value))
@@ -76,13 +76,13 @@ private[internals] final class SchemaVisitorPatternDecoder(
                 )
               )
         )
-      case EnumTag.IntEnum(_, _) =>
+      case EnumTag.IntEnum(_, None) =>
         PatternDecode.from(value =>
           if (fromIntValue.contains(BigDecimal(value)))
             fromIntValue(BigDecimal(value))
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case EnumTag.StringEnum(_, _) =>
+      case EnumTag.StringEnum(_, None) =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")

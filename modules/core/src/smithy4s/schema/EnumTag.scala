@@ -22,20 +22,4 @@ sealed trait EnumTag[E]
 object EnumTag {
   case class StringEnum[E](value: E => String, unknown: Option[String => E]) extends EnumTag[E]
   case class IntEnum[E](value: E => Int, unknown: Option[Int => E])          extends EnumTag[E]
-
-  object OpenStringEnum {
-    def unapply[E](enumTag: EnumTag[E]): Option[String => E] = enumTag match {
-      case t: StringEnum[E] => t.unknown
-      case _                => None
-    }
-
-  }
-
-  object OpenIntEnum {
-    def unapply[E](enumTag: EnumTag[E]): Option[Int => E] = enumTag match {
-      case t: IntEnum[E] => t.unknown
-      case _             => None
-    }
-  }
-
 }

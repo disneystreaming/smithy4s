@@ -1160,24 +1160,18 @@ private[smithy4s] class SchemaVisitorJCodec(
       values: List[EnumValue[E]],
       tag: EnumTag.StringEnum[E]
   ): JCodec[E] = new JCodec[E] {
-    private val nameMap: Map[String, E] =
+    private val stringValueMap: Map[String, E] =
       values.map(v => v.stringValue -> v.value).toMap
-
-    private def fromName(v: String): Option[E] =
-      nameMap.get(v)
-
-    private def fromNameOpen(v: String, unknown: String => E): E =
-      nameMap.getOrElse(v, unknown(v))
 
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
-    private val decode: (JsonReader, String) => E = tag match {
-      case EnumTag.OpenStringEnum(unknown) =>
-        (_, str) => fromNameOpen(str, unknown)
-      case _ =>
+    private val decode: (JsonReader, String) => E = tag.unknown match {
+      case Some(unknown) =>
+        (_, str) => stringValueMap.getOrElse(str, unknown(str))
+      case None =>
         (in, str) =>
-          fromName(str) match {
+          stringValueMap.get(str) match {
             case Some(value) => value
             case None        => in.enumValueError(str)
           }
@@ -1209,21 +1203,15 @@ private[smithy4s] class SchemaVisitorJCodec(
     private val intValueMap: Map[Int, E] =
       values.map(v => v.intValue -> v.value).toMap
 
-    private def fromOrdinal(v: Int): Option[E] =
-      intValueMap.get(v)
-
-    private def fromOrdinalOpen(v: Int, unknown: Int => E): E =
-      intValueMap.getOrElse(v, unknown(v))
-
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
-    private val decode: (JsonReader, Int) => E = tag match {
-      case EnumTag.OpenIntEnum(unknown) =>
-        (_, i) => fromOrdinalOpen(i, unknown)
-      case _ =>
+    private val decode: (JsonReader, Int) => E = tag.unknown match {
+      case Some(unknown) =>
+        (_, i) => intValueMap.getOrElse(i, unknown(i))
+      case None =>
         (in, i) =>
-          fromOrdinal(i) match {
+          intValueMap.get(i) match {
             case Some(value) => value
             case None        => in.enumValueError(i)
           }

@@ -20,8 +20,6 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
 import smithy4s.codegen.internals.Type.Nullable
@@ -1443,16 +1441,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
-  }
-
-  def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
-    val tagStr = tag match {
-      case IntEnum                => "ClosedIntEnum"
-      case StringEnum             => "ClosedStringEnum"
-      case EnumTag.OpenIntEnum    => "OpenIntEnum($unknown)"
-      case EnumTag.OpenStringEnum => "OpenStringEnum($unknown)"
-    }
-    line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
