@@ -25,8 +25,8 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
     smithy4s.example.Hash(),
   )
 
-  case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints())
-  case object WIFI extends NetworkConnectionType("WIFI", "WIFI", 1, Hints())
+  case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints.empty)
+  case object WIFI extends NetworkConnectionType("WIFI", "WIFI", 1, Hints.empty)
 
   val values: List[NetworkConnectionType] = List(
     ETHERNET,

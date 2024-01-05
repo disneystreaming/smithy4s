@@ -28,8 +28,10 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   )
 
   @deprecated(message = "N/A", since = "N/A")
-  case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints(smithy.api.Deprecated(message = None, since = None)))
-  case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints())
+  case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints.empty) {
+    override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None))
+  }
+  case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints.empty)
 
   val values: List[EnumWithDeprecations] = List(
     OLD,

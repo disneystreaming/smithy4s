@@ -30,7 +30,7 @@ object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Compan
     val $unknown: Prism[OpenIntEnumTest, OpenIntEnumTest.$Unknown] = Prism.partial[OpenIntEnumTest, OpenIntEnumTest.$Unknown]{ case u: OpenIntEnumTest.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenIntEnumTest("ONE", "ONE", 1, Hints())
+  case object ONE extends OpenIntEnumTest("ONE", "ONE", 1, Hints.empty)
   final case class $Unknown(int: Int) extends OpenIntEnumTest("$Unknown", "$Unknown", int, Hints.empty)
 
   val $unknown: Int => OpenIntEnumTest = $Unknown(_)
