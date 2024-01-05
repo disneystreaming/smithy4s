@@ -44,7 +44,7 @@ trait Refinement[A, B] { self =>
     (a: A) =>
       apply(a).left.map(msg =>
         ConstraintError(
-          new Hints.Binding.StaticBinding[Constraint](tag, Lazy(constraint)),
+          Hints.Binding.fromValue(tag, constraint),
           msg
         )
       )
@@ -53,7 +53,7 @@ trait Refinement[A, B] { self =>
     apply(_) match {
       case Left(msg) =>
         throw ConstraintError(
-          new Hints.Binding.StaticBinding[Constraint](tag, Lazy(constraint)),
+          Hints.Binding.fromValue(tag, constraint),
           msg
         )
       case Right(b) => b

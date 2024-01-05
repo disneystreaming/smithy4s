@@ -143,9 +143,6 @@ object Hints {
           if (key.eq(k)) Some(value.value.asInstanceOf[A]) else None
         case Binding.DynamicBinding(_, value) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
-        // to satisfy the compiler, although this is unreachable
-        case null | _ =>
-          sys.error("impossible")
       }
     def ++(other: Hints): Hints = {
       Impl(
@@ -175,15 +172,10 @@ object Hints {
     def keyId: ShapeId
   }
 
-  object Binding extends BindingPlatform {
-    def ordinal(b: Binding): Int = b match {
-      case _: Binding.StaticBinding[_] => 0
-      case _: Binding.DynamicBinding   => 1
-    }
-
-    final class StaticBinding[A](
+  object Binding {
+    private[smithy4s] final case class StaticBinding[A](
         k: ShapeTag[A],
-        private val v: Lazy[A]
+        val v: Lazy[A]
     ) extends Binding {
       override def keyId: ShapeId = key.id
       def key: ShapeTag[A] = k
@@ -202,56 +194,12 @@ object Hints {
 
       override def hashCode(): Int =
         Objects.hash(key, value.asInstanceOf[AnyRef])
-
-      // BINCOMPAT FOR 0.18 START
-      private[Binding] def this(key: ShapeTag[A], value: A) =
-        this(key, Lazy(value))
-
-      private[Binding] def copy(
-          key: ShapeTag[A],
-          value: A
-      ): StaticBinding[A] =
-        new StaticBinding(key, Lazy(value))
-
-      private[Binding] def copy$default$1(): ShapeTag[A] = k
-      private[Binding] def copy$default$2(): A = v.value
-
-      private[Binding] def _1: ShapeTag[A] = key
-      private[Binding] def _2: A = value
-
-      override def canEqual(that: Any): Boolean = that match {
-        case _: StaticBinding[_] => true
-        case _                   => false
-      }
-
-      override def productArity: Int = 2
-
-      override def productElement(n: Int): Any =
-        n match {
-          case 0 => key
-          case 1 => value
-          case _ => throw new IndexOutOfBoundsException(n.toString)
-        }
-
-      // BINCOMPAT FOR 0.18 END
-
     }
 
-    object StaticBinding extends StaticBindingPlatform {
-      // BINCOMPAT FOR 0.18 START
-      def apply[A](key: ShapeTag[A], value: A): StaticBinding[A] =
-        new StaticBinding[A](key, value)
-
-      def unapply[A](
-          binding: StaticBinding[A]
-      ): Option[(ShapeTag[A], Lazy[A])] =
-        Some((binding.key, binding.v))
-
-      // BINCOMPAT FOR 0.18 END
-    }
-
-    final case class DynamicBinding(keyId: ShapeId, value: Document)
-        extends Binding {
+    private[smithy4s] final case class DynamicBinding(
+        keyId: ShapeId,
+        value: Document
+    ) extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
     }
 
@@ -259,9 +207,9 @@ object Hints {
         key: ShapeTag[A]
     ): Binding = new StaticBinding[A](key, Lazy[A](value))
 
-    private[smithy4s] def fromValue[A, AA <: A](value: AA)(implicit
+    def fromValue[A, AA <: A](value: AA)(implicit
         key: ShapeTag[A]
-    ): Binding = fromValueLazy[A, AA](value)
+    ): Binding = new StaticBinding[A](key, Lazy[A](value))
 
     implicit def fromTuple(tup: (ShapeId, Document)): Binding =
       DynamicBinding(tup._1, tup._2)
