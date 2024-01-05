@@ -126,7 +126,6 @@ object Hints {
     bindings.map {
       case b @ Binding.StaticBinding(k, _)  => k.id -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b
-      case null | _                         => sys.error("unreachable")
     }.toMap
   }
 
