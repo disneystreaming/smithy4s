@@ -315,7 +315,6 @@ private[dynamic] object Compiler {
               EnumValue(
                 stringValue = value,
                 intValue = intValue,
-                // Using the intValue as a runtime value
                 value = value,
                 name = enumDefinition.name
                   .map(_.value)
