@@ -44,7 +44,7 @@ trait Refinement[A, B] { self =>
     (a: A) =>
       apply(a).left.map(msg =>
         ConstraintError(
-          Hints.Binding.fromValue(tag, constraint),
+          Hints.Binding.fromValue(constraint)(tag),
           msg
         )
       )
@@ -53,7 +53,7 @@ trait Refinement[A, B] { self =>
     apply(_) match {
       case Left(msg) =>
         throw ConstraintError(
-          Hints.Binding.fromValue(tag, constraint),
+          Hints.Binding.fromValue(constraint)(tag),
           msg
         )
       case Right(b) => b
