@@ -24,8 +24,8 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
     smithy.api.MediaType("audio/mpeg3"),
   )
 
-  case object GUITAR extends AudioEnum("guitar", "GUITAR", 0, Hints.empty)
-  case object BASS extends AudioEnum("bass", "BASS", 1, Hints.empty)
+  case object GUITAR extends AudioEnum("guitar", "GUITAR", 0, Hints())
+  case object BASS extends AudioEnum("bass", "BASS", 1, Hints())
 
   val values: List[AudioEnum] = List(
     GUITAR,

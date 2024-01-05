@@ -32,9 +32,9 @@ object OpenEnumCollisionTest extends Enumeration[OpenEnumCollisionTest] with Sha
     val $unknown: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.$Unknown] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.$Unknown]{ case u: OpenEnumCollisionTest.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenEnumCollisionTest("ONE", "ONE", 0, Hints.empty)
-  case object TWO extends OpenEnumCollisionTest("TWO", "TWO", 1, Hints.empty)
-  case object Unknown extends OpenEnumCollisionTest("Unknown", "Unknown", 2, Hints.empty)
+  case object ONE extends OpenEnumCollisionTest("ONE", "ONE", 0, Hints())
+  case object TWO extends OpenEnumCollisionTest("TWO", "TWO", 1, Hints())
+  case object Unknown extends OpenEnumCollisionTest("Unknown", "Unknown", 2, Hints())
   final case class $Unknown(str: String) extends OpenEnumCollisionTest(str, "$Unknown", -1, Hints.empty)
 
   val $unknown: String => OpenEnumCollisionTest = $Unknown(_)

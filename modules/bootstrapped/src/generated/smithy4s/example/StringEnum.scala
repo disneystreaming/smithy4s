@@ -22,8 +22,8 @@ object StringEnum extends Enumeration[StringEnum] with ShapeTag.Companion[String
 
   val hints: Hints = Hints.empty
 
-  case object STRING extends StringEnum("string", "STRING", 0, Hints.empty)
-  case object INTERESTING extends StringEnum("interesting", "INTERESTING", 1, Hints.empty)
+  case object STRING extends StringEnum("string", "STRING", 0, Hints())
+  case object INTERESTING extends StringEnum("interesting", "INTERESTING", 1, Hints())
 
   val values: List[StringEnum] = List(
     STRING,

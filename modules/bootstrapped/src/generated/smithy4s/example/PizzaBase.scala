@@ -22,8 +22,8 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
 
   val hints: Hints = Hints.empty
 
-  case object CREAM extends PizzaBase("C", "CREAM", 0, Hints.empty)
-  case object TOMATO extends PizzaBase("T", "TOMATO", 1, Hints.empty)
+  case object CREAM extends PizzaBase("C", "CREAM", 0, Hints())
+  case object TOMATO extends PizzaBase("T", "TOMATO", 1, Hints())
 
   val values: List[PizzaBase] = List(
     CREAM,

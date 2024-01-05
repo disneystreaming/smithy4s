@@ -24,7 +24,7 @@ object OpenOldEnumTest extends Enumeration[OpenOldEnumTest] with ShapeTag.Compan
     alloy.OpenEnum(),
   )
 
-  case object ONE extends OpenOldEnumTest("ONE", "ONE", 0, Hints.empty)
+  case object ONE extends OpenOldEnumTest("ONE", "ONE", 0, Hints())
   final case class $Unknown(str: String) extends OpenOldEnumTest(str, "$Unknown", -1, Hints.empty)
 
   val $unknown: String => OpenOldEnumTest = $Unknown(_)

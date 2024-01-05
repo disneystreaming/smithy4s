@@ -28,8 +28,8 @@ object OpticsEnum extends Enumeration[OpticsEnum] with ShapeTag.Companion[Optics
     val B: Prism[OpticsEnum, OpticsEnum.B.type] = Prism.partial[OpticsEnum, OpticsEnum.B.type]{ case OpticsEnum.B => OpticsEnum.B }(identity)
   }
 
-  case object A extends OpticsEnum("A", "A", 0, Hints.empty)
-  case object B extends OpticsEnum("B", "B", 1, Hints.empty)
+  case object A extends OpticsEnum("A", "A", 0, Hints())
+  case object B extends OpticsEnum("B", "B", 1, Hints())
 
   val values: List[OpticsEnum] = List(
     A,

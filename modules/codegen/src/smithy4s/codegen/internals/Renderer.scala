@@ -1250,7 +1250,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         values.map { case e @ EnumValue(value, intValue, _, hints) =>
           val valueName = NameRef(e.name)
 
-          val baseLine = line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $Hints_.empty)"""
+          val baseLine = line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $Hints_())"""
 
           lines(
             documentationAnnotation(hints),

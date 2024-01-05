@@ -22,8 +22,8 @@ object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumRe
 
   val hints: Hints = Hints.empty
 
-  case object FIRST extends EnumResult("FIRST", "FIRST", 1, Hints.empty)
-  case object SECOND extends EnumResult("SECOND", "SECOND", 2, Hints.empty)
+  case object FIRST extends EnumResult("FIRST", "FIRST", 1, Hints())
+  case object SECOND extends EnumResult("SECOND", "SECOND", 2, Hints())
 
   val values: List[EnumResult] = List(
     FIRST,
