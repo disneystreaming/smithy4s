@@ -22,8 +22,8 @@ object OldStyleLeftRight extends Enumeration[OldStyleLeftRight] with ShapeTag.Co
 
   val hints: Hints = Hints.empty
 
-  case object LEFT extends OldStyleLeftRight("left", "LEFT", 0, Hints())
-  case object RIGHT extends OldStyleLeftRight("right", "RIGHT", 1, Hints())
+  case object LEFT extends OldStyleLeftRight("left", "LEFT", 0, Hints.empty)
+  case object RIGHT extends OldStyleLeftRight("right", "RIGHT", 1, Hints.empty)
 
   val values: List[OldStyleLeftRight] = List(
     LEFT,

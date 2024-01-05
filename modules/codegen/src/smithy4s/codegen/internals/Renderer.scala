@@ -1249,7 +1249,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderPrismsEnum(name, values, hints, isOpen),
         values.map { case e @ EnumValue(value, intValue, _, hints) =>
           val valueName = NameRef(e.name)
-          val valueHints = line"$Hints_(${memberHints(e.hints)})"
+          val valueHints =
+            if (e.hints.isEmpty) line"$Hints_.empty"
+            else line"$Hints_.lazily($Hints_(${memberHints(e.hints)}))"
 
           lines(
             documentationAnnotation(hints),

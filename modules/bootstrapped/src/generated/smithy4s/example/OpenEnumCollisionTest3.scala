@@ -34,9 +34,9 @@ object OpenEnumCollisionTest3 extends Enumeration[OpenEnumCollisionTest3] with S
     val $unknown: Prism[OpenEnumCollisionTest3, OpenEnumCollisionTest3.$Unknown] = Prism.partial[OpenEnumCollisionTest3, OpenEnumCollisionTest3.$Unknown]{ case u: OpenEnumCollisionTest3.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenEnumCollisionTest3("ONE", "ONE", 0, Hints())
-  case object TWO extends OpenEnumCollisionTest3("TWO", "TWO", 1, Hints())
-  case object unknown extends OpenEnumCollisionTest3("unknown", "unknown", 2, Hints())
+  case object ONE extends OpenEnumCollisionTest3("ONE", "ONE", 0, Hints.empty)
+  case object TWO extends OpenEnumCollisionTest3("TWO", "TWO", 1, Hints.empty)
+  case object unknown extends OpenEnumCollisionTest3("unknown", "unknown", 2, Hints.empty)
   final case class $Unknown(str: String) extends OpenEnumCollisionTest3(str, "$Unknown", -1, Hints.empty)
 
   val $unknown: String => OpenEnumCollisionTest3 = $Unknown(_)

@@ -22,8 +22,8 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
 
   val hints: Hints = Hints.empty
 
-  case object ON extends SwitchState("ON", "ON", 0, Hints())
-  case object OFF extends SwitchState("OFF", "OFF", 1, Hints())
+  case object ON extends SwitchState("ON", "ON", 0, Hints.empty)
+  case object OFF extends SwitchState("OFF", "OFF", 1, Hints.empty)
 
   val values: List[SwitchState] = List(
     ON,
