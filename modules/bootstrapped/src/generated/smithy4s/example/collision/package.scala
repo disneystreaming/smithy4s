@@ -1,7 +1,7 @@
 package smithy4s.example
 
 package object collision {
-  type ReservedNameService[F[_]] = smithy4s.kinds.FunctorAlgebra[ReservedNameServiceGen, F]
+  type ReservedNameService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[ReservedNameServiceGen, F]
   val ReservedNameService = ReservedNameServiceGen
 
   type MyList = smithy4s.example.collision.MyList.Type

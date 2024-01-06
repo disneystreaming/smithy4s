@@ -1,20 +1,20 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.bigdecimal
 import smithy4s.schema.Schema.bigint
-import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.union
 
 /** Helpful information for Foo
   * int, bigInt and bDec are useful number constructs
   * The string case is there because.
   */
-sealed trait Foo extends scala.Product with scala.Serializable { self =>
+sealed trait Foo extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: Foo = this
   def $ordinal: Int
 

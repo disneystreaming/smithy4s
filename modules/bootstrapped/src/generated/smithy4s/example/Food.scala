@@ -1,13 +1,13 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 
-sealed trait Food extends scala.Product with scala.Serializable { self =>
+sealed trait Food extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: Food = this
   def $ordinal: Int
 

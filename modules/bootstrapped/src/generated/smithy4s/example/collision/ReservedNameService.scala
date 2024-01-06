@@ -1,23 +1,23 @@
 package smithy4s.example.collision
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.OperationSchema
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): F[SetInput, Nothing, Unit, Nothing, Nothing]
-  def list(list: scala.List[smithy4s.example.collision.String]): F[ListInput, Nothing, Unit, Nothing, Nothing]
-  def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): F[MapInput, Nothing, Unit, Nothing, Nothing]
-  def option(value: scala.Option[smithy4s.example.collision.String] = None): F[OptionInput, Nothing, Unit, Nothing, Nothing]
+  def set(set: _root_.scala.collection.immutable.Set[smithy4s.example.collision.String]): F[SetInput, Nothing, Unit, Nothing, Nothing]
+  def list(list: _root_.scala.List[smithy4s.example.collision.String]): F[ListInput, Nothing, Unit, Nothing, Nothing]
+  def map(value: _root_.scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): F[MapInput, Nothing, Unit, Nothing, Nothing]
+  def option(value: _root_.scala.Option[smithy4s.example.collision.String] = None): F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](this)
 }
@@ -25,7 +25,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
-  val version: java.lang.String = "1.0.0"
+  val version: _root_.java.lang.String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -67,16 +67,16 @@ sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, Str
 object ReservedNameServiceOperation {
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
-    def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): Set = Set(SetInput(set))
-    def list(list: scala.List[smithy4s.example.collision.String]): List = List(ListInput(list))
-    def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): Map = Map(MapInput(value))
-    def option(value: scala.Option[smithy4s.example.collision.String] = None): Option = Option(OptionInput(value))
+    def set(set: _root_.scala.collection.immutable.Set[smithy4s.example.collision.String]): Set = Set(SetInput(set))
+    def list(list: _root_.scala.List[smithy4s.example.collision.String]): List = List(ListInput(list))
+    def map(value: _root_.scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): Map = Map(MapInput(value))
+    def option(value: _root_.scala.Option[smithy4s.example.collision.String] = None): Option = Option(OptionInput(value))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
-    def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): P1[SetInput, Nothing, Unit, Nothing, Nothing] = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
-    def list(list: scala.List[smithy4s.example.collision.String]): P1[ListInput, Nothing, Unit, Nothing, Nothing] = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
-    def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): P1[MapInput, Nothing, Unit, Nothing, Nothing] = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
-    def option(value: scala.Option[smithy4s.example.collision.String] = None): P1[OptionInput, Nothing, Unit, Nothing, Nothing] = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
+    def set(set: _root_.scala.collection.immutable.Set[smithy4s.example.collision.String]): P1[SetInput, Nothing, Unit, Nothing, Nothing] = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
+    def list(list: _root_.scala.List[smithy4s.example.collision.String]): P1[ListInput, Nothing, Unit, Nothing, Nothing] = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
+    def map(value: _root_.scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): P1[MapInput, Nothing, Unit, Nothing, Nothing] = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
+    def option(value: _root_.scala.Option[smithy4s.example.collision.String] = None): P1[OptionInput, Nothing, Unit, Nothing, Nothing] = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {

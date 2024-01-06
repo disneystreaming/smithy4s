@@ -1,17 +1,17 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.ErrorSchema
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.ErrorSchema
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
 
 trait KVStoreGen[F[_, _, _, _, _]] {
@@ -97,7 +97,7 @@ object KVStoreOperation {
       .withOutput(Value.schema)
     def wrap(input: Key): Get = Get(input)
   }
-  sealed trait GetError extends scala.Product with scala.Serializable { self =>
+  sealed trait GetError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: GetError = this
     def $ordinal: Int
 
@@ -175,7 +175,7 @@ object KVStoreOperation {
       .withOutput(unit)
     def wrap(input: KeyValue): Put = Put(input)
   }
-  sealed trait PutError extends scala.Product with scala.Serializable { self =>
+  sealed trait PutError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: PutError = this
     def $ordinal: Int
 
@@ -239,7 +239,7 @@ object KVStoreOperation {
       .withOutput(unit)
     def wrap(input: Key): Delete = Delete(input)
   }
-  sealed trait DeleteError extends scala.Product with scala.Serializable { self =>
+  sealed trait DeleteError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: DeleteError = this
     def $ordinal: Int
 

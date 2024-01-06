@@ -1,13 +1,13 @@
 package smithy4s.example
 
-import smithy4s.Document
-import smithy4s.Hints
-import smithy4s.Newtype
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.schema.Schema.bijection
+import _root_.smithy4s.Document
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Newtype
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.document
-import smithy4s.schema.Schema.recursive
 
 object ArbitraryData extends Newtype[Document] {
   val id: ShapeId = ShapeId("smithy4s.example", "arbitraryData")

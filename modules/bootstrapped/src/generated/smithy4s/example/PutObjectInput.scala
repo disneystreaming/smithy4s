@@ -1,11 +1,11 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 /** A key and bucket is always required for putting a new file in a bucket */
 final case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)

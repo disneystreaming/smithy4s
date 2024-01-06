@@ -1,13 +1,13 @@
 package smithy4s.example
 
-import smithy4s.Enumeration
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Enumeration
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.EnumTag
+import _root_.smithy4s.schema.Schema.enumeration
 import smithy4s.optics.Prism
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
 
 sealed abstract class OpenIntEnumTest(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OpenIntEnumTest

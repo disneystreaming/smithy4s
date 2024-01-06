@@ -1,11 +1,11 @@
 package smithy4s.example.guides.hello
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 final case class World(message: String = "World !")
 
@@ -15,7 +15,7 @@ object World extends ShapeTag.Companion[World] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[World] = struct(
-    string.field[World]("message", _.message).addHints(smithy.api.Default(smithy4s.Document.fromString("World !"))),
+    string.field[World]("message", _.message).addHints(smithy.api.Default(_root_.smithy4s.Document.fromString("World !"))),
   ){
     World.apply
   }.withId(id).addHints(hints)

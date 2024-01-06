@@ -1,10 +1,10 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.struct
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 
 /** @param card
   *   FaceCard types
@@ -18,7 +18,7 @@ object StructureConstrainingEnum extends ShapeTag.Companion[StructureConstrainin
 
   implicit val schema: Schema[StructureConstrainingEnum] = struct(
     Letters.schema.validated(smithy.api.Length(min = Some(2L), max = None)).validated(smithy.api.Pattern(s"$$aaa$$")).optional[StructureConstrainingEnum]("letter", _.letter),
-    FaceCard.schema.validated(smithy.api.Range(min = None, max = Some(scala.math.BigDecimal(1.0)))).optional[StructureConstrainingEnum]("card", _.card),
+    FaceCard.schema.validated(smithy.api.Range(min = None, max = Some(_root_.scala.math.BigDecimal(1.0)))).optional[StructureConstrainingEnum]("card", _.card),
   ){
     StructureConstrainingEnum.apply
   }.withId(id).addHints(hints)

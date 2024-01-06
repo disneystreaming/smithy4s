@@ -1,7 +1,7 @@
 package smithy4s
 
 package object benchmark {
-  type BenchmarkService[F[_]] = smithy4s.kinds.FunctorAlgebra[BenchmarkServiceGen, F]
+  type BenchmarkService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[BenchmarkServiceGen, F]
   val BenchmarkService = BenchmarkServiceGen
 
   type ListPermissions = smithy4s.benchmark.ListPermissions.Type

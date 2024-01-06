@@ -1,10 +1,10 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.struct
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 
 /** @param astring
   *   This is a simple example of a "quoted string"
@@ -17,7 +17,7 @@ object AStructure extends ShapeTag.Companion[AStructure] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[AStructure] = struct(
-    AString.schema.field[AStructure]("astring", _.astring).addHints(smithy.api.Default(smithy4s.Document.fromString("\"Hello World\" with \"quotes\""))),
+    AString.schema.field[AStructure]("astring", _.astring).addHints(smithy.api.Default(_root_.smithy4s.Document.fromString("\"Hello World\" with \"quotes\""))),
   ){
     AStructure.apply
   }.withId(id).addHints(hints)

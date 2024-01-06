@@ -1,19 +1,18 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.bijection
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.union
 
-sealed trait TestIdRefUnion extends scala.Product with scala.Serializable { self =>
+sealed trait TestIdRefUnion extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: TestIdRefUnion = this
   def $ordinal: Int
 
   object project {
-    def test: Option[ShapeId] = TestIdRefUnion.TestCase.alt.project.lift(self).map(_.test)
+    def test: Option[smithy4s.ShapeId] = TestIdRefUnion.TestCase.alt.project.lift(self).map(_.test)
     def testTwo: Option[TestIdRefTwo] = TestIdRefUnion.TestTwoCase.alt.project.lift(self).map(_.testTwo)
   }
 
@@ -24,19 +23,19 @@ sealed trait TestIdRefUnion extends scala.Product with scala.Serializable { self
 }
 object TestIdRefUnion extends ShapeTag.Companion[TestIdRefUnion] {
 
-  def test(test: ShapeId): TestIdRefUnion = TestCase(test)
+  def test(test: smithy4s.ShapeId): TestIdRefUnion = TestCase(test)
   def testTwo(testTwo: TestIdRefTwo): TestIdRefUnion = TestTwoCase(testTwo)
 
-  val id: ShapeId = ShapeId("smithy4s.example", "TestIdRefUnion")
+  val id: _root_.smithy4s.ShapeId = _root_.smithy4s.ShapeId("smithy4s.example", "TestIdRefUnion")
 
   val hints: Hints = Hints.empty
 
-  final case class TestCase(test: ShapeId) extends TestIdRefUnion { final def $ordinal: Int = 0 }
+  final case class TestCase(test: smithy4s.ShapeId) extends TestIdRefUnion { final def $ordinal: Int = 0 }
   final case class TestTwoCase(testTwo: TestIdRefTwo) extends TestIdRefUnion { final def $ordinal: Int = 1 }
 
   object TestCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[TestIdRefUnion.TestCase] = bijection(string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).addHints(hints), TestIdRefUnion.TestCase(_), _.test)
+    val schema: Schema[TestIdRefUnion.TestCase] = bijection(string.refined[smithy4s.ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).addHints(hints), TestIdRefUnion.TestCase(_), _.test)
     val alt = schema.oneOf[TestIdRefUnion]("test")
   }
   object TestTwoCase {
@@ -46,14 +45,14 @@ object TestIdRefUnion extends ShapeTag.Companion[TestIdRefUnion] {
   }
 
   trait Visitor[A] {
-    def test(value: ShapeId): A
+    def test(value: smithy4s.ShapeId): A
     def testTwo(value: TestIdRefTwo): A
   }
 
   object Visitor {
     trait Default[A] extends Visitor[A] {
       def default: A
-      def test(value: ShapeId): A = default
+      def test(value: smithy4s.ShapeId): A = default
       def testTwo(value: TestIdRefTwo): A = default
     }
   }

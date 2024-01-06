@@ -1,11 +1,11 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 final case class DefaultInMixinUsageTest(one: String = "test") extends DefaultInMixinTest
 
@@ -15,7 +15,7 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[DefaultInMixinUsageTest] = struct(
-    string.field[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+    string.field[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(_root_.smithy4s.Document.fromString("test"))),
   ){
     DefaultInMixinUsageTest.apply
   }.withId(id).addHints(hints)

@@ -1,16 +1,16 @@
 package com.amazonaws.dynamodb
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.ErrorSchema
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.ErrorSchema
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 
 /** <fullname>Amazon DynamoDB</fullname>
   * 
@@ -97,7 +97,7 @@ sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput
   def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
-  def endpoint: smithy4s.Endpoint[DynamoDBOperation, Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: _root_.smithy4s.Endpoint[DynamoDBOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object DynamoDBOperation {
@@ -139,7 +139,7 @@ object DynamoDBOperation {
       .withHints(aws.api.ClientDiscoveredEndpoint(required = false), smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"), smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))))
     def wrap(input: ListTablesInput): ListTables = ListTables(input)
   }
-  sealed trait ListTablesError extends scala.Product with scala.Serializable { self =>
+  sealed trait ListTablesError extends Product with Serializable { self =>
     @inline final def widen: ListTablesError = this
     def $ordinal: Int
 

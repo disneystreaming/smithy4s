@@ -1,15 +1,15 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.Smithy4sThrowable
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.Smithy4sThrowable
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 final case class MixinErrorExample(a: Option[String] = None, b: Option[Int] = None, c: Option[Long] = None, d: Option[Boolean] = None) extends Smithy4sThrowable with CommonFieldsOne with CommonFieldsTwo {
 }

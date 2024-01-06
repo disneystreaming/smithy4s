@@ -1,14 +1,14 @@
 package smithy4s.example.guides.hello
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.OperationSchema
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
 
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {

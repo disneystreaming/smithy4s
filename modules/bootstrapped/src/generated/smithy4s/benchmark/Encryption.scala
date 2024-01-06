@@ -1,12 +1,12 @@
 package smithy4s.benchmark
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.Timestamp
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.Timestamp
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class Encryption(user: Option[String] = None, date: Option[Timestamp] = None, metadata: Option[EncryptionMetadata] = None)

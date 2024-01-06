@@ -1,16 +1,16 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.ErrorSchema
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.ErrorSchema
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
 
 trait NameCollisionGen[F[_, _, _, _, _]] {
@@ -59,7 +59,7 @@ sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedO
   def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
-  def endpoint: smithy4s.Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: _root_.smithy4s.Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object NameCollisionOperation {
@@ -89,7 +89,7 @@ object NameCollisionOperation {
       .withOutput(unit)
     def wrap(input: Unit): MyOp = MyOp()
   }
-  sealed trait MyOpError extends scala.Product with scala.Serializable { self =>
+  sealed trait MyOpError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: MyOpError = this
     def $ordinal: Int
 

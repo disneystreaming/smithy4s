@@ -1,16 +1,16 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.OperationSchema
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.StreamingSchema
 import smithy4s.schema.Schema.unit
-import smithy4s.schema.StreamingSchema
 
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
@@ -82,7 +82,7 @@ object StreamedObjectsOperation {
     val schema: OperationSchema[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PutStreamedObject"))
       .withInput(PutStreamedObjectInput.schema)
       .withOutput(unit)
-      .withStreamedInput(StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))
+      .withStreamedInput(StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(_root_.smithy4s.Document.fromString("")))))
     def wrap(input: PutStreamedObjectInput): PutStreamedObject = PutStreamedObject(input)
   }
   final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
@@ -94,7 +94,7 @@ object StreamedObjectsOperation {
     val schema: OperationSchema[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = Schema.operation(ShapeId("smithy4s.example", "GetStreamedObject"))
       .withInput(GetStreamedObjectInput.schema)
       .withOutput(GetStreamedObjectOutput.schema)
-      .withStreamedOutput(StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString("")))))
+      .withStreamedOutput(StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(_root_.smithy4s.Document.fromString("")))))
     def wrap(input: GetStreamedObjectInput): GetStreamedObject = GetStreamedObject(input)
   }
 }

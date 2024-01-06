@@ -1,14 +1,14 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.Timestamp
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.Timestamp
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class PathParams(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers)

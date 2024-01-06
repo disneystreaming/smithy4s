@@ -1,11 +1,11 @@
 package smithy4s.example.collision
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.example._package.MyPackageString
-import smithy4s.schema.Schema.struct
 
 final case class TestReservedNamespaceImport(_package: Option[MyPackageString] = None)
 

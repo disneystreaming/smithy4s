@@ -1,11 +1,11 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 @deprecated(message = "A compelling reason", since = "0.0.1")
 final case class DeprecatedStructure(@deprecated(message = "N/A", since = "N/A") strings: Option[List[String]] = None, other: Option[List[String]] = None, @deprecated(message = "N/A", since = "N/A") name: Option[String] = None, nameV2: Option[String] = None) extends DeprecatedMixin

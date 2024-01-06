@@ -1,13 +1,13 @@
 package smithy4s.benchmark
 
-import smithy4s.Blob
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Blob
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.bytes
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
 
 final case class S3Object(id: String, owner: String, attributes: Attributes, data: Blob)
 

@@ -1,17 +1,17 @@
 package smithy4s.example.guides.auth
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.ErrorSchema
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.ErrorSchema
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
 
 trait HelloWorldAuthServiceGen[F[_, _, _, _, _]] {
@@ -96,7 +96,7 @@ object HelloWorldAuthServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): SayWorld = SayWorld()
   }
-  sealed trait SayWorldError extends scala.Product with scala.Serializable { self =>
+  sealed trait SayWorldError extends Product with Serializable { self =>
     @inline final def widen: SayWorldError = this
     def $ordinal: Int
 
@@ -162,7 +162,7 @@ object HelloWorldAuthServiceOperation {
       .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): HealthCheck = HealthCheck()
   }
-  sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>
+  sealed trait HealthCheckError extends Product with Serializable { self =>
     @inline final def widen: HealthCheckError = this
     def $ordinal: Int
 

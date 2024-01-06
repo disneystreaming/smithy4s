@@ -1,11 +1,11 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.int
-import smithy4s.schema.Schema.struct
 
 final case class RangeCheck(qty: Int)
 
@@ -17,7 +17,7 @@ object RangeCheck extends ShapeTag.Companion[RangeCheck] {
   )
 
   implicit val schema: Schema[RangeCheck] = struct(
-    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty),
+    int.validated(smithy.api.Range(min = Some(_root_.scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty),
   ){
     RangeCheck.apply
   }.withId(id).addHints(hints)

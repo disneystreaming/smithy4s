@@ -1,17 +1,17 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.Transformation
-import smithy4s.kinds.PolyFunction5
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.schema.ErrorSchema
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.union
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.Service
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.Transformation
+import _root_.smithy4s.kinds.PolyFunction5
+import _root_.smithy4s.kinds.toPolyFunction5.const5
+import _root_.smithy4s.schema.ErrorSchema
+import _root_.smithy4s.schema.OperationSchema
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.unit
 
 trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
@@ -150,7 +150,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
     def wrap(input: AddMenuItemRequest): AddMenuItem = AddMenuItem(input)
   }
-  sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>
+  sealed trait AddMenuItemError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: AddMenuItemError = this
     def $ordinal: Int
 
@@ -243,7 +243,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu"), code = 200), smithy.api.Readonly())
     def wrap(input: GetMenuRequest): GetMenu = GetMenu(input)
   }
-  sealed trait GetMenuError extends scala.Product with scala.Serializable { self =>
+  sealed trait GetMenuError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: GetMenuError = this
     def $ordinal: Int
 
@@ -363,7 +363,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: HealthRequest): Health = Health(input)
   }
-  sealed trait HealthError extends scala.Product with scala.Serializable { self =>
+  sealed trait HealthError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: HealthError = this
     def $ordinal: Int
 
@@ -452,7 +452,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetEnumInput): GetEnum = GetEnum(input)
   }
-  sealed trait GetEnumError extends scala.Product with scala.Serializable { self =>
+  sealed trait GetEnumError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: GetEnumError = this
     def $ordinal: Int
 
@@ -517,7 +517,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-int-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetIntEnumInput): GetIntEnum = GetIntEnum(input)
   }
-  sealed trait GetIntEnumError extends scala.Product with scala.Serializable { self =>
+  sealed trait GetIntEnumError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: GetIntEnumError = this
     def $ordinal: Int
 
@@ -582,7 +582,7 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/custom-code/{code}"), code = 200), smithy.api.Readonly())
     def wrap(input: CustomCodeInput): CustomCode = CustomCode(input)
   }
-  sealed trait CustomCodeError extends scala.Product with scala.Serializable { self =>
+  sealed trait CustomCodeError extends _root_.scala.Product with _root_.scala.Serializable { self =>
     @inline final def widen: CustomCodeError = this
     def $ordinal: Int
 

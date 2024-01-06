@@ -1,42 +1,42 @@
 package smithy4s
 
 package object example {
-  type ErrorHandlingService[F[_]] = smithy4s.kinds.FunctorAlgebra[ErrorHandlingServiceGen, F]
+  type ErrorHandlingService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[ErrorHandlingServiceGen, F]
   val ErrorHandlingService = ErrorHandlingServiceGen
   @deprecated(message = "N/A", since = "N/A")
-  type DeprecatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
+  type DeprecatedService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
   val DeprecatedService = DeprecatedServiceGen
-  type PackedInputsService[F[_]] = smithy4s.kinds.FunctorAlgebra[PackedInputsServiceGen, F]
+  type PackedInputsService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[PackedInputsServiceGen, F]
   val PackedInputsService = PackedInputsServiceGen
-  type StreamedObjects[F[_]] = smithy4s.kinds.FunctorAlgebra[StreamedObjectsGen, F]
+  type StreamedObjects[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[StreamedObjectsGen, F]
   val StreamedObjects = StreamedObjectsGen
-  type PizzaAdminService[F[_]] = smithy4s.kinds.FunctorAlgebra[PizzaAdminServiceGen, F]
+  type PizzaAdminService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[PizzaAdminServiceGen, F]
   val PizzaAdminService = PizzaAdminServiceGen
-  type FooService[F[_]] = smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
+  type FooService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
   val FooService = FooServiceGen
-  type KVStore[F[_]] = smithy4s.kinds.FunctorAlgebra[KVStoreGen, F]
+  type KVStore[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[KVStoreGen, F]
   val KVStore = KVStoreGen
-  type ObjectService[F[_]] = smithy4s.kinds.FunctorAlgebra[ObjectServiceGen, F]
+  type ObjectService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[ObjectServiceGen, F]
   val ObjectService = ObjectServiceGen
-  type NameCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
+  type NameCollision[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
   val NameCollision = NameCollisionGen
-  type ObjectCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[ObjectCollisionGen, F]
+  type ObjectCollision[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[ObjectCollisionGen, F]
   val ObjectCollision = ObjectCollisionGen
-  type DummyService[F[_]] = smithy4s.kinds.FunctorAlgebra[DummyServiceGen, F]
+  type DummyService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[DummyServiceGen, F]
   val DummyService = DummyServiceGen
-  type EmptyService[F[_]] = smithy4s.kinds.FunctorAlgebra[EmptyServiceGen, F]
+  type EmptyService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[EmptyServiceGen, F]
   val EmptyService = EmptyServiceGen
-  type DiscriminatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DiscriminatedServiceGen, F]
+  type DiscriminatedService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[DiscriminatedServiceGen, F]
   val DiscriminatedService = DiscriminatedServiceGen
-  type Library[F[_]] = smithy4s.kinds.FunctorAlgebra[LibraryGen, F]
+  type Library[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[LibraryGen, F]
   val Library = LibraryGen
-  type RecursiveInputService[F[_]] = smithy4s.kinds.FunctorAlgebra[RecursiveInputServiceGen, F]
+  type RecursiveInputService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[RecursiveInputServiceGen, F]
   val RecursiveInputService = RecursiveInputServiceGen
-  type BrandService[F[_]] = smithy4s.kinds.FunctorAlgebra[BrandServiceGen, F]
+  type BrandService[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[BrandServiceGen, F]
   val BrandService = BrandServiceGen
-  type ErrorHandlingServiceExtraErrors[F[_]] = smithy4s.kinds.FunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]
+  type ErrorHandlingServiceExtraErrors[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]
   val ErrorHandlingServiceExtraErrors = ErrorHandlingServiceExtraErrorsGen
-  type Weather[F[_]] = smithy4s.kinds.FunctorAlgebra[WeatherGen, F]
+  type Weather[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[WeatherGen, F]
   val Weather = WeatherGen
 
   type PublishersList = smithy4s.example.PublishersList.Type

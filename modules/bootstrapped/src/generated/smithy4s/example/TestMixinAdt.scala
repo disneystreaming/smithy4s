@@ -1,15 +1,15 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
-import smithy4s.schema.Schema.union
 
-sealed trait TestMixinAdt extends scala.Product with scala.Serializable { self =>
+sealed trait TestMixinAdt extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: TestMixinAdt = this
   def $ordinal: Int
 

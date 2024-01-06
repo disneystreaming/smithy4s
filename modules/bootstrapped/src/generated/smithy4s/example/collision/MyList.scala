@@ -1,10 +1,10 @@
 package smithy4s.example.collision
 
-import smithy4s.Hints
-import smithy4s.Newtype
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.schema.Schema.bijection
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Newtype
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object MyList extends Newtype[List[String]] {

@@ -1,17 +1,17 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.struct
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.optics.Lens
 import smithy4s.optics.Prism
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
-import smithy4s.schema.Schema.union
 
-sealed trait Podcast extends PodcastCommon with scala.Product with scala.Serializable { self =>
+sealed trait Podcast extends PodcastCommon with _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: Podcast = this
   def $ordinal: Int
 

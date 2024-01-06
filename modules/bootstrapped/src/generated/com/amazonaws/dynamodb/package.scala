@@ -1,7 +1,7 @@
 package com.amazonaws
 
 package object dynamodb {
-  type DynamoDB[F[_]] = smithy4s.kinds.FunctorAlgebra[DynamoDBGen, F]
+  type DynamoDB[F[_]] = _root_.smithy4s.kinds.FunctorAlgebra[DynamoDBGen, F]
   val DynamoDB = DynamoDBGen
 
   type ListTablesInputLimit = com.amazonaws.dynamodb.ListTablesInputLimit.Type

@@ -1,19 +1,19 @@
 package smithy4s.example
 
 import OrderType.PreviewCaseAlt
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.bijection
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.struct
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.struct
-import smithy4s.schema.Schema.union
 
 /** Our order types have different ways to identify a product
   * Except for preview orders, these don't have an ID 
   */
-sealed trait OrderType extends scala.Product with scala.Serializable { self =>
+sealed trait OrderType extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: OrderType = this
   def $ordinal: Int
 

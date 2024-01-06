@@ -1,14 +1,14 @@
 package smithy4s.example
 
-import smithy4s.Hints
-import smithy4s.Schema
-import smithy4s.ShapeId
-import smithy4s.ShapeTag
-import smithy4s.schema.Schema.bijection
+import _root_.smithy4s.Hints
+import _root_.smithy4s.Schema
+import _root_.smithy4s.ShapeId
+import _root_.smithy4s.ShapeTag
+import _root_.smithy4s.schema.Schema.bijection
+import _root_.smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.union
 
-sealed trait CheckedOrUnchecked2 extends scala.Product with scala.Serializable { self =>
+sealed trait CheckedOrUnchecked2 extends _root_.scala.Product with _root_.scala.Serializable { self =>
   @inline final def widen: CheckedOrUnchecked2 = this
   def $ordinal: Int
 
