@@ -77,12 +77,15 @@ private[internals] case class Operation(
 private[internals] case class Product(
     shapeId: ShapeId,
     name: String,
+    safeName: String,
     fields: List[Field],
     mixins: List[Type],
     recursive: Boolean = false,
     hints: List[Hint] = Nil,
     isMixin: Boolean = false
-) extends Decl
+) extends Decl {
+  def safeNameRef: NameRef = NameRef(List.empty, safeName, List.empty)
+}
 
 private[internals] case class Union(
     shapeId: ShapeId,

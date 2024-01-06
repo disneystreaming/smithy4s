@@ -1008,12 +1008,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+
+          // Q: should we just use the label instead, rather than the product name? It'd be consistent with optics.
+          // Q2: any better way to use the existing fields? Currently all collision avoidance is in CollisionAvoidance so I wouldn't want to do it here.
+          line"def ${uncapitalise(product.safeNameRef.name)}($args): ${product.nameRef} = ${product.nameRef}($values)"
+
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
+
         case UnionMember.TypeCase(tpe) =>
           line"$prefix($ident: $tpe): $name = $cn($ident)"
       }
+
       lines(
         documentationAnnotation(alt.hints),
         deprecationAnnotation(alt.hints),

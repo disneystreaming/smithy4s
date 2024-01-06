@@ -1,3 +1,7 @@
+# 0.18.6
+
+* `@adt` union members that match a keyword wouldn't have their "smart constructors"' names escaped, possibly failing compilation. This is now fixed.
+
 # 0.18.5
 
 * When encoding to `application/x-www-form-urlencoded`, omit optional fields set to the field's default value.
