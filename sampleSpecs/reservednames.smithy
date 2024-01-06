@@ -139,4 +139,5 @@ structure ReservedKeywordTraitExampleStruct {
 
 enum KeywordEnum {
     implicit
+    package = "class"
 }
