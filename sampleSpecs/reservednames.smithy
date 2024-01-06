@@ -136,3 +136,7 @@ structure ReservedKeywordTraitExampleStruct {
     })
     member: String
 }
+
+enum KeywordEnum {
+    implicit
+}

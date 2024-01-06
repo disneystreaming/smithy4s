@@ -88,8 +88,14 @@ private[internals] object CollisionAvoidance {
         )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
-          case EnumValue(value, intValue, name, hints) =>
-            EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
+          case EnumValue(value, intValue, name, realName, hints) =>
+            EnumValue(
+              value = value,
+              intValue = intValue,
+              name = protectKeyword(name),
+              realName = realName,
+              hints.map(modHint)
+            )
         }
         Enumeration(
           shapeId,

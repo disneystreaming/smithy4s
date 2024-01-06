@@ -352,7 +352,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case ((name, value), index) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(value, index, name, hints(member))
+            EnumValue(
+              value = value,
+              intValue = index,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
@@ -375,7 +381,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case (name, value) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(name, value, name, hints(member))
+            EnumValue(
+              value = name,
+              intValue = value,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
