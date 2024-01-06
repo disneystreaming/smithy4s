@@ -1077,7 +1077,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
+        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}$product with $serializable"
       ).withSameLineValue(line" self =>")(
         line"@inline final def widen: $name = this",
         line"def $$ordinal: Int",
@@ -1197,7 +1197,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Field.Modifier.RequiredDefaultMod(_, None)          => tpeLine
         case Field.Modifier.DefaultMod(_, Some(default))         => tpeLine + ` = ` + renderDefault(default)
         case Field.Modifier.DefaultMod(_, None)                  => tpeLine
-        case Field.Modifier.NoModifier => Line.optional(tpeLine) + ` = ` + NameRef("scala.None")
+        case Field.Modifier.NoModifier                           => Line.optional(tpeLine) + ` = ` + none
       }
     } else if (field.modifier.none) {
       Line.optional(tpeLine)
@@ -1530,8 +1530,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
     prim match {
       case Primitive.BigDecimal =>
-        (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
+        (bd: BigDecimal) => line"_root_.scala.math.BigDecimal($bd)"
+      case Primitive.BigInteger => (bi: BigInt) => line"_root_.scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => line"()"
       case Primitive.Double     => t => line"${t.toString}d"
       case Primitive.Float      => t => line"${t.toString}f"
@@ -1539,39 +1539,39 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.Uuid       => uuid => line"_root_.java.util.UUID.fromString($uuid)"
       case Primitive.String     => renderStringLiteral
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
         ba =>
-          val blob = NameRef("smithy4s", "Blob")
+          val blob = NameRef("_root_.smithy4s", "Blob")
           if (ba.isEmpty) line"$blob.empty"
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
+        ts => line"${NameRef("_root_.smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {
             val innerValues = x.getElements().asScala.map(_.accept(this))
-            line"smithy4s.Document.array(${innerValues.toList.intercalate(Line.comma)})"
+            line"_root_.smithy4s.Document.array(${innerValues.toList.intercalate(Line.comma)})"
           }
           def booleanNode(x: BooleanNode): Line =
-            line"smithy4s.Document.fromBoolean(${x.getValue})"
+            line"_root_.smithy4s.Document.fromBoolean(${x.getValue})"
           def nullNode(x: NullNode): Line =
-            line"smithy4s.Document.nullDoc"
+            line"_root_.smithy4s.Document.nullDoc"
           def numberNode(x: NumberNode): Line =
-            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
+            line"_root_.smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
           def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
               val key = s""""${member._1.getValue()}""""
               val value = member._2.accept(this)
               line"$key -> $value"
             }
-            line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
+            line"_root_.smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
           }
           def stringNode(x: StringNode): Line =
-            line"""smithy4s.Document.fromString(${renderStringLiteral(
+            line"""_root_.smithy4s.Document.fromString(${renderStringLiteral(
               x.getValue
             )})"""
         })

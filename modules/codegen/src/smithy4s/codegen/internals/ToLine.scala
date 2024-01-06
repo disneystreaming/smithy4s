@@ -54,7 +54,7 @@ private[internals] object ToLine {
       case Type.Map(key, _, value, _) =>
         val keyTpe = typeToNameRef(key)
         val valueTpe = typeToNameRef(value)
-        NameRef("scala.collection.immutable", "Map").copy(typeParams =
+        NameRef("_root_.scala.collection.immutable", "Map").copy(typeParams =
           List(keyTpe, valueTpe)
         )
       case Type.Alias(
@@ -71,21 +71,24 @@ private[internals] object ToLine {
       case e: Type.ExternalType =>
         NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
       case Type.Nullable(underlying) =>
-        NameRef("scala", "Option").copy(typeParams =
+        NameRef("_root_.scala", "Option").copy(typeParams =
           List(typeToNameRef(underlying))
         )
     }
   }
 
   private def primitiveLine(p: Primitive): NameRef = {
-    def scalaP(name: String) = NameRef("scala", name)
-    def javaP(name: String) = NameRef("java.lang", name)
+    def scalaP(name: String) = NameRef("_root_.scala", name)
+    def javaP(name: String) = NameRef("_root_.java.lang", name)
+    def javaUtilP(name: String) = NameRef("_root_.java.util", name)
+    def smithy4sP(name: String) = NameRef("_root_.smithy4s", name)
+
     p match {
       case Primitive.Unit       => scalaP("Unit")
-      case Primitive.Blob       => NameRef("smithy4s", "Blob")
+      case Primitive.Blob       => smithy4sP("Blob")
       case Primitive.Bool       => scalaP("Boolean")
       case Primitive.String     => javaP("String")
-      case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
+      case Primitive.Timestamp  => smithy4sP("Timestamp")
       case Primitive.Byte       => scalaP("Byte")
       case Primitive.Int        => scalaP("Int")
       case Primitive.Short      => scalaP("Short")
@@ -94,9 +97,9 @@ private[internals] object ToLine {
       case Primitive.Double     => scalaP("Double")
       case Primitive.BigDecimal => scalaP("BigDecimal")
       case Primitive.BigInteger => scalaP("BigInt")
-      case Primitive.Uuid       => NameRef("java.util", "UUID")
-      case Primitive.Document   => NameRef("smithy4s", "Document")
-      case Primitive.Nothing    => NameRef("Nothing")
+      case Primitive.Uuid       => javaUtilP("UUID")
+      case Primitive.Document   => smithy4sP("Document")
+      case Primitive.Nothing    => scalaP("Nothing")
     }
   }
 }
@@ -139,7 +142,8 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 private[internals] object Line {
 
   def optional(line: Line): Line = {
-    NameRef("scala.Option").toLine + Literal("[") + line + Literal("]")
+
+    NameRef("_root_.scala.Option").toLine + Literal("[") + line + Literal("]")
   }
 
   def apply(value: String): Line = Line(Chain.one(Literal(value)))

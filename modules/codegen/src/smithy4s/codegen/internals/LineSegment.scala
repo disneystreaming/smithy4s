@@ -88,10 +88,10 @@ private[codegen] object LineSegment {
 
   object NameRef {
     val autoImportedNames: List[String] = List(
-      "scala",
-      "java.lang",
-      "scala.Predef",
-      "scala.collection.immutable"
+      "_root_.scala",
+      "_root_.java.lang",
+      "_root_.scala.Predef",
+      "_root_.scala.collection.immutable"
     )
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): NameRef =
