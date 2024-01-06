@@ -7,15 +7,20 @@ use smithy4s.example.package#MyPackageString
 
 @simpleRestJson
 service ReservedNameService {
-    version: "1.0.0",
-    operations: [Set,List,Map,Option]
+    version: "1.0.0"
+    operations: [
+        Set
+        List
+        Map
+        Option
+    ]
 }
 
 @http(method: "POST", uri: "/api/set/", code: 204)
 operation Set {
     input := {
-       @required
-       set:MySet
+        @required
+        set: MySet
     }
 }
 
@@ -60,4 +65,74 @@ string String
 
 structure TestReservedNamespaceImport {
     package: MyPackageString
+}
+
+// trait def
+@trait
+structure reservedKeywordStructTrait {
+    @required
+    implicit: String
+    package: Packagee
+}
+
+// note: can't name this Package because of #1343
+structure Packagee {
+    class: Integer
+}
+
+// trait usages
+@reservedKeywordStructTrait(implicit: "demo", package: {
+    class: 42
+})
+structure ReservedKeywordTraitExampleStruct {
+    @reservedKeywordStructTrait(implicit: "demo", package: {
+        class: 42
+    })
+    member: String
+}
+
+@reservedKeywordStructTrait(implicit: "demo", package: {
+    class: 42
+})
+union ReservedKeywordTraitExampleUnion {
+    @reservedKeywordStructTrait(implicit: "demo", package: {
+        class: 42
+    })
+    member: String
+}
+
+@reservedKeywordStructTrait(implicit: "demo", package: {
+    class: 42
+})
+string ReservedKeywordTraitExamplePrimitive
+
+@reservedKeywordStructTrait(implicit: "demo", package: {
+    class: 42
+})
+list ReservedKeywordTraitExampleCollection {
+    @reservedKeywordStructTrait(implicit: "demo", package: {
+        class: 42
+    })
+    member: String
+}
+
+// trait def, as a union
+@trait
+union reservedKeywordUnionTrait {
+    package: PackageUnion
+}
+
+union PackageUnion {
+    class: Integer
+}
+
+// trait usages
+@reservedKeywordUnionTrait(package: {
+    class: 42
+})
+structure ReservedKeywordTraitExampleStruct {
+    @reservedKeywordUnionTrait(package: {
+        class: 42
+    })
+    member: String
 }

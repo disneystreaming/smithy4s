@@ -1056,8 +1056,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
 
     /**
-      * Should be used only on the call site 
-      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait. 
+      * Should be used only on the call site
+      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
       */
     def getFieldsPlain: List[Field] =
       fieldsInternal(hintsExtractor = _ => List.empty)

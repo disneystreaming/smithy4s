@@ -201,7 +201,12 @@ private[internals] object CollisionAvoidance {
         case EnumerationTN(ref, value, intValue, name) =>
           EnumerationTN(modRef(ref), value, intValue, name)
         case StructureTN(ref, fields) =>
-          StructureTN(modRef(ref), fields)
+          StructureTN(
+            ref = modRef(ref),
+            fields = fields.map { case (k, v) =>
+              protectKeyword(k) -> v
+            }
+          )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
