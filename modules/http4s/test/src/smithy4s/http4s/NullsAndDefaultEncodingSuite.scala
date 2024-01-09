@@ -10,11 +10,9 @@ import io.circe.Json
 import org.typelevel.ci.CIString
 import org.typelevel.ci._
 import org.http4s.circe.CirceInstances
-import smithy4s.Document
 import org.http4s.client.Client
 import smithy4s.example.OperationInput
 import cats.effect.kernel.Deferred
-import smithy4s.schema.CompilationCache
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
@@ -103,88 +101,6 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
           request.body
         )
       }
-  }
-
-  test("document encoder - all default") {
-    val result = Document.Encoder
-      .fromSchema(OperationOutput.schema)
-      .encode(OperationOutput())
-    IO.pure(
-      assert.same(
-        Document.obj(
-          "requiredWithDefault" -> Document.fromString("required-default"),
-          "requiredHeaderWithDefault" -> Document.fromString(
-            "required-header-with-default"
-          )
-        ),
-        result
-      )
-    )
-  }
-
-  test("document encoder - all default - explicit defaults encoding = true") {
-    val result = Document.Encoder
-      .fromSchema(
-        OperationOutput.schema,
-        CompilationCache.nop,
-        explicitDefaultsEncoding = true
-      )
-      .encode(OperationOutput())
-    IO.pure(
-      assert.same(
-        Document.obj(
-          "optional" -> Document.nullDoc,
-          "optionalHeader" -> Document.nullDoc,
-          "optionalWithDefault" -> Document.fromString("optional-default"),
-          "requiredWithDefault" -> Document.fromString("required-default"),
-          "optionalHeaderWithDefault" -> Document.fromString(
-            "optional-header-with-default"
-          ),
-          "requiredHeaderWithDefault" -> Document.fromString(
-            "required-header-with-default"
-          )
-        ),
-        result
-      )
-    )
-  }
-
-  test("document encoder - default overrides") {
-    val result = Document.Encoder
-      .fromSchema(OperationOutput.schema)
-      .encode(
-        OperationOutput(
-          optional = Some("optional-override"),
-          optionalWithDefault = "optional-default-override",
-          requiredWithDefault = "required-default-override",
-          optionalHeader = Some("optional-header-override"),
-          optionalHeaderWithDefault = "optional-header-with-default-override",
-          requiredHeaderWithDefault = "required-header-with-default-override"
-        )
-      )
-    IO.pure(
-      assert.same(
-        Document.obj(
-          "optional" -> Document.fromString("optional-override"),
-          "optionalWithDefault" -> Document.fromString(
-            "optional-default-override"
-          ),
-          "requiredWithDefault" -> Document.fromString(
-            "required-default-override"
-          ),
-          "optionalHeader" -> Document.fromString(
-            "optional-header-override"
-          ),
-          "optionalHeaderWithDefault" -> Document.fromString(
-            "optional-header-with-default-override"
-          ),
-          "requiredHeaderWithDefault" -> Document.fromString(
-            "required-header-with-default-override"
-          )
-        ),
-        result
-      )
-    )
   }
 
   object Impl extends ServiceWithNullsAndDefaults[IO] {

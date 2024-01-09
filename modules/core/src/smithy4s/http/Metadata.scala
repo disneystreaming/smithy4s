@@ -211,14 +211,8 @@ object Metadata {
     */
   type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
-  private final class MetadataEncoder(
-      awsHeaderEncoding: Boolean,
-      explicitDefaultsEncoding: Boolean
-  ) extends CachedEncoderCompilerImpl(
-        awsHeaderEncoding = awsHeaderEncoding,
-        explicitDefaultsEncoding = explicitDefaultsEncoding
-      ) {
-    type Compiler = CachedSchemaCompiler[Encoder]
+  trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
+    def withExplicitDefaultsEncoding(explicitDefaults: Boolean): EncoderCompiler
   }
 
   object Encoder
@@ -227,14 +221,6 @@ object Metadata {
         explicitDefaultsEncoding = false
       ) {
     type Compiler = CachedSchemaCompiler[Encoder]
-
-    def make(
-        awsHeaderEncoding: Boolean,
-        explicitDefaultsEncoding: Boolean
-    ): Metadata.Encoder.Compiler = new MetadataEncoder(
-      awsHeaderEncoding = awsHeaderEncoding,
-      explicitDefaultsEncoding = explicitDefaultsEncoding
-    )
   }
 
   private[smithy4s] object AwsEncoder
@@ -246,11 +232,19 @@ object Metadata {
   private[http] class CachedEncoderCompilerImpl(
       awsHeaderEncoding: Boolean,
       explicitDefaultsEncoding: Boolean
-  ) extends CachedSchemaCompiler.DerivingImpl[Encoder] {
+  ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
+      with EncoderCompiler {
 
     type Aux[A] = internals.MetaEncode[A]
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
+
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler = new CachedEncoderCompilerImpl(
+      awsHeaderEncoding = awsHeaderEncoding,
+      explicitDefaultsEncoding = explicitDefaultsEncoding
+    )
 
     def fromSchema[A](
         schema: Schema[A],

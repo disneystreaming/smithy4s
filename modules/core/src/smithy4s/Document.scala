@@ -98,27 +98,29 @@ object Document {
     def encode(a: A): Document
   }
 
-  object Encoder extends CachedSchemaCompiler.DerivingImpl[Encoder] {
+  trait EncoderCompiler extends CachedSchemaCompiler[Encoder] {
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler
+  }
+
+  object Encoder
+      extends CachedEncoderCompilerImpl(explicitDefaultsEncoding = false)
+
+  private[smithy4s] class CachedEncoderCompilerImpl(
+      explicitDefaultsEncoding: Boolean
+  ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
+      with EncoderCompiler {
 
     protected type Aux[A] = internals.DocumentEncoder[A]
 
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
-    ): Encoder[A] =
-      fromSchema(schema, cache, explicitDefaultsEncoding = false)
-
-    def fromSchema[A](
-        schema: Schema[A],
-        cache: Cache,
-        explicitDefaultsEncoding: Boolean
     ): Encoder[A] = {
       val makeEncoder =
         schema.compile(
-          new DocumentEncoderSchemaVisitor(
-            cache,
-            explicitDefaultsEncoding = explicitDefaultsEncoding
-          )
+          new DocumentEncoderSchemaVisitor(cache, explicitDefaultsEncoding)
         )
       new Encoder[A] {
         def encode(a: A): Document = {
@@ -127,6 +129,11 @@ object Document {
       }
     }
 
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler = new CachedEncoderCompilerImpl(
+      explicitDefaultsEncoding = explicitDefaultsEncoding
+    )
   }
 
   type Decoder[A] =
