@@ -45,7 +45,7 @@ Smithy makes it really easy to create your own traits:
 ```kotlin
 namespace foo
 
-@trait(selector: is(structure))
+@trait(selector: ":is(structure)")
 string customThing
 
 @customThing("hello")
