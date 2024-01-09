@@ -18,7 +18,7 @@ package smithy4s.http
 
 final case class HttpUri(
     scheme: HttpUriScheme,
-    host: String,
+    host: Option[String],
     port: Option[Int],
     /**
       * A sequence of URL-decoded URI segment.
