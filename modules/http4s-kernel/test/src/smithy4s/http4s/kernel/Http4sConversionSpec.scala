@@ -118,7 +118,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
   private def aSmithy4sUri(scheme: HttpUriScheme) =
     smithy4s.http.HttpUri(
       scheme = scheme,
-      host = "localhost",
+      host = None,
       port = None,
       path = IndexedSeq.empty,
       queryParams = Map.empty,
