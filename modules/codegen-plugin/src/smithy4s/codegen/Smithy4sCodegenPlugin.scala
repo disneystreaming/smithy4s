@@ -210,7 +210,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sExternallyTrackedDependencies := {
       (config / externalDependencyClasspath).value
         .map(_.data)
-        .flatMap(extract)
+        .filter(_.ext == "jar")
+        .flatMap(extractJar)
         .distinct
     },
     config / smithy4sNormalExternalDependencies := {
@@ -386,7 +387,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   private lazy val simple = raw"([^:]*):([^:]*):([^:]*)".r
   private lazy val cross = raw"([^:]*)::([^:]*):([^:]*)".r
-  private def extract(jarFile: java.io.File): Seq[ModuleID] = {
+  private def extractJar(jarFile: java.io.File): Seq[ModuleID] = {
     JarUtils
       .extractSmithy4sDependencies(jarFile)
       .collect {
