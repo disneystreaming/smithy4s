@@ -1247,10 +1247,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         renderPrismsEnum(name, values, hints, isOpen),
-        values.map { case e @ EnumValue(value, intValue, _, hints) =>
+        values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
           val valueName = NameRef(e.name)
 
-          val baseLine = line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $Hints_.empty)"""
+          val baseLine =
+            line"""case object $valueName extends $name("$value", "${e.realName}", $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
