@@ -12,11 +12,9 @@ final case class GreetInput(name: String)
 object GreetInput extends ShapeTag.Companion[GreetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[GreetInput] = struct(
     string.required[GreetInput]("name", _.name),

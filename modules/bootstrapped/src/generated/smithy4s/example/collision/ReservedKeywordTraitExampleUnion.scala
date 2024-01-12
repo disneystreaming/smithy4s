@@ -27,14 +27,14 @@ object ReservedKeywordTraitExampleUnion extends ShapeTag.Companion[ReservedKeywo
 
   val hints: Hints = Hints(
     smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
-  )
+  ).lazily
 
   final case class MemberCase(member: String) extends ReservedKeywordTraitExampleUnion { final def $ordinal: Int = 0 }
 
   object MemberCase {
     val hints: Hints = Hints(
       smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
-    )
+    ).lazily
     val schema: Schema[ReservedKeywordTraitExampleUnion.MemberCase] = bijection(String.schema.addHints(hints), ReservedKeywordTraitExampleUnion.MemberCase(_), _.member)
     val alt = schema.oneOf[ReservedKeywordTraitExampleUnion]("member")
   }

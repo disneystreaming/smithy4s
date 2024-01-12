@@ -30,11 +30,9 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy4s.example.Hash(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy4s.example.Hash(),
+  ).lazily
 
   object optics {
     val email: Prism[PersonContactInfo, PersonEmail] = Prism.partial[PersonContactInfo, PersonEmail]{ case PersonContactInfo.EmailCase(t) => t }(PersonContactInfo.EmailCase.apply)

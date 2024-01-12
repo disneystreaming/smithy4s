@@ -26,11 +26,9 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
   val version: String = ""
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Deprecated(message = None, since = None),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

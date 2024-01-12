@@ -28,11 +28,9 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "UntaggedUnion")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.Untagged(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.Untagged(),
+  ).lazily
 
   final case class ThreeCase(three: Three) extends UntaggedUnion { final def $ordinal: Int = 0 }
   final case class FourCase(four: Four) extends UntaggedUnion { final def $ordinal: Int = 1 }

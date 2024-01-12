@@ -12,11 +12,9 @@ final case class RangeCheck(qty: Int)
 object RangeCheck extends ShapeTag.Companion[RangeCheck] {
   val id: ShapeId = ShapeId("smithy4s.example", "RangeCheck")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Suppress(List("UnreferencedShape")),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Suppress(List("UnreferencedShape")),
+  ).lazily
 
   implicit val schema: Schema[RangeCheck] = struct(
     int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty),

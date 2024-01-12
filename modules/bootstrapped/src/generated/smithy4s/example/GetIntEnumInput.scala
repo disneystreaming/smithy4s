@@ -11,11 +11,9 @@ final case class GetIntEnumInput(aa: EnumResult)
 object GetIntEnumInput extends ShapeTag.Companion[GetIntEnumInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnumInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[GetIntEnumInput] = struct(
     EnumResult.schema.required[GetIntEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel()),

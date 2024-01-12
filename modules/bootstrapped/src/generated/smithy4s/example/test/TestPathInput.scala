@@ -12,11 +12,9 @@ final case class TestPathInput(path: String)
 object TestPathInput extends ShapeTag.Companion[TestPathInput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "TestPathInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[TestPathInput] = struct(
     string.required[TestPathInput]("path", _.path).addHints(smithy.api.HttpLabel()),

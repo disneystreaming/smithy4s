@@ -11,11 +11,9 @@ final case class MapInput(value: Map[String, String])
 object MapInput extends ShapeTag.Companion[MapInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "MapInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[MapInput] = struct(
     MyMap.underlyingSchema.required[MapInput]("value", _.value),

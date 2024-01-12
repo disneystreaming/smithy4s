@@ -14,12 +14,10 @@ final case class NotFoundError(error: Option[String] = None) extends Smithy4sThr
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example.error", "NotFoundError")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.CLIENT.widen,
-      smithy.api.HttpError(404),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.CLIENT.widen,
+    smithy.api.HttpError(404),
+  ).lazily
 
   implicit val schema: Schema[NotFoundError] = struct(
     string.optional[NotFoundError]("error", _.error),

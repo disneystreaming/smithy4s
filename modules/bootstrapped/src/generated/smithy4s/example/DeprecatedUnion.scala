@@ -39,11 +39,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
+  ).lazily
 
   @deprecated(message = "N/A", since = "N/A")
   final case class SCase(s: String) extends DeprecatedUnion { final def $ordinal: Int = 0 }
@@ -56,11 +54,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
-    val hints: Hints = Hints.lazily(
-      Hints(
-        smithy.api.Deprecated(message = None, since = None),
-      )
-    )
+    val hints: Hints = Hints(
+      smithy.api.Deprecated(message = None, since = None),
+    ).lazily
 
     implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
 
@@ -74,11 +70,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
-    val hints: Hints = Hints.lazily(
-      Hints(
-        smithy.api.Deprecated(message = None, since = None),
-      )
-    )
+    val hints: Hints = Hints(
+      smithy.api.Deprecated(message = None, since = None),
+    ).lazily
 
     implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
 
@@ -86,11 +80,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   }
 
   object SCase {
-    val hints: Hints = Hints.lazily(
-      Hints(
-        smithy.api.Deprecated(message = None, since = None),
-      )
-    )
+    val hints: Hints = Hints(
+      smithy.api.Deprecated(message = None, since = None),
+    ).lazily
     val schema: Schema[DeprecatedUnion.SCase] = bijection(string.addHints(hints), DeprecatedUnion.SCase(_), _.s)
     val alt = schema.oneOf[DeprecatedUnion]("s")
   }

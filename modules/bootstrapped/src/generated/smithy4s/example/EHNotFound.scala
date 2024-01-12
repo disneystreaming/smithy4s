@@ -15,12 +15,10 @@ final case class EHNotFound(message: Option[String] = None) extends NoStackTrace
 object EHNotFound extends ShapeTag.Companion[EHNotFound] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHNotFound")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.CLIENT.widen,
-      smithy.api.HttpError(404),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.CLIENT.widen,
+    smithy.api.HttpError(404),
+  ).lazily
 
   implicit val schema: Schema[EHNotFound] = struct(
     string.optional[EHNotFound]("message", _.message),

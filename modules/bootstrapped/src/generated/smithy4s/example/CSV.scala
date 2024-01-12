@@ -9,11 +9,9 @@ import smithy4s.schema.Schema.string
 
 object CSV extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "CSV")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.MediaType("text/csv"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.MediaType("text/csv"),
+  ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[CSV] = bijection(underlyingSchema, asBijection)
 }

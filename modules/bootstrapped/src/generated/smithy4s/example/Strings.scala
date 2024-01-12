@@ -11,11 +11,9 @@ import smithy4s.schema.Schema.string
 @deprecated(message = "N/A", since = "N/A")
 object Strings extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "Strings")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Deprecated(message = None, since = None),
+  ).lazily
   val underlyingSchema: Schema[List[String]] = list(string).withId(id).addHints(hints)
   implicit val schema: Schema[Strings] = bijection(underlyingSchema, asBijection)
 }

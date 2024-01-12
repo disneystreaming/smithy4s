@@ -30,11 +30,9 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "DummyService")
   val version: String = "0.0"
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

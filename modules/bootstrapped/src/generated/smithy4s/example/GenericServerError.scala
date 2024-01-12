@@ -15,12 +15,10 @@ final case class GenericServerError(message: String) extends Smithy4sThrowable {
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericServerError")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.SERVER.widen,
-      smithy.api.HttpError(502),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.SERVER.widen,
+    smithy.api.HttpError(502),
+  ).lazily
 
   implicit val schema: Schema[GenericServerError] = struct(
     string.required[GenericServerError]("message", _.message),

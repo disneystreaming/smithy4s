@@ -15,11 +15,9 @@ final case class KeyNotFoundError(message: String) extends Smithy4sThrowable {
 object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example", "KeyNotFoundError")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.CLIENT.widen,
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.CLIENT.widen,
+  ).lazily
 
   implicit val schema: Schema[KeyNotFoundError] = struct(
     string.required[KeyNotFoundError]("message", _.message),

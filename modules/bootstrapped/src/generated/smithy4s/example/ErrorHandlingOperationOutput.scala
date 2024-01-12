@@ -12,11 +12,9 @@ final case class ErrorHandlingOperationOutput(out: Option[String] = None)
 object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOperationOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationOutput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Output(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Output(),
+  ).lazily
 
   implicit val schema: Schema[ErrorHandlingOperationOutput] = struct(
     string.optional[ErrorHandlingOperationOutput]("out", _.out),

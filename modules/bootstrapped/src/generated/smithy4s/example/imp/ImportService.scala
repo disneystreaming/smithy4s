@@ -29,11 +29,9 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.SimpleRestJson(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

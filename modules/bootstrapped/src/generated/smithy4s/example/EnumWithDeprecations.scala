@@ -22,16 +22,14 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("some docs here"),
-      smithy.api.Deprecated(message = None, since = None),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("some docs here"),
+    smithy.api.Deprecated(message = None, since = None),
+  ).lazily
 
   @deprecated(message = "N/A", since = "N/A")
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints.empty) {
-    override val hints: Hints = Hints.lazily(Hints(smithy.api.Deprecated(message = None, since = None)))
+    override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None)).lazily
   }
   case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints.empty)
 

@@ -16,11 +16,9 @@ final case class EnvVarString(member: Option[String] = None)
 object EnvVarString extends ShapeTag.Companion[EnvVarString] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnvVarString")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation(s"This is meant to be used with $${ENV_VAR}"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation(s"This is meant to be used with $${ENV_VAR}"),
+  ).lazily
 
   implicit val schema: Schema[EnvVarString] = struct(
     string.optional[EnvVarString]("member", _.member).addHints(smithy.api.Documentation(s"This is meant to be used with $$ENV_VAR")),

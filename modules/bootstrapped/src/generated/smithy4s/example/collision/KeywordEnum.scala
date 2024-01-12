@@ -22,8 +22,8 @@ object KeywordEnum extends Enumeration[KeywordEnum] with ShapeTag.Companion[Keyw
 
   val hints: Hints = Hints.empty
 
-  case object _implicit extends KeywordEnum("implicit", "implicit", 0, Hints())
-  case object _package extends KeywordEnum("class", "package", 1, Hints())
+  case object _implicit extends KeywordEnum("implicit", "implicit", 0, Hints.empty)
+  case object _package extends KeywordEnum("class", "package", 1, Hints.empty)
 
   val values: List[KeywordEnum] = List(
     _implicit,

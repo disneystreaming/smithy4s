@@ -19,11 +19,9 @@ final case class Endpoint(address: String, cachePeriodInMinutes: Long = 0L)
 object Endpoint extends ShapeTag.Companion[Endpoint] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "Endpoint")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("<p>An endpoint information details.</p>"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("<p>An endpoint information details.</p>"),
+  ).lazily
 
   implicit val schema: Schema[Endpoint] = struct(
     string.required[Endpoint]("Address", _.address).addHints(smithy.api.Documentation("<p>IP address of the endpoint.</p>")),

@@ -21,11 +21,9 @@ sealed abstract class OpenIntEnumCollisionTest2(_value: String, _name: String, _
 object OpenIntEnumCollisionTest2 extends Enumeration[OpenIntEnumCollisionTest2] with ShapeTag.Companion[OpenIntEnumCollisionTest2] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenIntEnumCollisionTest2")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.OpenEnum(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.OpenEnum(),
+  ).lazily
 
   object optics {
     val ONE: Prism[OpenIntEnumCollisionTest2, OpenIntEnumCollisionTest2.ONE.type] = Prism.partial[OpenIntEnumCollisionTest2, OpenIntEnumCollisionTest2.ONE.type]{ case OpenIntEnumCollisionTest2.ONE => OpenIntEnumCollisionTest2.ONE }(identity)

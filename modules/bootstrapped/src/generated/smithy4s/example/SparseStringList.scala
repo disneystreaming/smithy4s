@@ -10,11 +10,9 @@ import smithy4s.schema.Schema.string
 
 object SparseStringList extends Newtype[List[Option[String]]] {
   val id: ShapeId = ShapeId("smithy4s.example", "SparseStringList")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Sparse(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Sparse(),
+  ).lazily
   val underlyingSchema: Schema[List[Option[String]]] = list(string.option).withId(id).addHints(hints)
   implicit val schema: Schema[SparseStringList] = bijection(underlyingSchema, asBijection)
 }

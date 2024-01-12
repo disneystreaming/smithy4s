@@ -21,11 +21,9 @@ sealed abstract class OpenEnumTest(_value: String, _name: String, _intValue: Int
 object OpenEnumTest extends Enumeration[OpenEnumTest] with ShapeTag.Companion[OpenEnumTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenEnumTest")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.OpenEnum(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.OpenEnum(),
+  ).lazily
 
   object optics {
     val ONE: Prism[OpenEnumTest, OpenEnumTest.ONE.type] = Prism.partial[OpenEnumTest, OpenEnumTest.ONE.type]{ case OpenEnumTest.ONE => OpenEnumTest.ONE }(identity)

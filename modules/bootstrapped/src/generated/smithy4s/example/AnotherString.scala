@@ -13,11 +13,9 @@ import smithy4s.schema.Schema.string
   */
 object AnotherString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "AnotherString")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
+  ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[AnotherString] = bijection(underlyingSchema, asBijection)
 }

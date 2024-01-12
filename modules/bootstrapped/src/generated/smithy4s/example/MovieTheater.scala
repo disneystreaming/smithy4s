@@ -13,11 +13,9 @@ final case class MovieTheater(name: Option[String] = None)
 object MovieTheater extends ShapeTag.Companion[MovieTheater] {
   val id: ShapeId = ShapeId("smithy4s.example", "MovieTheater")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy4s.example.Hash(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy4s.example.Hash(),
+  ).lazily
 
   implicit val schema: Schema[MovieTheater] = struct(
     string.optional[MovieTheater]("name", _.name),

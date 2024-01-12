@@ -15,12 +15,10 @@ final case class RandomOtherClientErrorWithCode(message: Option[String] = None) 
 object RandomOtherClientErrorWithCode extends ShapeTag.Companion[RandomOtherClientErrorWithCode] {
   val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherClientErrorWithCode")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.CLIENT.widen,
-      smithy.api.HttpError(404),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.CLIENT.widen,
+    smithy.api.HttpError(404),
+  ).lazily
 
   implicit val schema: Schema[RandomOtherClientErrorWithCode] = struct(
     string.optional[RandomOtherClientErrorWithCode]("message", _.message),

@@ -20,11 +20,9 @@ sealed abstract class OpenNums(_value: String, _name: String, _intValue: Int, _h
 object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] {
   val id: ShapeId = ShapeId("smithy4s.example", "OpenNums")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.OpenEnum(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.OpenEnum(),
+  ).lazily
 
   case object ONE extends OpenNums("ONE", "ONE", 1, Hints.empty)
   case object TWO extends OpenNums("TWO", "TWO", 2, Hints.empty)

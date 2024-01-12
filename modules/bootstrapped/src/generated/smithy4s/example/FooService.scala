@@ -31,11 +31,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

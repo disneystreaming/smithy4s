@@ -21,11 +21,9 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _h
 object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
   val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("FaceCard types"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("FaceCard types"),
+  ).lazily
 
   case object JACK extends FaceCard("JACK", "JACK", 1, Hints.empty)
   case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints.empty)

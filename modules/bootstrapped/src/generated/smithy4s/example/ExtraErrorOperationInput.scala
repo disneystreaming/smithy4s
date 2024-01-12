@@ -12,11 +12,9 @@ final case class ExtraErrorOperationInput(in: Option[String] = None)
 object ExtraErrorOperationInput extends ShapeTag.Companion[ExtraErrorOperationInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[ExtraErrorOperationInput] = struct(
     string.optional[ExtraErrorOperationInput]("in", _.in),

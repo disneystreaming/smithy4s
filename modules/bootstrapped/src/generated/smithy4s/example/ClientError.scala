@@ -15,11 +15,9 @@ final case class ClientError(code: Int, details: String) extends Smithy4sThrowab
 object ClientError extends ShapeTag.Companion[ClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "ClientError")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.CLIENT.widen,
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.CLIENT.widen,
+  ).lazily
 
   implicit val schema: Schema[ClientError] = struct(
     int.required[ClientError]("code", _.code),

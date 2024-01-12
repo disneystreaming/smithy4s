@@ -10,11 +10,9 @@ import smithy4s.schema.Schema.uuid
 
 object ObjectKey extends Newtype[UUID] {
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectKey")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.UuidFormat(),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.UuidFormat(),
+  ).lazily
   val underlyingSchema: Schema[UUID] = uuid.withId(id).addHints(hints)
   implicit val schema: Schema[ObjectKey] = bijection(underlyingSchema, asBijection)
 }

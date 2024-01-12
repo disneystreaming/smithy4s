@@ -12,11 +12,9 @@ final case class GetWeatherOutput(weather: String)
 object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
   val id: ShapeId = ShapeId("weather", "GetWeatherOutput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Output(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Output(),
+  ).lazily
 
   implicit val schema: Schema[GetWeatherOutput] = struct(
     string.required[GetWeatherOutput]("weather", _.weather),

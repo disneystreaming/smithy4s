@@ -19,11 +19,9 @@ final case class ListTablesInput(exclusiveStartTableName: Option[TableName] = No
 object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
+  ).lazily
 
   implicit val schema: Schema[ListTablesInput] = struct(
     TableName.schema.optional[ListTablesInput]("ExclusiveStartTableName", _.exclusiveStartTableName).addHints(smithy.api.Documentation("<p>The first table name that this operation will evaluate. Use the value that was returned for\n        <code>LastEvaluatedTableName</code> in a previous operation, so that you can obtain the next page\n      of results.</p>")),

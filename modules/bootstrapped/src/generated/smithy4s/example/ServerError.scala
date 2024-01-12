@@ -15,11 +15,9 @@ final case class ServerError(message: Option[String] = None) extends Smithy4sThr
 object ServerError extends ShapeTag.Companion[ServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerError")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Error.SERVER.widen,
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Error.SERVER.widen,
+  ).lazily
 
   implicit val schema: Schema[ServerError] = struct(
     string.optional[ServerError]("message", _.message),

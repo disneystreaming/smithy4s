@@ -12,11 +12,9 @@ final case class SayHelloInput(greeting: Option[String] = None, query: Option[St
 object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloInput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Input(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Input(),
+  ).lazily
 
   implicit val schema: Schema[SayHelloInput] = struct(
     string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),

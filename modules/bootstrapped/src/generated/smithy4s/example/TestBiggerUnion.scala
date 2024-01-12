@@ -28,11 +28,9 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestBiggerUnion")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      alloy.Discriminated("tpe"),
-    )
-  )
+  val hints: Hints = Hints(
+    alloy.Discriminated("tpe"),
+  ).lazily
 
   final case class OneCase(one: One) extends TestBiggerUnion { final def $ordinal: Int = 0 }
   final case class TwoCase(two: Two) extends TestBiggerUnion { final def $ordinal: Int = 1 }

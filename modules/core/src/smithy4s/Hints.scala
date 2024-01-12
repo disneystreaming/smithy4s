@@ -114,7 +114,14 @@ object Hints {
   def apply(bindings: Hint*): Hints =
     fromSeq(bindings)
 
-  def lazily(underlying: => Hints): Hints = Hints.LazyHints(Lazy(underlying))
+  implicit final class HintsLazyOps(underlying: => Hints) {
+
+    /**
+     * Suspends the evaluation of the hints until they are needed.
+     * This is needed to avoid a deadlock in case of concurrent initialization of the hints' classes: see #537.
+     */
+    def lazily: Hints = Hints.LazyHints(Lazy(underlying))
+  }
 
   def member(bindings: Hint*): Hints =
     Impl(memberHintsMap = mapFromSeq(bindings), targetHintsMap = Map.empty)

@@ -12,11 +12,9 @@ final case class GreetOutput(message: String)
 object GreetOutput extends ShapeTag.Companion[GreetOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetOutput")
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.Output(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.Output(),
+  ).lazily
 
   implicit val schema: Schema[GreetOutput] = struct(
     string.required[GreetOutput]("message", _.message),

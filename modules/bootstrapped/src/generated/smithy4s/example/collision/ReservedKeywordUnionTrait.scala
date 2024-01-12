@@ -28,7 +28,7 @@ object ReservedKeywordUnionTrait extends ShapeTag.Companion[ReservedKeywordUnion
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   final case class PackageCase(_package: PackageUnion) extends ReservedKeywordUnionTrait { final def $ordinal: Int = 0 }
 

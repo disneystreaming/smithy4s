@@ -10,11 +10,9 @@ import smithy4s.schema.Schema.string
 
 object TestIdRefSet extends Newtype[Set[ShapeId]] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestIdRefSet")
-  val hints: Hints = Hints.lazily(
-    Hints(
-      smithy.api.UniqueItems(),
-    )
-  )
+  val hints: Hints = Hints(
+    smithy.api.UniqueItems(),
+  ).lazily
   val underlyingSchema: Schema[Set[ShapeId]] = set(string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None))).withId(id).addHints(hints)
   implicit val schema: Schema[TestIdRefSet] = bijection(underlyingSchema, asBijection)
 }

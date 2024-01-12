@@ -20,11 +20,9 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   val id: ShapeId = ShapeId("smithy4s.example.aws", "MyAwsService")
   val version: String = ""
 
-  val hints: Hints = Hints.lazily(
-    Hints(
-      aws.api.Service(sdkId = "MyThing", arnNamespace = None, cloudFormationName = None, cloudTrailEventSource = None, docId = None, endpointPrefix = Some("mything")),
-    )
-  )
+  val hints: Hints = Hints(
+    aws.api.Service(sdkId = "MyThing", arnNamespace = None, cloudFormationName = None, cloudTrailEventSource = None, docId = None, endpointPrefix = Some("mything")),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

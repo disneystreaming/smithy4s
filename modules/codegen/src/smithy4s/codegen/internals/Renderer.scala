@@ -1259,7 +1259,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             if (e.hints.isEmpty) baseLine
             else
               block(baseLine)(
-                line"override val hints: $Hints_ = $Hints_.lazily($Hints_(${memberHints(e.hints)}))"
+                line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
               )
           )
         },
@@ -1458,11 +1458,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints.flatMap(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
-        lines(
-          line"$lhs = $Hints_.lazily(",
-          indent(line"$Hints_".args(args)),
-          line")"
-        )
+        line"$lhs = $Hints_".args(args).appendToLast(".lazily")
     }
   }
 
