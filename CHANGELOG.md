@@ -1,11 +1,9 @@
-# 0.18.7
-
-* Smithy4s specific logic to extract manifest from jars can run on files that are not jars. Fixed in https://github.com/disneystreaming/smithy4s/pull/1351
-
 # 0.18.6
 
 * If a Smithy trait, being a structure shape, had a Scala keyword in its member names, compilation of the generated would fail. In addition, enumeration values that matched a known keyword would have their name erroneously escaped with an underscore in the string literal.
 These are now fixed in [#1344](https://github.com/disneystreaming/smithy4s/pull/1344).
+
+* Smithy4s specific logic to extract manifest from jars should not run on jar. Fixed in [#1351](https://github.com/disneystreaming/smithy4s/pull/1351).
 
 # 0.18.5
 
