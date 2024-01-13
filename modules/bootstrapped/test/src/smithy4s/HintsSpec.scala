@@ -157,10 +157,10 @@ class HintsSpec() extends FunSuite {
   private def makeLazyHints(hints: => Hints): (Hints, () => Boolean) = {
     var evaled = false
 
-    val result = Hints.lazily {
+    val result = {
       evaled = true
       hints
-    }
+    }.lazily
 
     (result, () => evaled)
   }
