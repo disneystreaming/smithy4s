@@ -145,7 +145,7 @@ object Dependencies {
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.11"
 
   object Webjars {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.9.4"
