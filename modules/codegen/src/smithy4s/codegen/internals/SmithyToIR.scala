@@ -217,13 +217,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
         val p =
           Product(
-            shape.getId(),
-            shape.name,
-            fields,
-            mixins,
-            rec,
-            hints,
-            isMixin
+            shapeId = shape.getId(),
+            name = shape.name,
+            fields = fields,
+            mixins = mixins,
+            recursive = rec,
+            hints = hints,
+            isMixin = isMixin
           ).some
         if (isPartOfAdt(shape)) {
           if (renderAdtMemberStructures) p else None
