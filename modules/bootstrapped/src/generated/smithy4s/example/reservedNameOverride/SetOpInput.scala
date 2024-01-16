@@ -13,7 +13,7 @@ object SetOpInput extends ShapeTag.Companion[SetOpInput] {
 
   val hints: Hints = Hints(
     smithy.api.Input(),
-  )
+  ).lazily
 
   implicit val schema: Schema[SetOpInput] = struct(
     Set.schema.required[SetOpInput]("set", _.set),

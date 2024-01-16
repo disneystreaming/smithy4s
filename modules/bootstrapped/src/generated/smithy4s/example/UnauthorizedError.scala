@@ -16,7 +16,7 @@ object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
 
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[UnauthorizedError] = struct(
     string.required[UnauthorizedError]("reason", _.reason),

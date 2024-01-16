@@ -27,7 +27,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
     smithy.api.Cors(origin = smithy.api.NonEmptyString("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(smithy.api.NonEmptyString("Authorization"))), additionalExposedHeaders = Some(List(smithy.api.NonEmptyString("X-Smithy4s")))),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

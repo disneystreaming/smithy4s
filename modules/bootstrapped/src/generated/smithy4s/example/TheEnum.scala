@@ -22,8 +22,8 @@ object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
 
   val hints: Hints = Hints.empty
 
-  case object V1 extends TheEnum("v1", "V1", 0, Hints())
-  case object V2 extends TheEnum("v2", "V2", 1, Hints())
+  case object V1 extends TheEnum("v1", "V1", 0, Hints.empty)
+  case object V2 extends TheEnum("v2", "V2", 1, Hints.empty)
 
   val values: List[TheEnum] = List(
     V1,

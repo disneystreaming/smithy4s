@@ -15,7 +15,7 @@ object RecursiveTraitStructure extends ShapeTag.Companion[RecursiveTraitStructur
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[RecursiveTraitStructure] = recursive(struct(
     string.optional[RecursiveTraitStructure]("name", _.name).addHints(smithy4s.example.RecursiveTraitStructure(name = None)),

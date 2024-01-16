@@ -22,9 +22,9 @@ object OpenOldEnumCollisionTest extends Enumeration[OpenOldEnumCollisionTest] wi
 
   val hints: Hints = Hints(
     alloy.OpenEnum(),
-  )
+  ).lazily
 
-  case object Unknown extends OpenOldEnumCollisionTest("unknown", "Unknown", 0, Hints())
+  case object Unknown extends OpenOldEnumCollisionTest("unknown", "Unknown", 0, Hints.empty)
   final case class $Unknown(str: String) extends OpenOldEnumCollisionTest(str, "$Unknown", -1, Hints.empty)
 
   val $unknown: String => OpenOldEnumCollisionTest = $Unknown(_)

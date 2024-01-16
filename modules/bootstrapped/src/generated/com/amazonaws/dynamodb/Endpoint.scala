@@ -21,7 +21,7 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
 
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>An endpoint information details.</p>"),
-  )
+  ).lazily
 
   implicit val schema: Schema[Endpoint] = struct(
     string.required[Endpoint]("Address", _.address).addHints(smithy.api.Documentation("<p>IP address of the endpoint.</p>")),

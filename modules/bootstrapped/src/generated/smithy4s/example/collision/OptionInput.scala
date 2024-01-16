@@ -13,7 +13,7 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
 
   val hints: Hints = Hints(
     smithy.api.Input(),
-  )
+  ).lazily
 
   implicit val schema: Schema[OptionInput] = struct(
     String.schema.optional[OptionInput]("value", _.value),

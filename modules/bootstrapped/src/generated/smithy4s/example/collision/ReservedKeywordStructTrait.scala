@@ -14,7 +14,7 @@ object ReservedKeywordStructTrait extends ShapeTag.Companion[ReservedKeywordStru
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[ReservedKeywordStructTrait] = recursive(struct(
     String.schema.required[ReservedKeywordStructTrait]("implicit", _._implicit),

@@ -15,7 +15,7 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
 
   val hints: Hints = Hints(
     smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
-  )
+  ).lazily
 
   implicit val schema: Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),

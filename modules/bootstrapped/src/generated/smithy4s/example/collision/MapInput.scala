@@ -13,7 +13,7 @@ object MapInput extends ShapeTag.Companion[MapInput] {
 
   val hints: Hints = Hints(
     smithy.api.Input(),
-  )
+  ).lazily
 
   implicit val schema: Schema[MapInput] = struct(
     MyMap.underlyingSchema.required[MapInput]("value", _.value),

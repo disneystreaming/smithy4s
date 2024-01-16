@@ -15,7 +15,7 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
 
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
-  )
+  ).lazily
 
   implicit val schema: Schema[MovieTheater] = struct(
     string.optional[MovieTheater]("name", _.name),

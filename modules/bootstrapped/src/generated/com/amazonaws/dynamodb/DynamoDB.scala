@@ -65,7 +65,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
     aws.api.Service(sdkId = "DynamoDB", arnNamespace = Some(aws.api.ArnNamespace("dynamodb")), cloudFormationName = Some(aws.api.CloudFormationName("DynamoDB")), cloudTrailEventSource = Some("dynamodb.amazonaws.com"), docId = None, endpointPrefix = Some("dynamodb")),
     smithy.api.XmlNamespace(uri = smithy.api.NonEmptyString("http://dynamodb.amazonaws.com/doc/2012-08-10/"), prefix = None),
     aws.api.ClientEndpointDiscovery(operation = smithy4s.ShapeId(namespace = "com.amazonaws.dynamodb", name = "DescribeEndpoints"), error = Some(smithy4s.ShapeId(namespace = "com.amazonaws.dynamodb", name = "InvalidEndpointException"))),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

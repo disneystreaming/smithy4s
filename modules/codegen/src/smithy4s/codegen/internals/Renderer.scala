@@ -1249,12 +1249,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderPrismsEnum(name, values, hints, isOpen),
         values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
           val valueName = NameRef(e.name)
-          val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
+          val baseLine =
+            line"""case object $valueName extends $name("$value", "${e.realName}", $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
             deprecationAnnotation(hints),
-            line"""case object $valueName extends $name("$value", "${e.realName}", $intValue, $valueHints)"""
+            if (e.hints.isEmpty) baseLine
+            else
+              block(baseLine)(
+                line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
+              )
           )
         },
         if (isOpen) {
@@ -1447,10 +1453,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
-    val base = line"val hints: $Hints_ = $Hints_"
+    val lhs = line"val hints: $Hints_"
+
     hints.flatMap(renderHint) match {
-      case Nil  => lines(base + line".empty")
-      case args => base.args(args)
+      case Nil => lines(line"$lhs = $Hints_.empty")
+      case args =>
+        line"$lhs = $Hints_".args(args).appendToLast(".lazily")
     }
   }
 
