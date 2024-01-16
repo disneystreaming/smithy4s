@@ -46,7 +46,7 @@ object Foo extends ShapeTag.Companion[Foo] {
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
-  )
+  ).lazily
 
   final case class IntCase(int: Int) extends Foo { final def $ordinal: Int = 0 }
   /** this is a comment saying you should be careful for this case
@@ -64,7 +64,7 @@ object Foo extends ShapeTag.Companion[Foo] {
   object StrCase {
     val hints: Hints = Hints(
       smithy.api.Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
-    )
+    ).lazily
     val schema: Schema[Foo.StrCase] = bijection(string.addHints(hints), Foo.StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }

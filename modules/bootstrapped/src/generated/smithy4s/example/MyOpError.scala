@@ -15,7 +15,7 @@ object MyOpError extends ShapeTag.Companion[MyOpError] {
 
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[MyOpError] = constant(MyOpError()).withId(id).addHints(hints)
 }

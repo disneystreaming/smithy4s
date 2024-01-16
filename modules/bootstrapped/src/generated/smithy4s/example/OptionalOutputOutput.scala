@@ -14,7 +14,7 @@ object OptionalOutputOutput extends ShapeTag.Companion[OptionalOutputOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[OptionalOutputOutput] = struct(
     string.optional[OptionalOutputOutput]("body", _.body).addHints(smithy.api.HttpPayload()),

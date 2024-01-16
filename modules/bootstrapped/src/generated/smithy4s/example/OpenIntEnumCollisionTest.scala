@@ -23,7 +23,7 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
 
   val hints: Hints = Hints(
     alloy.OpenEnum(),
-  )
+  ).lazily
 
   object optics {
     val ONE: Prism[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.ONE.type] = Prism.partial[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.ONE.type]{ case OpenIntEnumCollisionTest.ONE => OpenIntEnumCollisionTest.ONE }(identity)
@@ -32,9 +32,9 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
     val $unknown: Prism[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.$Unknown] = Prism.partial[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.$Unknown]{ case u: OpenIntEnumCollisionTest.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenIntEnumCollisionTest("ONE", "ONE", 1, Hints())
-  case object TWO extends OpenIntEnumCollisionTest("TWO", "TWO", 2, Hints())
-  case object Unknown extends OpenIntEnumCollisionTest("Unknown", "Unknown", 3, Hints())
+  case object ONE extends OpenIntEnumCollisionTest("ONE", "ONE", 1, Hints.empty)
+  case object TWO extends OpenIntEnumCollisionTest("TWO", "TWO", 2, Hints.empty)
+  case object Unknown extends OpenIntEnumCollisionTest("Unknown", "Unknown", 3, Hints.empty)
   final case class $Unknown(int: Int) extends OpenIntEnumCollisionTest("$Unknown", "$Unknown", int, Hints.empty)
 
   val $unknown: Int => OpenIntEnumCollisionTest = $Unknown(_)
