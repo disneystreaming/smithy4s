@@ -190,13 +190,13 @@ private[internals] object CollisionAvoidance {
   private def modProduct(p: Product): Product = {
     import p._
     Product(
-      p.shapeId,
-      protectKeyword(name.capitalize),
-      fields.map(modField),
-      mixins.map(modType),
-      recursive,
-      hints.map(modHint),
-      isMixin
+      shapeId = p.shapeId,
+      name = protectKeyword(name.capitalize),
+      fields = fields.map(modField),
+      mixins = mixins.map(modType),
+      recursive = recursive,
+      hints = hints.map(modHint),
+      isMixin = isMixin
     )
   }
 

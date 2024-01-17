@@ -29,8 +29,8 @@ sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product wit
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
 
-  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None):AdtOne = AdtOne(lng, sht, blb, str)
-  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None):AdtTwo = AdtTwo(lng, sht, int)
+  def one(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None): AdtOne = AdtOne(lng, sht, blb, str)
+  def two(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None): AdtTwo = AdtTwo(lng, sht, int)
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 

@@ -1008,12 +1008,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+
+          line"$prefix($args): ${product.nameRef} = ${product.nameRef}($values)"
+
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
+
         case UnionMember.TypeCase(tpe) =>
           line"$prefix($ident: $tpe): $name = $cn($ident)"
       }
+
       lines(
         documentationAnnotation(alt.hints),
         deprecationAnnotation(alt.hints),

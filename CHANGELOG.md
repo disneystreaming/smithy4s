@@ -4,6 +4,10 @@
 
 Previously, URIs constructed with a base URI of `/` would have `localhost` as the host. In some cases, that may not be desirable, such as in the case of frontend clients that want to reuse the window's origin. This is now fixed: hostnames are optional in the smithy4s URI model, and default to `None`.
 
+## Smart constructors for `@adt` union members have been renamed in [#1370](https://github.com/disneystreaming/smithy4s/pull/1370)
+
+Previously they'd be named after the **member target**, now they will use the name of the member itself (same as in the case of non-ADT unions).
+
 # 0.18.6
 
 * If a Smithy trait, being a structure shape, had a Scala keyword in its member names, compilation of the generated would fail. In addition, enumeration values that matched a known keyword would have their name erroneously escaped with an underscore in the string literal.

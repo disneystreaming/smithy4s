@@ -33,9 +33,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   @deprecated(message = "N/A", since = "N/A")
   def s(s: String): DeprecatedUnion = SCase(s)
   def s_V2(s_V2: String): DeprecatedUnion = S_V2Case(s_V2)
-  def deprecatedUnionProductCase():DeprecatedUnionProductCase = DeprecatedUnionProductCase()
+  def p(): DeprecatedUnionProductCase = DeprecatedUnionProductCase()
   @deprecated(message = "N/A", since = "N/A")
-  def unionProductCaseDeprecatedAtCallSite():UnionProductCaseDeprecatedAtCallSite = UnionProductCaseDeprecatedAtCallSite()
+  def p2(): UnionProductCaseDeprecatedAtCallSite = UnionProductCaseDeprecatedAtCallSite()
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
 
