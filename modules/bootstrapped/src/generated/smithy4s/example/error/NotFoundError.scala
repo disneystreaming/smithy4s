@@ -17,7 +17,7 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
-  )
+  ).lazily
 
   implicit val schema: Schema[NotFoundError] = struct(
     string.optional[NotFoundError]("error", _.error),

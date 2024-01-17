@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -88,8 +88,14 @@ private[internals] object CollisionAvoidance {
         )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
-          case EnumValue(value, intValue, name, hints) =>
-            EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
+          case EnumValue(value, intValue, name, realName, hints) =>
+            EnumValue(
+              value = value,
+              intValue = intValue,
+              name = protectKeyword(name),
+              realName = realName,
+              hints.map(modHint)
+            )
         }
         Enumeration(
           shapeId,
@@ -201,7 +207,12 @@ private[internals] object CollisionAvoidance {
         case EnumerationTN(ref, value, intValue, name) =>
           EnumerationTN(modRef(ref), value, intValue, name)
         case StructureTN(ref, fields) =>
-          StructureTN(modRef(ref), fields)
+          StructureTN(
+            ref = modRef(ref),
+            fields = fields.map { case (k, v) =>
+              protectKeyword(k) -> v
+            }
+          )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -120,11 +120,13 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
     if (segments.nonEmpty) {
       if (linesWithValue.exists(_.render.list.nonEmpty))
         Lines(List(self + Literal("("))) ++ indent(
-          linesWithValue.toList.foldMap(_.render).mapLines(_ + Literal(","))
+          linesWithValue.toList.foldMap(_.render.mapLines(_ + Literal(",")))
         ) ++ Lines(")")
       else
         Lines(self + Literal("()"))
     } else {
+      // todo: seems strange, we're discarding `linesWithValue` because `segments` is empty?
+      // seems risky, perhaps it's better to throw?
       Lines.empty
     }
   }

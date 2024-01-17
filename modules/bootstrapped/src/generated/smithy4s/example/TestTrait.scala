@@ -18,7 +18,7 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[TestTrait] = recursive(struct(
     OrderType.schema.optional[TestTrait]("orderType", _.orderType),

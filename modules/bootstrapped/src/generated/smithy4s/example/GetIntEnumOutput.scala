@@ -13,7 +13,7 @@ object GetIntEnumOutput extends ShapeTag.Companion[GetIntEnumOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[GetIntEnumOutput] = struct(
     EnumResult.schema.required[GetIntEnumOutput]("result", _.result),

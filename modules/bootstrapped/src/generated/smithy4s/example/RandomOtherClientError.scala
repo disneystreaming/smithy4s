@@ -17,7 +17,7 @@ object RandomOtherClientError extends ShapeTag.Companion[RandomOtherClientError]
 
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[RandomOtherClientError] = struct(
     string.optional[RandomOtherClientError]("message", _.message),

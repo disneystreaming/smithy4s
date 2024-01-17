@@ -13,7 +13,7 @@ object StringWithEnumTraits extends Newtype[String] {
     smithy4s.example.OldStyleLeftRight.RIGHT.widen,
     smithy4s.example.OneTwo.ONE.widen,
     smithy4s.example.LeftRight.LEFT.widen,
-  )
+  ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[StringWithEnumTraits] = bijection(underlyingSchema, asBijection)
 }

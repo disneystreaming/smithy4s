@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -352,7 +352,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case ((name, value), index) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(value, index, name, hints(member))
+            EnumValue(
+              value = value,
+              intValue = index,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
@@ -375,7 +381,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case (name, value) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(name, value, name, hints(member))
+            EnumValue(
+              value = name,
+              intValue = value,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
@@ -994,7 +1006,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    def fields = {
+    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
@@ -1013,7 +1025,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             member.getMemberName(),
             member.tpe,
             modifier,
-            hints(member) ++ default ++ noDefault
+            hintsExtractor(member) ++ default ++ noDefault
           )
         }
         .collect {
@@ -1047,6 +1059,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         case DefaultRenderMode.NoDefaults => result
       }
     }
+
+    /**
+      * Should be used when calculating schema for a structure.
+      *
+      * See https://github.com/disneystreaming/smithy4s/issues/1296 for details.
+      */
+    def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
+
+    /**
+      * Should be used only on the call site
+      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
+      */
+    def getFieldsPlain: List[Field] =
+      fieldsInternal(hintsExtractor = _ => List.empty)
 
     def alts = {
       shape
@@ -1210,8 +1236,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
-        val structFields = struct.fields
-        val fieldNames = struct.fields.map(_.name)
+        val structFields = struct.getFieldsPlain
+        val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, Field.Modifier.NoModifier, _) =>
             map.get(realName) match {
@@ -1392,6 +1418,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(
         Primitive.Timestamp,
         java.time.Instant.ofEpochSecond(0)
+      )
+    case (_, Primitive.Unit) =>
+      TypedNode.PrimitiveTN(
+        Primitive.Unit,
+        ()
       )
     case other =>
       throw new NotImplementedError(s"Unsupported case: $other")

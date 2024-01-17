@@ -23,13 +23,13 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
 
   val hints: Hints = Hints(
     smithy.api.Documentation("FaceCard types"),
-  )
+  ).lazily
 
-  case object JACK extends FaceCard("JACK", "JACK", 1, Hints())
-  case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints())
-  case object KING extends FaceCard("KING", "KING", 3, Hints())
-  case object ACE extends FaceCard("ACE", "ACE", 4, Hints())
-  case object JOKER extends FaceCard("JOKER", "JOKER", 5, Hints())
+  case object JACK extends FaceCard("JACK", "JACK", 1, Hints.empty)
+  case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints.empty)
+  case object KING extends FaceCard("KING", "KING", 3, Hints.empty)
+  case object ACE extends FaceCard("ACE", "ACE", 4, Hints.empty)
+  case object JOKER extends FaceCard("JOKER", "JOKER", 5, Hints.empty)
 
   val values: List[FaceCard] = List(
     JACK,

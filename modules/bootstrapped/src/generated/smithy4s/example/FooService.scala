@@ -33,7 +33,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val hints: Hints = Hints(
     smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

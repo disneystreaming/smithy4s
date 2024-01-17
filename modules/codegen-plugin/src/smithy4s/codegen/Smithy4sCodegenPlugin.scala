@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -210,7 +210,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sExternallyTrackedDependencies := {
       (config / externalDependencyClasspath).value
         .map(_.data)
-        .flatMap(extract)
+        .filter(_.ext == "jar")
+        .flatMap(extractJar)
         .distinct
     },
     config / smithy4sNormalExternalDependencies := {
@@ -386,7 +387,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   private lazy val simple = raw"([^:]*):([^:]*):([^:]*)".r
   private lazy val cross = raw"([^:]*)::([^:]*):([^:]*)".r
-  private def extract(jarFile: java.io.File): Seq[ModuleID] = {
+  private def extractJar(jarFile: java.io.File): Seq[ModuleID] = {
     JarUtils
       .extractSmithy4sDependencies(jarFile)
       .collect {

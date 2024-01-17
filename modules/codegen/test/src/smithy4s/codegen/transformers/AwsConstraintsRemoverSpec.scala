@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ final class AwsConstraintsRemoverSpec extends munit.FunSuite {
                                        |  val id: ShapeId = ShapeId("com.amazonaws.dummy", "Long")
                                        |  val hints: Hints = Hints(
                                        |    smithy.api.Box(),
-                                       |  )
+                                       |  ).lazily
                                        |  val underlyingSchema: Schema[scala.Long] = long.withId(id).addHints(hints)
                                        |  implicit val schema: Schema[Long] = bijection(underlyingSchema, asBijection)
                                        |}
