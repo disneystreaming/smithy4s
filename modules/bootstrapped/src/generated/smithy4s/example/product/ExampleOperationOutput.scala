@@ -14,7 +14,7 @@ object ExampleOperationOutput extends ShapeTag.Companion[ExampleOperationOutput]
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[ExampleOperationOutput] = struct(
     string.required[ExampleOperationOutput]("b", _.b),

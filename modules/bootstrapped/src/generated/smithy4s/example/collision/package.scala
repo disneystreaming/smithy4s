@@ -7,6 +7,8 @@ package object collision {
   type MyList = smithy4s.example.collision.MyList.Type
   type String = smithy4s.example.collision.String.Type
   type MyMap = smithy4s.example.collision.MyMap.Type
+  type ReservedKeywordTraitExampleCollection = smithy4s.example.collision.ReservedKeywordTraitExampleCollection.Type
+  type ReservedKeywordTraitExamplePrimitive = smithy4s.example.collision.ReservedKeywordTraitExamplePrimitive.Type
   type MySet = smithy4s.example.collision.MySet.Type
 
 }

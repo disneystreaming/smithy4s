@@ -34,7 +34,7 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   val hints: Hints = Hints(
     smithy.api.Documentation("Provides weather forecasts."),
     smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("nextToken")), outputToken = Some(smithy.api.NonEmptyString("nextToken")), items = None, pageSize = Some(smithy.api.NonEmptyString("pageSize"))),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

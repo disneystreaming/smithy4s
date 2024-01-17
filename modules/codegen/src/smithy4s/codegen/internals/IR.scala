@@ -113,6 +113,7 @@ private[internals] case class EnumValue(
     value: String,
     intValue: Int,
     name: String,
+    realName: String,
     hints: List[Hint]
 )
 

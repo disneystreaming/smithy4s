@@ -14,7 +14,7 @@ object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[HealthCheckOutput] = struct(
     string.required[HealthCheckOutput]("message", _.message),

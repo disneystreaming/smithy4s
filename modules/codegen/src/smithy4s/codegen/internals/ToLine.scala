@@ -120,11 +120,13 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
     if (segments.nonEmpty) {
       if (linesWithValue.exists(_.render.list.nonEmpty))
         Lines(List(self + Literal("("))) ++ indent(
-          linesWithValue.toList.foldMap(_.render).mapLines(_ + Literal(","))
+          linesWithValue.toList.foldMap(_.render.mapLines(_ + Literal(",")))
         ) ++ Lines(")")
       else
         Lines(self + Literal("()"))
     } else {
+      // todo: seems strange, we're discarding `linesWithValue` because `segments` is empty?
+      // seems risky, perhaps it's better to throw?
       Lines.empty
     }
   }

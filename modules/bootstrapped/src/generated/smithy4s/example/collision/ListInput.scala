@@ -13,7 +13,7 @@ object ListInput extends ShapeTag.Companion[ListInput] {
 
   val hints: Hints = Hints(
     smithy.api.Input(),
-  )
+  ).lazily
 
   implicit val schema: Schema[ListInput] = struct(
     MyList.underlyingSchema.required[ListInput]("list", _.list),

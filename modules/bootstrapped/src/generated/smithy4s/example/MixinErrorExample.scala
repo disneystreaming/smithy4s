@@ -19,7 +19,7 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
 
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[MixinErrorExample] = struct(
     string.optional[MixinErrorExample]("a", _.a),

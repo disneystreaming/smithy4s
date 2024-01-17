@@ -11,7 +11,7 @@ object StreamedBlob extends Newtype[Byte] {
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedBlob")
   val hints: Hints = Hints(
     smithy.api.Streaming(),
-  )
+  ).lazily
   val underlyingSchema: Schema[Byte] = byte.withId(id).addHints(hints)
   implicit val schema: Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
 }

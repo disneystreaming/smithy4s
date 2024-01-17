@@ -17,7 +17,7 @@ object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMess
 
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[ServerErrorCustomMessage] = struct(
     string.optional[ServerErrorCustomMessage]("messageField", _.messageField),

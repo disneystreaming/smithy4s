@@ -22,7 +22,7 @@ object UnknownServerErrorCode extends Enumeration[UnknownServerErrorCode] with S
 
   val hints: Hints = Hints.empty
 
-  case object ERROR_CODE extends UnknownServerErrorCode("server.error", "ERROR_CODE", 0, Hints())
+  case object ERROR_CODE extends UnknownServerErrorCode("server.error", "ERROR_CODE", 0, Hints.empty)
 
   val values: List[UnknownServerErrorCode] = List(
     ERROR_CODE,

@@ -17,7 +17,7 @@ object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError]
 
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[RandomOtherServerError] = struct(
     string.optional[RandomOtherServerError]("message", _.message),

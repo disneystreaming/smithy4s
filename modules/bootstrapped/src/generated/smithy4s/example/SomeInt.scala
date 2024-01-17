@@ -12,7 +12,7 @@ object SomeInt extends Newtype[Int] {
   val hints: Hints = Hints(
     smithy4s.example.SomeCollections(someList = List("a"), someSet = Set("b"), someMap = Map("a" -> "b")),
     smithy.api.Default(smithy4s.Document.fromDouble(0.0d)),
-  )
+  ).lazily
   val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
   implicit val schema: Schema[SomeInt] = bijection(underlyingSchema, asBijection)
 }

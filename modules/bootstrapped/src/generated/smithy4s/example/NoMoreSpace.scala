@@ -23,7 +23,7 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
-  )
+  ).lazily
 
   implicit val schema: Schema[NoMoreSpace] = struct(
     string.required[NoMoreSpace]("message", _.message),

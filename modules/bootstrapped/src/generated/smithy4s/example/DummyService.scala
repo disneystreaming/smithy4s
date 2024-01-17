@@ -32,7 +32,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

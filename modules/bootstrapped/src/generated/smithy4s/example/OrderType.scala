@@ -40,7 +40,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
-  )
+  ).lazily
 
   final case class OnlineCase(online: OrderNumber) extends OrderType { final def $ordinal: Int = 0 }
   /** For an InStoreOrder a location ID isn't needed */
@@ -53,7 +53,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
     val hints: Hints = Hints(
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
-    )
+    ).lazily
 
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id),

@@ -25,7 +25,7 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

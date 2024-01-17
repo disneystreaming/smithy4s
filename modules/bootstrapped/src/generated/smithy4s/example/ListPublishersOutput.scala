@@ -13,7 +13,7 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[ListPublishersOutput] = struct(
     PublishersList.underlyingSchema.required[ListPublishersOutput]("publishers", _.publishers),
