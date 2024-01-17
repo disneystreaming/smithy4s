@@ -25,7 +25,7 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

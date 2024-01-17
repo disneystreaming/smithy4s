@@ -14,7 +14,7 @@ object OperationOutput extends ShapeTag.Companion[OperationOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[OperationOutput] = struct(
     string.field[OperationOutput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
