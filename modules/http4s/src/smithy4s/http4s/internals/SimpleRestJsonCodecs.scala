@@ -90,7 +90,9 @@ private[http4s] class SimpleRestJsonCodecs(
       .withErrorBodyDecoders(payloadDecoders)
       .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
       .withMetadataDecoders(Metadata.Decoder)
-      .withMetadataEncoders(Metadata.Encoder)
+      .withMetadataEncoders(
+        Metadata.Encoder.withExplicitDefaultsEncoding(explicitDefaultsEncoding)
+      )
       .withBaseRequest(_ => baseRequest.pure[F])
       .withRequestMediaType("application/json")
       .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])

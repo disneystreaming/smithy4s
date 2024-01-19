@@ -47,7 +47,8 @@ import java.util.Base64
  */
 class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode],
-    commaDelimitedEncoding: Boolean
+    commaDelimitedEncoding: Boolean,
+    explicitDefaultsEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
   override def primitive[P](
@@ -169,10 +170,16 @@ class SchemaVisitorMetadataWriter(
           val encoder = self(field.schema.addHints(Hints(binding)))
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
-            field.getUnlessDefault(s) match {
-              case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
-              case None              => metadata
-            }
+            if (explicitDefaultsEncoding)
+              field.get(s) match {
+                case None => metadata
+                case _    => updateFunction(metadata, field.get(s))
+              }
+            else
+              field.getUnlessDefault(s) match {
+                case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
+                case None              => metadata
+              }
         }
     }
     // pull out the query params field as it must be applied last to the metadata
