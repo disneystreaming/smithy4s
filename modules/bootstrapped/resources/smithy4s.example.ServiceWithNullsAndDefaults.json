@@ -1,0 +1,156 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ServiceWithNullsAndDefaults",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/operation/{requiredLabel}": {
+            "post": {
+                "operationId": "Operation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OperationRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "requiredLabel",
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "default": "required-label-with-default"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "optional-query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "optional-query-with-default",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "optional-query-with-default"
+                        }
+                    },
+                    {
+                        "name": "required-query-with-default",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "required-query-with-default"
+                        }
+                    },
+                    {
+                        "name": "optional-header",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "optional-header-with-default",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "default": "optional-header-with-default"
+                        }
+                    },
+                    {
+                        "name": "required-header-with-default",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "default": "required-header-with-default"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation 200 response",
+                        "headers": {
+                            "optional-header": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "optional-header-with-default": {
+                                "schema": {
+                                    "type": "string",
+                                    "default": "optional-header-with-default"
+                                }
+                            },
+                            "required-header-with-default": {
+                                "schema": {
+                                    "type": "string",
+                                    "default": "required-header-with-default"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OperationResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "OperationRequestContent": {
+                "type": "object",
+                "properties": {
+                    "optional": {
+                        "type": "string"
+                    },
+                    "optionalWithDefault": {
+                        "type": "string",
+                        "default": "optional-default"
+                    },
+                    "requiredWithDefault": {
+                        "type": "string",
+                        "default": "required-default"
+                    }
+                },
+                "required": [
+                    "requiredWithDefault"
+                ]
+            },
+            "OperationResponseContent": {
+                "type": "object",
+                "properties": {
+                    "optional": {
+                        "type": "string"
+                    },
+                    "optionalWithDefault": {
+                        "type": "string",
+                        "default": "optional-default"
+                    },
+                    "requiredWithDefault": {
+                        "type": "string",
+                        "default": "required-default"
+                    }
+                },
+                "required": [
+                    "requiredWithDefault"
+                ]
+            }
+        }
+    }
+}

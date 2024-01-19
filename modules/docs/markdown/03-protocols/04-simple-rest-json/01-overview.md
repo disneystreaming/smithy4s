@@ -88,7 +88,7 @@ See the section about [unions](../../04-codegen/02-unions.md) for a detailed des
 
 ## Explicit Null Encoding
 
-By default, optional structure fields that are set to `None` will be excluded from encoded structures. If you wish to change this so that instead they are included and set to `null` explicitly, you can do so by calling `.withExplicitDefaultsEncoding(true)`.
+By default, optional properties (headers, query parameters, structure fields) that are set to `None` and optional properties that are set to default value will be excluded during encoding process. If you wish to change this so that instead they are included and set to `null` explicitly, you can do so by calling `.withExplicitDefaultsEncoding(true)`.
 
 ## Supported traits
 

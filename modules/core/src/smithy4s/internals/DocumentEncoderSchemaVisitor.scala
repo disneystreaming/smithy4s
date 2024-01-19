@@ -74,9 +74,14 @@ object DocumentEncoder {
 }
 
 class DocumentEncoderSchemaVisitor(
-    val cache: CompilationCache[DocumentEncoder]
+    val cache: CompilationCache[DocumentEncoder],
+    val explicitDefaultsEncoding: Boolean
 ) extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
+
+  def this(cache: CompilationCache[DocumentEncoder]) =
+    this(cache, explicitDefaultsEncoding = false)
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -197,9 +202,12 @@ class DocumentEncoderSchemaVisitor(
         .map(_.value)
         .getOrElse(field.label)
       (s, builder) =>
-        field.getUnlessDefault(s).foreach { value =>
-          builder.+=(jsonLabel -> encoder.apply(value))
-        }
+        if (explicitDefaultsEncoding) {
+          builder.+=(jsonLabel -> encoder.apply(field.get(s)))
+        } else
+          field.getUnlessDefault(s).foreach { value =>
+            builder.+=(jsonLabel -> encoder.apply(value))
+          }
     }
 
     val encoders = fields.map(field => fieldEncoder(field))
