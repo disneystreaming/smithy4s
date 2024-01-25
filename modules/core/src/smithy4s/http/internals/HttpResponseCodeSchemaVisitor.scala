@@ -101,8 +101,18 @@ class HttpResponseCodeSchemaVisitor()
           case OptionalResponseCode(f) => f(value)
         }
     }
-
   }
+
+  override def biject[A, B](
+      schema: smithy4s.schema.Schema[A],
+      bijection: smithy4s.Bijection[A, B]
+  ): ResponseCodeExtractor[B] = {
+    val underlyingExtractor: ResponseCodeExtractor[A] = apply(schema)
+    Contravariant[ResponseCodeExtractor].contramap(underlyingExtractor)(
+      bijection.from
+    )
+  }
+
 }
 
 object HttpResponseCodeSchemaVisitor {
