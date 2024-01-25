@@ -118,4 +118,46 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
 
   }
 
+  type StatusCodeNewType = StatusCodeNewType.Type
+
+  object StatusCodeNewType extends Newtype[Int] {
+    val id: ShapeId = ShapeId("smithy4s.example", "StatusCodeNewType")
+    val hints: Hints = Hints(
+      smithy.api.Box()
+    )
+    val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
+    implicit val schema: Schema[StatusCodeNewType] =
+      bijection(underlyingSchema, asBijection)
+  }
+
+  case class SampleResponse2(code: StatusCodeNewType)
+
+  object SampleResponse2 extends ShapeTag.Companion[SampleResponse2] {
+    implicit val schema: Schema[SampleResponse2] =
+      Schema
+        .struct[SampleResponse2](
+          StatusCodeNewType.schema
+            .required[SampleResponse2]("code", _.code)
+            .addHints(smithy.api.HttpResponseCode())
+        )(SampleResponse2.apply)
+        .withId("", "SampleResponse")
+
+    val id: ShapeId = ShapeId("", "SampleResponse")
+  }
+
+  test(
+    "applying HttpResponseCode works on an int newtype"
+  ) {
+
+    val res: ResponseCodeExtractor[SampleResponse2] =
+      SampleResponse2.schema.compile(visitor)
+    val test = SampleResponse2(StatusCodeNewType(234))
+    res match {
+      case HttpResponseCodeSchemaVisitor.RequiredResponseCode(f) =>
+        assert(f(test) == 234)
+      case _ => fail("Expected RequiredResponseCode")
+    }
+
+  }
+
 }
