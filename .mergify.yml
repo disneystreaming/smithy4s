@@ -10,3 +10,21 @@ pull_request_rules:
         message: Automatically approving scala-steward
       merge:
         method: merge
+
+  - name: backport labeled PRs to the 0.19 branch
+    conditions:
+      - label="backport-0.19"
+    actions:
+      backport:
+        branches:
+          - "series/0.19"
+
+  - name: automatically merge backport if they pass tests
+    conditions:
+      - author="mergify[bot]"
+      - base~=^mergify/bp/
+      - head~=^release-1.
+      - check-success="build-success-checkpoint"
+    actions:
+      merge:
+        method: merge
