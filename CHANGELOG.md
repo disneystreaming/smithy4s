@@ -1,3 +1,7 @@
+# 0.18.7
+
+* Added support for `@httpResponseCode` on newtypes (integer shapes that aren't exactly `smithy.api#Integer`), as well as refinements (e.g. ints with a `@range` constraint).
+
 # 0.18.6
 
 * If a Smithy trait, being a structure shape, had a Scala keyword in its member names, compilation of the generated would fail. In addition, enumeration values that matched a known keyword would have their name erroneously escaped with an underscore in the string literal.
