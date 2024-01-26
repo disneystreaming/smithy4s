@@ -133,6 +133,8 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
   case class SampleResponse2(code: StatusCodeNewType)
 
   object SampleResponse2 extends ShapeTag.Companion[SampleResponse2] {
+    val id: ShapeId = ShapeId("smithy4s.example", "SampleResponse2")
+
     implicit val schema: Schema[SampleResponse2] =
       Schema
         .struct[SampleResponse2](
@@ -140,15 +142,12 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
             .required[SampleResponse2]("code", _.code)
             .addHints(smithy.api.HttpResponseCode())
         )(SampleResponse2.apply)
-        .withId("", "SampleResponse")
-
-    val id: ShapeId = ShapeId("", "SampleResponse")
+        .withId(id)
   }
 
   test(
     "applying HttpResponseCode works on an int newtype"
   ) {
-
     val res: ResponseCodeExtractor[SampleResponse2] =
       SampleResponse2.schema.compile(visitor)
     val test = SampleResponse2(StatusCodeNewType(234))
@@ -157,7 +156,74 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
         assert(f(test) == 234)
       case _ => fail("Expected RequiredResponseCode")
     }
+  }
 
+  case class RefinedStatusCode(value: Int)
+
+  class RefinedStatusCodeFormat()
+
+  object RefinedStatusCodeFormat
+      extends ShapeTag.Companion[RefinedStatusCodeFormat] {
+    val id: ShapeId = ShapeId("smithy4s.example", "RefinedStatusCodeFormat")
+    val hints: Hints = Hints(
+      smithy.api.Trait()
+    )
+    implicit val schema: Schema[RefinedStatusCodeFormat] =
+      Schema.StructSchema(
+        id,
+        Hints.empty,
+        Vector.empty,
+        _ => new RefinedStatusCodeFormat()
+      )
+  }
+
+  object RefinedStatusCode {
+
+    private def isValidRefinedStatusCode(value: Int): Boolean =
+      value > 100 && value < 600
+
+    def apply(value: Int): Either[String, RefinedStatusCode] =
+      if (isValidRefinedStatusCode(value)) Right(new RefinedStatusCode(value))
+      else Left("RefinedStatusCode is not valid")
+
+    implicit val provider
+        : RefinementProvider[RefinedStatusCodeFormat, Int, RefinedStatusCode] =
+      Refinement.drivenBy[RefinedStatusCodeFormat](
+        RefinedStatusCode.apply,
+        (e: RefinedStatusCode) => e.value
+      )
+
+    val schema = Schema.int
+      .refined[RefinedStatusCode](new RefinedStatusCodeFormat())
+      .withId(ShapeId("smithy4s.example", "RefinedStatusCode"))
+  }
+
+  case class SampleResponse3(code: RefinedStatusCode)
+
+  object SampleResponse3 extends ShapeTag.Companion[SampleResponse3] {
+    val id: ShapeId = ShapeId("smithy4s.example", "SampleResponse3")
+
+    implicit val schema: Schema[SampleResponse3] =
+      Schema
+        .struct[SampleResponse3](
+          RefinedStatusCode.schema
+            .required[SampleResponse3]("code", _.code)
+            .addHints(smithy.api.HttpResponseCode())
+        )(SampleResponse3.apply)
+        .withId(id)
+  }
+
+  test(
+    "applying HttpResponseCode works on a refined int"
+  ) {
+    val res: ResponseCodeExtractor[SampleResponse3] =
+      SampleResponse3.schema.compile(visitor)
+    val test = SampleResponse3(RefinedStatusCode(234).toOption.get)
+    res match {
+      case HttpResponseCodeSchemaVisitor.RequiredResponseCode(f) =>
+        assert(f(test) == 234)
+      case _ => fail("Expected RequiredResponseCode")
+    }
   }
 
 }

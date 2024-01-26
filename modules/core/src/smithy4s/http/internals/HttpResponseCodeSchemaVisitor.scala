@@ -33,6 +33,7 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   RequiredResponseCode,
   ResponseCodeExtractor
 }
+import smithy4s.Refinement
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -110,6 +111,16 @@ class HttpResponseCodeSchemaVisitor()
     val underlyingExtractor: ResponseCodeExtractor[A] = apply(schema)
     Contravariant[ResponseCodeExtractor].contramap(underlyingExtractor)(
       bijection.from
+    )
+  }
+
+  override def refine[A, B](
+      schema: Schema[A],
+      refinement: Refinement[A, B]
+  ): ResponseCodeExtractor[B] = {
+    val underlyingExtractor: ResponseCodeExtractor[A] = apply(schema)
+    Contravariant[ResponseCodeExtractor].contramap(underlyingExtractor)(
+      refinement.from
     )
   }
 
