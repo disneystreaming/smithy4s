@@ -21,7 +21,7 @@ pull_request_rules:
 
   - name: automatically merge backport if they pass tests
     conditions:
-      - author="mergify[bot]"
+      - author=mergify[bot]
       - base~=^mergify/bp/
       - head~=^release-1.
       - check-success="build-success-checkpoint"
