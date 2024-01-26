@@ -17,6 +17,8 @@ These are now fixed in [#1344](https://github.com/disneystreaming/smithy4s/pull/
 
 * In some concurrent scenarios, especially those of concurrent initialization of objects (e.g. tests), your application would previously be at risk of deadlocking due to [#537](https://github.com/disneystreaming/smithy4s/issues/537). This is now fixed by suspending evaluation of hints in companion objects using the `.lazily` construct: see [#1326](https://github.com/disneystreaming/smithy4s/pull/1326).
 
+* Allow to configure how the default values (and nulls for optional fields) are rendered. Fixed in [#1315](https://github.com/disneystreaming/smithy4s/pull/1315)
+
 # 0.18.5
 
 * When encoding to `application/x-www-form-urlencoded`, omit optional fields set to the field's default value.
