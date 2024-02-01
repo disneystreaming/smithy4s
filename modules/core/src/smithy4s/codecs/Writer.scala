@@ -16,8 +16,8 @@
 
 package smithy4s.codecs
 
-import smithy4s.schema._
 import smithy4s.capability.EncoderK
+import smithy4s.schema._
 
 /**
   * An abstraction that codifies the notion of modifying a message with some additional information.

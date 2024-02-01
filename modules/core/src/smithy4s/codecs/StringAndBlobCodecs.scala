@@ -17,9 +17,10 @@
 package smithy4s
 package codecs
 
-import schema._
-import smithy4s.schema.Primitive._
 import smithy4s.capability.instances.either._
+import smithy4s.schema.Primitive._
+
+import schema._
 
 object StringAndBlobCodecs {
 

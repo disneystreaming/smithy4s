@@ -16,23 +16,19 @@
 
 package smithy4s.http.internals
 
-import smithy4s.capability.Contravariant
 import smithy4s.Hints
-import smithy4s.schema.{
-  EnumTag,
-  EnumValue,
-  Primitive,
-  Schema,
-  Field,
-  SchemaVisitor
-}
 import smithy4s.ShapeId
-import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
-  NoResponseCode,
-  OptionalResponseCode,
-  RequiredResponseCode,
-  ResponseCodeExtractor
-}
+import smithy4s.capability.Contravariant
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.NoResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.OptionalResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.ResponseCodeExtractor
+import smithy4s.schema.EnumTag
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Field
+import smithy4s.schema.Primitive
+import smithy4s.schema.Schema
+import smithy4s.schema.SchemaVisitor
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {

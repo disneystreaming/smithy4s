@@ -16,11 +16,14 @@
 
 package smithy4s.internals
 
-import smithy4s.schema._
+import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.http.internals.PathEncode
 import smithy4s.http.internals.PathEncode.MaybePathEncode
-import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.schema._
 
 private[internals] final class SchemaVisitorPatternEncoder(
     segments: List[PatternSegment]

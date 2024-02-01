@@ -16,9 +16,9 @@
 
 package smithy4s.codecs
 
-import smithy4s.kinds._
 import smithy4s.capability.Covariant
 import smithy4s.capability.Zipper
+import smithy4s.kinds._
 
 /**
   * An abstraction that codifies the action of reading data from some input.

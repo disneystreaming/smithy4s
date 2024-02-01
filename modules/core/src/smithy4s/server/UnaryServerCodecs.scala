@@ -16,8 +16,8 @@
 
 package smithy4s.server
 
-import smithy4s.schema.OperationSchema
 import smithy4s.capability.MonadThrowLike
+import smithy4s.schema.OperationSchema
 
 // scalafmt: {maxColumn = 120}
 final class UnaryServerCodecs[F[_], Request, Response, I, E, O](

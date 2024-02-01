@@ -17,11 +17,12 @@
 package smithy4s
 package http.internals
 
-import smithy4s.schema._
-import smithy4s.{Hints, ShapeId}
 import smithy4s.Bijection
+import smithy4s.Hints
 import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.schema.Primitive.PString
+import smithy4s.schema._
 
 /**
   * A schema visitor that allows to merge several values into a single, comma-separated header value.

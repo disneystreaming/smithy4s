@@ -16,9 +16,11 @@
 
 package smithy4s.http.internals
 
-import smithy4s.{Schema, _}
-import smithy4s.schema._
+import smithy4s.Schema
+import smithy4s._
 import smithy4s.codecs.Writer
+import smithy4s.schema._
+
 import HostPrefixSegment._
 
 object HostPrefixSchemaVisitor

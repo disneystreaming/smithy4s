@@ -18,7 +18,6 @@ package smithy4s
 package server
 
 import smithy4s.capability.MonadThrowLike
-
 import smithy4s.kinds._
 
 // scalafmt: {maxColumn: 120}
