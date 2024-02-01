@@ -28,6 +28,7 @@ import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.TypeclassTrait
 import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -42,7 +43,6 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
-import smithy4s.meta.TypeclassTrait
 
 private[codegen] object SmithyToIR {
 

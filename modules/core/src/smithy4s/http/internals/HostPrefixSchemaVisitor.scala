@@ -16,8 +16,10 @@
 
 package smithy4s.http.internals
 
-import smithy4s.Schema
-import smithy4s._
+import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.codecs.Writer
 import smithy4s.schema._
 
