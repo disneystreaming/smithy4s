@@ -23,10 +23,18 @@ object EnumTag {
   case object ClosedIntEnum extends EnumTag[Nothing]
 
   case class OpenStringEnum[E](unknown: String => E) extends EnumTag[E]
-  object OpenStringEnum {}
+  object OpenStringEnum {
+    def apply[E](unknown: String => E): OpenStringEnum[E] = {
+      new OpenStringEnum(unknown)
+    }
+  }
 
   case class OpenIntEnum[E](unknown: Int => E) extends EnumTag[E]
-  object OpenIntEnum {}
+  object OpenIntEnum {
+    def apply[E](unknown: Int => E): OpenIntEnum[E] = {
+      new OpenIntEnum(unknown)
+    }
+  }
 
   object StringEnum {
     def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
@@ -34,7 +42,6 @@ object EnumTag {
       case OpenStringEnum(_) => true
       case _                 => false
     }
-
   }
 
   object IntEnum {

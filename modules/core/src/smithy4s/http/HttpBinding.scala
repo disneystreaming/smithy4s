@@ -68,24 +68,40 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
   }
 
   object HeaderBinding {
+    def apply(httpName: CaseInsensitive): HeaderBinding = {
+      new HeaderBinding(httpName)
+    }
+
     val schema: Schema[HeaderBinding] =
       struct(string.required[HeaderBinding]("httpName", _.httpName.toString))(
         string => HeaderBinding(CaseInsensitive(string))
       )
   }
   object HeaderPrefixBinding {
+    def apply(prefix: String): HeaderPrefixBinding = {
+      new HeaderPrefixBinding(prefix)
+    }
+
     val schema: Schema[HeaderPrefixBinding] =
       struct(string.required[HeaderPrefixBinding]("prefix", _.prefix))(
         HeaderPrefixBinding.apply
       )
   }
   object QueryBinding {
+    def apply(httpName: String): QueryBinding = {
+      new QueryBinding(httpName)
+    }
+
     val schema: Schema[QueryBinding] =
       struct(string.required[QueryBinding]("httpName", _.httpName))(
         QueryBinding.apply
       )
   }
   object PathBinding {
+    def apply(httpName: String): PathBinding = {
+      new PathBinding(httpName)
+    }
+
     val schema: Schema[PathBinding] =
       struct(string.required[PathBinding]("httpName", _.httpName))(
         PathBinding.apply

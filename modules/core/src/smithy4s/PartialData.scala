@@ -55,13 +55,21 @@ object PartialData {
   final case class Total[A](a: A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
-  object Total {}
+  object Total {
+    def apply[A](a: A): Total[A] = {
+      new Total(a)
+    }
+  }
 
   // scalafmt: {maxColumn: 160}
   final case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
   }
-  object Partial {}
+  object Partial {
+    def apply[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A): Partial[A] = {
+      new Partial(indexes, partialData, make)
+    }
+  }
 
   /**
     * Reconciles bits of partial data (typically retrieved from various parts of a message)

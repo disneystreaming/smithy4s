@@ -137,11 +137,18 @@ case class Metadata(
 }
 
 object Metadata {
-
+  def apply(
+      path: Map[String, String] = Map.empty,
+      query: Map[String, Seq[String]] = Map.empty,
+      headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
+      statusCode: Option[Int] = None
+  ): Metadata = {
+    new Metadata(path, query, headers, statusCode)
+  }
   def fold[A](i: Iterable[A])(f: A => Metadata): Metadata =
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
 
-  val empty = Metadata(Map.empty, Map.empty, Map.empty)
+  val empty = Metadata(Map.empty, Map.empty, Map.empty, None)
 
   trait Access {
     def metadata: Metadata

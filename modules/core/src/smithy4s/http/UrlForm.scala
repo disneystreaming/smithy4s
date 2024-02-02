@@ -52,7 +52,9 @@ final case class UrlForm(values: List[UrlForm.FormData]) {
 }
 
 object UrlForm {
-
+  def apply(values: List[UrlForm.FormData]): UrlForm = {
+    new UrlForm(values)
+  }
   final case class FormData(path: PayloadPath, maybeValue: Option[String]) {
 
     def prepend(segment: PayloadPath.Segment): FormData =
@@ -80,7 +82,11 @@ object UrlForm {
       )
     }
   }
-  object FormData {}
+  object FormData {
+    def apply(path: PayloadPath, maybeValue: Option[String]): FormData = {
+      new FormData(path, maybeValue)
+    }
+  }
 
   /** Parses a `application/x-www-form-urlencoded` formatted String into a [[UrlForm]]. */
   def parse(

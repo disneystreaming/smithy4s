@@ -80,6 +80,10 @@ object HttpEndpoint {
 
   case class HttpEndpointError(message: String) extends Exception(message)
 
-  object HttpEndpointError {}
+  object HttpEndpointError {
+    def apply(message: String): HttpEndpointError = {
+      new HttpEndpointError(message)
+    }
+  }
 
 }

@@ -26,6 +26,10 @@ final case class ShapeId(namespace: String, name: String) extends HasId {
 }
 
 object ShapeId extends ShapeTag.Has[ShapeId] { self =>
+  def apply(namespace: String, name: String): ShapeId = {
+    new ShapeId(namespace, name)
+  }
+
   def parse(string: String): Option[ShapeId] = {
     if (!string.contains('#')) None
     else {
@@ -41,7 +45,11 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
   }
 
   final case class Member(shapeId: ShapeId, member: String)
-  object Member {}
+  object Member {
+    def apply(shapeId: ShapeId, member: String): Member = {
+      new Member(shapeId, member)
+    }
+  }
 
   val id: ShapeId = ShapeId("smithy4s", "ShapeId")
   lazy val schema =

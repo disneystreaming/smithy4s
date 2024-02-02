@@ -41,7 +41,12 @@ object SchemaPartition {
     * datatype.
     */
   final case class TotalMatch[A](schema: Schema[A]) extends SchemaPartition[A]
-  object TotalMatch {}
+  object TotalMatch {
+    def apply[A](schema: Schema[A]): TotalMatch[A] = {
+      new TotalMatch(schema)
+    }
+
+  }
 
   /**
     * Indicates that only a subset of fields matched the partitioning condition. This  datatype contains
@@ -56,14 +61,22 @@ object SchemaPartition {
     */
   // scalafmt: {maxColumn: 160}
   final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
-  object SplittingMatch {}
+  object SplittingMatch {
+    def apply[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]): SplittingMatch[A] = {
+      new SplittingMatch(matching, notMatching)
+    }
+
+  }
 
   /**
     * Indicates that no field matched the condition.
     */
   final case class NoMatch[A]() extends SchemaPartition[A]
-  object NoMatch {}
-  // format: on
+  object NoMatch {
+    def apply[A](): NoMatch[A] = {
+      new NoMatch()
+    }
+  }
 
   private[schema] def apply(
       keep: Field[_, _] => Boolean,

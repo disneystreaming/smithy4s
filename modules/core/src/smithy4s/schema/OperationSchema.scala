@@ -97,4 +97,25 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
 
 }
 
-object OperationSchema {}
+object OperationSchema {
+  def apply[I, E, O, SI, SO](
+      id: ShapeId,
+      hints: Hints,
+      input: Schema[I],
+      error: Option[ErrorSchema[E]],
+      output: Schema[O],
+      streamedInput: Option[StreamingSchema[SI]],
+      streamedOutput: Option[StreamingSchema[SO]]
+  ): OperationSchema[I, E, O, SI, SO] = {
+    new OperationSchema(
+      id,
+      hints,
+      input,
+      error,
+      output,
+      streamedInput,
+      streamedOutput
+    )
+  }
+
+}

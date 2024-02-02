@@ -24,12 +24,27 @@ object PathSegment {
   def greedy(value: String): PathSegment = GreedySegment(value)
 
   case class StaticSegment(value: String) extends PathSegment
-  object StaticSegment {}
+  object StaticSegment {
+    def apply(value: String): StaticSegment = {
+      new StaticSegment(value)
+    }
+
+  }
 
   case class LabelSegment(value: String) extends PathSegment
-  object LabelSegment {}
+  object LabelSegment {
+    def apply(value: String): LabelSegment = {
+      new LabelSegment(value)
+    }
+
+  }
 
   case class GreedySegment(value: String) extends PathSegment
-  object GreedySegment {}
+  object GreedySegment {
+    def apply(value: String): GreedySegment = {
+      new GreedySegment(value)
+    }
+
+  }
 
 }

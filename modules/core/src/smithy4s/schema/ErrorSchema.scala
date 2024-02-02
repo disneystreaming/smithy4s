@@ -74,6 +74,13 @@ case class ErrorSchema[E] private[smithy4s] (
 
 object ErrorSchema {
 
+  def apply[E](
+      schema: Schema[E],
+      liftError: Throwable => Option[E],
+      unliftError: E => Throwable
+  ): ErrorSchema[E] = {
+    new ErrorSchema(schema, liftError, unliftError)
+  }
   trait Companion[E] extends ShapeTag.Companion[E] {
     def liftError(throwable: Throwable): Option[E]
     def unliftError(e: E): Throwable

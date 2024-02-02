@@ -91,6 +91,13 @@ final case class Field[S, A](
 
 object Field {
 
+  def apply[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => A
+  ): Field[S, A] = {
+    new Field(label, schema, get)
+  }
   def required[S, A](
       label: String,
       schema: Schema[A],

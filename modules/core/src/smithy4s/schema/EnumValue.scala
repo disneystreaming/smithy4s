@@ -32,5 +32,14 @@ case class EnumValue[E](
 }
 
 object EnumValue {
+  def apply[E](
+      stringValue: String,
+      intValue: Int,
+      value: E,
+      name: String,
+      hints: Hints
+  ): EnumValue[E] = {
+    new EnumValue(stringValue, intValue, value, name, hints)
+  }
 
 }

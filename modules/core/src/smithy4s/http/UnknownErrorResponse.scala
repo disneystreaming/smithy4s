@@ -25,4 +25,12 @@ case class UnknownErrorResponse(
     s"status $code, headers: $headers, body:\n$body"
 }
 
-object UnknownErrorResponse {}
+object UnknownErrorResponse {
+  def apply(
+      code: Int,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: String
+  ): UnknownErrorResponse = {
+    new UnknownErrorResponse(code, headers, body)
+  }
+}

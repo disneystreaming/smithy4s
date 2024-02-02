@@ -69,6 +69,13 @@ final case class HttpResponse[+A](
 }
 
 object HttpResponse {
+  def apply[A](
+      statusCode: Int,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: A
+  ): HttpResponse[A] = {
+    new HttpResponse(statusCode, headers, body)
+  }
   private[http] type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpResponse[Body], A]
   private[http] type Decoder[F[_], Body, A] =

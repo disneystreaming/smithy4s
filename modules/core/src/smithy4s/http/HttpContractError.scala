@@ -62,6 +62,14 @@ case class HttpPayloadError(
 }
 
 object HttpPayloadError {
+  def apply(
+      path: PayloadPath,
+      expected: String,
+      message: String
+  ): HttpPayloadError = {
+    new HttpPayloadError(path, expected, message)
+  }
+
   val schema: Schema[HttpPayloadError] = {
     val path = PayloadPath.schema.required[HttpPayloadError]("path", _.path)
     val expected = string.required[HttpPayloadError]("expected", _.expected)
@@ -93,6 +101,10 @@ object MetadataError {
       extends MetadataError
 
   object NotFound {
+    def apply(field: String, location: HttpBinding): NotFound = {
+      new NotFound(field, location)
+    }
+
     val schema: Schema[NotFound] = struct(
       string.required[NotFound]("field", _.field),
       HttpBinding.schema.required[NotFound]("location", _.location)
@@ -107,6 +119,15 @@ object MetadataError {
   ) extends MetadataError
 
   object WrongType {
+    def apply(
+        field: String,
+        location: HttpBinding,
+        expectedType: String,
+        value: String
+    ): WrongType = {
+      new WrongType(field, location, expectedType, value)
+    }
+
     val schema = struct(
       string.required[WrongType]("field", _.field),
       HttpBinding.schema.required[WrongType]("location", _.location),
@@ -121,6 +142,10 @@ object MetadataError {
   ) extends MetadataError
 
   object ArityError {
+    def apply(field: String, location: HttpBinding): ArityError = {
+      new ArityError(field, location)
+    }
+
     val schema = struct(
       string.required[ArityError]("field", _.field),
       HttpBinding.schema.required[ArityError]("location", _.location)
@@ -134,6 +159,14 @@ object MetadataError {
   ) extends MetadataError
 
   object FailedConstraint {
+    def apply(
+        field: String,
+        location: HttpBinding,
+        message: String
+    ): FailedConstraint = {
+      new FailedConstraint(field, location, message)
+    }
+
     val schema = struct(
       string.required[FailedConstraint]("field", _.field),
       HttpBinding.schema.required[FailedConstraint]("location", _.location),
@@ -146,6 +179,9 @@ object MetadataError {
   ) extends MetadataError
 
   object ImpossibleDecoding {
+    def apply(message: String): ImpossibleDecoding = {
+      new ImpossibleDecoding(message)
+    }
     val schema = struct(
       string.required[ImpossibleDecoding]("message", _.message)
     )(ImpossibleDecoding.apply)

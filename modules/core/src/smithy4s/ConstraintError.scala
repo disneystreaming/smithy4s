@@ -22,4 +22,9 @@ final case class ConstraintError(hint: Hint, message: String)
   override def getMessage() = s"$hint: $message"
 }
 
-object ConstraintError {}
+object ConstraintError {
+  def apply(hint: Hint, message: String): ConstraintError = {
+    new ConstraintError(hint, message)
+  }
+
+}

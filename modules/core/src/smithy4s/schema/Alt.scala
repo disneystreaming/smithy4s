@@ -56,6 +56,14 @@ final case class Alt[U, A](
 
 }
 object Alt {
+  def apply[U, A](
+      label: String,
+      schema: Schema[A],
+      inject: A => U,
+      project: PartialFunction[U, A]
+  ): Alt[U, A] = {
+    new Alt(label, schema, inject, project)
+  }
 
   /**
     * Precompiles an Alt to produce an instance of `G`

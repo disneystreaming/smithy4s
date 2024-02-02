@@ -22,4 +22,8 @@ final case class UnsupportedProtocolError(service: HasId, protocolTag: HasId)
     s"Service ${service.id.show} does not support the ${protocolTag.id.show} protocol"
 }
 
-object UnsupportedProtocolError {}
+object UnsupportedProtocolError {
+  def apply(service: HasId, protocolTag: HasId): UnsupportedProtocolError = {
+    new UnsupportedProtocolError(service, protocolTag)
+  }
+}

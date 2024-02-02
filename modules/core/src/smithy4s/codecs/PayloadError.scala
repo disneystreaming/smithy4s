@@ -31,6 +31,14 @@ case class PayloadError(
 }
 
 object PayloadError {
+  def apply(
+      path: PayloadPath,
+      expected: String,
+      message: String
+  ): PayloadError = {
+    new PayloadError(path, expected, message)
+  }
+
   val schema: Schema[PayloadError] = {
     val path = PayloadPath.schema.required[PayloadError]("path", _.path)
     val expected = string.required[PayloadError]("expected", _.expected)

@@ -47,6 +47,14 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
+  def apply[A](
+      method: HttpMethod,
+      uri: HttpUri,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: A
+  ): HttpRequest[A] = {
+    new HttpRequest(method, uri, headers, body)
+  }
   private[http] type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpRequest[Body], A]
   private[http] type Decoder[F[_], Body, A] =

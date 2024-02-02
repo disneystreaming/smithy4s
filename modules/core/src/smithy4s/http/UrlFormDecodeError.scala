@@ -27,9 +27,14 @@ final case class UrlFormDecodeError(
   override def getMessage(): String = s"${path.render()}: $message"
 }
 
-private[http] object UrlFormDecodeError {
+object UrlFormDecodeError {
+  def apply(path: PayloadPath, message: String): UrlFormDecodeError = {
+    new UrlFormDecodeError(path, message)
+  }
 
-  def singleValueExpected(cursor: UrlFormCursor): UrlFormDecodeError =
+  private[http] def singleValueExpected(
+      cursor: UrlFormCursor
+  ): UrlFormDecodeError =
     UrlFormDecodeError(
       cursor.history,
       s"Expected a single value but got ${cursor.values}"

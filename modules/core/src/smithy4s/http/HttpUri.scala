@@ -32,4 +32,15 @@ final case class HttpUri(
     pathParams: Option[Map[String, String]]
 )
 
-object HttpUri {}
+object HttpUri {
+  def apply(
+      scheme: HttpUriScheme,
+      host: Option[String],
+      port: Option[Int],
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]],
+      pathParams: Option[Map[String, String]]
+  ): HttpUri = {
+    new HttpUri(scheme, host, port, path, queryParams, pathParams)
+  }
+}

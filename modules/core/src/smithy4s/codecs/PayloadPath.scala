@@ -72,12 +72,20 @@ object PayloadPath {
       override lazy val render: String = label
     }
 
-    object Label {}
+    object Label {
+      def apply(label: String): Label = {
+        new Label(label)
+      }
+    }
     case class Index(index: Int) extends Segment {
       override lazy val render: String = index.toString
     }
 
-    object Index {}
+    object Index {
+      def apply(index: Int): Index = {
+        new Index(index)
+      }
+    }
 
     implicit def stringConversion(label: String): Segment = Label(label)
     implicit def intConversion(index: Int): Segment = Index(index)

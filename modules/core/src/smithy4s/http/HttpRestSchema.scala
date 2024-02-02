@@ -46,17 +46,33 @@ sealed trait HttpRestSchema[A]
 object HttpRestSchema {
 
   final case class OnlyMetadata[A](schema: Schema[A]) extends HttpRestSchema[A]
-  object OnlyMetadata {}
+  object OnlyMetadata {
+    def apply[A](schema: Schema[A]): OnlyMetadata[A] = {
+      new OnlyMetadata(schema)
+    }
+  }
 
   final case class OnlyBody[A](schema: Schema[A]) extends HttpRestSchema[A]
-  object OnlyBody {}
+  object OnlyBody {
+    def apply[A](schema: Schema[A]): OnlyBody[A] = {
+      new OnlyBody(schema)
+    }
+  }
 
   // scalafmt: {maxColumn = 160}
   final case class MetadataAndBody[A](metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A]
-  object MetadataAndBody {}
+  object MetadataAndBody {
+    def apply[A](metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      new MetadataAndBody(metadataSchema, bodySchema)
+    }
+  }
 
   final case class Empty[A](value: A) extends HttpRestSchema[A]
-  object Empty {}
+  object Empty {
+    def apply[A](value: A): Empty[A] = {
+      new Empty(value)
+    }
+  }
 
   def apply[A](
       fullSchema: Schema[A]
