@@ -14,7 +14,7 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
 
   val hints: Hints = Hints(
     smithy.api.Input(),
-  )
+  ).lazily
 
   implicit val schema: Schema[SayHelloInput] = struct(
     string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),

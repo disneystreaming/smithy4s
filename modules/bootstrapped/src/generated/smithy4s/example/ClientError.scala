@@ -17,7 +17,7 @@ object ClientError extends ShapeTag.Companion[ClientError] {
 
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
-  )
+  ).lazily
 
   implicit val schema: Schema[ClientError] = struct(
     int.required[ClientError]("code", _.code),

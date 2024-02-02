@@ -31,7 +31,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

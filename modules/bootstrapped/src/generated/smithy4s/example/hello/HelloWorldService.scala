@@ -29,7 +29,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
     smithy.api.Tags(List("testServiceTag")),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

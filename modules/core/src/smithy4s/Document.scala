@@ -17,10 +17,11 @@
 package smithy4s
 
 import smithy4s.Document._
+import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
+
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
-import smithy4s.codecs.PayloadError
 
 /**
   * A json-like free-form structure serving as a model for
@@ -101,7 +102,19 @@ object Document {
     def encode(a: A): Document
   }
 
-  object Encoder extends CachedSchemaCompiler.DerivingImpl[Encoder] {
+  trait EncoderCompiler extends CachedSchemaCompiler[Encoder] {
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler
+  }
+
+  object Encoder
+      extends CachedEncoderCompilerImpl(explicitDefaultsEncoding = false)
+
+  private[smithy4s] class CachedEncoderCompilerImpl(
+      explicitDefaultsEncoding: Boolean
+  ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
+      with EncoderCompiler {
 
     protected type Aux[A] = internals.DocumentEncoder[A]
 
@@ -110,7 +123,9 @@ object Document {
         cache: Cache
     ): Encoder[A] = {
       val makeEncoder =
-        schema.compile(new DocumentEncoderSchemaVisitor(cache))
+        schema.compile(
+          new DocumentEncoderSchemaVisitor(cache, explicitDefaultsEncoding)
+        )
       new Encoder[A] {
         def encode(a: A): Document = {
           makeEncoder.apply(a)
@@ -118,6 +133,11 @@ object Document {
       }
     }
 
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler = new CachedEncoderCompilerImpl(
+      explicitDefaultsEncoding = explicitDefaultsEncoding
+    )
   }
 
   type Decoder[A] =

@@ -17,9 +17,10 @@
 package smithy4s
 package http
 
+import smithy4s.capability.MonadThrowLike
 import smithy4s.kinds._
 import smithy4s.server.UnaryServerCodecs
-import smithy4s.capability.MonadThrowLike
+
 import scala.annotation.nowarn
 
 // scalafmt: {maxColumn = 120}

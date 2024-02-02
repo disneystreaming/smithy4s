@@ -29,7 +29,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

@@ -28,6 +28,7 @@ import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.TypeclassTrait
 import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -42,7 +43,6 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
-import smithy4s.meta.TypeclassTrait
 
 private[codegen] object SmithyToIR {
 
@@ -217,13 +217,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
         val p =
           Product(
-            shape.getId(),
-            shape.name,
-            fields,
-            mixins,
-            rec,
-            hints,
-            isMixin
+            shapeId = shape.getId(),
+            name = shape.name,
+            fields = fields,
+            mixins = mixins,
+            recursive = rec,
+            hints = hints,
+            isMixin = isMixin
           ).some
         if (isPartOfAdt(shape)) {
           if (renderAdtMemberStructures) p else None
@@ -352,7 +352,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case ((name, value), index) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(value, index, name, hints(member))
+            EnumValue(
+              value = value,
+              intValue = index,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
@@ -375,7 +381,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case (name, value) =>
             val member = shape.getMember(name).get()
 
-            EnumValue(name, value, name, hints(member))
+            EnumValue(
+              value = name,
+              intValue = value,
+              name = name,
+              realName = name,
+              hints = hints(member)
+            )
           }
           .toList
 
@@ -1056,8 +1068,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
 
     /**
-      * Should be used only on the call site 
-      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait. 
+      * Should be used only on the call site
+      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
       */
     def getFieldsPlain: List[Field] =
       fieldsInternal(hintsExtractor = _ => List.empty)

@@ -21,8 +21,8 @@ object HostLabelEnum extends Enumeration[HostLabelEnum] with ShapeTag.Companion[
 
   val hints: Hints = Hints.empty
 
-  case object THING1 extends HostLabelEnum("THING1", "THING1", 0, Hints())
-  case object THING2 extends HostLabelEnum("THING2", "THING2", 1, Hints())
+  case object THING1 extends HostLabelEnum("THING1", "THING1", 0, Hints.empty)
+  case object THING2 extends HostLabelEnum("THING2", "THING2", 1, Hints.empty)
 
   val values: List[HostLabelEnum] = List(
     THING1,

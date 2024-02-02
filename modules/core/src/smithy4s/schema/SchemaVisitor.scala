@@ -17,8 +17,9 @@
 package smithy4s
 package schema
 
-import Schema._
 import smithy4s.kinds.OptionK
+
+import Schema._
 
 // format: off
 trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>

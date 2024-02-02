@@ -17,8 +17,9 @@
 package smithy4s
 package schema
 
-import Schema._
 import scala.reflect.ClassTag
+
+import Schema._
 
 // format: off
 sealed trait Schema[A]{

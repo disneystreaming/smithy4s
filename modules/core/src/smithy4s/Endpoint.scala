@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy4s.schema._
+
 import schema.ErrorSchema
 
 /**

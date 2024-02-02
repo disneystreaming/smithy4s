@@ -21,7 +21,7 @@ object FooEnum extends Enumeration[FooEnum] with ShapeTag.Companion[FooEnum] {
 
   val hints: Hints = Hints.empty
 
-  case object FOO extends FooEnum("FOO", "Foo", 0, Hints())
+  case object FOO extends FooEnum("FOO", "Foo", 0, Hints.empty)
 
   val values: List[FooEnum] = List(
     FOO,

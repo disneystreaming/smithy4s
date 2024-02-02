@@ -143,12 +143,16 @@ final class RendererSpec extends munit.FunSuite {
                      |  *   this is a HEART
                      |  */""".stripMargin
     val diamondWithDocRendered =
-      """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints(smithy.api.Documentation("this is a DIAMOND")))"""
+      List(
+        """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints.empty)""",
+        """override val hints: Hints = Hints(smithy.api.Documentation("this is a DIAMOND")).lazily"""
+      )
     // NOTE: enum trait and enum shape are not 100% compatible. For example, enum trait doesn't support deprecated$since and deprecated$message.
     val haertWithDeprecationAndDocRendered = List(
       "/** this is a HAERT */",
       "@deprecated",
-      """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None))"""
+      """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty)""",
+      """override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None)).lazily"""
     )
 
     assert(
@@ -156,7 +160,7 @@ final class RendererSpec extends munit.FunSuite {
       "generated class must hold documentation"
     )
     assert(
-      definition.contains(diamondWithDocRendered),
+      diamondWithDocRendered.forall(definition.contains),
       "DIAMOND variant must hold hints from `@enum` trait"
     )
     assert(
@@ -202,13 +206,17 @@ final class RendererSpec extends munit.FunSuite {
       }
     assert(
       definition.contains(
-        """case object HEAD extends Coin("HEAD", "HEAD", 0, Hints())"""
+        """case object HEAD extends Coin("HEAD", "HEAD", 0, Hints.empty)"""
       ),
       "enum trait value without name must be rendered as enum variant"
     )
     assert(
       definition.contains(
-        """case object TAIL extends Coin("TAIL", "t:a$i\l", 1, Hints())"""
+        <<<<<<< HEAD
+          """case object TAIL extends Coin("TAIL", "t:a$i\l", 1, Hints())"""
+          =======
+          """case object TAIL extends Coin("t:a$i\l", "TAIL", 1, Hints.empty)"""
+          >>>>>>> origin / series / 0.19
       ),
       "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
     )
@@ -256,11 +264,16 @@ final class RendererSpec extends munit.FunSuite {
                      |  *   this is a HEART
                      |  */""".stripMargin
     val diamondWithDocRendered =
-      """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints(smithy.api.Documentation("this is a DIAMOND")))"""
+      """  case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints.empty) {
+        |    override val hints: Hints = Hints(smithy.api.Documentation("this is a DIAMOND")).lazily
+        |  }""".stripMargin
     val haertWithDeprecationAndDocRendered =
       """|  /** this is a HAERT */
          |  @deprecated(message = "typo", since = "0.0.0")
-         |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0")))""".stripMargin
+         |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty) {
+         |    override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0"))).lazily
+         |  }""".stripMargin
+
     assert(
       definition.contains(classDoc),
       "generated class must hold documentation for itself and variants with doc hint."

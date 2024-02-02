@@ -16,10 +16,13 @@
 
 package smithy4s.internals
 
-import smithy4s.schema._
-import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
+import smithy4s.internals.PatternDecode.MaybePatternDecode
+import smithy4s.schema._
 
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]

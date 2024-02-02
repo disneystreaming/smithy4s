@@ -21,10 +21,10 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
 
   val hints: Hints = Hints.empty
 
-  case object MUSHROOM extends Ingredient("MUSHROOM", "Mushroom", 0, Hints())
-  case object CHEESE extends Ingredient("CHEESE", "Cheese", 1, Hints())
-  case object SALAD extends Ingredient("SALAD", "Salad", 2, Hints())
-  case object TOMATO extends Ingredient("TOMATO", "Tomato", 3, Hints())
+  case object MUSHROOM extends Ingredient("MUSHROOM", "Mushroom", 0, Hints.empty)
+  case object CHEESE extends Ingredient("CHEESE", "Cheese", 1, Hints.empty)
+  case object SALAD extends Ingredient("SALAD", "Salad", 2, Hints.empty)
+  case object TOMATO extends Ingredient("TOMATO", "Tomato", 3, Hints.empty)
 
   val values: List[Ingredient] = List(
     MUSHROOM,

@@ -16,8 +16,8 @@
 
 package smithy4s.http
 
-import smithy4s.http.internals.HostPrefixSchemaVisitor
 import smithy4s.codecs.Writer
+import smithy4s.http.internals.HostPrefixSchemaVisitor
 import smithy4s.schema.OperationSchema
 
 object HttpHostPrefix {

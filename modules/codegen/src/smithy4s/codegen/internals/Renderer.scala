@@ -1006,12 +1006,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+
+          line"$prefix($args): ${product.nameRef} = ${product.nameRef}($values)"
+
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
+
         case UnionMember.TypeCase(tpe) =>
           line"$prefix($ident: $tpe): $name = $cn($ident)"
       }
+
       lines(
         documentationAnnotation(alt.hints),
         deprecationAnnotation(alt.hints),
@@ -1251,14 +1255,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         renderPrismsEnum(name, values, hints, isOpen),
-        values.map { case e @ EnumValue(value, intValue, _, hints) =>
+        values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
           val valueName = NameRef(e.name)
-          val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
+          val baseLine =
+            line"""case object $valueName extends $name("${e.realName}", "$value", $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
             deprecationAnnotation(hints),
-            line"""case object $valueName extends $name("${e.name}", "$value", $intValue, $valueHints)"""
+            if (e.hints.isEmpty) baseLine
+            else
+              block(baseLine)(
+                line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
+              )
           )
         },
         if (isOpen) {
@@ -1444,10 +1454,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
-    val base = line"val hints: $Hints_ = $Hints_"
+    val lhs = line"val hints: $Hints_"
+
     hints.flatMap(renderHint) match {
-      case Nil  => lines(base + line".empty")
-      case args => base.args(args)
+      case Nil => lines(line"$lhs = $Hints_.empty")
+      case args =>
+        line"$lhs = $Hints_".args(args).appendToLast(".lazily")
     }
   }
 

@@ -16,7 +16,8 @@
 
 package smithy4s.internals
 
-import scala.collection.mutable.{ListBuffer, ArrayBuffer}
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 private[internals] sealed abstract class PatternSegment(value: String)
     extends Product

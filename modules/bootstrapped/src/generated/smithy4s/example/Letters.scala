@@ -21,9 +21,9 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
 
   val hints: Hints = Hints.empty
 
-  case object A extends Letters("A", "a", 0, Hints())
-  case object B extends Letters("B", "b", 1, Hints())
-  case object C extends Letters("C", "c", 2, Hints())
+  case object A extends Letters("A", "a", 0, Hints.empty)
+  case object B extends Letters("B", "b", 1, Hints.empty)
+  case object C extends Letters("C", "c", 2, Hints.empty)
 
   val values: List[Letters] = List(
     A,

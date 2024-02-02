@@ -21,8 +21,8 @@ object LeftRight extends Enumeration[LeftRight] with ShapeTag.Companion[LeftRigh
 
   val hints: Hints = Hints.empty
 
-  case object LEFT extends LeftRight("LEFT", "left", 0, Hints())
-  case object RIGHT extends LeftRight("RIGHT", "right", 1, Hints())
+  case object LEFT extends LeftRight("LEFT", "left", 0, Hints.empty)
+  case object RIGHT extends LeftRight("RIGHT", "right", 1, Hints.empty)
 
   val values: List[LeftRight] = List(
     LEFT,

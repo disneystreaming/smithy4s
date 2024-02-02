@@ -28,7 +28,7 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
 
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = None, since = None),
-  )
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

@@ -22,14 +22,14 @@ object OpenEnumTest extends Enumeration[OpenEnumTest] with ShapeTag.Companion[Op
 
   val hints: Hints = Hints(
     alloy.OpenEnum(),
-  )
+  ).lazily
 
   object optics {
     val ONE: Prism[OpenEnumTest, OpenEnumTest.ONE.type] = Prism.partial[OpenEnumTest, OpenEnumTest.ONE.type]{ case OpenEnumTest.ONE => OpenEnumTest.ONE }(identity)
     val $unknown: Prism[OpenEnumTest, OpenEnumTest.$Unknown] = Prism.partial[OpenEnumTest, OpenEnumTest.$Unknown]{ case u: OpenEnumTest.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenEnumTest("ONE", "ONE", 0, Hints())
+  case object ONE extends OpenEnumTest("ONE", "ONE", 0, Hints.empty)
   final case class $Unknown(str: String) extends OpenEnumTest("$Unknown", str, -1, Hints.empty)
 
   val $unknown: String => OpenEnumTest = $Unknown(_)

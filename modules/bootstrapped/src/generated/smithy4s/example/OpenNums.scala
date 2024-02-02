@@ -21,10 +21,10 @@ object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] 
 
   val hints: Hints = Hints(
     alloy.OpenEnum(),
-  )
+  ).lazily
 
-  case object ONE extends OpenNums("ONE", "ONE", 1, Hints())
-  case object TWO extends OpenNums("TWO", "TWO", 2, Hints())
+  case object ONE extends OpenNums("ONE", "ONE", 1, Hints.empty)
+  case object TWO extends OpenNums("TWO", "TWO", 2, Hints.empty)
   final case class $Unknown(int: Int) extends OpenNums("$Unknown", "$Unknown", int, Hints.empty)
 
   val $unknown: Int => OpenNums = $Unknown(_)

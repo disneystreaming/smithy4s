@@ -21,8 +21,8 @@ object OneTwo extends Enumeration[OneTwo] with ShapeTag.Companion[OneTwo] {
 
   val hints: Hints = Hints.empty
 
-  case object ONE extends OneTwo("ONE", "ONE", 1, Hints())
-  case object TWO extends OneTwo("TWO", "TWO", 2, Hints())
+  case object ONE extends OneTwo("ONE", "ONE", 1, Hints.empty)
+  case object TWO extends OneTwo("TWO", "TWO", 2, Hints.empty)
 
   val values: List[OneTwo] = List(
     ONE,
