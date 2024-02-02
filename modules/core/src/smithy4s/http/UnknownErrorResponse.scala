@@ -16,7 +16,7 @@
 
 package smithy4s.http
 
-case class UnknownErrorResponse(
+case class UnknownErrorResponse private (
     code: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: String

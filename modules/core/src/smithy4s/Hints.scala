@@ -229,7 +229,7 @@ object Hints {
   }
 
   object Binding {
-    final case class StaticBinding[A](key: ShapeTag[A], value: A)
+    final case class StaticBinding[A] private (key: ShapeTag[A], value: A)
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
@@ -240,7 +240,7 @@ object Hints {
       }
     }
 
-    final case class DynamicBinding(keyId: ShapeId, value: Document)
+    final case class DynamicBinding private (keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
     }

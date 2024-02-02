@@ -36,7 +36,7 @@ import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
 /** Represents data that was encoded using the `application/x-www-form-urlencoded` format. */
-final case class UrlForm(values: List[UrlForm.FormData]) {
+final case class UrlForm private (values: List[UrlForm.FormData]) {
 
   def render: String = {
     val builder = new mutable.StringBuilder
@@ -55,7 +55,10 @@ object UrlForm {
   def apply(values: List[UrlForm.FormData]): UrlForm = {
     new UrlForm(values)
   }
-  final case class FormData(path: PayloadPath, maybeValue: Option[String]) {
+  final case class FormData private (
+      path: PayloadPath,
+      maybeValue: Option[String]
+  ) {
 
     def prepend(segment: PayloadPath.Segment): FormData =
       copy(path.prepend(segment), maybeValue)

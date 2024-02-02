@@ -19,7 +19,7 @@ package smithy4s.codecs
 import smithy4s.schema.Schema._
 import smithy4s.schema._
 
-case class PayloadError(
+case class PayloadError private (
     path: PayloadPath,
     expected: String,
     message: String

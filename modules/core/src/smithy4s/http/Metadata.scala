@@ -37,7 +37,7 @@ import smithy4s.schema.CompilationCache
   * @param query the query parameters of the http message
   * @param headers the header parameters of the http message
   */
-case class Metadata(
+case class Metadata private (
     path: Map[String, String] = Map.empty,
     query: Map[String, Seq[String]] = Map.empty,
     headers: Map[CaseInsensitive, Seq[String]] = Map.empty,

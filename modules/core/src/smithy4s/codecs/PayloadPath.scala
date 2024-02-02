@@ -18,7 +18,7 @@ package smithy4s.codecs
 
 import smithy4s.schema._
 
-case class PayloadPath(segments: List[PayloadPath.Segment]) {
+case class PayloadPath private (segments: List[PayloadPath.Segment]) {
 
   def append(segment: PayloadPath.Segment): PayloadPath =
     copy(segments ::: List(segment))
@@ -68,7 +68,7 @@ object PayloadPath {
       case _: Throwable => Label(string)
     }
 
-    case class Label(label: String) extends Segment {
+    case class Label private (label: String) extends Segment {
       override lazy val render: String = label
     }
 
@@ -77,7 +77,7 @@ object PayloadPath {
         new Label(label)
       }
     }
-    case class Index(index: Int) extends Segment {
+    case class Index private (index: Int) extends Segment {
       override lazy val render: String = index.toString
     }
 

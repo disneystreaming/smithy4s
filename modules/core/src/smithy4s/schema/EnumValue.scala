@@ -17,7 +17,7 @@
 package smithy4s
 package schema
 
-case class EnumValue[E](
+case class EnumValue[E] private (
     stringValue: String,
     intValue: Int,
     value: E,

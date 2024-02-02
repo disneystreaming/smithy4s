@@ -22,7 +22,7 @@ import smithy4s.codecs.{Decoder => GenericDecoder}
 import smithy4s.kinds._
 import smithy4s.schema._
 
-final case class HttpRequest[+A](
+final case class HttpRequest[+A] private (
     method: HttpMethod,
     uri: HttpUri,
     headers: Map[CaseInsensitive, Seq[String]],

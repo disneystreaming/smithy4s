@@ -22,14 +22,14 @@ object EnumTag {
   case object ClosedStringEnum extends EnumTag[Nothing]
   case object ClosedIntEnum extends EnumTag[Nothing]
 
-  case class OpenStringEnum[E](unknown: String => E) extends EnumTag[E]
+  case class OpenStringEnum[E] private (unknown: String => E) extends EnumTag[E]
   object OpenStringEnum {
     def apply[E](unknown: String => E): OpenStringEnum[E] = {
       new OpenStringEnum(unknown)
     }
   }
 
-  case class OpenIntEnum[E](unknown: Int => E) extends EnumTag[E]
+  case class OpenIntEnum[E] private (unknown: Int => E) extends EnumTag[E]
   object OpenIntEnum {
     def apply[E](unknown: Int => E): OpenIntEnum[E] = {
       new OpenIntEnum(unknown)

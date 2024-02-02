@@ -23,7 +23,7 @@ object PathSegment {
   def label(value: String): PathSegment = LabelSegment(value)
   def greedy(value: String): PathSegment = GreedySegment(value)
 
-  case class StaticSegment(value: String) extends PathSegment
+  case class StaticSegment private (value: String) extends PathSegment
   object StaticSegment {
     def apply(value: String): StaticSegment = {
       new StaticSegment(value)
@@ -31,7 +31,7 @@ object PathSegment {
 
   }
 
-  case class LabelSegment(value: String) extends PathSegment
+  case class LabelSegment private (value: String) extends PathSegment
   object LabelSegment {
     def apply(value: String): LabelSegment = {
       new LabelSegment(value)
@@ -39,7 +39,7 @@ object PathSegment {
 
   }
 
-  case class GreedySegment(value: String) extends PathSegment
+  case class GreedySegment private (value: String) extends PathSegment
   object GreedySegment {
     def apply(value: String): GreedySegment = {
       new GreedySegment(value)

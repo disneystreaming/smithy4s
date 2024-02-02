@@ -18,7 +18,8 @@ package smithy4s
 
 import smithy.api.IdRef
 
-final case class ShapeId(namespace: String, name: String) extends HasId {
+final case class ShapeId private (namespace: String, name: String)
+    extends HasId {
   def show = s"$namespace#$name"
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
   override def toString = show
@@ -44,7 +45,7 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
     }
   }
 
-  final case class Member(shapeId: ShapeId, member: String)
+  final case class Member private (shapeId: ShapeId, member: String)
   object Member {
     def apply(shapeId: ShapeId, member: String): Member = {
       new Member(shapeId, member)

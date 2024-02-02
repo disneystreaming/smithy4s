@@ -20,7 +20,7 @@ package schema
 /**
   * Represents a member of product type (case class)
   */
-final case class Field[S, A](
+final case class Field[S, A] private (
     label: String,
     schema: Schema[A],
     get: S => A

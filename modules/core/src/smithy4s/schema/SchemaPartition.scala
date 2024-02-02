@@ -40,7 +40,8 @@ object SchemaPartition {
     * single payload field, the resulting schema would be a bijection from that payload field to the larger
     * datatype.
     */
-  final case class TotalMatch[A](schema: Schema[A]) extends SchemaPartition[A]
+  final case class TotalMatch[A] private (schema: Schema[A])
+      extends SchemaPartition[A]
   object TotalMatch {
     def apply[A](schema: Schema[A]): TotalMatch[A] = {
       new TotalMatch(schema)
@@ -60,7 +61,7 @@ object SchemaPartition {
     * @param notMatching the partial schema resulting from the non-matching fields
     */
   // scalafmt: {maxColumn: 160}
-  final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
+  final case class SplittingMatch[A] private (matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
   object SplittingMatch {
     def apply[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]): SplittingMatch[A] = {
       new SplittingMatch(matching, notMatching)
@@ -71,7 +72,7 @@ object SchemaPartition {
   /**
     * Indicates that no field matched the condition.
     */
-  final case class NoMatch[A]() extends SchemaPartition[A]
+  final case class NoMatch[A] private () extends SchemaPartition[A]
   object NoMatch {
     def apply[A](): NoMatch[A] = {
       new NoMatch()

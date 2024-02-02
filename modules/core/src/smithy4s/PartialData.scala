@@ -52,7 +52,7 @@ sealed trait PartialData[A] {
 }
 
 object PartialData {
-  final case class Total[A](a: A) extends PartialData[A] {
+  final case class Total[A] private (a: A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
   object Total {
@@ -62,7 +62,7 @@ object PartialData {
   }
 
   // scalafmt: {maxColumn: 160}
-  final case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
+  final case class Partial[A] private (indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
   }
   object Partial {

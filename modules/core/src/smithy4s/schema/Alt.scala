@@ -24,7 +24,7 @@ import kinds._
 /**
   * Represents a member of coproduct type (sealed trait)
   */
-final case class Alt[U, A](
+final case class Alt[U, A] private (
     label: String,
     schema: Schema[A],
     inject: A => U,

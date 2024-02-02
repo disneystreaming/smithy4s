@@ -16,7 +16,7 @@
 
 package smithy4s.http
 
-final case class HttpUri(
+final case class HttpUri private (
     scheme: HttpUriScheme,
     host: Option[String],
     port: Option[Int],

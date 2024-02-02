@@ -50,14 +50,14 @@ private[http] sealed abstract class MetaDecode[+A] {
         m(metadata).get(key) match {
           case Some(value)                    => process(value, fieldName, putField(_))
           case None if maybeDefault.isDefined => putField(maybeDefault.get)
-          case None => throw new MetadataError.NotFound(fieldName, binding)
+          case None => throw MetadataError.NotFound(fieldName, binding)
         }
     }
     // format: on
 
     def putDefault(putField: PutField) = maybeDefault match {
       case Some(default) => putField(default)
-      case None          => throw new MetadataError.NotFound(fieldName, binding)
+      case None          => throw MetadataError.NotFound(fieldName, binding)
     }
 
     (binding, this) match {

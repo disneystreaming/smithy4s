@@ -170,7 +170,7 @@ class DocumentDecoderSchemaVisitor(
             Timestamp
               .parse(value, format)
               .getOrElse(
-                throw new PayloadError(
+                throw PayloadError(
                   PayloadPath(pp.reverse),
                   formatRepr,
                   s"Wrong timestamp format"
@@ -262,7 +262,7 @@ class DocumentDecoderSchemaVisitor(
               builder.+=((decodedKey, decodedValue))
               i += 1
             case _ =>
-              throw new PayloadError(
+              throw PayloadError(
                 PayloadPath((PayloadPath.Segment(i) :: pp).reverse),
                 "Key Value object",
                 """Expected a Json object containing two values indexed with "key" and "value". """
@@ -350,7 +350,7 @@ class DocumentDecoderSchemaVisitor(
               case Some(document) =>
                 buffer(apply(field.schema)(path, document))
               case None =>
-                throw new PayloadError(
+                throw PayloadError(
                   PayloadPath(path.reverse),
                   "",
                   "Required field not found"
@@ -394,21 +394,21 @@ class DocumentDecoderSchemaVisitor(
               decoders.get(value.value) match {
                 case Some(decoder) => decoder(pp, document)
                 case None =>
-                  throw new PayloadError(
+                  throw PayloadError(
                     PayloadPath(pp.reverse),
                     "Union",
                     s"Unknown discriminator: ${value.value}"
                   )
               }
             case _ =>
-              throw new PayloadError(
+              throw PayloadError(
                 PayloadPath(pp.reverse),
                 "Union",
                 s"Unable to locate discriminator under property '${discriminated.value}'"
               )
           }
         case other =>
-          throw new PayloadError(
+          throw PayloadError(
             PayloadPath(pp.reverse),
             "Union",
             s"Expected DObject, but found $other"
@@ -427,14 +427,14 @@ class DocumentDecoderSchemaVisitor(
           decoders.get(key) match {
             case Some(decoder) => decoder(pp, value)
             case None =>
-              throw new PayloadError(
+              throw PayloadError(
                 PayloadPath(pp.reverse),
                 "Union",
                 s"Unknown discriminator: $key"
               )
           }
         case _ =>
-          throw new PayloadError(
+          throw PayloadError(
             PayloadPath(pp.reverse),
             "Union",
             "Expected a single-key Json object"

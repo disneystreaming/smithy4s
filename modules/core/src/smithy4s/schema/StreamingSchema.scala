@@ -16,7 +16,7 @@
 
 package smithy4s.schema
 
-case class StreamingSchema[A](fieldName: String, schema: Schema[A])
+case class StreamingSchema[A] private (fieldName: String, schema: Schema[A])
 
 object StreamingSchema {
   def apply[A](fieldName: String, schema: Schema[A]): StreamingSchema[A] = {

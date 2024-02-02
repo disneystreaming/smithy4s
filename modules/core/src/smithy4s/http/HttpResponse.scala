@@ -26,7 +26,7 @@ import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.ErrorSchema
 import smithy4s.schema.Schema
 
-final case class HttpResponse[+A](
+final case class HttpResponse[+A] private (
     statusCode: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: A

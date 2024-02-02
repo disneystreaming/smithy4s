@@ -51,7 +51,7 @@ object HttpContractError {
 
 }
 
-case class HttpPayloadError(
+case class HttpPayloadError private (
     path: PayloadPath,
     expected: String,
     message: String
@@ -97,7 +97,7 @@ sealed trait MetadataError extends HttpContractError {
 
 object MetadataError {
 
-  case class NotFound(field: String, location: HttpBinding)
+  case class NotFound private (field: String, location: HttpBinding)
       extends MetadataError
 
   object NotFound {
@@ -111,7 +111,7 @@ object MetadataError {
     )(NotFound.apply)
   }
 
-  case class WrongType(
+  case class WrongType private (
       field: String,
       location: HttpBinding,
       expectedType: String,
@@ -136,7 +136,7 @@ object MetadataError {
     )(WrongType.apply)
   }
 
-  case class ArityError(
+  case class ArityError private (
       field: String,
       location: HttpBinding
   ) extends MetadataError
@@ -152,7 +152,7 @@ object MetadataError {
     )(ArityError.apply)
   }
 
-  case class FailedConstraint(
+  case class FailedConstraint private (
       field: String,
       location: HttpBinding,
       message: String
@@ -174,7 +174,7 @@ object MetadataError {
     )(FailedConstraint.apply)
   }
 
-  case class ImpossibleDecoding(
+  case class ImpossibleDecoding private (
       message: String
   ) extends MetadataError
 

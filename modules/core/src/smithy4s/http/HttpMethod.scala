@@ -42,7 +42,7 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
-  case class OTHER(value: String) extends HttpMethod
+  case class OTHER private (value: String) extends HttpMethod
 
   object OTHER {
     def apply(value: String): OTHER = {
