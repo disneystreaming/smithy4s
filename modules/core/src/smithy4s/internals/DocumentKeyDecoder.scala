@@ -139,11 +139,11 @@ object DocumentKeyDecoder {
         val intVal = s"value in [${fromNum.keySet.mkString(", ")}]"
         val stringVal = s"value in [${fromName.keySet.mkString(", ")}]"
         tag match {
-          case EnumTag.OpenIntEnum(unknown) =>
+          case oie: EnumTag.OpenIntEnum[_] =>
             from(intVal) {
               case DString(value) if value.toIntOption.isDefined =>
                 val i = value.toInt
-                fromNum.getOrElse(i, unknown(i))
+                fromNum.getOrElse(i, oie.unknown(i))
             }
           case EnumTag.ClosedIntEnum =>
             from(intVal) {
@@ -151,9 +151,9 @@ object DocumentKeyDecoder {
                   if value.toIntOption.exists(fromNum.contains(_)) =>
                 fromNum(value.toInt)
             }
-          case EnumTag.OpenStringEnum(unknown) =>
+          case ose: EnumTag.OpenStringEnum[_] =>
             from(stringVal) { case DString(value) =>
-              fromName.getOrElse(value, unknown(value))
+              fromName.getOrElse(value, ose.unknown(value))
             }
           case EnumTag.ClosedStringEnum =>
             from(stringVal) {

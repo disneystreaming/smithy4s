@@ -61,29 +61,33 @@ private[http] sealed abstract class MetaDecode[+A] {
     }
 
     (binding, this) match {
-      case (PathBinding(path), StringValueMetaDecode(f)) =>
-        lookupAndProcess(_.path, path) { (value, fieldName, putField) =>
+      case (pb: PathBinding, StringValueMetaDecode(f)) =>
+        lookupAndProcess(_.path, pb.httpName) { (value, fieldName, putField) =>
           putField(f(value))
         }
-      case (HeaderBinding(h), StringValueMetaDecode(f)) =>
-        lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
-          if (values.size == 1) {
-            putField(f(values.head))
-          } else throw MetadataError.ArityError(fieldName, binding)
+      case (hb: HeaderBinding, StringValueMetaDecode(f)) =>
+        lookupAndProcess(_.headers, hb.httpName) {
+          (values, fieldName, putField) =>
+            if (values.size == 1) {
+              putField(f(values.head))
+            } else throw MetadataError.ArityError(fieldName, binding)
         }
-      case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
-        lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
-          putField(f(values.iterator))
+      case (hb: HeaderBinding, StringCollectionMetaDecode(f)) =>
+        lookupAndProcess(_.headers, hb.httpName) {
+          (values, fieldName, putField) =>
+            putField(f(values.iterator))
         }
-      case (QueryBinding(h), StringValueMetaDecode(f)) =>
-        lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
-          if (values.size == 1) {
-            putField(f(values.head))
-          } else throw MetadataError.ArityError(fieldName, binding)
+      case (qb: QueryBinding, StringValueMetaDecode(f)) =>
+        lookupAndProcess(_.query, qb.httpName) {
+          (values, fieldName, putField) =>
+            if (values.size == 1) {
+              putField(f(values.head))
+            } else throw MetadataError.ArityError(fieldName, binding)
         }
-      case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
-        lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(f(values.iterator))
+      case (qb: QueryBinding, StringCollectionMetaDecode(f)) =>
+        lookupAndProcess(_.query, qb.httpName) {
+          (values, fieldName, putField) =>
+            putField(f(values.iterator))
         }
       // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
       // when targeting Map[String,String] we take the first value encountered
@@ -107,25 +111,25 @@ private[http] sealed abstract class MetaDecode[+A] {
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
       }
-      case (HeaderPrefixBinding(prefix), StringMapMetaDecode(f)) => {
+      case (hpb: HeaderPrefixBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
           val iter = metadata.headers.iterator
             .collect {
-              case (k, values) if k.startsWith(prefix) =>
+              case (k, values) if k.startsWith(hpb.prefix) =>
                 if (values.size == 1) {
-                  k.toString.drop(prefix.length()) -> values.head
+                  k.toString.drop(hpb.prefix.length()) -> values.head
                 } else
                   throw MetadataError.ArityError(fieldName, HeaderBinding(k))
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
       }
-      case (HeaderPrefixBinding(prefix), StringListMapMetaDecode(f)) => {
+      case (hpb: HeaderPrefixBinding, StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
           val iter = metadata.headers.iterator
             .collect {
-              case (k, values) if k.startsWith(prefix) =>
-                k.toString.drop(prefix.length()) -> values.iterator
+              case (k, values) if k.startsWith(hpb.prefix) =>
+                k.toString.drop(hpb.prefix.length()) -> values.iterator
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)

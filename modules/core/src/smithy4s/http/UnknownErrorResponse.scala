@@ -26,6 +26,11 @@ case class UnknownErrorResponse private (
 }
 
 object UnknownErrorResponse {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UnknownErrorResponse is never used"
+  )
+  private def unapply(c: UnknownErrorResponse): Option[UnknownErrorResponse] =
+    Some(c)
   def apply(
       code: Int,
       headers: Map[CaseInsensitive, Seq[String]],

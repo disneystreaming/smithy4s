@@ -171,7 +171,10 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 }
 
 object Timestamp extends TimestampCompanionPlatform {
-
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Timestamp is never used"
+  )
+  private def unapply(c: Timestamp): Option[Timestamp] = Some(c)
   val epoch = Timestamp(0, 0)
 
   private val digits: Array[Short] = Array(

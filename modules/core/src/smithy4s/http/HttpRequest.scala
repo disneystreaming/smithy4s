@@ -44,9 +44,15 @@ final case class HttpRequest[+A] private (
     this.copy(headers =
       this.headers + (CaseInsensitive("Content-Type") -> Seq(contentType))
     )
+
+  def withBody[A0](body: A0): HttpRequest[A0] = copy(body = body)
 }
 
 object HttpRequest {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpRequest is never used"
+  )
+  private def unapply[A](c: HttpRequest[A]): Option[HttpRequest[A]] = Some(c)
   def apply[A](
       method: HttpMethod,
       uri: HttpUri,

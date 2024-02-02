@@ -33,6 +33,10 @@ final case class HttpUri private (
 )
 
 object HttpUri {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUri is never used"
+  )
+  private def unapply(c: HttpUri): Option[HttpUri] = Some(c)
   def apply(
       scheme: HttpUriScheme,
       host: Option[String],

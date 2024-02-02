@@ -115,7 +115,7 @@ object HttpUnaryClientCodecs {
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response] = copy(hostPrefixInjection = enabled)
 
     def build(): UnaryClientCodecs.Make[F, Request, Response] = {
-      val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
+      val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.withBody(blob))
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[HttpRequest[Blob], Blob](setBody)
 
       val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Writer[Blob, *]] {

@@ -25,6 +25,12 @@ final case class UnsupportedProtocolError private (
 }
 
 object UnsupportedProtocolError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UnsupportedProtocolError is never used"
+  )
+  private def unapply(
+      c: UnsupportedProtocolError
+  ): Option[UnsupportedProtocolError] = Some(c)
   def apply(service: HasId, protocolTag: HasId): UnsupportedProtocolError = {
     new UnsupportedProtocolError(service, protocolTag)
   }

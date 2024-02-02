@@ -96,14 +96,14 @@ object SchemaVisitorPathEncoder
       else writer.map(_.encode)
     }
     def compile1(path: PathSegment): Option[Writer] = path match {
-      case StaticSegment(value) => Some(Function.const(List(value)))
-      case LabelSegment(value) =>
+      case ss: StaticSegment => Some(Function.const(List(ss.value)))
+      case ls: LabelSegment =>
         fields
-          .find(_.label == value)
+          .find(_.label == ls.value)
           .flatMap(field => toPathEncoder(field, greedy = false))
-      case GreedySegment(value) =>
+      case gs: GreedySegment =>
         fields
-          .find(_.label == value)
+          .find(_.label == gs.value)
           .flatMap(field => toPathEncoder(field, greedy = true))
     }
 

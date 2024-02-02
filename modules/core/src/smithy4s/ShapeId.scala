@@ -27,6 +27,10 @@ final case class ShapeId private (namespace: String, name: String)
 }
 
 object ShapeId extends ShapeTag.Has[ShapeId] { self =>
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ShapeId is never used"
+  )
+  private def unapply(c: ShapeId): Option[ShapeId] = Some(c)
   def apply(namespace: String, name: String): ShapeId = {
     new ShapeId(namespace, name)
   }
@@ -47,6 +51,10 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
 
   final case class Member private (shapeId: ShapeId, member: String)
   object Member {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object Member is never used"
+    )
+    private def unapply(c: Member): Option[Member] = Some(c)
     def apply(shapeId: ShapeId, member: String): Member = {
       new Member(shapeId, member)
     }

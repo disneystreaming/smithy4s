@@ -56,6 +56,10 @@ object PartialData {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
   object Total {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object Total is never used"
+    )
+    private def unapply[A](c: Total[A]): Option[Total[A]] = Some(c)
     def apply[A](a: A): Total[A] = {
       new Total(a)
     }
@@ -66,6 +70,8 @@ object PartialData {
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
   }
   object Partial {
+    @scala.annotation.nowarn("msg=private method unapply in object Partial is never used")
+    private def unapply[A](c: Partial[A]): Option[Partial[A]] = Some(c)
     def apply[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A): Partial[A] = {
       new Partial(indexes, partialData, make)
     }
@@ -78,22 +84,20 @@ object PartialData {
     */
   def unsafeReconcile[A](pieces: PartialData[A]*): A = {
     pieces
-      .collectFirst { case Total(a) =>
-        a
-      }
+      .collectFirst { case t: Total[_] => t.a }
       .getOrElse {
         val allPieces = pieces.asInstanceOf[Seq[PartialData.Partial[A]]]
         var totalSize = 0
         allPieces.foreach(totalSize += _.indexes.size)
         val array = Array.fill[Any](totalSize)(null)
         var make: IndexedSeq[Any] => A = null
-        allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
+        allPieces.foreach { case p: PartialData.Partial[_] =>
           // all the `const` values should be the same, therefore which one is called
           // is an arbitrary choice.
-          make = const
+          make = p.make
           var i = 0
-          while (i < data.size) {
-            array(indexes(i)) = data(i)
+          while (i < p.partialData.size) {
+            array(p.indexes(i)) = p.partialData(i)
             i += 1
           }
         }

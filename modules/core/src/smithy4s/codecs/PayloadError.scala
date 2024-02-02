@@ -31,6 +31,10 @@ case class PayloadError private (
 }
 
 object PayloadError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object PayloadError is never used"
+  )
+  private def unapply(c: PayloadError): Option[PayloadError] = Some(c)
   def apply(
       path: PayloadPath,
       expected: String,

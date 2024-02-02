@@ -38,9 +38,13 @@ private[http] final case class UrlFormCursor(
     UrlFormCursor(
       history.append(segment),
       values.collect {
-        case UrlForm
-              .FormData(PayloadPath(`segment` :: segments), Some(value)) =>
-          UrlForm.FormData(PayloadPath(segments), Some(value))
+        case uf: UrlForm.FormData
+            if uf.path.segments.headOption.contains(segment) &&
+              uf.maybeValue.isDefined =>
+          UrlForm.FormData(
+            PayloadPath(uf.path.segments.tail: _*),
+            uf.maybeValue
+          )
       }
     )
 

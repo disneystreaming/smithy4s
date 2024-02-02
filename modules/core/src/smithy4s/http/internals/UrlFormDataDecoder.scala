@@ -55,8 +55,9 @@ private[internals] object UrlFormDataDecoder {
   ): UrlFormDataDecoder[A] = {
     case UrlFormCursor(
           history,
-          List(UrlForm.FormData(PayloadPath.root, Some(value)))
-        ) =>
+          List(uf: UrlForm.FormData)
+        ) if uf.path == PayloadPath.root && uf.maybeValue.isDefined =>
+      val value = uf.maybeValue.get
       f(value).toRight(
         UrlFormDecodeError(
           history,

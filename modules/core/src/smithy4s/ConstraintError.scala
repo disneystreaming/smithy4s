@@ -23,6 +23,10 @@ final case class ConstraintError private (hint: Hint, message: String)
 }
 
 object ConstraintError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ConstraintError is never used"
+  )
+  private def unapply(c: ConstraintError): Option[ConstraintError] = Some(c)
   def apply(hint: Hint, message: String): ConstraintError = {
     new ConstraintError(hint, message)
   }

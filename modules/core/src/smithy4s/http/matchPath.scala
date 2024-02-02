@@ -35,23 +35,23 @@ object matchPath extends smithy4s.ScalaCompat {
     ): Option[Map[String, String]] =
       path match {
         case Nil if i >= size => Some(acc)
-        case StaticSegment(value) :: lt
-            if i < size && compareStrings(value, received(i)) =>
+        case (ss: StaticSegment) :: lt
+            if i < size && compareStrings(ss.value, received(i)) =>
           matchPathAux(lt, i + 1, acc, Nil)
-        case (LabelSegment(name) :: lt) if i < size =>
-          matchPathAux(lt, i + 1, acc + (name -> received(i)), Nil)
-        case (GreedySegment(name) :: StaticSegment(value) :: lt)
+        case (ls: LabelSegment) :: lt if i < size =>
+          matchPathAux(lt, i + 1, acc + (ls.value -> received(i)), Nil)
+        case (gs: GreedySegment) :: (ss: StaticSegment) :: lt
             if i < size && compareStrings(
-              value,
+              ss.value,
               received(i)
             ) && greedyAcc.nonEmpty =>
           val value = greedyAcc.reverse.mkString("/")
-          matchPathAux(lt, i + 1, acc + (name -> value), Nil)
-        case p @ (GreedySegment(_) :: Nil) if i < size =>
+          matchPathAux(lt, i + 1, acc + (gs.value -> value), Nil)
+        case p @ ((_: GreedySegment) :: Nil) if i < size =>
           matchPathAux(p, i + 1, acc, received(i) :: greedyAcc)
-        case GreedySegment(name) :: Nil if greedyAcc.nonEmpty =>
+        case (gs: GreedySegment) :: Nil if greedyAcc.nonEmpty =>
           val value = greedyAcc.reverse.mkString("/")
-          Some(acc + (name -> value))
+          Some(acc + (gs.value -> value))
         case _ => None
       }
     matchPathAux(path, 0, Map.empty, List.empty)

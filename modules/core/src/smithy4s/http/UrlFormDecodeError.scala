@@ -28,6 +28,12 @@ final case class UrlFormDecodeError private (
 }
 
 object UrlFormDecodeError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UrlFormDecodeError is never used"
+  )
+  private def unapply(c: UrlFormDecodeError): Option[UrlFormDecodeError] = Some(
+    c
+  )
   def apply(path: PayloadPath, message: String): UrlFormDecodeError = {
     new UrlFormDecodeError(path, message)
   }

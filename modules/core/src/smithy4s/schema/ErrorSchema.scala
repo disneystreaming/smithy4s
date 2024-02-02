@@ -74,6 +74,10 @@ case class ErrorSchema[E] private[smithy4s] (
 
 object ErrorSchema {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ErrorSchema is never used"
+  )
+  private def unapply[E](c: ErrorSchema[E]): Option[ErrorSchema[E]] = Some(c)
   def apply[E](
       schema: Schema[E],
       liftError: Throwable => Option[E],

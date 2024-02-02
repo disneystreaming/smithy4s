@@ -24,6 +24,10 @@ object HttpDiscriminator {
 
   final case class FullId private (shapeId: ShapeId) extends HttpDiscriminator
   object FullId {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object FullId is never used"
+    )
+    private def unapply(c: FullId): Option[FullId] = Some(c)
     def apply(shapeId: ShapeId): FullId = {
       new FullId(shapeId)
     }
@@ -31,6 +35,10 @@ object HttpDiscriminator {
 
   final case class NameOnly private (name: String) extends HttpDiscriminator
   object NameOnly {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object NameOnly is never used"
+    )
+    private def unapply(c: NameOnly): Option[NameOnly] = Some(c)
     def apply(name: String): NameOnly = {
       new NameOnly(name)
     }
@@ -38,6 +46,10 @@ object HttpDiscriminator {
 
   final case class StatusCode private (int: Int) extends HttpDiscriminator
   object StatusCode {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object StatusCode is never used"
+    )
+    private def unapply(c: StatusCode): Option[StatusCode] = Some(c)
     def apply(int: Int): StatusCode = {
       new StatusCode(int)
     }

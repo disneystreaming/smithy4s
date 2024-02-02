@@ -36,12 +36,13 @@ import smithy4s.schema.CompilationCache
   * @param path the path parameters of the http message
   * @param query the query parameters of the http message
   * @param headers the header parameters of the http message
+  * @param statusCode the int value of a http response status code
   */
 case class Metadata private (
-    path: Map[String, String] = Map.empty,
-    query: Map[String, Seq[String]] = Map.empty,
-    headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
-    statusCode: Option[Int] = None
+    path: Map[String, String],
+    query: Map[String, Seq[String]],
+    headers: Map[CaseInsensitive, Seq[String]],
+    statusCode: Option[Int]
 ) { self =>
 
   def headersFlattened: Vector[(CaseInsensitive, String)] =
@@ -121,22 +122,26 @@ case class Metadata private (
 
   def find(location: HttpBinding): Option[(String, List[String])] =
     location match {
-      case HttpBinding.HeaderBinding(httpName) =>
-        headers.get(httpName).flatMap {
+      case hb: HttpBinding.HeaderBinding =>
+        headers.get(hb.httpName).flatMap {
           case head :: tl => Some((head, tl))
           case Nil        => None
         }
-      case HttpBinding.QueryBinding(httpName) =>
-        query.get(httpName).flatMap {
+      case qb: HttpBinding.QueryBinding =>
+        query.get(qb.httpName).flatMap {
           case head :: tl => Some((head, tl))
           case Nil        => None
         }
-      case HttpBinding.PathBinding(httpName) => path.get(httpName).map(_ -> Nil)
-      case _                                 => None
+      case pb: HttpBinding.PathBinding => path.get(pb.httpName).map(_ -> Nil)
+      case _                           => None
     }
 }
 
 object Metadata {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Metadata is never used"
+  )
+  private def unapply(c: Metadata): Option[Metadata] = Some(c)
   def apply(
       path: Map[String, String] = Map.empty,
       query: Map[String, Seq[String]] = Map.empty,

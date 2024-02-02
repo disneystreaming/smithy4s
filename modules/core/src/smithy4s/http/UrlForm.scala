@@ -52,6 +52,10 @@ final case class UrlForm private (values: List[UrlForm.FormData]) {
 }
 
 object UrlForm {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UrlForm is never used"
+  )
+  private def unapply(c: UrlForm): Option[UrlForm] = Some(c)
   def apply(values: List[UrlForm.FormData]): UrlForm = {
     new UrlForm(values)
   }
@@ -68,11 +72,11 @@ object UrlForm {
       var i = 0
       for (segment <- path.segments) {
         builder.append(segment match {
-          case Segment.Label(label) =>
-            URLEncoder.encode(label, StandardCharsets.UTF_8.name())
+          case l: Segment.Label =>
+            URLEncoder.encode(l.label, StandardCharsets.UTF_8.name())
 
-          case Segment.Index(index) =>
-            index
+          case i: Segment.Index =>
+            i.index
         })
         if (i < lastIndex) builder.append('.')
         i += 1
@@ -86,6 +90,10 @@ object UrlForm {
     }
   }
   object FormData {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object FormData is never used"
+    )
+    private def unapply(c: FormData): Option[FormData] = Some(c)
     def apply(path: PayloadPath, maybeValue: Option[String]): FormData = {
       new FormData(path, maybeValue)
     }

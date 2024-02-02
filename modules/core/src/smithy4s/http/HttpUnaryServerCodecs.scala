@@ -105,7 +105,7 @@ object HttpUnaryServerCodecs {
       copy(responseTransformation = responseTransformation.andThen(F.flatMap(_)(f)))
 
     def build(): UnaryServerCodecs.Make[F, Request, Response] = {
-      val setBody: HttpResponse.Writer[Blob, Blob] = Writer.lift((res, blob) => res.copy(body = blob))
+      val setBody: HttpResponse.Writer[Blob, Blob] = Writer.lift((res, blob) => res.withBody(blob))
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[HttpResponse[Blob], Blob](setBody)
 
       val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpResponse.Writer[Blob, *]] {

@@ -1175,8 +1175,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
     private val decode: (JsonReader, String) => E = tag match {
-      case EnumTag.OpenStringEnum(unknown) =>
-        (_, str) => fromNameOpen(str, unknown)
+      case ose: EnumTag.OpenStringEnum[_] =>
+        (_, str) => fromNameOpen(str, ose.unknown)
       case _ =>
         (in, str) =>
           fromName(str) match {
@@ -1222,8 +1222,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
     private val decode: (JsonReader, Int) => E = tag match {
-      case EnumTag.OpenIntEnum(unknown) =>
-        (_, i) => fromOrdinalOpen(i, unknown)
+      case oie: EnumTag.OpenIntEnum[_] =>
+        (_, i) => fromOrdinalOpen(i, oie.unknown)
       case _ =>
         (in, i) =>
           fromOrdinal(i) match {

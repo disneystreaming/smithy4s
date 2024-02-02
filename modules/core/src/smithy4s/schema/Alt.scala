@@ -56,6 +56,10 @@ final case class Alt[U, A] private (
 
 }
 object Alt {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Alt is never used"
+  )
+  private def unapply[U, A](c: Alt[U, A]): Option[Alt[U, A]] = Some(c)
   def apply[U, A](
       label: String,
       schema: Schema[A],

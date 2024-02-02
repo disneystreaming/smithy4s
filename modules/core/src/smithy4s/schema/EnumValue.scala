@@ -32,6 +32,10 @@ case class EnumValue[E] private (
 }
 
 object EnumValue {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object EnumValue is never used"
+  )
+  private def unapply[E](c: EnumValue[E]): Option[EnumValue[E]] = Some(c)
   def apply[E](
       stringValue: String,
       intValue: Int,

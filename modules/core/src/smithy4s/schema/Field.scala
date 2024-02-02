@@ -91,6 +91,10 @@ final case class Field[S, A] private (
 
 object Field {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Field is never used"
+  )
+  private def unapply[S, A](c: Field[S, A]): Option[Field[S, A]] = Some(c)
   def apply[S, A](
       label: String,
       schema: Schema[A],

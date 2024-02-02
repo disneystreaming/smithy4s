@@ -82,6 +82,12 @@ object HttpEndpoint {
       extends Exception(message)
 
   object HttpEndpointError {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object HttpEndpointError is never used"
+    )
+    private def unapply(c: HttpEndpointError): Option[HttpEndpointError] = Some(
+      c
+    )
     def apply(message: String): HttpEndpointError = {
       new HttpEndpointError(message)
     }

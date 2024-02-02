@@ -35,11 +35,18 @@ case class PayloadPath private (segments: List[PayloadPath.Segment]) {
 
 object PayloadPath {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object PayloadPath is never used"
+  )
+  private def unapply(c: PayloadPath): Option[PayloadPath] = Some(c)
   val root = PayloadPath(segments = List.empty)
 
-  def apply(segments: PayloadPath.Segment*): PayloadPath = PayloadPath(
+  def apply(segments: PayloadPath.Segment*): PayloadPath = new PayloadPath(
     segments.toList
   )
+
+  def fromSegments(segments: List[PayloadPath.Segment]): PayloadPath =
+    new PayloadPath(segments)
 
   def parse(string: String): PayloadPath = PayloadPath(
     string.split('.').filter(_.nonEmpty).map(Segment.parse).toList
@@ -73,6 +80,10 @@ object PayloadPath {
     }
 
     object Label {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object Label is never used"
+      )
+      private def unapply(c: Label): Option[Label] = Some(c)
       def apply(label: String): Label = {
         new Label(label)
       }
@@ -82,6 +93,10 @@ object PayloadPath {
     }
 
     object Index {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object Index is never used"
+      )
+      private def unapply(c: Index): Option[Index] = Some(c)
       def apply(index: Int): Index = {
         new Index(index)
       }

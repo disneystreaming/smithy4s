@@ -62,6 +62,10 @@ case class HttpPayloadError private (
 }
 
 object HttpPayloadError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpPayloadError is never used"
+  )
+  private def unapply(c: HttpPayloadError): Option[HttpPayloadError] = Some(c)
   def apply(
       path: PayloadPath,
       expected: String,
@@ -82,16 +86,16 @@ sealed trait MetadataError extends HttpContractError {
   import MetadataError._
 
   override def getMessage(): String = this match {
-    case NotFound(field, location) =>
-      s"${location.show} was not found (field $field)"
-    case WrongType(field, location, expectedType, value) =>
-      s"""String "$value", found in ${location.show}, does not fit field $field ($expectedType)"""
-    case ArityError(field, location) =>
-      s"Field $field expects a single value to be found at ${location.show}"
-    case FailedConstraint(field, location, message) =>
-      s"Field $field, found in ${location.show}, failed constraint checks with message: $message"
-    case ImpossibleDecoding(message) =>
-      message
+    case nf: NotFound =>
+      s"${nf.location.show} was not found (field ${nf.field})"
+    case wt: WrongType =>
+      s"""String "${wt.value}", found in ${wt.location.show}, does not fit field ${wt.field} (${wt.expectedType})"""
+    case ae: ArityError =>
+      s"Field ${ae.field} expects a single value to be found at ${ae.location.show}"
+    case fc: FailedConstraint =>
+      s"Field ${fc.field}, found in ${fc.location.show}, failed constraint checks with message: ${fc.message}"
+    case id: ImpossibleDecoding =>
+      id.message
   }
 }
 
@@ -101,6 +105,10 @@ object MetadataError {
       extends MetadataError
 
   object NotFound {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object NotFound is never used"
+    )
+    private def unapply(c: NotFound): Option[NotFound] = Some(c)
     def apply(field: String, location: HttpBinding): NotFound = {
       new NotFound(field, location)
     }
@@ -119,6 +127,10 @@ object MetadataError {
   ) extends MetadataError
 
   object WrongType {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object WrongType is never used"
+    )
+    private def unapply(c: WrongType): Option[WrongType] = Some(c)
     def apply(
         field: String,
         location: HttpBinding,
@@ -142,6 +154,10 @@ object MetadataError {
   ) extends MetadataError
 
   object ArityError {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object ArityError is never used"
+    )
+    private def unapply(c: ArityError): Option[ArityError] = Some(c)
     def apply(field: String, location: HttpBinding): ArityError = {
       new ArityError(field, location)
     }
@@ -159,6 +175,10 @@ object MetadataError {
   ) extends MetadataError
 
   object FailedConstraint {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object FailedConstraint is never used"
+    )
+    private def unapply(c: FailedConstraint): Option[FailedConstraint] = Some(c)
     def apply(
         field: String,
         location: HttpBinding,
@@ -179,6 +199,11 @@ object MetadataError {
   ) extends MetadataError
 
   object ImpossibleDecoding {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object ImpossibleDecoding is never used"
+    )
+    private def unapply(c: ImpossibleDecoding): Option[ImpossibleDecoding] =
+      Some(c)
     def apply(message: String): ImpossibleDecoding = {
       new ImpossibleDecoding(message)
     }

@@ -69,6 +69,11 @@ final case class HttpResponse[+A] private (
 }
 
 object HttpResponse {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpResponse is never used"
+  )
+  private def unapply[A](c: HttpResponse[A]): Option[HttpResponse[A]] = Some(c)
+
   def apply[A](
       statusCode: Int,
       headers: Map[CaseInsensitive, Seq[String]],

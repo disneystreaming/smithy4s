@@ -25,6 +25,10 @@ object PathSegment {
 
   case class StaticSegment private (value: String) extends PathSegment
   object StaticSegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object StaticSegment is never used"
+    )
+    private def unapply(c: StaticSegment): Option[StaticSegment] = Some(c)
     def apply(value: String): StaticSegment = {
       new StaticSegment(value)
     }
@@ -33,6 +37,10 @@ object PathSegment {
 
   case class LabelSegment private (value: String) extends PathSegment
   object LabelSegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object LabelSegment is never used"
+    )
+    private def unapply(c: LabelSegment): Option[LabelSegment] = Some(c)
     def apply(value: String): LabelSegment = {
       new LabelSegment(value)
     }
@@ -41,6 +49,10 @@ object PathSegment {
 
   case class GreedySegment private (value: String) extends PathSegment
   object GreedySegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object GreedySegment is never used"
+    )
+    private def unapply(c: GreedySegment): Option[GreedySegment] = Some(c)
     def apply(value: String): GreedySegment = {
       new GreedySegment(value)
     }

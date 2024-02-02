@@ -201,6 +201,9 @@ object Service {
   }
 
   object Builder {
+    @scala.annotation.nowarn("msg=private method unapply in object Builder is never used")
+    private def unapply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](c: Builder[Alg, Op]): Option[Builder[Alg, Op]] = Some(c)
+
     def fromService[Alg[_[_, _, _, _, _]]](
         service: Service[Alg]
     ): Builder[Alg, service.Operation] =

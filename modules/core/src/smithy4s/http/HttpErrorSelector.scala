@@ -173,10 +173,10 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
   ): Option[Alt[E, _]] = {
     import HttpDiscriminator._
     discriminator match {
-      case FullId(shapeId) => byShapeId.get(shapeId)
-      case NameOnly(name)  => byName.get(name)
-      case StatusCode(int) => byStatusCode(int)
-      case Undetermined    => None
+      case fi: FullId     => byShapeId.get(fi.shapeId)
+      case no: NameOnly   => byName.get(no.name)
+      case sc: StatusCode => byStatusCode(sc.int)
+      case Undetermined   => None
     }
   }
 }

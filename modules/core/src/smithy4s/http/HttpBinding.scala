@@ -32,12 +32,12 @@ sealed abstract class HttpBinding(val tpe: HttpBinding.Type)
     with Serializable {
 
   def show: String = this match {
-    case HeaderBinding(httpName)     => s"Header $httpName"
-    case HeaderPrefixBinding(prefix) => s"Headers prefixed by $prefix"
-    case QueryBinding(httpName)      => s"Query parameter $httpName"
-    case QueryParamsBinding          => "Query parameters"
-    case PathBinding(httpName)       => s"Path parameter $httpName"
-    case StatusCodeBinding           => "Status code"
+    case hb: HeaderBinding        => s"Header ${hb.httpName}"
+    case hpb: HeaderPrefixBinding => s"Headers prefixed by ${hpb.prefix}"
+    case qb: QueryBinding         => s"Query parameter ${qb.httpName}"
+    case QueryParamsBinding       => "Query parameters"
+    case pb: PathBinding          => s"Path parameter ${pb.httpName}"
+    case StatusCodeBinding        => "Status code"
   }
 
 }
@@ -70,6 +70,10 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
   }
 
   object HeaderBinding {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object HeaderBinding is never used"
+    )
+    private def unapply(c: HeaderBinding): Option[HeaderBinding] = Some(c)
     def apply(httpName: CaseInsensitive): HeaderBinding = {
       new HeaderBinding(httpName)
     }
@@ -80,6 +84,11 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       )
   }
   object HeaderPrefixBinding {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object HeaderPrefixBinding is never used"
+    )
+    private def unapply(c: HeaderPrefixBinding): Option[HeaderPrefixBinding] =
+      Some(c)
     def apply(prefix: String): HeaderPrefixBinding = {
       new HeaderPrefixBinding(prefix)
     }
@@ -90,6 +99,10 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       )
   }
   object QueryBinding {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object QueryBinding is never used"
+    )
+    private def unapply(c: QueryBinding): Option[QueryBinding] = Some(c)
     def apply(httpName: String): QueryBinding = {
       new QueryBinding(httpName)
     }
@@ -100,6 +113,10 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       )
   }
   object PathBinding {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object PathBinding is never used"
+    )
+    private def unapply(c: PathBinding): Option[PathBinding] = Some(c)
     def apply(httpName: String): PathBinding = {
       new PathBinding(httpName)
     }

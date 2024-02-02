@@ -53,7 +53,11 @@ trait DocumentDecoder[A] { self =>
         f(self(path, document)) match {
           case Right(value) => value
           case Left(value) =>
-            throw PayloadError(PayloadPath(path), expected, value.message)
+            throw PayloadError(
+              PayloadPath.fromSegments(path),
+              expected,
+              value.message
+            )
         }
       }
 
@@ -80,7 +84,7 @@ object DocumentDecoder {
       if (f.isDefinedAt(tuple)) f(tuple)
       else
         throw PayloadError(
-          PayloadPath(history.reverse),
+          PayloadPath.fromSegments(history.reverse),
           expectedType,
           s"Expected Json Shape: $expectedJsonShape but got the following Json Shape ${document.name}"
         )
@@ -171,7 +175,7 @@ class DocumentDecoderSchemaVisitor(
               .parse(value, format)
               .getOrElse(
                 throw PayloadError(
-                  PayloadPath(pp.reverse),
+                  PayloadPath.fromSegments(pp.reverse),
                   formatRepr,
                   s"Wrong timestamp format"
                 )
@@ -235,7 +239,7 @@ class DocumentDecoderSchemaVisitor(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
                 val path = PayloadPath.Segment.parse(key) :: pp
                 throw PayloadError(
-                  PayloadPath(path.reverse),
+                  PayloadPath.fromSegments(path.reverse),
                   expectedType,
                   "Wrong Json shape"
                 )
@@ -263,7 +267,7 @@ class DocumentDecoderSchemaVisitor(
               i += 1
             case _ =>
               throw PayloadError(
-                PayloadPath((PayloadPath.Segment(i) :: pp).reverse),
+                PayloadPath((PayloadPath.Segment(i) :: pp).reverse: _*),
                 "Key Value object",
                 """Expected a Json object containing two values indexed with "key" and "value". """
               )
@@ -290,17 +294,17 @@ class DocumentDecoderSchemaVisitor(
           case DNumber(value) if fromOrdinal.contains(value) =>
             fromOrdinal(value)
         }
-      case EnumTag.OpenIntEnum(unknown) =>
+      case oie: EnumTag.OpenIntEnum[_] =>
         from(label) { case DNumber(value) =>
-          fromOrdinal.getOrElse(value, unknown(value.toInt))
+          fromOrdinal.getOrElse(value, oie.unknown(value.toInt))
         }
       case EnumTag.ClosedStringEnum =>
         from(label) {
           case DString(value) if fromName.contains(value) => fromName(value)
         }
-      case EnumTag.OpenStringEnum(unknown) =>
+      case ose: EnumTag.OpenStringEnum[_] =>
         from(label) { case DString(value) =>
-          fromName.getOrElse(value, unknown(value))
+          fromName.getOrElse(value, ose.unknown(value))
         }
     }
   }
@@ -351,7 +355,7 @@ class DocumentDecoderSchemaVisitor(
                 buffer(apply(field.schema)(path, document))
               case None =>
                 throw PayloadError(
-                  PayloadPath(path.reverse),
+                  PayloadPath.fromSegments(path.reverse),
                   "",
                   "Required field not found"
                 )
@@ -395,21 +399,21 @@ class DocumentDecoderSchemaVisitor(
                 case Some(decoder) => decoder(pp, document)
                 case None =>
                   throw PayloadError(
-                    PayloadPath(pp.reverse),
+                    PayloadPath.fromSegments(pp.reverse),
                     "Union",
                     s"Unknown discriminator: ${value.value}"
                   )
               }
             case _ =>
               throw PayloadError(
-                PayloadPath(pp.reverse),
+                PayloadPath.fromSegments(pp.reverse),
                 "Union",
                 s"Unable to locate discriminator under property '${discriminated.value}'"
               )
           }
         case other =>
           throw PayloadError(
-            PayloadPath(pp.reverse),
+            PayloadPath.fromSegments(pp.reverse),
             "Union",
             s"Expected DObject, but found $other"
           )
@@ -428,14 +432,14 @@ class DocumentDecoderSchemaVisitor(
             case Some(decoder) => decoder(pp, value)
             case None =>
               throw PayloadError(
-                PayloadPath(pp.reverse),
+                PayloadPath.fromSegments(pp.reverse),
                 "Union",
                 s"Unknown discriminator: $key"
               )
           }
         case _ =>
           throw PayloadError(
-            PayloadPath(pp.reverse),
+            PayloadPath.fromSegments(pp.reverse),
             "Union",
             "Expected a single-key Json object"
           )
@@ -453,10 +457,10 @@ class DocumentDecoderSchemaVisitor(
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
+      alternatives.map { case alt: Alt[_, _] =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(label :: pp, doc))
+          alt.inject(apply(alt.schema)(label :: pp, doc))
         }
         jsonLabel(alt) -> encoder
       }.toMap
@@ -516,7 +520,7 @@ class DocumentDecoderSchemaVisitor(
         if (f.isDefinedAt(a)) f(a)
         else
           throw PayloadError(
-            PayloadPath(path.reverse),
+            PayloadPath.fromSegments(path.reverse),
             expectedType,
             "Wrong Json shape"
           )
@@ -535,14 +539,14 @@ class DocumentDecoderSchemaVisitor(
           } catch {
             case e: Throwable =>
               throw PayloadError(
-                PayloadPath(path.reverse),
+                PayloadPath.fromSegments(path.reverse),
                 expectedType,
                 e.getMessage()
               )
           }
         } else
           throw PayloadError(
-            PayloadPath(path.reverse),
+            PayloadPath.fromSegments(path.reverse),
             expectedType,
             "Wrong Json shape"
           )

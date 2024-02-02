@@ -98,6 +98,12 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
 }
 
 object OperationSchema {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object OperationSchema is never used"
+  )
+  private def unapply[I, E, O, SI, SO](
+      c: OperationSchema[I, E, O, SI, SO]
+  ): Option[OperationSchema[I, E, O, SI, SO]] = Some(c)
   def apply[I, E, O, SI, SO](
       id: ShapeId,
       hints: Hints,

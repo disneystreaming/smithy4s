@@ -24,6 +24,13 @@ object EnumTag {
 
   case class OpenStringEnum[E] private (unknown: String => E) extends EnumTag[E]
   object OpenStringEnum {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OpenStringEnum is never used"
+    )
+    private def unapply[E](c: OpenStringEnum[E]): Option[OpenStringEnum[E]] =
+      Some(
+        c
+      )
     def apply[E](unknown: String => E): OpenStringEnum[E] = {
       new OpenStringEnum(unknown)
     }
@@ -31,6 +38,10 @@ object EnumTag {
 
   case class OpenIntEnum[E] private (unknown: Int => E) extends EnumTag[E]
   object OpenIntEnum {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OpenIntEnum is never used"
+    )
+    private def unapply[E](c: OpenIntEnum[E]): Option[OpenIntEnum[E]] = Some(c)
     def apply[E](unknown: Int => E): OpenIntEnum[E] = {
       new OpenIntEnum(unknown)
     }
@@ -38,17 +49,17 @@ object EnumTag {
 
   object StringEnum {
     def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedStringEnum  => true
-      case OpenStringEnum(_) => true
-      case _                 => false
+      case ClosedStringEnum     => true
+      case _: OpenStringEnum[_] => true
+      case _                    => false
     }
   }
 
   object IntEnum {
     def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedIntEnum  => true
-      case OpenIntEnum(_) => true
-      case _              => false
+      case ClosedIntEnum     => true
+      case _: OpenIntEnum[_] => true
+      case _                 => false
     }
   }
 }
