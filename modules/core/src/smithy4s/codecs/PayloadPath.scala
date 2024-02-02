@@ -20,6 +20,9 @@ import smithy4s.schema._
 
 case class PayloadPath private (segments: List[PayloadPath.Segment]) {
 
+  def withSegments(value: List[PayloadPath.Segment]): PayloadPath = {
+    copy(segments = value)
+  }
   def append(segment: PayloadPath.Segment): PayloadPath =
     copy(segments ::: List(segment))
 
@@ -76,6 +79,9 @@ object PayloadPath {
     }
 
     case class Label private (label: String) extends Segment {
+      def withLabel(value: String): Label = {
+        copy(label = value)
+      }
       override lazy val render: String = label
     }
 
@@ -89,6 +95,9 @@ object PayloadPath {
       }
     }
     case class Index private (index: Int) extends Segment {
+      def withIndex(value: Int): Index = {
+        copy(index = value)
+      }
       override lazy val render: String = index.toString
     }
 

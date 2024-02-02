@@ -24,6 +24,13 @@ final case class UrlFormDecodeError private (
     path: PayloadPath,
     message: String
 ) extends Throwable {
+  def withPath(value: PayloadPath): UrlFormDecodeError = {
+    copy(path = value)
+  }
+
+  def withMessage(value: String): UrlFormDecodeError = {
+    copy(message = value)
+  }
   override def getMessage(): String = s"${path.render()}: $message"
 }
 

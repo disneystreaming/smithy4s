@@ -23,6 +23,13 @@ import scala.util.control.NonFatal
 
 case class Timestamp private (epochSecond: Long, nano: Int)
     extends TimestampPlatform {
+  def withEpochSecond(value: Long): Timestamp = {
+    copy(epochSecond = value)
+  }
+
+  def withNano(value: Int): Timestamp = {
+    copy(nano = value)
+  }
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano

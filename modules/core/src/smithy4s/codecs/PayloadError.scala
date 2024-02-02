@@ -25,6 +25,17 @@ case class PayloadError private (
     message: String
 ) extends Throwable
     with scala.util.control.NoStackTrace {
+  def withPath(value: PayloadPath): PayloadError = {
+    copy(path = value)
+  }
+
+  def withExpected(value: String): PayloadError = {
+    copy(expected = value)
+  }
+
+  def withMessage(value: String): PayloadError = {
+    copy(message = value)
+  }
   override def toString(): String =
     s"PayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = s"$message (path: $path)"

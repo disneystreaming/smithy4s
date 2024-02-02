@@ -30,6 +30,17 @@ final case class Field[S, A] private (
     * Returns the hints that are only relative to the field
     * (typically derived from member-level traits)
     */
+  def withLabel(value: String): Field[S, A] = {
+    copy(label = value)
+  }
+
+  def withSchema(value: Schema[A]): Field[S, A] = {
+    copy(schema = value)
+  }
+
+  def withGet(value: S => A): Field[S, A] = {
+    copy(get = value)
+  }
   final def memberHints: Hints = schema.hints.memberHints
 
   /**

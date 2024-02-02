@@ -38,6 +38,9 @@ import scala.collection.mutable
 /** Represents data that was encoded using the `application/x-www-form-urlencoded` format. */
 final case class UrlForm private (values: List[UrlForm.FormData]) {
 
+  def withValues(value: List[UrlForm.FormData]): UrlForm = {
+    copy(values = value)
+  }
   def render: String = {
     val builder = new mutable.StringBuilder
     val lastIndex = values.size - 1
@@ -64,6 +67,13 @@ object UrlForm {
       maybeValue: Option[String]
   ) {
 
+    def withPath(value: PayloadPath): FormData = {
+      copy(path = value)
+    }
+
+    def withMaybeValue(value: Option[String]): FormData = {
+      copy(maybeValue = value)
+    }
     def prepend(segment: PayloadPath.Segment): FormData =
       copy(path.prepend(segment), maybeValue)
 

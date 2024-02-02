@@ -46,7 +46,12 @@ sealed trait HttpRestSchema[A]
 object HttpRestSchema {
 
   final case class OnlyMetadata[A] private (schema: Schema[A])
-      extends HttpRestSchema[A]
+      extends HttpRestSchema[A] {
+    def withSchema(value: Schema[A]): OnlyMetadata[A] = {
+      copy(schema = value)
+    }
+
+  }
   object OnlyMetadata {
     @scala.annotation.nowarn(
       "msg=private method unapply in object OnlyMetadata is never used"
@@ -60,7 +65,12 @@ object HttpRestSchema {
   }
 
   final case class OnlyBody[A] private (schema: Schema[A])
-      extends HttpRestSchema[A]
+      extends HttpRestSchema[A] {
+    def withSchema(value: Schema[A]): OnlyBody[A] = {
+      copy(schema = value)
+    }
+
+  }
   object OnlyBody {
     @scala.annotation.nowarn(
       "msg=private method unapply in object OnlyBody is never used"
@@ -72,7 +82,16 @@ object HttpRestSchema {
   }
 
   // scalafmt: {maxColumn = 160}
-  final case class MetadataAndBody[A] private (metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A]
+  final case class MetadataAndBody[A] private (metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A] {
+    def withMetadataSchema(value: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      copy(metadataSchema = value)
+    }
+
+    def withBodySchema(value: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      copy(bodySchema = value)
+    }
+
+  }
   object MetadataAndBody {
     @scala.annotation.nowarn("msg=private method unapply in object MetadataAndBody is never used")
     private def unapply[A](c: MetadataAndBody[A]): Option[MetadataAndBody[A]] = Some(c)
@@ -81,7 +100,12 @@ object HttpRestSchema {
     }
   }
 
-  final case class Empty[A] private (value: A) extends HttpRestSchema[A]
+  final case class Empty[A] private (value: A) extends HttpRestSchema[A] {
+    def withValue(value: A): Empty[A] = {
+      copy(value = value)
+    }
+
+  }
   object Empty {
     @scala.annotation.nowarn("msg=private method unapply in object Empty is never used")
     private def unapply[A](c: Empty[A]): Option[Empty[A]] = Some(c)

@@ -28,6 +28,21 @@ final case class HttpRequest[+A] private (
     headers: Map[CaseInsensitive, Seq[String]],
     body: A
 ) {
+  def withMethod(value: HttpMethod): HttpRequest[A] = {
+    copy(method = value)
+  }
+
+  def withUri(value: HttpUri): HttpRequest[A] = {
+    copy(uri = value)
+  }
+
+  def withHeaders(value: Map[CaseInsensitive, Seq[String]]): HttpRequest[A] = {
+    copy(headers = value)
+  }
+
+  def withBody[A0](value: A0): HttpRequest[A0] = {
+    copy(body = value)
+  }
   def map[B](f: A => B): HttpRequest[B] =
     HttpRequest(method, uri, headers, f(body))
 
@@ -44,8 +59,6 @@ final case class HttpRequest[+A] private (
     this.copy(headers =
       this.headers + (CaseInsensitive("Content-Type") -> Seq(contentType))
     )
-
-  def withBody[A0](body: A0): HttpRequest[A0] = copy(body = body)
 }
 
 object HttpRequest {
@@ -96,7 +109,7 @@ object HttpRequest {
         val staticQueries = httpEndpoint.staticQueryParams
         val oldUri = request.uri
         val newUri =
-          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+          oldUri.withPath(oldUri.path ++ path).withQueryParams(staticQueries)
         val method = httpEndpoint.method
         request.copy(method = method, uri = newUri)
       }
@@ -105,8 +118,7 @@ object HttpRequest {
     private def metadataWriter[Body]: Writer[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
-        val newUri =
-          oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
+        val newUri = oldUri.withQueryParams(oldUri.queryParams ++ meta.query)
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
@@ -123,8 +135,8 @@ object HttpRequest {
               val hostPrefix = prefixEncoder.write(List.empty, input).mkString
               val oldUri = request.uri
               val prefixedHost = oldUri.host.map(host => s"$hostPrefix$host")
-              val newUri = oldUri.copy(host = prefixedHost)
-              request.copy(uri = newUri)
+              val newUri = oldUri.withHost(prefixedHost)
+              request.withUri(newUri)
             }
           }
         case None =>

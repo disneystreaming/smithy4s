@@ -34,6 +34,17 @@ case class ErrorSchema[E] private[smithy4s] (
     unliftError: E => Throwable
 ) {
 
+  def withSchema(value: Schema[E]): ErrorSchema[E] = {
+    copy(schema = value)
+  }
+
+  def withLiftError(value: Throwable => Option[E]): ErrorSchema[E] = {
+    copy(liftError = value)
+  }
+
+  def withUnliftError(value: E => Throwable): ErrorSchema[E] = {
+    copy(unliftError = value)
+  }
   def transformHintsLocally(f: Hints => Hints): ErrorSchema[E] = {
     val newSchema = schema match {
       case u: Schema.UnionSchema[E] =>

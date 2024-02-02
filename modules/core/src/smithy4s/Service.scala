@@ -218,6 +218,26 @@ object Service {
       private val baseHints: Hints,
   ) {
 
+    def withBase(value: Service.Aux[Alg, Op]): Builder[Alg, Op] = {
+      copy(base = value)
+    }
+
+    def withBaseEndpoints(value: IndexedSeq[Endpoint[Op, _, _, _, _, _]]): Builder[Alg, Op] = {
+      copy(baseEndpoints = value)
+    }
+
+    def withBaseId(value: ShapeId): Builder[Alg, Op] = {
+      copy(baseId = value)
+    }
+
+    def withBaseVersion(value: String): Builder[Alg, Op] = {
+      copy(baseVersion = value)
+    }
+
+    def withBaseHints(value: Hints): Builder[Alg, Op] = {
+      copy(baseHints = value)
+    }
+
     def mapEndpointEach(
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
     ): Builder[Alg, Op] = {

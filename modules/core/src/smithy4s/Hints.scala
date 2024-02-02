@@ -231,6 +231,13 @@ object Hints {
   object Binding {
     final case class StaticBinding[A] private (key: ShapeTag[A], value: A)
         extends Binding {
+      def withKey(value: ShapeTag[A]): StaticBinding[A] = {
+        copy(key = value)
+      }
+
+      def withValue(value: A): StaticBinding[A] = {
+        copy(value = value)
+      }
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
     }
@@ -249,6 +256,13 @@ object Hints {
 
     final case class DynamicBinding private (keyId: ShapeId, value: Document)
         extends Binding {
+      def withKeyId(value: ShapeId): DynamicBinding = {
+        copy(keyId = value)
+      }
+
+      def withValue(value: Document): DynamicBinding = {
+        copy(value = value)
+      }
       override def toString = Document.obj(keyId.show -> value).toString()
     }
     object DynamicBinding {

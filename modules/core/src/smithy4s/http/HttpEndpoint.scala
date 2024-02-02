@@ -79,7 +79,12 @@ object HttpEndpoint {
   }
 
   case class HttpEndpointError private (message: String)
-      extends Exception(message)
+      extends Exception(message) {
+    def withMessage(value: String): HttpEndpointError = {
+      copy(message = value)
+    }
+
+  }
 
   object HttpEndpointError {
     @scala.annotation.nowarn(

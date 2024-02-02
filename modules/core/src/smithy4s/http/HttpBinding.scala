@@ -55,16 +55,36 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
   }
 
   case class HeaderBinding private (httpName: CaseInsensitive)
-      extends HttpBinding(Type.HeaderType)
+      extends HttpBinding(Type.HeaderType) {
+    def withHttpName(value: CaseInsensitive): HeaderBinding = {
+      copy(httpName = value)
+    }
+
+  }
   case class HeaderPrefixBinding private (prefix: String)
-      extends HttpBinding(Type.HeaderType)
+      extends HttpBinding(Type.HeaderType) {
+    def withPrefix(value: String): HeaderPrefixBinding = {
+      copy(prefix = value)
+    }
+
+  }
   case class QueryBinding private (httpName: String)
-      extends HttpBinding(Type.QueryType)
+      extends HttpBinding(Type.QueryType) {
+    def withHttpName(value: String): QueryBinding = {
+      copy(httpName = value)
+    }
+
+  }
   case object QueryParamsBinding extends HttpBinding(Type.QueryType) {
     val schema: Schema[QueryParamsBinding.type] = constant(QueryParamsBinding)
   }
   case class PathBinding private (httpName: String)
-      extends HttpBinding(Type.PathType)
+      extends HttpBinding(Type.PathType) {
+    def withHttpName(value: String): PathBinding = {
+      copy(httpName = value)
+    }
+
+  }
   case object StatusCodeBinding extends HttpBinding(Type.StatusCodeType) {
     val schema: Schema[StatusCodeBinding.type] = constant(StatusCodeBinding)
   }

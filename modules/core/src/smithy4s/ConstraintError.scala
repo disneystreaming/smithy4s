@@ -19,6 +19,13 @@ package smithy4s
 final case class ConstraintError private (hint: Hint, message: String)
     extends Throwable
     with scala.util.control.NoStackTrace {
+  def withHint(value: Hint): ConstraintError = {
+    copy(hint = value)
+  }
+
+  def withMessage(value: String): ConstraintError = {
+    copy(message = value)
+  }
   override def getMessage() = s"$hint: $message"
 }
 

@@ -31,6 +31,21 @@ final case class Alt[U, A] private (
     project: PartialFunction[U, A]
 ) {
 
+  def withLabel(value: String): Alt[U, A] = {
+    copy(label = value)
+  }
+
+  def withSchema(value: Schema[A]): Alt[U, A] = {
+    copy(schema = value)
+  }
+
+  def withInject(value: A => U): Alt[U, A] = {
+    copy(inject = value)
+  }
+
+  def withProject(value: PartialFunction[U, A]): Alt[U, A] = {
+    copy(project = value)
+  }
   @deprecated("use .schema instead", since = "0.18.0")
   def instance: Schema[A] = schema
 

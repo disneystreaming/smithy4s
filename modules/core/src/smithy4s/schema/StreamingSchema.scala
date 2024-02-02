@@ -16,7 +16,16 @@
 
 package smithy4s.schema
 
-case class StreamingSchema[A] private (fieldName: String, schema: Schema[A])
+case class StreamingSchema[A] private (fieldName: String, schema: Schema[A]) {
+  def withFieldName(value: String): StreamingSchema[A] = {
+    copy(fieldName = value)
+  }
+
+  def withSchema(value: Schema[A]): StreamingSchema[A] = {
+    copy(schema = value)
+  }
+
+}
 
 object StreamingSchema {
   @scala.annotation.nowarn(

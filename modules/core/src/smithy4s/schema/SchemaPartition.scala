@@ -41,7 +41,12 @@ object SchemaPartition {
     * datatype.
     */
   final case class TotalMatch[A] private (schema: Schema[A])
-      extends SchemaPartition[A]
+      extends SchemaPartition[A] {
+    def withSchema(value: Schema[A]): TotalMatch[A] = {
+      copy(schema = value)
+    }
+
+  }
   object TotalMatch {
     @scala.annotation.nowarn(
       "msg=private method unapply in object TotalMatch is never used"
@@ -65,7 +70,16 @@ object SchemaPartition {
     * @param notMatching the partial schema resulting from the non-matching fields
     */
   // scalafmt: {maxColumn: 160}
-  final case class SplittingMatch[A] private (matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
+  final case class SplittingMatch[A] private (matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A] {
+    def withMatching(value: Schema[PartialData[A]]): SplittingMatch[A] = {
+      copy(matching = value)
+    }
+
+    def withNotMatching(value: Schema[PartialData[A]]): SplittingMatch[A] = {
+      copy(notMatching = value)
+    }
+
+  }
   object SplittingMatch {
     @scala.annotation.nowarn("msg=private method unapply in object SplittingMatch is never used")
     private def unapply[A](c: SplittingMatch[A]): Option[SplittingMatch[A]] = Some(c)
@@ -78,7 +92,7 @@ object SchemaPartition {
   /**
     * Indicates that no field matched the condition.
     */
-  final case class NoMatch[A] private () extends SchemaPartition[A]
+  final case class NoMatch[A] private () extends SchemaPartition[A] {}
   object NoMatch {
     @scala.annotation.nowarn("msg=private method unapply in object NoMatch is never used")
     private def unapply[A](c: NoMatch[A]): Option[NoMatch[A]] = Some(c)

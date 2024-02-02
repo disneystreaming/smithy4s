@@ -56,6 +56,17 @@ case class HttpPayloadError private (
     expected: String,
     message: String
 ) extends HttpContractError {
+  def withPath(value: PayloadPath): HttpPayloadError = {
+    copy(path = value)
+  }
+
+  def withExpected(value: String): HttpPayloadError = {
+    copy(expected = value)
+  }
+
+  def withMessage(value: String): HttpPayloadError = {
+    copy(message = value)
+  }
   override def toString(): String =
     s"HttpPayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = s"$message (path: $path)"
@@ -102,7 +113,16 @@ sealed trait MetadataError extends HttpContractError {
 object MetadataError {
 
   case class NotFound private (field: String, location: HttpBinding)
-      extends MetadataError
+      extends MetadataError {
+    def withField(value: String): NotFound = {
+      copy(field = value)
+    }
+
+    def withLocation(value: HttpBinding): NotFound = {
+      copy(location = value)
+    }
+
+  }
 
   object NotFound {
     @scala.annotation.nowarn(
@@ -124,7 +144,24 @@ object MetadataError {
       location: HttpBinding,
       expectedType: String,
       value: String
-  ) extends MetadataError
+  ) extends MetadataError {
+    def withField(value: String): WrongType = {
+      copy(field = value)
+    }
+
+    def withLocation(value: HttpBinding): WrongType = {
+      copy(location = value)
+    }
+
+    def withExpectedType(value: String): WrongType = {
+      copy(expectedType = value)
+    }
+
+    def withValue(value: String): WrongType = {
+      copy(value = value)
+    }
+
+  }
 
   object WrongType {
     @scala.annotation.nowarn(
@@ -151,7 +188,16 @@ object MetadataError {
   case class ArityError private (
       field: String,
       location: HttpBinding
-  ) extends MetadataError
+  ) extends MetadataError {
+    def withField(value: String): ArityError = {
+      copy(field = value)
+    }
+
+    def withLocation(value: HttpBinding): ArityError = {
+      copy(location = value)
+    }
+
+  }
 
   object ArityError {
     @scala.annotation.nowarn(
@@ -172,7 +218,20 @@ object MetadataError {
       field: String,
       location: HttpBinding,
       message: String
-  ) extends MetadataError
+  ) extends MetadataError {
+    def withField(value: String): FailedConstraint = {
+      copy(field = value)
+    }
+
+    def withLocation(value: HttpBinding): FailedConstraint = {
+      copy(location = value)
+    }
+
+    def withMessage(value: String): FailedConstraint = {
+      copy(message = value)
+    }
+
+  }
 
   object FailedConstraint {
     @scala.annotation.nowarn(
@@ -196,7 +255,12 @@ object MetadataError {
 
   case class ImpossibleDecoding private (
       message: String
-  ) extends MetadataError
+  ) extends MetadataError {
+    def withMessage(value: String): ImpossibleDecoding = {
+      copy(message = value)
+    }
+
+  }
 
   object ImpossibleDecoding {
     @scala.annotation.nowarn(

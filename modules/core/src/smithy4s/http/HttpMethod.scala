@@ -42,7 +42,12 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
-  case class OTHER private (value: String) extends HttpMethod
+  case class OTHER private (value: String) extends HttpMethod {
+    def withValue(value: String): OTHER = {
+      copy(value = value)
+    }
+
+  }
 
   object OTHER {
     @scala.annotation.nowarn(

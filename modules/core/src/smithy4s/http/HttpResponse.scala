@@ -35,7 +35,6 @@ final case class HttpResponse[+A] private (
     this.copy(statusCode = statusCode)
   def withHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
     this.copy(headers = headers)
-
   def withBody[A0](body: A0): HttpResponse[A0] =
     this.copy(body = body)
 

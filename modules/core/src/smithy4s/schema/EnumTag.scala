@@ -22,7 +22,13 @@ object EnumTag {
   case object ClosedStringEnum extends EnumTag[Nothing]
   case object ClosedIntEnum extends EnumTag[Nothing]
 
-  case class OpenStringEnum[E] private (unknown: String => E) extends EnumTag[E]
+  case class OpenStringEnum[E] private (unknown: String => E)
+      extends EnumTag[E] {
+    def withUnknown(value: String => E): OpenStringEnum[E] = {
+      copy(unknown = value)
+    }
+
+  }
   object OpenStringEnum {
     @scala.annotation.nowarn(
       "msg=private method unapply in object OpenStringEnum is never used"
@@ -36,7 +42,12 @@ object EnumTag {
     }
   }
 
-  case class OpenIntEnum[E] private (unknown: Int => E) extends EnumTag[E]
+  case class OpenIntEnum[E] private (unknown: Int => E) extends EnumTag[E] {
+    def withUnknown(value: Int => E): OpenIntEnum[E] = {
+      copy(unknown = value)
+    }
+
+  }
   object OpenIntEnum {
     @scala.annotation.nowarn(
       "msg=private method unapply in object OpenIntEnum is never used"

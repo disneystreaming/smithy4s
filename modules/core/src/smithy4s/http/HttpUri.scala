@@ -30,7 +30,32 @@ final case class HttpUri private (
       * once the routing logic has come in effect.
       */
     pathParams: Option[Map[String, String]]
-)
+) {
+  def withScheme(value: HttpUriScheme): HttpUri = {
+    copy(scheme = value)
+  }
+
+  def withHost(value: Option[String]): HttpUri = {
+    copy(host = value)
+  }
+
+  def withPort(value: Option[Int]): HttpUri = {
+    copy(port = value)
+  }
+
+  def withPath(value: IndexedSeq[String]): HttpUri = {
+    copy(path = value)
+  }
+
+  def withQueryParams(value: Map[String, Seq[String]]): HttpUri = {
+    copy(queryParams = value)
+  }
+
+  def withPathParams(value: Option[Map[String, String]]): HttpUri = {
+    copy(pathParams = value)
+  }
+
+}
 
 object HttpUri {
   @scala.annotation.nowarn(

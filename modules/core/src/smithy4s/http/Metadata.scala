@@ -45,6 +45,21 @@ case class Metadata private (
     statusCode: Option[Int]
 ) { self =>
 
+  def withPath(value: Map[String, String]): Metadata = {
+    copy(path = value)
+  }
+
+  def withQuery(value: Map[String, Seq[String]]): Metadata = {
+    copy(query = value)
+  }
+
+  def withHeaders(value: Map[CaseInsensitive, Seq[String]]): Metadata = {
+    copy(headers = value)
+  }
+
+  def withStatusCode(value: Option[Int]): Metadata = {
+    copy(statusCode = value)
+  }
   def headersFlattened: Vector[(CaseInsensitive, String)] =
     headers.toVector.flatMap { case (k, v) =>
       v.map(k -> _)

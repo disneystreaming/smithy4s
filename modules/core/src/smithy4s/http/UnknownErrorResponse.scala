@@ -21,6 +21,19 @@ case class UnknownErrorResponse private (
     headers: Map[CaseInsensitive, Seq[String]],
     body: String
 ) extends Throwable {
+  def withCode(value: Int): UnknownErrorResponse = {
+    copy(code = value)
+  }
+
+  def withHeaders(
+      value: Map[CaseInsensitive, Seq[String]]
+  ): UnknownErrorResponse = {
+    copy(headers = value)
+  }
+
+  def withBody(value: String): UnknownErrorResponse = {
+    copy(body = value)
+  }
   override def getMessage(): String =
     s"status $code, headers: $headers, body:\n$body"
 }

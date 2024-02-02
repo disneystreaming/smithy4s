@@ -20,6 +20,13 @@ final case class UnsupportedProtocolError private (
     service: HasId,
     protocolTag: HasId
 ) extends Throwable {
+  def withService(value: HasId): UnsupportedProtocolError = {
+    copy(service = value)
+  }
+
+  def withProtocolTag(value: HasId): UnsupportedProtocolError = {
+    copy(protocolTag = value)
+  }
   override def getMessage(): String =
     s"Service ${service.id.show} does not support the ${protocolTag.id.show} protocol"
 }
