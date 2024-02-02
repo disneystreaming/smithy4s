@@ -18,8 +18,9 @@ package smithy4s.internals
 
 import alloy.StructurePattern
 import smithy4s._
-import scala.util.control.NoStackTrace
 import smithy4s.http.internals.PathEncode
+
+import scala.util.control.NoStackTrace
 
 private[internals] final case class StructurePatternError(message: String)
     extends RuntimeException(message)

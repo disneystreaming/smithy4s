@@ -17,10 +17,11 @@
 package smithy4s
 
 import smithy4s.Document._
+import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
+
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
-import smithy4s.codecs.PayloadError
 
 /**
   * A json-like free-form structure serving as a model for

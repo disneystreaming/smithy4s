@@ -18,12 +18,12 @@ package smithy4s
 package http
 
 import smithy.api.Error
-import smithy4s.schema.Alt
 import smithy.api.HttpError
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.ErrorSchema
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
+import smithy4s.schema.Alt
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.ErrorSchema
 
 /**
   * Utility function to help find the decoder matching a certain discriminator

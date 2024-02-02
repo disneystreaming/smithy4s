@@ -18,17 +18,15 @@ package smithy4s
 package http
 package internals
 
-import smithy4s.http.internals.MetaDecode.{
-  EmptyMetaDecode,
-  PutField,
-  StringListMapMetaDecode,
-  StringCollectionMetaDecode,
-  StringMapMetaDecode,
-  StringValueMetaDecode,
-  StructureMetaDecode
-}
-import smithy4s.schema._
+import smithy4s.http.internals.MetaDecode.EmptyMetaDecode
+import smithy4s.http.internals.MetaDecode.PutField
+import smithy4s.http.internals.MetaDecode.StringCollectionMetaDecode
+import smithy4s.http.internals.MetaDecode.StringListMapMetaDecode
+import smithy4s.http.internals.MetaDecode.StringMapMetaDecode
+import smithy4s.http.internals.MetaDecode.StringValueMetaDecode
+import smithy4s.http.internals.MetaDecode.StructureMetaDecode
 import smithy4s.internals.SchemaDescription
+import smithy4s.schema._
 
 import java.util.Base64
 

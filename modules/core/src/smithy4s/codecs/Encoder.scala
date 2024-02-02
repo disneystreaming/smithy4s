@@ -16,9 +16,9 @@
 
 package smithy4s.codecs
 
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.kinds.PolyFunction
 import smithy4s.capability.EncoderK
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * An abstraction that codifies the notion of transforming a piece of data into some output.
