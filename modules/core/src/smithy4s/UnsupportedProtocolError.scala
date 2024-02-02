@@ -21,3 +21,5 @@ final case class UnsupportedProtocolError(service: HasId, protocolTag: HasId)
   override def getMessage(): String =
     s"Service ${service.id.show} does not support the ${protocolTag.id.show} protocol"
 }
+
+object UnsupportedProtocolError {}

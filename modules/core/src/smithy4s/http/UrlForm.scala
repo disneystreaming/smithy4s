@@ -80,6 +80,7 @@ object UrlForm {
       )
     }
   }
+  object FormData {}
 
   /** Parses a `application/x-www-form-urlencoded` formatted String into a [[UrlForm]]. */
   def parse(

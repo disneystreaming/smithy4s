@@ -31,3 +31,5 @@ final case class HttpUri(
       */
     pathParams: Option[Map[String, String]]
 )
+
+object HttpUri {}

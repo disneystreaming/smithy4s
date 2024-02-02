@@ -234,10 +234,13 @@ object Hints {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
     }
+    object StaticBinding {}
+
     final case class DynamicBinding(keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
     }
+    object DynamicBinding {}
 
     implicit def fromValue[A, AA <: A](value: AA)(implicit
         key: ShapeTag[A]

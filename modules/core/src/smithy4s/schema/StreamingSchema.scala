@@ -17,3 +17,5 @@
 package smithy4s.schema
 
 case class StreamingSchema[A](fieldName: String, schema: Schema[A])
+
+object StreamingSchema {}

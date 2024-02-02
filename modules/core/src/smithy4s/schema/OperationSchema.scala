@@ -96,3 +96,5 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     copy(streamedOutput = streamedOutput.map(f))
 
 }
+
+object OperationSchema {}

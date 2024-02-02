@@ -21,3 +21,5 @@ final case class ConstraintError(hint: Hint, message: String)
     with scala.util.control.NoStackTrace {
   override def getMessage() = s"$hint: $message"
 }
+
+object ConstraintError {}

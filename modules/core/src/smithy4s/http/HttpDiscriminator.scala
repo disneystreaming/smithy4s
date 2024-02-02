@@ -22,12 +22,16 @@ sealed trait HttpDiscriminator extends Product with Serializable
 
 object HttpDiscriminator {
 
-  // format: off
   final case class FullId(shapeId: ShapeId) extends HttpDiscriminator
+
+  object FullId {}
   final case class NameOnly(name: String) extends HttpDiscriminator
+
+  object NameOnly {}
   final case class StatusCode(int: Int) extends HttpDiscriminator
+
+  object StatusCode {}
   case object Undetermined extends HttpDiscriminator
-  // format: on
 
   def fromResponse(
       discriminatingHeaderNames: List[String],

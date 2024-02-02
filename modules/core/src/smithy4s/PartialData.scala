@@ -50,14 +50,18 @@ import scala.collection.compat.immutable.ArraySeq
 sealed trait PartialData[A] {
   def map[B](f: A => B): PartialData[B]
 }
-// format: off
+
 object PartialData {
   final case class Total[A](a: A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
+  object Total {}
+
+  // scalafmt: {maxColumn: 160}
   final case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
   }
+  object Partial {}
 
   /**
     * Reconciles bits of partial data (typically retrieved from various parts of a message)
@@ -65,25 +69,27 @@ object PartialData {
     * the individual pieces can be reconciled into the full data.
     */
   def unsafeReconcile[A](pieces: PartialData[A]*): A = {
-    pieces.collectFirst {
-      case Total(a) => a
-    }.getOrElse {
-      val allPieces = pieces.asInstanceOf[Seq[PartialData.Partial[A]]]
-      var totalSize = 0
-      allPieces.foreach(totalSize += _.indexes.size)
-      val array = Array.fill[Any](totalSize)(null)
-      var make : IndexedSeq[Any] => A = null
-      allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
-        // all the `const` values should be the same, therefore which one is called
-        // is an arbitrary choice.
-        make = const
-        var i = 0
-        while(i < data.size) {
-          array(indexes(i)) = data(i)
-          i += 1
-        }
+    pieces
+      .collectFirst { case Total(a) =>
+        a
       }
-      make(ArraySeq.unsafeWrapArray(array))
-    }
+      .getOrElse {
+        val allPieces = pieces.asInstanceOf[Seq[PartialData.Partial[A]]]
+        var totalSize = 0
+        allPieces.foreach(totalSize += _.indexes.size)
+        val array = Array.fill[Any](totalSize)(null)
+        var make: IndexedSeq[Any] => A = null
+        allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
+          // all the `const` values should be the same, therefore which one is called
+          // is an arbitrary choice.
+          make = const
+          var i = 0
+          while (i < data.size) {
+            array(indexes(i)) = data(i)
+            i += 1
+          }
+        }
+        make(ArraySeq.unsafeWrapArray(array))
+      }
   }
 }

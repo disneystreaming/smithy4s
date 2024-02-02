@@ -41,6 +41,7 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
   }
 
   final case class Member(shapeId: ShapeId, member: String)
+  object Member {}
 
   val id: ShapeId = ShapeId("smithy4s", "ShapeId")
   lazy val schema =

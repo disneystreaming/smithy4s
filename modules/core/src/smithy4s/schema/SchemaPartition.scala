@@ -32,8 +32,6 @@ sealed trait SchemaPartition[A]
 
 object SchemaPartition {
 
-
-  // format: off
   /**
     * Indicates that all fields of a schema matched a condition.
     *
@@ -43,6 +41,7 @@ object SchemaPartition {
     * datatype.
     */
   final case class TotalMatch[A](schema: Schema[A]) extends SchemaPartition[A]
+  object TotalMatch {}
 
   /**
     * Indicates that only a subset of fields matched the partitioning condition. This  datatype contains
@@ -55,12 +54,15 @@ object SchemaPartition {
     * @param matching the partial schema resulting from the matching fields
     * @param notMatching the partial schema resulting from the non-matching fields
     */
+  // scalafmt: {maxColumn: 160}
   final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
+  object SplittingMatch {}
 
   /**
     * Indicates that no field matched the condition.
     */
   final case class NoMatch[A]() extends SchemaPartition[A]
+  object NoMatch {}
   // format: on
 
   private[schema] def apply(
@@ -76,9 +78,8 @@ object SchemaPartition {
                 fieldsAndIndexes: Vector[(Field[S, _], Int)]
             ): Schema[PartialData[S]] = {
               val indexes = fieldsAndIndexes.map(_._2)
-              val unsafeAccessFields = fieldsAndIndexes.map {
-                case (schemaField, _) =>
-                  toPartialDataField(schemaField)
+              val unsafeAccessFields = fieldsAndIndexes.map { case (schemaField, _) =>
+                toPartialDataField(schemaField)
               }
               def const(values: IndexedSeq[Any]): PartialData[S] =
                 PartialData.Partial(indexes, values, make)
@@ -103,8 +104,8 @@ object SchemaPartition {
                   SchemaPartition.NoMatch()
                 }
             } else {
-              val partitioned = fields.zipWithIndex.partition {
-                case (schemaField, _) => keep(schemaField)
+              val partitioned = fields.zipWithIndex.partition { case (schemaField, _) =>
+                keep(schemaField)
               }
 
               partitioned match {

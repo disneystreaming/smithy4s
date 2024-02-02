@@ -45,12 +45,18 @@ sealed trait HttpRestSchema[A]
 
 object HttpRestSchema {
 
-  // format: off
   final case class OnlyMetadata[A](schema: Schema[A]) extends HttpRestSchema[A]
+  object OnlyMetadata {}
+
   final case class OnlyBody[A](schema: Schema[A]) extends HttpRestSchema[A]
+  object OnlyBody {}
+
+  // scalafmt: {maxColumn = 160}
   final case class MetadataAndBody[A](metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A]
+  object MetadataAndBody {}
+
   final case class Empty[A](value: A) extends HttpRestSchema[A]
-  // format: on
+  object Empty {}
 
   def apply[A](
       fullSchema: Schema[A]

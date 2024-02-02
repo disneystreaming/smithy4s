@@ -44,6 +44,8 @@ object HttpMethod {
   case object PATCH extends HttpMethod
   case class OTHER(value: String) extends HttpMethod
 
+  object OTHER {}
+
   val values: List[HttpMethod] =
     List(PUT, POST, DELETE, GET, PATCH)
 

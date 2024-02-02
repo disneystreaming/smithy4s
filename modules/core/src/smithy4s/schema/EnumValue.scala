@@ -30,3 +30,7 @@ case class EnumValue[E](
   def transformHints(f: Hints => Hints): EnumValue[E] =
     copy(hints = f(hints))
 }
+
+object EnumValue {
+
+}

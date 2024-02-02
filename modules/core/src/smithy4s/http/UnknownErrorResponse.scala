@@ -24,3 +24,5 @@ case class UnknownErrorResponse(
   override def getMessage(): String =
     s"status $code, headers: $headers, body:\n$body"
 }
+
+object UnknownErrorResponse {}

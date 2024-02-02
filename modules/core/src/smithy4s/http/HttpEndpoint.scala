@@ -80,4 +80,6 @@ object HttpEndpoint {
 
   case class HttpEndpointError(message: String) extends Exception(message)
 
+  object HttpEndpointError {}
+
 }
