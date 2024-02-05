@@ -103,14 +103,14 @@ class SchemaVisitorJsonCodecPropertyTests()
               expect(min.forall(_ <= value))
               expect(max.forall(_ >= value))
           }
-        case Left(PayloadError(_, _, message)) =>
+        case Left(pe: PayloadError) =>
           hint.value match {
             case Length(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString))
-              expect(max.isEmpty || message.contains(max.get.toString))
+              expect(min.isEmpty || pe.message.contains(min.get.toString))
+              expect(max.isEmpty || pe.message.contains(max.get.toString))
             case Range(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString))
-              expect(max.isEmpty || message.contains(max.get.toString))
+              expect(min.isEmpty || pe.message.contains(min.get.toString))
+              expect(max.isEmpty || pe.message.contains(max.get.toString))
           }
         case _ => fail("result should have matched one of the above cases")
       }
@@ -155,9 +155,15 @@ class SchemaVisitorJsonCodecPropertyTests()
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
     hint match {
-      case Hints.Binding.StaticBinding(_, l: Length) => lengthGen(l)
-      case Hints.Binding.StaticBinding(_, r: Range)  => rangeGen(r)
+      case staticBindingValue(l: Length) => lengthGen(l)
+      case staticBindingValue(r: Range)  => rangeGen(r)
       case _ => Gen.const(int.asInstanceOf[Schema[Any]])
+    }
+  }
+
+  object staticBindingValue {
+    def unapply[A](sb: Hints.Binding.StaticBinding[A]): Option[A] = {
+      Some(sb.value)
     }
   }
 

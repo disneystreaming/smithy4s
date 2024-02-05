@@ -38,7 +38,7 @@ final class HttpRequestSpec extends FunSuite {
     val resultUri = writer.write(request, Foo("hello")).uri
     assertEquals(
       resultUri,
-      uri.copy(host = Some("test.hello-other.example.com"))
+      uri.withHost(Some("test.hello-other.example.com"))
     )
   }
 

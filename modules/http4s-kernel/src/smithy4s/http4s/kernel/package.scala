@@ -131,8 +131,8 @@ package object kernel {
       case Smithy4sHttpMethod.DELETE => Method.DELETE
       case Smithy4sHttpMethod.GET    => Method.GET
       case Smithy4sHttpMethod.PATCH  => Method.PATCH
-      case Smithy4sHttpMethod.OTHER(v) =>
-        Method.fromString(v) match {
+      case o: Smithy4sHttpMethod.OTHER =>
+        Method.fromString(o.value) match {
           case Left(e)  => throw e
           case Right(m) => m
         }
@@ -147,8 +147,8 @@ package object kernel {
       case Smithy4sHttpMethod.DELETE => Some(Method.DELETE)
       case Smithy4sHttpMethod.GET    => Some(Method.GET)
       case Smithy4sHttpMethod.PATCH  => Some(Method.PATCH)
-      case Smithy4sHttpMethod.OTHER(v) =>
-        Method.fromString(v) match {
+      case o: Smithy4sHttpMethod.OTHER =>
+        Method.fromString(o.value) match {
           case Left(_)  => None
           case Right(m) => Some(m)
         }

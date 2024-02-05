@@ -73,14 +73,14 @@ private[internals] class Cursor private[internals] () {
   }
 
   def payloadError[A](codec: JCodec[A], message: String): Nothing =
-    throw new PayloadError(getPath(Nil), codec.expecting, message)
+    throw PayloadError(getPath(Nil), codec.expecting, message)
 
   def requiredFieldError[A](codec: JCodec[A], field: String): Nothing =
     requiredFieldError(codec.expecting, field)
 
   def requiredFieldError[A](expecting: String, field: String): Nothing = {
-    val path = getPath(new PayloadPath.Segment.Label(field) :: Nil)
-    throw new PayloadError(path, expecting, "Missing required field")
+    val path = getPath(PayloadPath.Segment.Label(field) :: Nil)
+    throw PayloadError(path, expecting, "Missing required field")
   }
 
   private[internals] def getPath(
@@ -92,11 +92,11 @@ private[internals] class Cursor private[internals] () {
       top -= 1
       val label = labelStack(top)
       val segment =
-        if (label ne null) new PayloadPath.Segment.Label(label)
-        else new PayloadPath.Segment.Index(indexStack(top))
+        if (label ne null) PayloadPath.Segment.Label(label)
+        else PayloadPath.Segment.Index(indexStack(top))
       list = segment :: list
     }
-    new PayloadPath(list)
+    PayloadPath.fromSegments(list)
   }
 
   private def getExpected(): String =
@@ -123,5 +123,5 @@ object Cursor {
   }
 
   private[this] def payloadError(cursor: Cursor, message: String): Nothing =
-    throw new PayloadError(cursor.getPath(Nil), cursor.getExpected(), message)
+    throw PayloadError(cursor.getPath(Nil), cursor.getExpected(), message)
 }

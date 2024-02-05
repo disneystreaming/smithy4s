@@ -53,10 +53,9 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
   implicit val showPathSegment: Show[PathSegment] = Show.fromToString
 
   private val renderExampleSegment: PathSegment => String = {
-    case LabelSegment(_)      => "label-example"
-    case StaticSegment(value) => value
-    case GreedySegment(_) =>
-      "greedy/example"
+    case _: LabelSegment   => "label-example"
+    case ss: StaticSegment => ss.value
+    case _: GreedySegment  => "greedy/example"
   }
 
   property("Doesn't throw on empty path") {

@@ -400,7 +400,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case HttpPayloadError(smithy4s.codecs.PayloadPath(List()), _, _) =>
+        case hpe: HttpPayloadError if hpe.path.segments.isEmpty =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")
