@@ -302,7 +302,7 @@ private[internals] object CollisionAvoidance {
     "open",
     "throws",
     "transparent",
-    "using",
+    "using"
   )
 
   class Names() {

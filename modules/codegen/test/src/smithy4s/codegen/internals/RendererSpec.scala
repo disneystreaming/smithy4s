@@ -504,7 +504,9 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("collision avoidance sanitizes `export` as a structure member for scala 3 compat") {
+  test(
+    "collision avoidance sanitizes `export` as a structure member for scala 3 compat"
+  ) {
     val smithy =
       """
         |$version: "2"
@@ -523,7 +525,9 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("collision avoidance sanitizes `given` as a structure member for scala 3 compat") {
+  test(
+    "collision avoidance sanitizes `given` as a structure member for scala 3 compat"
+  ) {
     val smithy =
       """
         |$version: "2"
