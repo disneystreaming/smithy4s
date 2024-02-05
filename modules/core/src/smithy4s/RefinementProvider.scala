@@ -50,6 +50,9 @@ object RefinementProvider extends LowPriorityImplicits {
   def rangeConstraint[A, N: Numeric](getValue: A => N): Simple[Range, A] =
     new RangeConstraint[A, N](getValue)
 
+  def patternConstraint[A](toString: A => String): Simple[Pattern, A] =
+    new PatternConstraint[A](toString)
+
   implicit val stringLengthConstraint: Simple[Length, String] =
     lengthConstraint[String](_.length)
 
@@ -65,7 +68,7 @@ object RefinementProvider extends LowPriorityImplicits {
     lengthConstraint[Map[K, V]](_.size)
 
   implicit val stringPatternConstraints: Simple[Pattern, String] =
-    new PatternConstraint[String](identity)
+    patternConstraint[String](identity)
 
   implicit def numericRangeConstraints[N: Numeric]
       : Simple[smithy.api.Range, N] = rangeConstraint[N, N](identity)
