@@ -423,7 +423,7 @@ private[dynamic] object Compiler {
       val input = shape.input.map(_.target)
       val output = shape.output.map(_.target)
 
-      val errorId = id.copy(name = id.name + "Error")
+      val errorId = id.withName(id.name + "Error")
       val allOperationErrors = (serviceErrors ++ shape.errors).toNel
 
       val errorUnionLazy = allOperationErrors.traverse { err =>

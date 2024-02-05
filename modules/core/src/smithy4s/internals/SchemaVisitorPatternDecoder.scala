@@ -65,7 +65,7 @@ private[internals] final class SchemaVisitorPatternDecoder(
             fromOrdinal(BigDecimal(value))
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case EnumTag.OpenIntEnum(unknown) =>
+      case oie: EnumTag.OpenIntEnum[_] =>
         PatternDecode.from(value =>
           if (fromOrdinal.contains(BigDecimal(value)))
             fromOrdinal(BigDecimal(value))
@@ -74,7 +74,7 @@ private[internals] final class SchemaVisitorPatternDecoder(
             util
               .Try(value.toInt)
               .toOption
-              .map(unknown(_))
+              .map(oie.unknown(_))
               .getOrElse(
                 throw StructurePatternError(
                   s"Enum case for '$value' not found."
@@ -86,10 +86,10 @@ private[internals] final class SchemaVisitorPatternDecoder(
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case EnumTag.OpenStringEnum(unknown) =>
+      case ose: EnumTag.OpenStringEnum[_] =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
-          else unknown(value)
+          else ose.unknown(value)
         )
     }
   }

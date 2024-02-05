@@ -26,7 +26,7 @@ import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.ErrorSchema
 import smithy4s.schema.Schema
 
-final case class HttpResponse[+A](
+final case class HttpResponse[+A] private (
     statusCode: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: A
@@ -35,7 +35,6 @@ final case class HttpResponse[+A](
     this.copy(statusCode = statusCode)
   def withHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
     this.copy(headers = headers)
-
   def withBody[A0](body: A0): HttpResponse[A0] =
     this.copy(body = body)
 
@@ -69,6 +68,18 @@ final case class HttpResponse[+A](
 }
 
 object HttpResponse {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpResponse is never used"
+  )
+  private def unapply[A](c: HttpResponse[A]): Option[HttpResponse[A]] = Some(c)
+
+  def apply[A](
+      statusCode: Int,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: A
+  ): HttpResponse[A] = {
+    new HttpResponse(statusCode, headers, body)
+  }
   private[http] type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpResponse[Body], A]
   private[http] type Decoder[F[_], Body, A] =

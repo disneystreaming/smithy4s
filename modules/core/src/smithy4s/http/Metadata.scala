@@ -36,14 +36,30 @@ import smithy4s.schema.CompilationCache
   * @param path the path parameters of the http message
   * @param query the query parameters of the http message
   * @param headers the header parameters of the http message
+  * @param statusCode the int value of a http response status code
   */
-case class Metadata(
-    path: Map[String, String] = Map.empty,
-    query: Map[String, Seq[String]] = Map.empty,
-    headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
-    statusCode: Option[Int] = None
+case class Metadata private (
+    path: Map[String, String],
+    query: Map[String, Seq[String]],
+    headers: Map[CaseInsensitive, Seq[String]],
+    statusCode: Option[Int]
 ) { self =>
 
+  def withPath(value: Map[String, String]): Metadata = {
+    copy(path = value)
+  }
+
+  def withQuery(value: Map[String, Seq[String]]): Metadata = {
+    copy(query = value)
+  }
+
+  def withHeaders(value: Map[CaseInsensitive, Seq[String]]): Metadata = {
+    copy(headers = value)
+  }
+
+  def withStatusCode(value: Option[Int]): Metadata = {
+    copy(statusCode = value)
+  }
   def headersFlattened: Vector[(CaseInsensitive, String)] =
     headers.toVector.flatMap { case (k, v) =>
       v.map(k -> _)
@@ -121,27 +137,38 @@ case class Metadata(
 
   def find(location: HttpBinding): Option[(String, List[String])] =
     location match {
-      case HttpBinding.HeaderBinding(httpName) =>
-        headers.get(httpName).flatMap {
+      case hb: HttpBinding.HeaderBinding =>
+        headers.get(hb.httpName).flatMap {
           case head :: tl => Some((head, tl))
           case Nil        => None
         }
-      case HttpBinding.QueryBinding(httpName) =>
-        query.get(httpName).flatMap {
+      case qb: HttpBinding.QueryBinding =>
+        query.get(qb.httpName).flatMap {
           case head :: tl => Some((head, tl))
           case Nil        => None
         }
-      case HttpBinding.PathBinding(httpName) => path.get(httpName).map(_ -> Nil)
-      case _                                 => None
+      case pb: HttpBinding.PathBinding => path.get(pb.httpName).map(_ -> Nil)
+      case _                           => None
     }
 }
 
 object Metadata {
-
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Metadata is never used"
+  )
+  private def unapply(c: Metadata): Option[Metadata] = Some(c)
+  def apply(
+      path: Map[String, String] = Map.empty,
+      query: Map[String, Seq[String]] = Map.empty,
+      headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
+      statusCode: Option[Int] = None
+  ): Metadata = {
+    new Metadata(path, query, headers, statusCode)
+  }
   def fold[A](i: Iterable[A])(f: A => Metadata): Metadata =
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
 
-  val empty = Metadata(Map.empty, Map.empty, Map.empty)
+  val empty = Metadata(Map.empty, Map.empty, Map.empty, None)
 
   trait Access {
     def metadata: Metadata

@@ -23,6 +23,13 @@ import scala.util.control.NonFatal
 
 case class Timestamp private (epochSecond: Long, nano: Int)
     extends TimestampPlatform {
+  def withEpochSecond(value: Long): Timestamp = {
+    copy(epochSecond = value)
+  }
+
+  def withNano(value: Int): Timestamp = {
+    copy(nano = value)
+  }
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano
@@ -171,7 +178,10 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 }
 
 object Timestamp extends TimestampCompanionPlatform {
-
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Timestamp is never used"
+  )
+  private def unapply(c: Timestamp): Option[Timestamp] = Some(c)
   val epoch = Timestamp(0, 0)
 
   private val digits: Array[Short] = Array(

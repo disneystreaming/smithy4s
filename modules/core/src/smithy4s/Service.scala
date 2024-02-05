@@ -201,6 +201,9 @@ object Service {
   }
 
   object Builder {
+    @scala.annotation.nowarn("msg=private method unapply in object Builder is never used")
+    private def unapply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](c: Builder[Alg, Op]): Option[Builder[Alg, Op]] = Some(c)
+
     def fromService[Alg[_[_, _, _, _, _]]](
         service: Service[Alg]
     ): Builder[Alg, service.Operation] =
@@ -214,6 +217,26 @@ object Service {
       private val baseVersion: String,
       private val baseHints: Hints,
   ) {
+
+    def withBase(value: Service.Aux[Alg, Op]): Builder[Alg, Op] = {
+      copy(base = value)
+    }
+
+    def withBaseEndpoints(value: IndexedSeq[Endpoint[Op, _, _, _, _, _]]): Builder[Alg, Op] = {
+      copy(baseEndpoints = value)
+    }
+
+    def withBaseId(value: ShapeId): Builder[Alg, Op] = {
+      copy(baseId = value)
+    }
+
+    def withBaseVersion(value: String): Builder[Alg, Op] = {
+      copy(baseVersion = value)
+    }
+
+    def withBaseHints(value: Hints): Builder[Alg, Op] = {
+      copy(baseHints = value)
+    }
 
     def mapEndpointEach(
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]

@@ -45,12 +45,74 @@ sealed trait HttpRestSchema[A]
 
 object HttpRestSchema {
 
-  // format: off
-  final case class OnlyMetadata[A](schema: Schema[A]) extends HttpRestSchema[A]
-  final case class OnlyBody[A](schema: Schema[A]) extends HttpRestSchema[A]
-  final case class MetadataAndBody[A](metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A]
-  final case class Empty[A](value: A) extends HttpRestSchema[A]
-  // format: on
+  final case class OnlyMetadata[A] private (schema: Schema[A])
+      extends HttpRestSchema[A] {
+    def withSchema(value: Schema[A]): OnlyMetadata[A] = {
+      copy(schema = value)
+    }
+
+  }
+  object OnlyMetadata {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OnlyMetadata is never used"
+    )
+    private def unapply[A](c: OnlyMetadata[A]): Option[OnlyMetadata[A]] = Some(
+      c
+    )
+    def apply[A](schema: Schema[A]): OnlyMetadata[A] = {
+      new OnlyMetadata(schema)
+    }
+  }
+
+  final case class OnlyBody[A] private (schema: Schema[A])
+      extends HttpRestSchema[A] {
+    def withSchema(value: Schema[A]): OnlyBody[A] = {
+      copy(schema = value)
+    }
+
+  }
+  object OnlyBody {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OnlyBody is never used"
+    )
+    private def unapply[A](c: OnlyBody[A]): Option[OnlyBody[A]] = Some(c)
+    def apply[A](schema: Schema[A]): OnlyBody[A] = {
+      new OnlyBody(schema)
+    }
+  }
+
+  // scalafmt: {maxColumn = 160}
+  final case class MetadataAndBody[A] private (metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]) extends HttpRestSchema[A] {
+    def withMetadataSchema(value: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      copy(metadataSchema = value)
+    }
+
+    def withBodySchema(value: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      copy(bodySchema = value)
+    }
+
+  }
+  object MetadataAndBody {
+    @scala.annotation.nowarn("msg=private method unapply in object MetadataAndBody is never used")
+    private def unapply[A](c: MetadataAndBody[A]): Option[MetadataAndBody[A]] = Some(c)
+    def apply[A](metadataSchema: Schema[PartialData[A]], bodySchema: Schema[PartialData[A]]): MetadataAndBody[A] = {
+      new MetadataAndBody(metadataSchema, bodySchema)
+    }
+  }
+
+  final case class Empty[A] private (value: A) extends HttpRestSchema[A] {
+    def withValue(value: A): Empty[A] = {
+      copy(value = value)
+    }
+
+  }
+  object Empty {
+    @scala.annotation.nowarn("msg=private method unapply in object Empty is never used")
+    private def unapply[A](c: Empty[A]): Option[Empty[A]] = Some(c)
+    def apply[A](value: A): Empty[A] = {
+      new Empty(value)
+    }
+  }
 
   def apply[A](
       fullSchema: Schema[A]
@@ -64,22 +126,22 @@ object HttpRestSchema {
       field.memberHints.has[HttpPayload]
 
     fullSchema.findPayload(isPayloadField) match {
-      case TotalMatch(schema) => OnlyBody(schema)
-      case NoMatch() =>
+      case tm: TotalMatch[_] => OnlyBody(tm.schema)
+      case _: NoMatch[_] =>
         fullSchema.partition(isMetadataField) match {
-          case SplittingMatch(metadataSchema, bodySchema) =>
-            MetadataAndBody(metadataSchema, bodySchema)
-          case TotalMatch(schema) =>
-            OnlyMetadata(schema)
-          case NoMatch() =>
+          case sm: SplittingMatch[_] =>
+            MetadataAndBody(sm.matching, sm.notMatching)
+          case tm: TotalMatch[_] =>
+            OnlyMetadata(tm.schema)
+          case _: NoMatch[_] =>
             fullSchema match {
               case Schema.StructSchema(_, _, fields, make) if fields.isEmpty =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }
         }
-      case SplittingMatch(bodySchema, metadataSchema) =>
-        MetadataAndBody(metadataSchema, bodySchema)
+      case sm: SplittingMatch[_] =>
+        MetadataAndBody(sm.notMatching, sm.matching)
     }
   }
 
@@ -120,30 +182,30 @@ object HttpRestSchema {
         val emptyBodyEncoder =
           bodyWriters.fromSchema(emptySchema).contramap((_: A) => ())
         HttpRestSchema(fullSchema) match {
-          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
+          case om: HttpRestSchema.OnlyMetadata[_] =>
             // The data can be fully decoded from the metadata.
             val metadataEncoder =
-              metadataWriters.fromSchema(metadataSchema, cache._1)
+              metadataWriters.fromSchema(om.schema, cache._1)
             if (writeEmptyStructs(fullSchema)) {
               emptyBodyEncoder.combine(metadataEncoder)
             } else metadataEncoder
-          case HttpRestSchema.OnlyBody(bodySchema) =>
+          case ob: HttpRestSchema.OnlyBody[_] =>
             // The data can be fully decoded from the body
-            bodyWriters.fromSchema(bodySchema, cache._2)
-          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
+            bodyWriters.fromSchema(ob.schema, cache._2)
+          case mb: HttpRestSchema.MetadataAndBody[_] =>
             val metadataWriter =
               metadataWriters
-                .fromSchema(metadataSchema, cache._1)
+                .fromSchema(mb.metadataSchema, cache._1)
                 .contramap[A](PartialData.Total(_))
             val bodyWriter =
               bodyWriters
-                .fromSchema(bodySchema, cache._2)
+                .fromSchema(mb.bodySchema, cache._2)
                 .contramap[A](PartialData.Total(_))
             // The order matters here, as the metadata encoder might override headers
             // that would be set with body encoders (if a smithy member is annotated with
             // `@httpHeader("Content-Type")` for instance)
             bodyWriter.combine(metadataWriter)
-          case HttpRestSchema.Empty(_) =>
+          case _: HttpRestSchema.Empty[_] =>
             if (writeEmptyStructs(fullSchema)) emptyBodyEncoder else Writer.noop
           // format: on
         }
@@ -180,26 +242,26 @@ object HttpRestSchema {
       def fromSchema[A](fullSchema: Schema[A], cache: Cache) = {
         // writeEmptyStructs is not relevant for reading.
         HttpRestSchema(fullSchema) match {
-          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
+          case om: HttpRestSchema.OnlyMetadata[_] =>
             // The data can be fully decoded from the metadata,
             // but we still decoding Unit from the body to drain the message.
             val metadataDecoder =
-              metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
+              metadataDecoderCompiler.fromSchema(om.schema, cache._1)
             val bodyDrain = Decoder.lift(drainBody)
             zipper.zipMap(bodyDrain, metadataDecoder) { case (_, data) => data }
-          case HttpRestSchema.OnlyBody(bodySchema) =>
+          case ob: HttpRestSchema.OnlyBody[_] =>
             // The data can be fully decoded from the body
-            bodyDecoderCompiler.fromSchema(bodySchema, cache._2)
-          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
+            bodyDecoderCompiler.fromSchema(ob.schema, cache._2)
+          case mb: HttpRestSchema.MetadataAndBody[_] =>
             val metadataDecoder: Decoder[F, Message, PartialData[A]] =
-              metadataDecoderCompiler.fromSchema(metadataSchema, cache._1)
+              metadataDecoderCompiler.fromSchema(mb.metadataSchema, cache._1)
             val bodyDecoder: Decoder[F, Message, PartialData[A]] =
-              bodyDecoderCompiler.fromSchema(bodySchema, cache._2)
+              bodyDecoderCompiler.fromSchema(mb.bodySchema, cache._2)
             zipper.zipMap(metadataDecoder, bodyDecoder)(
               PartialData.unsafeReconcile(_, _)
             )
-          case HttpRestSchema.Empty(value) =>
-            zipper.pure(value)
+          case e: HttpRestSchema.Empty[_] =>
+            zipper.pure(e.value)
           // format: on
         }
       }

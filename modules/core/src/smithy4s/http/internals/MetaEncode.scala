@@ -31,17 +31,18 @@ sealed trait MetaEncode[-A] {
       binding: HttpBinding
   ): (Metadata, A) => Metadata =
     (binding, this) match {
-      case (PathBinding(path), StringValueMetaEncode(f)) =>
-        (metadata: Metadata, a: A) => metadata.addPathParam(path, f(a))
-      case (HeaderBinding(name), StringValueMetaEncode(f)) =>
-        (metadata: Metadata, a: A) => metadata.addHeader(name, f(a))
-      case (HeaderBinding(name), StringListMetaEncode(f)) =>
-        (metadata: Metadata, a: A) => metadata.addMultipleHeaders(name, f(a))
-      case (QueryBinding(name), StringValueMetaEncode(f)) =>
-        (metadata: Metadata, a: A) => metadata.addQueryParam(name, f(a))
-      case (QueryBinding(name), StringListMetaEncode(f)) =>
+      case (pb: PathBinding, StringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) => metadata.addPathParam(pb.httpName, f(a))
+      case (hb: HeaderBinding, StringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) => metadata.addHeader(hb.httpName, f(a))
+      case (hb: HeaderBinding, StringListMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
-          metadata.addMultipleQueryParams(name, f(a))
+          metadata.addMultipleHeaders(hb.httpName, f(a))
+      case (qb: QueryBinding, StringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) => metadata.addQueryParam(qb.httpName, f(a))
+      case (qb: QueryBinding, StringListMetaEncode(f)) =>
+        (metadata: Metadata, a: A) =>
+          metadata.addMultipleQueryParams(qb.httpName, f(a))
       case (QueryParamsBinding, StringMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
@@ -52,15 +53,15 @@ sealed trait MetaEncode[-A] {
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
             m.addQueryParamsIfNoExist(k, v: _*)
           }
-      case (HeaderPrefixBinding(prefix), StringMapMetaEncode(f)) =>
+      case (hpb: HeaderPrefixBinding, StringMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
-            m.addHeader(prefix + k, v)
+            m.addHeader(hpb.prefix + k, v)
           }
-      case (HeaderPrefixBinding(prefix), StringListMapMetaEncode(f)) =>
+      case (hpb: HeaderPrefixBinding, StringListMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
-            m.addMultipleHeaders(prefix + k, v)
+            m.addMultipleHeaders(hpb.prefix + k, v)
           }
       case _ => (metadata: Metadata, _: A) => metadata
     }

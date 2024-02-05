@@ -19,18 +19,41 @@ package smithy4s.codecs
 import smithy4s.schema.Schema._
 import smithy4s.schema._
 
-case class PayloadError(
+case class PayloadError private (
     path: PayloadPath,
     expected: String,
     message: String
 ) extends Throwable
     with scala.util.control.NoStackTrace {
+  def withPath(value: PayloadPath): PayloadError = {
+    copy(path = value)
+  }
+
+  def withExpected(value: String): PayloadError = {
+    copy(expected = value)
+  }
+
+  def withMessage(value: String): PayloadError = {
+    copy(message = value)
+  }
   override def toString(): String =
     s"PayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = s"$message (path: $path)"
 }
 
 object PayloadError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object PayloadError is never used"
+  )
+  private def unapply(c: PayloadError): Option[PayloadError] = Some(c)
+  def apply(
+      path: PayloadPath,
+      expected: String,
+      message: String
+  ): PayloadError = {
+    new PayloadError(path, expected, message)
+  }
+
   val schema: Schema[PayloadError] = {
     val path = PayloadPath.schema.required[PayloadError]("path", _.path)
     val expected = string.required[PayloadError]("expected", _.expected)

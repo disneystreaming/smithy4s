@@ -23,8 +23,55 @@ object PathSegment {
   def label(value: String): PathSegment = LabelSegment(value)
   def greedy(value: String): PathSegment = GreedySegment(value)
 
-  case class StaticSegment(value: String) extends PathSegment
-  case class LabelSegment(value: String) extends PathSegment
-  case class GreedySegment(value: String) extends PathSegment
+  case class StaticSegment private (value: String) extends PathSegment {
+    def withValue(value: String): StaticSegment = {
+      copy(value = value)
+    }
+
+  }
+  object StaticSegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object StaticSegment is never used"
+    )
+    private def unapply(c: StaticSegment): Option[StaticSegment] = Some(c)
+    def apply(value: String): StaticSegment = {
+      new StaticSegment(value)
+    }
+
+  }
+
+  case class LabelSegment private (value: String) extends PathSegment {
+    def withValue(value: String): LabelSegment = {
+      copy(value = value)
+    }
+
+  }
+  object LabelSegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object LabelSegment is never used"
+    )
+    private def unapply(c: LabelSegment): Option[LabelSegment] = Some(c)
+    def apply(value: String): LabelSegment = {
+      new LabelSegment(value)
+    }
+
+  }
+
+  case class GreedySegment private (value: String) extends PathSegment {
+    def withValue(value: String): GreedySegment = {
+      copy(value = value)
+    }
+
+  }
+  object GreedySegment {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object GreedySegment is never used"
+    )
+    private def unapply(c: GreedySegment): Option[GreedySegment] = Some(c)
+    def apply(value: String): GreedySegment = {
+      new GreedySegment(value)
+    }
+
+  }
 
 }

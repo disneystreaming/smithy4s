@@ -28,7 +28,7 @@ final class CursorSpec extends FunSuite {
     c.push(1)
     assertEquals(
       c.getPath(List.empty),
-      PayloadPath(List(PayloadPath.Segment(1)))
+      PayloadPath.fromSegments(List(PayloadPath.Segment(1)))
     )
   }
 

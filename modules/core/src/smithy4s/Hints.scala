@@ -131,8 +131,8 @@ object Hints {
 
   private def mapFromSeq(bindings: Seq[Hint]): Map[ShapeId, Hint] = {
     bindings.map {
-      case b @ Binding.StaticBinding(k, _)  => k.id -> b
-      case b @ Binding.DynamicBinding(k, _) => k -> b
+      case b: Binding.StaticBinding[_] => b.key.id -> b
+      case b: Binding.DynamicBinding   => b.keyId -> b
     }.toMap
   }
 
@@ -145,10 +145,10 @@ object Hints {
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key.id).flatMap {
-        case Binding.StaticBinding(k, value) =>
-          if (key.eq(k)) Some(value.asInstanceOf[A]) else None
-        case Binding.DynamicBinding(_, value) =>
-          Document.Decoder.fromSchema(key.schema).decode(value).toOption
+        case sb: Binding.StaticBinding[_] =>
+          if (key.eq(sb.key)) Some(sb.value.asInstanceOf[A]) else None
+        case db: Binding.DynamicBinding =>
+          Document.Decoder.fromSchema(key.schema).decode(db.value).toOption
       }
     def ++(other: Hints): Hints = concat(this, other)
 
@@ -229,14 +229,50 @@ object Hints {
   }
 
   object Binding {
-    final case class StaticBinding[A](key: ShapeTag[A], value: A)
+    final case class StaticBinding[A] private (key: ShapeTag[A], value: A)
         extends Binding {
+      def withKey(value: ShapeTag[A]): StaticBinding[A] = {
+        copy(key = value)
+      }
+
+      def withValue(value: A): StaticBinding[A] = {
+        copy(value = value)
+      }
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
     }
-    final case class DynamicBinding(keyId: ShapeId, value: Document)
+    object StaticBinding {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object StaticBinding is never used"
+      )
+      private def unapply[A](c: StaticBinding[A]): Option[StaticBinding[A]] =
+        Some(
+          c
+        )
+      def apply[A](key: ShapeTag[A], value: A): StaticBinding[A] = {
+        new StaticBinding(key, value)
+      }
+    }
+
+    final case class DynamicBinding private (keyId: ShapeId, value: Document)
         extends Binding {
+      def withKeyId(value: ShapeId): DynamicBinding = {
+        copy(keyId = value)
+      }
+
+      def withValue(value: Document): DynamicBinding = {
+        copy(value = value)
+      }
       override def toString = Document.obj(keyId.show -> value).toString()
+    }
+    object DynamicBinding {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object DynamicBinding is never used"
+      )
+      private def unapply(c: DynamicBinding): Option[DynamicBinding] = Some(c)
+      def apply(keyId: ShapeId, value: Document): DynamicBinding = {
+        new DynamicBinding(keyId, value)
+      }
     }
 
     implicit def fromValue[A, AA <: A](value: AA)(implicit

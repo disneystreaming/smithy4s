@@ -84,14 +84,14 @@ object StringAndBlobCodecs {
               }
             }
           })
-        case EnumTag.OpenStringEnum(processUnknown) =>
+        case ose: EnumTag.OpenStringEnum[_] =>
           Some(new BlobDecoder[E] {
             def decode(blob: Blob): Either[PayloadError, E] = {
               val str = blob.toUTF8String
               val result: E = values
                 .find(_.stringValue == str)
                 .map(_.value)
-                .getOrElse(processUnknown(str))
+                .getOrElse(ose.unknown(str))
               Right(result)
             }
           })
@@ -162,7 +162,7 @@ object StringAndBlobCodecs {
       tag match {
         case EnumTag.ClosedStringEnum =>
           Some(stringEncoder.contramap(total(_: E).stringValue))
-        case EnumTag.OpenStringEnum(_) =>
+        case _: EnumTag.OpenStringEnum[_] =>
           Some(stringEncoder.contramap(total(_: E).stringValue))
         case _ => None
       }

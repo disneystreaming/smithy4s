@@ -167,9 +167,9 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Foo](json)
       fail("Unexpected success")
     } catch {
-      case PayloadError(path, expected, _) =>
-        expect.same(path, PayloadPath("b"))
-        expect.same(expected, "JsNull or int")
+      case pe: PayloadError =>
+        expect.same(pe.path, PayloadPath("b"))
+        expect.same(pe.expected, "JsNull or int")
     }
   }
 
@@ -188,10 +188,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Bar](json)
       fail("Unexpected success")
     } catch {
-      case ex @ PayloadError(path, expected, _) =>
-        expect(path == PayloadPath(jsonNameValue))
-        expect(expected == jsonNameValue)
-        expect.same(ex.getMessage(), "Missing required field (path: .oldName)")
+      case pe: PayloadError =>
+        expect(pe.path == PayloadPath(jsonNameValue))
+        expect(pe.expected == jsonNameValue)
+        expect.same(pe.getMessage(), "Missing required field (path: .oldName)")
     }
   }
 
@@ -295,10 +295,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Either[Int, String]](json)
       fail("Unexpected success")
     } catch {
-      case PayloadError(path, expected, msg) =>
-        expect.same(path, PayloadPath("left"))
-        expect.same(expected, "int")
-        expect(msg.contains("illegal number"))
+      case pe: PayloadError =>
+        expect.same(pe.path, PayloadPath("left"))
+        expect.same(pe.expected, "int")
+        expect(pe.message.contains("illegal number"))
 
     }
   }
@@ -309,10 +309,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Either[Int, String]](json)
       fail("Unexpected success")
     } catch {
-      case PayloadError(path, expected, msg) =>
-        expect.same(path, PayloadPath.root)
-        expect.same(expected, "tagged-union")
-        expect(msg.contains("Expected JSON object"))
+      case pe: PayloadError =>
+        expect.same(pe.path, PayloadPath.root)
+        expect.same(pe.expected, "tagged-union")
+        expect(pe.message.contains("Expected JSON object"))
 
     }
   }
@@ -524,9 +524,9 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Foo3](json)
       fail("Unexpected success")
     } catch {
-      case PayloadError(path, _, message) =>
-        expect.same(message, "length required to be <= 10, but was 11")
-        expect.same(path, PayloadPath.parse("bar.0.str"))
+      case pe: PayloadError =>
+        expect.same(pe.message, "length required to be <= 10, but was 11")
+        expect.same(pe.path, PayloadPath.parse("bar.0.str"))
     }
   }
 
@@ -541,8 +541,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Map[String, Int]](items)
       fail("Unexpected success")
     } catch {
-      case PayloadError(_, _, message) =>
-        expect(message == "Input map exceeded max arity of 1024")
+      case pe: PayloadError =>
+        expect(pe.message == "Input map exceeded max arity of 1024")
     }
   }
 
@@ -556,8 +556,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[List[Int]](items)
       fail("Unexpected success")
     } catch {
-      case PayloadError(_, _, message) =>
-        expect.same(message, "Input list exceeded max arity of 1024")
+      case pe: PayloadError =>
+        expect.same(pe.message, "Input list exceeded max arity of 1024")
     }
   }
 
@@ -567,8 +567,11 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Document](items)
       fail("Unexpected success")
     } catch {
-      case PayloadError(_, _, message) =>
-        expect.same(message, "Input JSON document exceeded max arity of 1024")
+      case pe: PayloadError =>
+        expect.same(
+          pe.message,
+          "Input JSON document exceeded max arity of 1024"
+        )
     }
   }
 
@@ -579,8 +582,11 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val _ = readFromString[Document](items)
       fail("Unexpected success")
     } catch {
-      case PayloadError(_, _, message) =>
-        expect.same(message, "Input JSON document exceeded max arity of 1024")
+      case pe: PayloadError =>
+        expect.same(
+          pe.message,
+          "Input JSON document exceeded max arity of 1024"
+        )
     }
   }
 

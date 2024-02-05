@@ -16,4 +16,26 @@
 
 package smithy4s.schema
 
-case class StreamingSchema[A](fieldName: String, schema: Schema[A])
+case class StreamingSchema[A] private (fieldName: String, schema: Schema[A]) {
+  def withFieldName(value: String): StreamingSchema[A] = {
+    copy(fieldName = value)
+  }
+
+  def withSchema(value: Schema[A]): StreamingSchema[A] = {
+    copy(schema = value)
+  }
+
+}
+
+object StreamingSchema {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object StreamingSchema is never used"
+  )
+  private def unapply[A](c: StreamingSchema[A]): Option[StreamingSchema[A]] =
+    Some(
+      c
+    )
+  def apply[A](fieldName: String, schema: Schema[A]): StreamingSchema[A] = {
+    new StreamingSchema(fieldName, schema)
+  }
+}

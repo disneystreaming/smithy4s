@@ -20,7 +20,7 @@ package schema
 /**
   * Represents a member of product type (case class)
   */
-final case class Field[S, A](
+final case class Field[S, A] private (
     label: String,
     schema: Schema[A],
     get: S => A
@@ -30,6 +30,17 @@ final case class Field[S, A](
     * Returns the hints that are only relative to the field
     * (typically derived from member-level traits)
     */
+  def withLabel(value: String): Field[S, A] = {
+    copy(label = value)
+  }
+
+  def withSchema(value: Schema[A]): Field[S, A] = {
+    copy(schema = value)
+  }
+
+  def withGet(value: S => A): Field[S, A] = {
+    copy(get = value)
+  }
   final def memberHints: Hints = schema.hints.memberHints
 
   /**
@@ -91,6 +102,17 @@ final case class Field[S, A](
 
 object Field {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object Field is never used"
+  )
+  private def unapply[S, A](c: Field[S, A]): Option[Field[S, A]] = Some(c)
+  def apply[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => A
+  ): Field[S, A] = {
+    new Field(label, schema, get)
+  }
   def required[S, A](
       label: String,
       schema: Schema[A],

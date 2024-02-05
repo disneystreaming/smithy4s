@@ -16,7 +16,7 @@
 
 package smithy4s.http
 
-final case class HttpUri(
+final case class HttpUri private (
     scheme: HttpUriScheme,
     host: Option[String],
     port: Option[Int],
@@ -30,4 +30,46 @@ final case class HttpUri(
       * once the routing logic has come in effect.
       */
     pathParams: Option[Map[String, String]]
-)
+) {
+  def withScheme(value: HttpUriScheme): HttpUri = {
+    copy(scheme = value)
+  }
+
+  def withHost(value: Option[String]): HttpUri = {
+    copy(host = value)
+  }
+
+  def withPort(value: Option[Int]): HttpUri = {
+    copy(port = value)
+  }
+
+  def withPath(value: IndexedSeq[String]): HttpUri = {
+    copy(path = value)
+  }
+
+  def withQueryParams(value: Map[String, Seq[String]]): HttpUri = {
+    copy(queryParams = value)
+  }
+
+  def withPathParams(value: Option[Map[String, String]]): HttpUri = {
+    copy(pathParams = value)
+  }
+
+}
+
+object HttpUri {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUri is never used"
+  )
+  private def unapply(c: HttpUri): Option[HttpUri] = Some(c)
+  def apply(
+      scheme: HttpUriScheme,
+      host: Option[String],
+      port: Option[Int],
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]],
+      pathParams: Option[Map[String, String]]
+  ): HttpUri = {
+    new HttpUri(scheme, host, port, path, queryParams, pathParams)
+  }
+}

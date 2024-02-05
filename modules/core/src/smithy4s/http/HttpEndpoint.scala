@@ -78,6 +78,24 @@ object HttpEndpoint {
     }
   }
 
-  case class HttpEndpointError(message: String) extends Exception(message)
+  case class HttpEndpointError private (message: String)
+      extends Exception(message) {
+    def withMessage(value: String): HttpEndpointError = {
+      copy(message = value)
+    }
+
+  }
+
+  object HttpEndpointError {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object HttpEndpointError is never used"
+    )
+    private def unapply(c: HttpEndpointError): Option[HttpEndpointError] = Some(
+      c
+    )
+    def apply(message: String): HttpEndpointError = {
+      new HttpEndpointError(message)
+    }
+  }
 
 }

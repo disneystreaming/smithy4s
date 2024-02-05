@@ -34,6 +34,19 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     with smithy4s.ScalaCompat {
   compile =>
 
+  private object singleSegment {
+    def unapply(c: UrlForm.FormData): Option[PayloadPath.Segment] =
+      if (c.path.segments.size == 1) c.path.segments.headOption
+      else None
+  }
+  private object firstSegmentIsIndex {
+    def unapply(c: UrlForm.FormData): Option[Int] = {
+      c.path.segments.headOption.collectFirst {
+        case i: PayloadPath.Segment.Index => i.index
+      }
+    }
+  }
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -77,12 +90,8 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
           // then sort by index.
           import scala.collection.compat._
           val groupedAndSortedCursors = values
-            .collect {
-              case formData @ UrlForm.FormData(
-                    PayloadPath(PayloadPath.Segment.Index(index) :: _),
-                    _
-                  ) =>
-                index -> formData
+            .collect { case formData @ firstSegmentIsIndex(index) =>
+              index -> formData
             }
             .groupMap { case (index, _) => index } { case (_, value) => value }
             .toVector
@@ -170,7 +179,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     locally {
       case cursor @ UrlFormCursor(
             history,
-            UrlForm.FormData(PayloadPath(segment :: Nil), _) :: Nil
+            singleSegment(segment) :: Nil
           ) =>
         altMap.get(segment) match {
           case Some(altDecoder) =>

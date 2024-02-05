@@ -16,8 +16,25 @@
 
 package smithy4s
 
-final case class ConstraintError(hint: Hint, message: String)
+final case class ConstraintError private (hint: Hint, message: String)
     extends Throwable
     with scala.util.control.NoStackTrace {
+  def withHint(value: Hint): ConstraintError = {
+    copy(hint = value)
+  }
+
+  def withMessage(value: String): ConstraintError = {
+    copy(message = value)
+  }
   override def getMessage() = s"$hint: $message"
+}
+
+object ConstraintError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ConstraintError is never used"
+  )
+  private def unapply(c: ConstraintError): Option[ConstraintError] = Some(c)
+  def apply(hint: Hint, message: String): ConstraintError = {
+    new ConstraintError(hint, message)
+  }
 }

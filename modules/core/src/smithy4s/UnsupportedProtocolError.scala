@@ -16,8 +16,29 @@
 
 package smithy4s
 
-final case class UnsupportedProtocolError(service: HasId, protocolTag: HasId)
-    extends Throwable {
+final case class UnsupportedProtocolError private (
+    service: HasId,
+    protocolTag: HasId
+) extends Throwable {
+  def withService(value: HasId): UnsupportedProtocolError = {
+    copy(service = value)
+  }
+
+  def withProtocolTag(value: HasId): UnsupportedProtocolError = {
+    copy(protocolTag = value)
+  }
   override def getMessage(): String =
     s"Service ${service.id.show} does not support the ${protocolTag.id.show} protocol"
+}
+
+object UnsupportedProtocolError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UnsupportedProtocolError is never used"
+  )
+  private def unapply(
+      c: UnsupportedProtocolError
+  ): Option[UnsupportedProtocolError] = Some(c)
+  def apply(service: HasId, protocolTag: HasId): UnsupportedProtocolError = {
+    new UnsupportedProtocolError(service, protocolTag)
+  }
 }

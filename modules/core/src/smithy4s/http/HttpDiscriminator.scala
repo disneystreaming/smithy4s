@@ -22,12 +22,55 @@ sealed trait HttpDiscriminator extends Product with Serializable
 
 object HttpDiscriminator {
 
-  // format: off
-  final case class FullId(shapeId: ShapeId) extends HttpDiscriminator
-  final case class NameOnly(name: String) extends HttpDiscriminator
-  final case class StatusCode(int: Int) extends HttpDiscriminator
+  final case class FullId private (shapeId: ShapeId) extends HttpDiscriminator {
+    def withShapeId(value: ShapeId): FullId = {
+      copy(shapeId = value)
+    }
+
+  }
+  object FullId {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object FullId is never used"
+    )
+    private def unapply(c: FullId): Option[FullId] = Some(c)
+    def apply(shapeId: ShapeId): FullId = {
+      new FullId(shapeId)
+    }
+  }
+
+  final case class NameOnly private (name: String) extends HttpDiscriminator {
+    def withName(value: String): NameOnly = {
+      copy(name = value)
+    }
+
+  }
+  object NameOnly {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object NameOnly is never used"
+    )
+    private def unapply(c: NameOnly): Option[NameOnly] = Some(c)
+    def apply(name: String): NameOnly = {
+      new NameOnly(name)
+    }
+  }
+
+  final case class StatusCode private (int: Int) extends HttpDiscriminator {
+    def withInt(value: Int): StatusCode = {
+      copy(int = value)
+    }
+
+  }
+  object StatusCode {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object StatusCode is never used"
+    )
+    private def unapply(c: StatusCode): Option[StatusCode] = Some(c)
+    def apply(int: Int): StatusCode = {
+      new StatusCode(int)
+    }
+  }
+
   case object Undetermined extends HttpDiscriminator
-  // format: on
 
   def fromResponse(
       discriminatingHeaderNames: List[String],

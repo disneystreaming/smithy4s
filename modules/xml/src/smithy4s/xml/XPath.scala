@@ -28,7 +28,7 @@ import smithy4s.codecs.PayloadPath
   */
 case class XPath(reversedSegments: List[XPath.Segment]) {
   def render: String = reversedSegments.reverse.map(_.render).mkString(".")
-  def toPayloadPath: PayloadPath = PayloadPath {
+  def toPayloadPath: PayloadPath = PayloadPath.fromSegments {
     reversedSegments.reverse.map { xpathSegment =>
       xpathSegment match {
         case Index(index) => PayloadPath.Segment(index)

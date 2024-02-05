@@ -50,13 +50,45 @@ import scala.collection.compat.immutable.ArraySeq
 sealed trait PartialData[A] {
   def map[B](f: A => B): PartialData[B]
 }
-// format: off
+
 object PartialData {
-  final case class Total[A](a: A) extends PartialData[A] {
+  final case class Total[A] private (a: A) extends PartialData[A] {
+    def withA(value: A): Total[A] = {
+      copy(a = value)
+    }
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
-  final case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
+  object Total {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object Total is never used"
+    )
+    private def unapply[A](c: Total[A]): Option[Total[A]] = Some(c)
+    def apply[A](a: A): Total[A] = {
+      new Total(a)
+    }
+  }
+
+  // scalafmt: {maxColumn: 160}
+  final case class Partial[A] private (indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
+    def withIndexes(value: IndexedSeq[Int]): Partial[A] = {
+      copy(indexes = value)
+    }
+
+    def withPartialData(value: IndexedSeq[Any]): Partial[A] = {
+      copy(partialData = value)
+    }
+
+    def withMake(value: IndexedSeq[Any] => A): Partial[A] = {
+      copy(make = value)
+    }
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
+  }
+  object Partial {
+    @scala.annotation.nowarn("msg=private method unapply in object Partial is never used")
+    private def unapply[A](c: Partial[A]): Option[Partial[A]] = Some(c)
+    def apply[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A): Partial[A] = {
+      new Partial(indexes, partialData, make)
+    }
   }
 
   /**
@@ -65,25 +97,25 @@ object PartialData {
     * the individual pieces can be reconciled into the full data.
     */
   def unsafeReconcile[A](pieces: PartialData[A]*): A = {
-    pieces.collectFirst {
-      case Total(a) => a
-    }.getOrElse {
-      val allPieces = pieces.asInstanceOf[Seq[PartialData.Partial[A]]]
-      var totalSize = 0
-      allPieces.foreach(totalSize += _.indexes.size)
-      val array = Array.fill[Any](totalSize)(null)
-      var make : IndexedSeq[Any] => A = null
-      allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
-        // all the `const` values should be the same, therefore which one is called
-        // is an arbitrary choice.
-        make = const
-        var i = 0
-        while(i < data.size) {
-          array(indexes(i)) = data(i)
-          i += 1
+    pieces
+      .collectFirst { case t: Total[_] => t.a }
+      .getOrElse {
+        val allPieces = pieces.asInstanceOf[Seq[PartialData.Partial[A]]]
+        var totalSize = 0
+        allPieces.foreach(totalSize += _.indexes.size)
+        val array = Array.fill[Any](totalSize)(null)
+        var make: IndexedSeq[Any] => A = null
+        allPieces.foreach { case p: PartialData.Partial[_] =>
+          // all the `const` values should be the same, therefore which one is called
+          // is an arbitrary choice.
+          make = p.make
+          var i = 0
+          while (i < p.partialData.size) {
+            array(p.indexes(i)) = p.partialData(i)
+            i += 1
+          }
         }
+        make(ArraySeq.unsafeWrapArray(array))
       }
-      make(ArraySeq.unsafeWrapArray(array))
-    }
   }
 }

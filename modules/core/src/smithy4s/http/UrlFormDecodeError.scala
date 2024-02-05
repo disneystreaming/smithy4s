@@ -20,16 +20,34 @@ package http
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.internals.UrlFormCursor
 
-final case class UrlFormDecodeError(
+final case class UrlFormDecodeError private (
     path: PayloadPath,
     message: String
 ) extends Throwable {
+  def withPath(value: PayloadPath): UrlFormDecodeError = {
+    copy(path = value)
+  }
+
+  def withMessage(value: String): UrlFormDecodeError = {
+    copy(message = value)
+  }
   override def getMessage(): String = s"${path.render()}: $message"
 }
 
-private[http] object UrlFormDecodeError {
+object UrlFormDecodeError {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object UrlFormDecodeError is never used"
+  )
+  private def unapply(c: UrlFormDecodeError): Option[UrlFormDecodeError] = Some(
+    c
+  )
+  def apply(path: PayloadPath, message: String): UrlFormDecodeError = {
+    new UrlFormDecodeError(path, message)
+  }
 
-  def singleValueExpected(cursor: UrlFormCursor): UrlFormDecodeError =
+  private[http] def singleValueExpected(
+      cursor: UrlFormCursor
+  ): UrlFormDecodeError =
     UrlFormDecodeError(
       cursor.history,
       s"Expected a single value but got ${cursor.values}"

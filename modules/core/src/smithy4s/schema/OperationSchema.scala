@@ -96,3 +96,32 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     copy(streamedOutput = streamedOutput.map(f))
 
 }
+
+object OperationSchema {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object OperationSchema is never used"
+  )
+  private def unapply[I, E, O, SI, SO](
+      c: OperationSchema[I, E, O, SI, SO]
+  ): Option[OperationSchema[I, E, O, SI, SO]] = Some(c)
+  def apply[I, E, O, SI, SO](
+      id: ShapeId,
+      hints: Hints,
+      input: Schema[I],
+      error: Option[ErrorSchema[E]],
+      output: Schema[O],
+      streamedInput: Option[StreamingSchema[SI]],
+      streamedOutput: Option[StreamingSchema[SO]]
+  ): OperationSchema[I, E, O, SI, SO] = {
+    new OperationSchema(
+      id,
+      hints,
+      input,
+      error,
+      output,
+      streamedInput,
+      streamedOutput
+    )
+  }
+
+}

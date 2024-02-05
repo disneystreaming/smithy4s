@@ -77,9 +77,9 @@ final class SchemaPartitionSpec extends FunSuite {
 
     import SchemaPartition._
     xPartialSchema match {
-      case SplittingMatch(xSchema, ySchema) =>
-        val decoderX = Document.Decoder.fromSchema(xSchema)
-        val decoderY = Document.Decoder.fromSchema(ySchema)
+      case sm: SplittingMatch[_] =>
+        val decoderX = Document.Decoder.fromSchema(sm.matching)
+        val decoderY = Document.Decoder.fromSchema(sm.notMatching)
 
         val result =
           (decoderX.decode(documentX), decoderY.decode(documentY)).mapN {
@@ -111,9 +111,9 @@ final class SchemaPartitionSpec extends FunSuite {
 
     import SchemaPartition._
     xPartialSchema match {
-      case (SplittingMatch(xSchema, ySchema)) =>
-        val encoderX = Document.Encoder.fromSchema(xSchema)
-        val encoderY = Document.Encoder.fromSchema(ySchema)
+      case sm: SplittingMatch[_] =>
+        val encoderX = Document.Encoder.fromSchema(sm.matching)
+        val encoderY = Document.Encoder.fromSchema(sm.notMatching)
 
         val input = PartialData.Total(Foo(1, 2))
         assertEquals(encoderX.encode(input), documentX)
@@ -136,9 +136,9 @@ final class SchemaPartitionSpec extends FunSuite {
 
     import SchemaPartition._
     (xPartialSchema) match {
-      case (SplittingMatch(xSchema, ySchema)) =>
-        val decoderX = Document.Decoder.fromSchema(xSchema)
-        val decoderY = Document.Decoder.fromSchema(ySchema)
+      case sm: SplittingMatch[_] =>
+        val decoderX = Document.Decoder.fromSchema(sm.matching)
+        val decoderY = Document.Decoder.fromSchema(sm.notMatching)
 
         val result =
           (decoderX.decode(documentX), decoderY.decode(documentY)).mapN {
@@ -173,9 +173,9 @@ final class SchemaPartitionSpec extends FunSuite {
 
     import SchemaPartition._
     xPartialSchema match {
-      case SplittingMatch(xSchema, ySchema) =>
-        val decoderX = Document.Decoder.fromSchema(xSchema)
-        val decoderY = Document.Decoder.fromSchema(ySchema)
+      case sm: SplittingMatch[_] =>
+        val decoderX = Document.Decoder.fromSchema(sm.matching)
+        val decoderY = Document.Decoder.fromSchema(sm.notMatching)
 
         val result =
           (decoderX.decode(documentX), decoderY.decode(documentY)).mapN {
@@ -202,9 +202,9 @@ final class SchemaPartitionSpec extends FunSuite {
 
     import SchemaPartition._
     xPartialSchema match {
-      case (TotalMatch(xSchema)) =>
+      case tm: TotalMatch[_] =>
         val originalDecoder = Document.Decoder.fromSchema(schema)
-        val payloadDecoder = Document.Decoder.fromSchema(xSchema)
+        val payloadDecoder = Document.Decoder.fromSchema(tm.schema)
 
         val orignalResult =
           originalDecoder.decode(Document.obj("x" -> documentX))
@@ -233,8 +233,8 @@ final class SchemaPartitionSpec extends FunSuite {
     ): List[Document] => Either[codecs.PayloadError, A] = {
       val allDecoders: List[Document.Decoder[PartialData[A]]] =
         predicates.toList.map(schema.partition(_)).collect {
-          case SchemaPartition.SplittingMatch(matching, _) =>
-            Document.Decoder.fromSchema(matching)
+          case sm: SchemaPartition.SplittingMatch[_] =>
+            Document.Decoder.fromSchema(sm.matching)
         }
       (documents: List[Document]) =>
         allDecoders

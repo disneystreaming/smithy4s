@@ -21,23 +21,56 @@ sealed trait EnumTag[+E]
 object EnumTag {
   case object ClosedStringEnum extends EnumTag[Nothing]
   case object ClosedIntEnum extends EnumTag[Nothing]
-  case class OpenStringEnum[E](unknown: String => E) extends EnumTag[E]
-  case class OpenIntEnum[E](unknown: Int => E) extends EnumTag[E]
+
+  case class OpenStringEnum[E] private (unknown: String => E)
+      extends EnumTag[E] {
+    def withUnknown(value: String => E): OpenStringEnum[E] = {
+      copy(unknown = value)
+    }
+
+  }
+  object OpenStringEnum {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OpenStringEnum is never used"
+    )
+    private def unapply[E](c: OpenStringEnum[E]): Option[OpenStringEnum[E]] =
+      Some(
+        c
+      )
+    def apply[E](unknown: String => E): OpenStringEnum[E] = {
+      new OpenStringEnum(unknown)
+    }
+  }
+
+  case class OpenIntEnum[E] private (unknown: Int => E) extends EnumTag[E] {
+    def withUnknown(value: Int => E): OpenIntEnum[E] = {
+      copy(unknown = value)
+    }
+
+  }
+  object OpenIntEnum {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OpenIntEnum is never used"
+    )
+    private def unapply[E](c: OpenIntEnum[E]): Option[OpenIntEnum[E]] = Some(c)
+    def apply[E](unknown: Int => E): OpenIntEnum[E] = {
+      new OpenIntEnum(unknown)
+    }
+  }
 
   object StringEnum {
     def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedStringEnum  => true
-      case OpenStringEnum(_) => true
-      case _                 => false
+      case ClosedStringEnum     => true
+      case _: OpenStringEnum[_] => true
+      case _                    => false
     }
-
   }
 
   object IntEnum {
     def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedIntEnum  => true
-      case OpenIntEnum(_) => true
-      case _              => false
+      case ClosedIntEnum     => true
+      case _: OpenIntEnum[_] => true
+      case _                 => false
     }
   }
 }

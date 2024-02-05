@@ -93,12 +93,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
     val nameMap: Map[String, E] =
       values.map(v => v.stringValue -> v.value).toMap
     val extract: String => Option[E] = tag match {
-      case EnumTag.OpenIntEnum(unknown) =>
-        _.toIntOption.map(i => ordinalMap.getOrElse(i, unknown(i)))
+      case oie: EnumTag.OpenIntEnum[_] =>
+        _.toIntOption.map(i => ordinalMap.getOrElse(i, oie.unknown(i)))
       case EnumTag.ClosedIntEnum =>
         _.toIntOption.flatMap(ordinalMap.get)
-      case EnumTag.OpenStringEnum(unknown) =>
-        str => Some(nameMap.getOrElse(str, unknown(str)))
+      case ose: EnumTag.OpenStringEnum[_] =>
+        str => Some(nameMap.getOrElse(str, ose.unknown(str)))
       case EnumTag.ClosedStringEnum =>
         nameMap.get(_)
     }

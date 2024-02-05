@@ -18,8 +18,11 @@ package smithy4s.codecs
 
 import smithy4s.schema._
 
-case class PayloadPath(segments: List[PayloadPath.Segment]) {
+case class PayloadPath private (segments: List[PayloadPath.Segment]) {
 
+  def withSegments(value: List[PayloadPath.Segment]): PayloadPath = {
+    copy(segments = value)
+  }
   def append(segment: PayloadPath.Segment): PayloadPath =
     copy(segments ::: List(segment))
 
@@ -35,11 +38,18 @@ case class PayloadPath(segments: List[PayloadPath.Segment]) {
 
 object PayloadPath {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object PayloadPath is never used"
+  )
+  private def unapply(c: PayloadPath): Option[PayloadPath] = Some(c)
   val root = PayloadPath(segments = List.empty)
 
-  def apply(segments: PayloadPath.Segment*): PayloadPath = PayloadPath(
+  def apply(segments: PayloadPath.Segment*): PayloadPath = new PayloadPath(
     segments.toList
   )
+
+  def fromSegments(segments: List[PayloadPath.Segment]): PayloadPath =
+    new PayloadPath(segments)
 
   def parse(string: String): PayloadPath = PayloadPath(
     string.split('.').filter(_.nonEmpty).map(Segment.parse).toList
@@ -68,11 +78,37 @@ object PayloadPath {
       case _: Throwable => Label(string)
     }
 
-    case class Label(label: String) extends Segment {
+    case class Label private (label: String) extends Segment {
+      def withLabel(value: String): Label = {
+        copy(label = value)
+      }
       override lazy val render: String = label
     }
-    case class Index(index: Int) extends Segment {
+
+    object Label {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object Label is never used"
+      )
+      private def unapply(c: Label): Option[Label] = Some(c)
+      def apply(label: String): Label = {
+        new Label(label)
+      }
+    }
+    case class Index private (index: Int) extends Segment {
+      def withIndex(value: Int): Index = {
+        copy(index = value)
+      }
       override lazy val render: String = index.toString
+    }
+
+    object Index {
+      @scala.annotation.nowarn(
+        "msg=private method unapply in object Index is never used"
+      )
+      private def unapply(c: Index): Option[Index] = Some(c)
+      def apply(index: Int): Index = {
+        new Index(index)
+      }
     }
 
     implicit def stringConversion(label: String): Segment = Label(label)

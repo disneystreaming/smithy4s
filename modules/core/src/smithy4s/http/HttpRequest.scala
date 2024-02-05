@@ -22,12 +22,27 @@ import smithy4s.codecs.{Decoder => GenericDecoder}
 import smithy4s.kinds._
 import smithy4s.schema._
 
-final case class HttpRequest[+A](
+final case class HttpRequest[+A] private (
     method: HttpMethod,
     uri: HttpUri,
     headers: Map[CaseInsensitive, Seq[String]],
     body: A
 ) {
+  def withMethod(value: HttpMethod): HttpRequest[A] = {
+    copy(method = value)
+  }
+
+  def withUri(value: HttpUri): HttpRequest[A] = {
+    copy(uri = value)
+  }
+
+  def withHeaders(value: Map[CaseInsensitive, Seq[String]]): HttpRequest[A] = {
+    copy(headers = value)
+  }
+
+  def withBody[A0](value: A0): HttpRequest[A0] = {
+    copy(body = value)
+  }
   def map[B](f: A => B): HttpRequest[B] =
     HttpRequest(method, uri, headers, f(body))
 
@@ -47,6 +62,18 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpRequest is never used"
+  )
+  private def unapply[A](c: HttpRequest[A]): Option[HttpRequest[A]] = Some(c)
+  def apply[A](
+      method: HttpMethod,
+      uri: HttpUri,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: A
+  ): HttpRequest[A] = {
+    new HttpRequest(method, uri, headers, body)
+  }
   private[http] type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpRequest[Body], A]
   private[http] type Decoder[F[_], Body, A] =
@@ -82,7 +109,7 @@ object HttpRequest {
         val staticQueries = httpEndpoint.staticQueryParams
         val oldUri = request.uri
         val newUri =
-          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+          oldUri.withPath(oldUri.path ++ path).withQueryParams(staticQueries)
         val method = httpEndpoint.method
         request.copy(method = method, uri = newUri)
       }
@@ -91,8 +118,7 @@ object HttpRequest {
     private def metadataWriter[Body]: Writer[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
-        val newUri =
-          oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
+        val newUri = oldUri.withQueryParams(oldUri.queryParams ++ meta.query)
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
@@ -109,8 +135,8 @@ object HttpRequest {
               val hostPrefix = prefixEncoder.write(List.empty, input).mkString
               val oldUri = request.uri
               val prefixedHost = oldUri.host.map(host => s"$hostPrefix$host")
-              val newUri = oldUri.copy(host = prefixedHost)
-              request.copy(uri = newUri)
+              val newUri = oldUri.withHost(prefixedHost)
+              request.withUri(newUri)
             }
           }
         case None =>

@@ -112,8 +112,8 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
         val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
         val handler: String => Option[E] =
           tag match {
-            case EnumTag.OpenIntEnum(unknown) =>
-              _.toIntOption.map(i => valueMap.getOrElse(i, unknown(i)))
+            case oie: EnumTag.OpenIntEnum[_] =>
+              _.toIntOption.map(i => valueMap.getOrElse(i, oie.unknown(i)))
             case _ =>
               _.toIntOption.flatMap(valueMap.get)
           }
@@ -125,8 +125,8 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
         val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
         val handler: String => Option[E] =
           tag match {
-            case EnumTag.OpenStringEnum(unknown) =>
-              s => Some(valueMap.getOrElse(s, unknown(s)))
+            case ose: EnumTag.OpenStringEnum[_] =>
+              s => Some(valueMap.getOrElse(s, ose.unknown(s)))
             case _ =>
               valueMap.get(_)
           }

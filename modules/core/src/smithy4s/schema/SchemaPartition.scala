@@ -32,8 +32,6 @@ sealed trait SchemaPartition[A]
 
 object SchemaPartition {
 
-
-  // format: off
   /**
     * Indicates that all fields of a schema matched a condition.
     *
@@ -42,7 +40,23 @@ object SchemaPartition {
     * single payload field, the resulting schema would be a bijection from that payload field to the larger
     * datatype.
     */
-  final case class TotalMatch[A](schema: Schema[A]) extends SchemaPartition[A]
+  final case class TotalMatch[A] private (schema: Schema[A])
+      extends SchemaPartition[A] {
+    def withSchema(value: Schema[A]): TotalMatch[A] = {
+      copy(schema = value)
+    }
+
+  }
+  object TotalMatch {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object TotalMatch is never used"
+    )
+    private def unapply[A](c: TotalMatch[A]): Option[TotalMatch[A]] = Some(c)
+    def apply[A](schema: Schema[A]): TotalMatch[A] = {
+      new TotalMatch(schema)
+    }
+
+  }
 
   /**
     * Indicates that only a subset of fields matched the partitioning condition. This  datatype contains
@@ -55,13 +69,37 @@ object SchemaPartition {
     * @param matching the partial schema resulting from the matching fields
     * @param notMatching the partial schema resulting from the non-matching fields
     */
-  final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
+  // scalafmt: {maxColumn: 160}
+  final case class SplittingMatch[A] private (matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A] {
+    def withMatching(value: Schema[PartialData[A]]): SplittingMatch[A] = {
+      copy(matching = value)
+    }
+
+    def withNotMatching(value: Schema[PartialData[A]]): SplittingMatch[A] = {
+      copy(notMatching = value)
+    }
+
+  }
+  object SplittingMatch {
+    @scala.annotation.nowarn("msg=private method unapply in object SplittingMatch is never used")
+    private def unapply[A](c: SplittingMatch[A]): Option[SplittingMatch[A]] = Some(c)
+    def apply[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]): SplittingMatch[A] = {
+      new SplittingMatch(matching, notMatching)
+    }
+
+  }
 
   /**
     * Indicates that no field matched the condition.
     */
-  final case class NoMatch[A]() extends SchemaPartition[A]
-  // format: on
+  final case class NoMatch[A] private () extends SchemaPartition[A] {}
+  object NoMatch {
+    @scala.annotation.nowarn("msg=private method unapply in object NoMatch is never used")
+    private def unapply[A](c: NoMatch[A]): Option[NoMatch[A]] = Some(c)
+    def apply[A](): NoMatch[A] = {
+      new NoMatch()
+    }
+  }
 
   private[schema] def apply(
       keep: Field[_, _] => Boolean,
@@ -76,9 +114,8 @@ object SchemaPartition {
                 fieldsAndIndexes: Vector[(Field[S, _], Int)]
             ): Schema[PartialData[S]] = {
               val indexes = fieldsAndIndexes.map(_._2)
-              val unsafeAccessFields = fieldsAndIndexes.map {
-                case (schemaField, _) =>
-                  toPartialDataField(schemaField)
+              val unsafeAccessFields = fieldsAndIndexes.map { case (schemaField, _) =>
+                toPartialDataField(schemaField)
               }
               def const(values: IndexedSeq[Any]): PartialData[S] =
                 PartialData.Partial(indexes, values, make)
@@ -103,8 +140,8 @@ object SchemaPartition {
                   SchemaPartition.NoMatch()
                 }
             } else {
-              val partitioned = fields.zipWithIndex.partition {
-                case (schemaField, _) => keep(schemaField)
+              val partitioned = fields.zipWithIndex.partition { case (schemaField, _) =>
+                keep(schemaField)
               }
 
               partitioned match {
@@ -122,16 +159,16 @@ object SchemaPartition {
               }
             }
 
-          case BijectionSchema(underlying, bijection) =>
-            apply(underlying) match {
-              case SchemaPartition.SplittingMatch(matching, notMatching) =>
+          case bs: BijectionSchema[_, _] =>
+            apply(bs.underlying) match {
+              case sm: SchemaPartition.SplittingMatch[_] =>
                 SchemaPartition.SplittingMatch(
-                  matching.biject(_.map(bijection.to))(_.map(bijection.from)),
-                  notMatching.biject(_.map(bijection.to))(_.map(bijection.from))
+                  sm.matching.biject(_.map(bs.bijection.to))(_.map(bs.bijection.from)),
+                  sm.notMatching.biject(_.map(bs.bijection.to))(_.map(bs.bijection.from))
                 )
-              case SchemaPartition.TotalMatch(total) =>
-                SchemaPartition.TotalMatch(total.biject(bijection))
-              case SchemaPartition.NoMatch() => SchemaPartition.NoMatch()
+              case tm: SchemaPartition.TotalMatch[_] =>
+                SchemaPartition.TotalMatch(tm.schema.biject(bs.bijection))
+              case _: SchemaPartition.NoMatch[_] => SchemaPartition.NoMatch()
             }
           case LazySchema(s) => apply(s.value)
           case _             => SchemaPartition.NoMatch()
@@ -173,7 +210,7 @@ object SchemaPartition {
         }
 
         val from = (_: PartialData[S]) match {
-          case PartialData.Total(s)      => field.get(s)
+          case t: PartialData.Total[_]   => field.get(t.a)
           case _: PartialData.Partial[_] =>
             // It's impossible to get the whole struct from a single field if it's not the only one
             codingError
@@ -193,8 +230,8 @@ object SchemaPartition {
       field: Field[S, A]
   ): Field[PartialData[S], A] = {
     def access(product: PartialData[S]): A = product match {
-      case PartialData.Total(struct)    => field.get(struct)
-      case PartialData.Partial(_, _, _) => codingError
+      case t: PartialData.Total[_]   => field.get(t.a)
+      case _: PartialData.Partial[_] => codingError
     }
     Field(field.label, field.schema, access)
   }

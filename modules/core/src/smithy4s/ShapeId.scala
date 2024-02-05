@@ -18,7 +18,15 @@ package smithy4s
 
 import smithy.api.IdRef
 
-final case class ShapeId(namespace: String, name: String) extends HasId {
+final case class ShapeId private (namespace: String, name: String)
+    extends HasId {
+  def withNamespace(value: String): ShapeId = {
+    copy(namespace = value)
+  }
+
+  def withName(value: String): ShapeId = {
+    copy(name = value)
+  }
   def show = s"$namespace#$name"
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
   override def toString = show
@@ -26,6 +34,14 @@ final case class ShapeId(namespace: String, name: String) extends HasId {
 }
 
 object ShapeId extends ShapeTag.Has[ShapeId] { self =>
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ShapeId is never used"
+  )
+  private def unapply(c: ShapeId): Option[ShapeId] = Some(c)
+  def apply(namespace: String, name: String): ShapeId = {
+    new ShapeId(namespace, name)
+  }
+
   def parse(string: String): Option[ShapeId] = {
     if (!string.contains('#')) None
     else {
@@ -40,7 +56,25 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
     }
   }
 
-  final case class Member(shapeId: ShapeId, member: String)
+  final case class Member private (shapeId: ShapeId, member: String) {
+    def withShapeId(value: ShapeId): Member = {
+      copy(shapeId = value)
+    }
+
+    def withMember(value: String): Member = {
+      copy(member = value)
+    }
+
+  }
+  object Member {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object Member is never used"
+    )
+    private def unapply(c: Member): Option[Member] = Some(c)
+    def apply(shapeId: ShapeId, member: String): Member = {
+      new Member(shapeId, member)
+    }
+  }
 
   val id: ShapeId = ShapeId("smithy4s", "ShapeId")
   lazy val schema =

@@ -34,6 +34,17 @@ case class ErrorSchema[E] private[smithy4s] (
     unliftError: E => Throwable
 ) {
 
+  def withSchema(value: Schema[E]): ErrorSchema[E] = {
+    copy(schema = value)
+  }
+
+  def withLiftError(value: Throwable => Option[E]): ErrorSchema[E] = {
+    copy(liftError = value)
+  }
+
+  def withUnliftError(value: E => Throwable): ErrorSchema[E] = {
+    copy(unliftError = value)
+  }
   def transformHintsLocally(f: Hints => Hints): ErrorSchema[E] = {
     val newSchema = schema match {
       case u: Schema.UnionSchema[E] =>
@@ -74,6 +85,17 @@ case class ErrorSchema[E] private[smithy4s] (
 
 object ErrorSchema {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object ErrorSchema is never used"
+  )
+  private def unapply[E](c: ErrorSchema[E]): Option[ErrorSchema[E]] = Some(c)
+  def apply[E](
+      schema: Schema[E],
+      liftError: Throwable => Option[E],
+      unliftError: E => Throwable
+  ): ErrorSchema[E] = {
+    new ErrorSchema(schema, liftError, unliftError)
+  }
   trait Companion[E] extends ShapeTag.Companion[E] {
     def liftError(throwable: Throwable): Option[E]
     def unliftError(e: E): Throwable

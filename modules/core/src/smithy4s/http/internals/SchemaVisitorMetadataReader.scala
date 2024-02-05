@@ -126,16 +126,16 @@ private[http] class SchemaVisitorMetadataReader(
     tag match {
       case EnumTag.ClosedIntEnum =>
         MetaDecode.from(intVals)(str => handleInt(str.toIntOption))
-      case EnumTag.OpenIntEnum(unknown) =>
+      case oie: EnumTag.OpenIntEnum[_] =>
         MetaDecode.from(intVals) { string =>
           val maybeInt = string.toIntOption
-          handleInt(maybeInt).orElse(maybeInt.map(unknown))
+          handleInt(maybeInt).orElse(maybeInt.map(oie.unknown))
         }
       case EnumTag.ClosedStringEnum =>
         MetaDecode.from(stringVals)(handleString)
-      case EnumTag.OpenStringEnum(unknown) =>
+      case ose: EnumTag.OpenStringEnum[_] =>
         MetaDecode.from(stringVals)(str =>
-          Some(handleString(str).getOrElse(unknown(str)))
+          Some(handleString(str).getOrElse(ose.unknown(str)))
         )
     }
   }
@@ -194,12 +194,12 @@ private[http] class SchemaVisitorMetadataReader(
           case e: MetadataError => Left(e)
           case MetaDecode.MetaDecodeError(const) =>
             Left(const(currentFieldName, currentBinding))
-          case ConstraintError(_, message) =>
+          case ce: ConstraintError =>
             Left(
               MetadataError.FailedConstraint(
                 currentFieldName,
                 currentBinding,
-                message
+                ce.message
               )
             )
         }

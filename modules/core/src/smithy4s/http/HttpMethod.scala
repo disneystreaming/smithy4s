@@ -18,21 +18,21 @@ package smithy4s.http
 
 sealed trait HttpMethod extends Product with Serializable {
   def showUppercase = this match {
-    case HttpMethod.PUT          => "PUT"
-    case HttpMethod.POST         => "POST"
-    case HttpMethod.DELETE       => "DELETE"
-    case HttpMethod.GET          => "GET"
-    case HttpMethod.PATCH        => "PATCH"
-    case HttpMethod.OTHER(value) => value.toUpperCase
+    case HttpMethod.PUT      => "PUT"
+    case HttpMethod.POST     => "POST"
+    case HttpMethod.DELETE   => "DELETE"
+    case HttpMethod.GET      => "GET"
+    case HttpMethod.PATCH    => "PATCH"
+    case o: HttpMethod.OTHER => o.value.toUpperCase
   }
 
   def showCapitalised = this match {
-    case HttpMethod.PUT          => "Put"
-    case HttpMethod.POST         => "Post"
-    case HttpMethod.DELETE       => "Delete"
-    case HttpMethod.GET          => "Get"
-    case HttpMethod.PATCH        => "Patch"
-    case HttpMethod.OTHER(value) => value.capitalize
+    case HttpMethod.PUT      => "Put"
+    case HttpMethod.POST     => "Post"
+    case HttpMethod.DELETE   => "Delete"
+    case HttpMethod.GET      => "Get"
+    case HttpMethod.PATCH    => "Patch"
+    case o: HttpMethod.OTHER => o.value.capitalize
   }
 }
 
@@ -42,7 +42,22 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
-  case class OTHER(value: String) extends HttpMethod
+  case class OTHER private (value: String) extends HttpMethod {
+    def withValue(value: String): OTHER = {
+      copy(value = value)
+    }
+
+  }
+
+  object OTHER {
+    @scala.annotation.nowarn(
+      "msg=private method unapply in object OTHER is never used"
+    )
+    private def unapply(c: OTHER): Option[OTHER] = Some(c)
+    def apply(value: String): OTHER = {
+      new OTHER(value)
+    }
+  }
 
   val values: List[HttpMethod] =
     List(PUT, POST, DELETE, GET, PATCH)
