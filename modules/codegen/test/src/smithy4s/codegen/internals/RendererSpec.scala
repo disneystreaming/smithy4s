@@ -485,14 +485,14 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("collision avoidance should cover `import`") {
+  test("collision avoidance sanitizes `import` as a structure member") {
     val smithy =
       """
         |$version: "2"
         |
         |namespace input
         |
-        |struct Import { import: String }
+        |structure Import { import: String }
         |""".stripMargin
     val contents = generateScalaCode(smithy).values
     assert(
@@ -504,14 +504,14 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("collision avoidance should cover `export` for scala 3 compat") {
+  test("collision avoidance sanitizes `export` as a structure member for scala 3 compat") {
     val smithy =
       """
         |$version: "2"
         |
         |namespace input
         |
-        |struct Export { export: String }
+        |structure Export { export: String }
         |""".stripMargin
     val contents = generateScalaCode(smithy).values
     assert(
@@ -523,14 +523,14 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("collision avoidance should cover `given` for scala 3 compat") {
+  test("collision avoidance sanitizes `given` as a structure member for scala 3 compat") {
     val smithy =
       """
         |$version: "2"
         |
         |namespace input
         |
-        |struct Given { given: String }
+        |structure Given { given: String }
         |""".stripMargin
     val contents = generateScalaCode(smithy).values
     assert(
