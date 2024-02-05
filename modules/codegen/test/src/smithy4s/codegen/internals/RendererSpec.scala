@@ -484,4 +484,61 @@ final class RendererSpec extends munit.FunSuite {
       )
     )
   }
+
+  test("collision avoidance should cover `import`") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace input
+        |
+        |struct Import { import: String }
+        |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    assert(
+      contents.exists(
+        _.contains(
+          "case class Import(_import: Option[String] = None)"
+        )
+      )
+    )
+  }
+
+  test("collision avoidance should cover `export` for scala 3 compat") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace input
+        |
+        |struct Export { export: String }
+        |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    assert(
+      contents.exists(
+        _.contains(
+          "case class Export(_export: Option[String] = None)"
+        )
+      )
+    )
+  }
+
+  test("collision avoidance should cover `given` for scala 3 compat") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace input
+        |
+        |struct Given { given: String }
+        |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    assert(
+      contents.exists(
+        _.contains(
+          "case class Given(_given: Option[String] = None)"
+        )
+      )
+    )
+  }
 }

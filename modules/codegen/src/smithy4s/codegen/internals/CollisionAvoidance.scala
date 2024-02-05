@@ -279,7 +279,30 @@ private[internals] object CollisionAvoidance {
     "notify",
     "notifyAll",
     "toString",
-    "wait"
+    "wait",
+
+    // scala 3 "regular" keywords
+    // https://docs.scala-lang.org/scala3/guides/migration/incompat-syntactic.html#restricted-keywords
+    "enum",
+    "export",
+    "given",
+    "then",
+
+    // scala 3 "soft" keywords
+    // https://dotty.epfl.ch/docs/internals/syntax.html#soft-keywords-3
+    // https://docs.scala-lang.org/scala3/reference/soft-modifier.html
+    "as",
+    "derives",
+    "end",
+    "erased",
+    "extension",
+    "infix",
+    "inline",
+    "opaque",
+    "open",
+    "throws",
+    "transparent",
+    "using",
   )
 
   class Names() {
