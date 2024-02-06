@@ -1,3 +1,7 @@
+# 0.18.8
+
+* Fix collision avoidance algorithm to cover Scala 3 keywords
+
 # 0.18.7
 
 * Added support for `@httpResponseCode` on newtypes (integer shapes that aren't exactly `smithy.api#Integer`), as well as refinements (e.g. ints with a `@range` constraint).
