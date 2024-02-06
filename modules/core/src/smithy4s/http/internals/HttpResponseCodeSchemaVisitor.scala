@@ -19,6 +19,7 @@ package smithy4s.http.internals
 import smithy4s.capability.Contravariant
 import smithy4s.Hints
 import smithy4s.schema.{
+  Alt,
   EnumTag,
   EnumValue,
   Primitive,
@@ -30,7 +31,6 @@ import smithy4s.ShapeId
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   NoResponseCode,
   OptionalResponseCode,
-  RequiredResponseCode,
   ResponseCodeExtractor
 }
 import smithy4s.Refinement
@@ -89,6 +89,28 @@ class HttpResponseCodeSchemaVisitor()
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
+  ): ResponseCodeExtractor[U] = {
+    import HttpResponseCodeSchemaVisitor.VariantResponseCodeExtractor
+    val variants = alternatives.map { alt: Alt[U, _] =>
+      VariantResponseCodeExtractor.fromAlt(this, alt)
+    }
+    val allAreNoResponseCode = variants.forall { _.extractor == NoResponseCode }
+    if (allAreNoResponseCode) {
+      NoResponseCode
+    } else {
+      OptionalResponseCode { (u: U) =>
+        variants.flatMap { case variantExtractor =>
+          variantExtractor.project(u).flatMap(variantExtractor.extractor.apply)
+        }.headOption
+      }
+    }
+  }
+
   override def option[A](
       schema: Schema[A]
   ): ResponseCodeExtractor[Option[A]] = {
@@ -96,11 +118,7 @@ class HttpResponseCodeSchemaVisitor()
     OptionalResponseCode[Option[A]] {
       case None => None
       case Some(value) =>
-        aExt match {
-          case NoResponseCode          => None
-          case RequiredResponseCode(f) => Some(f(value))
-          case OptionalResponseCode(f) => f(value)
-        }
+        aExt.apply(value)
     }
   }
 
@@ -127,7 +145,13 @@ class HttpResponseCodeSchemaVisitor()
 }
 
 object HttpResponseCodeSchemaVisitor {
-  sealed trait ResponseCodeExtractor[-A]
+  sealed trait ResponseCodeExtractor[-A] {
+    def apply(a: A): Option[Int] = this match {
+      case NoResponseCode          => None
+      case RequiredResponseCode(f) => Some(f(a))
+      case OptionalResponseCode(f) => f(a)
+    }
+  }
   object NoResponseCode extends ResponseCodeExtractor[Any]
   case class RequiredResponseCode[A](f: A => Int)
       extends ResponseCodeExtractor[A]
@@ -152,4 +176,20 @@ object HttpResponseCodeSchemaVisitor {
   val int: ResponseCodeExtractor[Int] = {
     RequiredResponseCode(identity)
   }
+
+  private case class VariantResponseCodeExtractor[U, V](
+      extractor: ResponseCodeExtractor[V],
+      project: U => Option[V]
+  )
+
+  private object VariantResponseCodeExtractor {
+    def fromAlt[U, V](
+        visitor: HttpResponseCodeSchemaVisitor,
+        alt: Alt[U, V]
+    ): VariantResponseCodeExtractor[U, V] = {
+      val altExtractor = visitor.apply(alt.schema)
+      VariantResponseCodeExtractor[U, V](altExtractor, alt.project.lift)
+    }
+  }
+
 }

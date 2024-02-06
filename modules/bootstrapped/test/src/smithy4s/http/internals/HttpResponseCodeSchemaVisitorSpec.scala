@@ -226,4 +226,70 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
     }
   }
 
+  sealed trait Union1
+  object Union1 extends ShapeTag.Companion[Union1] {
+    case class Variant1(value: Int) extends Union1
+    case class Variant2(value: String) extends Union1
+    case class Variant3(value: SampleResponse1) extends Union1
+
+    val id: ShapeId = ShapeId("smithy4s.example", "Union1")
+    val hints: Hints = Hints(
+    )
+    implicit val schema: Schema[Union1] = Schema.UnionSchema(
+      id,
+      hints,
+      Vector(
+        Schema.int.biject(Variant1.apply(_))(_.value).oneOf[Union1]("Variant1").addHints(smithy.api.HttpResponseCode()),
+        Schema.string.biject(Variant2.apply(_))(_.value).oneOf[Union1]("Variant2"),
+        SampleResponse1.schema.biject(Variant3.apply(_))(_.value).oneOf[Union1]("Variant3")
+      ),
+      {
+        case _: Variant1 => 1
+        case _: Variant2 => 2
+        case _: Variant3 => 3
+      }
+    )
+  }
+
+  test("applying HttpResponseCode works on a union with status codes") {
+    val res: ResponseCodeExtractor[Union1] =
+      Union1.schema.compile(visitor)
+    res match {
+      case HttpResponseCodeSchemaVisitor.OptionalResponseCode(f) =>
+        assert(f(Union1.Variant1(234)) == Some(234))
+        assert(f(Union1.Variant2("abc")) == None)
+        assert(f(Union1.Variant3(SampleResponse1(StatusCode.OK))) == Some(200))
+      case _ => fail("Expected RequiredResponseCode")
+    }
+  }
+
+  sealed trait Union2
+  object Union2 extends ShapeTag.Companion[Union2] {
+    case class Variant1(value: Int) extends Union2
+    case class Variant2(value: String) extends Union2
+
+    val id: ShapeId = ShapeId("smithy4s.example", "Union1")
+    val hints: Hints = Hints(
+    )
+    implicit val schema: Schema[Union2] = Schema.UnionSchema(
+      id,
+      hints,
+      Vector(
+        Schema.int.biject(Variant1.apply(_))(_.value).oneOf[Union2]("Variant1"),
+        Schema.string.biject(Variant2.apply(_))(_.value).oneOf[Union2]("Variant2"),
+      ),
+      {
+        case _: Variant1 => 1
+        case _: Variant2 => 2
+      }
+    )
+  }
+
+  test("applying HttpResponseCode works on a union without status codes") {
+    val res: ResponseCodeExtractor[Union2] =
+      Union2.schema.compile(visitor)
+    assert(res == HttpResponseCodeSchemaVisitor.NoResponseCode)
+  }
+
+
 }
