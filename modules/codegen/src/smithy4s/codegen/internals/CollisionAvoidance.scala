@@ -279,7 +279,14 @@ private[internals] object CollisionAvoidance {
     "notify",
     "notifyAll",
     "toString",
-    "wait"
+    "wait",
+
+    // scala 3 "regular" keywords
+    // https://docs.scala-lang.org/scala3/guides/migration/incompat-syntactic.html#restricted-keywords
+    "enum",
+    "export",
+    "given",
+    "then"
   )
 
   class Names() {
