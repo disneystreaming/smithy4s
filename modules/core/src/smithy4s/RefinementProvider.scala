@@ -50,8 +50,8 @@ object RefinementProvider extends LowPriorityImplicits {
   def rangeConstraint[A, N: Numeric](getValue: A => N): Simple[Range, A] =
     new RangeConstraint[A, N](getValue)
 
-  def patternConstraint[A](toString: A => String): Simple[Pattern, A] =
-    new PatternConstraint[A](toString)
+  def patternConstraint[A](getValue: A => String): Simple[Pattern, A] =
+    new PatternConstraint[A](getValue)
 
   implicit val stringLengthConstraint: Simple[Length, String] =
     lengthConstraint[String](_.length)
