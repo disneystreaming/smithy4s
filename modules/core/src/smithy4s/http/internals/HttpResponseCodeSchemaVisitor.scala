@@ -96,7 +96,7 @@ class HttpResponseCodeSchemaVisitor()
       dispatch: Alt.Dispatcher[U]
   ): ResponseCodeExtractor[U] = {
     import HttpResponseCodeSchemaVisitor.VariantResponseCodeExtractor
-    val variants = alternatives.map { alt: Alt[U, _] =>
+    val variants = alternatives.map { (alt: Alt[U, _]) =>
       VariantResponseCodeExtractor.fromAlt(this, alt)
     }
     val allAreNoResponseCode = variants.forall { _.extractor == NoResponseCode }

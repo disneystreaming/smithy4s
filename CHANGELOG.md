@@ -1,3 +1,7 @@
+# 0.18.9
+
+* Added support for `@httpResponseCode` on unions.
+
 # 0.18.8
 
 * Fix collision avoidance algorithm to cover Scala 3 keywords
