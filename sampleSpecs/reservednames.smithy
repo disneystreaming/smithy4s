@@ -141,3 +141,8 @@ enum KeywordEnum {
     implicit
     package = "class"
 }
+
+structure Scala3ReservedKeywords {
+    export: String
+    enum: String
+}
