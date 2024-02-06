@@ -75,7 +75,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.6"
+    val millVersion = "0.11.7"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
