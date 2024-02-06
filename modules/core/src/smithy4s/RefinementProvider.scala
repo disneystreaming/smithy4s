@@ -44,25 +44,34 @@ object RefinementProvider extends LowPriorityImplicits {
 
   type Simple[C, A] = RefinementProvider[C, A, A]
 
+  def lengthConstraint[A](getLength: A => Int): Simple[Length, A] =
+    new LengthConstraint(getLength)
+
+  def rangeConstraint[A, N: Numeric](getValue: A => N): Simple[Range, A] =
+    new RangeConstraint[A, N](getValue)
+
+  def patternConstraint[A](getValue: A => String): Simple[Pattern, A] =
+    new PatternConstraint[A](getValue)
+
   implicit val stringLengthConstraint: Simple[Length, String] =
-    new LengthConstraint[String](_.length)
+    lengthConstraint[String](_.length)
 
   implicit val blobLengthConstraint: Simple[Length, Blob] =
-    new LengthConstraint[Blob](_.size)
+    lengthConstraint[Blob](_.size)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]
   ): Simple[Length, C[A]] =
-    new LengthConstraint[C[A]](ca => ev(ca).size)
+    lengthConstraint[C[A]](ca => ev(ca).size)
 
   implicit def mapLengthConstraint[K, V]: Simple[Length, Map[K, V]] =
-    new LengthConstraint[Map[K, V]](_.size)
+    lengthConstraint[Map[K, V]](_.size)
 
   implicit val stringPatternConstraints: Simple[Pattern, String] =
-    new PatternConstraint[String](identity)
+    patternConstraint[String](identity)
 
   implicit def numericRangeConstraints[N: Numeric]
-      : Simple[smithy.api.Range, N] = new RangeConstraint[N, N](identity[N])
+      : Simple[smithy.api.Range, N] = rangeConstraint[N, N](identity)
 
   // Lazy to avoid some pernicious recursive initialisation issue between
   // the ShapeId static object and the generated code that makes use of it,
