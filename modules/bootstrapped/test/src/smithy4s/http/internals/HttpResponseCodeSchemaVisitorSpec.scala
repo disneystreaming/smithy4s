@@ -239,9 +239,16 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       id,
       hints,
       Vector(
-        Schema.int.biject(Variant1.apply(_))(_.value).oneOf[Union1]("Variant1").addHints(smithy.api.HttpResponseCode()),
-        Schema.string.biject(Variant2.apply(_))(_.value).oneOf[Union1]("Variant2"),
-        SampleResponse1.schema.biject(Variant3.apply(_))(_.value).oneOf[Union1]("Variant3")
+        Schema.int
+          .biject(Variant1.apply(_))(_.value)
+          .oneOf[Union1]("Variant1")
+          .addHints(smithy.api.HttpResponseCode()),
+        Schema.string
+          .biject(Variant2.apply(_))(_.value)
+          .oneOf[Union1]("Variant2"),
+        SampleResponse1.schema
+          .biject(Variant3.apply(_))(_.value)
+          .oneOf[Union1]("Variant3")
       ),
       {
         case _: Variant1 => 1
@@ -276,7 +283,9 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       hints,
       Vector(
         Schema.int.biject(Variant1.apply(_))(_.value).oneOf[Union2]("Variant1"),
-        Schema.string.biject(Variant2.apply(_))(_.value).oneOf[Union2]("Variant2"),
+        Schema.string
+          .biject(Variant2.apply(_))(_.value)
+          .oneOf[Union2]("Variant2")
       ),
       {
         case _: Variant1 => 1
@@ -290,6 +299,5 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       Union2.schema.compile(visitor)
     assert(res == HttpResponseCodeSchemaVisitor.NoResponseCode)
   }
-
 
 }
