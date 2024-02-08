@@ -30,7 +30,6 @@ import smithy4s.ShapeId
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   NoResponseCode,
   OptionalResponseCode,
-  RequiredResponseCode,
   ResponseCodeExtractor
 }
 import smithy4s.Refinement
@@ -96,11 +95,7 @@ class HttpResponseCodeSchemaVisitor()
     OptionalResponseCode[Option[A]] {
       case None => None
       case Some(value) =>
-        aExt match {
-          case NoResponseCode          => None
-          case RequiredResponseCode(f) => Some(f(value))
-          case OptionalResponseCode(f) => f(value)
-        }
+        aExt.apply(value)
     }
   }
 
@@ -127,7 +122,15 @@ class HttpResponseCodeSchemaVisitor()
 }
 
 object HttpResponseCodeSchemaVisitor {
-  sealed trait ResponseCodeExtractor[-A]
+  sealed trait ResponseCodeExtractor[-A] {
+    def apply(a: A): Option[Int] = this match {
+      case NoResponseCode => None
+      case RequiredResponseCode(f) =>
+        Some(f(a))
+      case OptionalResponseCode(f) =>
+        f(a)
+    }
+  }
   object NoResponseCode extends ResponseCodeExtractor[Any]
   case class RequiredResponseCode[A](f: A => Int)
       extends ResponseCodeExtractor[A]
