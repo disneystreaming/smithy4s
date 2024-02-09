@@ -251,7 +251,7 @@ object Metadata {
         cache: Cache
     ): Encoder[A] = {
       val toStatusCode: A => Option[Int] =
-        schema.compile(new HttpResponseCodeSchemaVisitor()).apply
+        schema.compile(new HttpResponseCodeSchemaVisitor()).toFunction
 
       val schemaVisitor = new SchemaVisitorMetadataWriter(
         cache,

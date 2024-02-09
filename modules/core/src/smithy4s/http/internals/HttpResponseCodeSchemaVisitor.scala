@@ -33,6 +33,7 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   ResponseCodeExtractor
 }
 import smithy4s.Refinement
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -92,10 +93,12 @@ class HttpResponseCodeSchemaVisitor()
       schema: Schema[A]
   ): ResponseCodeExtractor[Option[A]] = {
     val aExt = apply(schema)
-    OptionalResponseCode[Option[A]] {
-      case None => None
-      case Some(value) =>
-        aExt.apply(value)
+    aExt match {
+      case NoResponseCode => NoResponseCode
+      case RequiredResponseCode(f) =>
+        OptionalResponseCode((_: Option[A]).map(f))
+      case OptionalResponseCode(f) =>
+        OptionalResponseCode((_: Option[A]).flatMap(f))
     }
   }
 
@@ -123,19 +126,21 @@ class HttpResponseCodeSchemaVisitor()
 
 object HttpResponseCodeSchemaVisitor {
   sealed trait ResponseCodeExtractor[-A] {
-    def apply(a: A): Option[Int] = this match {
-      case NoResponseCode => None
-      case RequiredResponseCode(f) =>
-        Some(f(a))
-      case OptionalResponseCode(f) =>
-        f(a)
-    }
+    def toFunction: A => Option[Int]
   }
-  object NoResponseCode extends ResponseCodeExtractor[Any]
+
+  object NoResponseCode extends ResponseCodeExtractor[Any] {
+    def apply(v1: Any): Option[Int] = None
+    val toFunction: Any => Option[Int] = _ => None
+  }
   case class RequiredResponseCode[A](f: A => Int)
-      extends ResponseCodeExtractor[A]
+      extends ResponseCodeExtractor[A] {
+    def toFunction: A => Option[Int] = f andThen (Some(_))
+  }
   case class OptionalResponseCode[A](f: A => Option[Int])
-      extends ResponseCodeExtractor[A]
+      extends ResponseCodeExtractor[A] {
+    def toFunction: A => Option[Int] = f
+  }
 
   implicit val contravariant: Contravariant[ResponseCodeExtractor] =
     new Contravariant[ResponseCodeExtractor]() {
