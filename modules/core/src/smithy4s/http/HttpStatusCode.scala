@@ -19,6 +19,9 @@ package http
 
 import smithy4s.schema._
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.NoResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.OptionalResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
 
 /**
   * Typeclass construct allowing to retrieve the status code associated to a value.
@@ -36,13 +39,19 @@ object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
   type Aux[A] = internals.HttpCode[A]
 
   def fromSchema[A](schema: Schema[A], cache: Cache): HttpStatusCode[A] = {
-    val dynamicErrorCodeVisitor =
+    val dynamicErrorCode =
       schema.compile(new HttpResponseCodeSchemaVisitor())
-    val staticVisitor =
+    val staticErrorCode =
       schema.compile(new internals.ErrorCodeSchemaVisitor(cache))
-    new HttpStatusCode[A] {
-      def code(a: A, default: Int): Int =
-        dynamicErrorCodeVisitor(a).orElse(staticVisitor(a)).getOrElse(default)
+
+    dynamicErrorCode match {
+      case NoResponseCode =>
+        (a: A, default: Int) => staticErrorCode(a).getOrElse(default)
+      case OptionalResponseCode(getDynamicCode) =>
+        (a: A, default: Int) =>
+          getDynamicCode(a).orElse(staticErrorCode(a)).getOrElse(default)
+      case RequiredResponseCode(getDynamicCode) =>
+        (a: A, default: Int) => getDynamicCode(a)
     }
   }
 
