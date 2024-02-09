@@ -30,10 +30,10 @@ import smithy4s.ShapeId
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   NoResponseCode,
   OptionalResponseCode,
-  RequiredResponseCode,
   ResponseCodeExtractor
 }
 import smithy4s.Refinement
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -93,14 +93,12 @@ class HttpResponseCodeSchemaVisitor()
       schema: Schema[A]
   ): ResponseCodeExtractor[Option[A]] = {
     val aExt = apply(schema)
-    OptionalResponseCode[Option[A]] {
-      case None => None
-      case Some(value) =>
-        aExt match {
-          case NoResponseCode          => None
-          case RequiredResponseCode(f) => Some(f(value))
-          case OptionalResponseCode(f) => f(value)
-        }
+    aExt match {
+      case NoResponseCode => NoResponseCode
+      case RequiredResponseCode(f) =>
+        OptionalResponseCode((_: Option[A]).map(f))
+      case OptionalResponseCode(f) =>
+        OptionalResponseCode((_: Option[A]).flatMap(f))
     }
   }
 
@@ -127,12 +125,22 @@ class HttpResponseCodeSchemaVisitor()
 }
 
 object HttpResponseCodeSchemaVisitor {
-  sealed trait ResponseCodeExtractor[-A]
-  object NoResponseCode extends ResponseCodeExtractor[Any]
+  sealed trait ResponseCodeExtractor[-A] {
+    def toFunction: A => Option[Int]
+  }
+
+  object NoResponseCode extends ResponseCodeExtractor[Any] {
+    def apply(v1: Any): Option[Int] = None
+    val toFunction: Any => Option[Int] = _ => None
+  }
   case class RequiredResponseCode[A](f: A => Int)
-      extends ResponseCodeExtractor[A]
+      extends ResponseCodeExtractor[A] {
+    def toFunction: A => Option[Int] = f andThen (Some(_))
+  }
   case class OptionalResponseCode[A](f: A => Option[Int])
-      extends ResponseCodeExtractor[A]
+      extends ResponseCodeExtractor[A] {
+    def toFunction: A => Option[Int] = f
+  }
 
   implicit val contravariant: Contravariant[ResponseCodeExtractor] =
     new Contravariant[ResponseCodeExtractor]() {

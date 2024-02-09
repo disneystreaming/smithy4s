@@ -1,3 +1,7 @@
+# 0.18.9
+
+* Supports error responses with `@httpResponseCode` fields.
+
 # 0.18.8
 
 * Fix collision avoidance algorithm to cover Scala 3 keywords
