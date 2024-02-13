@@ -91,7 +91,9 @@ object Document {
   def array(values: Iterable[Document]): Document = DArray(
     IndexedSeq.newBuilder.++=(values).result()
   )
-  def obj(kv: Iterable[(String, Document)]): Document = DObject(Map.from(kv))
+  def obj(kv: Iterable[(String, Document)]): Document = DObject(
+    Map(kv.toSeq: _*)
+  )
   def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
