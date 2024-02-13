@@ -69,8 +69,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): Unit = discard {
       counter.incrementAndGet()
     }

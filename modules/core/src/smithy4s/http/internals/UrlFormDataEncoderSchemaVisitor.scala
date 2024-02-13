@@ -107,24 +107,23 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): UrlFormDataEncoder[E] = tag match {
-    case EnumTag.IntEnum() =>
-      value =>
+    case EnumTag.IntEnum(value, _) =>
+      e =>
         List(
           UrlForm.FormData(
             PayloadPath.root,
-            Some(total(value).intValue.toString)
+            Some(value(e).toString)
           )
         )
 
-    case _ =>
-      value =>
+    case EnumTag.StringEnum(value, _) =>
+      e =>
         List(
           UrlForm.FormData(
             PayloadPath.root,
-            Some(total(value).stringValue)
+            Some(value(e))
           )
         )
   }

@@ -52,13 +52,11 @@ object HostPrefixSchemaVisitor
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MaybeHostPrefixEncoder[E] =
     tag match {
-      case EnumTag.IntEnum() => default
-      case _ =>
-        maybeStr.map(_.contramap(total(_).stringValue))
+      case EnumTag.IntEnum(_, _)        => default
+      case EnumTag.StringEnum(value, _) => maybeStr.map(_.contramap(value))
     }
 
   override def struct[S](

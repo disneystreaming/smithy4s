@@ -52,23 +52,21 @@ private[internals] final class SchemaVisitorPatternDecoder(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MaybePatternDecode[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
-    val fromOrdinal =
+    val fromIntValue =
       values.map(e => BigDecimal(e.intValue) -> e.value).toMap
     tag match {
-      case EnumTag.ClosedIntEnum =>
+      case EnumTag.StringEnum(_, Some(unknown)) =>
         PatternDecode.from(value =>
-          if (fromOrdinal.contains(BigDecimal(value)))
-            fromOrdinal(BigDecimal(value))
-          else throw StructurePatternError(s"Enum case for '$value' not found.")
+          if (fromName.contains(value)) fromName(value)
+          else unknown(value)
         )
-      case EnumTag.OpenIntEnum(unknown) =>
+      case EnumTag.IntEnum(_, Some(unknown)) =>
         PatternDecode.from(value =>
-          if (fromOrdinal.contains(BigDecimal(value)))
-            fromOrdinal(BigDecimal(value))
+          if (fromIntValue.contains(BigDecimal(value)))
+            fromIntValue(BigDecimal(value))
           else
             // toIntOption not available on 2.12
             util
@@ -81,15 +79,16 @@ private[internals] final class SchemaVisitorPatternDecoder(
                 )
               )
         )
-      case EnumTag.ClosedStringEnum =>
+      case EnumTag.IntEnum(_, None) =>
+        PatternDecode.from(value =>
+          if (fromIntValue.contains(BigDecimal(value)))
+            fromIntValue(BigDecimal(value))
+          else throw StructurePatternError(s"Enum case for '$value' not found.")
+        )
+      case EnumTag.StringEnum(_, None) =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")
-        )
-      case EnumTag.OpenStringEnum(unknown) =>
-        PatternDecode.from(value =>
-          if (fromName.contains(value)) fromName(value)
-          else unknown(value)
         )
     }
   }

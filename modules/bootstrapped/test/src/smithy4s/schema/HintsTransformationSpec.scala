@@ -211,10 +211,11 @@ class HintsTransformationSpec() extends FunSuite {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): Count[E] = { e =>
-      count(hints) + count(total(e).hints)
+      count(hints) + count(
+        values.find(_.value == e).map(_.hints).getOrElse(Hints.empty)
+      )
     }
 
     def struct[S](

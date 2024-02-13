@@ -82,6 +82,8 @@ object Document {
   case class DArray(value: IndexedSeq[Document]) extends Document
   case class DObject(value: Map[String, Document]) extends Document
 
+  final val EmptyObject = DObject(Map.empty)
+
   def fromString(str: String): Document = DString(str)
   def fromInt(int: Int): Document = DNumber(BigDecimal(int))
   def fromLong(long: Long): Document = DNumber(BigDecimal(long))
@@ -92,7 +94,8 @@ object Document {
   def array(values: Iterable[Document]): Document = DArray(
     IndexedSeq.newBuilder.++=(values).result()
   )
-  def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
+  def obj(kv: (String, Document)*): Document =
+    if (kv.isEmpty) EmptyObject else DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
   trait Encoder[A] {

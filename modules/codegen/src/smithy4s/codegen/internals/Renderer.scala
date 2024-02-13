@@ -20,8 +20,6 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
 import smithy4s.codegen.internals.Type.Nullable
@@ -1231,15 +1229,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case EnumTag.IntEnum | EnumTag.OpenIntEnum => true
       case _                                     => false
     }
+    val enumSchemaMethod = (isOpen, isIntEnum) match {
+      case (false, false) => stringEnumeration_
+      case (true, false)  => openStringEnumeration_
+      case (false, true)  => intEnumeration_
+      case (true, true)   => openIntEnumeration_
+    }
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
+        line"sealed abstract class ${name.name}(_name: $string_, _stringValue: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
         line"override type EnumType = $name",
-        line"override val value: $string_ = _value",
         line"override val name: $string_ = _name",
+        line"override val stringValue: $string_ = _stringValue",
         line"override val intValue: $int_ = _intValue",
         line"override val hints: $Hints_ = _hints",
         line"override def enumeration: $Enumeration_[EnumType] = $name",
@@ -1255,7 +1259,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val valueName = NameRef(e.name)
 
           val baseLine =
-            line"""case object $valueName extends $name("$value", "${e.realName}", $intValue, $Hints_.empty)"""
+            line"""case object $valueName extends $name("${e.realName}", "$value", $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
@@ -1273,7 +1277,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val intValue = if (isIntEnum) paramName else "-1"
           val stringValue = if (isIntEnum) "\"$Unknown\"" else paramName
           lines(
-            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, "$$Unknown", $intValue, Hints.empty)""",
+            line"""final case class $$Unknown($paramName: $paramType) extends $name("$$Unknown", $stringValue, $intValue, Hints.empty)""",
             newline,
             line"val $$unknown: $paramType => $name = $$Unknown(_)"
           )
@@ -1282,8 +1286,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"val values: $list[$name] = $list".args(
           values.map(_.name)
         ),
-        renderEnumTag(name, tag),
-        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
+        if (isOpen) {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values, $$unknown).withId(id).addHints(hints)"
+        } else {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values).withId(id).addHints(hints)"
+        },
         renderTypeclasses(hints, name)
       )
     )
@@ -1444,16 +1451,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
-  }
-
-  def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
-    val tagStr = tag match {
-      case IntEnum                => "ClosedIntEnum"
-      case StringEnum             => "ClosedStringEnum"
-      case EnumTag.OpenIntEnum    => "OpenIntEnum($unknown)"
-      case EnumTag.OpenStringEnum => "OpenStringEnum($unknown)"
-    }
-    line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {

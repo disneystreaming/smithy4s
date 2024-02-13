@@ -18,7 +18,6 @@ package smithy4s.internals
 
 import munit._
 import smithy4s._
-import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema._
 import java.util.UUID
 import smithy4s.example.OpenEnumTest
@@ -68,7 +67,7 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
       _hints: Hints
   ) extends Enumeration.Value {
     override type EnumType = SomeEnum
-    override val value: String = _value
+    override val stringValue: String = _value
     override val name: String = _name
     override val intValue: Int = _intValue
     override val hints: Hints = _hints
@@ -89,10 +88,8 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
 
     val values = List(ONE, TWO)
 
-    val tag = EnumTag.ClosedStringEnum
-
     implicit val schema: Schema[SomeEnum] =
-      enumeration(tag, values).withId(id).addHints(hints)
+      stringEnumeration(values).withId(id).addHints(hints)
   }
 
   case class Primitives(

@@ -65,8 +65,7 @@ object HttpMediaType extends Newtype[String] {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): Option[String] = Some(stringMediaType(hints))
 
     override def biject[A, B](

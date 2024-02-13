@@ -219,7 +219,7 @@ class DocumentSpec() extends FunSuite {
     val one: OpenEnumTest = OpenEnumTest.ONE
     val document = Document.encode(one)
     import Document._
-    val expectedDocument = DString(OpenEnumTest.ONE.value)
+    val expectedDocument = DString(OpenEnumTest.ONE.stringValue)
 
     val roundTripped = Document.decode[OpenEnumTest](document)
 

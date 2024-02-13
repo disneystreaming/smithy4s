@@ -68,14 +68,13 @@ object SchemaVisitorPathEncoder
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MaybePathEncode[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        PathEncode.from(e => total(e).intValue.toString)
-      case _ =>
-        PathEncode.from(e => total(e).stringValue)
+      case EnumTag.IntEnum(value, _) =>
+        PathEncode.from(e => value(e).toString)
+      case EnumTag.StringEnum(value, _) =>
+        PathEncode.from(value)
     }
 
   override def struct[S](

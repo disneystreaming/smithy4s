@@ -1,5 +1,8 @@
 # 0.19.0
 
+<<<<<<< HEAD
+* Reworked enumerations / the EnumerationSchema to eliminate a OOM pitfall and improve ergonomics of SchemaVisitor
+=======
 ## Remove localhost from default URI in [#1341](https://github.com/disneystreaming/smithy4s/pull/1341)
 
 Previously, URIs constructed with a base URI of `/` would have `localhost` as the host. In some cases, that may not be desirable, such as in the case of frontend clients that want to reuse the window's origin. This is now fixed: hostnames are optional in the smithy4s URI model, and default to `None`.
@@ -18,6 +21,7 @@ These are now fixed in [#1344](https://github.com/disneystreaming/smithy4s/pull/
 * In some concurrent scenarios, especially those of concurrent initialization of objects (e.g. tests), your application would previously be at risk of deadlocking due to [#537](https://github.com/disneystreaming/smithy4s/issues/537). This is now fixed by suspending evaluation of hints in companion objects using the `.lazily` construct: see [#1326](https://github.com/disneystreaming/smithy4s/pull/1326).
 
 * Allow to configure how the default values (and nulls for optional fields) are rendered. Fixed in [#1315](https://github.com/disneystreaming/smithy4s/pull/1315)
+>>>>>>> origin/series/0.19
 
 # 0.18.5
 
