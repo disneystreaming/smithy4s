@@ -1,6 +1,9 @@
 # 0.18.9
 
 * Supports error responses with `@httpResponseCode` fields.
+* Adds a `Field#addHints(hints: Hints)` method
+* Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
+* Adds a `smithy4s.Document.syntax` object, the contents of which can be imported to facilitate the instantiation of documents.
 
 # 0.18.8
 
