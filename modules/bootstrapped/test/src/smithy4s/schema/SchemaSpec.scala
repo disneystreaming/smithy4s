@@ -37,4 +37,9 @@ final class SchemaSpec extends FunSuite {
     assertEquals(sch.getDefaultValue, None)
   }
 
+  test("bijection - identity") {
+    val sut = Bijection.identity[String]
+    val str = "value"
+    assertEquals(sut.to(sut.from(str)), str)
+  }
 }
