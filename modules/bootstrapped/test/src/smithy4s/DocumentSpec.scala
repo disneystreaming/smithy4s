@@ -540,4 +540,36 @@ class DocumentSpec() extends FunSuite {
 
   }
 
+  test("Document syntax allows to build documents more concisely") {
+    import Document.syntax._
+
+    val niceSyntaxDocument = obj(
+      "int" -> 1,
+      "boolean" -> true,
+      "long" -> 2L,
+      "string" -> "hello",
+      "nested" -> obj("null" -> nullDoc),
+      "array" -> array("one", "two", "three"),
+      "fromSchema" -> JsonName("name")
+    )
+
+    val expectedDocument = Document.obj(
+      "int" -> Document.DNumber(BigDecimal(1)),
+      "boolean" -> Document.DBoolean(true),
+      "long" -> Document.DNumber(BigDecimal(2)),
+      "string" -> Document.DString("hello"),
+      "nested" -> Document.DObject(Map("null" -> Document.DNull)),
+      "array" -> Document.DArray(
+        IndexedSeq(
+          Document.DString("one"),
+          Document.DString("two"),
+          Document.DString("three")
+        )
+      ),
+      "fromSchema" -> Document.DString("name")
+    )
+
+    assertEquals(niceSyntaxDocument, expectedDocument)
+  }
+
 }
