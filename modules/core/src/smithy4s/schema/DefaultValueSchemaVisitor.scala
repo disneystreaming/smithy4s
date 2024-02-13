@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,8 +61,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Option[E] = None
 
   def struct[S](

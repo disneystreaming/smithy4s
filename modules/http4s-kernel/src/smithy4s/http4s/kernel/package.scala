@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ package object kernel {
 
     Smithy4sHttpUri(
       uriScheme,
-      uri.host.map(_.renderString).getOrElse("localhost"),
+      uri.host.map(_.renderString),
       uri.port,
       uri.path.segments.map(_.decoded()),
       getQueryParams(uri),
@@ -98,10 +98,10 @@ package object kernel {
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
-
+    val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
     Uri(
       path = path,
-      authority = Some(Uri.Authority(host = Uri.RegName(uri.host), port = uri.port)),
+      authority = authority,
       scheme = Some {
         uri.scheme match {
           case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http

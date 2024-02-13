@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,28 +16,10 @@
 
 package smithy4s.schema
 
-sealed trait EnumTag[+E]
+// scalafmt: { maxColumn = 120, align.preset = most}
+sealed trait EnumTag[E]
 
 object EnumTag {
-  case object ClosedStringEnum extends EnumTag[Nothing]
-  case object ClosedIntEnum extends EnumTag[Nothing]
-  case class OpenStringEnum[E](unknown: String => E) extends EnumTag[E]
-  case class OpenIntEnum[E](unknown: Int => E) extends EnumTag[E]
-
-  object StringEnum {
-    def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedStringEnum  => true
-      case OpenStringEnum(_) => true
-      case _                 => false
-    }
-
-  }
-
-  object IntEnum {
-    def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
-      case ClosedIntEnum  => true
-      case OpenIntEnum(_) => true
-      case _              => false
-    }
-  }
+  case class StringEnum[E](value: E => String, unknown: Option[String => E]) extends EnumTag[E]
+  case class IntEnum[E](value: E => Int, unknown: Option[Int => E])          extends EnumTag[E]
 }

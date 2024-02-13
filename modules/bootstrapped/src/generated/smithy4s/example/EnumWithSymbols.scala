@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class EnumWithSymbols(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class EnumWithSymbols(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = EnumWithSymbols
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = EnumWithSymbols
@@ -22,15 +21,14 @@ object EnumWithSymbols extends Enumeration[EnumWithSymbols] with ShapeTag.Compan
 
   val hints: Hints = Hints.empty
 
-  case object FooFooFoo extends EnumWithSymbols("foo:foo:foo", "FooFooFoo", 0, Hints())
-  case object BarBarBar extends EnumWithSymbols("bar:bar:bar", "BarBarBar", 1, Hints())
-  case object Value2 extends EnumWithSymbols("_", "Value2", 2, Hints())
+  case object FooFooFoo extends EnumWithSymbols("FooFooFoo", "foo:foo:foo", 0, Hints.empty)
+  case object BarBarBar extends EnumWithSymbols("BarBarBar", "bar:bar:bar", 1, Hints.empty)
+  case object Value2 extends EnumWithSymbols("Value2", "_", 2, Hints.empty)
 
   val values: List[EnumWithSymbols] = List(
     FooFooFoo,
     BarBarBar,
     Value2,
   )
-  val tag: EnumTag[EnumWithSymbols] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[EnumWithSymbols] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[EnumWithSymbols] = stringEnumeration(values).withId(id).addHints(hints)
 }

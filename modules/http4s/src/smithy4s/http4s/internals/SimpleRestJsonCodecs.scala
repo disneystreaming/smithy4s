@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,7 +90,9 @@ private[http4s] class SimpleRestJsonCodecs(
       .withErrorBodyDecoders(payloadDecoders)
       .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
       .withMetadataDecoders(Metadata.Decoder)
-      .withMetadataEncoders(Metadata.Encoder)
+      .withMetadataEncoders(
+        Metadata.Encoder.withExplicitDefaultsEncoding(explicitDefaultsEncoding)
+      )
       .withBaseRequest(_ => baseRequest.pure[F])
       .withRequestMediaType("application/json")
       .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])

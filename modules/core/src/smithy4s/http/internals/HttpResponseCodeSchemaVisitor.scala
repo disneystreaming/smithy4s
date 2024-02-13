@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,23 +16,19 @@
 
 package smithy4s.http.internals
 
-import smithy4s.capability.Contravariant
 import smithy4s.Hints
-import smithy4s.schema.{
-  EnumTag,
-  EnumValue,
-  Primitive,
-  Schema,
-  Field,
-  SchemaVisitor
-}
 import smithy4s.ShapeId
-import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
-  NoResponseCode,
-  OptionalResponseCode,
-  RequiredResponseCode,
-  ResponseCodeExtractor
-}
+import smithy4s.capability.Contravariant
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.NoResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.OptionalResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.ResponseCodeExtractor
+import smithy4s.schema.EnumTag
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Field
+import smithy4s.schema.Primitive
+import smithy4s.schema.Schema
+import smithy4s.schema.SchemaVisitor
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -55,14 +51,14 @@ class HttpResponseCodeSchemaVisitor()
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): ResponseCodeExtractor[E] =
     tag match {
-      case EnumTag.IntEnum() if hints.has[smithy.api.HttpResponseCode] =>
+      case EnumTag.IntEnum(value, _)
+          if hints.has[smithy.api.HttpResponseCode] =>
         Contravariant[ResponseCodeExtractor].contramap(
           HttpResponseCodeSchemaVisitor.int
-        )(e => total(e).intValue)
+        )(value)
       case _ =>
         NoResponseCode
     }

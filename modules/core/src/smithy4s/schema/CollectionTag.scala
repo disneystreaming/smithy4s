@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ object CollectionTag {
       case IndexedSeqTag => Some(implicitly[ClassTag[IndexedSeq[A]]])
     }
     def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): MaybeCT[Map[K,V]] = Some(implicitly[ClassTag[Map[K, V]]])
-    def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]], total: E => EnumValue[E]): MaybeCT[E] = None
+    def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): MaybeCT[E] = None
     def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
     def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: Alt.Dispatcher[U]): MaybeCT[U] = None
     def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): MaybeCT[B] = {

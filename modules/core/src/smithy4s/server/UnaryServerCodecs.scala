@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package smithy4s.server
 
-import smithy4s.schema.OperationSchema
 import smithy4s.capability.MonadThrowLike
+import smithy4s.schema.OperationSchema
 
 // scalafmt: {maxColumn = 120}
 final class UnaryServerCodecs[F[_], Request, Response, I, E, O](

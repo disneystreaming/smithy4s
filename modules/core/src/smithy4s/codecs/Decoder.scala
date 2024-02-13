@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package smithy4s.codecs
 
-import smithy4s.kinds._
 import smithy4s.capability.Covariant
 import smithy4s.capability.Zipper
+import smithy4s.kinds._
 
 /**
   * An abstraction that codifies the action of reading data from some input.

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 
 package smithy4s.internals
 
-import java.util.Base64
-import java.util.UUID
-
-import smithy4s._
 import smithy4s.Document._
+import smithy4s._
+import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.EnumTag
+
+import java.util.Base64
+import java.util.UUID
 
 trait DocumentKeyDecoder[A] { self =>
   def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =
@@ -131,31 +131,30 @@ object DocumentKeyDecoder {
           shapeId: ShapeId,
           hints: Hints,
           tag: EnumTag[E],
-          values: List[EnumValue[E]],
-          total: E => EnumValue[E]
+          values: List[EnumValue[E]]
       ): OptDocumentKeyDecoder[E] = {
         val fromName = values.map(e => e.stringValue -> e.value).toMap
         val fromNum = values.map(e => e.intValue -> e.value).toMap
         val intVal = s"value in [${fromNum.keySet.mkString(", ")}]"
         val stringVal = s"value in [${fromName.keySet.mkString(", ")}]"
         tag match {
-          case EnumTag.OpenIntEnum(unknown) =>
+          case EnumTag.IntEnum(_, Some(unknown)) =>
             from(intVal) {
               case DString(value) if value.toIntOption.isDefined =>
                 val i = value.toInt
                 fromNum.getOrElse(i, unknown(i))
             }
-          case EnumTag.ClosedIntEnum =>
+          case EnumTag.StringEnum(_, Some(unknown)) =>
+            from(stringVal) { case DString(value) =>
+              fromName.getOrElse(value, unknown(value))
+            }
+          case EnumTag.IntEnum(_, None) =>
             from(intVal) {
               case DString(value)
                   if value.toIntOption.exists(fromNum.contains(_)) =>
                 fromNum(value.toInt)
             }
-          case EnumTag.OpenStringEnum(unknown) =>
-            from(stringVal) { case DString(value) =>
-              fromName.getOrElse(value, unknown(value))
-            }
-          case EnumTag.ClosedStringEnum =>
+          case EnumTag.StringEnum(_, None) =>
             from(stringVal) {
               case DString(value) if fromName.contains(value) => fromName(value)
             }

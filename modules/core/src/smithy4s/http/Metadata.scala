@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -210,18 +210,40 @@ object Metadata {
     */
   type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
-  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
+  trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
+    def withExplicitDefaultsEncoding(explicitDefaults: Boolean): EncoderCompiler
+  }
+
+  object Encoder
+      extends CachedEncoderCompilerImpl(
+        awsHeaderEncoding = false,
+        explicitDefaultsEncoding = false
+      ) {
     type Compiler = CachedSchemaCompiler[Encoder]
   }
-  private[smithy4s] object AwsEncoder
-      extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 
-  private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)
-      extends CachedSchemaCompiler.DerivingImpl[Encoder] {
+  private[smithy4s] object AwsEncoder
+      extends CachedEncoderCompilerImpl(
+        awsHeaderEncoding = true,
+        explicitDefaultsEncoding = false
+      )
+
+  private[http] class CachedEncoderCompilerImpl(
+      awsHeaderEncoding: Boolean,
+      explicitDefaultsEncoding: Boolean
+  ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
+      with EncoderCompiler {
 
     type Aux[A] = internals.MetaEncode[A]
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
+
+    def withExplicitDefaultsEncoding(
+        explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler = new CachedEncoderCompilerImpl(
+      awsHeaderEncoding = awsHeaderEncoding,
+      explicitDefaultsEncoding = explicitDefaultsEncoding
+    )
 
     def fromSchemaAux[A](
         schema: Schema[A],
@@ -239,7 +261,8 @@ object Metadata {
       }
       val schemaVisitor = new SchemaVisitorMetadataWriter(
         cache,
-        commaDelimitedEncoding = awsHeaderEncoding
+        commaDelimitedEncoding = awsHeaderEncoding,
+        explicitDefaultsEncoding = explicitDefaultsEncoding
       )
       schemaVisitor(schema) match {
         case StructureMetaEncode(f) if awsHeaderEncoding => { (a: A) =>

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
 import smithy4s.codegen.internals.Type.Nullable
@@ -1008,12 +1006,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+
+          line"$prefix($args): ${product.nameRef} = ${product.nameRef}($values)"
+
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
+
         case UnionMember.TypeCase(tpe) =>
           line"$prefix($ident: $tpe): $name = $cn($ident)"
       }
+
       lines(
         documentationAnnotation(alt.hints),
         deprecationAnnotation(alt.hints),
@@ -1227,15 +1229,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case EnumTag.IntEnum | EnumTag.OpenIntEnum => true
       case _                                     => false
     }
+    val enumSchemaMethod = (isOpen, isIntEnum) match {
+      case (false, false) => stringEnumeration_
+      case (true, false)  => openStringEnumeration_
+      case (false, true)  => intEnumeration_
+      case (true, true)   => openIntEnumeration_
+    }
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
+        line"sealed abstract class ${name.name}(_name: $string_, _stringValue: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
         line"override type EnumType = $name",
-        line"override val value: $string_ = _value",
         line"override val name: $string_ = _name",
+        line"override val stringValue: $string_ = _stringValue",
         line"override val intValue: $int_ = _intValue",
         line"override val hints: $Hints_ = _hints",
         line"override def enumeration: $Enumeration_[EnumType] = $name",
@@ -1247,14 +1255,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         renderPrismsEnum(name, values, hints, isOpen),
-        values.map { case e @ EnumValue(value, intValue, _, hints) =>
+        values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
           val valueName = NameRef(e.name)
-          val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
+          val baseLine =
+            line"""case object $valueName extends $name("${e.realName}", "$value", $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
             deprecationAnnotation(hints),
-            line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
+            if (e.hints.isEmpty) baseLine
+            else
+              block(baseLine)(
+                line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
+              )
           )
         },
         if (isOpen) {
@@ -1263,7 +1277,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val intValue = if (isIntEnum) paramName else "-1"
           val stringValue = if (isIntEnum) "\"$Unknown\"" else paramName
           lines(
-            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, "$$Unknown", $intValue, Hints.empty)""",
+            line"""final case class $$Unknown($paramName: $paramType) extends $name("$$Unknown", $stringValue, $intValue, Hints.empty)""",
             newline,
             line"val $$unknown: $paramType => $name = $$Unknown(_)"
           )
@@ -1272,8 +1286,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"val values: $list[$name] = $list".args(
           values.map(_.name)
         ),
-        renderEnumTag(name, tag),
-        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
+        if (isOpen) {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values, $$unknown).withId(id).addHints(hints)"
+        } else {
+          line"implicit val schema: $Schema_[$name] = $enumSchemaMethod(values).withId(id).addHints(hints)"
+        },
         renderTypeclasses(hints, name)
       )
     )
@@ -1436,21 +1453,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
-    val tagStr = tag match {
-      case IntEnum                => "ClosedIntEnum"
-      case StringEnum             => "ClosedStringEnum"
-      case EnumTag.OpenIntEnum    => "OpenIntEnum($unknown)"
-      case EnumTag.OpenStringEnum => "OpenStringEnum($unknown)"
-    }
-    line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
-  }
-
   def renderHintsVal(hints: List[Hint]): Lines = {
-    val base = line"val hints: $Hints_ = $Hints_"
+    val lhs = line"val hints: $Hints_"
+
     hints.flatMap(renderHint) match {
-      case Nil  => lines(base + line".empty")
-      case args => base.args(args)
+      case Nil => lines(line"$lhs = $Hints_.empty")
+      case args =>
+        line"$lhs = $Hints_".args(args).appendToLast(".lazily")
     }
   }
 

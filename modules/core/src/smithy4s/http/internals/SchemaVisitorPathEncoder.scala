@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,14 +16,20 @@
 
 package smithy4s.http.internals
 
-import smithy4s.schema._
-import PathEncode.MaybePathEncode
+import smithy.api.Http
 import smithy.api.TimestampFormat
 import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.http.PathSegment
-import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
-import smithy4s.{Hints, Lazy, Refinement, ShapeId}
-import smithy.api.Http
+import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
+import smithy4s.schema._
+
+import PathEncode.MaybePathEncode
 
 object SchemaVisitorPathEncoder
     extends SchemaVisitor[MaybePathEncode]
@@ -62,14 +68,13 @@ object SchemaVisitorPathEncoder
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MaybePathEncode[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        PathEncode.from(e => total(e).intValue.toString)
-      case _ =>
-        PathEncode.from(e => total(e).stringValue)
+      case EnumTag.IntEnum(value, _) =>
+        PathEncode.from(e => value(e).toString)
+      case EnumTag.StringEnum(value, _) =>
+        PathEncode.from(value)
     }
 
   override def struct[S](

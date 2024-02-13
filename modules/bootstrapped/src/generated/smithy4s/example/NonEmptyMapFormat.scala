@@ -13,7 +13,7 @@ object NonEmptyMapFormat extends ShapeTag.Companion[NonEmptyMapFormat] {
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("map"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[NonEmptyMapFormat] = constant(NonEmptyMapFormat()).withId(id).addHints(hints)
 }

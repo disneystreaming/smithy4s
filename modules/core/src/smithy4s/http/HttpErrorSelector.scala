@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package smithy4s
 package http
 
 import smithy.api.Error
-import smithy4s.schema.Alt
 import smithy.api.HttpError
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.ErrorSchema
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
+import smithy4s.schema.Alt
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.ErrorSchema
 
 /**
   * Utility function to help find the decoder matching a certain discriminator

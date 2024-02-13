@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -88,8 +88,14 @@ private[internals] object CollisionAvoidance {
         )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
-          case EnumValue(value, intValue, name, hints) =>
-            EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
+          case EnumValue(value, intValue, name, realName, hints) =>
+            EnumValue(
+              value = value,
+              intValue = intValue,
+              name = protectKeyword(name),
+              realName = realName,
+              hints.map(modHint)
+            )
         }
         Enumeration(
           shapeId,
@@ -184,13 +190,13 @@ private[internals] object CollisionAvoidance {
   private def modProduct(p: Product): Product = {
     import p._
     Product(
-      p.shapeId,
-      protectKeyword(name.capitalize),
-      fields.map(modField),
-      mixins.map(modType),
-      recursive,
-      hints.map(modHint),
-      isMixin
+      shapeId = p.shapeId,
+      name = protectKeyword(name.capitalize),
+      fields = fields.map(modField),
+      mixins = mixins.map(modType),
+      recursive = recursive,
+      hints = hints.map(modHint),
+      isMixin = isMixin
     )
   }
 
@@ -201,7 +207,12 @@ private[internals] object CollisionAvoidance {
         case EnumerationTN(ref, value, intValue, name) =>
           EnumerationTN(modRef(ref), value, intValue, name)
         case StructureTN(ref, fields) =>
-          StructureTN(modRef(ref), fields)
+          StructureTN(
+            ref = modRef(ref),
+            fields = fields.map { case (k, v) =>
+              protectKeyword(k) -> v
+            }
+          )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
@@ -296,6 +307,13 @@ private[internals] object CollisionAvoidance {
     val union_ = NameRef("smithy4s.schema.Schema", "union")
     val recursive_ = NameRef("smithy4s.schema.Schema", "recursive")
     val enumeration_ = NameRef("smithy4s.schema.Schema", "enumeration")
+    val stringEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "stringEnumeration")
+    val intEnumeration_ = NameRef("smithy4s.schema.Schema", "intEnumeration")
+    val openStringEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "openStringEnumeration")
+    val openIntEnumeration_ =
+      NameRef("smithy4s.schema.Schema", "openIntEnumeration")
     val constant_ = NameRef("smithy4s.schema.Schema", "constant")
     val struct_ = NameRef("smithy4s.schema.Schema", "struct")
     val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")

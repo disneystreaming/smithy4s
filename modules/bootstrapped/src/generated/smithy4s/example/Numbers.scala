@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.intEnumeration
 
-sealed abstract class Numbers(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class Numbers(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = Numbers
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = Numbers
@@ -22,13 +21,12 @@ object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
 
   val hints: Hints = Hints.empty
 
-  case object ONE extends Numbers("ONE", "ONE", 1, Hints())
-  case object TWO extends Numbers("TWO", "TWO", 2, Hints())
+  case object ONE extends Numbers("ONE", "ONE", 1, Hints.empty)
+  case object TWO extends Numbers("TWO", "TWO", 2, Hints.empty)
 
   val values: List[Numbers] = List(
     ONE,
     TWO,
   )
-  val tag: EnumTag[Numbers] = EnumTag.ClosedIntEnum
-  implicit val schema: Schema[Numbers] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[Numbers] = intEnumeration(values).withId(id).addHints(hints)
 }

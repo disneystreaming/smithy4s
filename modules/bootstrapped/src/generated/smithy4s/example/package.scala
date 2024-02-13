@@ -3,6 +3,8 @@ package smithy4s
 package object example {
   type ErrorHandlingService[F[_]] = smithy4s.kinds.FunctorAlgebra[ErrorHandlingServiceGen, F]
   val ErrorHandlingService = ErrorHandlingServiceGen
+  type ServiceWithNullsAndDefaults[F[_]] = smithy4s.kinds.FunctorAlgebra[ServiceWithNullsAndDefaultsGen, F]
+  val ServiceWithNullsAndDefaults = ServiceWithNullsAndDefaultsGen
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
   val DeprecatedService = DeprecatedServiceGen

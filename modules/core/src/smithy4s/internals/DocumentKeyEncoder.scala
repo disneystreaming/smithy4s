@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package smithy4s.internals
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
 import smithy4s._
+import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
-import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.Schema
-import smithy4s.schema.EnumTag
+import smithy4s.schema.SchemaVisitor
 
 trait DocumentKeyEncoder[A] { self =>
   def apply(a: A): String
@@ -91,13 +91,12 @@ object DocumentKeyEncoder {
           shapeId: ShapeId,
           hints: Hints,
           tag: EnumTag[E],
-          values: List[EnumValue[E]],
-          total: E => EnumValue[E]
+          values: List[EnumValue[E]]
       ): OptDocumentKeyEncoder[E] = tag match {
-        case EnumTag.IntEnum() =>
-          Some { a => total(a).intValue.toString }
-        case _ =>
-          Some { a => total(a).stringValue }
+        case EnumTag.IntEnum(value, _) =>
+          Some { a => value(a).toString }
+        case EnumTag.StringEnum(value, _) =>
+          Some { value(_) }
       }
 
       override def biject[A, B](

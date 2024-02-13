@@ -15,7 +15,7 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
 
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
-  )
+  ).lazily
 
   implicit val schema: Schema[DeprecatedStructure] = struct(
     Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings).addHints(smithy.api.Deprecated(message = None, since = None)),

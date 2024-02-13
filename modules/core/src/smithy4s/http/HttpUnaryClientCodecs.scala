@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
 package smithy4s
 package http
 
+import smithy4s.capability.MonadThrowLike
 import smithy4s.client.UnaryClientCodecs
-import smithy4s.codecs.{BlobEncoder, BlobDecoder}
-import smithy4s.codecs.{Decoder}
-import smithy4s.codecs.Writer
+import smithy4s.codecs.BlobDecoder
+import smithy4s.codecs.BlobEncoder
+import smithy4s.codecs.Decoder
 import smithy4s.codecs.PayloadError
+import smithy4s.codecs.Writer
+import smithy4s.kinds.PolyFunction5
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
-import smithy4s.capability.MonadThrowLike
-import smithy4s.kinds.PolyFunction5
 
 // scalafmt: { maxColumn = 120 }
 object HttpUnaryClientCodecs {

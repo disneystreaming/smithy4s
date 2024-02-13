@@ -58,7 +58,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       _hints: Hints
   ) extends Enumeration.Value {
     override type EnumType = StatusCode
-    override val value: String = _value
+    override val stringValue: String = _value
     override val name: String = _name
     override val intValue: Int = _intValue
     override val hints: Hints = _hints

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ trait Enumeration[E <: Enumeration.Value] extends ShapeTag.Companion[E] {
   def id: ShapeId
   def hints: Hints
   def values: List[E]
-  lazy val valueMap = values.map(e => e.value -> e).toMap
+  lazy val valueMap = values.map(e => e.stringValue -> e).toMap
   lazy val intValueMap = values.map(e => e.intValue -> e).toMap
   final def fromString(s: String): Option[E] = valueMap.get(s)
   final def fromOrdinal(s: Int): Option[E] = intValueMap.get(s)
@@ -33,8 +33,8 @@ object Enumeration {
   abstract class Value extends Product with Serializable {
     type EnumType <: Value
 
-    def value: String
     def name: String
+    def stringValue: String
     def intValue: Int
     def hints: Hints
     def enumeration: Enumeration[EnumType]
@@ -42,7 +42,7 @@ object Enumeration {
 
   object Value {
     def toSchema[E <: Value](e: E): EnumValue[E] = {
-      EnumValue(e.value, e.intValue, e, e.name, e.hints)
+      EnumValue(e.stringValue, e.intValue, e, e.name, e.hints)
     }
   }
 

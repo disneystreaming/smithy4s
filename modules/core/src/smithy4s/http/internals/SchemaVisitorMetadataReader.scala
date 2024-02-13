@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,17 +18,15 @@ package smithy4s
 package http
 package internals
 
-import smithy4s.http.internals.MetaDecode.{
-  EmptyMetaDecode,
-  PutField,
-  StringListMapMetaDecode,
-  StringCollectionMetaDecode,
-  StringMapMetaDecode,
-  StringValueMetaDecode,
-  StructureMetaDecode
-}
-import smithy4s.schema._
+import smithy4s.http.internals.MetaDecode.EmptyMetaDecode
+import smithy4s.http.internals.MetaDecode.PutField
+import smithy4s.http.internals.MetaDecode.StringCollectionMetaDecode
+import smithy4s.http.internals.MetaDecode.StringListMapMetaDecode
+import smithy4s.http.internals.MetaDecode.StringMapMetaDecode
+import smithy4s.http.internals.MetaDecode.StringValueMetaDecode
+import smithy4s.http.internals.MetaDecode.StructureMetaDecode
 import smithy4s.internals.SchemaDescription
+import smithy4s.schema._
 
 import java.util.Base64
 
@@ -112,8 +110,7 @@ private[http] class SchemaVisitorMetadataReader(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MetaDecode[E] = {
     val intVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
     val stringVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
@@ -126,16 +123,16 @@ private[http] class SchemaVisitorMetadataReader(
       values.find(_.stringValue == string).map(_.value)
     }
     tag match {
-      case EnumTag.ClosedIntEnum =>
+      case EnumTag.IntEnum(_, None) =>
         MetaDecode.from(intVals)(str => handleInt(str.toIntOption))
-      case EnumTag.OpenIntEnum(unknown) =>
+      case EnumTag.IntEnum(_, Some(unknown)) =>
         MetaDecode.from(intVals) { string =>
           val maybeInt = string.toIntOption
           handleInt(maybeInt).orElse(maybeInt.map(unknown))
         }
-      case EnumTag.ClosedStringEnum =>
+      case EnumTag.StringEnum(_, None) =>
         MetaDecode.from(stringVals)(handleString)
-      case EnumTag.OpenStringEnum(unknown) =>
+      case EnumTag.StringEnum(_, Some(unknown)) =>
         MetaDecode.from(stringVals)(str =>
           Some(handleString(str).getOrElse(unknown(str)))
         )

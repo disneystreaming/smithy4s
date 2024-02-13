@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,33 +17,33 @@
 package smithy4s
 package internals
 
+import alloy.Discriminated
+import alloy.Untagged
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import alloy.Discriminated
 import smithy4s.capability.EncoderK
+import smithy4s.schema.Primitive.PBigDecimal
+import smithy4s.schema.Primitive.PBigInt
+import smithy4s.schema.Primitive.PBlob
+import smithy4s.schema.Primitive.PBoolean
+import smithy4s.schema.Primitive.PByte
+import smithy4s.schema.Primitive.PDocument
+import smithy4s.schema.Primitive.PDouble
+import smithy4s.schema.Primitive.PFloat
+import smithy4s.schema.Primitive.PInt
+import smithy4s.schema.Primitive.PLong
+import smithy4s.schema.Primitive.PShort
+import smithy4s.schema.Primitive.PString
+import smithy4s.schema.Primitive.PTimestamp
+import smithy4s.schema.Primitive.PUUID
 import smithy4s.schema._
 
 import scala.collection.mutable.Builder
 
 import Document._
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PUUID
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PString
-import alloy.Untagged
 
 trait DocumentEncoder[A] { self =>
 
@@ -74,9 +74,14 @@ object DocumentEncoder {
 }
 
 class DocumentEncoderSchemaVisitor(
-    val cache: CompilationCache[DocumentEncoder]
+    val cache: CompilationCache[DocumentEncoder],
+    val explicitDefaultsEncoding: Boolean
 ) extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
+
+  def this(cache: CompilationCache[DocumentEncoder]) =
+    this(cache, explicitDefaultsEncoding = false)
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -166,14 +171,13 @@ class DocumentEncoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): DocumentEncoder[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        from(e => Document.fromInt(total(e).intValue))
-      case _ =>
-        from(e => DString(total(e).stringValue))
+      case EnumTag.IntEnum(value, _) =>
+        from(e => Document.fromInt(value(e)))
+      case EnumTag.StringEnum(value, _) =>
+        from(e => DString(value(e)))
     }
 
   override def struct[S](
@@ -197,9 +201,12 @@ class DocumentEncoderSchemaVisitor(
         .map(_.value)
         .getOrElse(field.label)
       (s, builder) =>
-        field.getUnlessDefault(s).foreach { value =>
-          builder.+=(jsonLabel -> encoder.apply(value))
-        }
+        if (explicitDefaultsEncoding) {
+          builder.+=(jsonLabel -> encoder.apply(field.get(s)))
+        } else
+          field.getUnlessDefault(s).foreach { value =>
+            builder.+=(jsonLabel -> encoder.apply(value))
+          }
     }
 
     val encoders = fields.map(field => fieldEncoder(field))

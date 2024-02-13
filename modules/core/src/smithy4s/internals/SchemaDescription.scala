@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package smithy4s
 package internals
 
-import smithy4s.schema._
 import smithy4s.schema.Primitive.PTimestamp
+import smithy4s.schema._
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   // format: off
@@ -38,7 +38,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
 
-  override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
+  override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
 
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =

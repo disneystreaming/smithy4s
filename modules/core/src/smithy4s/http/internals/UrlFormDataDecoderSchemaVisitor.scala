@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -120,17 +120,16 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): UrlFormDataDecoder[E] = tag match {
-    case EnumTag.IntEnum() =>
+    case EnumTag.IntEnum(_, _) =>
       val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
       val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
       UrlFormDataDecoder.fromStringParser(desc)(
         _.toIntOption.flatMap(valueMap.get(_))
       )
 
-    case _ =>
+    case EnumTag.StringEnum(_, _) =>
       val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
       val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
       UrlFormDataDecoder.fromStringParser(desc)(valueMap.get)

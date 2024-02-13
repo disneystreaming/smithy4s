@@ -13,7 +13,7 @@ object AgeFormat extends ShapeTag.Companion[AgeFormat] {
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = Some(":test(integer, member > integer)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[AgeFormat] = constant(AgeFormat()).withId(id).addHints(hints)
 }

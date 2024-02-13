@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
   private def aSmithy4sUri(scheme: HttpUriScheme) =
     smithy4s.http.HttpUri(
       scheme = scheme,
-      host = "localhost",
+      host = None,
       port = None,
       path = IndexedSeq.empty,
       queryParams = Map.empty,

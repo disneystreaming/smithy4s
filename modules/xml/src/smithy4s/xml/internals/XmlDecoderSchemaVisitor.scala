@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -103,29 +103,28 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): XmlDecoder[E] = {
     tag match {
-      case EnumTag.IntEnum() =>
+      case EnumTag.IntEnum(_, maybeUnknown) =>
         val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
         val handler: String => Option[E] =
-          tag match {
-            case EnumTag.OpenIntEnum(unknown) =>
+          maybeUnknown match {
+            case Some(unknown) =>
               _.toIntOption.map(i => valueMap.getOrElse(i, unknown(i)))
-            case _ =>
+            case None =>
               _.toIntOption.flatMap(valueMap.get)
           }
         XmlDecoder.fromStringParser(desc, trim = true)(
           handler(_)
         )
-      case _ =>
+      case EnumTag.StringEnum(_, maybeUnknown) =>
         val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
         val handler: String => Option[E] =
-          tag match {
-            case EnumTag.OpenStringEnum(unknown) =>
+          maybeUnknown match {
+            case Some(unknown) =>
               s => Some(valueMap.getOrElse(s, unknown(s)))
             case _ =>
               valueMap.get(_)

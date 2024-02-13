@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.24.4"
+    val jsoniterScalaVersion = "2.27.3"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -71,7 +71,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.9.1")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.10.0")
   }
 
   object Mill {
@@ -101,7 +101,7 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.5.2")
 
   object Http4s {
-    val http4sVersion = "0.23.24"
+    val http4sVersion = "0.23.25"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -145,7 +145,7 @@ object Dependencies {
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.9"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.11"
 
   object Webjars {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.9.4"

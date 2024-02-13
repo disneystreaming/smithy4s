@@ -14,7 +14,7 @@ object GreetOutput extends ShapeTag.Companion[GreetOutput] {
 
   val hints: Hints = Hints(
     smithy.api.Output(),
-  )
+  ).lazily
 
   implicit val schema: Schema[GreetOutput] = struct(
     string.required[GreetOutput]("message", _.message),

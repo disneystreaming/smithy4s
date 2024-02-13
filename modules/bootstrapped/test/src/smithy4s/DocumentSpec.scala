@@ -21,6 +21,7 @@ import smithy.api.Default
 import smithy4s.example.IntList
 import alloy.Discriminated
 import munit._
+import smithy4s.example.OperationOutput
 
 class DocumentSpec() extends FunSuite {
 
@@ -218,7 +219,7 @@ class DocumentSpec() extends FunSuite {
     val one: OpenEnumTest = OpenEnumTest.ONE
     val document = Document.encode(one)
     import Document._
-    val expectedDocument = DString(OpenEnumTest.ONE.value)
+    val expectedDocument = DString(OpenEnumTest.ONE.stringValue)
 
     val roundTripped = Document.decode[OpenEnumTest](document)
 
@@ -393,6 +394,150 @@ class DocumentSpec() extends FunSuite {
       .encode("default")
 
     expect.same(encoded, Document.obj())
+  }
+
+  test("document encoder - all default") {
+    val result = Document.Encoder
+      .fromSchema(OperationOutput.schema)
+      .encode(OperationOutput())
+
+    expect.same(
+      Document.obj(
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+
+  }
+
+  test(
+    "document encoder - all default values + explicit defaults encoding = true"
+  ) {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(true)
+      .fromSchema(
+        OperationOutput.schema
+      )
+      .encode(OperationOutput())
+    expect.same(
+      Document.obj(
+        "optional" -> Document.nullDoc,
+        "optionalHeader" -> Document.nullDoc,
+        "optionalWithDefault" -> Document.fromString("optional-default"),
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "optionalHeaderWithDefault" -> Document.fromString(
+          "optional-header-with-default"
+        ),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+  }
+
+  test(
+    "document encoder - all default values + explicit defaults encoding = false"
+  ) {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(
+        OperationOutput.schema
+      )
+      .encode(OperationOutput())
+    expect.same(
+      Document.obj(
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+  }
+
+  test(
+    "document encoder - default values overrides + explicit defaults encoding = true"
+  ) {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(true)
+      .fromSchema(OperationOutput.schema)
+      .encode(
+        OperationOutput(
+          optional = Some("optional-override"),
+          optionalWithDefault = "optional-default-override",
+          requiredWithDefault = "required-default-override",
+          optionalHeader = Some("optional-header-override"),
+          optionalHeaderWithDefault = "optional-header-with-default-override",
+          requiredHeaderWithDefault = "required-header-with-default-override"
+        )
+      )
+
+    expect.same(
+      Document.obj(
+        "optional" -> Document.fromString("optional-override"),
+        "optionalWithDefault" -> Document.fromString(
+          "optional-default-override"
+        ),
+        "requiredWithDefault" -> Document.fromString(
+          "required-default-override"
+        ),
+        "optionalHeader" -> Document.fromString(
+          "optional-header-override"
+        ),
+        "optionalHeaderWithDefault" -> Document.fromString(
+          "optional-header-with-default-override"
+        ),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default-override"
+        )
+      ),
+      result
+    )
+
+  }
+  test(
+    "document encoder - default values overrides + explicit defaults encoding = false"
+  ) {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(OperationOutput.schema)
+      .encode(
+        OperationOutput(
+          optional = Some("optional-override"),
+          optionalWithDefault = "optional-default-override",
+          requiredWithDefault = "required-default-override",
+          optionalHeader = Some("optional-header-override"),
+          optionalHeaderWithDefault = "optional-header-with-default-override",
+          requiredHeaderWithDefault = "required-header-with-default-override"
+        )
+      )
+
+    expect.same(
+      Document.obj(
+        "optional" -> Document.fromString("optional-override"),
+        "optionalWithDefault" -> Document.fromString(
+          "optional-default-override"
+        ),
+        "requiredWithDefault" -> Document.fromString(
+          "required-default-override"
+        ),
+        "optionalHeader" -> Document.fromString(
+          "optional-header-override"
+        ),
+        "optionalHeaderWithDefault" -> Document.fromString(
+          "optional-header-with-default-override"
+        ),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default-override"
+        )
+      ),
+      result
+    )
+
   }
 
 }

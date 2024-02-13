@@ -175,6 +175,89 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     )
   }
 
+  pureTest(
+    "struct: default (but not required) values are omitted from encoded output"
+  ) {
+    val defaultValue = "default"
+    case class Foo(x: Int, y: String)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        val y = smithy4s.schema
+          .Field[Foo, String]("x", string, _.y)
+          .addHints(
+            smithy.api.Default(smithy4s.Document.fromString(defaultValue))
+          )
+        struct(x, y)(Foo.apply)
+      }
+    }
+
+    expect.same(
+      UrlForm
+        .Encoder(
+          capitalizeStructAndUnionMemberNames = false
+        )
+        .fromSchema(Foo.schema)
+        .encode(Foo(42, defaultValue))
+        .render,
+      "x=42"
+    )
+  }
+
+  pureTest("struct: required default values are included in encoded output") {
+    val defaultValue = "default"
+    case class Foo(x: Int, y: String)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        val y = string
+          .required[Foo]("y", _.y)
+          .addHints(
+            smithy.api.Default(smithy4s.Document.fromString(defaultValue))
+          )
+        struct(x, y)(Foo.apply)
+      }
+    }
+
+    expect.same(
+      UrlForm
+        .Encoder(
+          capitalizeStructAndUnionMemberNames = false
+        )
+        .fromSchema(Foo.schema)
+        .encode(Foo(42, defaultValue))
+        .render,
+      "x=42&y=default"
+    )
+  }
+
+  pureTest("struct: optional default values are omitted from encoded output") {
+    val defaultValue = "default"
+    case class Foo(x: Int, y: Option[String])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        val y = string
+          .optional[Foo]("y", _.y)
+          .addHints(
+            smithy.api.Default(smithy4s.Document.fromString(defaultValue))
+          )
+        struct(x, y)(Foo.apply)
+      }
+    }
+
+    expect.same(
+      UrlForm
+        .Encoder(
+          capitalizeStructAndUnionMemberNames = false
+        )
+        .fromSchema(Foo.schema)
+        .encode(Foo(42, Some(defaultValue)))
+        .render,
+      "x=42"
+    )
+  }
+
   pureTest("list") {
     case class Foo(foos: List[Int])
     object Foo {
@@ -279,9 +362,9 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
   }
 
   pureTest("enumeration") {
-    sealed abstract class FooBar(val value: String, val intValue: Int)
+    sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
-      val name = value
+      val name = stringValue
       val hints = Hints.empty
       type EnumType = FooBar
       def enumeration: smithy4s.Enumeration[FooBar] = FooBar

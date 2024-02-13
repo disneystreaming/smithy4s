@@ -6,13 +6,12 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.optics.Prism
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.openIntEnumeration
 
-sealed abstract class OpenIntEnumCollisionTest(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class OpenIntEnumCollisionTest(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OpenIntEnumCollisionTest
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = OpenIntEnumCollisionTest
@@ -23,7 +22,7 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
 
   val hints: Hints = Hints(
     alloy.OpenEnum(),
-  )
+  ).lazily
 
   object optics {
     val ONE: Prism[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.ONE.type] = Prism.partial[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.ONE.type]{ case OpenIntEnumCollisionTest.ONE => OpenIntEnumCollisionTest.ONE }(identity)
@@ -32,9 +31,9 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
     val $unknown: Prism[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.$Unknown] = Prism.partial[OpenIntEnumCollisionTest, OpenIntEnumCollisionTest.$Unknown]{ case u: OpenIntEnumCollisionTest.$Unknown => u }(identity)
   }
 
-  case object ONE extends OpenIntEnumCollisionTest("ONE", "ONE", 1, Hints())
-  case object TWO extends OpenIntEnumCollisionTest("TWO", "TWO", 2, Hints())
-  case object Unknown extends OpenIntEnumCollisionTest("Unknown", "Unknown", 3, Hints())
+  case object ONE extends OpenIntEnumCollisionTest("ONE", "ONE", 1, Hints.empty)
+  case object TWO extends OpenIntEnumCollisionTest("TWO", "TWO", 2, Hints.empty)
+  case object Unknown extends OpenIntEnumCollisionTest("Unknown", "Unknown", 3, Hints.empty)
   final case class $Unknown(int: Int) extends OpenIntEnumCollisionTest("$Unknown", "$Unknown", int, Hints.empty)
 
   val $unknown: Int => OpenIntEnumCollisionTest = $Unknown(_)
@@ -44,6 +43,5 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
     TWO,
     Unknown,
   )
-  val tag: EnumTag[OpenIntEnumCollisionTest] = EnumTag.OpenIntEnum($unknown)
-  implicit val schema: Schema[OpenIntEnumCollisionTest] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OpenIntEnumCollisionTest] = openIntEnumeration(values, $unknown).withId(id).addHints(hints)
 }

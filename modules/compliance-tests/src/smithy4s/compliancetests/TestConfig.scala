@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ object TestConfig {
   val serverReq = TestConfig(AppliesTo.SERVER, TestType.Request)
   val serverRes = TestConfig(AppliesTo.SERVER, TestType.Response)
   sealed abstract class TestType(
-      val value: String,
+      val stringValue: String,
       val intValue: Int
   ) extends Enumeration.Value {
     type EnumType = TestType
-    def name: String = value
+    def name: String = stringValue
     def hints: Hints = Hints.empty
     def enumeration: Enumeration[EnumType] = TestType
   }

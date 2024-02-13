@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
     IO.pure(ReservationOutput(message = s"Booked for $name"))
 
   def getEnum(theEnum: TheEnum): IO[GetEnumOutput] =
-    IO.pure(GetEnumOutput(result = Some(theEnum.value)))
+    IO.pure(GetEnumOutput(result = Some(theEnum.stringValue)))
 
   def getIntEnum(theEnum: EnumResult): IO[GetIntEnumOutput] =
     IO.pure(GetIntEnumOutput(theEnum))

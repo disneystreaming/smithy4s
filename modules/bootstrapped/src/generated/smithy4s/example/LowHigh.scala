@@ -5,18 +5,17 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
 /** @param LOW
   *   low
   * @param HIGH
   *   high
   */
-sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class LowHigh(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = LowHigh
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = LowHigh
@@ -28,14 +27,17 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
   val hints: Hints = Hints.empty
 
   /** low */
-  case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))
+  case object LOW extends LowHigh("LOW", "Low", 0, Hints.empty) {
+    override val hints: Hints = Hints(smithy.api.Documentation("low")).lazily
+  }
   /** high */
-  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(smithy.api.Documentation("high")))
+  case object HIGH extends LowHigh("HIGH", "High", 1, Hints.empty) {
+    override val hints: Hints = Hints(smithy.api.Documentation("high")).lazily
+  }
 
   val values: List[LowHigh] = List(
     LOW,
     HIGH,
   )
-  val tag: EnumTag[LowHigh] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[LowHigh] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[LowHigh] = stringEnumeration(values).withId(id).addHints(hints)
 }

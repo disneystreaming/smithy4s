@@ -5,15 +5,14 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
 /** some docs here */
 @deprecated(message = "N/A", since = "N/A")
-sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class EnumWithDeprecations(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = EnumWithDeprecations
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = EnumWithDeprecations
@@ -25,16 +24,17 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   val hints: Hints = Hints(
     smithy.api.Documentation("some docs here"),
     smithy.api.Deprecated(message = None, since = None),
-  )
+  ).lazily
 
   @deprecated(message = "N/A", since = "N/A")
-  case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints(smithy.api.Deprecated(message = None, since = None)))
-  case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints())
+  case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints.empty) {
+    override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None)).lazily
+  }
+  case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints.empty)
 
   val values: List[EnumWithDeprecations] = List(
     OLD,
     NEW,
   )
-  val tag: EnumTag[EnumWithDeprecations] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[EnumWithDeprecations] = stringEnumeration(values).withId(id).addHints(hints)
 }

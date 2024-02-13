@@ -18,7 +18,7 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(503),
-  )
+  ).lazily
 
   implicit val schema: Schema[EHServiceUnavailable] = struct(
     string.optional[EHServiceUnavailable]("message", _.message),

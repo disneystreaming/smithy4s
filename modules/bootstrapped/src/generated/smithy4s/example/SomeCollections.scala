@@ -14,7 +14,7 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
+  ).lazily
 
   implicit val schema: Schema[SomeCollections] = recursive(struct(
     StringList.underlyingSchema.required[SomeCollections]("someList", _.someList),

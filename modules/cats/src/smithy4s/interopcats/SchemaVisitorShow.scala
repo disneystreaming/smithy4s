@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -117,11 +117,12 @@ final class SchemaVisitorShow(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
-  ): Show[E] = Show.show { e =>
-    total(e).stringValue
-  }
+      values: List[EnumValue[E]]
+  ): Show[E] =
+    tag match {
+      case EnumTag.StringEnum(value, _) => Show.show(value)
+      case EnumTag.IntEnum(value, _)    => Show.show(value(_).toString)
+    }
 
   override def struct[S](
       shapeId: ShapeId,

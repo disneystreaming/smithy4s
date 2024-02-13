@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ private[smithy4s] trait LowPriorityImplicits {
 
   implicit def enumLengthConstraint[E <: Enumeration.Value]
       : RefinementProvider[Length, E, E] =
-    new RefinementProvider.LengthConstraint[E](e => e.value.size)
+    new RefinementProvider.LengthConstraint[E](e => e.stringValue.size)
 
   implicit def enumRangeConstraint[E <: Enumeration.Value]
       : RefinementProvider[Range, E, E] =
@@ -191,7 +191,7 @@ private[smithy4s] trait LowPriorityImplicits {
 
   implicit def enumPatternConstraint[E <: Enumeration.Value]
       : RefinementProvider[Pattern, E, E] =
-    new RefinementProvider.PatternConstraint[E](e => e.value)
+    new RefinementProvider.PatternConstraint[E](e => e.stringValue)
 
   implicit def isomorphismConstraint[C, A, A0](implicit
       constraintOnA: RefinementProvider.Simple[C, A],
