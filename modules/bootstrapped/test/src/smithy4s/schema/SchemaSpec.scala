@@ -38,6 +38,12 @@ final class SchemaSpec extends FunSuite {
     assertEquals(sch.getDefaultValue, None)
   }
 
+  test("bijection - identity") {
+    val sut = Bijection.identity[String]
+    val str = "value"
+    assertEquals(sut.to(sut.from(str)), str)
+  }
+
   test("Hints can be added to fields as varars or full Hints") {
     case class Test(foo: String)
     val documentation = Documentation("hello")
