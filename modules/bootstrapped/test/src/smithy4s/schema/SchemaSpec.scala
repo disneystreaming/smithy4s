@@ -20,6 +20,7 @@ package schema
 import munit._
 import Schema._
 import smithy.api.Default
+import smithy.api.Documentation
 
 final class SchemaSpec extends FunSuite {
 
@@ -35,6 +36,17 @@ final class SchemaSpec extends FunSuite {
 
     assertEquals(sch.getDefault, None)
     assertEquals(sch.getDefaultValue, None)
+  }
+
+  test("Hints can be added to fields as varars or full Hints") {
+    case class Test(foo: String)
+    val documentation = Documentation("hello")
+    val getter = (_: Test).foo
+    val field1 =
+      Schema.string.required[Test]("foo", getter).addHints(documentation)
+    val field2 =
+      Schema.string.required[Test]("foo", getter).addHints(Hints(documentation))
+    assertEquals(field1, field2)
   }
 
 }
