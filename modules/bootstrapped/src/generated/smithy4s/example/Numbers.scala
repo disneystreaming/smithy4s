@@ -20,7 +20,9 @@ sealed abstract class Numbers(_value: String, _name: String, _intValue: Int, _hi
 object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
   val id: ShapeId = ShapeId("smithy4s.example", "Numbers")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Box(),
+  ).lazily
 
   case object ONE extends Numbers("ONE", "ONE", 1, Hints.empty)
   case object TWO extends Numbers("TWO", "TWO", 2, Hints.empty)

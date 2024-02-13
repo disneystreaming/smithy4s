@@ -22,6 +22,7 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
   val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
 
   val hints: Hints = Hints(
+    smithy.api.Box(),
     smithy.api.Documentation("FaceCard types"),
   ).lazily
 

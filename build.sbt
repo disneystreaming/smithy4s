@@ -299,6 +299,9 @@ lazy val `aws-http4s` = projectMatrix
     bootstrapped % "test->compile"
   )
   .settings(
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     libraryDependencies ++= {
       Seq(
         Dependencies.Fs2.io.value,
@@ -313,6 +316,9 @@ lazy val `aws-http4s` = projectMatrix
       "-Wconf:msg=class Ec2Query in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
+    ),
+    Test / complianceTestRepositories := Seq(
+      "https://s01.oss.sonatype.org/content/repositories/snapshots"
     ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
@@ -365,6 +371,9 @@ lazy val codegen = projectMatrix
       "alloyVersion" -> Dependencies.Alloy.alloyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
@@ -561,6 +570,9 @@ lazy val dynamic = projectMatrix
     bootstrapped % "test->test;test->compile"
   )
   .settings(
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     libraryDependencies ++= munitDeps.value ++ Seq(
       Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value,
@@ -691,6 +703,9 @@ lazy val http4s = projectMatrix
   )
   .settings(
     isMimaEnabled := true,
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.core.value,
@@ -707,6 +722,9 @@ lazy val http4s = projectMatrix
     },
     Test / allowedNamespaces := Seq(
       "smithy4s.example.guides.auth"
+    ),
+    Test / complianceTestRepositories := Seq(
+      "https://s01.oss.sonatype.org/content/repositories/snapshots"
     ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
@@ -798,6 +816,9 @@ lazy val transformers = projectMatrix
   .in(file("modules/transformers"))
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
@@ -963,7 +984,10 @@ def genSmithy(config: Configuration) = Def.settings(
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
 def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
 
-// SBT setting to specify artifacts to be included in the Smithy model for compliance testing
+// SBT settings to specify repositories and their artifacts to be included in
+// the Smithy model for compliance testing
+val complianceTestRepositories =
+  SettingKey[Seq[String]]("complianceTestRepositories")
 val complianceTestDependencies =
   SettingKey[Seq[ModuleID]]("complianceTestDependencies")
 
@@ -975,6 +999,8 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
+    val repos =
+      (config / complianceTestRepositories).?.value.getOrElse(Seq.empty)
     val transforms = (config / smithy4sModelTransformers).value
     lazy val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
@@ -1022,8 +1048,10 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     val s = (config / streams).value
 
     val args =
-      if (transforms.isEmpty) List.empty
-      else List("--transformers", transforms.mkString(","))
+      (if (repos.isEmpty) List.empty
+       else List("--repositories", repos.mkString(","))) ++
+        (if (transforms.isEmpty) List.empty
+         else List("--transformers", transforms.mkString(",")))
     val cached =
       Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
@@ -1076,6 +1104,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
+  val smithy4sRepos =
+    (config / smithy4sRepositories).?.value.getOrElse(Seq.empty)
   val smithy4sDeps =
     (config / smithy4sDependencies).?.value.getOrElse(Seq.empty).map {
       moduleId =>
@@ -1153,6 +1183,10 @@ def genSmithyImpl(config: Configuration) = Def.task {
                   List("--allowed-ns", allowedNS.get.mkString(","))
                 else Nil
               val skipOpt = skip.flatMap(s => List("--skip", s))
+              val respositoriesOpt =
+                if (smithy4sRepos.nonEmpty)
+                  List("--repositories", smithy4sRepos.mkString(","))
+                else Nil
               val dependenciesOpt =
                 if (smithy4sDeps.nonEmpty)
                   List("--dependencies", smithy4sDeps.mkString(","))
@@ -1162,6 +1196,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 allowedNsOpt ++
                 inputs ++
                 skipOpt ++
+                respositoriesOpt ++
                 dependenciesOpt
 
               val cp = codegenCp

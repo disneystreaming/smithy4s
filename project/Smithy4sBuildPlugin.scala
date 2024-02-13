@@ -40,6 +40,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
     val allowedNamespaces        = SettingKey[Seq[String]]("allowedNamespaces")
     val smithy4sModelTransformers = SettingKey[Seq[String]]("smithy4sModelTransformers")
+    val smithy4sRepositories     = SettingKey[Seq[String]]("smithy4sRepositories")
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
     val bloopEnabled             = SettingKey[Boolean]("bloopEnabled")
@@ -86,6 +87,11 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
   override def buildSettings: Seq[Setting[_]] = Seq(
     smithySpecs := Seq.empty,
+    // TODO: Remove once https://github.com/disneystreaming/alloy/pull/135 is
+    // merged and released.
+    smithy4sRepositories := Seq(
+      "https://s01.oss.sonatype.org/content/repositories/snapshots"
+    ),
     smithy4sDependencies := Seq(Dependencies.Alloy.core),
     bloopAllowedCombos := Seq(
       Seq(VirtualAxis.jvm, VirtualAxis.scalaABIVersion(Scala213))
