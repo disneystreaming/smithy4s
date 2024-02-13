@@ -63,7 +63,6 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
