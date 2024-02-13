@@ -114,6 +114,11 @@ object Hints {
   def apply(bindings: Hint*): Hints =
     fromSeq(bindings)
 
+  def dynamic(bindings: (String, Document)*): Hints =
+    fromSeq(bindings.map { case (k, v) => ShapeId.parse(k) -> v }.collect {
+      case (Some(id), v) => (id, v)
+    })
+
   implicit final class HintsLazyOps(underlying: => Hints) {
 
     /**
