@@ -1,6 +1,7 @@
 # 0.18.9
 
 * Supports error responses with `@httpResponseCode` fields.
+* Fix in Bijection#identity which caused and infinite recursion, fixed in [1401](https://github.com/disneystreaming/smithy4s/pull/1401)
 
 # 0.18.8
 
