@@ -28,9 +28,9 @@ import scala.util.hashing.MurmurHash3.productSeed
 
 object SchemaVisitorHash extends CachedSchemaCompiler.Impl[Hash] {
   protected type Aux[A] = Hash[A]
-  def fromSchema[A](
+  def fromSchemaAux[A](
       schema: Schema[A],
-      cache: Cache
+      cache: AuxCache
   ): Hash[A] = {
     schema.compile(new SchemaVisitorHash(cache))
   }

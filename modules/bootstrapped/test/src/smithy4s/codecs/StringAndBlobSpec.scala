@@ -26,12 +26,18 @@ class StringAndBlobSpec() extends munit.FunSuite {
   val error = PayloadError(PayloadPath.root, "error", "error")
   object DummyDecoderCompiler
       extends CachedSchemaCompiler.Impl[PayloadDecoder] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] =
+    def fromSchemaAux[A](
+        schema: Schema[A],
+        cache: AuxCache
+    ): PayloadDecoder[A] =
       Decoder.static(Left(error): Either[PayloadError, A])
   }
 
   object DummyWriterCompiler extends CachedSchemaCompiler.Impl[PayloadEncoder] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): PayloadEncoder[A] =
+    def fromSchemaAux[A](
+        schema: Schema[A],
+        cache: AuxCache
+    ): PayloadEncoder[A] =
       Encoder.static(Blob.empty): Encoder[Blob, A]
 
   }

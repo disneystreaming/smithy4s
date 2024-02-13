@@ -55,7 +55,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   ): JsoniterCodecCompiler =
     copy(preserveMapOrder = preserveMapOrder)
 
-  def fromSchema[A](schema: Schema[A], cache: Cache): JCodec[A] = {
+  def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): JCodec[A] = {
     val visitor = new SchemaVisitorJCodec(
       maxArity,
       explicitDefaultsEncoding,

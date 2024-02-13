@@ -109,7 +109,7 @@ object XmlDocument {
   implicit def decoderFromSchema[A: Schema]: Decoder[A] = Decoder.derivedImplicitInstance
   object Decoder extends CachedSchemaCompiler.DerivingImpl[Decoder] {
     protected override type Aux[A] = XmlDecoder[A]
-    def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] = {
+    def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): Decoder[A] = {
       val startingPath: List[XmlQName] = getStartingPath(schema)
       val schemaVisitor = new XmlDecoderSchemaVisitor(cache)
       val xmlDecoder = schemaVisitor(schema)
@@ -126,7 +126,7 @@ object XmlDocument {
   }
   object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
     protected override type Aux[A] = XmlEncoder[A]
-    def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
+    def fromSchemaAux[A](schema: Schema[A], cache: AuxCache): Encoder[A] = {
       val rootName: XmlQName = getRootName(schema)
       val rootNamespace =
         schema.hints

@@ -25,17 +25,17 @@ import schema._
 object StringAndBlobCodecs {
 
   object decoders extends CachedSchemaCompiler.Optional.Impl[BlobDecoder] {
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Option[BlobDecoder[A]] =
       StringAndBlobReaderVisitor(schema)
   }
 
   object encoders extends CachedSchemaCompiler.Optional.Impl[BlobEncoder] {
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Option[BlobEncoder[A]] =
       StringAndBlobWriterVisitor(schema)
   }

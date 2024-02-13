@@ -22,7 +22,6 @@ import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.CompilationCache
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -185,9 +184,9 @@ object Metadata {
     def apply[A](implicit instance: Decoder[A]): Decoder[A] =
       instance
 
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: CompilationCache[internals.MetaDecode]
+        cache: AuxCache
     ): Decoder[A] = {
       val metaDecode =
         new SchemaVisitorMetadataReader(cache, awsHeaderEncoding)(schema)
@@ -246,9 +245,9 @@ object Metadata {
       explicitDefaultsEncoding = explicitDefaultsEncoding
     )
 
-    def fromSchema[A](
+    def fromSchemaAux[A](
         schema: Schema[A],
-        cache: Cache
+        cache: AuxCache
     ): Encoder[A] = {
       val toStatusCode: A => Option[Int] = { a =>
         schema.compile(new HttpResponseCodeSchemaVisitor()) match {

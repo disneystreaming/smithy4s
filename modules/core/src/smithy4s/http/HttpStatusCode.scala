@@ -34,7 +34,10 @@ object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
     instance
   type Aux[A] = internals.HttpCode[A]
 
-  def fromSchema[A](schema: Schema[A], cache: Cache): HttpStatusCode[A] = {
+  def fromSchemaAux[A](
+      schema: Schema[A],
+      cache: AuxCache
+  ): HttpStatusCode[A] = {
     val visitor = new internals.ErrorCodeSchemaVisitor(cache)
     val go = schema.compile(visitor)
     new HttpStatusCode[A] {

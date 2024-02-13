@@ -25,7 +25,7 @@ trait CachedSchemaCompiler[+F[_]] { self =>
   def fromSchema[A](schema: Schema[A]): F[A]
   def fromSchema[A](schema: Schema[A], cache: Cache): F[A]
 
-  final def mapK[F0[x] >: F[x], G[_]](
+  def mapK[F0[x] >: F[x], G[_]](
       fk: PolyFunction[F0, G]
   ): CachedSchemaCompiler[G] =
     new CachedSchemaCompiler[G] {
@@ -39,7 +39,7 @@ trait CachedSchemaCompiler[+F[_]] { self =>
       )
     }
 
-  final def contramapSchema(
+  def contramapSchema(
       fk: PolyFunction[Schema, Schema]
   ): CachedSchemaCompiler[F] = new CachedSchemaCompiler[F] {
     type Cache = self.Cache
@@ -49,7 +49,6 @@ trait CachedSchemaCompiler[+F[_]] { self =>
 
     def fromSchema[A](schema: Schema[A], cache: Cache): F[A] =
       self.fromSchema(fk(schema), cache)
-
   }
 
 }
@@ -86,14 +85,50 @@ object CachedSchemaCompiler { outer =>
         self.mapK(fk)
     }
 
-  abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
+  abstract class Impl[F[_]] extends CachedSchemaCompiler[F] { self =>
     protected type Aux[_]
-    type Cache = CompilationCache[Aux]
+    type AuxCache = CompilationCache[Aux]
+    case class Cache(outer: CompilationCache[F], inner: AuxCache)
+
+    def fromSchemaAux[A](
+        schema: Schema[A],
+        innerCache: CompilationCache[Aux]
+    ): F[A]
 
     override final def fromSchema[A](schema: Schema[A]): F[A] =
-      fromSchema(schema, CompilationCache.nop[Aux])
+      fromSchema(
+        schema,
+        Cache(CompilationCache.nop[F], CompilationCache.nop[Aux])
+      )
 
-    def createCache(): Cache = CompilationCache.make[Aux]
+    override final def fromSchema[A](schema: Schema[A], cache: Cache) = {
+      cache.outer.getOrElseUpdate(schema, s => fromSchemaAux(s, cache.inner))
+    }
+
+    override final def mapK[F0[x] >: F[x], G[_]](
+        fk: PolyFunction[F0, G]
+    ): CachedSchemaCompiler[G] = new Impl[G] {
+      type Aux[A] = self.Aux[A]
+      def fromSchemaAux[A](
+          schema: Schema[A],
+          innerCache: CompilationCache[Aux]
+      ): G[A] =
+        fk(self.fromSchemaAux(schema, innerCache))
+    }
+
+    override final def contramapSchema(
+        fk: PolyFunction[Schema, Schema]
+    ): CachedSchemaCompiler[F] = new Impl[F] {
+      type Aux[A] = self.Aux[A]
+      def fromSchemaAux[A](
+          schema: Schema[A],
+          innerCache: CompilationCache[Aux]
+      ): F[A] =
+        self.fromSchemaAux(fk(schema), innerCache)
+    }
+
+    final def createCache(): Cache =
+      Cache(CompilationCache.make[F], CompilationCache.make[Aux])
   }
 
   abstract class Uncached[F[_]] extends CachedSchemaCompiler[F] {
