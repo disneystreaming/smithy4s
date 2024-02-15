@@ -23,6 +23,8 @@ import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
+import alloy.UnknownFieldRetention
+import alloy.Untagged
 import smithy4s.capability.EncoderK
 import smithy4s.schema._
 
@@ -43,7 +45,6 @@ import smithy4s.schema.Primitive.PUUID
 import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PString
-import alloy.Untagged
 
 trait DocumentEncoder[A] { self =>
 
@@ -195,26 +196,42 @@ class DocumentEncoderSchemaVisitor(
       }
     def fieldEncoder[A](
         field: Field[S, A]
-    ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
-      val encoder = apply(field.schema)
-      val jsonLabel = field.hints
-        .get(JsonName)
-        .map(_.value)
-        .getOrElse(field.label)
-      (s, builder) =>
-        if (explicitDefaultsEncoding) {
-          builder.+=(jsonLabel -> encoder.apply(field.get(s)))
-        } else
-          field.getUnlessDefault(s).foreach { value =>
-            builder.+=(jsonLabel -> encoder.apply(value))
-          }
-    }
+    ): (S, Builder[(String, Document), Map[String, Document]]) => Unit =
+      if (
+        field.hints
+          .has(UnknownFieldRetention)
+      ) {
+        field.schema match {
+          case Schema.MapSchema(_, _, Schema.string, Schema.document) =>
+            (s, builder) => builder ++= field.get(s)
 
-    val encoders = fields.map(field => fieldEncoder(field))
+          case Schema.OptionSchema(
+                Schema.MapSchema(_, _, Schema.string, Schema.document)
+              ) =>
+            (s, builder) => field.get(s).foreach(builder ++= _)
+
+          case _ =>
+            (_, _) => ()
+        }
+      } else {
+        val encoder = apply(field.schema)
+        val jsonLabel = field.hints
+          .get(JsonName)
+          .map(_.value)
+          .getOrElse(field.label)
+        if (explicitDefaultsEncoding) { (s, builder) =>
+          builder.+=(jsonLabel -> encoder.apply(field.get(s)))
+        } else { (s, builder) =>
+          field
+            .getUnlessDefault(s)
+            .foreach(value => builder += jsonLabel -> encoder.apply(value))
+        }
+      }
+    val fieldEncoders = fields.map(field => fieldEncoder(field))
     new DocumentEncoder[S] {
       def apply(s: S): Document = {
         val builder = Map.newBuilder[String, Document]
-        encoders.foreach(_(s, builder))
+        fieldEncoders.foreach(_(s, builder))
         DObject(builder.result() ++ discriminator)
       }
     }

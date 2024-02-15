@@ -18,10 +18,14 @@ package smithy4s
 
 import smithy.api.JsonName
 import smithy.api.Default
-import smithy4s.example.IntList
 import alloy.Discriminated
 import munit._
+import smithy4s.example.IntList
 import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultRequiredUnknownFieldRetentionExample
+import smithy4s.example.DefaultUnknownFieldRetentionExample
+import smithy4s.example.RequiredUnknownFieldRetentionExample
+import smithy4s.example.UnknownFieldRetentionExample
 
 class DocumentSpec() extends FunSuite {
 
@@ -499,6 +503,7 @@ class DocumentSpec() extends FunSuite {
     )
 
   }
+
   test(
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
@@ -538,6 +543,136 @@ class DocumentSpec() extends FunSuite {
       result
     )
 
+  }
+
+  test(
+    "document codec - unknown field retention + explicit defaults encoding = false"
+  ) {
+    val unknownFieldRetentionExample = UnknownFieldRetentionExample(
+      foo = Some("foo"),
+      bar = Some("bar"),
+      bazes = Some(
+        Map(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+    )
+
+    val document = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(UnknownFieldRetentionExample.schema)
+      .encode(unknownFieldRetentionExample)
+    import Document._
+    val expectedDocument = Document.obj(
+      "foo" -> Document.fromString("foo"),
+      "bar" -> Document.fromString("bar"),
+      "unknownField1" -> Document.fromString("unknownString1"),
+      "unknownField2" -> Document.fromString("unknownString2")
+    )
+
+    val roundTripped = Document.decode[UnknownFieldRetentionExample](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(unknownFieldRetentionExample))
+  }
+  test(
+    "document codec - unknown field retention + explicit defaults encoding = true"
+  ) {
+    val defaultUnknownFieldRetentionExample =
+      DefaultUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        bazes = Map(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val document = Document.Encoder
+      .withExplicitDefaultsEncoding(true)
+      .fromSchema(DefaultUnknownFieldRetentionExample.schema)
+      .encode(defaultUnknownFieldRetentionExample)
+    import Document._
+    val expectedDocument = Document.obj(
+      "foo" -> Document.fromString("foo"),
+      "bar" -> Document.fromString("bar"),
+      "unknownField1" -> Document.fromString("unknownString1"),
+      "unknownField2" -> Document.fromString("unknownString2")
+    )
+
+    val roundTripped =
+      Document.decode[DefaultUnknownFieldRetentionExample](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(defaultUnknownFieldRetentionExample))
+  }
+
+  test(
+    "document codec - required unknown field retention + explicit defaults encoding = false"
+  ) {
+    val requiredUnknownFieldRetentionExample =
+      RequiredUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        bazes = Map(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val document = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(RequiredUnknownFieldRetentionExample.schema)
+      .encode(requiredUnknownFieldRetentionExample)
+    import Document._
+    val expectedDocument = Document.obj(
+      "foo" -> Document.fromString("foo"),
+      "bar" -> Document.fromString("bar"),
+      "unknownField1" -> Document.fromString("unknownString1"),
+      "unknownField2" -> Document.fromString("unknownString2")
+    )
+
+    val roundTripped =
+      Document.decode[RequiredUnknownFieldRetentionExample](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(requiredUnknownFieldRetentionExample))
+  }
+
+  test(
+    "document codec - required unknown field retention + explicit defaults encoding = true"
+  ) {
+    val defaultRequiredUnknownFieldRetentionExample =
+      DefaultRequiredUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        bazes = Map(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val document = Document.Encoder
+      .withExplicitDefaultsEncoding(true)
+      .fromSchema(DefaultRequiredUnknownFieldRetentionExample.schema)
+      .encode(defaultRequiredUnknownFieldRetentionExample)
+    import Document._
+    val expectedDocument = Document.obj(
+      "foo" -> Document.fromString("foo"),
+      "bar" -> Document.fromString("bar"),
+      "unknownField1" -> Document.fromString("unknownString1"),
+      "unknownField2" -> Document.fromString("unknownString2")
+    )
+
+    val roundTripped =
+      Document.decode[DefaultRequiredUnknownFieldRetentionExample](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(
+      roundTripped,
+      Right(defaultRequiredUnknownFieldRetentionExample)
+    )
   }
 
 }
