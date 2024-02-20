@@ -18,6 +18,7 @@ package smithy4s
 package internals
 
 import alloy.Discriminated
+import alloy.Nullable
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -209,12 +210,13 @@ class DocumentDecoderSchemaVisitor(
   def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
     new DocumentDecoder[Option[A]] {
       val decoder = schema.compile(self)
+      val aIsNullable = schema.hints.has(Nullable) && schema.isOption
       def expected = decoder.expected
 
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): Option[A] = if (document == Document.DNull) None
+      ): Option[A] = if (document == Document.DNull && !aIsNullable) None
       else Some(decoder(history, document))
     }
 

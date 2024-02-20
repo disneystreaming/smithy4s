@@ -616,4 +616,33 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, json)
   }
 
+  case class Patchable(a: Option[Nullable[Int]])
+
+  object Patchable {
+    implicit val schema: Schema[Patchable] = {
+      val a = Nullable.schema(int).optional[Patchable]("a", _.a)
+      struct(a)(Patchable.apply)
+    }
+  }
+
+  test("JSON patchable: Nullable.Null is encoded as null rather than missing") {
+    val patchable = Patchable(Some(Nullable.Null))
+    val toJson = Json.writePrettyString(patchable)
+    val expectedJson = """|{
+                          |  "a": null
+                          |}""".stripMargin
+    val fromJson = Json.read[Patchable](Blob(expectedJson))
+    assertEquals(toJson, expectedJson)
+    assertEquals(fromJson, Right(patchable))
+  }
+
+  test("JSON patchable: None is encoded as absent") {
+    val patchable = Patchable(None)
+    val toJson = Json.writeBlob(patchable)
+    val expectedJson = Blob("""{}""")
+    val fromJson = Json.read[Patchable](expectedJson)
+    assertEquals(toJson, expectedJson)
+    assertEquals(fromJson, Right(patchable))
+  }
+
 }

@@ -92,6 +92,7 @@ sealed trait Schema[A]{
 
   final def isOption: Boolean = this match {
     case _: OptionSchema[_] => true
+    case BijectionSchema(underlying, _) => underlying.isOption // TODO AJ: does this have any side-effects in the other places .isOption is used? is it a breaking change?
     case _ => false
   }
 

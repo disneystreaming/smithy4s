@@ -26,6 +26,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
+import alloy.Nullable
 import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
@@ -1252,6 +1253,8 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def option[A](schema: Schema[A]): JCodec[Option[A]] =
     new JCodec[Option[A]] {
       val underlying: JCodec[A] = self(schema)
+      val aIsNullable =
+        schema.hints.has(Nullable) && schema.isOption
       def expecting: String = s"JsNull or ${underlying.expecting}"
       def decodeKey(in: JsonReader): Option[A] = ???
       def encodeKey(x: Option[A], out: JsonWriter): Unit = ???
@@ -1261,7 +1264,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Option[A] =
-        if (in.isNextToken('n'))
+        // if `A` is an option and has nullable, we delegate the handling of `null` to it.
+        // This allows for supporting Json-merge patches, where the absence of value
+        // and the presence of "null" have different meanings.
+        if (in.isNextToken('n') && !aIsNullable)
           in.readNullOrError[Option[A]](None, "Expected null")
         else {
           in.rollbackToken()
