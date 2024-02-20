@@ -302,9 +302,6 @@ object Schema {
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] =
       this.apply(schema).map(bijection.to)
-
-//    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]) : Option[B] =
-//      this(schema).flatMap(b => refinement(b).toOption)
   }
 
   def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =
