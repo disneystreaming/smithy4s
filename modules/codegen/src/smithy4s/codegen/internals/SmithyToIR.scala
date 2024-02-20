@@ -795,41 +795,41 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
       tr: Trait
   ): Trait = tr match {
-      case default: DefaultTrait if default.toNode == Node.nullNode =>
-        val tpe = shape.asMemberShape().asScala match {
-          case Some(memShape) => model.getShape(memShape.getTarget).get.getType
-          case None           => shape.getType
-        }
-        val newNode = tpe match {
-          case ShapeType.STRING      => Node.from("")
-          case ShapeType.MAP         => Node.objectNode()
-          case ShapeType.LIST        => Node.arrayNode()
-          case ShapeType.INTEGER     => Node.from(0)
-          case ShapeType.BIG_DECIMAL => Node.from(0)
-          case ShapeType.BIG_INTEGER => Node.from(0)
-          case ShapeType.LONG        => Node.from(0L)
-          case ShapeType.DOUBLE      => Node.from(0.0d)
-          case ShapeType.SHORT       => Node.from(0: Short)
-          case ShapeType.FLOAT       => Node.from(0.0f)
-          case ShapeType.BOOLEAN     => Node.from(false)
-          case ShapeType.BLOB        => Node.arrayNode()
-          case ShapeType.BYTE        => Node.from(0)
-          case ShapeType.TIMESTAMP =>
-            shape
-              .getTrait(classOf[TimestampFormatTrait])
-              .asScala
-              .map(_.getValue) match {
-              case Some(TimestampFormatTrait.DATE_TIME) =>
-                Node.from("1970-01-01T00:00:00.00Z")
-              case Some(TimestampFormatTrait.HTTP_DATE) =>
-                Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
-              case _ => Node.from(0)
-            }
-          case _ => default.toNode
-        }
-        new DefaultTrait(newNode)
-      case other => other
-    }
+    case default: DefaultTrait if default.toNode == Node.nullNode =>
+      val tpe = shape.asMemberShape().asScala match {
+        case Some(memShape) => model.getShape(memShape.getTarget).get.getType
+        case None           => shape.getType
+      }
+      val newNode = tpe match {
+        case ShapeType.STRING      => Node.from("")
+        case ShapeType.MAP         => Node.objectNode()
+        case ShapeType.LIST        => Node.arrayNode()
+        case ShapeType.INTEGER     => Node.from(0)
+        case ShapeType.BIG_DECIMAL => Node.from(0)
+        case ShapeType.BIG_INTEGER => Node.from(0)
+        case ShapeType.LONG        => Node.from(0L)
+        case ShapeType.DOUBLE      => Node.from(0.0d)
+        case ShapeType.SHORT       => Node.from(0: Short)
+        case ShapeType.FLOAT       => Node.from(0.0f)
+        case ShapeType.BOOLEAN     => Node.from(false)
+        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BYTE        => Node.from(0)
+        case ShapeType.TIMESTAMP =>
+          shape
+            .getTrait(classOf[TimestampFormatTrait])
+            .asScala
+            .map(_.getValue) match {
+            case Some(TimestampFormatTrait.DATE_TIME) =>
+              Node.from("1970-01-01T00:00:00.00Z")
+            case Some(TimestampFormatTrait.HTTP_DATE) =>
+              Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
+            case _ => Node.from(0)
+          }
+        case _ => default.toNode
+      }
+      new DefaultTrait(newNode)
+    case other => other
+  }
 
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
@@ -974,10 +974,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def hints(shape: Shape): List[Hint] = {
     val allTraits = shape.getAllTraits().asScala.values.toList
-    // empty default should be converted to the default value for that type...
-    // UNLESS the field is explicitly annotated with @nullable, in which case a null default is valid
-    val hasNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
-    val traits = if (hasNullable) allTraits else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
+    val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
+    val traits =
+      if (isNullable) allTraits
+      else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -1236,13 +1236,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               mod.default.get.node
             } // value or default must be present if type is not wrapped
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(
-                _,
-                realName,
-                tpe,
-                _,
-                _
-              ) => // TODO AJ: anything else need to happen here?
+          case Field(_, realName, tpe, _, _) =>
+            // TODO AJ: anything else need to happen here?
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))

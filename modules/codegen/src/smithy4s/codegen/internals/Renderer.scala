@@ -636,7 +636,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
-
       val fieldType = Line.fieldType(field)
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
@@ -703,12 +702,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, modifier, hints) =>
               val fieldBuilder = modifier.typeMod match {
-                case Field.TypeModification.None if modifier.required => "required"
-                case Field.TypeModification.None => "field"
-                case Field.TypeModification.Option => "optional"
+                case Field.TypeModification.None if modifier.required     => "required"
+                case Field.TypeModification.None                          => "field"
+                case Field.TypeModification.Option                        => "optional"
                 case Field.TypeModification.Nullable if modifier.required => "nullable.required"
-                case Field.TypeModification.Nullable => "nullable.field"
-                case Field.TypeModification.OptionNullable => "nullable.optional"
+                case Field.TypeModification.Nullable                      => "nullable.field"
+                case Field.TypeModification.OptionNullable                => "nullable.optional"
               }
 
               if (hints.isEmpty) {
@@ -812,11 +811,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val fetchLogic = field.modifier.typeMod match {
       // depending on the type modifier the message may be nested 0, 1 or 2 levels deep
       case Field.TypeModification.OptionNullable if field.tpe.isResolved => line".map(_.toOption).flatten.orNull"
-      case Field.TypeModification.OptionNullable => line".map(_.toOption).flatten.map(_.value).orNull"
+      case Field.TypeModification.OptionNullable               => line".map(_.toOption).flatten.map(_.value).orNull"
       case Field.TypeModification.None if field.tpe.isResolved => Line.empty
-      case Field.TypeModification.None => line".value"
-      case _  if field.tpe.isResolved => line".orNull"
-      case _ => line".map(_.value).orNull"
+      case Field.TypeModification.None                         => line".value"
+      case _ if field.tpe.isResolved                           => line".orNull"
+      case _                                                   => line".map(_.value).orNull"
     }
 
     line"override def getMessage(): $string_ = ${field.name}$fetchLogic"
@@ -1187,12 +1186,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val tpeLine = Line.fieldType(field)
     import field._
 
-    val defaultLine : Option[Line] = field.modifier match {
+    val defaultLine: Option[Line] = field.modifier match {
       // non-required fields with no default get a default of None
       case Field.Modifier(false, _, None) => Some(NameRef("scala.None").toLine)
       // nullable with a default of null
       // (the Some(_) check on the second parameter is necessary in order to correctly render in mode OPTION_ONLY)
-      case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode => Some(NameRef("smithy4s.Nullable.Null").toLine)
+      case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode =>
+        Some(NameRef("smithy4s.Nullable.Null").toLine)
       // nullable with a default of a value
       case Field.Modifier(_, true, Some(Field.Default(_, Some(default)))) =>
         Some {
@@ -1206,7 +1206,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     defaultLine match {
       case Some(default) if shouldRenderDefault => line"$name: " + tpeLine + Literal(" = ") + default
-      case _ => line"$name: " + tpeLine
+      case _                                    => line"$name: " + tpeLine
     }
   }
 
