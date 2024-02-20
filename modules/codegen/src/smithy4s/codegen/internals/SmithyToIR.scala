@@ -110,7 +110,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case DefaultRenderMode.OptionOnly => None
       case DefaultRenderMode.NoDefaults => None
     }
-    Field.Modifier(hasRequired, hasNullable, defaultNode.map(Field.Default(_, defaultTypedNode)))
+    Field.Modifier(
+      hasRequired,
+      hasNullable,
+      defaultNode.map(Field.Default(_, defaultTypedNode))
+    )
   }
 
   def allDecls = allShapes
@@ -788,13 +792,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
-  private def imputeZeroValuesOnDefaultTraits(
-      shape: Shape
-  ): List[Trait] = {
-    val allTraits = shape.getAllTraits().asScala.values.toList
-    def isNullable = allTraits.exists(_.toShapeId() == alloy.NullableTrait.ID)
-    allTraits.map {
-      case default: DefaultTrait if default.toNode == Node.nullNode && !isNullable =>
+  private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
+      tr: Trait
+  ): Trait = tr match {
+      case default: DefaultTrait if default.toNode == Node.nullNode =>
         val tpe = shape.asMemberShape().asScala match {
           case Some(memShape) => model.getShape(memShape.getTarget).get.getType
           case None           => shape.getType
@@ -829,7 +830,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         new DefaultTrait(newNode)
       case other => other
     }
-  }
 
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
@@ -973,7 +973,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def hints(shape: Shape): List[Hint] = {
-    val traits = imputeZeroValuesOnDefaultTraits(shape)
+    val allTraits = shape.getAllTraits().asScala.values.toList
+    // empty default should be converted to the default value for that type...
+    // UNLESS the field is explicitly annotated with @nullable, in which case a null default is valid
+    val hasNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
+    val traits = if (hasNullable) allTraits else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -989,7 +993,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
-        .filter(tr => tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID)
+        .filter(tr =>
+          tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
+        )
         .map(unfoldTrait) ++
       maybeTypeclassesHint(shape)
   }
@@ -1224,12 +1230,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.getFieldsPlain
         val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, mod, _) if mod.typeMod == Field.TypeModification.None =>
+          case Field(_, realName, tpe, mod, _)
+              if mod.typeMod == Field.TypeModification.None =>
             val node = map.get(realName).getOrElse {
               mod.default.get.node
             } // value or default must be present if type is not wrapped
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(_, realName, tpe, _, _) => // TODO AJ: anything else need to happen here?
+          case Field(
+                _,
+                realName,
+                tpe,
+                _,
+                _
+              ) => // TODO AJ: anything else need to happen here?
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))

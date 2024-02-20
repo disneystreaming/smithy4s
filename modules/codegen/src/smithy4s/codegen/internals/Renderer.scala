@@ -1204,12 +1204,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
 
-    val tpeAndDefault = defaultLine match {
-      case Some(default) if shouldRenderDefault => tpeLine + Literal(" = ") + default
-      case _ => tpeLine
+    defaultLine match {
+      case Some(default) if shouldRenderDefault => line"$name: " + tpeLine + Literal(" = ") + default
+      case _ => line"$name: " + tpeLine
     }
-
-    line"$name: " + tpeAndDefault
   }
 
   private def renderArgs(fields: List[Field]): Line = fields
