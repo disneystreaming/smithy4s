@@ -809,13 +809,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderGetMessage(field: Field) = {
     val fetchLogic = field.modifier.typeMod match {
-      // depending on the type modifier the message may be nested 0, 1 or 2 levels deep
       case Field.TypeModification.OptionNullable if field.tpe.isResolved => line".map(_.toOption).flatten.orNull"
-      case Field.TypeModification.OptionNullable               => line".map(_.toOption).flatten.map(_.value).orNull"
-      case Field.TypeModification.None if field.tpe.isResolved => Line.empty
-      case Field.TypeModification.None                         => line".value"
-      case _ if field.tpe.isResolved                           => line".orNull"
-      case _                                                   => line".map(_.value).orNull"
+      case Field.TypeModification.OptionNullable                   => line".map(_.toOption).flatten.map(_.value).orNull"
+      case Field.TypeModification.Nullable if field.tpe.isResolved => line".toOption.orNull"
+      case Field.TypeModification.Nullable                         => line".toOption.map(_.value).orNull"
+      case Field.TypeModification.Option if field.tpe.isResolved   => line".orNull"
+      case Field.TypeModification.Option                           => line".map(_.value).orNull"
+      case Field.TypeModification.None if field.tpe.isResolved     => Line.empty
+      case Field.TypeModification.None                             => line".value"
     }
 
     line"override def getMessage(): $string_ = ${field.name}$fetchLogic"
