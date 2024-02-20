@@ -139,9 +139,22 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 }
 
 private[internals] object Line {
+  import LineSyntax._
 
-  def optional(line: Line): Line = {
+  def fieldType(field: Field) = field.modifier.typeMod match {
+    case Field.TypeModification.OptionNullable =>
+      Line.optional(Line.nullable(line"${field.tpe}"))
+    case Field.TypeModification.Option   => Line.optional(line"${field.tpe}")
+    case Field.TypeModification.Nullable => Line.nullable(line"${field.tpe}")
+    case Field.TypeModification.None     => line"${field.tpe}"
+  }
+
+  private def optional(line: Line): Line = {
     NameRef("scala.Option").toLine + Literal("[") + line + Literal("]")
+  }
+
+  private def nullable(line: Line): Line = {
+    NameRef("smithy4s.Nullable").toLine + Literal("[") + line + Literal("]")
   }
 
   def apply(value: String): Line = Line(Chain.one(Literal(value)))

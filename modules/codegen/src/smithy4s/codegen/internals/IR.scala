@@ -18,6 +18,7 @@ package smithy4s.codegen.internals
 
 import cats.Applicative
 import cats.Eval
+import cats.Order
 import cats.Traverse
 import cats.data.NonEmptyList
 import cats.kernel.Eq
@@ -141,29 +142,51 @@ private[internals] case class StreamingField(
 )
 
 private[internals] object Field {
+  sealed trait TypeModification
 
-  sealed trait Modifier {
-    def default: Option[Node] = this match {
-      case Modifier.RequiredDefaultMod(node, _) => Some(node)
-      case Modifier.DefaultMod(node, _)         => Some(node)
-      case Modifier.RequiredMod                 => None
-      case Modifier.NoModifier                  => None
-    }
+  object TypeModification {
+    case object None extends TypeModification
+    case object Option extends TypeModification
+    case object Nullable extends TypeModification
+    case object OptionNullable extends TypeModification
 
-    def none: Boolean = this match {
-      case Modifier.RequiredDefaultMod(_, _) => false
-      case Modifier.DefaultMod(_, _)         => false
-      case Modifier.RequiredMod              => false
-      case Modifier.NoModifier               => true
+    implicit val order: Order[TypeModification] = Order.by {
+      case None           => 0
+      case Nullable       => 1
+      case Option         => 2
+      case OptionNullable => 3
     }
   }
+
+  case class Default(node: Node, typedNode: Option[Fix[TypedNode]])
+  case class Modifier(
+      required: Boolean,
+      nullable: Boolean,
+      default: Option[Default]
+  ) {
+    def typeMod: TypeModification =
+      if (!required && nullable && default.isEmpty)
+        TypeModification.OptionNullable // nullable without default or required gets rendered as Option[Nullable[T]]
+      else if (nullable)
+        TypeModification.Nullable // other nullables get rendered as just Nullable[T]
+      else if (!required && default.isEmpty)
+        TypeModification.Option // normal line without default or required gets rendered as Option[T]
+      else
+        TypeModification.None // everything else just gets rendered as T
+  }
+
   object Modifier {
-    case object NoModifier extends Modifier
-    case object RequiredMod extends Modifier
-    case class RequiredDefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
-        extends Modifier
-    case class DefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
-        extends Modifier
+    // field order if all defaults are populated
+    def fullOrder: Order[Modifier] = Order.whenEqual(
+      Order.by {
+        case Modifier(true, _, None) => 0
+        case _                       => 1
+      },
+      Order.by(_.typeMod)
+    )
+
+    // field order if only option defaults are populated
+    def optionOnlyOrder: Order[Modifier] = Order.by(_.typeMod)
   }
 
   def apply(
