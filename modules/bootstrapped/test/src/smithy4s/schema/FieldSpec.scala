@@ -57,7 +57,7 @@ final class FieldSpec extends FunSuite {
   ) {
     import Nullable._
     case class Foo(
-        a: Nullable[String],
+        a: Nullable[String]
     )
 
     val emptyStringDefault = string.nullable
@@ -72,6 +72,71 @@ final class FieldSpec extends FunSuite {
     assertEquals(emptyStringDefault.getUnlessDefault(Foo(Null)), Some(Null))
     assertEquals(nullDefault.getUnlessDefault(Foo(Value(""))), Some(Value("")))
     assertEquals(nullDefault.getUnlessDefault(Foo(Null)), None)
+  }
 
+  test(
+    "getUnlessDefault can handle required nullable fields"
+  ) {
+    case class Foo(
+        a: Nullable[String]
+    )
+
+    val requiredNoDefault = string.nullable
+      .required[Foo]("a", _.a)
+
+    val requiredDefaultNull = string.nullable
+      .required[Foo]("a", _.a)
+      .addHints(Default(Document.DNull))
+
+    val requiredDefaultValue = string.nullable
+      .required[Foo]("a", _.a)
+      .addHints(Default(Document.fromString("default")))
+
+    // required should always return no matter what
+    List(Nullable.Value("default"), Nullable.Value(""), Nullable.Null).foreach {
+      test =>
+        assertEquals(requiredNoDefault.getUnlessDefault(Foo(test)), Some(test))
+        assertEquals(
+          requiredDefaultNull.getUnlessDefault(Foo(test)),
+          Some(test)
+        )
+        assertEquals(
+          requiredDefaultValue.getUnlessDefault(Foo(test)),
+          Some(test)
+        )
+    }
+  }
+
+  // Optional fields cannot have an explicit default set
+  // but None should be the implicit default
+  test(
+    "getUnlessDefault can handle optional fields, treating None as the default"
+  ) {
+    case class Foo(a: Option[String])
+
+    val optional = string.optional[Foo]("a", _.a)
+
+    expect.eql(optional.getUnlessDefault(Foo(Some(""))), Some(Some("")))
+    expect.eql(optional.getUnlessDefault(Foo(None)), None)
+  }
+
+  test(
+    "getUnlessDefault can handle optional nullable fields, treating None as the default"
+  ) {
+    case class Foo(
+        a: Option[Nullable[String]]
+    )
+
+    val optional = string.nullable
+      .optional[Foo]("a", _.a)
+
+    List(
+      Some(Nullable.Value("default")),
+      Some(Nullable.Value("")),
+      Some(Nullable.Null)
+    ).foreach { test =>
+      assertEquals(optional.getUnlessDefault(Foo(test)), Some(test))
+    }
+    assertEquals(optional.getUnlessDefault(Foo(None)), None)
   }
 }
