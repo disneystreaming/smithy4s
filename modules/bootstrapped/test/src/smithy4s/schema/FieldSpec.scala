@@ -52,4 +52,26 @@ final class FieldSpec extends FunSuite {
     assertEquals(result.toList, List(Some("test2"), None))
   }
 
+  test(
+    "getUnlessDefault can distinguish between the type's default value and null for nullable fields"
+  ) {
+    import Nullable._
+    case class Foo(
+        a: Nullable[String],
+    )
+
+    val emptyStringDefault = string.nullable
+      .field[Foo]("a", _.a)
+      .addHints(Default(Document.fromString("")))
+
+    val nullDefault = string.nullable
+      .field[Foo]("a", _.a)
+      .addHints(Default(Document.DNull))
+
+    assertEquals(emptyStringDefault.getUnlessDefault(Foo(Value(""))), None)
+    assertEquals(emptyStringDefault.getUnlessDefault(Foo(Null)), Some(Null))
+    assertEquals(nullDefault.getUnlessDefault(Foo(Value(""))), Some(Value("")))
+    assertEquals(nullDefault.getUnlessDefault(Foo(Null)), None)
+
+  }
 }

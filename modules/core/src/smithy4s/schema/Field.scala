@@ -65,10 +65,8 @@ final case class Field[S, A](
    * Applies a side-effecting lambda if the field is marked as required (using `smithy.api#required`),
    * OR if the field value is different from its default. Otherwise nothing happens.
    */
-  def foreachUnlessDefault(s: S)(f: A => Unit): Unit = {
-    val a = get(s)
-    if (isDefaultValue(a) && !isRequired) () else f(a)
-  }
+  def foreachUnlessDefault(s: S)(f: A => Unit): Unit =
+    getUnlessDefault(s).foreach(f)
 
   def hasDefaultValue: Boolean = getDefaultValue.isDefined
   def isRequired: Boolean = hints.has(smithy.api.Required)
