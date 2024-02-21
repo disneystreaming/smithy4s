@@ -159,7 +159,7 @@ object HelloWorldAuthServiceOperation {
       .withInput(unit)
       .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly(), smithy.api.Auth(Set()))
+      .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): HealthCheck = HealthCheck()
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>
