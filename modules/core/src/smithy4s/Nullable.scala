@@ -30,7 +30,7 @@ sealed trait Nullable[+A] {
     case Null     => Null
   }
 
-  def fold[B](whenValue: A => B, whenNull: => B): B =
+  def fold[B](whenNull: => B)(whenValue: A => B): B =
     this match {
       case Value(a) => whenValue(a)
       case Null     => whenNull
