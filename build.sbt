@@ -64,7 +64,6 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -843,6 +842,7 @@ lazy val bootstrapped = projectMatrix
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
+    Test / fork := true,
     exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
     cleanFiles += exampleGeneratedOutput.value,
     smithy4sDependencies ++= Seq(

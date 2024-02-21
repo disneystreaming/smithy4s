@@ -21,6 +21,9 @@ import smithy.api.HttpLabel
 import munit._
 import smithy.api.Readonly
 import smithy.api.Required
+import smithy.api.JsonName
+import smithy.api.Documentation
+import smithy.api.Tags
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
@@ -152,6 +155,18 @@ class HintsSpec() extends FunSuite {
       Hints(Required(), HttpLabel()),
       result
     )
+  }
+
+  test("Hints can be built from tuples of strings/documents") {
+    import Document.syntax._
+    lazy val hints = Hints.dynamic(
+      "smithy.api#jsonName" -> "foo",
+      "smithy.api#documentation" -> "hello",
+      "smithy.api#tags" -> array("one", "two", "three")
+    )
+    assertEquals(hints.get(JsonName), Some(JsonName("foo")))
+    assertEquals(hints.get(Documentation), Some(Documentation("hello")))
+    assertEquals(hints.get(Tags), Some(Tags(List("one", "two", "three"))))
   }
 
   private def makeLazyHints(hints: => Hints): (Hints, () => Boolean) = {
