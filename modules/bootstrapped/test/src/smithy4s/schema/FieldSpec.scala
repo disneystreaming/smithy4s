@@ -107,8 +107,6 @@ final class FieldSpec extends FunSuite {
     }
   }
 
-  // Optional fields cannot have an explicit default set
-  // but None should be the implicit default
   test(
     "getUnlessDefault can handle optional fields, treating None as the default"
   ) {
