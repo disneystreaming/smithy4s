@@ -1237,7 +1237,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             } // value or default must be present if type is not wrapped
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
           case Field(_, realName, tpe, _, _) =>
-            // TODO AJ: anything else need to happen here?
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))
