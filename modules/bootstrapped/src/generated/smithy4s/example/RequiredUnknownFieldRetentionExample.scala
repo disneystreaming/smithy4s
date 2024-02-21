@@ -5,10 +5,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.document
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class RequiredUnknownFieldRetentionExample(bazes: Map[String, Document], foo: Option[String] = None, bar: Option[String] = None)
+final case class RequiredUnknownFieldRetentionExample(retainedUnknownFields: Document, foo: Option[String] = None, bar: Option[String] = None)
 
 object RequiredUnknownFieldRetentionExample extends ShapeTag.Companion[RequiredUnknownFieldRetentionExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "RequiredUnknownFieldRetentionExample")
@@ -16,7 +17,7 @@ object RequiredUnknownFieldRetentionExample extends ShapeTag.Companion[RequiredU
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[RequiredUnknownFieldRetentionExample] = struct(
-    RetainedUnknownFields.underlyingSchema.required[RequiredUnknownFieldRetentionExample]("bazes", _.bazes).addHints(alloy.UnknownFieldRetention()),
+    document.required[RequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention()),
     string.optional[RequiredUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[RequiredUnknownFieldRetentionExample]("bar", _.bar),
   ){

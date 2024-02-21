@@ -551,8 +551,8 @@ class DocumentSpec() extends FunSuite {
     val unknownFieldRetentionExample = UnknownFieldRetentionExample(
       foo = Some("foo"),
       bar = Some("bar"),
-      bazes = Some(
-        Map(
+      retainedUnknownFields = Some(
+        Document.obj(
           "unknownField1" -> Document.fromString("unknownString1"),
           "unknownField2" -> Document.fromString("unknownString2")
         )
@@ -583,7 +583,7 @@ class DocumentSpec() extends FunSuite {
       DefaultUnknownFieldRetentionExample(
         foo = Some("foo"),
         bar = Some("bar"),
-        bazes = Map(
+        retainedUnknownFields = Document.obj(
           "unknownField1" -> Document.fromString("unknownString1"),
           "unknownField2" -> Document.fromString("unknownString2")
         )
@@ -615,7 +615,7 @@ class DocumentSpec() extends FunSuite {
       RequiredUnknownFieldRetentionExample(
         foo = Some("foo"),
         bar = Some("bar"),
-        bazes = Map(
+        retainedUnknownFields = Document.obj(
           "unknownField1" -> Document.fromString("unknownString1"),
           "unknownField2" -> Document.fromString("unknownString2")
         )
@@ -647,7 +647,7 @@ class DocumentSpec() extends FunSuite {
       DefaultRequiredUnknownFieldRetentionExample(
         foo = Some("foo"),
         bar = Some("bar"),
-        bazes = Map(
+        retainedUnknownFields = Document.obj(
           "unknownField1" -> Document.fromString("unknownString1"),
           "unknownField2" -> Document.fromString("unknownString2")
         )

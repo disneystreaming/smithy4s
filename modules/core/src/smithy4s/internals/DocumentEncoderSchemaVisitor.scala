@@ -182,6 +182,42 @@ class DocumentEncoderSchemaVisitor(
         from(e => DString(total(e).stringValue))
     }
 
+  trait UnknownFieldsEncoder[A] {
+    def apply(a: A): Map[String, Document]
+  }
+
+  object UnknownFieldsEncoder
+      extends SchemaVisitor.Default[UnknownFieldsEncoder] { self =>
+
+    override def default[A]: UnknownFieldsEncoder[A] = _ => Map.empty
+
+    override def primitive[P](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: Primitive[P]
+    ): UnknownFieldsEncoder[P] = document =>
+      tag match {
+        case PDocument =>
+          document match {
+            case Document.DObject(values) => values
+            case _                        => Map.empty
+          }
+
+        case _ =>
+          Map.empty
+      }
+
+    override def option[A](
+        schema: Schema[A]
+    ): UnknownFieldsEncoder[Option[A]] = {
+      val encoder = self(schema)
+      locally {
+        case Some(a) => encoder.apply(a)
+        case None    => Map.empty
+      }
+    }
+  }
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -201,18 +237,8 @@ class DocumentEncoderSchemaVisitor(
         field.hints
           .has(UnknownFieldRetention)
       ) {
-        field.schema match {
-          case Schema.MapSchema(_, _, Schema.string, Schema.document) =>
-            (s, builder) => builder ++= field.get(s)
-
-          case Schema.OptionSchema(
-                Schema.MapSchema(_, _, Schema.string, Schema.document)
-              ) =>
-            (s, builder) => field.get(s).foreach(builder ++= _)
-
-          case _ =>
-            (_, _) => ()
-        }
+        val unknownFieldsEncoder = UnknownFieldsEncoder(field.schema)
+        (s, builder) => builder ++= unknownFieldsEncoder(field.get(s))
       } else {
         val encoder = apply(field.schema)
         val jsonLabel = field.hints

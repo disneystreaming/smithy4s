@@ -8,24 +8,24 @@ structure UnknownFieldRetentionExample {
     foo: String
     bar: String
     @unknownFieldRetention
-    bazes: RetainedUnknownFields
- }
+    retainedUnknownFields: Document
+}
 
 structure DefaultUnknownFieldRetentionExample {
     foo: String
     bar: String
     @default
     @unknownFieldRetention
-    bazes: RetainedUnknownFields
- }
+    retainedUnknownFields: Document
+}
 
 structure RequiredUnknownFieldRetentionExample {
     foo: String
     bar: String
     @required
     @unknownFieldRetention
-    bazes: RetainedUnknownFields
- }
+    retainedUnknownFields: Document
+}
 
 structure DefaultRequiredUnknownFieldRetentionExample {
     foo: String
@@ -33,10 +33,5 @@ structure DefaultRequiredUnknownFieldRetentionExample {
     @default
     @required
     @unknownFieldRetention
-    bazes: RetainedUnknownFields
- }
- 
- map RetainedUnknownFields {
-    key: String
-    value: Document 
+    retainedUnknownFields: Document
 }

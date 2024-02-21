@@ -5,10 +5,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.document
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class DefaultUnknownFieldRetentionExample(bazes: Map[String, Document] = Map(), foo: Option[String] = None, bar: Option[String] = None)
+final case class DefaultUnknownFieldRetentionExample(retainedUnknownFields: Document = smithy4s.Document.nullDoc, foo: Option[String] = None, bar: Option[String] = None)
 
 object DefaultUnknownFieldRetentionExample extends ShapeTag.Companion[DefaultUnknownFieldRetentionExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultUnknownFieldRetentionExample")
@@ -16,7 +17,7 @@ object DefaultUnknownFieldRetentionExample extends ShapeTag.Companion[DefaultUnk
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[DefaultUnknownFieldRetentionExample] = struct(
-    RetainedUnknownFields.underlyingSchema.field[DefaultUnknownFieldRetentionExample]("bazes", _.bazes).addHints(alloy.UnknownFieldRetention(), smithy.api.Default(smithy4s.Document.obj())),
+    document.field[DefaultUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
     string.optional[DefaultUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[DefaultUnknownFieldRetentionExample]("bar", _.bar),
   ){

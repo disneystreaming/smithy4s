@@ -306,6 +306,57 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
+  trait UnknownFieldsDecoder[A] { self =>
+    def apply(
+        history: List[PayloadPath.Segment],
+        unknownFields: Map[String, Document]
+    ): A
+  }
+
+  object UnknownFieldsDecoder
+      extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
+
+    override def default[A]: UnknownFieldsDecoder[A] = (
+        history: List[PayloadPath.Segment],
+        _: Map[String, Document]
+    ) =>
+      throw PayloadError(
+        PayloadPath(history.reverse),
+        "Json document",
+        "Expected Json Shape: Object"
+      )
+
+    override def primitive[P](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: Primitive[P]
+    ): UnknownFieldsDecoder[P] = (
+        history: List[PayloadPath.Segment],
+        unknownFields: Map[String, Document]
+    ) =>
+      tag match {
+        case PDocument => Document.DObject(unknownFields)
+        case _ =>
+          throw PayloadError(
+            PayloadPath(history.reverse),
+            "Json document",
+            "Expected Json Shape: Object"
+          )
+      }
+
+    override def option[A](
+        schema: Schema[A]
+    ): UnknownFieldsDecoder[Option[A]] = {
+      val decoder = schema.compile(self)
+      (
+          history: List[PayloadPath.Segment],
+          unknownFields: Map[String, Document]
+      ) =>
+        if (unknownFields.isEmpty) None
+        else Some(decoder(history, unknownFields))
+    }
+  }
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -324,35 +375,14 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit =
       if (isForUnknownFieldRetention(field)) {
-        field.schema match {
-          case Schema.MapSchema(_, _, Schema.string, Schema.document) =>
-            (
-                _: List[PayloadPath.Segment],
-                buffer: Any => Unit,
-                fields: Map[String, Document]
-            ) => {
-              val retainedUnknownFields = fields -- knownFieldLabels
-              buffer(retainedUnknownFields)
-            }
-
-          case Schema.OptionSchema(
-                Schema.MapSchema(_, _, Schema.string, Schema.document)
-              ) =>
-            (
-                _: List[PayloadPath.Segment],
-                buffer: Any => Unit,
-                fields: Map[String, Document]
-            ) => {
-              val retainedUnknownFields = fields -- knownFieldLabels
-              buffer(Some(retainedUnknownFields))
-            }
-
-          case _ =>
-            (
-                _: List[PayloadPath.Segment],
-                _: Any => Unit,
-                _: Map[String, Document]
-            ) => ()
+        val unknownFieldsDecoder = UnknownFieldsDecoder(field.schema)
+        (
+            pp: List[PayloadPath.Segment],
+            buffer: Any => Unit,
+            fields: Map[String, Document]
+        ) => {
+          val unknownFields = fields -- knownFieldLabels
+          buffer(unknownFieldsDecoder(pp, unknownFields))
         }
       } else {
         val jsonLabel = jsonLabelOrLabel(field)
@@ -398,7 +428,7 @@ class DocumentDecoderSchemaVisitor(
     DocumentDecoder.instance("Structure", "Object") {
       case (pp, DObject(value)) =>
         val buffer = Vector.newBuilder[Any]
-        fieldDecoders.foreach(fd => fd(pp, buffer.+=(_), value))
+        fieldDecoders.foreach(fd => fd(pp, buffer += (_), value))
         make(buffer.result())
     }
   }
