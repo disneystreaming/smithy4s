@@ -51,7 +51,7 @@ object Nullable {
     case None    => Null
   }
 
-  case class Value[A](a: A) extends Nullable[A]
+  final case class Value[A](a: A) extends Nullable[A]
   case object Null extends Nullable[Nothing]
 
   private[smithy4s] def schema[A](schemaA: Schema[A]): Schema[Nullable[A]] = {
