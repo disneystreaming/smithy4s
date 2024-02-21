@@ -18,6 +18,6 @@ package smithy4s.interopcats
 
 package object instances {
 
-  private[interopcats] object all extends HashInstances with ShowInstances
+  private[interopcats] object all extends HashInstances with ShowInstances with NullableInstances
 
 }
