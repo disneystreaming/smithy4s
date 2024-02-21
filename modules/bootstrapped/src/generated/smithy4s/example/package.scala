@@ -90,6 +90,7 @@ package object example {
   type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
   type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
+  type CustomErrorMessageType = smithy4s.example.CustomErrorMessageType.Type
   type UVIndex = smithy4s.example.UVIndex.Type
   @deprecated(message = "N/A", since = "N/A")
   type Strings = smithy4s.example.Strings.Type

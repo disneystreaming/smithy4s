@@ -17,8 +17,7 @@
 package smithy4s
 
 import munit._
-import smithy4s.example.ClientError
-import smithy4s.example.ServerErrorCustomMessage
+import smithy4s.example._
 
 class ErrorMessageTraitSpec extends FunSuite {
 
@@ -32,6 +31,32 @@ class ErrorMessageTraitSpec extends FunSuite {
       e.toString,
       "smithy4s.example.ServerErrorCustomMessage: error message"
     )
+  }
+
+  test("Custom @errorMessage field works for various nullable/default/required combos") {
+    val customMessage = "some custom error message"
+    val errorsWithCustomMessage = List(
+      ErrorCustomTypeMessage(Some(CustomErrorMessageType(customMessage))),
+      ErrorCustomTypeRequiredMessage(CustomErrorMessageType(customMessage)),
+      ErrorNullableMessage(Some(Nullable.Value(customMessage))),
+      ErrorNullableRequiredMessage(Nullable.Value(customMessage)),
+      ErrorNullableCustomTypeMessage(Some(Nullable.Value(CustomErrorMessageType(customMessage)))),
+      ErrorNullableCustomTypeRequiredMessage(Nullable.Value(CustomErrorMessageType(customMessage))),
+      ErrorRequiredMessage(customMessage)
+    )
+    val errorsWithNullMessage = List(
+      ErrorCustomTypeMessage(None),
+      ErrorNullableMessage(None),
+      ErrorNullableMessage(Some(Nullable.Null)),
+      ErrorNullableRequiredMessage(Nullable.Null),
+      ErrorNullableCustomTypeMessage(None),
+      ErrorNullableCustomTypeMessage(Some(Nullable.Null)),
+      ErrorNullableCustomTypeRequiredMessage(Nullable.Null),
+      ServerErrorCustomMessage(None),
+    )
+
+    errorsWithCustomMessage.foreach(e => assertEquals(e.getMessage, customMessage, s"Failed on ${e.getClass.getName}"))
+    errorsWithNullMessage.foreach(e => assertEquals(e.getMessage, null, s"Failed on ${e.getClass.getName}"))
   }
 
   test("Generated getMessage") {
