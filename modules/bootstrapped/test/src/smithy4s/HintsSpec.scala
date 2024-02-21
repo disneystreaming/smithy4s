@@ -24,9 +24,6 @@ import smithy.api.Required
 import smithy.api.JsonName
 import smithy.api.Documentation
 import smithy.api.Tags
-// import smithy.api.JsonName
-// import smithy.api.Documentation
-// import smithy.api.Tags
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
