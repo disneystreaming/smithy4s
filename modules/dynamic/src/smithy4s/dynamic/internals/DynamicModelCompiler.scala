@@ -514,37 +514,45 @@ private[dynamic] object Compiler {
       serviceMap += id -> service
     }
 
-    override def structureShape(id: ShapeId, shape: StructureShape): Unit =
+    override def structureShape(id: ShapeId, shape: StructureShape): Unit = {
+      def getFieldSchema(
+          labelledShape: (String, MemberShape),
+          index: Int
+      ): Eval[Field[DynStruct, DynData]] = {
+        val (label, mShape) = labelledShape
+        val field = schema(mShape.target)
+          .map { sch =>
+            if (mShape.traits.contains("alloy#nullable"))
+              sch.nullable.asInstanceOf[Schema[DynData]]
+            else
+              sch
+          }
+          .map { sch =>
+            if (mShape.traits.contains("smithy.api#required"))
+              sch.required[DynStruct](label, Accessor(index))
+            else if (mShape.traits.contains("smithy.api#default"))
+              sch.field[DynStruct](label, Accessor(index))
+            else
+              sch
+                .optional[DynStruct](label, OptionalAccessor(index))
+                .asInstanceOf[Field[DynStruct, DynData]]
+          }
+        val memberHints = allHints(mShape.traits)
+        field.map(_.addHints(memberHints.all.toSeq: _*))
+      }
       update(
         id,
         shape.traits, {
           val lFields = {
-            shape.members.toVector.zipWithIndex.traverse {
-              case ((label, mShape), index) =>
-                val lMemberSchema = schema(mShape.target)
-                val lField =
-                  if (
-                    mShape.traits
-                      .contains(IdRef("smithy.api#required"))
-                  ) {
-                    lMemberSchema.map(
-                      _.required[DynStruct](label, Accessor(index))
-                    )
-                  } else {
-                    lMemberSchema.map(
-                      _.optional[DynStruct](label, OptionalAccessor(index))
-                        .asInstanceOf[Field[DynStruct, DynData]]
-                    )
-                  }
-                val memberHints = allHints(mShape.traits)
-                lField.map(_.addHints(memberHints.all.toSeq: _*))
-            }
+            shape.members.toVector.zipWithIndex
+              .traverse((getFieldSchema _).tupled)
           }
           if (isRecursive(id)) {
             Eval.later(recursive(struct(lFields.value)(Constructor)))
           } else lFields.map(fields => struct(fields)(Constructor))
         }
       )
+    }
 
     override def unionShape(id: ShapeId, shape: UnionShape): Unit = {
       update(

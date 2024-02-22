@@ -59,4 +59,19 @@ object Nullable {
       Bijection[Option[A], Nullable[A]](fromOption, _.toOption)
     }
   }
+
+  private[smithy4s] object Schema {
+    import smithy4s.Schema.{BijectionSchema, OptionSchema}
+
+    def unapply[A](schema: Schema[A]): Option[Schema[_]] = {
+      schema match {
+        case bs: BijectionSchema[_, _] if bs.hints.has(alloy.Nullable) =>
+          bs.underlying match {
+            case os: OptionSchema[_] => Some(os.underlying)
+            case _                        => None
+          }
+        case _ => None
+      }
+    }
+  }
 }
