@@ -530,8 +530,6 @@ private[dynamic] object Compiler {
           .map { sch =>
             if (mShape.traits.contains(IdRef("smithy.api#required")))
               sch.required[DynStruct](label, Accessor(index))
-            else if (mShape.traits.contains(IdRef("smithy.api#default")))
-              sch.field[DynStruct](label, Accessor(index))
             else
               sch
                 .optional[DynStruct](label, OptionalAccessor(index))

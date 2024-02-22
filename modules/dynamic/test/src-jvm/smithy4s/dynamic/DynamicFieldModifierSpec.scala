@@ -55,7 +55,7 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
   }
 
 
-  test("Optional field without default results in optional schema") {
+  test("Optional field results in optional schema") {
     val model = """|namespace foo
                    |
                    |use smithy.api#required
@@ -73,26 +73,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     }
   }
 
-  test(
-    "Optional field with default results in default hint and regular schema"
-  ) {
-    val model = """|$version: "2"
-                   |
-                   |namespace foo
-                   |
-                   |use smithy.api#required
-                   |
-                   |structure Foo {
-                   |  bar: String = "bar"
-                   |}
-                   |""".stripMargin
-    val field = loadFieldInfo(model)
-    checkRequired(field, false)
-    checkNullable(field, false)
-    checkDefault(field, Document.DString("bar"))
-    expectPrimitiveStringSchema(field.schema)
-  }
-
   test("Required field results in regular schema with required hint") {
     val model =
       """|namespace foo
@@ -107,27 +87,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     val field = loadFieldInfo(model)
     checkRequired(field, true)
     checkNullable(field, false)
-    expectPrimitiveStringSchema(field.schema)
-  }
-
-  test(
-    "Required field with default results in default hint and regular schema"
-  ) {
-    val model = """|$version: "2"
-                   |
-                   |namespace foo
-                   |
-                   |use smithy.api#required
-                   |
-                   |structure Foo {
-                   |  @required
-                   |  bar: String = "bar"
-                   |}
-                   |""".stripMargin
-    val field = loadFieldInfo(model)
-    checkRequired(field, true)
-    checkNullable(field, false)
-    checkDefault(field, Document.DString("bar"))
     expectPrimitiveStringSchema(field.schema)
   }
 
@@ -173,10 +132,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     checkRequired(field, false)
     checkNullable(field, true)
     checkDefault(field, Document.DString("foo"))
-    field.schema match {
-      case Nullable.Schema(s) => expectPrimitiveStringSchema(s)
-      case other              => fail(s"Expected nullable schema, got $other")
-    }
   }
 
   test(
@@ -200,10 +155,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     checkRequired(field, false)
     checkNullable(field, true)
     checkDefault(field, Document.DNull)
-    field.schema match {
-      case Nullable.Schema(s) => expectPrimitiveStringSchema(s)
-      case other              => fail(s"Expected nullable schema, got $other")
-    }
   }
 
   test(
@@ -225,34 +176,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     val field = loadFieldInfo(model)
     checkRequired(field, true)
     checkNullable(field, true)
-    field.schema match {
-      case Nullable.Schema(s) => expectPrimitiveStringSchema(s)
-      case other              => fail(s"Expected nullable schema, got $other")
-    }
-  }
-
-  test(
-    "Required nullable field with default results in nullable hint and nullable schema"
-  ) {
-    val model = """|$version: "2"
-                   |
-                   |namespace foo
-                   |
-                   |use smithy.api#default
-                   |use smithy.api#required
-                   |use alloy#nullable
-                   |
-                   |structure Foo {
-                   |  @nullable
-                   |  @required
-                   |  @default
-                   |  bar: String
-                   |}
-                   |""".stripMargin
-    val field = loadFieldInfo(model)
-    checkRequired(field, true)
-    checkNullable(field, true)
-    checkDefault(field, Document.DNull)
     field.schema match {
       case Nullable.Schema(s) => expectPrimitiveStringSchema(s)
       case other              => fail(s"Expected nullable schema, got $other")
