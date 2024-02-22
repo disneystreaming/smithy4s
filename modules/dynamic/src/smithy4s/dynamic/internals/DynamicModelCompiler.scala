@@ -522,15 +522,15 @@ private[dynamic] object Compiler {
         val (label, mShape) = labelledShape
         val field = schema(mShape.target)
           .map { sch =>
-            if (mShape.traits.contains("alloy#nullable"))
+            if (mShape.traits.contains(IdRef("alloy#nullable")))
               sch.nullable.asInstanceOf[Schema[DynData]]
             else
               sch
           }
           .map { sch =>
-            if (mShape.traits.contains("smithy.api#required"))
+            if (mShape.traits.contains(IdRef("smithy.api#required")))
               sch.required[DynStruct](label, Accessor(index))
-            else if (mShape.traits.contains("smithy.api#default"))
+            else if (mShape.traits.contains(IdRef("smithy.api#default")))
               sch.field[DynStruct](label, Accessor(index))
             else
               sch
