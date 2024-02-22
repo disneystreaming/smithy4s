@@ -5,7 +5,7 @@ title: Default Values
 
 ## Null Default
 
-When the `smithy.api#default` trait annotating a shape contains a `null` value, Smithy4s will (where possible) assume a "zero value" as the default. For example:
+When the `smithy.api#default` trait annotating a shape contains a `null` value, and the shape is not additionally [annotated explicitly as nullable](./01-customisation/13-nullable-values.md), Smithy4s will (where possible) assume a "zero value" as the default. For example:
 
 ```smithy
 structure Test {

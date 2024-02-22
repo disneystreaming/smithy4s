@@ -112,7 +112,7 @@ object Foo extends smithy4s.ShapeTag.Companion[Foo] {
 ```
 
 As you can see, the Smithy **structure** translates quite naturally to a Scala `case class`.
-Every member of the structure that does not have the `@required` trait is rendered as an optional value defaulting to None (by default, smithy4s sorts the fields before rendering the case class so that the required ones appear before the optional ones. That is a pragmatic decision that tends to improve UX for users.)
+Every member of the structure that does not have either the `@required` trait or a default value specified is rendered as an optional value defaulting to None (by default, smithy4s sorts the fields before rendering the case class so that the required ones appear before the optional ones. That is a pragmatic decision that tends to improve UX for users.)
 
 Indeed, for each field, there is an associated reference to a schema (int, string, ...), a string label, and a lambda calling the case class accessor that allows the retrieval of the associated field value.
 Additionally, the constructor of the case class is also referenced in the Schema.
@@ -132,7 +132,7 @@ Since 0.18, the concept of Option in Smithy4s is backed
 by a `OptionSchema` member of the `Schema` GADT. Having Option as a first-class citizen has some advantages, as it allows to support [sparse collections](https://smithy.io/2.0/spec/aggregate-types.html?highlight=sparse%20collections#list-member-optionality).
 
 The downside is that this allows to create schemas (and therefore codecs) that do not abide by round-tripping properties. Indeed, once data is on the wire, it's often
-impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`.
+impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`.  If you need to distinguish between presence of a null value and absence of a value, Smithy4s provides an [additional Nullable type](./../04-codegen/01-customisation/13-nullable-values.md) in order to allow an extra level of nesting.
 
 ### Unions
 
