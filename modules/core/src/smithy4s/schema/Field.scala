@@ -87,6 +87,9 @@ final case class Field[S, A](
 
   def addHints(newHints: Hint*): Field[S, A] =
     copy(schema = schema.addMemberHints(newHints: _*))
+
+  def addHints(newHints: Hints): Field[S, A] =
+    copy(schema = schema.addMemberHints(newHints))
 }
 
 object Field {
