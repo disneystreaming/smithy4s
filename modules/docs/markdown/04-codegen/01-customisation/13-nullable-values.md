@@ -24,19 +24,21 @@ This will be rendered as
 ```scala
 package example
 
-import smithy4s.Nullable
+import smithy4s._
 import smithy4s.schema.Schema._
 
-case class Foo(a: Option[Nullable[Int]] = None)
+final case class Foo(a: Option[Nullable[Int]] = None)
 
-object Foo extends smithy4s.ShapeTag.Companion[Foo] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("example", "Foo")
+object Foo extends ShapeTag.Companion[Foo] {
+  val id: ShapeId = ShapeId("example", "FooIsh")
 
-  implicit val schema: smithy4s.Schema[Foo] = struct(
-    int.nullable.optional("a", _.a)
+  val hints: Hints = Hints.empty
+
+  implicit val schema: Schema[Foo] = struct(
+    int.nullable.optional[Foo]("a", _.a),
   ){
     Foo.apply
-  }.withId(id)
+  }.withId(id).addHints(hints)
 }
 ```
 
