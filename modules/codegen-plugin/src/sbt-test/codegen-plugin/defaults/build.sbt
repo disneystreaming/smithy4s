@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
       val expectedLines = Set(
         "version",
         "src/main/smithy",
-        "com.disneystreaming.alloy:alloy-core:0.2.8"
+        "com.disneystreaming.alloy:alloy-core:0.3.0"
       )
       val content =
         IO.readLines(baseDirectory.value / "smithy-build.json")
