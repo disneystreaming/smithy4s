@@ -1,6 +1,7 @@
 # 0.18.9
 
-* Supports error responses with `@httpResponseCode` fields.
+* Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
+* Generalise implementation of `@httpResponseCode` to later allow for its use in error responses.
 
 # 0.18.8
 
