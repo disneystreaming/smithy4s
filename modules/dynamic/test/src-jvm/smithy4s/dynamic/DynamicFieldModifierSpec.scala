@@ -54,7 +54,6 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     }
   }
 
-
   test("Optional field results in optional schema") {
     val model = """|namespace foo
                    |
@@ -200,9 +199,13 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
   private def checkRequired[A, B](
       field: Field[A, B],
       isRequired: Boolean
-  )(implicit loc: Location): Unit = expect(field.memberHints.has(smithy.api.Required) == isRequired)
+  )(implicit loc: Location): Unit = expect(
+    field.memberHints.has(smithy.api.Required) == isRequired
+  )
   private def checkNullable[A, B](
       field: Field[A, B],
       isNullable: Boolean
-  )(implicit loc: Location): Unit = expect(field.memberHints.has(alloy.Nullable) == isNullable)
+  )(implicit loc: Location): Unit = expect(
+    field.memberHints.has(alloy.Nullable) == isNullable
+  )
 }

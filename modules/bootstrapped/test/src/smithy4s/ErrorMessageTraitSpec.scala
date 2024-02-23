@@ -33,15 +33,21 @@ class ErrorMessageTraitSpec extends FunSuite {
     )
   }
 
-  test("Custom @errorMessage field works for various nullable/default/required combos") {
+  test(
+    "Custom @errorMessage field works for various nullable/default/required combos"
+  ) {
     val customMessage = "some custom error message"
     val errorsWithCustomMessage = List(
       ErrorCustomTypeMessage(Some(CustomErrorMessageType(customMessage))),
       ErrorCustomTypeRequiredMessage(CustomErrorMessageType(customMessage)),
       ErrorNullableMessage(Some(Nullable.Value(customMessage))),
       ErrorNullableRequiredMessage(Nullable.Value(customMessage)),
-      ErrorNullableCustomTypeMessage(Some(Nullable.Value(CustomErrorMessageType(customMessage)))),
-      ErrorNullableCustomTypeRequiredMessage(Nullable.Value(CustomErrorMessageType(customMessage))),
+      ErrorNullableCustomTypeMessage(
+        Some(Nullable.Value(CustomErrorMessageType(customMessage)))
+      ),
+      ErrorNullableCustomTypeRequiredMessage(
+        Nullable.Value(CustomErrorMessageType(customMessage))
+      ),
       ErrorRequiredMessage(customMessage)
     )
     val errorsWithNullMessage = List(
@@ -52,11 +58,19 @@ class ErrorMessageTraitSpec extends FunSuite {
       ErrorNullableCustomTypeMessage(None),
       ErrorNullableCustomTypeMessage(Some(Nullable.Null)),
       ErrorNullableCustomTypeRequiredMessage(Nullable.Null),
-      ServerErrorCustomMessage(None),
+      ServerErrorCustomMessage(None)
     )
 
-    errorsWithCustomMessage.foreach(e => assertEquals(e.getMessage, customMessage, s"Failed on ${e.getClass.getName}"))
-    errorsWithNullMessage.foreach(e => assertEquals(e.getMessage, null, s"Failed on ${e.getClass.getName}"))
+    errorsWithCustomMessage.foreach(e =>
+      assertEquals(
+        e.getMessage,
+        customMessage,
+        s"Failed on ${e.getClass.getName}"
+      )
+    )
+    errorsWithNullMessage.foreach(e =>
+      assertEquals(e.getMessage, null, s"Failed on ${e.getClass.getName}")
+    )
   }
 
   test("Generated getMessage") {
