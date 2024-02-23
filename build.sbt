@@ -374,7 +374,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "upickle" % "3.1.4",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.8"
+      "io.get-coursier" %% "coursier" % "2.1.9"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
