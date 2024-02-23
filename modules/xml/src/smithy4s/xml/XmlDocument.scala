@@ -246,7 +246,7 @@ object XmlDocument {
 
       private def toAttr(attr: XmlAttr): Attr = Attr(
         toQName(attr.name),
-        attr.values.map(text => XmlEvent.XmlString(escape(text.text), isCDATA = false))
+        attr.values.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
       )
 
       private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
