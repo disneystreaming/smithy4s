@@ -2,6 +2,8 @@
 
 * Supports error responses with `@httpResponseCode` fields.
 
+* Added support for `@nullable` on fields, to allow absent values to be handled differently from explicit null
+
 # 0.18.8
 
 * Fix collision avoidance algorithm to cover Scala 3 keywords
