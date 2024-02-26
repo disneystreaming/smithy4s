@@ -20,7 +20,9 @@ sealed abstract class EnumResult(_value: String, _name: String, _intValue: Int, 
 object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumResult] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnumResult")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Box(),
+  ).lazily
 
   case object FIRST extends EnumResult("FIRST", "FIRST", 1, Hints.empty)
   case object SECOND extends EnumResult("SECOND", "SECOND", 2, Hints.empty)

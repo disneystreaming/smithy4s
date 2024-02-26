@@ -22,6 +22,7 @@ object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Compan
   val id: ShapeId = ShapeId("smithy4s.example", "OpenIntEnumTest")
 
   val hints: Hints = Hints(
+    smithy.api.Box(),
     alloy.OpenEnum(),
   ).lazily
 

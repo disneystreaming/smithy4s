@@ -22,6 +22,7 @@ object OpenIntEnumCollisionTest2 extends Enumeration[OpenIntEnumCollisionTest2] 
   val id: ShapeId = ShapeId("smithy4s.example", "OpenIntEnumCollisionTest2")
 
   val hints: Hints = Hints(
+    smithy.api.Box(),
     alloy.OpenEnum(),
   ).lazily
 
