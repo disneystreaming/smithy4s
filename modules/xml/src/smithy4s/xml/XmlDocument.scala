@@ -218,39 +218,48 @@ object XmlDocument {
 
     }
 
-  implicit val documentEventifier: DocumentEventifier[XmlDocument] =
-    new DocumentEventifier[XmlDocument] {
-      def eventify(node: XmlDocument): Stream[Pure, XmlEvent] = {
-        Stream(XmlEvent.StartDocument) ++
-          eventifyContent(node.root) ++
-          Stream(XmlEvent.EndDocument)
-      }
-      def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
-        xmlContent match {
-          case XmlText(text) =>
-            Stream(XmlEvent.XmlString(escape(text), isCDATA = false))
-          case XmlDocument.XmlEntityRef(entityName) =>
-            Stream.emit(XmlEvent.XmlEntityRef(entityName))
-          case XmlElem(name, attributes, children) =>
-            val qName = toQName(name)
-            val attr: List[Attr] = attributes.map(toAttr)
-            if (children.isEmpty) {
-              Stream(XmlEvent.StartTag(qName, attr, isEmpty = true), XmlEvent.EndTag(qName))
-            } else {
-              Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
-                children.foldMap(eventifyContent) ++
-                Stream(XmlEvent.EndTag(qName))
-            }
-          case XmlAttr(_, _) => Stream.empty
-        }
+  private[xml] def makeDocumentEventifier(escapeAttributes: Boolean): DocumentEventifier[XmlDocument] =
+    new XmlDocumentEventifier(escapeAttributes)
 
-      private def toAttr(attr: XmlAttr): Attr = Attr(
-        toQName(attr.name),
-        attr.values.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
-      )
+  implicit val documentEventifier: DocumentEventifier[XmlDocument] = new XmlDocumentEventifier(false)
 
-      private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
+  private class XmlDocumentEventifier(escapeAttributes: Boolean) extends DocumentEventifier[XmlDocument] {
+    def eventify(node: XmlDocument): Stream[Pure, XmlEvent] = {
+      Stream(XmlEvent.StartDocument) ++
+        eventifyContent(node.root) ++
+        Stream(XmlEvent.EndDocument)
     }
+    def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
+      xmlContent match {
+        case XmlText(text) =>
+          Stream(XmlEvent.XmlString(escape(text), isCDATA = false))
+        case XmlDocument.XmlEntityRef(entityName) =>
+          Stream.emit(XmlEvent.XmlEntityRef(entityName))
+        case XmlElem(name, attributes, children) =>
+          val qName = toQName(name)
+          val attr: List[Attr] = attributes.map(toAttr)
+          if (children.isEmpty) {
+            Stream(XmlEvent.StartTag(qName, attr, isEmpty = true), XmlEvent.EndTag(qName))
+          } else {
+            Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
+              children.foldMap(eventifyContent) ++
+              Stream(XmlEvent.EndTag(qName))
+          }
+        case XmlAttr(_, _) => Stream.empty
+      }
+
+    private def toAttr(attr: XmlAttr): Attr = {
+      Attr(
+        toQName(attr.name),
+        attr.values.map { text =>
+          val attrText = if (escapeAttributes) escape(text.text) else text.text
+          XmlEvent.XmlString(attrText, isCDATA = false)
+        }
+      )
+    }
+
+    private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
+  }
 
   private def escape(string: String): String = {
     string.flatMap {
