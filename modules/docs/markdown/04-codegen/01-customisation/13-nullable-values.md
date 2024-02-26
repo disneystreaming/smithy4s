@@ -3,7 +3,7 @@ sidebar_label: Nullable Values
 title: Nullable Values
 ---
 
-By default, smithy does not distinguish between a value being absent and it being null - both are translated to `scala.None`, which in turn will be serialised as an absent value.
+The official smithy toolset does not offer anything to distinguish between an absence of value and a value set to null during (de) serialisation. 
 
 In order to differentiate the two, for example in order to allow a HTTP server to implement merge patch semantics or return explicit null rather than silently dropping a field, you can use the `alloy.nullable` trait on members of a structure shape. For example:
 
