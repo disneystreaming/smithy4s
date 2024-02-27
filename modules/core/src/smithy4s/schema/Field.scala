@@ -66,6 +66,7 @@ final case class Field[S, A](
    * OR if the field value is different from its default. Otherwise nothing happens.
    */
   def foreachUnlessDefault(s: S)(f: A => Unit): Unit = {
+    // duplicates logic from getUnlessDefault in order to avoid unnecessary Option allocation
     val a = get(s)
     if (isDefaultValue(a) && !isRequired) () else f(a)
   }

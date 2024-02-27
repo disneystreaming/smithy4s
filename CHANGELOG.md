@@ -6,6 +6,8 @@
 * Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
 * Adds a `smithy4s.Document.syntax` object, the contents of which can be imported to facilitate the instantiation of documents.
 
+* Added support for `@nullable` on fields, to allow absent values to be handled differently from explicit null
+
 # 0.18.8
 
 * Fix collision avoidance algorithm to cover Scala 3 keywords
