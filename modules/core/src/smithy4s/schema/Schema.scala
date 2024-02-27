@@ -90,8 +90,12 @@ sealed trait Schema[A]{
   final def biject[B](to: A => B)(from: B => A) : Schema[B] = Schema.bijection(this, to, from)
   final def option: Schema[Option[A]] = Schema.option(this)
 
+  final def nullable: Schema[Nullable[A]] = Nullable.schema(this)
+
   final def isOption: Boolean = this match {
     case _: OptionSchema[_] => true
+    case BijectionSchema(underlying, _) => underlying.isOption
+    case RefinementSchema(underlying, _) => underlying.isOption
     case _ => false
   }
 

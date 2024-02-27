@@ -14,13 +14,18 @@
  *  limitations under the License.
  */
 
-package smithy4s.interopcats
+package smithy4s.xml
 
-package object instances {
+import smithy4s.schema.CachedSchemaCompiler
 
-  private[interopcats] object all
-      extends HashInstances
-      with ShowInstances
-      with NullableInstances
+// scalafmt: {maxColumn = 120}
+import smithy4s.codecs.PayloadEncoder
+
+trait XmlPayloadEncoderCompiler extends CachedSchemaCompiler[PayloadEncoder] {
+
+  /**
+    * States whether XML special characters should be escaped in XML attributes
+    */
+  def withEscapeAttributes(escapeAttributes: Boolean): XmlPayloadEncoderCompiler
 
 }
