@@ -36,7 +36,7 @@ private[aws] object AwsRestXmlCodecs {
     )
 
     HttpUnaryClientCodecs.builder
-      .withBodyEncoders(Xml.encoders)
+      .withBodyEncoders(Xml.encoders.withEscapeAttributes(true))
       .withSuccessBodyDecoders(Xml.decoders)
       .withErrorBodyDecoders(errorDecoders)
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(errorDecoders))

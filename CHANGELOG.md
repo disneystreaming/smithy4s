@@ -1,6 +1,7 @@
 # 0.18.9
 
-* Supports error responses with `@httpResponseCode` fields.
+* Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
+* Generalise implementation of `@httpResponseCode` to later allow for its use in error responses.
 * Fix in Bijection#identity which caused and infinite recursion, fixed in [1401](https://github.com/disneystreaming/smithy4s/pull/1401)
 * Adds a `Field#addHints(hints: Hints)` method
 * Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
