@@ -986,6 +986,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
+        // remove box trait
+        .filterNot(_.toShapeId() == BoxTrait.ID): @nowarn(
+        "msg=class BoxTrait in package traits is deprecated"
+      )
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
