@@ -9,9 +9,7 @@ import smithy4s.schema.Schema.int
 
 object ListTablesInputLimit extends Newtype[Int] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesInputLimit")
-  val hints: Hints = Hints(
-    smithy.api.Box(),
-  ).lazily
+  val hints: Hints = Hints.empty
   val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints).validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = Some(scala.math.BigDecimal(100.0))))
   implicit val schema: Schema[ListTablesInputLimit] = bijection(underlyingSchema, asBijection)
 }

@@ -20,9 +20,7 @@ sealed abstract class OneTwo(_value: String, _name: String, _intValue: Int, _hin
 object OneTwo extends Enumeration[OneTwo] with ShapeTag.Companion[OneTwo] {
   val id: ShapeId = ShapeId("smithy4s.example", "oneTwo")
 
-  val hints: Hints = Hints(
-    smithy.api.Box(),
-  ).lazily
+  val hints: Hints = Hints.empty
 
   case object ONE extends OneTwo("ONE", "ONE", 1, Hints.empty)
   case object TWO extends OneTwo("TWO", "TWO", 2, Hints.empty)
