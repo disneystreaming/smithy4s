@@ -26,6 +26,7 @@ import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
 
 import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.transform.ModelTransformer
 
 private[codegen] object CodegenImpl { self =>
 
@@ -179,8 +180,12 @@ private[codegen] object CodegenImpl { self =>
       discoverModels = false,
       args.localJars
     )
+    val flattenedModel =
+      ModelTransformer.create().flattenAndRemoveMixins(model)
 
-    Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
+    Node.prettyPrintJson(
+      ModelSerializer.builder().build.serialize(flattenedModel)
+    )
   }
 
   private def withAwsTypeTransformer(transformers: List[String]): List[String] =
