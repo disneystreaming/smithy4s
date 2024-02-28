@@ -38,9 +38,27 @@ trait RefinementProvider[C, A, B] { self =>
       def make(c: C): Refinement[A0, B0] { type Constraint = C } =
         self.make(c).imapFull(bijectSource, bijectTarget)
     }
+
+  def imapTarget[B1](
+      bijectionTarget: Bijection[B, B1]
+  ): RefinementProvider[C, A, B1] =
+    new RefinementProvider[C, A, B1] {
+      def tag = self.tag
+      def make(c: C): Refinement[A, B1] { type Constraint = C } =
+        self.make(c).imapTarget(bijectionTarget)
+    }
 }
 
 object RefinementProvider extends LowPriorityImplicits {
+
+  def make[A]: RefinementProviderPartiallyApplied[A] =
+    new RefinementProviderPartiallyApplied[A]
+
+  class RefinementProviderPartiallyApplied[A] {
+    def apply[C, B](c: C)(implicit
+        ev: RefinementProvider[C, A, B]
+    ): Refinement.Aux[C, A, B] = ev.make(c)
+  }
 
   type Simple[C, A] = RefinementProvider[C, A, A]
 
