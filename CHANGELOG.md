@@ -1,3 +1,7 @@
+# 0.18.10
+
+* Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
+
 # 0.18.9
 
 * Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
