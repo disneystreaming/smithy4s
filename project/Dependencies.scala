@@ -25,6 +25,7 @@ object Dependencies {
     val build = org % "smithy-build" % smithyVersion
     val awsTraits = org % "smithy-aws-traits" % smithyVersion
     val waiters = org % "smithy-waiters" % smithyVersion
+    val `aws-protocol-tests` = org % "smithy-aws-protocol-tests" % smithyVersion
   }
 
   val Alloy = new {
