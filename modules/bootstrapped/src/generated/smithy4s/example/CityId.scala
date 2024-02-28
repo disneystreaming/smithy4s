@@ -8,6 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.NewtypeValidated
 import smithy4s.RefinementProvider
 
+// todo: also check lists/maps
 object CityId extends NewtypeValidated[String] {
 
   private val refinement = RefinementProvider.make[String](smithy.api.Pattern(s"^[A-Za-z0-9 ]+$$"))
