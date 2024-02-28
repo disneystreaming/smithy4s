@@ -314,7 +314,7 @@ lazy val `aws-http4s` = projectMatrix
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
     ),
     Test / complianceTestDependencies := Seq(
-      Dependencies.Alloy.`protocol-tests`
+      Dependencies.Smithy.`aws-protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / smithy4sModelTransformers) := Seq.empty,

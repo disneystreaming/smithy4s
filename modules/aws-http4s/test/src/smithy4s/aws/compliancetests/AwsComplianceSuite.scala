@@ -47,7 +47,19 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
       "HostWithPathOperation",
       // We expect users to set idempotency tokens because doing so raises
       // awareness of the need to do so outside of any retry mechanism.
-      "QueryIdempotencyTokenAutoFill"
+      "QueryIdempotencyTokenAutoFill",
+
+      // TODO https://github.com/disneystreaming/smithy4s/issues/1424
+      "AwsJson10DeserializeIgnoreType",
+      "AwsJson10ClientPopulatesDefaultValuesInInput",
+      "AwsJson10ClientPopulatesDefaultsValuesWhenMissingInResponse",
+      "AwsJson10ClientPopulatesNestedDefaultValuesWhenMissing",
+      "AwsJson10ClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+      "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
+      "AwsJson11DeserializeIgnoreType",
+      "RestJsonHttpPayloadWithUnsetUnion",
+      "RestJsonDeserializeIgnoreType",
+      "RestXmlHttpPayloadWithUnsetUnion"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
