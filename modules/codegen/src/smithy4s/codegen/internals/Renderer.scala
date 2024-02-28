@@ -1301,10 +1301,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val trailingCalls =
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
+
+    val hasConstraints = hints.exists {
+      case _: Hint.Constraint => true
+      case _                  => false
+    }
+
+    val foo = if (hasConstraints) line"FOO" else line"$Newtype_"
+
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
-      obj(name, line"$Newtype_[$tpe]")(
+      obj(name, line"$foo[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
         line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
