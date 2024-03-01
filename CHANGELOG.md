@@ -1,6 +1,7 @@
 # 0.18.11
 
 * Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+In addition, the semantics of `transformHintsTransitively` have been changed: the transformation no longer modifies the hints on the result of the `total` function.
 
 # 0.18.10
 
