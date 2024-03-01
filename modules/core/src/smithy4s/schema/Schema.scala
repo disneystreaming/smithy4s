@@ -66,18 +66,20 @@ sealed trait Schema[A]{
     case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
-  final def transformHintsTransitively(f: Hints => Hints): Schema[A] = this match {
-    case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
-    case s: CollectionSchema[c, a] => CollectionSchema[c, a](s.shapeId, f(s.hints), s.tag, s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-    case EnumerationSchema(shapeId, hints, tag, values, total) => EnumerationSchema(shapeId, f(hints), tag, values.map(_.transformHints(f)), total andThen (_.transformHints(f)))
-    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsTransitively(f)), make)
-    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsTransitively(f)), dispatch)
-    case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
-    case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsTransitively(f), refinement)
-    case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-  }
+  final def transformHintsTransitively(f: Hints => Hints): Schema[A] = transformTransitivelyK(new (Schema ~> Schema) {
+    def apply[B](fa: Schema[B]): Schema[B] = {
+      val base = fa.transformHintsLocally(f)
+
+      base match {
+        case EnumerationSchema(shapeId, hints, tag, values, total) =>
+          EnumerationSchema(shapeId, hints, tag, values.map(_.transformHints(f)), total)
+
+        case other => other
+      }
+    }
+  })
+
+  def transformTransitivelyK(f: Schema ~> Schema): Schema[A] = compile(new TransitiveCompiler(f))
 
   final def validated[C](c: C)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
     val hint = Hints.Binding.fromValue(c)(constraint.tag)
@@ -194,9 +196,7 @@ object Schema {
    * Transforms this schema, and all the schemas inside it, using the provided function.
    */
   def transformTransitivelyK(f: Schema ~> Schema): Schema ~> Schema = new (Schema ~> Schema) {
-    private val compiler = new TransitiveCompiler(f)
-
-    def apply[A](fa: Schema[A]): Schema[A] = fa.compile(compiler)
+    def apply[A](fa: Schema[A]): Schema[A] = fa.transformTransitivelyK(f)
   }
 
   // format: on
