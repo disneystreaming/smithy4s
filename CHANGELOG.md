@@ -1,3 +1,7 @@
+# 0.18.11
+
+* Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+
 # 0.18.10
 
 * Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
