@@ -15,9 +15,12 @@ object ListInput extends ShapeTag.Companion[ListInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(list: List[String]): ListInput = ListInput(list)
+
   implicit val schema: Schema[ListInput] = struct(
     MyList.underlyingSchema.required[ListInput]("list", _.list),
   ){
-    ListInput.apply
+    make
   }.withId(id).addHints(hints)
 }

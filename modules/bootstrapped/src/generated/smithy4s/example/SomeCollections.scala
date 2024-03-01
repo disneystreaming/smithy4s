@@ -16,11 +16,14 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(someList: List[String], someSet: Set[String], someMap: Map[String, String]): SomeCollections = SomeCollections(someList, someSet, someMap)
+
   implicit val schema: Schema[SomeCollections] = recursive(struct(
     StringList.underlyingSchema.required[SomeCollections]("someList", _.someList),
     StringSet.underlyingSchema.required[SomeCollections]("someSet", _.someSet),
     StringMap.underlyingSchema.required[SomeCollections]("someMap", _.someMap),
   ){
-    SomeCollections.apply
+    make
   }.withId(id).addHints(hints))
 }

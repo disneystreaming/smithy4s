@@ -16,11 +16,14 @@ object Encryption extends ShapeTag.Companion[Encryption] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(user: Option[String], date: Option[Timestamp], metadata: Option[EncryptionMetadata]): Encryption = Encryption(user, date, metadata)
+
   implicit val schema: Schema[Encryption] = struct(
     string.optional[Encryption]("user", _.user),
     timestamp.optional[Encryption]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
     EncryptionMetadata.schema.optional[Encryption]("metadata", _.metadata),
   ){
-    Encryption.apply
+    make
   }.withId(id).addHints(hints)
 }

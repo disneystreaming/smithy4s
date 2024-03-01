@@ -15,9 +15,12 @@ object MapInput extends ShapeTag.Companion[MapInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(value: Map[String, String]): MapInput = MapInput(value)
+
   implicit val schema: Schema[MapInput] = struct(
     MyMap.underlyingSchema.required[MapInput]("value", _.value),
   ){
-    MapInput.apply
+    make
   }.withId(id).addHints(hints)
 }

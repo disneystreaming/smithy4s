@@ -20,9 +20,12 @@ object DocumentationComment extends ShapeTag.Companion[DocumentationComment] {
     smithy.api.Documentation("We should be able to use comments in documentation /* */"),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(member: Option[String]): DocumentationComment = DocumentationComment(member)
+
   implicit val schema: Schema[DocumentationComment] = struct(
     string.optional[DocumentationComment]("member", _.member).addHints(smithy.api.Documentation("/*")),
   ){
-    DocumentationComment.apply
+    make
   }.withId(id).addHints(hints)
 }

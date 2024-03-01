@@ -18,6 +18,9 @@ object Attributes extends ShapeTag.Companion[Attributes] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(user: String, public: Boolean, size: Long, creationDate: Timestamp, region: String, queryable: Option[Boolean], queryableLastChange: Option[Timestamp], blockPublicAccess: Option[Boolean], permissions: Option[List[Permission]], tags: Option[List[String]], backedUp: Option[Boolean], metadata: Option[List[Metadata]], encryption: Option[Encryption]): Attributes = Attributes(user, public, size, creationDate, region, queryable, queryableLastChange, blockPublicAccess, permissions, tags, backedUp, metadata, encryption)
+
   implicit val schema: Schema[Attributes] = struct(
     string.required[Attributes]("user", _.user),
     boolean.required[Attributes]("public", _.public),
@@ -33,6 +36,6 @@ object Attributes extends ShapeTag.Companion[Attributes] {
     ListMetadata.underlyingSchema.optional[Attributes]("metadata", _.metadata),
     Encryption.schema.optional[Attributes]("encryption", _.encryption),
   ){
-    Attributes.apply
+    make
   }.withId(id).addHints(hints)
 }

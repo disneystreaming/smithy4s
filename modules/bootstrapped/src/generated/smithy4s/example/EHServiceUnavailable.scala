@@ -20,9 +20,12 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
     smithy.api.HttpError(503),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[String]): EHServiceUnavailable = EHServiceUnavailable(message)
+
   implicit val schema: Schema[EHServiceUnavailable] = struct(
     string.optional[EHServiceUnavailable]("message", _.message),
   ){
-    EHServiceUnavailable.apply
+    make
   }.withId(id).addHints(hints)
 }

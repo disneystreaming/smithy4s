@@ -16,9 +16,12 @@ object OptionalOutputOutput extends ShapeTag.Companion[OptionalOutputOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(body: Option[String]): OptionalOutputOutput = OptionalOutputOutput(body)
+
   implicit val schema: Schema[OptionalOutputOutput] = struct(
     string.optional[OptionalOutputOutput]("body", _.body).addHints(smithy.api.HttpPayload()),
   ){
-    OptionalOutputOutput.apply
+    make
   }.withId(id).addHints(hints)
 }

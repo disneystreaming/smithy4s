@@ -14,11 +14,14 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(key: String, bucketName: String, body: String): SendStringInput = SendStringInput(key, bucketName, body)
+
   implicit val schema: Schema[SendStringInput] = struct(
     string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel()),
     string.required[SendStringInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
     string.required[SendStringInput]("body", _.body).addHints(smithy.api.HttpPayload()),
   ){
-    SendStringInput.apply
+    make
   }.withId(id).addHints(hints)
 }

@@ -14,9 +14,12 @@ object HeadersWithDefaults extends ShapeTag.Companion[HeadersWithDefaults] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(dflt: String): HeadersWithDefaults = HeadersWithDefaults(dflt)
+
   implicit val schema: Schema[HeadersWithDefaults] = struct(
     string.field[HeadersWithDefaults]("dflt", _.dflt).addHints(smithy.api.Default(smithy4s.Document.fromString("test")), smithy.api.HttpHeader("dflt")),
   ){
-    HeadersWithDefaults.apply
+    make
   }.withId(id).addHints(hints)
 }

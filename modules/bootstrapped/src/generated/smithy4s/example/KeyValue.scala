@@ -14,10 +14,13 @@ object KeyValue extends ShapeTag.Companion[KeyValue] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(key: String, value: String): KeyValue = KeyValue(key, value)
+
   implicit val schema: Schema[KeyValue] = struct(
     string.required[KeyValue]("key", _.key),
     string.required[KeyValue]("value", _.value),
   ){
-    KeyValue.apply
+    make
   }.withId(id).addHints(hints)
 }

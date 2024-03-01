@@ -16,9 +16,12 @@ object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): ReservationOutput = ReservationOutput(message)
+
   implicit val schema: Schema[ReservationOutput] = struct(
     string.required[ReservationOutput]("message", _.message),
   ){
-    ReservationOutput.apply
+    make
   }.withId(id).addHints(hints)
 }

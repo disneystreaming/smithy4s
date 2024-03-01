@@ -15,11 +15,14 @@ object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(one: Int, two: Option[String], three: String): DefaultOrderingTest = DefaultOrderingTest(three, one, two)
+
   implicit val schema: Schema[DefaultOrderingTest] = struct(
-    string.required[DefaultOrderingTest]("three", _.three),
     int.field[DefaultOrderingTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.optional[DefaultOrderingTest]("two", _.two),
+    string.required[DefaultOrderingTest]("three", _.three),
   ){
-    DefaultOrderingTest.apply
+    make
   }.withId(id).addHints(hints)
 }

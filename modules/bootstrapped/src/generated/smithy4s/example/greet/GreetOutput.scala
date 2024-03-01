@@ -16,9 +16,12 @@ object GreetOutput extends ShapeTag.Companion[GreetOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): GreetOutput = GreetOutput(message)
+
   implicit val schema: Schema[GreetOutput] = struct(
     string.required[GreetOutput]("message", _.message),
   ){
-    GreetOutput.apply
+    make
   }.withId(id).addHints(hints)
 }

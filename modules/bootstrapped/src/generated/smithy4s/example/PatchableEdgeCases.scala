@@ -16,6 +16,9 @@ object PatchableEdgeCases extends ShapeTag.Companion[PatchableEdgeCases] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(required: Nullable[Int], requiredDefaultValue: Nullable[Int], requiredDefaultNull: Nullable[Int], defaultValue: Nullable[Int], defaultNull: Nullable[Int]): PatchableEdgeCases = PatchableEdgeCases(required, requiredDefaultValue, requiredDefaultNull, defaultValue, defaultNull)
+
   implicit val schema: Schema[PatchableEdgeCases] = struct(
     int.nullable.required[PatchableEdgeCases]("required", _.required),
     int.nullable.required[PatchableEdgeCases]("requiredDefaultValue", _.requiredDefaultValue).addHints(smithy.api.Default(smithy4s.Document.fromDouble(3.0d))),
@@ -23,6 +26,6 @@ object PatchableEdgeCases extends ShapeTag.Companion[PatchableEdgeCases] {
     int.nullable.field[PatchableEdgeCases]("defaultValue", _.defaultValue).addHints(smithy.api.Default(smithy4s.Document.fromDouble(5.0d))),
     int.nullable.field[PatchableEdgeCases]("defaultNull", _.defaultNull).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
   ){
-    PatchableEdgeCases.apply
+    make
   }.withId(id).addHints(hints)
 }

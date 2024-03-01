@@ -13,9 +13,12 @@ object GetForecastInput extends ShapeTag.Companion[GetForecastInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(cityId: CityId): GetForecastInput = GetForecastInput(cityId)
+
   implicit val schema: Schema[GetForecastInput] = struct(
     CityId.schema.required[GetForecastInput]("cityId", _.cityId),
   ){
-    GetForecastInput.apply
+    make
   }.withId(id).addHints(hints)
 }

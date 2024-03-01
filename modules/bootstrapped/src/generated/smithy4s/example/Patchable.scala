@@ -15,9 +15,12 @@ object Patchable extends ShapeTag.Companion[Patchable] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(allowExplicitNull: Option[Nullable[Int]]): Patchable = Patchable(allowExplicitNull)
+
   implicit val schema: Schema[Patchable] = struct(
     int.nullable.optional[Patchable]("allowExplicitNull", _.allowExplicitNull),
   ){
-    Patchable.apply
+    make
   }.withId(id).addHints(hints)
 }

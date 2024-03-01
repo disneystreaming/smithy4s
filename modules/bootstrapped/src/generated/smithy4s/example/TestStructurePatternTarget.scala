@@ -15,10 +15,13 @@ object TestStructurePatternTarget extends ShapeTag.Companion[TestStructurePatter
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(one: String, two: Int): TestStructurePatternTarget = TestStructurePatternTarget(one, two)
+
   implicit val schema: Schema[TestStructurePatternTarget] = struct(
     string.required[TestStructurePatternTarget]("one", _.one),
     int.required[TestStructurePatternTarget]("two", _.two),
   ){
-    TestStructurePatternTarget.apply
+    make
   }.withId(id).addHints(hints)
 }

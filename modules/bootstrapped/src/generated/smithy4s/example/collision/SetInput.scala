@@ -15,9 +15,12 @@ object SetInput extends ShapeTag.Companion[SetInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(set: Set[String]): SetInput = SetInput(set)
+
   implicit val schema: Schema[SetInput] = struct(
     MySet.underlyingSchema.required[SetInput]("set", _.set),
   ){
-    SetInput.apply
+    make
   }.withId(id).addHints(hints)
 }

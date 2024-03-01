@@ -16,9 +16,12 @@ object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(city: String): GetWeatherInput = GetWeatherInput(city)
+
   implicit val schema: Schema[GetWeatherInput] = struct(
     string.required[GetWeatherInput]("city", _.city).addHints(smithy.api.HttpLabel()),
   ){
-    GetWeatherInput.apply
+    make
   }.withId(id).addHints(hints)
 }

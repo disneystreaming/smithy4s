@@ -25,10 +25,13 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
     smithy.api.HttpError(507),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String, foo: Option[Foo]): NoMoreSpace = NoMoreSpace(message, foo)
+
   implicit val schema: Schema[NoMoreSpace] = struct(
     string.required[NoMoreSpace]("message", _.message),
     Foo.schema.optional[NoMoreSpace]("foo", _.foo),
   ){
-    NoMoreSpace.apply
+    make
   }.withId(id).addHints(hints)
 }

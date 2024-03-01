@@ -15,10 +15,13 @@ object Set extends ShapeTag.Companion[Set] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(someField: String, otherField: Int): Set = Set(someField, otherField)
+
   implicit val schema: Schema[Set] = struct(
     string.required[Set]("someField", _.someField),
     int.required[Set]("otherField", _.otherField),
   ){
-    Set.apply
+    make
   }.withId(id).addHints(hints)
 }

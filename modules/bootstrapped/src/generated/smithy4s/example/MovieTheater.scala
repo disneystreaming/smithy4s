@@ -17,10 +17,13 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
     smithy4s.example.Hash(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(name: Option[String]): MovieTheater = MovieTheater(name)
+
   implicit val schema: Schema[MovieTheater] = struct(
     string.optional[MovieTheater]("name", _.name),
   ){
-    MovieTheater.apply
+    make
   }.withId(id).addHints(hints)
 
   implicit val movieTheaterHash: cats.Hash[MovieTheater] = SchemaVisitorHash.fromSchema(schema)

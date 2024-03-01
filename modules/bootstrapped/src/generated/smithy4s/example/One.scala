@@ -14,9 +14,12 @@ object One extends ShapeTag.Companion[One] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(value: Option[String]): One = One(value)
+
   implicit val schema: Schema[One] = struct(
     string.optional[One]("value", _.value),
   ){
-    One.apply
+    make
   }.withId(id).addHints(hints)
 }

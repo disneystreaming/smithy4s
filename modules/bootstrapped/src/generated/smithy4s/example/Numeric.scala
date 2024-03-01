@@ -20,6 +20,9 @@ object Numeric extends ShapeTag.Companion[Numeric] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(i: Int, f: Float, d: Double, s: Short, l: Long, bi: BigInt, bd: BigDecimal): Numeric = Numeric(i, f, d, s, l, bi, bd)
+
   implicit val schema: Schema[Numeric] = struct(
     int.field[Numeric]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     float.field[Numeric]("f", _.f).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
@@ -29,6 +32,6 @@ object Numeric extends ShapeTag.Companion[Numeric] {
     bigint.field[Numeric]("bi", _.bi).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     bigdecimal.field[Numeric]("bd", _.bd).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
   ){
-    Numeric.apply
+    make
   }.withId(id).addHints(hints)
 }

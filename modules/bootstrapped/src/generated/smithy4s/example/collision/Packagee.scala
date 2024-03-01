@@ -14,9 +14,12 @@ object Packagee extends ShapeTag.Companion[Packagee] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(_class: Option[Int]): Packagee = Packagee(_class)
+
   implicit val schema: Schema[Packagee] = struct(
     int.optional[Packagee]("class", _._class),
   ){
-    Packagee.apply
+    make
   }.withId(id).addHints(hints)
 }

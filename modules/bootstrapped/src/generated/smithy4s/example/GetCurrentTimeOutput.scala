@@ -15,9 +15,12 @@ object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(time: Timestamp): GetCurrentTimeOutput = GetCurrentTimeOutput(time)
+
   implicit val schema: Schema[GetCurrentTimeOutput] = struct(
     timestamp.required[GetCurrentTimeOutput]("time", _.time),
   ){
-    GetCurrentTimeOutput.apply
+    make
   }.withId(id).addHints(hints)
 }

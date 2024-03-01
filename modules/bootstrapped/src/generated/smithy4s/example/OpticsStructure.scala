@@ -18,9 +18,12 @@ object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
     val two: Lens[OpticsStructure, Option[OpticsEnum]] = Lens[OpticsStructure, Option[OpticsEnum]](_.two)(n => a => a.copy(two = n))
   }
 
+  // constructor using the original order from the spec
+  private def make(two: Option[OpticsEnum]): OpticsStructure = OpticsStructure(two)
+
   implicit val schema: Schema[OpticsStructure] = struct(
     OpticsEnum.schema.optional[OpticsStructure]("two", _.two),
   ){
-    OpticsStructure.apply
+    make
   }.withId(id).addHints(hints)
 }

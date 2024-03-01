@@ -15,10 +15,13 @@ object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(nextToken: Option[String], pageSize: Option[Int]): ListCitiesInput = ListCitiesInput(nextToken, pageSize)
+
   implicit val schema: Schema[ListCitiesInput] = struct(
     string.optional[ListCitiesInput]("nextToken", _.nextToken),
     int.optional[ListCitiesInput]("pageSize", _.pageSize),
   ){
-    ListCitiesInput.apply
+    make
   }.withId(id).addHints(hints)
 }

@@ -14,9 +14,12 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(one: String): DefaultInMixinUsageTest = DefaultInMixinUsageTest(one)
+
   implicit val schema: Schema[DefaultInMixinUsageTest] = struct(
     string.field[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
   ){
-    DefaultInMixinUsageTest.apply
+    make
   }.withId(id).addHints(hints)
 }

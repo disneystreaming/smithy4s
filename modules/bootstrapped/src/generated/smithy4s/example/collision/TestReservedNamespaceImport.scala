@@ -14,9 +14,12 @@ object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamesp
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(_package: Option[MyPackageString]): TestReservedNamespaceImport = TestReservedNamespaceImport(_package)
+
   implicit val schema: Schema[TestReservedNamespaceImport] = struct(
     MyPackageString.schema.optional[TestReservedNamespaceImport]("package", _._package),
   ){
-    TestReservedNamespaceImport.apply
+    make
   }.withId(id).addHints(hints)
 }

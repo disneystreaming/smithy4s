@@ -16,10 +16,13 @@ object ReservationInput extends ShapeTag.Companion[ReservationInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(name: String, town: Option[String]): ReservationInput = ReservationInput(name, town)
+
   implicit val schema: Schema[ReservationInput] = struct(
     string.required[ReservationInput]("name", _.name).addHints(smithy.api.HttpLabel()),
     string.optional[ReservationInput]("town", _.town).addHints(smithy.api.HttpQuery("town")),
   ){
-    ReservationInput.apply
+    make
   }.withId(id).addHints(hints)
 }

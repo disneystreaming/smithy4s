@@ -16,10 +16,13 @@ object ReservedKeywordStructTrait extends ShapeTag.Companion[ReservedKeywordStru
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(_implicit: String, _package: Option[Packagee]): ReservedKeywordStructTrait = ReservedKeywordStructTrait(_implicit, _package)
+
   implicit val schema: Schema[ReservedKeywordStructTrait] = recursive(struct(
     String.schema.required[ReservedKeywordStructTrait]("implicit", _._implicit),
     Packagee.schema.optional[ReservedKeywordStructTrait]("package", _._package),
   ){
-    ReservedKeywordStructTrait.apply
+    make
   }.withId(id).addHints(hints))
 }

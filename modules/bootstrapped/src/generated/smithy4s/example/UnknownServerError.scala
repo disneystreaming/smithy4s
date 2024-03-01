@@ -19,11 +19,14 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     smithy.api.HttpError(500),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(errorCode: UnknownServerErrorCode, description: Option[String], stateHash: Option[String]): UnknownServerError = UnknownServerError(errorCode, description, stateHash)
+
   implicit val schema: Schema[UnknownServerError] = struct(
     UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode),
     string.optional[UnknownServerError]("description", _.description),
     string.optional[UnknownServerError]("stateHash", _.stateHash),
   ){
-    UnknownServerError.apply
+    make
   }.withId(id).addHints(hints)
 }

@@ -14,12 +14,15 @@ object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(uppercaseHeader: Option[String], capitalizedHeader: Option[String], lowercaseHeader: Option[String], mixedHeader: Option[String]): HeaderEndpointData = HeaderEndpointData(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader)
+
   implicit val schema: Schema[HeaderEndpointData] = struct(
     string.optional[HeaderEndpointData]("uppercaseHeader", _.uppercaseHeader).addHints(smithy.api.HttpHeader("X-UPPERCASE-HEADER")),
     string.optional[HeaderEndpointData]("capitalizedHeader", _.capitalizedHeader).addHints(smithy.api.HttpHeader("X-Capitalized-Header")),
     string.optional[HeaderEndpointData]("lowercaseHeader", _.lowercaseHeader).addHints(smithy.api.HttpHeader("x-lowercase-header")),
     string.optional[HeaderEndpointData]("mixedHeader", _.mixedHeader).addHints(smithy.api.HttpHeader("x-MiXeD-hEaDEr")),
   ){
-    HeaderEndpointData.apply
+    make
   }.withId(id).addHints(hints)
 }

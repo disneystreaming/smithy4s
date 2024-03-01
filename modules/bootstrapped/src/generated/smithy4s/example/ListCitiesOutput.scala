@@ -14,10 +14,13 @@ object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(nextToken: Option[String], items: List[CitySummary]): ListCitiesOutput = ListCitiesOutput(items, nextToken)
+
   implicit val schema: Schema[ListCitiesOutput] = struct(
-    CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items),
     string.optional[ListCitiesOutput]("nextToken", _.nextToken),
+    CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items),
   ){
-    ListCitiesOutput.apply
+    make
   }.withId(id).addHints(hints)
 }

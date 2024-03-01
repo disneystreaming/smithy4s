@@ -14,10 +14,13 @@ object Person extends ShapeTag.Companion[Person] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(name: String, town: Option[String]): Person = Person(name, town)
+
   implicit val schema: Schema[Person] = struct(
     string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel()),
     string.optional[Person]("town", _.town).addHints(smithy.api.HttpQuery("town")),
   ){
-    Person.apply
+    make
   }.withId(id).addHints(hints)
 }

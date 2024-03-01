@@ -19,9 +19,12 @@ object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError]
     smithy.api.Error.SERVER.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[String]): RandomOtherServerError = RandomOtherServerError(message)
+
   implicit val schema: Schema[RandomOtherServerError] = struct(
     string.optional[RandomOtherServerError]("message", _.message),
   ){
-    RandomOtherServerError.apply
+    make
   }.withId(id).addHints(hints)
 }

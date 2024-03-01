@@ -16,9 +16,12 @@ object ErrorHandlingOperationInput extends ShapeTag.Companion[ErrorHandlingOpera
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(in: Option[String]): ErrorHandlingOperationInput = ErrorHandlingOperationInput(in)
+
   implicit val schema: Schema[ErrorHandlingOperationInput] = struct(
     string.optional[ErrorHandlingOperationInput]("in", _.in),
   ){
-    ErrorHandlingOperationInput.apply
+    make
   }.withId(id).addHints(hints)
 }
