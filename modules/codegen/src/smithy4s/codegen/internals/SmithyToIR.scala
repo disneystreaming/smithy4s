@@ -1035,12 +1035,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hintsExtractor(member) ++ default ++ noDefault
           )
         }
+        .zipWithIndex
         .collect {
-          case (name, Some(tpe: Type.ExternalType), modifier, hints) =>
+          case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, modifier, newHints)
-          case (name, Some(tpe), modifier, hints) =>
-            Field(name, tpe, modifier, hints)
+            Field(name, tpe, modifier, index, newHints)
+          case ((name, Some(tpe), modifier, hints), index) =>
+            Field(name, tpe, modifier, index, hints)
         }
         .toList
 
@@ -1234,13 +1235,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.getFieldsPlain
         val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, mod, _)
+          case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
             val node = map.get(realName).getOrElse {
               mod.default.get.node
             } // value or default must be present if type is not wrapped
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(_, realName, tpe, _, _) =>
+          case Field(_, realName, tpe, _, _, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))
