@@ -21,7 +21,5 @@ object HostLabelInput extends ShapeTag.Companion[HostLabelInput] {
     string.required[HostLabelInput]("label1", _.label1).addHints(smithy.api.HostLabel()),
     string.required[HostLabelInput]("label2", _.label2).addHints(smithy.api.HostLabel()),
     HostLabelEnum.schema.required[HostLabelInput]("label3", _.label3).addHints(smithy.api.HostLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

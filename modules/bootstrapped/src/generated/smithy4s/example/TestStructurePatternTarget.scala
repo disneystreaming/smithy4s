@@ -21,7 +21,5 @@ object TestStructurePatternTarget extends ShapeTag.Companion[TestStructurePatter
   implicit val schema: Schema[TestStructurePatternTarget] = struct(
     string.required[TestStructurePatternTarget]("one", _.one),
     int.required[TestStructurePatternTarget]("two", _.two),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

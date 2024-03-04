@@ -20,7 +20,5 @@ object MenuItem extends ShapeTag.Companion[MenuItem] {
   implicit val schema: Schema[MenuItem] = struct(
     Food.schema.required[MenuItem]("food", _.food),
     float.required[MenuItem]("price", _.price),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

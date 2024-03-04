@@ -23,7 +23,5 @@ object Encryption extends ShapeTag.Companion[Encryption] {
     string.optional[Encryption]("user", _.user),
     timestamp.optional[Encryption]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
     EncryptionMetadata.schema.optional[Encryption]("metadata", _.metadata),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -24,7 +24,5 @@ object S3Object extends ShapeTag.Companion[S3Object] {
     string.required[S3Object]("owner", _.owner),
     Attributes.schema.required[S3Object]("attributes", _.attributes),
     bytes.required[S3Object]("data", _.data),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

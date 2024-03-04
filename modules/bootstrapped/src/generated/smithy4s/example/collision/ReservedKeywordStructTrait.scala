@@ -22,7 +22,5 @@ object ReservedKeywordStructTrait extends ShapeTag.Companion[ReservedKeywordStru
   implicit val schema: Schema[ReservedKeywordStructTrait] = recursive(struct(
     String.schema.required[ReservedKeywordStructTrait]("implicit", _._implicit),
     Packagee.schema.optional[ReservedKeywordStructTrait]("package", _._package),
-  ){
-    make
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

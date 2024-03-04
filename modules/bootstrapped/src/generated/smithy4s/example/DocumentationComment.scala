@@ -25,7 +25,5 @@ object DocumentationComment extends ShapeTag.Companion[DocumentationComment] {
 
   implicit val schema: Schema[DocumentationComment] = struct(
     string.optional[DocumentationComment]("member", _.member).addHints(smithy.api.Documentation("/*")),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

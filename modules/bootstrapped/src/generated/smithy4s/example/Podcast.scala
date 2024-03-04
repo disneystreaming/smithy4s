@@ -61,9 +61,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       string.optional[Video]("title", _.title),
       string.optional[Video]("url", _.url),
       long.optional[Video]("durationMillis", _.durationMillis),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("video")
   }
@@ -89,9 +87,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       string.optional[Audio]("title", _.title),
       string.optional[Audio]("url", _.url),
       long.optional[Audio]("durationMillis", _.durationMillis),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("audio")
   }

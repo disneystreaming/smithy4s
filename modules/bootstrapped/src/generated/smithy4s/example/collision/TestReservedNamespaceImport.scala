@@ -19,7 +19,5 @@ object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamesp
 
   implicit val schema: Schema[TestReservedNamespaceImport] = struct(
     MyPackageString.schema.optional[TestReservedNamespaceImport]("package", _._package),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

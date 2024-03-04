@@ -19,7 +19,5 @@ object SayHelloPayload extends ShapeTag.Companion[SayHelloPayload] {
 
   implicit val schema: Schema[SayHelloPayload] = struct(
     string.required[SayHelloPayload]("result", _.result),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

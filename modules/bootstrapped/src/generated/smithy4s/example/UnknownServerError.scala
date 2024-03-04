@@ -26,7 +26,5 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode),
     string.optional[UnknownServerError]("description", _.description),
     string.optional[UnknownServerError]("stateHash", _.stateHash),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

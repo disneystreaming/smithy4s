@@ -53,9 +53,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       short.optional[AdtOne]("sht", _.sht),
       bytes.optional[AdtOne]("blb", _.blb),
       string.optional[AdtOne]("str", _.str),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("one")
   }
@@ -75,9 +73,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       long.optional[AdtTwo]("lng", _.lng),
       short.optional[AdtTwo]("sht", _.sht),
       int.optional[AdtTwo]("int", _.int),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("two")
   }

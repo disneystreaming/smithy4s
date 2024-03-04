@@ -19,7 +19,5 @@ object EchoBody extends ShapeTag.Companion[EchoBody] {
 
   implicit val schema: Schema[EchoBody] = struct(
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[EchoBody]("data", _.data),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

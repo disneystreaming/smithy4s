@@ -23,7 +23,5 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
 
   implicit val schema: Schema[GetFooOutput] = struct(
     Foo.schema.optional[GetFooOutput]("foo", _.foo),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

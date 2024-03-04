@@ -19,7 +19,5 @@ object Scala3ReservedKeywords extends ShapeTag.Companion[Scala3ReservedKeywords]
   implicit val schema: Schema[Scala3ReservedKeywords] = struct(
     String.schema.optional[Scala3ReservedKeywords]("export", _._export),
     String.schema.optional[Scala3ReservedKeywords]("enum", _._enum),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

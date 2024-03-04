@@ -30,7 +30,5 @@ object OperationInput extends ShapeTag.Companion[OperationInput] {
     string.optional[OperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery("optional-query")),
     string.field[OperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-query-with-default")), smithy.api.HttpQuery("optional-query-with-default")),
     string.field[OperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-query-with-default")), smithy.api.HttpQuery("required-query-with-default")),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

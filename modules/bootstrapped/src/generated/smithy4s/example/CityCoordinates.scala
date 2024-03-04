@@ -20,7 +20,5 @@ object CityCoordinates extends ShapeTag.Companion[CityCoordinates] {
   implicit val schema: Schema[CityCoordinates] = struct(
     float.required[CityCoordinates]("latitude", _.latitude),
     float.required[CityCoordinates]("longitude", _.longitude),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

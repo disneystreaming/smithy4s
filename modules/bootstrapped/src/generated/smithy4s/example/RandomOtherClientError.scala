@@ -24,7 +24,5 @@ object RandomOtherClientError extends ShapeTag.Companion[RandomOtherClientError]
 
   implicit val schema: Schema[RandomOtherClientError] = struct(
     string.optional[RandomOtherClientError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

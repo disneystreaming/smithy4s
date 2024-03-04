@@ -20,7 +20,5 @@ object Person extends ShapeTag.Companion[Person] {
   implicit val schema: Schema[Person] = struct(
     string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel()),
     string.optional[Person]("town", _.town).addHints(smithy.api.HttpQuery("town")),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

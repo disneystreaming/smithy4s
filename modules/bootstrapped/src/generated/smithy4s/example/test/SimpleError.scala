@@ -24,7 +24,5 @@ object SimpleError extends ShapeTag.Companion[SimpleError] {
 
   implicit val schema: Schema[SimpleError] = struct(
     int.required[SimpleError]("expected", _.expected),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

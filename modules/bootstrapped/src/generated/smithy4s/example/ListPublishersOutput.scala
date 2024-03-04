@@ -20,7 +20,5 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
 
   implicit val schema: Schema[ListPublishersOutput] = struct(
     PublishersList.underlyingSchema.required[ListPublishersOutput]("publishers", _.publishers),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

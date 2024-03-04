@@ -25,7 +25,5 @@ object EHNotFound extends ShapeTag.Companion[EHNotFound] {
 
   implicit val schema: Schema[EHNotFound] = struct(
     string.optional[EHNotFound]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

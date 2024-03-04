@@ -19,7 +19,5 @@ object Packagee extends ShapeTag.Companion[Packagee] {
 
   implicit val schema: Schema[Packagee] = struct(
     int.optional[Packagee]("class", _._class),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

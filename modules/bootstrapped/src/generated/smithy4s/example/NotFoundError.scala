@@ -24,7 +24,5 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
 
   implicit val schema: Schema[NotFoundError] = struct(
     string.required[NotFoundError]("name", _.name),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

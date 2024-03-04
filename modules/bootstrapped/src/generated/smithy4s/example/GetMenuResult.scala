@@ -18,7 +18,5 @@ object GetMenuResult extends ShapeTag.Companion[GetMenuResult] {
 
   implicit val schema: Schema[GetMenuResult] = struct(
     Menu.underlyingSchema.required[GetMenuResult]("menu", _.menu).addHints(smithy.api.HttpPayload()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

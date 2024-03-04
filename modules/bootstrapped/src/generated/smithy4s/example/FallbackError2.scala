@@ -23,7 +23,5 @@ object FallbackError2 extends ShapeTag.Companion[FallbackError2] {
 
   implicit val schema: Schema[FallbackError2] = struct(
     string.required[FallbackError2]("error", _.error),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

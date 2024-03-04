@@ -21,7 +21,5 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
 
   implicit val schema: Schema[DescribeEndpointsResponse] = struct(
     Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>")),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

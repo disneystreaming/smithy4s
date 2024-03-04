@@ -21,7 +21,5 @@ object Permission extends ShapeTag.Companion[Permission] {
     boolean.optional[Permission]("read", _.read),
     boolean.optional[Permission]("write", _.write),
     boolean.optional[Permission]("directory", _.directory),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

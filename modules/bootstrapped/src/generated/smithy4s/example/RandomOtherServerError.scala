@@ -24,7 +24,5 @@ object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError]
 
   implicit val schema: Schema[RandomOtherServerError] = struct(
     string.optional[RandomOtherServerError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -24,7 +24,5 @@ object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
 
   implicit val schema: Schema[KeyNotFoundError] = struct(
     string.required[KeyNotFoundError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

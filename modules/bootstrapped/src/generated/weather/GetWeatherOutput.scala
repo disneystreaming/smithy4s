@@ -21,7 +21,5 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
 
   implicit val schema: Schema[GetWeatherOutput] = struct(
     string.required[GetWeatherOutput]("weather", _.weather),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

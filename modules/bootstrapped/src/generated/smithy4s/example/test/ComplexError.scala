@@ -29,7 +29,5 @@ object ComplexError extends ShapeTag.Companion[ComplexError] {
     int.required[ComplexError]("value", _.value),
     string.required[ComplexError]("message", _.message),
     ErrorDetails.schema.optional[ComplexError]("details", _.details),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

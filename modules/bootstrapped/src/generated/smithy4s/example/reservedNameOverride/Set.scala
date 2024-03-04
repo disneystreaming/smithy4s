@@ -21,7 +21,5 @@ object Set extends ShapeTag.Companion[Set] {
   implicit val schema: Schema[Set] = struct(
     string.required[Set]("someField", _.someField),
     int.required[Set]("otherField", _.otherField),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

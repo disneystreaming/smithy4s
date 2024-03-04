@@ -19,7 +19,5 @@ object Dog extends ShapeTag.Companion[Dog] {
 
   implicit val schema: Schema[Dog] = struct(
     string.required[Dog]("name", _.name),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

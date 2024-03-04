@@ -21,7 +21,5 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
 
   implicit val schema: Schema[HealthResponse] = struct(
     string.required[HealthResponse]("status", _.status),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -21,7 +21,5 @@ object GreetOutput extends ShapeTag.Companion[GreetOutput] {
 
   implicit val schema: Schema[GreetOutput] = struct(
     string.required[GreetOutput]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

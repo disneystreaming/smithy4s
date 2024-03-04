@@ -28,7 +28,5 @@ object TestInput extends ShapeTag.Companion[TestInput] {
     string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.HttpLabel()),
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
     TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

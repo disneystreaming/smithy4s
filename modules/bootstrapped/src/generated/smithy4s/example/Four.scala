@@ -19,7 +19,5 @@ object Four extends ShapeTag.Companion[Four] {
 
   implicit val schema: Schema[Four] = struct(
     int.required[Four]("four", _.four),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

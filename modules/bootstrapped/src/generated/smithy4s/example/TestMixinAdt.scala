@@ -44,9 +44,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       string.optional[TestAdtMemberWithMixin]("a", _.a),
       int.optional[TestAdtMemberWithMixin]("b", _.b),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestMixinAdt]("test")
   }

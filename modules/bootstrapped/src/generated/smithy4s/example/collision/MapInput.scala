@@ -20,7 +20,5 @@ object MapInput extends ShapeTag.Companion[MapInput] {
 
   implicit val schema: Schema[MapInput] = struct(
     MyMap.underlyingSchema.required[MapInput]("value", _.value),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

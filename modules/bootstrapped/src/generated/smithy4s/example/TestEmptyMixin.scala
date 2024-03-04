@@ -19,7 +19,5 @@ object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
 
   implicit val schema: Schema[TestEmptyMixin] = struct(
     long.optional[TestEmptyMixin]("a", _.a),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

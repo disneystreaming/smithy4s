@@ -49,7 +49,5 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
     byte.field[DefaultTest]("sixteen", _.sixteen).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
     bytes.field[DefaultTest]("seventeen", _.seventeen).addHints(smithy.api.Default(smithy4s.Document.array())),
     boolean.field[DefaultTest]("eighteen", _.eighteen).addHints(smithy.api.Default(smithy4s.Document.fromBoolean(false))),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

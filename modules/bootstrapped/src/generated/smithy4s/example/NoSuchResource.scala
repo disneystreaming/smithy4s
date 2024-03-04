@@ -23,7 +23,5 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
 
   implicit val schema: Schema[NoSuchResource] = struct(
     string.required[NoSuchResource]("resourceType", _.resourceType),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -19,7 +19,5 @@ object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalM
 
   implicit val schema: Schema[MixinOptionalMemberDefaultAdded] = struct(
     string.field[MixinOptionalMemberDefaultAdded]("a", _.a).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

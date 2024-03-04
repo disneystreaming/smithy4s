@@ -22,9 +22,7 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
 
   implicit val schema: Schema[MovieTheater] = struct(
     string.optional[MovieTheater]("name", _.name),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 
   implicit val movieTheaterHash: cats.Hash[MovieTheater] = SchemaVisitorHash.fromSchema(schema)
 }

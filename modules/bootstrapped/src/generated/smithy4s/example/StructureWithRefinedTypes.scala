@@ -24,7 +24,5 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
     UnwrappedFancyList.underlyingSchema.optional[StructureWithRefinedTypes]("unwrappedFancyList", _.unwrappedFancyList),
     smithy4s.example.Name.schema.optional[StructureWithRefinedTypes]("name", _.name),
     DogName.underlyingSchema.optional[StructureWithRefinedTypes]("dogName", _.dogName),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

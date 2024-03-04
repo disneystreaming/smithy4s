@@ -23,7 +23,5 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
     string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),
     string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery("Hi")),
     string.optional[SayHelloInput]("name", _.name),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -22,7 +22,5 @@ object StructureConstrainingEnum extends ShapeTag.Companion[StructureConstrainin
   implicit val schema: Schema[StructureConstrainingEnum] = struct(
     Letters.schema.validated(smithy.api.Length(min = Some(2L), max = None)).validated(smithy.api.Pattern(s"$$aaa$$")).optional[StructureConstrainingEnum]("letter", _.letter),
     FaceCard.schema.validated(smithy.api.Range(min = None, max = Some(scala.math.BigDecimal(1.0)))).optional[StructureConstrainingEnum]("card", _.card),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

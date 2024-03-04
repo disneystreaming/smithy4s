@@ -19,7 +19,5 @@ object GetEnumOutput extends ShapeTag.Companion[GetEnumOutput] {
 
   implicit val schema: Schema[GetEnumOutput] = struct(
     string.optional[GetEnumOutput]("result", _.result),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

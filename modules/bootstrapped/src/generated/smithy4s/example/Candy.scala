@@ -19,7 +19,5 @@ object Candy extends ShapeTag.Companion[Candy] {
 
   implicit val schema: Schema[Candy] = struct(
     string.optional[Candy]("name", _.name),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -29,7 +29,5 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
     int.optional[MixinErrorExample]("b", _.b),
     long.optional[MixinErrorExample]("c", _.c),
     boolean.optional[MixinErrorExample]("d", _.d),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

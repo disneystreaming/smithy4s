@@ -20,7 +20,5 @@ object Patchable extends ShapeTag.Companion[Patchable] {
 
   implicit val schema: Schema[Patchable] = struct(
     int.nullable.optional[Patchable]("allowExplicitNull", _.allowExplicitNull),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

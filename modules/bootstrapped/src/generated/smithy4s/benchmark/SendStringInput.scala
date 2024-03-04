@@ -21,7 +21,5 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
     string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel()),
     string.required[SendStringInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
     string.required[SendStringInput]("body", _.body).addHints(smithy.api.HttpPayload()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

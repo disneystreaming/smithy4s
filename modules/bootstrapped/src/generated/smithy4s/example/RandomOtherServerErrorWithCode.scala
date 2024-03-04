@@ -25,7 +25,5 @@ object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServ
 
   implicit val schema: Schema[RandomOtherServerErrorWithCode] = struct(
     string.optional[RandomOtherServerErrorWithCode]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -20,7 +20,5 @@ object Salad extends ShapeTag.Companion[Salad] {
   implicit val schema: Schema[Salad] = struct(
     string.required[Salad]("name", _.name),
     Ingredients.underlyingSchema.required[Salad]("ingredients", _.ingredients),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

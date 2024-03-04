@@ -24,7 +24,5 @@ object ServerError extends ShapeTag.Companion[ServerError] {
 
   implicit val schema: Schema[ServerError] = struct(
     string.optional[ServerError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

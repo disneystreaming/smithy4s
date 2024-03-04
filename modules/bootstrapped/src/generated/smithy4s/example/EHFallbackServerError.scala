@@ -24,7 +24,5 @@ object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
 
   implicit val schema: Schema[EHFallbackServerError] = struct(
     string.optional[EHFallbackServerError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

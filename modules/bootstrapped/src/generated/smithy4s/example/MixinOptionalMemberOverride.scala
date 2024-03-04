@@ -19,7 +19,5 @@ object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMembe
 
   implicit val schema: Schema[MixinOptionalMemberOverride] = struct(
     string.required[MixinOptionalMemberOverride]("a", _.a),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

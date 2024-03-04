@@ -23,7 +23,5 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
     StringList.underlyingSchema.required[SomeCollections]("someList", _.someList),
     StringSet.underlyingSchema.required[SomeCollections]("someSet", _.someSet),
     StringMap.underlyingSchema.required[SomeCollections]("someMap", _.someMap),
-  ){
-    make
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

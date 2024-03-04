@@ -20,7 +20,5 @@ object StructureWithRefinedMember extends ShapeTag.Companion[StructureWithRefine
 
   implicit val schema: Schema[StructureWithRefinedMember] = struct(
     int.refined[smithy4s.refined.Age](smithy4s.example.AgeFormat()).optional[StructureWithRefinedMember]("otherAge", _.otherAge),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

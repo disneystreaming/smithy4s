@@ -21,7 +21,5 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
     string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),
     string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
     S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(smithy.api.HttpPayload()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -20,7 +20,5 @@ object Creds extends ShapeTag.Companion[Creds] {
   implicit val schema: Schema[Creds] = struct(
     string.optional[Creds]("user", _.user),
     string.optional[Creds]("key", _.key),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

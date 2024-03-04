@@ -21,7 +21,5 @@ object AStructure extends ShapeTag.Companion[AStructure] {
 
   implicit val schema: Schema[AStructure] = struct(
     AString.schema.field[AStructure]("astring", _.astring).addHints(smithy.api.Default(smithy4s.Document.fromString("\"Hello World\" with \"quotes\""))),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

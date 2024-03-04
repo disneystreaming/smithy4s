@@ -20,7 +20,5 @@ object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
   implicit val schema: Schema[GetCityOutput] = struct(
     string.required[GetCityOutput]("name", _.name),
     CityCoordinates.schema.required[GetCityOutput]("coordinates", _.coordinates),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

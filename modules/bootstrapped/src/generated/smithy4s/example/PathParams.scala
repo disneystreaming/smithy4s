@@ -30,7 +30,5 @@ object PathParams extends ShapeTag.Companion[PathParams] {
     timestamp.required[PathParams]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpLabel()),
     boolean.required[PathParams]("b", _.b).addHints(smithy.api.HttpLabel()),
     Numbers.schema.required[PathParams]("ie", _.ie).addHints(smithy.api.HttpLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

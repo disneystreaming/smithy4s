@@ -21,7 +21,5 @@ object ReservedKeywordTraitExampleStruct extends ShapeTag.Companion[ReservedKeyw
 
   implicit val schema: Schema[ReservedKeywordTraitExampleStruct] = struct(
     String.schema.optional[ReservedKeywordTraitExampleStruct]("member", _.member).addHints(smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))), smithy4s.example.collision.ReservedKeywordUnionTrait.PackageCase(smithy4s.example.collision.PackageUnion.ClassCase(42).widen).widen),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -26,7 +26,5 @@ object Metadata extends ShapeTag.Companion[Metadata] {
     string.optional[Metadata]("checkSum", _.checkSum),
     boolean.optional[Metadata]("pendingDeletion", _.pendingDeletion),
     string.optional[Metadata]("etag", _.etag),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -21,7 +21,5 @@ object TestPathInput extends ShapeTag.Companion[TestPathInput] {
 
   implicit val schema: Schema[TestPathInput] = struct(
     string.required[TestPathInput]("path", _.path).addHints(smithy.api.HttpLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

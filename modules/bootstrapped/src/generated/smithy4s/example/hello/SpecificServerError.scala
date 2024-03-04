@@ -25,7 +25,5 @@ object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
 
   implicit val schema: Schema[SpecificServerError] = struct(
     string.optional[SpecificServerError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -21,7 +21,5 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
 
   implicit val schema: Schema[ExampleOperationInput] = struct(
     string.required[ExampleOperationInput]("a", _.a),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

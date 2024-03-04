@@ -19,7 +19,5 @@ object RecursiveInput extends ShapeTag.Companion[RecursiveInput] {
 
   implicit val schema: Schema[RecursiveInput] = recursive(struct(
     smithy4s.example.RecursiveInput.schema.optional[RecursiveInput]("hello", _.hello),
-  ){
-    make
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

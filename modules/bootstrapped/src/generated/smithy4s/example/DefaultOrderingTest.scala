@@ -22,7 +22,5 @@ object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
     int.field[DefaultOrderingTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.optional[DefaultOrderingTest]("two", _.two),
     string.required[DefaultOrderingTest]("three", _.three),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -25,7 +25,5 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
 
   implicit val schema: Schema[EHServiceUnavailable] = struct(
     string.optional[EHServiceUnavailable]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

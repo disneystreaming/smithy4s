@@ -22,7 +22,5 @@ object RecursiveTraitStructure extends ShapeTag.Companion[RecursiveTraitStructur
 
   implicit val schema: Schema[RecursiveTraitStructure] = recursive(struct(
     string.optional[RecursiveTraitStructure]("name", _.name).addHints(smithy4s.example.RecursiveTraitStructure(name = None)),
-  ){
-    make
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

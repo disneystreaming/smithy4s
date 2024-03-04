@@ -19,7 +19,5 @@ object PackedInput extends ShapeTag.Companion[PackedInput] {
 
   implicit val schema: Schema[PackedInput] = struct(
     string.required[PackedInput]("key", _.key),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -25,7 +25,5 @@ object ErrorNullableRequiredMessage extends ShapeTag.Companion[ErrorNullableRequ
 
   implicit val schema: Schema[ErrorNullableRequiredMessage] = struct(
     string.nullable.required[ErrorNullableRequiredMessage]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

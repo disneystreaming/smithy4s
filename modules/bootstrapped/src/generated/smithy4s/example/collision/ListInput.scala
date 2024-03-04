@@ -20,7 +20,5 @@ object ListInput extends ShapeTag.Companion[ListInput] {
 
   implicit val schema: Schema[ListInput] = struct(
     MyList.underlyingSchema.required[ListInput]("list", _.list),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

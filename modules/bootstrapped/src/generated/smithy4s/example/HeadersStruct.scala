@@ -34,7 +34,5 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
     OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader("openNums")),
     OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader("openNumsStr")),
     StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(smithy.api.HttpPrefixHeaders("foo-")),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -19,7 +19,5 @@ object PutStreamedObjectInput extends ShapeTag.Companion[PutStreamedObjectInput]
 
   implicit val schema: Schema[PutStreamedObjectInput] = struct(
     string.required[PutStreamedObjectInput]("key", _.key),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

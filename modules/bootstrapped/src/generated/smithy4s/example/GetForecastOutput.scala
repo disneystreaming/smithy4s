@@ -23,7 +23,5 @@ object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
 
   implicit val schema: Schema[GetForecastOutput] = struct(
     ForecastResult.schema.optional[GetForecastOutput]("forecast", _.forecast),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

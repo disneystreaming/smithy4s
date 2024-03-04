@@ -25,7 +25,5 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
 
   implicit val schema: Schema[NotAuthorizedError] = struct(
     string.required[NotAuthorizedError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

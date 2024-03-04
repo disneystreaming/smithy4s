@@ -19,7 +19,5 @@ object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
 
   implicit val schema: Schema[CustomCodeInput] = struct(
     int.required[CustomCodeInput]("code", _.code).addHints(smithy.api.HttpLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

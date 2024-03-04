@@ -24,7 +24,5 @@ object ErrorRequiredMessage extends ShapeTag.Companion[ErrorRequiredMessage] {
 
   implicit val schema: Schema[ErrorRequiredMessage] = struct(
     string.required[ErrorRequiredMessage]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

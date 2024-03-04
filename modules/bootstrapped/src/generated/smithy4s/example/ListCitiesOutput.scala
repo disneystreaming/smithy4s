@@ -20,7 +20,5 @@ object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
   implicit val schema: Schema[ListCitiesOutput] = struct(
     string.optional[ListCitiesOutput]("nextToken", _.nextToken),
     CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -23,7 +23,5 @@ object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
 
   implicit val schema: Schema[OpticsStructure] = struct(
     OpticsEnum.schema.optional[OpticsStructure]("two", _.two),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

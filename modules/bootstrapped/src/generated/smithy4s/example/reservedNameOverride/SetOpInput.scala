@@ -20,7 +20,5 @@ object SetOpInput extends ShapeTag.Companion[SetOpInput] {
 
   implicit val schema: Schema[SetOpInput] = struct(
     Set.schema.required[SetOpInput]("set", _.set),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

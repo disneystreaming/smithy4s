@@ -61,9 +61,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id),
       string.optional[InStoreOrder]("locationId", _.locationId),
-    ){
-      make
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[OrderType]("inStore")
   }

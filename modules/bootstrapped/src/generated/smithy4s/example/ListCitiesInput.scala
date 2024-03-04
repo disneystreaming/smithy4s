@@ -21,7 +21,5 @@ object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
   implicit val schema: Schema[ListCitiesInput] = struct(
     string.optional[ListCitiesInput]("nextToken", _.nextToken),
     int.optional[ListCitiesInput]("pageSize", _.pageSize),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

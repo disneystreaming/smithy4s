@@ -25,7 +25,5 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
     int.optional[MixinExample]("b", _.b),
     long.optional[MixinExample]("c", _.c),
     boolean.optional[MixinExample]("d", _.d),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

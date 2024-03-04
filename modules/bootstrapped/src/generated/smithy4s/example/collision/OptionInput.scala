@@ -20,7 +20,5 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
 
   implicit val schema: Schema[OptionInput] = struct(
     String.schema.optional[OptionInput]("value", _.value),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

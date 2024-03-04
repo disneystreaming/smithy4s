@@ -19,7 +19,5 @@ object Value extends ShapeTag.Companion[Value] {
 
   implicit val schema: Schema[Value] = struct(
     string.required[Value]("value", _.value),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

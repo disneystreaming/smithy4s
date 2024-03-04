@@ -32,7 +32,5 @@ object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   implicit val schema: Schema[GetObjectInput] = struct(
     ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.Documentation("Sent in the URI label named \"key\".\nKey can also be seen as the filename\nIt is always required for a GET operation"), smithy.api.HttpLabel()),
     BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Documentation("Sent in the URI label named \"bucketName\"."), smithy.api.HttpLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

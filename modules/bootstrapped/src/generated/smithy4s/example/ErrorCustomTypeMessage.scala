@@ -23,7 +23,5 @@ object ErrorCustomTypeMessage extends ShapeTag.Companion[ErrorCustomTypeMessage]
 
   implicit val schema: Schema[ErrorCustomTypeMessage] = struct(
     CustomErrorMessageType.schema.optional[ErrorCustomTypeMessage]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

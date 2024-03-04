@@ -25,7 +25,5 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
 
   implicit val schema: Schema[GenericClientError] = struct(
     string.required[GenericClientError]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

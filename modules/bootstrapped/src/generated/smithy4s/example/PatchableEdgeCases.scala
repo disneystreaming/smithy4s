@@ -25,7 +25,5 @@ object PatchableEdgeCases extends ShapeTag.Companion[PatchableEdgeCases] {
     int.nullable.required[PatchableEdgeCases]("requiredDefaultNull", _.requiredDefaultNull).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     int.nullable.field[PatchableEdgeCases]("defaultValue", _.defaultValue).addHints(smithy.api.Default(smithy4s.Document.fromDouble(5.0d))),
     int.nullable.field[PatchableEdgeCases]("defaultNull", _.defaultNull).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -21,7 +21,5 @@ object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
 
   implicit val schema: Schema[ReservationOutput] = struct(
     string.required[ReservationOutput]("message", _.message),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

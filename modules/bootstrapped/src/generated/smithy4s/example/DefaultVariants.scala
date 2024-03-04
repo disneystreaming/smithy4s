@@ -22,7 +22,5 @@ object DefaultVariants extends ShapeTag.Companion[DefaultVariants] {
     string.required[DefaultVariants]("reqDef", _.reqDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
     string.optional[DefaultVariants]("opt", _.opt),
     string.field[DefaultVariants]("optDef", _.optDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

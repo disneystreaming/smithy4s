@@ -21,7 +21,5 @@ object Pizza extends ShapeTag.Companion[Pizza] {
     string.required[Pizza]("name", _.name),
     PizzaBase.schema.required[Pizza]("base", _.base),
     Ingredients.underlyingSchema.required[Pizza]("toppings", _.toppings),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

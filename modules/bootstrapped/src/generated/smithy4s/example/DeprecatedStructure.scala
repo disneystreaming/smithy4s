@@ -25,7 +25,5 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
     Strings.underlyingSchema.optional[DeprecatedStructure]("other", _.other),
     string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None)),
     string.optional[DeprecatedStructure]("nameV2", _.nameV2),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

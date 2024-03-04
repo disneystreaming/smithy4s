@@ -21,7 +21,5 @@ object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOper
 
   implicit val schema: Schema[ErrorHandlingOperationOutput] = struct(
     string.optional[ErrorHandlingOperationOutput]("out", _.out),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

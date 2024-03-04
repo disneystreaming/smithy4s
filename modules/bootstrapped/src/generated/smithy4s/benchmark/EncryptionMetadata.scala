@@ -22,7 +22,5 @@ object EncryptionMetadata extends ShapeTag.Companion[EncryptionMetadata] {
     string.optional[EncryptionMetadata]("system", _.system),
     Creds.schema.optional[EncryptionMetadata]("credentials", _.credentials),
     boolean.optional[EncryptionMetadata]("partial", _.partial),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

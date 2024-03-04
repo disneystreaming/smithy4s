@@ -18,7 +18,5 @@ object GetEnumInput extends ShapeTag.Companion[GetEnumInput] {
 
   implicit val schema: Schema[GetEnumInput] = struct(
     TheEnum.schema.required[GetEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel()),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -22,7 +22,5 @@ object RoundTripData extends ShapeTag.Companion[RoundTripData] {
     string.optional[RoundTripData]("header", _.header).addHints(smithy.api.HttpHeader("HEADER")),
     string.optional[RoundTripData]("query", _.query).addHints(smithy.api.HttpQuery("query")),
     string.optional[RoundTripData]("body", _.body),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

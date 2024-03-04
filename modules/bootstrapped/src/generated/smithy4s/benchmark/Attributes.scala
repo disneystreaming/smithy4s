@@ -35,7 +35,5 @@ object Attributes extends ShapeTag.Companion[Attributes] {
     boolean.optional[Attributes]("backedUp", _.backedUp),
     ListMetadata.underlyingSchema.optional[Attributes]("metadata", _.metadata),
     Encryption.schema.optional[Attributes]("encryption", _.encryption),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

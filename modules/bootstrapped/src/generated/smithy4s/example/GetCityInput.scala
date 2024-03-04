@@ -23,7 +23,5 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
 
   implicit val schema: Schema[GetCityInput] = struct(
     CityId.schema.required[GetCityInput]("cityId", _.cityId),
-  ){
-    make
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }
