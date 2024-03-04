@@ -19,9 +19,10 @@ object ErrorRequiredMessage extends ShapeTag.Companion[ErrorRequiredMessage] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): ErrorRequiredMessage = ErrorRequiredMessage(message)
+
   implicit val schema: Schema[ErrorRequiredMessage] = struct(
     string.required[ErrorRequiredMessage]("message", _.message),
-  ){
-    ErrorRequiredMessage.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

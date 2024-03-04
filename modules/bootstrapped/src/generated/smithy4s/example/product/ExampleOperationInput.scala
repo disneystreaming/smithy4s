@@ -16,9 +16,10 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(a: String): ExampleOperationInput = ExampleOperationInput(a)
+
   implicit val schema: Schema[ExampleOperationInput] = struct(
     string.required[ExampleOperationInput]("a", _.a),
-  ){
-    ExampleOperationInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

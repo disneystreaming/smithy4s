@@ -18,6 +18,9 @@ object Queries extends ShapeTag.Companion[Queries] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(str: Option[String], int: Option[Int], ts1: Option[Timestamp], ts2: Option[Timestamp], ts3: Option[Timestamp], ts4: Option[Timestamp], b: Option[Boolean], sl: Option[List[String]], ie: Option[Numbers], on: Option[OpenNums], ons: Option[OpenNumsStr], slm: Option[Map[String, String]]): Queries = Queries(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm)
+
   implicit val schema: Schema[Queries] = struct(
     string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str")),
     int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int")),
@@ -31,7 +34,5 @@ object Queries extends ShapeTag.Companion[Queries] {
     OpenNums.schema.optional[Queries]("on", _.on).addHints(smithy.api.HttpQuery("openNums")),
     OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(smithy.api.HttpQuery("openNumsStr")),
     StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(smithy.api.HttpQueryParams()),
-  ){
-    Queries.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

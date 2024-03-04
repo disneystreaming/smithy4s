@@ -27,6 +27,9 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(one: Int, two: String, three: List[String], four: List[String], five: String, six: Int, seven: Document, eight: Map[String, String], nine: Short, ten: Double, eleven: Float, twelve: Long, thirteen: Timestamp, fourteen: Timestamp, fifteen: Timestamp, sixteen: Byte, seventeen: Blob, eighteen: Boolean): DefaultTest = DefaultTest(one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
+
   implicit val schema: Schema[DefaultTest] = struct(
     int.field[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.field[DefaultTest]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
@@ -46,7 +49,5 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
     byte.field[DefaultTest]("sixteen", _.sixteen).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
     bytes.field[DefaultTest]("seventeen", _.seventeen).addHints(smithy.api.Default(smithy4s.Document.array())),
     boolean.field[DefaultTest]("eighteen", _.eighteen).addHints(smithy.api.Default(smithy4s.Document.fromBoolean(false))),
-  ){
-    DefaultTest.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

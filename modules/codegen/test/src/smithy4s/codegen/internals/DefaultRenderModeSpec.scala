@@ -64,6 +64,9 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  val hints: Hints = Hints.empty
          |
+         |  // constructor using the original order from the spec
+         |  private def make(one: Option[String], two: String, three: String, four: String, five: Option[Nullable[String]], six: Nullable[String], seven: Nullable[String], eight: Nullable[String]): Test = Test(one, two, three, four, five, six, seven, eight)
+         |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
          |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
@@ -73,9 +76,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
-         |  ){
-         |    Test.apply
-         |  }.withId(id).addHints(hints)
+         |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
 
     TestUtils.runTest(smithy, scalaCode)
@@ -127,18 +128,19 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  val hints: Hints = Hints.empty
          |
+         |  // constructor using the original order from the spec
+         |  private def make(one: Option[String], two: String, three: String, four: String, five: Option[Nullable[String]], six: Nullable[String], seven: Nullable[String], eight: Nullable[String]): Test = Test(two, three, four, six, seven, eight, one, five)
+         |
          |  implicit val schema: Schema[Test] = struct(
+         |    string.optional[Test]("one", _.one),
          |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
          |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.nullable.optional[Test]("five", _.five),
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
-         |    string.optional[Test]("one", _.one),
-         |    string.nullable.optional[Test]("five", _.five),
-         |  ){
-         |    Test.apply
-         |  }.withId(id).addHints(hints)
+         |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
 
     TestUtils.runTest(smithy, scalaCode)
@@ -192,18 +194,19 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  val hints: Hints = Hints.empty
          |
+         |  // constructor using the original order from the spec
+         |  private def make(one: Option[String], two: String, three: String, four: String, five: Option[Nullable[String]], six: Nullable[String], seven: Nullable[String], eight: Nullable[String]): Test = Test(three, eight, two, four, six, seven, one, five)
+         |
          |  implicit val schema: Schema[Test] = struct(
-         |    string.required[Test]("three", _.three),
-         |    string.nullable.required[Test]("eight", _.eight),
+         |    string.optional[Test]("one", _.one),
          |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.required[Test]("three", _.three),
          |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.nullable.optional[Test]("five", _.five),
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-         |    string.optional[Test]("one", _.one),
-         |    string.nullable.optional[Test]("five", _.five),
-         |  ){
-         |    Test.apply
-         |  }.withId(id).addHints(hints)
+         |    string.nullable.required[Test]("eight", _.eight),
+         |  )(make).withId(id).addHints(hints)
          |}
          |""".stripMargin
 

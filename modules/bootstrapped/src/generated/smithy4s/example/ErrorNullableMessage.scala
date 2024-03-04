@@ -20,9 +20,10 @@ object ErrorNullableMessage extends ShapeTag.Companion[ErrorNullableMessage] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[Nullable[String]]): ErrorNullableMessage = ErrorNullableMessage(message)
+
   implicit val schema: Schema[ErrorNullableMessage] = struct(
     string.nullable.optional[ErrorNullableMessage]("message", _.message),
-  ){
-    ErrorNullableMessage.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }
