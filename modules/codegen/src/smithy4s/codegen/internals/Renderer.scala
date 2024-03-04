@@ -737,8 +737,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
-              .block(line"make")
-              .appendToLast(".withId(id).addHints(hints)")
+              .appendToLast("(make).withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
