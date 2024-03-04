@@ -76,9 +76,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
-         |  ){
-         |    make
-         |  }.withId(id).addHints(hints)
+         |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
 
     TestUtils.runTest(smithy, scalaCode)
@@ -142,9 +140,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
-         |  ){
-         |    make
-         |  }.withId(id).addHints(hints)
+         |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
 
     TestUtils.runTest(smithy, scalaCode)
@@ -210,9 +206,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
          |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
-         |  ){
-         |    make
-         |  }.withId(id).addHints(hints)
+         |  )(make).withId(id).addHints(hints)
          |}
          |""".stripMargin
 

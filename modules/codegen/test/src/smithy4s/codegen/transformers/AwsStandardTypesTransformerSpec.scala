@@ -94,9 +94,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |    int.required[TestStructure]("i", _.i),
         |    Date.schema.optional[TestStructure]("d", _.d),
         |    Long.schema.optional[TestStructure]("l", _.l),
-        |  ){
-        |    make
-        |  }.withId(id).addHints(hints)
+        |  )(make).withId(id).addHints(hints)
         |}""".stripMargin
     )
   }
@@ -157,9 +155,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |
         |  implicit val schema: Schema[TestStructure] = struct(
         |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
-        |  ){
-        |    make
-        |  }.withId(id).addHints(hints)
+        |  )(make).withId(id).addHints(hints)
         |}""".stripMargin
     )
   }
@@ -222,9 +218,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |
         |  implicit val schema: Schema[TestStructure] = struct(
         |    int.field[TestStructure]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(5.0d))),
-        |  ){
-        |    make
-        |  }.withId(id).addHints(hints)
+        |  )(make).withId(id).addHints(hints)
         |}""".stripMargin
     )
   }
