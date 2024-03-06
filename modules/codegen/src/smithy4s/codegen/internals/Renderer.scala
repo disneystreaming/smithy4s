@@ -747,7 +747,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .args(renderedFields)
               .block(
                 line"arr => make".args(
-                  fields.zipWithIndex.map { case (field, idx) =>
+                  fields.sortBy(_.originalIndex).zipWithIndex.map { case (field, idx) =>
                     line"arr($idx).asInstanceOf[${Line.fieldType(field)}]"
                   }
                 )
