@@ -11,7 +11,7 @@ service DummyService {
   operations: [Dummy, DummyHostPrefix, DummyPath]
 }
 
-@http(method: "GET", uri: "/dummy")
+@http(method: "POST", uri: "/dummy")
 @endpoint(hostPrefix: "foo.{label1}--abc{label2}.{label3}.secure.")
 operation DummyHostPrefix {
     input: HostLabelInput
