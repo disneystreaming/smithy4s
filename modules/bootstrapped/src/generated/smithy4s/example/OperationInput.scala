@@ -16,18 +16,19 @@ object OperationInput extends ShapeTag.Companion[OperationInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(optional: Option[String], optionalWithDefault: String, requiredLabel: String, requiredWithDefault: String, optionalHeader: Option[String], optionalHeaderWithDefault: String, requiredHeaderWithDefault: String, optionalQuery: Option[String], optionalQueryWithDefault: String, requiredQueryWithDefault: String): OperationInput = OperationInput(optionalWithDefault, requiredLabel, requiredWithDefault, optionalHeaderWithDefault, requiredHeaderWithDefault, optionalQueryWithDefault, requiredQueryWithDefault, optional, optionalHeader, optionalQuery)
+
   implicit val schema: Schema[OperationInput] = struct(
+    string.optional[OperationInput]("optional", _.optional),
     string.field[OperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
     string.required[OperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.HttpLabel(), smithy.api.Default(smithy4s.Document.fromString("required-label-with-default"))),
     string.required[OperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
+    string.optional[OperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
     string.field[OperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
     string.required[OperationInput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader("required-header-with-default")),
+    string.optional[OperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery("optional-query")),
     string.field[OperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-query-with-default")), smithy.api.HttpQuery("optional-query-with-default")),
     string.field[OperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-query-with-default")), smithy.api.HttpQuery("required-query-with-default")),
-    string.optional[OperationInput]("optional", _.optional),
-    string.optional[OperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
-    string.optional[OperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery("optional-query")),
-  ){
-    OperationInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

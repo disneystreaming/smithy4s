@@ -1,7 +1,23 @@
+# 0.18.11
+
+* smithy4s Structure schemas are now retaining the original order of fields, as per the specification.
+* Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+In addition, the semantics of `transformHintsTransitively` have been changed: the transformation no longer modifies the hints on the result of the `total` function.
+
+# 0.18.10
+
+* Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
+
 # 0.18.9
 
-* Supports error responses with `@httpResponseCode` fields.
+* Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
+* Generalise implementation of `@httpResponseCode` to later allow for its use in error responses.
 * Fix in Bijection#identity which caused and infinite recursion, fixed in [1401](https://github.com/disneystreaming/smithy4s/pull/1401)
+* Adds a `Field#addHints(hints: Hints)` method
+* Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
+* Adds a `smithy4s.Document.syntax` object, the contents of which can be imported to facilitate the instantiation of documents.
+
+* Added support for `@nullable` on fields, to allow absent values to be handled differently from explicit null
 
 # 0.18.8
 

@@ -16,11 +16,12 @@ object DefaultRequiredUnknownFieldRetentionExample extends ShapeTag.Companion[De
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(foo: Option[String], bar: Option[String], retainedUnknownFields: Document): DefaultRequiredUnknownFieldRetentionExample = DefaultRequiredUnknownFieldRetentionExample(retainedUnknownFields, foo, bar)
+
   implicit val schema: Schema[DefaultRequiredUnknownFieldRetentionExample] = struct(
-    document.required[DefaultRequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
     string.optional[DefaultRequiredUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[DefaultRequiredUnknownFieldRetentionExample]("bar", _.bar),
-  ){
-    DefaultRequiredUnknownFieldRetentionExample.apply
-  }.withId(id).addHints(hints)
+    document.required[DefaultRequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
+  )(make).withId(id).addHints(hints)
 }

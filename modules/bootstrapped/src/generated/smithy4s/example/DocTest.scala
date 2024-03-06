@@ -18,5 +18,6 @@ object DocTest extends ShapeTag.Companion[DocTest] {
     smithy.api.Documentation("Test if an at-sign is rendered appropriately\n@test"),
   ).lazily
 
+
   implicit val schema: Schema[DocTest] = constant(DocTest()).withId(id).addHints(hints)
 }

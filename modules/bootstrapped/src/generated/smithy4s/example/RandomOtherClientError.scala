@@ -19,9 +19,10 @@ object RandomOtherClientError extends ShapeTag.Companion[RandomOtherClientError]
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[String]): RandomOtherClientError = RandomOtherClientError(message)
+
   implicit val schema: Schema[RandomOtherClientError] = struct(
     string.optional[RandomOtherClientError]("message", _.message),
-  ){
-    RandomOtherClientError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

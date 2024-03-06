@@ -19,17 +19,18 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.41.1"
+    val smithyVersion = "1.45.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
     val awsTraits = org % "smithy-aws-traits" % smithyVersion
     val waiters = org % "smithy-waiters" % smithyVersion
+    val `aws-protocol-tests` = org % "smithy-aws-protocol-tests" % smithyVersion
   }
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.2.8-29-706e86-SNAPSHOT"
+    val alloyVersion = "0.3.2-5-185b0b-SNAPSHOT"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -148,7 +149,7 @@ object Dependencies {
   val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.11"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.11.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.11.8"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.50"
   }

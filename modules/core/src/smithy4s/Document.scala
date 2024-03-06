@@ -91,6 +91,9 @@ object Document {
   def array(values: Iterable[Document]): Document = DArray(
     IndexedSeq.newBuilder.++=(values).result()
   )
+  def obj(kv: Iterable[(String, Document)]): Document = DObject(
+    Map(kv.toSeq: _*)
+  )
   def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
@@ -160,7 +163,20 @@ object Document {
           }
       }
     }
+  }
 
+  // scalafmt: { maxColumn = 120 }
+  object syntax {
+    implicit def intConversion(int: Int): Document = Document.fromInt(int)
+    implicit def longConversion(long: Long): Document = Document.fromLong(long)
+    implicit def booleanConversion(boolean: Boolean): Document = Document.fromBoolean(boolean)
+    implicit def doubleConversion(double: Double): Document = Document.fromDouble(double)
+    implicit def fromString(string: String): Document = Document.fromString(string)
+    implicit def iterableConversion(iterable: Iterable[Document]): Document = Document.array(iterable)
+    implicit def fromSchema[A: Schema](a: A): Document = Document.Encoder.fromSchema(implicitly[Schema[A]]).encode(a)
+    def obj(kv: (String, Document)*): Document = Document.obj(kv)
+    def array(kv: Document*): Document = Document.array(kv)
+    def nullDoc: Document = Document.nullDoc
   }
 
 }

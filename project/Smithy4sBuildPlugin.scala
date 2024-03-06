@@ -29,7 +29,7 @@ case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
-  val Scala212 = "2.12.18"
+  val Scala212 = "2.12.19"
   val Scala213 = "2.13.12"
   val Scala3 = "3.3.1"
 
@@ -182,7 +182,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         Seq(
           compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
           compilerPlugin(
-            "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
+            "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
           )
         )
       else Seq.empty

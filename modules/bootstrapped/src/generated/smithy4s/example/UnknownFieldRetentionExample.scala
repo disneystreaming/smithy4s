@@ -16,11 +16,12 @@ object UnknownFieldRetentionExample extends ShapeTag.Companion[UnknownFieldReten
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(foo: Option[String], bar: Option[String], retainedUnknownFields: Option[Document]): UnknownFieldRetentionExample = UnknownFieldRetentionExample(foo, bar, retainedUnknownFields)
+
   implicit val schema: Schema[UnknownFieldRetentionExample] = struct(
     string.optional[UnknownFieldRetentionExample]("foo", _.foo),
     string.optional[UnknownFieldRetentionExample]("bar", _.bar),
     document.optional[UnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention()),
-  ){
-    UnknownFieldRetentionExample.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

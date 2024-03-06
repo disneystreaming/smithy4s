@@ -16,9 +16,10 @@ object HelloInput extends ShapeTag.Companion[HelloInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(name: String): HelloInput = HelloInput(name)
+
   implicit val schema: Schema[HelloInput] = struct(
     string.required[HelloInput]("name", _.name).addHints(smithy.api.HttpLabel()),
-  ){
-    HelloInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

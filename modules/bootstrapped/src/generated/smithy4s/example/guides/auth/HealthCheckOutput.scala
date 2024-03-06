@@ -16,9 +16,10 @@ object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): HealthCheckOutput = HealthCheckOutput(message)
+
   implicit val schema: Schema[HealthCheckOutput] = struct(
     string.required[HealthCheckOutput]("message", _.message),
-  ){
-    HealthCheckOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

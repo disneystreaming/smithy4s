@@ -15,5 +15,6 @@ object NameFormat extends ShapeTag.Companion[NameFormat] {
     smithy.api.Trait(selector = Some("string"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+
   implicit val schema: Schema[NameFormat] = constant(NameFormat()).withId(id).addHints(hints)
 }

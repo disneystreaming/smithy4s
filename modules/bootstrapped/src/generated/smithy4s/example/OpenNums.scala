@@ -21,7 +21,6 @@ object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] 
   val id: ShapeId = ShapeId("smithy4s.example", "OpenNums")
 
   val hints: Hints = Hints(
-    smithy.api.Box(),
     alloy.OpenEnum(),
   ).lazily
 

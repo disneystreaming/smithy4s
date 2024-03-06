@@ -38,12 +38,13 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
     val hints: Hints = Hints.empty
 
+    // constructor using the original order from the spec
+    private def make(a: Option[String], b: Option[Int]): TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
+
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       string.optional[TestAdtMemberWithMixin]("a", _.a),
       int.optional[TestAdtMemberWithMixin]("b", _.b),
-    ){
-      TestAdtMemberWithMixin.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestMixinAdt]("test")
   }

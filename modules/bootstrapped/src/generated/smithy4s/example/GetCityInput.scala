@@ -18,9 +18,10 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
     val cityId: Lens[GetCityInput, CityId] = Lens[GetCityInput, CityId](_.cityId)(n => a => a.copy(cityId = n))
   }
 
+  // constructor using the original order from the spec
+  private def make(cityId: CityId): GetCityInput = GetCityInput(cityId)
+
   implicit val schema: Schema[GetCityInput] = struct(
     CityId.schema.required[GetCityInput]("cityId", _.cityId),
-  ){
-    GetCityInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

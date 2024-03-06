@@ -13,10 +13,11 @@ object Scala3ReservedKeywords extends ShapeTag.Companion[Scala3ReservedKeywords]
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(_export: Option[String], _enum: Option[String]): Scala3ReservedKeywords = Scala3ReservedKeywords(_export, _enum)
+
   implicit val schema: Schema[Scala3ReservedKeywords] = struct(
     String.schema.optional[Scala3ReservedKeywords]("export", _._export),
     String.schema.optional[Scala3ReservedKeywords]("enum", _._enum),
-  ){
-    Scala3ReservedKeywords.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -58,6 +58,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
       smithy.api.Deprecated(message = None, since = None),
     ).lazily
 
+
     implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
@@ -73,6 +74,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     ).lazily
+
 
     implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
 

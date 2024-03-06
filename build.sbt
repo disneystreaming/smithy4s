@@ -64,7 +64,6 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -321,7 +320,7 @@ lazy val `aws-http4s` = projectMatrix
       "https://s01.oss.sonatype.org/content/repositories/snapshots"
     ),
     Test / complianceTestDependencies := Seq(
-      Dependencies.Alloy.`protocol-tests`
+      Dependencies.Smithy.`aws-protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / smithy4sModelTransformers) := Seq.empty,
@@ -381,10 +380,10 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.9.3",
-      "com.lihaoyi" %% "upickle" % "3.1.4",
+      "com.lihaoyi" %% "upickle" % "3.1.5",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.8"
+      "io.get-coursier" %% "coursier" % "2.1.9"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -864,6 +863,7 @@ lazy val bootstrapped = projectMatrix
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
+    Test / fork := true,
     exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
     cleanFiles += exampleGeneratedOutput.value,
     smithy4sDependencies ++= Seq(
