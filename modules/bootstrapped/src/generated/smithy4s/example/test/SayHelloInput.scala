@@ -17,8 +17,8 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
   ).lazily
 
   implicit val schema: Schema[SayHelloInput] = struct(
-    string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),
-    string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery("Hi")),
+    string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader.unsafeApply("X-Greeting")),
+    string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery.unsafeApply("Hi")),
     string.optional[SayHelloInput]("name", _.name),
   ){
     SayHelloInput.apply

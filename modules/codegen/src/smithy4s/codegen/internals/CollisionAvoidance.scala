@@ -24,6 +24,7 @@ import TypedNode._
 import Type.ExternalType
 import LineSegment._
 import smithy4s.codegen.internals.Type.Nullable
+import smithy4s.codegen.internals.Type.ValidatedAlias
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -86,6 +87,14 @@ private[internals] object CollisionAvoidance {
           rec,
           hints.map(modHint)
         )
+      case ValidatedTypeAlias(shapeId, name, tpe, recursive, hints) => 
+        ValidatedTypeAlias(
+          shapeId,
+          protectKeyword(name.capitalize),
+          modType(tpe),
+          recursive,
+          hints.map(modHint)
+        )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, realName, hints) =>
@@ -128,6 +137,8 @@ private[internals] object CollisionAvoidance {
       val protectedName = protectKeyword(name.capitalize)
       val unwrapped = isUnwrapped | (protectedName != name.capitalize)
       Alias(namespace, protectKeyword(name.capitalize), modType(tpe), unwrapped)
+    case ValidatedAlias(namespace, name, tpe) => 
+      ValidatedAlias(namespace, protectKeyword(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, typeParams, pFqn, under, refinementHint) =>
       ExternalType(
@@ -215,6 +226,8 @@ private[internals] object CollisionAvoidance {
           )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
+        case ValidatedNewTypeTN(ref, target) => 
+          ValidatedNewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
           AltTN(modRef(ref), altName, alt)
         case MapTN(values) =>
@@ -301,6 +314,7 @@ private[internals] object CollisionAvoidance {
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
     val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
+    val NewtypeValidated_ = NameRef("smithy4s", "NewtypeValidated")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")
     val ErrorSchema_ = NameRef("smithy4s.schema", "ErrorSchema")

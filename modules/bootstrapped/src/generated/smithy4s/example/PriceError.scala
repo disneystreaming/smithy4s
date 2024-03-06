@@ -22,7 +22,7 @@ object PriceError extends ShapeTag.Companion[PriceError] {
 
   implicit val schema: Schema[PriceError] = struct(
     string.required[PriceError]("message", _.message),
-    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE")),
+    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader.unsafeApply("X-CODE")),
   ){
     PriceError.apply
   }.withId(id).addHints(hints)

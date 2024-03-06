@@ -78,7 +78,7 @@ object WeatherServiceOperation {
     val schema: OperationSchema[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = Schema.operation(ShapeId("weather", "GetWeather"))
       .withInput(GetWeatherInput.schema)
       .withOutput(GetWeatherOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/weather/{city}"), code = 200))
     def wrap(input: GetWeatherInput): GetWeather = GetWeather(input)
   }
 }

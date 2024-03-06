@@ -88,7 +88,7 @@ object ImportServiceOperation {
       .withInput(unit)
       .withError(ImportOperationError.errorSchema)
       .withOutput(OpOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/test"), code = 200))
     def wrap(input: Unit): ImportOperation = ImportOperation()
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable { self =>

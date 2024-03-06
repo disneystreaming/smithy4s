@@ -81,7 +81,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "CreateObject"))
       .withInput(CreateObjectInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/complex/{bucketName}/{key}"), code = 200))
     def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
   }
   final case class SendString(input: SendStringInput) extends BenchmarkServiceOperation[SendStringInput, Nothing, Unit, Nothing, Nothing] {
@@ -93,7 +93,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[SendStringInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "SendString"))
       .withInput(SendStringInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/simple/{bucketName}/{key}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/simple/{bucketName}/{key}"), code = 200))
     def wrap(input: SendStringInput): SendString = SendString(input)
   }
 }

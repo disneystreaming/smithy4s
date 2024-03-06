@@ -158,6 +158,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               recursive,
               hints
             ).some
+          case Type.ValidatedAlias(_, name, tpe) =>
+            ValidatedTypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              recursive,
+              hints
+            ).some
           case Type.PrimitiveType(_) => None
           case other =>
             TypeAlias(
@@ -592,6 +600,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
       }
 
+      private def hasConstraints(shape: Shape): Boolean = {
+        shape.getAllTraits().asScala.values.exists {
+          case ConstraintTrait(_) => true
+          case _             => false
+        }
+      }
+
       def primitive(
           shape: Shape,
           primitiveId: String,
@@ -603,7 +618,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shape.getId() != ShapeId.from(primitiveId) &&
           !isUnboxedPrimitive(shape.getId())
         ) {
-          Type
+          val isUnwrapped = isUnwrappedShape(shape)
+          if(isUnwrapped || !hasConstraints(shape)) {
+            Type
             .Alias(
               shape.getId().getNamespace(),
               shape.getId().getName(),
@@ -611,6 +628,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               isUnwrappedShape(shape)
             )
             .some
+          } else {
+            Type.ValidatedAlias(
+              shape.getId().getNamespace(),
+              shape.getId().getName(),
+              externalOrBase
+            ).some
+          }
+          
         } else externalOrBase.some
       }
 
@@ -1269,6 +1294,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
+      case (node, Type.ValidatedAlias(ns, name, tpe)) =>
+        TypedNode.ValidatedNewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration (Enum Trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =

@@ -93,7 +93,7 @@ object HelloWorldAuthServiceOperation {
       .withInput(unit)
       .withError(SayWorldError.errorSchema)
       .withOutput(World.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): SayWorld = SayWorld()
   }
   sealed trait SayWorldError extends scala.Product with scala.Serializable { self =>
@@ -159,7 +159,7 @@ object HelloWorldAuthServiceOperation {
       .withInput(unit)
       .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema)
-      .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Auth(Set()), smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): HealthCheck = HealthCheck()
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>

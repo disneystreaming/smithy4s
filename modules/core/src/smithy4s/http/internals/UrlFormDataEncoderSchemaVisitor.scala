@@ -94,7 +94,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
+      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName.unsafeApply("entry"))
     }
     // Avoid serialising empty maps, see comment in collection case and
     // https://github.com/smithy-lang/smithy/issues/1868.

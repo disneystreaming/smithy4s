@@ -98,7 +98,7 @@ object ObjectServiceOperation {
       .withInput(PutObjectInput.schema)
       .withError(PutObjectError.errorSchema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Idempotent())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("PUT"), uri = smithy.api.NonEmptyString.unsafeApply("/{bucketName}/{key}"), code = 200), smithy.api.Idempotent())
     def wrap(input: PutObjectInput): PutObject = PutObject(input)
   }
   sealed trait PutObjectError extends scala.Product with scala.Serializable { self =>
@@ -191,7 +191,7 @@ object ObjectServiceOperation {
       .withInput(GetObjectInput.schema)
       .withError(GetObjectError.errorSchema)
       .withOutput(GetObjectOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetObjectInput): GetObject = GetObject(input)
   }
   sealed trait GetObjectError extends scala.Product with scala.Serializable { self =>

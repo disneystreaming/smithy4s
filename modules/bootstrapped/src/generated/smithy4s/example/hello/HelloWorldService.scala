@@ -85,7 +85,7 @@ object HelloWorldServiceOperation {
       .withInput(Person.schema)
       .withError(HelloError.errorSchema)
       .withOutput(Greeting.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200), smithy.api.Tags(List("testOperationTag")))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/{name}"), code = 200), smithy.api.Tags(List("testOperationTag")))
     def wrap(input: Person): Hello = Hello(input)
   }
   sealed trait HelloError extends scala.Product with scala.Serializable { self =>

@@ -21,8 +21,8 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),
     BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
     string.required[PutObjectInput]("data", _.data).addHints(smithy.api.HttpPayload()),
-    LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(smithy.api.HttpHeader("X-Foo")),
-    SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(smithy.api.HttpQuery("paramName")),
+    LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(smithy.api.HttpHeader.unsafeApply("X-Foo")),
+    SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(smithy.api.HttpQuery.unsafeApply("paramName")),
   ){
     PutObjectInput.apply
   }.withId(id).addHints(hints)

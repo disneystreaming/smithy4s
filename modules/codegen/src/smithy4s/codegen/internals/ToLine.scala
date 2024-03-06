@@ -66,6 +66,8 @@ private[internals] object ToLine {
         NameRef(ns, name)
       case Type.Alias(_, _, aliased, _) =>
         typeToNameRef(aliased)
+      case Type.ValidatedAlias(ns, name, _) =>
+        NameRef(ns, name)
       case Type.Ref(namespace, name) => NameRef(namespace, name)
       case Type.PrimitiveType(prim)  => primitiveLine(prim)
       case e: Type.ExternalType =>

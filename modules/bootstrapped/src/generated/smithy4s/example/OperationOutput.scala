@@ -19,10 +19,10 @@ object OperationOutput extends ShapeTag.Companion[OperationOutput] {
   implicit val schema: Schema[OperationOutput] = struct(
     string.field[OperationOutput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
     string.required[OperationOutput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
-    string.field[OperationOutput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
-    string.required[OperationOutput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader("required-header-with-default")),
+    string.field[OperationOutput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader.unsafeApply("optional-header-with-default")),
+    string.required[OperationOutput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader.unsafeApply("required-header-with-default")),
     string.optional[OperationOutput]("optional", _.optional),
-    string.optional[OperationOutput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
+    string.optional[OperationOutput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader.unsafeApply("optional-header")),
   ){
     OperationOutput.apply
   }.withId(id).addHints(hints)

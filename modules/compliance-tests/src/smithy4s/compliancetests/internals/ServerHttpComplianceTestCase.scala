@@ -245,8 +245,8 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): (Service.Reflective[NoInputOp], Request[F]) = {
     val newHints = {
       val newHttp = smithy.api.Http(
-        method = smithy.api.NonEmptyString("GET"),
-        uri = smithy.api.NonEmptyString("/")
+        method = smithy.api.NonEmptyString.unsafeApply("GET"),
+        uri = smithy.api.NonEmptyString.unsafeApply("/")
       )
       val code =
         endpoint.hints.get[smithy.api.Http].map(_.code).getOrElse(newHttp.code)

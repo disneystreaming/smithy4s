@@ -91,7 +91,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[Queries, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Dummy"))
       .withInput(Queries.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/dummy"), code = 200), smithy.api.Readonly())
     def wrap(input: Queries): Dummy = Dummy(input)
   }
   final case class DummyHostPrefix(input: HostLabelInput) extends DummyServiceOperation[HostLabelInput, Nothing, Unit, Nothing, Nothing] {
@@ -103,7 +103,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[HostLabelInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyHostPrefix"))
       .withInput(HostLabelInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Endpoint(hostPrefix = smithy.api.NonEmptyString("foo.{label1}--abc{label2}.{label3}.secure.")))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/dummy"), code = 200), smithy.api.Endpoint(hostPrefix = smithy.api.NonEmptyString.unsafeApply("foo.{label1}--abc{label2}.{label3}.secure.")))
     def wrap(input: HostLabelInput): DummyHostPrefix = DummyHostPrefix(input)
   }
   final case class DummyPath(input: PathParams) extends DummyServiceOperation[PathParams, Nothing, Unit, Nothing, Nothing] {
@@ -115,7 +115,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[PathParams, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyPath"))
       .withInput(PathParams.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200), smithy.api.Readonly())
     def wrap(input: PathParams): DummyPath = DummyPath(input)
   }
 }

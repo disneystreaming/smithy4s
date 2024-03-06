@@ -185,6 +185,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
+    case vta @ ValidatedTypeAlias(shapeId, _, tpe, recursive, hints) =>
+      renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, tag, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
@@ -260,6 +262,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
       case TypeAlias(_, name, _, _, _, hints) =>
+        lines(
+          documentationAnnotation(hints),
+          deprecationAnnotation(hints),
+          line"type $name = ${compilationUnit.namespace}.${name}.Type"
+        )
+      case ValidatedTypeAlias(_, name, _, _, hints) =>
         lines(
           documentationAnnotation(hints),
           deprecationAnnotation(hints),
@@ -1323,6 +1331,51 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )
     )
   }
+ 
+   private def renderValidatedNewtype(
+      shapeId: ShapeId,
+      name: NameRef,
+      tpe: Type,
+      recursive: Boolean,
+      hints: List[Hint]
+  ): Lines = {
+    val validators = {
+      val tags = hints.collect { case t: Hint.Constraint => t }
+      tags.map{ tag =>
+        line"a => validateInternal(${renderNativeHint(tag.native)})(a)"
+      }.intercalate(Line.comma)
+    }
+
+    val definition =
+      if (recursive) line"$recursive_("
+      else Line.empty
+    val trailingCalls =
+      line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+    val closing = if (recursive) ")" else ""
+    lines(
+      documentationAnnotation(hints),
+      deprecationAnnotation(hints),
+      obj(name, line"$NewtypeValidated_[$tpe]")(
+        renderId(shapeId),
+        renderHintsVal(hints),
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
+        lines(
+          line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijectionUnsafe)$closing"
+        ),
+        lines(
+          line"val validators: List[$tpe => Either[String, $tpe]] = List(",
+          indent(validators),
+          line")"
+        ),
+        lines(
+          line"@inline def apply(a: $tpe): Either[String, $name] = validators",
+          indent(line".foldLeft(Right(a): Either[String, $tpe])((acc, v) => acc.flatMap(v))"),
+          indent(line".map(unsafeApply)")
+        ),
+        renderTypeclasses(hints, name)
+      )
+    )
+  }
 
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
@@ -1386,6 +1439,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             _,
             false
           ) =>
+        NameRef(ns, s"$name.schema").toLine
+      case Type.ValidatedAlias(ns, name, _) =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
@@ -1517,6 +1572,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           false -> text
         else
           false -> line"${ref.show}($text)"
+      })
+    case ValidatedNewTypeTN(ref, target) => 
+      Reader(topLevel => {
+        val (wroteCollection, text) = target.run(topLevel)
+        if (wroteCollection && !topLevel)
+          false -> text
+        else
+          false -> line"${ref.show}.unsafeApply($text)"
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>

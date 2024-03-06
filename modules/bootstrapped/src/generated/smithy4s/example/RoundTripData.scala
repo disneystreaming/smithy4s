@@ -16,8 +16,8 @@ object RoundTripData extends ShapeTag.Companion[RoundTripData] {
 
   implicit val schema: Schema[RoundTripData] = struct(
     string.required[RoundTripData]("label", _.label).addHints(smithy.api.HttpLabel()),
-    string.optional[RoundTripData]("header", _.header).addHints(smithy.api.HttpHeader("HEADER")),
-    string.optional[RoundTripData]("query", _.query).addHints(smithy.api.HttpQuery("query")),
+    string.optional[RoundTripData]("header", _.header).addHints(smithy.api.HttpHeader.unsafeApply("HEADER")),
+    string.optional[RoundTripData]("query", _.query).addHints(smithy.api.HttpQuery.unsafeApply("query")),
     string.optional[RoundTripData]("body", _.body),
   ){
     RoundTripData.apply
