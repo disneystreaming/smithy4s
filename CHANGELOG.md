@@ -1,3 +1,7 @@
+# 0.18.12
+
+* fix issue where schemas for fields of generated big structs (over 22 fields in size) would not be ordered correctly
+
 # 0.18.11
 
 * smithy4s Structure schemas are now retaining the original order of fields, as per the specification.
