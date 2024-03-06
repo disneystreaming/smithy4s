@@ -120,6 +120,7 @@ private[codegen] object CodegenImpl { self =>
       Set(
         "alloy",
         "alloy.common",
+        "alloy.proto",
         "smithy4s.api",
         "smithy4s.meta"
       )
@@ -169,6 +170,7 @@ private[codegen] object CodegenImpl { self =>
           os.RelPath(result.namespace.split('.').toIndexedSeq, ups = 0)
         (relPath, result)
       }
+
   }
 
   def dumpModel(args: DumpModelArgs): String = {
