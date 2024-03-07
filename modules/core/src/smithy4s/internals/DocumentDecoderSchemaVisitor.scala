@@ -515,16 +515,16 @@ class DocumentDecoderSchemaVisitor(
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
   ): DocumentDecoder[U] = {
-    def jsonLabel[A](alt: Alt[U, A]): String =
+    def jsonLabelOrLabel[A](alt: Alt[U, A]): String =
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
       alternatives.map { case alt @ Alt(_, instance, inject, _) =>
-        val label = jsonLabel(alt)
+        val jsonLabel = jsonLabelOrLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(label :: pp, doc))
+          inject(apply(instance)(jsonLabel :: pp, doc))
         }
-        jsonLabel(alt) -> encoder
+        jsonLabelOrLabel(alt) -> encoder
       }.toMap
 
     hints match {

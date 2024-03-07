@@ -38,6 +38,7 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.ListMap
+import scala.jdk.CollectionConverters._
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
@@ -936,7 +937,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[U, A]): String =
+      def jsonLabelOrLabel[A](alt: Alt[U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
@@ -950,7 +951,7 @@ private[smithy4s] class SchemaVisitorJCodec(
               alt.inject(cursor.decode(codec, reader))
           }
 
-          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+          alternatives.foreach(alt => put(jsonLabelOrLabel(alt), handler(alt)))
         }
 
       def decodeValue(cursor: Cursor, in: JsonReader): U =
@@ -1067,7 +1068,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[U, A]): String =
+      def jsonLabelOrLabel[A](alt: Alt[U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
@@ -1083,7 +1084,7 @@ private[smithy4s] class SchemaVisitorJCodec(
               alt.inject(cursor.decode(codec, reader))
           }
 
-          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+          alternatives.foreach(alt => put(jsonLabelOrLabel(alt), handler(alt)))
         }
 
       def decodeValue(cursor: Cursor, in: JsonReader): U =
@@ -1274,12 +1275,58 @@ private[smithy4s] class SchemaVisitorJCodec(
         }
     }
 
-  private def jsonLabel[A, Z](field: Field[Z, A]): String =
+  private def isForUnknownFieldRetention[Z](field: Field[Z, _]): Boolean =
+    field.hints
+      .has(UnknownJsonFieldRetention)
+
+  private def jsonLabelOrLabel[Z](field: Field[Z, _]): String =
     field.hints.get(JsonName) match {
       case None    => field.label
       case Some(x) => x.value
     }
 
+  trait UnknownFieldsDecoder[A] { self =>
+    def apply(
+        in: JsonReader,
+        unknownFields: util.HashMap[String, Document]
+    ): A
+  }
+
+  object UnknownFieldsDecoder
+      extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
+
+    override def default[A]: UnknownFieldsDecoder[A] = (
+        in: JsonReader,
+        _: util.HashMap[String, Document]
+    ) => in.decodeError("Expected JSON document")
+
+    override def primitive[P](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: Primitive[P]
+    ): UnknownFieldsDecoder[P] = (
+        in: JsonReader,
+        unknownFields: util.HashMap[String, Document]
+    ) =>
+      tag match {
+        case PDocument => Document.DObject(unknownFields.asScala.toMap)
+        case _         => in.decodeError("Expected JSON document")
+      }
+
+    override def option[A](
+        schema: Schema[A]
+    ): UnknownFieldsDecoder[Option[A]] = {
+      val decoder = schema.compile(self)
+      (
+          in: JsonReader,
+          unknownFields: util.HashMap[String, Document]
+      ) =>
+        if (unknownFields.isEmpty) None
+        else Some(decoder(in, unknownFields))
+    }
+  }
+
+  // TODO: Remove/rename mmap?
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
@@ -1316,10 +1363,11 @@ private[smithy4s] class SchemaVisitorJCodec(
         case PDocument =>
           document match {
             case Document.DObject(values) =>
-              jsonWriter => values.foreach {case (key, value) =>
-                jsonWriter.writeKey(key)
-                documentJCodec.encodeValue(value, jsonWriter)
-              }
+              jsonWriter =>
+                values.foreach { case (key, value) =>
+                  jsonWriter.writeKey(key)
+                  documentJCodec.encodeValue(value, jsonWriter)
+                }
 
             case _ =>
               _ => ()
@@ -1342,19 +1390,16 @@ private[smithy4s] class SchemaVisitorJCodec(
   private def fieldEncoder[Z, A](
       field: Field[Z, A]
   ): (Z, JsonWriter) => Unit =
-    if (
-      field.hints
-        .has(UnknownJsonFieldRetention)
-    ) {
+    if (isForUnknownFieldRetention(field)) {
       val unknownFieldsEncoder = UnknownFieldsEncoder(field.schema)
       (z: Z, out: JsonWriter) => unknownFieldsEncoder(field.get(z))(out)
     } else {
       val codec = apply(field.schema)
-      val jLabel = jsonLabel(field)
+      val jsonLabel = jsonLabelOrLabel(field)
       val writeLabel: JsonWriter => Unit =
-        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-          _.writeNonEscapedAsciiKey(jLabel)
-        } else _.writeKey(jLabel)
+        if (jsonLabel.forall(JsonWriter.isNonEscapedAscii)) {
+          _.writeNonEscapedAsciiKey(jsonLabel)
+        } else _.writeKey(jsonLabel)
 
       if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
         writeLabel(out)
@@ -1371,10 +1416,10 @@ private[smithy4s] class SchemaVisitorJCodec(
   private type LabelledFields[Z] = Vector[(Field[Z, _], String, Any)]
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
-      val jLabel = jsonLabel(field)
+      val jsonLabel = jsonLabelOrLabel(field)
       val decoded: Option[Any] = field.schema.getDefaultValue
       val default = decoded.orNull
-      (field, jLabel, default)
+      (field, jsonLabel, default)
     }
 
   private def nonPayloadStruct[Z](
@@ -1386,10 +1431,14 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
+      private[this] val retainUnknownFields = fields.exists {
+        case (field, _, _) => isForUnknownFieldRetention(field)
+      }
+
       private[this] val handlers =
         new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
-          fields.foreach { case (field, jLabel, _) =>
-            put(jLabel, fieldHandler(field))
+          fields.foreach { case (field, jsonLabel, _) =>
+            put(jsonLabel, fieldHandler(field))
           }
         }
 
@@ -1401,13 +1450,26 @@ private[smithy4s] class SchemaVisitorJCodec(
       override def canBeKey = false
 
       override def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+        val unknownFields =
+          if (retainUnknownFields)
+            new util.HashMap[String, Document](handlers.size << 1, 0.5f)
+          else null
+        def retainUnknownField(key: String): Unit = {
+          val value = documentJCodec.decodeValue(cursor, in)
+          unknownFields.put(key, value)
+          ()
+        }
         val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
-              val handler = handlers.get(in.readKeyAsString())
-              if (handler eq null) in.skip()
+              val key = in.readKeyAsString()
+              val handler = handlers.get(key)
+              if (handler eq null)
+                if (retainUnknownFields)
+                  retainUnknownField(key)
+                else in.skip()
               else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
@@ -1415,14 +1477,19 @@ private[smithy4s] class SchemaVisitorJCodec(
           }
         } else in.decodeError("Expected JSON object")
         val stage2 = new VectorBuilder[Any]
-        fields.foreach { case (f, jsonLabel, default) =>
+        fields.foreach { case (field, jsonLabel, default) =>
           stage2 += {
-            val value = buffer.get(f.label)
-            if (value == null) {
-              if (default == null)
-                cursor.requiredFieldError(jsonLabel, jsonLabel)
-              else default
-            } else value
+            if (isForUnknownFieldRetention(field)) {
+              val unknownFieldsDecoder = UnknownFieldsDecoder(field.schema)
+              unknownFieldsDecoder(in, unknownFields)
+            } else {
+              val value = buffer.get(field.label)
+              if (value == null) {
+                if (default == null)
+                  cursor.requiredFieldError(jsonLabel, jsonLabel)
+                else default
+              } else value
+            }
           }
         }
         const(stage2.result())

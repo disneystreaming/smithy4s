@@ -669,7 +669,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val roundTripped = readFromString[UnknownFieldRetentionExample](json)
 
     expect.same(json, expectedJson)
-    expect.same(roundTripped, Right(unknownFieldRetentionExample))
+    expect.same(roundTripped, unknownFieldRetentionExample)
   }
 
   test(
@@ -688,10 +688,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = writeToString(defaultUnknownFieldRetentionExample)
     val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
-    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+    val roundTripped = readFromString[DefaultUnknownFieldRetentionExample](json)
 
     expect.same(json, expectedJson)
-    expect.same(roundTripped, Right(defaultUnknownFieldRetentionExample))
+    expect.same(roundTripped, defaultUnknownFieldRetentionExample)
   }
 
   test(
@@ -710,10 +710,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = writeToString(requiredUnknownFieldRetentionExample)
     val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
-    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+    val roundTripped = readFromString[RequiredUnknownFieldRetentionExample](json)
 
     expect.same(json, expectedJson)
-    expect.same(roundTripped, Right(requiredUnknownFieldRetentionExample))
+    expect.same(roundTripped, requiredUnknownFieldRetentionExample)
   }
 
   test(
@@ -732,10 +732,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = writeToString(defaultRequiredUnknownFieldRetentionExample)
     val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
-    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+    val roundTripped = readFromString[DefaultRequiredUnknownFieldRetentionExample](json)
 
     expect.same(json, expectedJson)
-    expect.same(roundTripped, Right(defaultRequiredUnknownFieldRetentionExample))
+    expect.same(roundTripped, defaultRequiredUnknownFieldRetentionExample)
   }
 
 }
