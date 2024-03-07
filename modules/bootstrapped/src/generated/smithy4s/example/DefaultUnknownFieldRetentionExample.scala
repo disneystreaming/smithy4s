@@ -22,6 +22,6 @@ object DefaultUnknownFieldRetentionExample extends ShapeTag.Companion[DefaultUnk
   implicit val schema: Schema[DefaultUnknownFieldRetentionExample] = struct(
     string.optional[DefaultUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[DefaultUnknownFieldRetentionExample]("bar", _.bar),
-    document.field[DefaultUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
+    document.field[DefaultUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownDocumentFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
   )(make).withId(id).addHints(hints)
 }

@@ -19,7 +19,7 @@ package internals
 
 import alloy.Discriminated
 import alloy.Nullable
-import alloy.UnknownFieldRetention
+import alloy.UnknownDocumentFieldRetention
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -366,7 +366,7 @@ class DocumentDecoderSchemaVisitor(
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
     def isForUnknownFieldRetention(field: Field[S, _]): Boolean = field.hints
-      .has(UnknownFieldRetention)
+      .has(UnknownDocumentFieldRetention)
     def jsonLabelOrLabel(field: Field[S, _]): String =
       field.hints.get(JsonName).map(_.value).getOrElse(field.label)
     val knownFieldLabels =

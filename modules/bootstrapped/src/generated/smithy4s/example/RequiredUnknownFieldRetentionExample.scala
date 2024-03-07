@@ -22,6 +22,6 @@ object RequiredUnknownFieldRetentionExample extends ShapeTag.Companion[RequiredU
   implicit val schema: Schema[RequiredUnknownFieldRetentionExample] = struct(
     string.optional[RequiredUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[RequiredUnknownFieldRetentionExample]("bar", _.bar),
-    document.required[RequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownFieldRetention()),
+    document.required[RequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownDocumentFieldRetention()),
   )(make).withId(id).addHints(hints)
 }

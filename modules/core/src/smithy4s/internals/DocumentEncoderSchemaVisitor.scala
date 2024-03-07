@@ -23,7 +23,7 @@ import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
-import alloy.UnknownFieldRetention
+import alloy.UnknownDocumentFieldRetention
 import alloy.Untagged
 import smithy4s.capability.EncoderK
 import smithy4s.schema._
@@ -235,7 +235,7 @@ class DocumentEncoderSchemaVisitor(
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit =
       if (
         field.hints
-          .has(UnknownFieldRetention)
+          .has(UnknownDocumentFieldRetention)
       ) {
         val unknownFieldsEncoder = UnknownFieldsEncoder(field.schema)
         (s, builder) => builder ++= unknownFieldsEncoder(field.get(s))

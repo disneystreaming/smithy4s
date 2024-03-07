@@ -2,12 +2,12 @@ $version: "2"
 
 namespace smithy4s.example
 
-use alloy#unknownFieldRetention
+use alloy#unknownDocumentFieldRetention
 
 structure UnknownFieldRetentionExample {
     foo: String
     bar: String
-    @unknownFieldRetention
+    @unknownDocumentFieldRetention
     retainedUnknownFields: Document
 }
 
@@ -15,7 +15,7 @@ structure DefaultUnknownFieldRetentionExample {
     foo: String
     bar: String
     @default
-    @unknownFieldRetention
+    @unknownDocumentFieldRetention
     retainedUnknownFields: Document
 }
 
@@ -23,7 +23,7 @@ structure RequiredUnknownFieldRetentionExample {
     foo: String
     bar: String
     @required
-    @unknownFieldRetention
+    @unknownDocumentFieldRetention
     retainedUnknownFields: Document
 }
 
@@ -32,6 +32,6 @@ structure DefaultRequiredUnknownFieldRetentionExample {
     bar: String
     @default
     @required
-    @unknownFieldRetention
+    @unknownDocumentFieldRetention
     retainedUnknownFields: Document
 }
