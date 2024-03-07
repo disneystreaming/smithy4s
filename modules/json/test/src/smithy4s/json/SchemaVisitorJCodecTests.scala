@@ -26,13 +26,17 @@ import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
 import smithy4s.example.CheckedOrUnchecked
 import smithy4s.example.CheckedOrUnchecked2
+import smithy4s.example.DefaultRequiredUnknownFieldRetentionExample
+import smithy4s.example.DefaultUnknownFieldRetentionExample
 import smithy4s.example.FaceCard
 import smithy4s.example.Four
 import smithy4s.example.One
 import smithy4s.example.PayloadData
 import smithy4s.example.RangeCheck
+import smithy4s.example.RequiredUnknownFieldRetentionExample
 import smithy4s.example.TestBiggerUnion
 import smithy4s.example.Three
+import smithy4s.example.UnknownFieldRetentionExample
 import smithy4s.example.UntaggedUnion
 import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 import smithy4s.schema.Schema._
@@ -643,6 +647,95 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val fromJson = Json.read[Patchable](expectedJson)
     assertEquals(toJson, expectedJson)
     assertEquals(fromJson, Right(patchable))
+  }
+
+  test(
+    "unknown field retention + explicit defaults encoding = false"
+  ) {
+    val unknownFieldRetentionExample = UnknownFieldRetentionExample(
+      foo = Some("foo"),
+      bar = Some("bar"),
+      retainedUnknownFields = Some(
+        Document.obj(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+    )
+
+    val json = writeToString(unknownFieldRetentionExample)
+    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+
+    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+
+    expect.same(json, expectedJson)
+    expect.same(roundTripped, Right(unknownFieldRetentionExample))
+  }
+
+  test(
+    "unknown field retention + explicit defaults encoding = true"
+  ) {
+    val defaultUnknownFieldRetentionExample =
+      DefaultUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        retainedUnknownFields = Document.obj(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val json = writeToString(defaultUnknownFieldRetentionExample)
+    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+
+    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+
+    expect.same(json, expectedJson)
+    expect.same(roundTripped, Right(defaultUnknownFieldRetentionExample))
+  }
+
+  test(
+    "required unknown field retention + explicit defaults encoding = false"
+  ) {
+    val requiredUnknownFieldRetentionExample =
+      RequiredUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        retainedUnknownFields = Document.obj(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val json = writeToString(requiredUnknownFieldRetentionExample)
+    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+
+    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+
+    expect.same(json, expectedJson)
+    expect.same(roundTripped, Right(requiredUnknownFieldRetentionExample))
+  }
+
+  test(
+    "required unknown field retention + explicit defaults encoding = true"
+  ) {
+    val defaultRequiredUnknownFieldRetentionExample =
+      DefaultRequiredUnknownFieldRetentionExample(
+        foo = Some("foo"),
+        bar = Some("bar"),
+        retainedUnknownFields = Document.obj(
+          "unknownField1" -> Document.fromString("unknownString1"),
+          "unknownField2" -> Document.fromString("unknownString2")
+        )
+      )
+
+    val json = writeToString(defaultRequiredUnknownFieldRetentionExample)
+    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+
+    val roundTripped = readFromString[UnknownFieldRetentionExample](json)
+
+    expect.same(json, expectedJson)
+    expect.same(roundTripped, Right(defaultRequiredUnknownFieldRetentionExample))
   }
 
 }

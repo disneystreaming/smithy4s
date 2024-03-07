@@ -20,10 +20,10 @@ import smithy.api.JsonName
 import smithy.api.Default
 import alloy.Discriminated
 import munit._
-import smithy4s.example.IntList
-import smithy4s.example.OperationOutput
 import smithy4s.example.DefaultRequiredUnknownFieldRetentionExample
 import smithy4s.example.DefaultUnknownFieldRetentionExample
+import smithy4s.example.IntList
+import smithy4s.example.OperationOutput
 import smithy4s.example.RequiredUnknownFieldRetentionExample
 import smithy4s.example.UnknownFieldRetentionExample
 
