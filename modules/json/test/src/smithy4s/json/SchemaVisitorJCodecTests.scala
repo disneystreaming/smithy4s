@@ -664,7 +664,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     )
 
     val json = writeToString(unknownFieldRetentionExample)
-    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+    val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
     val roundTripped = readFromString[UnknownFieldRetentionExample](json)
 
@@ -686,7 +686,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       )
 
     val json = writeToString(defaultUnknownFieldRetentionExample)
-    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+    val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
     val roundTripped = readFromString[UnknownFieldRetentionExample](json)
 
@@ -708,7 +708,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       )
 
     val json = writeToString(requiredUnknownFieldRetentionExample)
-    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+    val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
     val roundTripped = readFromString[UnknownFieldRetentionExample](json)
 
@@ -730,7 +730,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       )
 
     val json = writeToString(defaultRequiredUnknownFieldRetentionExample)
-    val expectedJson = """{foo:"foo",bar:"bar",unknownField1:"unknownString1",unknownField2:"unknownString2"}"""
+    val expectedJson = """{"foo":"foo","bar":"bar","unknownField1":"unknownString1","unknownField2":"unknownString2"}"""
 
     val roundTripped = readFromString[UnknownFieldRetentionExample](json)
 

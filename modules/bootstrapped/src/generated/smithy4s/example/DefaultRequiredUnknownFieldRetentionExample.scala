@@ -22,6 +22,6 @@ object DefaultRequiredUnknownFieldRetentionExample extends ShapeTag.Companion[De
   implicit val schema: Schema[DefaultRequiredUnknownFieldRetentionExample] = struct(
     string.optional[DefaultRequiredUnknownFieldRetentionExample]("foo", _.foo),
     string.optional[DefaultRequiredUnknownFieldRetentionExample]("bar", _.bar),
-    document.required[DefaultRequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(alloy.UnknownDocumentFieldRetention(), smithy.api.Default(smithy4s.Document.nullDoc)),
+    document.required[DefaultRequiredUnknownFieldRetentionExample]("retainedUnknownFields", _.retainedUnknownFields).addHints(smithy.api.Default(smithy4s.Document.nullDoc), alloy.UnknownJsonFieldRetention(), alloy.UnknownDocumentFieldRetention()),
   )(make).withId(id).addHints(hints)
 }

@@ -21,6 +21,7 @@ package internals
 import com.github.plokhotnyuk.jsoniter_scala.core._
 
 /**
+ * // TODO: Update this
   * Construct that expresses the ability to decode an http message,
   * the metadata of which will have already been decoded and staged
   * in a Map[String, Any] indexed by field.
@@ -36,6 +37,7 @@ private[internals] trait JCodec[A] extends JsonCodec[A] {
   def expecting: String
 
   /**
+ * // TODO: Update this
     * States whether this codec expects data
     * from the body of an http request (as opposed to
     * from headers, query params, etc). Used to prevent
