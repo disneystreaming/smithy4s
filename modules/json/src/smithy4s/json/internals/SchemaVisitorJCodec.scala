@@ -1327,16 +1327,14 @@ private[smithy4s] class SchemaVisitorJCodec(
           _.writeNonEscapedAsciiKey(jsonLabel)
         } else _.writeKey(jsonLabel)
 
-      if (explicitDefaultsEncoding) { 
-        (z, out) =>
+      if (explicitDefaultsEncoding) { (z, out) =>
+        writeLabel(out)
+        codec.encodeValue(field.get(z), out)
+      } else { (z, out) =>
+        field.foreachUnlessDefault(z) { (a: A) =>
           writeLabel(out)
-          codec.encodeValue(field.get(z), out)
-      } else {
-         (z, out) =>
-          field.foreachUnlessDefault(z) { (a: A) =>
-            writeLabel(out)
-            codec.encodeValue(a, out)
-          }
+          codec.encodeValue(a, out)
+        }
       }
     }
 
@@ -1359,17 +1357,32 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val retainUnknownFields = fields.exists {
-        case (field, _, _) => isForUnknownFieldRetention(field)
+      private[this] val (
+        knownFields: LabelledFields[Z],
+        unknownFieldRetainers: LabelledFields[Z]
+      ) = fields.partition { case (field, _, _) =>
+        isForUnknownFieldRetention(field)
       }
 
-      private[this] val handlers =
-        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
-          fields.foreach { case (field, jsonLabel, _) =>
-            if (!isForUnknownFieldRetention(field))
-              put(jsonLabel, fieldHandler(field))
+      private[this] val knownFieldsHandlers =
+        new util.HashMap[String, Handler](knownFields.length << 1, 0.5f) {
+          knownFields.foreach { case (field, jsonLabel, _) =>
+            put(jsonLabel, fieldHandler(field))
           }
         }
+
+      private[this] val unknownFieldRetainerHandlers =
+        new util.HashMap[String, Handler](
+          unknownFieldRetainers.length << 1,
+          0.5f
+        ) {
+          unknownFieldRetainers.foreach { case (field, _, _) =>
+            put(field.label, fieldHandler(field))
+          }
+        }
+
+      private[this] val retainUnknownFields =
+        !unknownFieldRetainerHandlers.isEmpty
 
       private[this] val documentEncoders =
         fields.map(labelledField => fieldEncoder(labelledField._1))
@@ -1379,24 +1392,23 @@ private[smithy4s] class SchemaVisitorJCodec(
       override def canBeKey = false
 
       override def decodeValue(cursor: Cursor, in: JsonReader): Z = {
-        val unknownFields =
-          if (retainUnknownFields)
-            new util.HashMap[String, Document](handlers.size << 1, 0.5f)
+        val unknownFieldValues =
+          if (retainUnknownFields) new util.HashMap[String, Document]
           else null
-        val knownFields =
-          new util.HashMap[String, Any](handlers.size << 1, 0.5f)
+        val knownFieldValues =
+          new util.HashMap[String, Any](knownFieldsHandlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
               val key = in.readKeyAsString()
-              val handler = handlers.get(key)
+              val handler = knownFieldsHandlers.get(key)
               if (handler eq null)
                 if (retainUnknownFields) {
                   val value = documentJCodec.decodeValue(cursor, in)
-                  unknownFields.put(key, value)
+                  unknownFieldValues.put(key, value)
                 } else in.skip()
-              else handler(cursor, in, knownFields)
+              else handler(cursor, in, knownFieldValues)
               in.isNextToken(',')
             }) ()
             if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
@@ -1404,26 +1416,28 @@ private[smithy4s] class SchemaVisitorJCodec(
         } else in.decodeError("Expected JSON object")
         val values = new VectorBuilder[Any]
         fields.foreach { case (field, jsonLabel, default) =>
-          values += {
-            if (isForUnknownFieldRetention(field)) {
+          if (!isForUnknownFieldRetention(field)) {
+            values += {
+              val value = knownFieldValues.get(field.label)
+              if (value == null) {
+                if (default == null)
+                  cursor.requiredFieldError(jsonLabel, jsonLabel)
+                else default
+              } else value
+            }
+          } else {
+            values += {
               // TODO: Lift out.
               val unknownFieldsDecoder =
                 Document.Decoder.fromSchema(field.schema)
               unknownFieldsDecoder
-                .decode(Document.DObject(unknownFields.asScala.toMap))
+                .decode(Document.DObject(unknownFieldValues.asScala.toMap))
                 .getOrElse(
                   cursor.payloadError(
                     this,
                     "Expected JSON document"
                   )
                 )
-            } else {
-              val value = knownFields.get(field.label)
-              if (value == null) {
-                if (default == null)
-                  cursor.requiredFieldError(jsonLabel, jsonLabel)
-                else default
-              } else value
             }
           }
         }
