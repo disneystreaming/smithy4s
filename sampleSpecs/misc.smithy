@@ -53,8 +53,9 @@ structure BigStruct {
     a21: Integer
     @required
     a22: Integer
+    a23: String
     @required
-    a23: Integer
+    a24: Integer
 }
 
 @enum([

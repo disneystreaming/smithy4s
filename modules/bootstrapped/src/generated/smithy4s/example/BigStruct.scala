@@ -5,9 +5,10 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.int
+import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class BigStruct(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a23: Int)
+final case class BigStruct(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a24: Int, a23: Option[String] = None)
 
 object BigStruct extends ShapeTag.Companion[BigStruct] {
   val id: ShapeId = ShapeId("smithy4s.example", "BigStruct")
@@ -15,7 +16,7 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
   val hints: Hints = Hints.empty
 
   // constructor using the original order from the spec
-  private def make(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a23: Int): BigStruct = BigStruct(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23)
+  private def make(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a23: Option[String], a24: Int): BigStruct = BigStruct(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a24, a23)
 
   implicit val schema: Schema[BigStruct] = struct.genericArity(
     int.required[BigStruct]("a1", _.a1),
@@ -40,7 +41,8 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
     int.required[BigStruct]("a20", _.a20),
     int.required[BigStruct]("a21", _.a21),
     int.required[BigStruct]("a22", _.a22),
-    int.required[BigStruct]("a23", _.a23),
+    string.optional[BigStruct]("a23", _.a23),
+    int.required[BigStruct]("a24", _.a24),
   ){
     arr => make(
       arr(0).asInstanceOf[Int],
@@ -65,7 +67,8 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
       arr(19).asInstanceOf[Int],
       arr(20).asInstanceOf[Int],
       arr(21).asInstanceOf[Int],
-      arr(22).asInstanceOf[Int],
+      arr(22).asInstanceOf[Option[String]],
+      arr(23).asInstanceOf[Int],
     )
   }.withId(id).addHints(hints)
 }

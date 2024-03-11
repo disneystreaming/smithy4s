@@ -176,7 +176,8 @@ lazy val core = projectMatrix
       "smithy.api",
       "smithy.waiters",
       "alloy",
-      "alloy.common"
+      "alloy.common",
+      "alloy.proto"
     ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters
