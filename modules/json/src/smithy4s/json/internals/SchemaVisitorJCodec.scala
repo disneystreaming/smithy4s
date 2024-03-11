@@ -1377,7 +1377,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           0.5f
         ) {
           unknownFieldRetainers.foreach { case (field, _, _) =>
-            put(field.label, fieldHandler(field))
+            put(field.label, 
+            // TODO: Change this to solve the TODO further down
+            fieldHandler(field))
           }
         }
 
