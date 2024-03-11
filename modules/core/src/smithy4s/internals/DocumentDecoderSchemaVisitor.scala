@@ -326,7 +326,6 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit =
       if (isForUnknownFieldRetention(field)) {
-        // TODO: Lift out.
         val unknownFieldsDecoder = Document.Decoder.fromSchema(field.schema)
         (
             pp: List[PayloadPath.Segment],

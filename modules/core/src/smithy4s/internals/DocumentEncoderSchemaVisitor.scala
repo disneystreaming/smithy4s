@@ -201,7 +201,6 @@ class DocumentEncoderSchemaVisitor(
         field.hints
           .has(UnknownDocumentFieldRetention)
       ) {
-        // TODO: Lift out.
         val unknownFieldsEncoder = Document.Encoder.fromSchema(field.schema)
         (s, builder) =>
           unknownFieldsEncoder.encode(field.get(s)) match {
