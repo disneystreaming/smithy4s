@@ -72,9 +72,17 @@ private[codegen] object CodegenImpl { self =>
       }
     } else List.empty
 
+    val protoFiles = if (!args.skipProto) {
+      smithytranslate.proto3.SmithyToProtoCompiler.compile(model).map {
+        renderedProto =>
+          val protoFile = (args.resourceOutput / renderedProto.path)
+          CodegenEntry.FromMemory(protoFile, renderedProto.contents)
+      }
+    } else List.empty
+
     CodegenResult(
       sources = scalaFiles,
-      resources = openApiFiles ++ smithyResources
+      resources = openApiFiles ++ protoFiles ++ smithyResources
     )
   }
 
