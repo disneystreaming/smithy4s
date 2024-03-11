@@ -490,7 +490,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
 
       private def maxArityError(cursor: Cursor): Nothing =
-        throw cursor.payloadError(
+        cursor.payloadError(
           this,
           s"Input $expecting exceeded max arity of $maxArity"
         )
@@ -578,7 +578,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.encodeError("Cannot use vectors as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
+      cursor.payloadError(
         this,
         s"Input $expecting exceeded max arity of $maxArity"
       )
@@ -626,7 +626,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.encodeError("Cannot use vectors as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
+      cursor.payloadError(
         this,
         s"Input $expecting exceeded max arity of $maxArity"
       )
@@ -687,7 +687,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.encodeError("Cannot use vectors as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
+      cursor.payloadError(
         this,
         s"Input $expecting exceeded max arity of $maxArity"
       )
@@ -734,7 +734,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.encodeError("Cannot use vectors as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
+      cursor.payloadError(
         this,
         s"Input $expecting exceeded max arity of $maxArity"
       )
@@ -793,7 +793,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.encodeError("Cannot use maps as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
+      cursor.payloadError(
         this,
         s"Input $expecting exceeded max arity of $maxArity"
       )
@@ -864,7 +864,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.encodeError("Cannot use maps as keys")
 
       private def maxArityError(cursor: Cursor): Nothing =
-        throw cursor.payloadError(
+        cursor.payloadError(
           this,
           s"Input $expecting exceeded max arity of $maxArity"
         )
@@ -1285,39 +1285,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       case Some(x) => x.value
     }
 
-  trait UnknownFieldsDecoder[A] { self =>
-    def apply(
-        in: JsonReader,
-        unknownFields: util.HashMap[String, Document]
-    ): A
-  }
-
-  object UnknownFieldsDecoder
-      extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
-
-    override def default[A]: UnknownFieldsDecoder[A] = (in, _) =>
-      in.decodeError("Expected JSON document")
-
-    override def primitive[P](
-        shapeId: ShapeId,
-        hints: Hints,
-        tag: Primitive[P]
-    ): UnknownFieldsDecoder[P] = (in, unknownFields) =>
-      tag match {
-        case PDocument => Document.DObject(unknownFields.asScala.toMap)
-        case _         => in.decodeError("Expected JSON document")
-      }
-
-    override def option[A](
-        schema: Schema[A]
-    ): UnknownFieldsDecoder[Option[A]] = {
-      val decoder = schema.compile(self)
-      (in, unknownFields) =>
-        if (unknownFields.isEmpty) None
-        else Some(decoder(in, unknownFields))
-    }
-  }
-
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
@@ -1336,54 +1303,22 @@ private[smithy4s] class SchemaVisitorJCodec(
       )
   }
 
-  trait UnknownFieldsEncoder[A] {
-    def apply(a: A): JsonWriter => Unit
-  }
-
-  object UnknownFieldsEncoder
-      extends SchemaVisitor.Default[UnknownFieldsEncoder] { self =>
-
-    override def default[A]: UnknownFieldsEncoder[A] = _ => _ => ()
-
-    override def primitive[P](
-        shapeId: ShapeId,
-        hints: Hints,
-        tag: Primitive[P]
-    ): UnknownFieldsEncoder[P] = document =>
-      tag match {
-        case PDocument =>
-          document match {
-            case Document.DObject(values) =>
-              jsonWriter =>
-                values.foreach { case (key, value) =>
-                  jsonWriter.writeKey(key)
-                  documentJCodec.encodeValue(value, jsonWriter)
-                }
-
-            case _ =>
-              _ => ()
-          }
-
-        case _ => _ => ()
-      }
-
-    override def option[A](
-        schema: Schema[A]
-    ): UnknownFieldsEncoder[Option[A]] = {
-      val encoder = self(schema)
-      locally {
-        case Some(a) => encoder.apply(a)
-        case None    => _ => ()
-      }
-    }
-  }
-
   private def fieldEncoder[Z, A](
       field: Field[Z, A]
   ): (Z, JsonWriter) => Unit =
     if (isForUnknownFieldRetention(field)) {
-      val unknownFieldsEncoder = UnknownFieldsEncoder(field.schema)
-      (z: Z, out: JsonWriter) => unknownFieldsEncoder(field.get(z))(out)
+      val unknownFieldsEncoder = Document.Encoder.fromSchema(field.schema)
+      (z: Z, out: JsonWriter) =>
+        unknownFieldsEncoder.encode(field.get(z)) match {
+          case Document.DObject(values) =>
+            values.foreach { case (key, value) =>
+              out.writeKey(key)
+              documentJCodec.encodeValue(value, out)
+            }
+
+          case _ =>
+            ()
+        }
     } else {
       val codec = apply(field.schema)
       val jsonLabel = jsonLabelOrLabel(field)
@@ -1468,8 +1403,17 @@ private[smithy4s] class SchemaVisitorJCodec(
         fields.foreach { case (field, jsonLabel, default) =>
           values += {
             if (isForUnknownFieldRetention(field)) {
-              val unknownFieldsDecoder = UnknownFieldsDecoder(field.schema)
-              unknownFieldsDecoder(in, unknownFields)
+              // TODO: Lift out.
+              val unknownFieldsDecoder =
+                Document.Decoder.fromSchema(field.schema)
+              unknownFieldsDecoder
+                .decode(Document.DObject(unknownFields.asScala.toMap))
+                .getOrElse(
+                  cursor.payloadError(
+                    this,
+                    "Expected JSON document"
+                  )
+                )
             } else {
               val value = knownFields.get(field.label)
               if (value == null) {

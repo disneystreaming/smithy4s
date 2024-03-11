@@ -308,48 +308,6 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  trait UnknownFieldsDecoder[A] { self =>
-    def apply(
-        history: List[PayloadPath.Segment],
-        unknownFields: Map[String, Document]
-    ): A
-  }
-
-  object UnknownFieldsDecoder
-      extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
-
-    override def default[A]: UnknownFieldsDecoder[A] = (history, _) =>
-      throw PayloadError(
-        PayloadPath(history.reverse),
-        "Json document",
-        "Expected Json Shape: Object"
-      )
-
-    override def primitive[P](
-        shapeId: ShapeId,
-        hints: Hints,
-        tag: Primitive[P]
-    ): UnknownFieldsDecoder[P] = (history, unknownFields) =>
-      tag match {
-        case PDocument => Document.DObject(unknownFields)
-        case _ =>
-          throw PayloadError(
-            PayloadPath(history.reverse),
-            "Json document",
-            "Expected Json Shape: Object"
-          )
-      }
-
-    override def option[A](
-        schema: Schema[A]
-    ): UnknownFieldsDecoder[Option[A]] = {
-      val decoder = schema.compile(self)
-      (history, unknownFields) =>
-        if (unknownFields.isEmpty) None
-        else Some(decoder(history, unknownFields))
-    }
-  }
-
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -368,14 +326,25 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit =
       if (isForUnknownFieldRetention(field)) {
-        val unknownFieldsDecoder = UnknownFieldsDecoder(field.schema)
+        // TODO: Lift out.
+        val unknownFieldsDecoder = Document.Decoder.fromSchema(field.schema)
         (
             pp: List[PayloadPath.Segment],
             buffer: Any => Unit,
             fields: Map[String, Document]
         ) => {
           val unknownFields = fields -- knownFieldLabels
-          buffer(unknownFieldsDecoder(pp, unknownFields))
+          buffer(
+            unknownFieldsDecoder
+              .decode(Document.DObject(unknownFields))
+              .getOrElse(
+                throw new PayloadError(
+                  PayloadPath(pp.reverse),
+                  "Json document",
+                  "Expected Json Shape: Object"
+                )
+              )
+          )
         }
       } else {
         val jsonLabel = jsonLabelOrLabel(field)
