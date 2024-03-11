@@ -1295,19 +1295,14 @@ private[smithy4s] class SchemaVisitorJCodec(
   object UnknownFieldsDecoder
       extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
 
-    override def default[A]: UnknownFieldsDecoder[A] = (
-        in: JsonReader,
-        _: util.HashMap[String, Document]
-    ) => in.decodeError("Expected JSON document")
+    override def default[A]: UnknownFieldsDecoder[A] = (in, _) =>
+      in.decodeError("Expected JSON document")
 
     override def primitive[P](
         shapeId: ShapeId,
         hints: Hints,
         tag: Primitive[P]
-    ): UnknownFieldsDecoder[P] = (
-        in: JsonReader,
-        unknownFields: util.HashMap[String, Document]
-    ) =>
+    ): UnknownFieldsDecoder[P] = (in, unknownFields) =>
       tag match {
         case PDocument => Document.DObject(unknownFields.asScala.toMap)
         case _         => in.decodeError("Expected JSON document")
@@ -1317,10 +1312,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         schema: Schema[A]
     ): UnknownFieldsDecoder[Option[A]] = {
       val decoder = schema.compile(self)
-      (
-          in: JsonReader,
-          unknownFields: util.HashMap[String, Document]
-      ) =>
+      (in, unknownFields) =>
         if (unknownFields.isEmpty) None
         else Some(decoder(in, unknownFields))
     }

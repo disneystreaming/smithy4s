@@ -318,10 +318,7 @@ class DocumentDecoderSchemaVisitor(
   object UnknownFieldsDecoder
       extends SchemaVisitor.Default[UnknownFieldsDecoder] { self =>
 
-    override def default[A]: UnknownFieldsDecoder[A] = (
-        history: List[PayloadPath.Segment],
-        _: Map[String, Document]
-    ) =>
+    override def default[A]: UnknownFieldsDecoder[A] = (history, _) =>
       throw PayloadError(
         PayloadPath(history.reverse),
         "Json document",
@@ -332,10 +329,7 @@ class DocumentDecoderSchemaVisitor(
         shapeId: ShapeId,
         hints: Hints,
         tag: Primitive[P]
-    ): UnknownFieldsDecoder[P] = (
-        history: List[PayloadPath.Segment],
-        unknownFields: Map[String, Document]
-    ) =>
+    ): UnknownFieldsDecoder[P] = (history, unknownFields) =>
       tag match {
         case PDocument => Document.DObject(unknownFields)
         case _ =>
@@ -350,10 +344,7 @@ class DocumentDecoderSchemaVisitor(
         schema: Schema[A]
     ): UnknownFieldsDecoder[Option[A]] = {
       val decoder = schema.compile(self)
-      (
-          history: List[PayloadPath.Segment],
-          unknownFields: Map[String, Document]
-      ) =>
+      (history, unknownFields) =>
         if (unknownFields.isEmpty) None
         else Some(decoder(history, unknownFields))
     }
