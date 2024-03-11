@@ -1361,7 +1361,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         knownFields: LabelledFields[Z],
         unknownFieldRetainers: LabelledFields[Z]
       ) = fields.partition { case (field, _, _) =>
-        isForUnknownFieldRetention(field)
+        !isForUnknownFieldRetention(field)
       }
 
       private[this] val knownFieldsHandlers =
