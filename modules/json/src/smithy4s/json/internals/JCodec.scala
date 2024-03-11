@@ -20,30 +20,12 @@ package internals
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 
-/**
- * // TODO: Update this
-  * Construct that expresses the ability to decode an http message,
-  * the metadata of which will have already been decoded and staged
-  * in a Map[String, Any] indexed by field.
-  *
-  * On the encoding side, the fields that should be stored in metadata
-  * are eluded.
-  */
 private[internals] trait JCodec[A] extends JsonCodec[A] {
   self =>
 
   def canBeKey: Boolean = true
 
   def expecting: String
-
-  /**
- * // TODO: Update this
-    * States whether this codec expects data
-    * from the body of an http request (as opposed to
-    * from headers, query params, etc). Used to prevent
-    * parsing altogether when not required.
-    */
-  def expectBody: Boolean = true
 
   def decodeValue(cursor: Cursor, in: JsonReader): A
 
