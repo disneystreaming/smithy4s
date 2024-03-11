@@ -197,10 +197,7 @@ class DocumentEncoderSchemaVisitor(
     def fieldEncoder[A](
         field: Field[S, A]
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit =
-      if (
-        field.hints
-          .has(UnknownDocumentFieldRetention)
-      ) {
+      if (field.hints.has(UnknownDocumentFieldRetention)) {
         val unknownFieldsEncoder = Document.Encoder.fromSchema(field.schema)
         (s, builder) =>
           unknownFieldsEncoder.encode(field.get(s)) match {

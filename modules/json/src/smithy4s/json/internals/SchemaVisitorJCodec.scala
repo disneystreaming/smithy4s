@@ -1308,7 +1308,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): (Z, JsonWriter) => Unit =
     if (isForUnknownFieldRetention(field)) {
       val unknownFieldsEncoder = Document.Encoder.fromSchema(field.schema)
-      (z: Z, out: JsonWriter) =>
+      (z, out) =>
         unknownFieldsEncoder.encode(field.get(z)) match {
           case Document.DObject(values) =>
             values.foreach { case (key, value) =>
@@ -1327,14 +1327,16 @@ private[smithy4s] class SchemaVisitorJCodec(
           _.writeNonEscapedAsciiKey(jsonLabel)
         } else _.writeKey(jsonLabel)
 
-      if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
-        writeLabel(out)
-        codec.encodeValue(field.get(z), out)
-      } else { (z: Z, out: JsonWriter) =>
-        field.foreachUnlessDefault(z) { (a: A) =>
+      if (explicitDefaultsEncoding) { 
+        (z, out) =>
           writeLabel(out)
-          codec.encodeValue(a, out)
-        }
+          codec.encodeValue(field.get(z), out)
+      } else {
+         (z, out) =>
+          field.foreachUnlessDefault(z) { (a: A) =>
+            writeLabel(out)
+            codec.encodeValue(a, out)
+          }
       }
     }
 
@@ -1364,7 +1366,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       private[this] val handlers =
         new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
           fields.foreach { case (field, jsonLabel, _) =>
-            put(jsonLabel, fieldHandler(field))
+            if (!isForUnknownFieldRetention(field))
+              put(jsonLabel, fieldHandler(field))
           }
         }
 

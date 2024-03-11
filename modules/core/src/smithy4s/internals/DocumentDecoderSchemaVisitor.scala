@@ -314,8 +314,8 @@ class DocumentDecoderSchemaVisitor(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
-    def isForUnknownFieldRetention(field: Field[S, _]): Boolean = field.hints
-      .has(UnknownDocumentFieldRetention)
+    def isForUnknownFieldRetention(field: Field[S, _]): Boolean =
+      field.hints.has(UnknownDocumentFieldRetention)
     def jsonLabelOrLabel(field: Field[S, _]): String =
       field.hints.get(JsonName).map(_.value).getOrElse(field.label)
     val knownFieldLabels =
@@ -327,11 +327,7 @@ class DocumentDecoderSchemaVisitor(
     ) => Unit =
       if (isForUnknownFieldRetention(field)) {
         val unknownFieldsDecoder = Document.Decoder.fromSchema(field.schema)
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) => {
+        (pp, buffer, fields) =>
           val unknownFields = fields -- knownFieldLabels
           buffer(
             unknownFieldsDecoder
@@ -344,35 +340,23 @@ class DocumentDecoderSchemaVisitor(
                 )
               )
           )
-        }
       } else {
         val jsonLabel = jsonLabelOrLabel(field)
         field.getDefaultValue match {
           case Some(defaultValue) =>
-            (
-                pp: List[PayloadPath.Segment],
-                buffer: Any => Unit,
-                fields: Map[String, Document]
-            ) => {
+            (pp, buffer, fields) =>
               val path = PayloadPath.Segment(jsonLabel) :: pp
-              fields
-                .get(jsonLabel) match {
+              fields.get(jsonLabel) match {
                 case Some(document) =>
                   buffer(apply(field.schema)(path, document))
                 case None =>
                   buffer(defaultValue)
               }
-            }
 
           case None =>
-            (
-                pp: List[PayloadPath.Segment],
-                buffer: Any => Unit,
-                fields: Map[String, Document]
-            ) => {
+            (pp, buffer, fields) =>
               val path = PayloadPath.Segment(jsonLabel) :: pp
-              fields
-                .get(jsonLabel) match {
+              fields.get(jsonLabel) match {
                 case Some(document) =>
                   buffer(apply(field.schema)(path, document))
                 case None =>
@@ -382,7 +366,6 @@ class DocumentDecoderSchemaVisitor(
                     "Required field not found"
                   )
               }
-            }
         }
       }
     val fieldDecoders = fields.map(field => fieldDecoder(field))
