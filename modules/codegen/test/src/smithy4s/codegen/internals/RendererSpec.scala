@@ -16,7 +16,13 @@
 
 package smithy4s.codegen.internals
 
-final class RendererSpec extends munit.FunSuite {
+import org.scalacheck.Gen
+import org.scalacheck.Prop
+import software.amazon.smithy.model.shapes.EnumShape
+import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.StructureShape
+
+final class RendererSpec extends munit.ScalaCheckSuite {
   import TestUtils._
 
   test("list member hints should be preserved") {
@@ -484,4 +490,34 @@ final class RendererSpec extends munit.FunSuite {
       )
     )
   }
+
+  property("enumeration order is preserved") {
+
+    // custom input to avoid scalacheck shrinking
+    case class Input(identifiers: List[String])
+    Prop.forAll(
+      Gen
+        .nonEmptyListOf(Gen.identifier.map(_.toUpperCase()))
+        .map(_.distinct)
+        .map(Input(_))
+    ) { input =>
+      import input.identifiers
+      val builder = EnumShape.builder().id("input#MyEnum")
+      identifiers.foreach(id => builder.addMember(id, id))
+      val enumShape = builder.build()
+      val unitShape = StructureShape.builder().id("smithy.api#Unit").build()
+
+      val model = Model.builder().addShapes(unitShape, enumShape).build()
+
+      val allContents = generateScalaCode(model)
+      allContents.values.exists { fileContent =>
+        val cleanLines = fileContent.linesIterator
+          .map(_.trim().replace(",", "")) // removing whitespace and commas
+          .toList
+
+        cleanLines.containsSlice(identifiers)
+      }
+    }
+  }
+
 }
