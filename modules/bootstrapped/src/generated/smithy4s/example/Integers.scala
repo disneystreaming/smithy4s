@@ -21,9 +21,9 @@ object Integers extends ShapeTag.Companion[Integers] {
 
   implicit val schema: Schema[Integers] = struct(
     int.required[Integers]("int", _.int).addHints(alloy.proto.ProtoIndex(1)),
-    int.required[Integers]("sint", _.sint).addHints(alloy.proto.ProtoNumType.SIGNED.widen, alloy.proto.ProtoIndex(2)),
-    int.required[Integers]("uint", _.uint).addHints(alloy.proto.ProtoNumType.UNSIGNED.widen, alloy.proto.ProtoIndex(3)),
-    int.required[Integers]("fixedUint", _.fixedUint).addHints(alloy.proto.ProtoNumType.FIXED.widen, alloy.proto.ProtoIndex(4)),
-    int.required[Integers]("fixedSint", _.fixedSint).addHints(alloy.proto.ProtoNumType.FIXED_SIGNED.widen, alloy.proto.ProtoIndex(5)),
+    int.required[Integers]("sint", _.sint).addHints(alloy.proto.ProtoIndex(2), alloy.proto.ProtoNumType.SIGNED.widen),
+    int.required[Integers]("uint", _.uint).addHints(alloy.proto.ProtoIndex(3), alloy.proto.ProtoNumType.UNSIGNED.widen),
+    int.required[Integers]("fixedUint", _.fixedUint).addHints(alloy.proto.ProtoIndex(4), alloy.proto.ProtoNumType.FIXED.widen),
+    int.required[Integers]("fixedSint", _.fixedSint).addHints(alloy.proto.ProtoIndex(5), alloy.proto.ProtoNumType.FIXED_SIGNED.widen),
   )(make).withId(id).addHints(hints)
 }

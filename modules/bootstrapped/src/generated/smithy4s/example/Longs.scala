@@ -21,9 +21,9 @@ object Longs extends ShapeTag.Companion[Longs] {
 
   implicit val schema: Schema[Longs] = struct(
     long.required[Longs]("long", _.long).addHints(alloy.proto.ProtoIndex(1)),
-    long.required[Longs]("slong", _.slong).addHints(alloy.proto.ProtoNumType.SIGNED.widen, alloy.proto.ProtoIndex(2)),
-    long.required[Longs]("ulong", _.ulong).addHints(alloy.proto.ProtoNumType.UNSIGNED.widen, alloy.proto.ProtoIndex(3)),
-    long.required[Longs]("fixedLong", _.fixedLong).addHints(alloy.proto.ProtoNumType.FIXED.widen, alloy.proto.ProtoIndex(4)),
-    long.required[Longs]("fixedSlong", _.fixedSlong).addHints(alloy.proto.ProtoNumType.FIXED_SIGNED.widen, alloy.proto.ProtoIndex(5)),
+    long.required[Longs]("slong", _.slong).addHints(alloy.proto.ProtoIndex(2), alloy.proto.ProtoNumType.SIGNED.widen),
+    long.required[Longs]("ulong", _.ulong).addHints(alloy.proto.ProtoIndex(3), alloy.proto.ProtoNumType.UNSIGNED.widen),
+    long.required[Longs]("fixedLong", _.fixedLong).addHints(alloy.proto.ProtoIndex(4), alloy.proto.ProtoNumType.FIXED.widen),
+    long.required[Longs]("fixedSlong", _.fixedSlong).addHints(alloy.proto.ProtoIndex(5), alloy.proto.ProtoNumType.FIXED_SIGNED.widen),
   )(make).withId(id).addHints(hints)
 }

@@ -19,6 +19,7 @@ package internals
 
 import alloy.Discriminated
 import alloy.Nullable
+import alloy.UnknownDocumentFieldRetention
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -313,60 +314,65 @@ class DocumentDecoderSchemaVisitor(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
-    def jsonLabel[A](field: Field[S, A]): String =
+    def isForUnknownFieldRetention(field: Field[S, _]): Boolean =
+      field.hints.has(UnknownDocumentFieldRetention)
+    def jsonLabelOrLabel(field: Field[S, _]): String =
       field.hints.get(JsonName).map(_.value).getOrElse(field.label)
-
-    def fieldDecoder[A](
-        field: Field[S, A]
-    ): (
+    val knownFieldLabels =
+      fields.filterNot(isForUnknownFieldRetention).map(jsonLabelOrLabel)
+    def fieldDecoder[A](field: Field[S, A]): (
         List[PayloadPath.Segment],
         Any => Unit,
         Map[String, Document]
-    ) => Unit = {
-      val jLabel = jsonLabel(field)
-
-      field.getDefaultValue match {
-        case Some(defaultValue) =>
-          (
-              pp: List[PayloadPath.Segment],
-              buffer: Any => Unit,
-              fields: Map[String, Document]
-          ) =>
-            val path = PayloadPath.Segment(jLabel) :: pp
-            fields
-              .get(jLabel) match {
-              case Some(document) =>
-                buffer(apply(field.schema)(path, document))
-              case None =>
-                buffer(defaultValue)
-            }
-        case None =>
-          (
-              pp: List[PayloadPath.Segment],
-              buffer: Any => Unit,
-              fields: Map[String, Document]
-          ) =>
-            val path = PayloadPath.Segment(jLabel) :: pp
-            fields
-              .get(jLabel) match {
-              case Some(document) =>
-                buffer(apply(field.schema)(path, document))
-              case None =>
+    ) => Unit =
+      if (isForUnknownFieldRetention(field)) {
+        val unknownFieldsDecoder = Document.Decoder.fromSchema(field.schema)
+        (pp, buffer, fields) =>
+          val unknownFields = fields -- knownFieldLabels
+          buffer(
+            unknownFieldsDecoder
+              .decode(Document.DObject(unknownFields))
+              .getOrElse(
                 throw new PayloadError(
-                  PayloadPath(path.reverse),
-                  "",
-                  "Required field not found"
+                  PayloadPath(pp.reverse),
+                  "Json document",
+                  "Expected Json Shape: Object"
                 )
-            }
+              )
+          )
+      } else {
+        val jsonLabel = jsonLabelOrLabel(field)
+        field.getDefaultValue match {
+          case Some(defaultValue) =>
+            (pp, buffer, fields) =>
+              val path = PayloadPath.Segment(jsonLabel) :: pp
+              fields.get(jsonLabel) match {
+                case Some(document) =>
+                  buffer(apply(field.schema)(path, document))
+                case None =>
+                  buffer(defaultValue)
+              }
+
+          case None =>
+            (pp, buffer, fields) =>
+              val path = PayloadPath.Segment(jsonLabel) :: pp
+              fields.get(jsonLabel) match {
+                case Some(document) =>
+                  buffer(apply(field.schema)(path, document))
+                case None =>
+                  throw new PayloadError(
+                    PayloadPath(path.reverse),
+                    "",
+                    "Required field not found"
+                  )
+              }
+        }
       }
-    }
-
     val fieldDecoders = fields.map(field => fieldDecoder(field))
-
     DocumentDecoder.instance("Structure", "Object") {
       case (pp, DObject(value)) =>
         val buffer = Vector.newBuilder[Any]
-        fieldDecoders.foreach(fd => fd(pp, buffer.+=(_), value))
+        fieldDecoders.foreach(fd => fd(pp, buffer += (_), value))
         make(buffer.result())
     }
   }
@@ -451,16 +457,16 @@ class DocumentDecoderSchemaVisitor(
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
   ): DocumentDecoder[U] = {
-    def jsonLabel[A](alt: Alt[U, A]): String =
+    def jsonLabelOrLabel[A](alt: Alt[U, A]): String =
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
       alternatives.map { case alt @ Alt(_, instance, inject, _) =>
-        val label = jsonLabel(alt)
+        val jsonLabel = jsonLabelOrLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(label :: pp, doc))
+          inject(apply(instance)(jsonLabel :: pp, doc))
         }
-        jsonLabel(alt) -> encoder
+        jsonLabelOrLabel(alt) -> encoder
       }.toMap
 
     hints match {

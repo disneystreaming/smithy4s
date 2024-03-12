@@ -88,7 +88,8 @@ object JsoniterCodecCompiler {
       DiscriminatedUnionMember,
       Default,
       Required,
-      Nullable
+      Nullable,
+      UnknownJsonFieldRetention
     )
 
 }

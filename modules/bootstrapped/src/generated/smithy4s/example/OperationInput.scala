@@ -22,7 +22,7 @@ object OperationInput extends ShapeTag.Companion[OperationInput] {
   implicit val schema: Schema[OperationInput] = struct(
     string.optional[OperationInput]("optional", _.optional),
     string.field[OperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
-    string.required[OperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.Default(smithy4s.Document.fromString("required-label-with-default")), smithy.api.HttpLabel()),
+    string.required[OperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.HttpLabel(), smithy.api.Default(smithy4s.Document.fromString("required-label-with-default"))),
     string.required[OperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
     string.optional[OperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
     string.field[OperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
