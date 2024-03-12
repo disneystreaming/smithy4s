@@ -22,12 +22,8 @@ object ClosedString extends Enumeration[ClosedString] with ShapeTag.Companion[Cl
 
   val hints: Hints = Hints.empty
 
-  case object FOO extends ClosedString("FOO", "FOO", 0, Hints.empty) {
-    override val hints: Hints = Hints(alloy.proto.ProtoIndex(0)).lazily
-  }
-  case object BAR extends ClosedString("BAR", "BAR", 1, Hints.empty) {
-    override val hints: Hints = Hints(alloy.proto.ProtoIndex(1)).lazily
-  }
+  case object FOO extends ClosedString("FOO", "FOO", 0, Hints.empty)
+  case object BAR extends ClosedString("BAR", "BAR", 1, Hints.empty)
 
   val values: List[ClosedString] = List(
     FOO,
