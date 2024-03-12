@@ -1,3 +1,7 @@
+# 0.18.13
+
+* modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
+
 # 0.18.12
 
 * fix issue where schemas for fields of generated big structs (over 22 fields in size) would not be ordered correctly
