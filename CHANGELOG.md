@@ -1,6 +1,6 @@
 # 0.18.13
 
-* modify rendering logic to guarantee that enum values are rendered in the same order as the spec.
+* modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
 
 # 0.18.12
 
