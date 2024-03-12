@@ -320,12 +320,12 @@ class EnumSpec extends DummyIO.Suite {
       val stringEnumSchemaNames = index
         .getSchema(ShapeId("input", "MyStringEnum"))
         .toList
-        .flatMap(_.compile(EnumNamesSchemaVisitor))
+        .flatMap(EnumNamesSchemaVisitor(_))
 
       val intEnumSchemaNames = index
         .getSchema(ShapeId("input", "MyIntEnum"))
         .toList
-        .flatMap(_.compile(EnumNamesSchemaVisitor))
+        .flatMap(EnumNamesSchemaVisitor(_))
       assertEquals(stringEnumSchemaNames, identifiers)
       assertEquals(intEnumSchemaNames, identifiers)
     }
