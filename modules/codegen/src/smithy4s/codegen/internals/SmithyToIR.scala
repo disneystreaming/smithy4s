@@ -342,13 +342,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
 
       override def enumShape(shape: EnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
           .zipWithIndex
-          .map { case ((name, value), index) =>
-            val member = shape.getMember(name).get()
-
+          .map { case (member, index) =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = value,
               intValue = index,
@@ -372,12 +373,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
-          .map { case (name, value) =>
-            val member = shape.getMember(name).get()
-
+          .map { member =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = name,
               intValue = value,
