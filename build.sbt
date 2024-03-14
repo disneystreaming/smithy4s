@@ -373,7 +373,7 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.openapi,
       Dependencies.Smithytranslate.proto,
       "com.lihaoyi" %% "os-lib" % "0.9.3",
-      "com.lihaoyi" %% "upickle" % "3.1.5",
+      "com.lihaoyi" %% "upickle" % "3.2.0",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "io.get-coursier" %% "coursier" % "2.1.9"
