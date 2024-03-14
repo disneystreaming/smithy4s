@@ -1,10 +1,15 @@
 $version: "2"
 
-namespace smithy4s.example
+metadata "proto_options" = [{
+
+}]
+namespace smithy4s.example.protobuf
 
 use alloy#UUID
 use alloy#openEnum
+use alloy#uuidFormat
 use alloy.openapi#openapiExtensions
+use alloy.proto#protoCompactUUID
 use alloy.proto#protoEnabled
 use alloy.proto#protoIndex
 use alloy.proto#protoInlinedOneOf
@@ -13,22 +18,17 @@ use alloy.proto#protoWrapped
 
 @protoEnabled
 structure Integers {
-    @protoIndex(1)
     @required
     int: Integer
-    @protoIndex(2)
     @protoNumType("SIGNED")
     @required
     sint: Integer
-    @protoIndex(3)
     @protoNumType("UNSIGNED")
     @required
     uint: Integer
-    @protoIndex(4)
     @protoNumType("FIXED")
     @required
     fixedUint: Integer
-    @protoIndex(5)
     @protoNumType("FIXED_SIGNED")
     @required
     fixedSint: Integer
@@ -36,22 +36,17 @@ structure Integers {
 
 @protoEnabled
 structure Longs {
-    @protoIndex(1)
     @required
     long: Long
-    @protoIndex(2)
     @protoNumType("SIGNED")
     @required
     slong: Long
-    @protoIndex(3)
     @protoNumType("UNSIGNED")
     @required
     ulong: Long
-    @protoIndex(4)
     @protoNumType("FIXED")
     @required
     fixedLong: Long
-    @protoIndex(5)
     @protoNumType("FIXED_SIGNED")
     @required
     fixedSlong: Long
@@ -59,82 +54,70 @@ structure Longs {
 
 @protoEnabled
 structure OtherScalars {
-    @protoIndex(1)
     @required
     boolean: Boolean
     @required
-    @protoIndex(2)
     byte: Byte
     @required
-    @protoIndex(3)
     float: Float
     @required
-    @protoIndex(4)
     double: Double
     @required
-    @protoIndex(5)
     short: Short
 }
 
 @protoEnabled
 structure WrappedScalars {
-    @protoIndex(1)
     @protoWrapped
     int: Integer
-    @protoIndex(2)
     @protoWrapped
     bool: Boolean
 }
 
 @protoEnabled
 structure StringWrapper {
-    @protoIndex(1)
     @required
     string: String
 }
 
 @protoEnabled
 structure OptionalStringWrapper {
-    @protoIndex(1)
     string: String
 }
 
 @protoEnabled
 structure BigDecimalWrapper {
-    @protoIndex(1)
     @required
     bigDecimal: BigDecimal
 }
 
+@uuidFormat
+@protoCompactUUID
+string CompactUUID
+
 @protoEnabled
-structure Other {
-    @protoIndex(3)
-    @required
-    bigDecimal: BigDecimal
-    @required
-    @protoIndex(4)
-    bigInteger: BigInteger
-    @protoIndex(5)
-    @required
+structure UUIDWrapper {
     uuid: UUID
+    compactUUID: CompactUUID
+}
+
+list IntList {
+    member: Integer
 }
 
 @protoEnabled
 structure MessageWrapper {
-    @protoIndex(1)
     @required
     message: Integers
 }
 
 @protoEnabled
 structure OptionalMessageWrapper {
-    @protoIndex(1)
     message: Integers
 }
 
 @protoEnabled
 structure IntListWrapper {
-    @protoIndex(1)
     @required
     ints: IntList
 }
@@ -150,10 +133,8 @@ list WrappedStringList {
 
 @protoEnabled
 structure StringListWrapper {
-    @protoIndex(1)
     @required
     strings: StringList
-    @protoIndex(2)
     @required
     wrappedStrings: WrappedStringList
 }
@@ -166,28 +147,27 @@ list MyIntList {
 
 @protoEnabled
 structure MyIntListWrapper {
-    @protoIndex(1)
     @required
     ints: MyIntList
 }
 
 @protoEnabled
 structure Recursive {
-    @protoIndex(1)
     recursive: Recursive
 }
 
 @protoEnabled
 structure UnionWrapper {
-    @protoIndex(1)
     myUnion: MyUnion
 }
 
 union MyUnion {
-    @protoIndex(1)
     int: Integer
-    @protoIndex(2)
     bool: Boolean
+    @protoWrapped
+    list: MyIntList
+    @protoWrapped
+    map: StringMap
 }
 
 @protoEnabled
@@ -197,15 +177,82 @@ structure InlinedUnionWrapper {
 
 @protoInlinedOneOf
 union MyInlinedUnion {
-    @protoIndex(1)
     int: Integer
-    @protoIndex(2)
     bool: Boolean
 }
 
 @protoEnabled
 structure StringMapWrapper {
-    @protoIndex(1)
     @required
     values: StringMap
+}
+
+map StringMap {
+    key: String
+    value: Integer
+}
+
+@protoEnabled
+structure Enums {
+    @required
+    closedString: ClosedString
+    @required
+    openString: OpenString
+    @required
+    closedInt: ClosedInt
+    @required
+    openInt: OpenInt
+}
+
+enum ClosedString {
+    FOO
+    BAR
+}
+
+@openEnum
+enum OpenString {
+    FOO
+    BAR
+}
+
+intEnum ClosedInt {
+    @protoIndex(0)
+    FOO = 0
+    @protoIndex(1)
+    BAR = 1
+}
+
+@openEnum
+intEnum OpenInt {
+    FOO = 0
+    BAR = 1
+}
+
+@protoEnabled
+structure RefinedIntWrapped {
+    @required
+    @range(min: 1, max: 10)
+    int: Integer
+}
+
+@protoEnabled
+structure StructureWithCustomIndexes {
+    @protoIndex(4)
+    a: Integer
+    @protoIndex(3)
+    b: Integer = 0
+    @protoIndex(2)
+    @required
+    c: Integer
+    @protoIndex(1)
+    d: UnionWithCustomIndexes
+}
+
+union UnionWithCustomIndexes {
+    @protoIndex(3)
+    a: Integer
+    @protoIndex(2)
+    b: Integer
+    @protoIndex(1)
+    c: Integer
 }

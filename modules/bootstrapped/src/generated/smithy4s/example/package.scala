@@ -41,14 +41,12 @@ package object example {
   type Weather[F[_]] = smithy4s.kinds.FunctorAlgebra[WeatherGen, F]
   val Weather = WeatherGen
 
-  type MyIntList = smithy4s.example.MyIntList.Type
   type PublishersList = smithy4s.example.PublishersList.Type
   type TestString = smithy4s.example.TestString.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type CSV = smithy4s.example.CSV.Type
   type CityId = smithy4s.example.CityId.Type
-  type WrappedStringList = smithy4s.example.WrappedStringList.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
@@ -103,7 +101,6 @@ package object example {
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
   type PNG = smithy4s.example.PNG.Type
-  type MyInt = smithy4s.example.MyInt.Type
   type StringWithEnumTraits = smithy4s.example.StringWithEnumTraits.Type
   type Name = smithy4s.example.Name.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type

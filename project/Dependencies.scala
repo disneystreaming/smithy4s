@@ -36,6 +36,12 @@ object Dependencies {
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
   }
 
+  val Smithytranslate = new {
+    val org = "com.disneystreaming.smithy"
+    val smithyTranslateVersion = "0.5.1"
+    val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
+  }
+
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "cats-core" % "2.10.0")

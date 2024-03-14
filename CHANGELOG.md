@@ -1,5 +1,6 @@
 # 0.18.13
 
+* Enable generation of protobuf specifications from smithy specifications.
 * modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
 
 # 0.18.12

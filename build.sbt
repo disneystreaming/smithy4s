@@ -371,6 +371,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
+      Dependencies.Smithytranslate.proto,
       "com.lihaoyi" %% "os-lib" % "0.9.3",
       "com.lihaoyi" %% "upickle" % "3.1.5",
       Dependencies.collectionsCompat.value,
@@ -834,6 +835,11 @@ lazy val complianceTests = projectMatrix
 lazy val exampleGeneratedOutput =
   settingKey[File]("Output directory where the generated code is going to be.")
 
+lazy val exampleGeneratedResourcesOutput =
+  settingKey[File](
+    "Output directory where the generated resources are going to be."
+  )
+
 /**
   * A project that contains generated code, which can serve as a basis for tests.
   */
@@ -845,7 +851,11 @@ lazy val bootstrapped = projectMatrix
   .settings(
     Test / fork := true,
     exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
-    cleanFiles += exampleGeneratedOutput.value,
+    exampleGeneratedResourcesOutput := (Compile / resourceDirectory).value,
+    cleanFiles ++= Seq(
+      exampleGeneratedOutput.value,
+      exampleGeneratedResourcesOutput.value
+    ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.testTraits,
       Dependencies.Smithy.awsTraits,
@@ -867,6 +877,7 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.hello",
       "smithy4s.example.test",
       "smithy4s.example.package",
+      "smithy4s.example.protobuf",
       "weather",
       "smithy4s.example.product",
       "smithy4s.example.reservedNameOverride"
@@ -878,7 +889,7 @@ lazy val bootstrapped = projectMatrix
     libraryDependencies += Dependencies.Http4s.emberServer.value,
     genSmithy(Compile),
     genSmithyOutput := exampleGeneratedOutput.value,
-    genSmithyResourcesOutput := (Compile / resourceDirectory).value,
+    genSmithyResourcesOutput := exampleGeneratedResourcesOutput.value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
