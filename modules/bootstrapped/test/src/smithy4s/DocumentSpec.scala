@@ -22,6 +22,7 @@ import smithy4s.example.IntList
 import alloy.Discriminated
 import munit._
 import smithy4s.example.OperationOutput
+import alloy.Untagged
 
 class DocumentSpec() extends FunSuite {
 
@@ -136,6 +137,30 @@ class DocumentSpec() extends FunSuite {
 
     expect.same(document, expectedDocument)
     expect.same(roundTripped, Right(fooOrBar))
+  }
+
+  test("untagged unions encoding") {
+    implicit val eitherSchema: Schema[Either[Long, String]] = {
+      val left = Schema.long
+      val right = Schema.string
+
+      Schema
+        .either(left, right)
+        .addHints(
+          Untagged()
+        )
+    }
+    val longOrString: Either[Long, String] = Right("hello")
+
+    val document = Document.encode(longOrString)
+    import Document._
+    val expectedDocument =
+      Document.fromString("hello")
+
+    val roundTripped = Document.decode[Either[Long, String]](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(longOrString))
   }
 
   test("discriminated unions encoding - empty structure alternative") {
