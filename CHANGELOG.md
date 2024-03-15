@@ -1,3 +1,7 @@
+# 0.18.14
+
+* Add support for decoding Document representations of untagged unions
+
 # 0.18.13
 
 * Enable generation of protobuf specifications from smithy specifications.
