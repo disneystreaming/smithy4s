@@ -1,3 +1,7 @@
+# 0.18.14
+
+* Update aws-http4s clients using json to have a maxArity of Int.MaxValue
+
 # 0.18.13
 
 * Enable generation of protobuf specifications from smithy specifications.

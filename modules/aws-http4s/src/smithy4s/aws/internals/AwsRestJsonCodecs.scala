@@ -37,6 +37,7 @@ private[aws] object AwsRestJsonCodecs {
           .withInfinitySupport(true)
           .withFlexibleCollectionsSupport(true)
           .withHintMask(hintMask)
+          .withMaxArity(Int.MaxValue)
       )
 
     def nullToEmptyObject(blob: Blob): Blob =
