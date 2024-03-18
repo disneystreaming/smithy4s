@@ -21,12 +21,20 @@ import cats.effect.Temporal
 import cats.syntax.all._
 import fs2.io.file.Files
 import org.http4s.client.Client
+import smithy4s.Timestamp
+import smithy4s.Endpoint
 
+// scalafmt: {maxColumn = 120}
 trait AwsEnvironment[F[_]] {
   def credentials: F[AwsCredentials]
   def region: F[AwsRegion]
   def timestamp: F[Timestamp]
   def httpClient: Client[F]
+  def endpointMiddleware: Endpoint.Middleware[Client[F]]
+
+  // Fluent builders
+  def withEndpointMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F]
+  def withTimestamp(timestamp: F[Timestamp]): AwsEnvironment[F]
 }
 
 object AwsEnvironment {
@@ -50,14 +58,25 @@ object AwsEnvironment {
       awsRegion: F[AwsRegion],
       creds: F[AwsCredentials],
       time: F[Timestamp]
-  ): AwsEnvironment[F] = new AwsEnvironment[F] {
-    def credentials: F[AwsCredentials] = creds
+  ): AwsEnvironment[F] = new Impl[F](
+    credentials = creds,
+    region = awsRegion,
+    timestamp = time,
+    httpClient = client,
+    endpointMiddleware = Endpoint.Middleware.noop
+  )
 
-    def region: F[AwsRegion] = awsRegion
+  private case class Impl[F[_]](
+      credentials: F[AwsCredentials],
+      region: F[AwsRegion],
+      timestamp: F[Timestamp],
+      httpClient: Client[F],
+      endpointMiddleware: Endpoint.Middleware[Client[F]]
+  ) extends AwsEnvironment[F] {
+    def withEndpointMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F] =
+      copy(endpointMiddleware = middleware)
 
-    def timestamp: F[Timestamp] = time
-
-    def httpClient: Client[F] = client
+    def withTimestamp(timestamp: F[Timestamp]): AwsEnvironment[F] = copy(timestamp = timestamp)
   }
 
 }
