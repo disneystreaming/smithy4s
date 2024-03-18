@@ -33,6 +33,7 @@ import smithy4s.schema._
 import java.util.Base64
 import java.util.UUID
 import scala.collection.immutable.ListMap
+import alloy.Untagged
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -445,6 +446,34 @@ class DocumentDecoderSchemaVisitor(
 
   }
 
+  private def untaggedUnion[S](
+      decoders: DecoderMap[S]
+  ): DocumentDecoder[S] = {
+    val decodersList = decoders.values.toList
+    val len = decodersList.length
+
+    handleUnion { (pp: List[PayloadPath.Segment], document: Document) =>
+      var z: S = null.asInstanceOf[S]
+      var i = 0
+      while (z == null && i < len) {
+        try {
+          z = decodersList(i)(pp, document)
+        } catch {
+          case _: Throwable => i += 1
+        }
+      }
+      if (z == null) {
+        throw new PayloadError(
+          PayloadPath(pp.reverse),
+          "Union",
+          "No valid alternatives found for untagged union"
+        )
+      } else {
+        z
+      }
+    }
+  }
+
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
@@ -466,6 +495,8 @@ class DocumentDecoderSchemaVisitor(
     hints match {
       case Discriminated.hint(discriminated) =>
         discriminatedUnion(discriminated, decoders)
+      case Untagged.hint(_) =>
+        untaggedUnion(decoders)
       case _ =>
         taggedUnion(decoders)
     }
