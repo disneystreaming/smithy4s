@@ -1,6 +1,7 @@
 # 0.18.15
 
 * Add support for injecting endpoint-specific middlewares in AWS clients
+* Fixes a bug in the parsing of AWS credentials files
 
 # 0.18.14
 
