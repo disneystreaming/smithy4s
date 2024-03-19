@@ -12,7 +12,7 @@ import _root_.smithy4s.Service
 import org.http4s.Headers
 import org.typelevel.ci.CIString
 
-object AwsMiddlewareTest extends SimpleIOSuite {
+object AwsMiddlewareTest extends SimpleIOSuite with Compat {
 
   test("Endpoint middleware can be applied on AWS Clients") {
     val epMiddleware = new Endpoint.Middleware[Client[IO]] {
