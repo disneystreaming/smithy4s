@@ -33,7 +33,7 @@ trait AwsEnvironment[F[_]] {
   def endpointMiddleware: Endpoint.Middleware[Client[F]]
 
   // Fluent builders
-  def withEndpointMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F]
+  def withMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F]
   def withTimestamp(timestamp: F[Timestamp]): AwsEnvironment[F]
 }
 
@@ -73,7 +73,7 @@ object AwsEnvironment {
       httpClient: Client[F],
       endpointMiddleware: Endpoint.Middleware[Client[F]]
   ) extends AwsEnvironment[F] {
-    def withEndpointMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F] =
+    def withMiddleware(middleware: Endpoint.Middleware[Client[F]]): AwsEnvironment[F] =
       copy(endpointMiddleware = middleware)
 
     def withTimestamp(timestamp: F[Timestamp]): AwsEnvironment[F] = copy(timestamp = timestamp)

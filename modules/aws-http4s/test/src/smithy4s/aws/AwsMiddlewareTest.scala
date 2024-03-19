@@ -33,7 +33,7 @@ object AwsMiddlewareTest extends SimpleIOSuite with Compat {
       )
       awsEnv <- AwsEnvironment
         .default(httpClient, AwsRegion.US_EAST_1)
-        .map(_.withEndpointMiddleware(epMiddleware))
+        .map(_.withMiddleware(epMiddleware))
       awsClient <- AwsClient(DynamoDB, awsEnv)
       _ <- awsClient.listTables().attempt.toResource
       interceptedHeaders <- ref.get

@@ -23,7 +23,7 @@ object PrintingMiddleware extends Endpoint.Middleware.Standard[Client[IO]] {
       }
 }
 
-val awsEnvironment = AwsEnvironment.default(http4sClient, AwsRegion.US_EAST_1).map(_.withEndpointMiddleware(PrintingMiddleware))
+val awsEnvironment = AwsEnvironment.default(http4sClient, AwsRegion.US_EAST_1).map(_.withMiddleware(PrintingMiddleware))
 ```
 
 The `Endpoint.Middleware` interface allows to provide transformations that will be applied on per-endpoint basis, allowing to customise
