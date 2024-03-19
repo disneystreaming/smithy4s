@@ -945,6 +945,7 @@ lazy val `aws-sandbox` = projectMatrix
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
+      "software.amazon.awssdk" % "s3" % "2.25.11",
       Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true

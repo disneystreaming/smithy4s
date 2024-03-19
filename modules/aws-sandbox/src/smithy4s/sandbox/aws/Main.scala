@@ -19,53 +19,44 @@ package sandbox
 package aws
 
 import cats.effect._
-import com.amazonaws.cloudwatch
-import com.amazonaws.ec2
 import org.http4s.client.middleware.RequestLogger
 import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
 
 object Main extends IOApp.Simple {
 
-  override def run: IO[Unit] = awsEnvironmentResource.use { awsEnvironment =>
-    // Per
-    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
-    // CloudWatch is one of a few services that use the awsQuery protocol.
-    AwsClient(cloudwatch.CloudWatch, awsEnvironment).use(cloudWatchClient =>
-      listAll[
-        cloudwatch.NextToken,
-        cloudwatch.ListMetricsOutput,
-        cloudwatch.Metric
-      ](
-        listF = maybeNextToken =>
-          cloudWatchClient.listMetrics(
-            // This is just a simple way of reducing the size of the results while
-            // still exercising the pagination handler.
-            namespace = Some("AWS/S3"),
-            nextToken = maybeNextToken
-          ),
-        accessResults = _.metrics.toList.flatten,
-        accessNextToken = _.nextToken
+  val keyName = "overlay/production/main/index.html"
+  val bucketName = "apiregistry-general"
+
+  override def run: IO[Unit] = awsS3() *> smithy4sS3()
+
+  private def smithy4sS3(): IO[Unit] = awsEnvironmentResource.use {
+    awsEnvironment =>
+      IO.println("hey")
+  }
+
+  private def awsS3(): IO[Unit] = {
+    import software.amazon.awssdk.services.s3.S3Client
+    import software.amazon.awssdk.services.s3.model._
+    import software.amazon.awssdk.regions.Region
+
+    val makeS3 = Resource.make(
+      IO.delay(
+        S3Client
+          .builder()
+          .region(Region.US_EAST_1)
+          .build()
       )
-        .map(_.size)
-        .flatMap(size => IO.println(s"Found $size metrics"))
-    )
-    // Per
-    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
-    // EC2 is the only service that use the ec2Query protocol.
-    AwsClient(ec2.EC2, awsEnvironment).use(ec2Client =>
-      listAll[String, ec2.DescribeInstanceStatusResult, ec2.InstanceStatus](
-        listF = maybeNextToken =>
-          ec2Client.describeInstanceStatus(
-            maxResults = 100,
-            nextToken = maybeNextToken
-          ),
-        accessResults = _.instanceStatuses.toList.flatten,
-        accessNextToken = _.nextToken
-      )
-        .map(_.size)
-        .flatMap(size => IO.println(s"Found $size instance statuses"))
-    )
+    )(s3 => IO.delay(s3.close()))
+    makeS3.use { s3 =>
+      val getObjectRequest = GetObjectRequest
+        .builder()
+        .key(keyName)
+        .bucket(bucketName)
+        .build()
+      val get = IO.blocking(s3.getObjectAsBytes(getObjectRequest).asByteArray())
+      get.flatMap { bytes => IO.println(s"got ${bytes.size} bytes") }
+    }
   }
 
   private val awsEnvironmentResource: Resource[IO, AwsEnvironment[IO]] =
@@ -89,32 +80,4 @@ object Main extends IOApp.Simple {
       ),
       IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
     )
-
-  // This is probably something that's gonna get reimplemented a lot in
-  // user-land. Perhaps we could use pagination hints from the specs to avoid
-  // having to manually wire up the accessors, and to generate synthetic service
-  // functions that handle pagination?
-  private def listAll[NextToken, ListOutput, Result](
-      listF: Option[NextToken] => IO[ListOutput],
-      accessResults: ListOutput => List[Result],
-      accessNextToken: ListOutput => Option[NextToken],
-      acc: List[Result] = List.empty,
-      maybeNextToken: Option[NextToken] = None
-  ): IO[List[Result]] =
-    for {
-      listOutput <- listF(maybeNextToken)
-      accumulatedResults = acc ::: accessResults(listOutput)
-      result <- accessNextToken(listOutput) match {
-        case None => IO.pure(accumulatedResults)
-        case Some(nextNextToken) =>
-          listAll(
-            listF,
-            accessResults,
-            accessNextToken,
-            accumulatedResults,
-            Some(nextNextToken)
-          )
-      }
-    } yield result
-
 }
