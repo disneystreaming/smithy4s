@@ -287,7 +287,8 @@ private[internals] object Type {
       tpe: Type,
       isUnwrapped: Boolean
   ) extends Type
-  case class ValidatedAlias(namespace: String, name: String, tpe: Type) extends Type
+  case class ValidatedAlias(namespace: String, name: String, tpe: Type)
+      extends Type
   case class PrimitiveType(prim: Primitive) extends Type
   case class ExternalType(
       name: String,
@@ -431,7 +432,7 @@ private[internals] object TypedNode {
           fields.traverse(_.traverse(_.traverse(f))).map(StructureTN(ref, _))
         case NewTypeTN(ref, target) =>
           f(target).map(NewTypeTN(ref, _))
-        case ValidatedNewTypeTN(ref, target) => 
+        case ValidatedNewTypeTN(ref, target) =>
           f(target).map(ValidatedNewTypeTN(ref, _))
         case AltTN(ref, altName, alt) =>
           alt.traverse(f).map(AltTN(ref, altName, _))
@@ -463,7 +464,8 @@ private[internals] object TypedNode {
       fields: List[(String, FieldTN[A])]
   ) extends TypedNode[A]
   case class NewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
-  case class ValidatedNewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
+  case class ValidatedNewTypeTN[A](ref: Type.Ref, target: A)
+      extends TypedNode[A]
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]

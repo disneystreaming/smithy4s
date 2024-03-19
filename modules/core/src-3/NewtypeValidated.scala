@@ -34,27 +34,28 @@ abstract class NewtypeValidated[A] extends HasId { self =>
     def schema: Schema[Type] = self.schema
   }
 
-  given refinementProvider[C](using ev: RefinementProvider.Simple[C, A]): RefinementProvider.Simple[C, Type] with {
-    // new RefinementProvider.Simple[C, Type] {
-      val tag: ShapeTag[C] = ev.tag
-      override def make(c: C): Refinement.Aux[C, Type, Type] = ev.make(c).imapFull[Type, Type](asBijectionUnsafe, asBijectionUnsafe)
+  given refinementProvider[C](using
+      ev: RefinementProvider.Simple[C, A]
+  ): RefinementProvider.Simple[C, Type] with {
+
+    val tag: ShapeTag[C] = ev.tag
+
+    override def make(c: C): Refinement.Aux[C, Type, Type] =
+      ev.make(c).imapFull[Type, Type](asBijectionUnsafe, asBijectionUnsafe)
   }
- 
-//   implicit def refinementProvider[C](given ev: RefinementProvider.Simple[C, A]): RefinementProvider.Simple[C, Type] = 
-//     new RefinementProvider.Simple[C, Type] {
-//       val tag: ShapeTag[C] = ev.tag
-//       override def make(c: C): Refinement.Aux[C, Type, Type] = ev.make(c).imapFull[Type, Type](asBijectionUnsafe, asBijectionUnsafe)
-//     }
-  
+
   protected val validators: List[A => Either[String, A]]
-  
-  protected def validateInternal[C](c: C)(value: A)(using ev: RefinementProvider.Simple[C, A]): Either[String, A] =
+
+  protected def validateInternal[C](c: C)(value: A)(using
+      ev: RefinementProvider.Simple[C, A]
+  ): Either[String, A] =
     ev.make(c).apply(value)
 
-  protected val asBijectionUnsafe: Bijection[A, Type] = new NewtypeValidated.Make[A, Type] {
-    def to(a: A): Type = self.unsafeApply(a)
-    def from(t: Type): A = value(t)
-  }
+  protected val asBijectionUnsafe: Bijection[A, Type] =
+    new NewtypeValidated.Make[A, Type] {
+      def to(a: A): Type = self.unsafeApply(a)
+      def from(t: Type): A = value(t)
+    }
 
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)

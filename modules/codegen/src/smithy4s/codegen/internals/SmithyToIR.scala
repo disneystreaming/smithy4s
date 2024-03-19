@@ -603,7 +603,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       private def hasConstraints(shape: Shape): Boolean = {
         shape.getAllTraits().asScala.values.exists {
           case ConstraintTrait(_) => true
-          case _             => false
+          case _                  => false
         }
       }
 
@@ -619,23 +619,25 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           !isUnboxedPrimitive(shape.getId())
         ) {
           val isUnwrapped = isUnwrappedShape(shape)
-          if(isUnwrapped || !hasConstraints(shape)) {
+          if (isUnwrapped || !hasConstraints(shape)) {
             Type
-            .Alias(
-              shape.getId().getNamespace(),
-              shape.getId().getName(),
-              externalOrBase,
-              isUnwrappedShape(shape)
-            )
-            .some
+              .Alias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase,
+                isUnwrappedShape(shape)
+              )
+              .some
           } else {
-            Type.ValidatedAlias(
-              shape.getId().getNamespace(),
-              shape.getId().getName(),
-              externalOrBase
-            ).some
+            Type
+              .ValidatedAlias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase
+              )
+              .some
           }
-          
+
         } else externalOrBase.some
       }
 

@@ -17,7 +17,7 @@
 package smithy4s
 
 abstract class NewtypeValidated[A] extends HasId { self =>
-  // This encoding originally comes from this library: 
+  // This encoding originally comes from this library:
   // https://github.com/alexknvl/newtypes#what-does-it-do
   type Base
   trait _Tag extends Any
@@ -43,15 +43,20 @@ abstract class NewtypeValidated[A] extends HasId { self =>
 
   def unapply(t: Type): Some[A] = Some(t.value)
 
-  implicit def refinementProvider[C](implicit ev: RefinementProvider.Simple[C, A]): RefinementProvider.Simple[C, Type] = 
+  implicit def refinementProvider[C](implicit
+      ev: RefinementProvider.Simple[C, A]
+  ): RefinementProvider.Simple[C, Type] =
     new RefinementProvider.Simple[C, Type] {
       val tag: ShapeTag[C] = ev.tag
-      override def make(c: C): Refinement.Aux[C, Type, Type] = ev.make(c).imapFull[Type, Type](asBijectionUnsafe, asBijectionUnsafe)
+      override def make(c: C): Refinement.Aux[C, Type, Type] =
+        ev.make(c).imapFull[Type, Type](asBijectionUnsafe, asBijectionUnsafe)
     }
-  
+
   protected val validators: List[A => Either[String, A]]
-  
-  protected def validateInternal[C](c: C)(value: A)(implicit ev: RefinementProvider.Simple[C, A]): Either[String, A] =
+
+  protected def validateInternal[C](c: C)(value: A)(implicit
+      ev: RefinementProvider.Simple[C, A]
+  ): Either[String, A] =
     ev.make(c).apply(value)
 
   protected val asBijectionUnsafe: Bijection[A, Type] =

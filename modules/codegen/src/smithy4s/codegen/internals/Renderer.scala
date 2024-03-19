@@ -1331,8 +1331,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )
     )
   }
- 
-   private def renderValidatedNewtype(
+
+  private def renderValidatedNewtype(
       shapeId: ShapeId,
       name: NameRef,
       tpe: Type,
@@ -1341,9 +1341,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     val validators = {
       val tags = hints.collect { case t: Hint.Constraint => t }
-      tags.map{ tag =>
-        line"a => validateInternal(${renderNativeHint(tag.native)})(a)"
-      }.intercalate(Line.comma)
+      tags
+        .map { tag =>
+          line"a => validateInternal(${renderNativeHint(tag.native)})(a)"
+        }
+        .intercalate(Line.comma)
     }
 
     val definition =
@@ -1573,7 +1575,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         else
           false -> line"${ref.show}($text)"
       })
-    case ValidatedNewTypeTN(ref, target) => 
+    case ValidatedNewTypeTN(ref, target) =>
       Reader(topLevel => {
         val (wroteCollection, text) = target.run(topLevel)
         if (wroteCollection && !topLevel)

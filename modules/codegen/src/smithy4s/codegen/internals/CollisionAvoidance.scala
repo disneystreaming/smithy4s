@@ -87,7 +87,7 @@ private[internals] object CollisionAvoidance {
           rec,
           hints.map(modHint)
         )
-      case ValidatedTypeAlias(shapeId, name, tpe, recursive, hints) => 
+      case ValidatedTypeAlias(shapeId, name, tpe, recursive, hints) =>
         ValidatedTypeAlias(
           shapeId,
           protectKeyword(name.capitalize),
@@ -137,7 +137,7 @@ private[internals] object CollisionAvoidance {
       val protectedName = protectKeyword(name.capitalize)
       val unwrapped = isUnwrapped | (protectedName != name.capitalize)
       Alias(namespace, protectKeyword(name.capitalize), modType(tpe), unwrapped)
-    case ValidatedAlias(namespace, name, tpe) => 
+    case ValidatedAlias(namespace, name, tpe) =>
       ValidatedAlias(namespace, protectKeyword(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, typeParams, pFqn, under, refinementHint) =>
@@ -226,7 +226,7 @@ private[internals] object CollisionAvoidance {
           )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
-        case ValidatedNewTypeTN(ref, target) => 
+        case ValidatedNewTypeTN(ref, target) =>
           ValidatedNewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
           AltTN(modRef(ref), altName, alt)
