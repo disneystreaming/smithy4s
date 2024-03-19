@@ -26,7 +26,10 @@ object AwsCredentialsFileTest extends FunSuite {
       e: Either[Throwable, A]
   )(f: A => Expectations): Expectations =
     e.fold(
-      err => failure(s"Got Left but expected a Right. ${err.getMessage}"),
+      err => {
+        err.printStackTrace()
+        failure(s"Got Left but expected a Right. ${err.getMessage}")
+      },
       f
     )
 
@@ -141,6 +144,21 @@ object AwsCredentialsFileTest extends FunSuite {
       expect.same(Some(creds), res.default) &&
       expect.same(creds, res.profiles("p1")) &&
       expect.same(creds, res.profiles("p2"))
+    }
+  }
+
+  test("profiles can have special characters in them") {
+    expectRight(
+      AwsCredentialsFile.processFileLines(
+        asLines(
+          """|[Namespace/User@USER_ID]
+             |aws_access_key_id = key
+             |aws_secret_access_key = sec
+             |aws_session_token = token""".stripMargin
+        )
+      )
+    ) { res =>
+      expect.same(creds, res.profiles("Namespace/User@USER_ID"))
     }
   }
 
