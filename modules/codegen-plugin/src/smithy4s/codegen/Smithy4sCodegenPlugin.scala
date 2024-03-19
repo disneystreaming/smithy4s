@@ -141,7 +141,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val smithy4sRenderValidatedNewtypes =
       taskKey[Boolean](
         "Boolean value to indicate whether or not to generate validated newtypes"
-      )    
+      )
 
     val smithy4sGeneratedSmithyFiles =
       taskKey[Seq[File]](
@@ -263,32 +263,45 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     },
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory = (config / streams).value.cacheStoreFactory
-      val cached = Tracked.inputChanged[(String, Boolean, Boolean), Seq[File]](
-        cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
-      ) { case (changed, (wildcardArg, shouldGenerateOptics, shouldRenderValidatedNewtypes)) =>
-        val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
-          cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
-        ) { case (changed, prevResult) =>
-          if (changed || prevResult.isEmpty) {
-            val file = (config / smithy4sGeneratedSmithyMetadataFile).value
-            IO.write(
-              file,
-              s"""$$version: "2"
-                 |metadata smithy4sWildcardArgument = "$wildcardArg"
-                 |metadata smithy4sRenderOptics = $shouldGenerateOptics
-                 |metadata smithy4sRenderValidatedNewtypes = $shouldRenderValidatedNewtypes
-                 |""".stripMargin
-            )
-            Seq(file)
-          } else {
-            prevResult.get
+      val cached =
+        Tracked
+          .inputChanged[(String, Boolean, Boolean), Seq[File]](
+            cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
+          ) {
+            case (
+                  changed,
+                  (
+                    wildcardArg,
+                    shouldGenerateOptics,
+                    shouldRenderValidatedNewtypes
+                  )
+                ) =>
+              val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
+                cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
+              ) {
+                case (changed, prevResult) =>
+                  if (changed || prevResult.isEmpty) {
+                    val file =
+                      (config / smithy4sGeneratedSmithyMetadataFile).value
+                    IO.write(
+                      file,
+                      s"""$$version: "2"
+                         |metadata smithy4sWildcardArgument = "$wildcardArg"
+                         |metadata smithy4sRenderOptics = $shouldGenerateOptics
+                         |metadata smithy4sRenderValidatedNewtypes = $shouldRenderValidatedNewtypes
+                         |""".stripMargin
+                    )
+                    Seq(file)
+                  } else {
+                    prevResult.get
+                  }
+              }
+              lastOutput(changed)
           }
-        }
-        lastOutput(changed)
-      }
       val wildcardArg = (config / smithy4sWildcardArgument).value
       val generateOptics = (config / smithy4sRenderOptics).value
-      val renderValidatedNewtypes = (config / smithy4sRenderValidatedNewtypes).value
+      val renderValidatedNewtypes =
+        (config / smithy4sRenderValidatedNewtypes).value
       cached((wildcardArg, generateOptics, renderValidatedNewtypes))
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(

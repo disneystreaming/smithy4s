@@ -62,7 +62,7 @@ private[internals] object Renderer {
         .flatMap(_.asBooleanNode().asScala)
         .map(_.getValue())
         .getOrElse(false)
-      
+
       val renderValidatedNewtypes = metadata
         .get("smithy4sRenderValidatedNewtypes")
         .flatMap(_.asBooleanNode().asScala)
@@ -194,7 +194,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case vta @ ValidatedTypeAlias(shapeId, _, tpe, recursive, hints) =>
-      if(compilationUnit.rendererConfig.renderValidatedNewtypes) {
+      if (compilationUnit.rendererConfig.renderValidatedNewtypes) {
         renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
       } else {
         renderNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
@@ -1592,13 +1592,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val (wroteCollection, text) = target.run(topLevel)
         if (wroteCollection && !topLevel)
           false -> text
-        else
-          if(compilationUnit.rendererConfig.renderValidatedNewtypes) {
-            false -> line"${ref.show}.unsafeApply($text)"
-            
-          } else {
-            false -> line"${ref.show}($text)"
-          }
+        else if (compilationUnit.rendererConfig.renderValidatedNewtypes) {
+          false -> line"${ref.show}.unsafeApply($text)"
+
+        } else {
+          false -> line"${ref.show}($text)"
+        }
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>

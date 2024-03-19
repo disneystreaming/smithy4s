@@ -549,7 +549,9 @@ final class RendererSpec extends munit.FunSuite {
     )
   }
 
-  test("unwrapped newtype with constraint and smithy4sRenderValidatedNewtypes=true") {
+  test(
+    "unwrapped newtype with constraint and smithy4sRenderValidatedNewtypes=true"
+  ) {
     val smithy = """
                    |$version: "2"
                    |
