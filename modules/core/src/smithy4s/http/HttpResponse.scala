@@ -161,7 +161,7 @@ object HttpResponse {
 
   }
 
-  private[http] object Decoder {
+  object Decoder {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],

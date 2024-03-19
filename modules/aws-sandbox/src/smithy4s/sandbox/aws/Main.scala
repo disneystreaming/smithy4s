@@ -21,34 +21,80 @@ package aws
 import cats.effect._
 import org.http4s.client.middleware.RequestLogger
 import org.http4s.ember.client.EmberClientBuilder
+import com.amazonaws.{s3 => smithyS3}
 import smithy4s.aws._
+import java.net.URI
 
 object Main extends IOApp.Simple {
 
   val keyName = "overlay/production/main/index.html"
   val bucketName = "apiregistry-general"
 
-  override def run: IO[Unit] = awsS3() *> smithy4sS3()
+  override def run: IO[Unit] =
+    awsS3().attempt.flatMap(print) *> smithy4sS3().attempt.flatMap(print)
 
-  private def smithy4sS3(): IO[Unit] = awsEnvironmentResource.use {
-    awsEnvironment =>
-      IO.println("hey")
+  private def print[B](either: Either[Throwable, B]): IO[Unit] =
+    either match {
+      case Left(value) =>
+        IO.consoleForIO.printStackTrace(value)
+      case Right(value) => IO.println(value)
+    }
+
+  private def smithy4sS3(): IO[Unit] = {
+    import smithyS3._
+    val program = for {
+      awsEnv <- awsEnvironmentResource
+      s3 <- AwsClient(S3, awsEnv)
+      res <- {
+        // F[GetObjectRequest, S3Operation.GetObjectError, GetObjectOutput, Nothing, StreamingBlob]
+        s3.getObject(BucketName(bucketName), ObjectKey(keyName)).map { output =>
+          IO.println(s"hey s3 ${output}")
+        }
+      }.toResource
+    } yield res
+    program.use_
   }
 
   private def awsS3(): IO[Unit] = {
+    import software.amazon.awssdk.http.SdkHttpClient
+    import software.amazon.awssdk.http.apache.ProxyConfiguration
+    import software.amazon.awssdk.http.apache.ApacheHttpClient
     import software.amazon.awssdk.services.s3.S3Client
     import software.amazon.awssdk.services.s3.model._
     import software.amazon.awssdk.regions.Region
+    import software.amazon.awssdk.utils.AttributeMap
+    import software.amazon.awssdk.http.SdkHttpConfigurationOption.TRUST_ALL_CERTIFICATES
 
-    val makeS3 = Resource.make(
+    val pc = ProxyConfiguration
+      .builder()
+      .endpoint(URI.create("http://localhost:8080"))
+      .build()
+
+    val client =
+      Resource.make(
+        IO.delay(
+          ApacheHttpClient
+            .builder()
+            .proxyConfiguration(pc)
+            .buildWithDefaults(
+              AttributeMap
+                .builder()
+                .put(TRUST_ALL_CERTIFICATES, java.lang.Boolean.TRUE)
+                .build()
+            )
+        )
+      )(c => IO.delay(c.close()))
+
+    def makeS3(client: SdkHttpClient) = Resource.make(
       IO.delay(
         S3Client
           .builder()
+          .httpClient(client)
           .region(Region.US_EAST_1)
           .build()
       )
     )(s3 => IO.delay(s3.close()))
-    makeS3.use { s3 =>
+    client.flatMap(makeS3).use { s3 =>
       val getObjectRequest = GetObjectRequest
         .builder()
         .key(keyName)
