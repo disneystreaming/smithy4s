@@ -1,3 +1,7 @@
+# 0.18.15
+
+* Add support for injecting endpoint-specific middlewares in AWS clients
+
 # 0.18.14
 
 * Add support for decoding Document representations of untagged unions
