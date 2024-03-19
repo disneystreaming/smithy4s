@@ -78,7 +78,7 @@ object DiscriminatedServiceOperation {
     val schema: OperationSchema[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TestDiscriminated"))
       .withInput(TestDiscriminatedInput.schema)
       .withOutput(TestDiscriminatedOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/test/{key}"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200), smithy.api.Readonly())
     def wrap(input: TestDiscriminatedInput): TestDiscriminated = TestDiscriminated(input)
   }
 }

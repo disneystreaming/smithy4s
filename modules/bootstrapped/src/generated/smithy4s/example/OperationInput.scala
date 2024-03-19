@@ -20,13 +20,13 @@ object OperationInput extends ShapeTag.Companion[OperationInput] {
     string.field[OperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
     string.required[OperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.Default(smithy4s.Document.fromString("required-label-with-default")), smithy.api.HttpLabel()),
     string.required[OperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
-    string.field[OperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader.unsafeApply("optional-header-with-default")),
-    string.required[OperationInput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader.unsafeApply("required-header-with-default")),
-    string.field[OperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-query-with-default")), smithy.api.HttpQuery.unsafeApply("optional-query-with-default")),
-    string.field[OperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-query-with-default")), smithy.api.HttpQuery.unsafeApply("required-query-with-default")),
+    string.field[OperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
+    string.required[OperationInput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader("required-header-with-default")),
+    string.field[OperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-query-with-default")), smithy.api.HttpQuery("optional-query-with-default")),
+    string.field[OperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-query-with-default")), smithy.api.HttpQuery("required-query-with-default")),
     string.optional[OperationInput]("optional", _.optional),
-    string.optional[OperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader.unsafeApply("optional-header")),
-    string.optional[OperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery.unsafeApply("optional-query")),
+    string.optional[OperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
+    string.optional[OperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery("optional-query")),
   ){
     OperationInput.apply
   }.withId(id).addHints(hints)

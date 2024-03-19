@@ -13,7 +13,7 @@ final class MetadataDecoderSpec extends FunSuite {
         .struct(
           Schema.string
             .optional[Foo]("deviceType", _.deviceType)
-            .addHints(api.HttpHeader.unsafeApply("x-device-type"))
+            .addHints(api.HttpHeader("x-device-type"))
             .addHints(api.Input())
         )(Foo(_))
         .addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -30,7 +30,7 @@ final class MetadataDecoderSpec extends FunSuite {
       val field = Schema.string.option
         .biject[Option[String]](identity[Option[String]](_))(identity(_))
         .required[Foo]("name", _.name)
-        .addHints(smithy.api.HttpHeader.unsafeApply("X-Name"))
+        .addHints(smithy.api.HttpHeader("X-Name"))
       Schema
         .struct(field)(Foo(_))
         .addHints(smithy4s.internals.InputOutput.Input.widen)

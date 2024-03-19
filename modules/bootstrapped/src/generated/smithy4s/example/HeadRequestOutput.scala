@@ -15,7 +15,7 @@ object HeadRequestOutput extends ShapeTag.Companion[HeadRequestOutput] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[HeadRequestOutput] = struct(
-    string.required[HeadRequestOutput]("test", _.test).addHints(smithy.api.HttpHeader.unsafeApply("Test")),
+    string.required[HeadRequestOutput]("test", _.test).addHints(smithy.api.HttpHeader("Test")),
   ){
     HeadRequestOutput.apply
   }.withId(id).addHints(hints)

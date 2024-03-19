@@ -67,7 +67,7 @@ final class CompositionSpec extends FunSuite {
   }
 
   test("lens composition newtypes") {
-    val input = GetCityInput(CityId.unsafeApply("test"))
+    val input = GetCityInput(CityId("test"))
 
     val cityName: Lens[GetCityInput, String] =
       GetCityInput.optics.cityId.value

@@ -13,7 +13,7 @@ final class HttpRequestSpec extends FunSuite {
     val schema =
       Schema.struct(Schema.string.required[Foo]("foo", _.foo))(Foo(_))
     val endpointHint =
-      api.Endpoint(hostPrefix = api.NonEmptyString.unsafeApply("test.{foo}-other."))
+      api.Endpoint(hostPrefix = api.NonEmptyString("test.{foo}-other."))
     val opSchema = OperationSchema(
       ShapeId("test", "Test"),
       Hints(endpointHint),

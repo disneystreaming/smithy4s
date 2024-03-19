@@ -15,7 +15,7 @@ object HealthRequest extends ShapeTag.Companion[HealthRequest] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[HealthRequest] = struct(
-    string.validated(smithy.api.Length(min = Some(0L), max = Some(5L))).optional[HealthRequest]("query", _.query).addHints(smithy.api.HttpQuery.unsafeApply("query")),
+    string.validated(smithy.api.Length(min = Some(0L), max = Some(5L))).optional[HealthRequest]("query", _.query).addHints(smithy.api.HttpQuery("query")),
   ){
     HealthRequest.apply
   }.withId(id).addHints(hints)

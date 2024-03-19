@@ -138,6 +138,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Boolean value to indicate whether or not to generate optics"
       )
 
+    val smithy4sRenderValidatedNewtypes =
+      taskKey[Boolean](
+        "Boolean value to indicate whether or not to generate validated newtypes"
+      )    
+
     val smithy4sGeneratedSmithyFiles =
       taskKey[Seq[File]](
         "Generated smithy files"
@@ -252,14 +257,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
     },
     config / smithy4sRenderOptics := false,
+    config / smithy4sRenderValidatedNewtypes := false,
     config / smithy4sGeneratedSmithyMetadataFile := {
       (config / sourceManaged).value / "smithy" / "generated-metadata.smithy"
     },
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory = (config / streams).value.cacheStoreFactory
-      val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
+      val cached = Tracked.inputChanged[(String, Boolean, Boolean), Seq[File]](
         cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
-      ) { case (changed, (wildcardArg, shouldGenerateOptics)) =>
+      ) { case (changed, (wildcardArg, shouldGenerateOptics, shouldRenderValidatedNewtypes)) =>
         val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
           cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
         ) { case (changed, prevResult) =>
@@ -270,6 +276,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
               s"""$$version: "2"
                  |metadata smithy4sWildcardArgument = "$wildcardArg"
                  |metadata smithy4sRenderOptics = $shouldGenerateOptics
+                 |metadata smithy4sRenderValidatedNewtypes = $shouldRenderValidatedNewtypes
                  |""".stripMargin
             )
             Seq(file)
@@ -281,7 +288,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
       val wildcardArg = (config / smithy4sWildcardArgument).value
       val generateOptics = (config / smithy4sRenderOptics).value
-      cached((wildcardArg, generateOptics))
+      val renderValidatedNewtypes = (config / smithy4sRenderValidatedNewtypes).value
+      cached((wildcardArg, generateOptics, renderValidatedNewtypes))
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")

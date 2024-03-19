@@ -19,17 +19,17 @@ object Queries extends ShapeTag.Companion[Queries] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Queries] = struct(
-    string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery.unsafeApply("str")),
-    int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery.unsafeApply("int")),
-    timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery.unsafeApply("ts1")),
-    timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpQuery.unsafeApply("ts2")),
-    timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpQuery.unsafeApply("ts3")),
-    timestamp.optional[Queries]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpQuery.unsafeApply("ts4")),
-    boolean.optional[Queries]("b", _.b).addHints(smithy.api.HttpQuery.unsafeApply("b")),
-    StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(smithy.api.HttpQuery.unsafeApply("sl")),
-    Numbers.schema.optional[Queries]("ie", _.ie).addHints(smithy.api.HttpQuery.unsafeApply("nums")),
-    OpenNums.schema.optional[Queries]("on", _.on).addHints(smithy.api.HttpQuery.unsafeApply("openNums")),
-    OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(smithy.api.HttpQuery.unsafeApply("openNumsStr")),
+    string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str")),
+    int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int")),
+    timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery("ts1")),
+    timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpQuery("ts2")),
+    timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpQuery("ts3")),
+    timestamp.optional[Queries]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpQuery("ts4")),
+    boolean.optional[Queries]("b", _.b).addHints(smithy.api.HttpQuery("b")),
+    StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(smithy.api.HttpQuery("sl")),
+    Numbers.schema.optional[Queries]("ie", _.ie).addHints(smithy.api.HttpQuery("nums")),
+    OpenNums.schema.optional[Queries]("on", _.on).addHints(smithy.api.HttpQuery("openNums")),
+    OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(smithy.api.HttpQuery("openNumsStr")),
     StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(smithy.api.HttpQueryParams()),
   ){
     Queries.apply

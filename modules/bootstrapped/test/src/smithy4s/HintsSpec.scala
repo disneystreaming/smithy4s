@@ -24,27 +24,27 @@ import smithy.api.Required
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
-    val hints = Hints(HttpHeader.unsafeApply("X-Foobar"))
-    expect(hints.get(HttpHeader) == Some(HttpHeader.unsafeApply("X-Foobar")))
+    val hints = Hints(HttpHeader("X-Foobar"))
+    expect(hints.get(HttpHeader) == Some(HttpHeader("X-Foobar")))
   }
 
   test("hints work as expected with newtypes (using implicits)") {
-    val hints = Hints(HttpHeader.unsafeApply("X-Foobar"))
-    expect.same(hints.get[HttpHeader], Some(HttpHeader.unsafeApply("X-Foobar")))
+    val hints = Hints(HttpHeader("X-Foobar"))
+    expect.same(hints.get[HttpHeader], Some(HttpHeader("X-Foobar")))
   }
 
   test("hints can be stored as member hints") {
-    val hints = Hints(HttpLabel()).addMemberHints(HttpHeader.unsafeApply("X-Foobar"))
+    val hints = Hints(HttpLabel()).addMemberHints(HttpHeader("X-Foobar"))
     // Member and target hints are both looked at when searching for a hint.
-    expect.same(hints.get(HttpHeader), Some(HttpHeader.unsafeApply("X-Foobar")))
+    expect.same(hints.get(HttpHeader), Some(HttpHeader("X-Foobar")))
     expect.same(hints.get(HttpLabel), Some(HttpLabel()))
   }
 
   test("Member hints are stored separately from target hints") {
     val hints =
-      Hints(HttpHeader.unsafeApply("X-Target")).addMemberHints(HttpHeader.unsafeApply("X-Member"))
-    expect.same(hints.memberHints, Hints.member(HttpHeader.unsafeApply("X-Member")))
-    expect.same(hints.targetHints, Hints(HttpHeader.unsafeApply("X-Target")))
+      Hints(HttpHeader("X-Target")).addMemberHints(HttpHeader("X-Member"))
+    expect.same(hints.memberHints, Hints.member(HttpHeader("X-Member")))
+    expect.same(hints.targetHints, Hints(HttpHeader("X-Target")))
   }
 
   test(
@@ -52,25 +52,25 @@ class HintsSpec() extends FunSuite {
   ) {
     val hints =
       Hints.empty
-        .addMemberHints(HttpHeader.unsafeApply("X-Member"))
-        .addTargetHints(HttpHeader.unsafeApply("X-Foobar"))
-    expect.same(hints.get(HttpHeader), Some(HttpHeader.unsafeApply("X-Member")))
+        .addMemberHints(HttpHeader("X-Member"))
+        .addTargetHints(HttpHeader("X-Foobar"))
+    expect.same(hints.get(HttpHeader), Some(HttpHeader("X-Member")))
   }
 
   test("Hints concatenation respect hint level") {
-    val concat = Hints.member(HttpHeader.unsafeApply("X-Member")) ++ Hints(HttpLabel())
-    expect.same(concat.memberHints, Hints.member(HttpHeader.unsafeApply("X-Member")))
+    val concat = Hints.member(HttpHeader("X-Member")) ++ Hints(HttpLabel())
+    expect.same(concat.memberHints, Hints.member(HttpHeader("X-Member")))
     expect.same(concat.targetHints, Hints(HttpLabel()))
   }
 
   test("Hints#add adds to the member layer") {
-    val concat = Hints.empty.add(HttpHeader.unsafeApply("X-Member"))
-    expect.same(concat, Hints.member(HttpHeader.unsafeApply("X-Member")))
+    val concat = Hints.empty.add(HttpHeader("X-Member"))
+    expect.same(concat, Hints.member(HttpHeader("X-Member")))
   }
 
   test("Hints#addTargetHints adds to the target layer") {
-    val concat = Hints.empty.addTargetHints(HttpHeader.unsafeApply("X-Member"))
-    expect.same(concat, Hints(HttpHeader.unsafeApply("X-Member")))
+    val concat = Hints.empty.addTargetHints(HttpHeader("X-Member"))
+    expect.same(concat, Hints(HttpHeader("X-Member")))
   }
 
   test("Hints#expand allows to derive a hint from another hint") {

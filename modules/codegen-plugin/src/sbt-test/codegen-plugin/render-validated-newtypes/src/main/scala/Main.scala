@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,21 +14,22 @@
  *  limitations under the License.
  */
 
-package smithy4s
-import smithy4s.example._
+package demo
 
-class PatternSpec extends munit.FunSuite {
+import smithy4s.example.{ SimpleValidatedString, TestValidatedNewTypes }
 
-  test(
-    "Unicode in regex is escaped correctly and can be matched against on all platforms"
-  ) {
-    val s = "😎"
-
-    val result = Document.Decoder
-      .fromSchema(UnicodeRegexString.schema)
-      .decode(Document.fromString(s))
-
-    assertEquals(result, Right(UnicodeRegexString(s)))
+object Main extends App {
+  try {
+    val validatedStringOrError: Either[String, SimpleValidatedString] = SimpleValidatedString("test")
+    println(
+      validatedStringOrError match {
+        case Right(value) => s"Success: ${TestValidatedNewTypes(value, "unwraped string test")}"
+        case Left(error) => s"Error: $error"
+      }
+    )
+  } catch {
+    case _: java.lang.ExceptionInInitializerError =>
+      println("failed")
+      sys.exit(1)
   }
-
 }

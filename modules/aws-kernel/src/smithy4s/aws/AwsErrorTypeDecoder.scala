@@ -90,7 +90,7 @@ object AwsErrorTypeDecoder {
         .optional[Body]("__type", _._1)
       val codeField = string
         .optional[Body]("code", _._2)
-        .addHints(smithy.api.XmlName.unsafeApply("Code"))
+        .addHints(smithy.api.XmlName("Code"))
       struct(__typeField, codeField)((_, _))
     }
   }

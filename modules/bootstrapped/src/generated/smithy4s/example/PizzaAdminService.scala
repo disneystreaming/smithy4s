@@ -147,7 +147,7 @@ object PizzaAdminServiceOperation {
       .withInput(AddMenuItemRequest.schema)
       .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/restaurant/{restaurant}/menu/item"), code = 201))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
     def wrap(input: AddMenuItemRequest): AddMenuItem = AddMenuItem(input)
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>
@@ -240,7 +240,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetMenuRequest.schema)
       .withError(GetMenuError.errorSchema)
       .withOutput(GetMenuResult.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/restaurant/{restaurant}/menu"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu"), code = 200), smithy.api.Readonly())
     def wrap(input: GetMenuRequest): GetMenu = GetMenu(input)
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable { self =>
@@ -347,7 +347,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, VersionOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Version"))
       .withInput(unit)
       .withOutput(VersionOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/version"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/version"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): Version = Version()
   }
   final case class Health(input: HealthRequest) extends PizzaAdminServiceOperation[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
@@ -360,7 +360,7 @@ object PizzaAdminServiceOperation {
       .withInput(HealthRequest.schema)
       .withError(HealthError.errorSchema)
       .withOutput(HealthResponse.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/health"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200), smithy.api.Readonly())
     def wrap(input: HealthRequest): Health = Health(input)
   }
   sealed trait HealthError extends scala.Product with scala.Serializable { self =>
@@ -424,7 +424,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeaderEndpoint"))
       .withInput(HeaderEndpointData.schema)
       .withOutput(HeaderEndpointData.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/headers/"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/headers/"), code = 200))
     def wrap(input: HeaderEndpointData): HeaderEndpoint = HeaderEndpoint(input)
   }
   final case class RoundTrip(input: RoundTripData) extends PizzaAdminServiceOperation[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
@@ -436,7 +436,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RoundTrip"))
       .withInput(RoundTripData.schema)
       .withOutput(RoundTripData.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/roundTrip/{label}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/roundTrip/{label}"), code = 200))
     def wrap(input: RoundTripData): RoundTrip = RoundTrip(input)
   }
   final case class GetEnum(input: GetEnumInput) extends PizzaAdminServiceOperation[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
@@ -449,7 +449,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetEnumInput.schema)
       .withError(GetEnumError.errorSchema)
       .withOutput(GetEnumOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/get-enum/{aa}"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetEnumInput): GetEnum = GetEnum(input)
   }
   sealed trait GetEnumError extends scala.Product with scala.Serializable { self =>
@@ -514,7 +514,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetIntEnumInput.schema)
       .withError(GetIntEnumError.errorSchema)
       .withOutput(GetIntEnumOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/get-int-enum/{aa}"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/get-int-enum/{aa}"), code = 200), smithy.api.Readonly())
     def wrap(input: GetIntEnumInput): GetIntEnum = GetIntEnum(input)
   }
   sealed trait GetIntEnumError extends scala.Product with scala.Serializable { self =>
@@ -579,7 +579,7 @@ object PizzaAdminServiceOperation {
       .withInput(CustomCodeInput.schema)
       .withError(CustomCodeError.errorSchema)
       .withOutput(CustomCodeOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/custom-code/{code}"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/custom-code/{code}"), code = 200), smithy.api.Readonly())
     def wrap(input: CustomCodeInput): CustomCode = CustomCode(input)
   }
   sealed trait CustomCodeError extends scala.Product with scala.Serializable { self =>
@@ -643,7 +643,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Reservation"))
       .withInput(ReservationInput.schema)
       .withOutput(ReservationOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/book/{name}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/book/{name}"), code = 200))
     def wrap(input: ReservationInput): Reservation = Reservation(input)
   }
   final case class Echo(input: EchoInput) extends PizzaAdminServiceOperation[EchoInput, Nothing, Unit, Nothing, Nothing] {
@@ -655,7 +655,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[EchoInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Echo"))
       .withInput(EchoInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/echo/{pathParam}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/echo/{pathParam}"), code = 200))
     def wrap(input: EchoInput): Echo = Echo(input)
   }
   final case class OptionalOutput() extends PizzaAdminServiceOperation[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
@@ -668,7 +668,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "OptionalOutput"))
       .withInput(unit)
       .withOutput(OptionalOutputOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/optional-output"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/optional-output"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): OptionalOutput = OptionalOutput()
   }
   final case class HeadRequest() extends PizzaAdminServiceOperation[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
@@ -681,7 +681,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeadRequest"))
       .withInput(unit)
       .withOutput(HeadRequestOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("HEAD"), uri = smithy.api.NonEmptyString.unsafeApply("/head-request"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("HEAD"), uri = smithy.api.NonEmptyString("/head-request"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): HeadRequest = HeadRequest()
   }
   final case class NoContentRequest() extends PizzaAdminServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
@@ -694,7 +694,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "NoContentRequest"))
       .withInput(unit)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/no-content"), code = 204), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/no-content"), code = 204), smithy.api.Readonly())
     def wrap(input: Unit): NoContentRequest = NoContentRequest()
   }
 }

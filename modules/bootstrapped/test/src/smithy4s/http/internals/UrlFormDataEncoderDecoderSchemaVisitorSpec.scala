@@ -164,8 +164,8 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val x = string.required[Foo]("x", _.x).addHints(UrlFormName.unsafeApply("xx"))
-        val y = string.optional[Foo]("y", _.y).addHints(UrlFormName.unsafeApply("y:y"))
+        val x = string.required[Foo]("x", _.x).addHints(UrlFormName("xx"))
+        val y = string.optional[Foo]("y", _.y).addHints(UrlFormName("y:y"))
         struct(x, y)(Foo.apply)
       }
     }
@@ -276,7 +276,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = list(int.addHints(UrlFormName.unsafeApply("x")))
+        val foos = list(int.addHints(UrlFormName("x")))
           .required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply)
       }
@@ -309,7 +309,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val foos = list(int)
           .required[Foo]("foos", _.foos)
-          .addHints(UrlFormFlattened(), UrlFormName.unsafeApply("x"))
+          .addHints(UrlFormFlattened(), UrlFormName("x"))
         struct(foos)(Foo.apply)
       }
     }
@@ -349,8 +349,8 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
   pureTest("union: custom names") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = Schema.either(
-      int.addMemberHints(UrlFormName.unsafeApply("foo")),
-      string.addMemberHints(UrlFormName.unsafeApply("bar"))
+      int.addMemberHints(UrlFormName("foo")),
+      string.addMemberHints(UrlFormName("bar"))
     )
     checkEncodingAndDecoding[Foo](
       value = Left(1),
@@ -407,9 +407,9 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(UrlFormName.unsafeApply("k")), int.addHints(UrlFormName.unsafeApply("v")))
+          map(string.addHints(UrlFormName("k")), int.addHints(UrlFormName("v")))
             .required[Foo]("foos", _.foos)
-            .addHints(UrlFormName.unsafeApply("entries"))
+            .addHints(UrlFormName("entries"))
         struct(foos)(Foo.apply)
       }
     }

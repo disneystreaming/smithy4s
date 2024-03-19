@@ -15,10 +15,10 @@ object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[HeaderEndpointData] = struct(
-    string.optional[HeaderEndpointData]("uppercaseHeader", _.uppercaseHeader).addHints(smithy.api.HttpHeader.unsafeApply("X-UPPERCASE-HEADER")),
-    string.optional[HeaderEndpointData]("capitalizedHeader", _.capitalizedHeader).addHints(smithy.api.HttpHeader.unsafeApply("X-Capitalized-Header")),
-    string.optional[HeaderEndpointData]("lowercaseHeader", _.lowercaseHeader).addHints(smithy.api.HttpHeader.unsafeApply("x-lowercase-header")),
-    string.optional[HeaderEndpointData]("mixedHeader", _.mixedHeader).addHints(smithy.api.HttpHeader.unsafeApply("x-MiXeD-hEaDEr")),
+    string.optional[HeaderEndpointData]("uppercaseHeader", _.uppercaseHeader).addHints(smithy.api.HttpHeader("X-UPPERCASE-HEADER")),
+    string.optional[HeaderEndpointData]("capitalizedHeader", _.capitalizedHeader).addHints(smithy.api.HttpHeader("X-Capitalized-Header")),
+    string.optional[HeaderEndpointData]("lowercaseHeader", _.lowercaseHeader).addHints(smithy.api.HttpHeader("x-lowercase-header")),
+    string.optional[HeaderEndpointData]("mixedHeader", _.mixedHeader).addHints(smithy.api.HttpHeader("x-MiXeD-hEaDEr")),
   ){
     HeaderEndpointData.apply
   }.withId(id).addHints(hints)

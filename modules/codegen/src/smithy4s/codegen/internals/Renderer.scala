@@ -41,7 +41,8 @@ private[internals] object Renderer {
   case class Config(
       errorsAsScala3Unions: Boolean,
       wildcardArgument: String,
-      renderOptics: Boolean
+      renderOptics: Boolean,
+      renderValidatedNewtypes: Boolean
   )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
@@ -61,6 +62,12 @@ private[internals] object Renderer {
         .flatMap(_.asBooleanNode().asScala)
         .map(_.getValue())
         .getOrElse(false)
+      
+      val renderValidatedNewtypes = metadata
+        .get("smithy4sRenderValidatedNewtypes")
+        .flatMap(_.asBooleanNode().asScala)
+        .map(_.getValue())
+        .getOrElse(false)
 
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
@@ -71,7 +78,8 @@ private[internals] object Renderer {
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
         wildcardArgument = wildcardArgument,
-        renderOptics = renderOptics
+        renderOptics = renderOptics,
+        renderValidatedNewtypes = renderValidatedNewtypes
       )
     }
   }
@@ -186,7 +194,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case vta @ ValidatedTypeAlias(shapeId, _, tpe, recursive, hints) =>
-      renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
+      if(compilationUnit.rendererConfig.renderValidatedNewtypes) {
+        renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
+      } else {
+        renderNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
+      }
     case enumeration @ Enumeration(shapeId, _, tag, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
@@ -1581,7 +1593,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         if (wroteCollection && !topLevel)
           false -> text
         else
-          false -> line"${ref.show}.unsafeApply($text)"
+          if(compilationUnit.rendererConfig.renderValidatedNewtypes) {
+            false -> line"${ref.show}.unsafeApply($text)"
+            
+          } else {
+            false -> line"${ref.show}($text)"
+          }
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>

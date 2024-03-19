@@ -19,17 +19,17 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[HeadersStruct] = struct(
-    string.optional[HeadersStruct]("str", _.str).addHints(smithy.api.HttpHeader.unsafeApply("str")),
-    int.optional[HeadersStruct]("int", _.int).addHints(smithy.api.HttpHeader.unsafeApply("int")),
-    timestamp.optional[HeadersStruct]("ts1", _.ts1).addHints(smithy.api.HttpHeader.unsafeApply("ts1")),
-    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpHeader.unsafeApply("ts2")),
-    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpHeader.unsafeApply("ts3")),
-    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpHeader.unsafeApply("ts4")),
-    boolean.optional[HeadersStruct]("b", _.b).addHints(smithy.api.HttpHeader.unsafeApply("b")),
-    StringList.underlyingSchema.optional[HeadersStruct]("sl", _.sl).addHints(smithy.api.HttpHeader.unsafeApply("sl")),
-    Numbers.schema.optional[HeadersStruct]("ie", _.ie).addHints(smithy.api.HttpHeader.unsafeApply("nums")),
-    OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader.unsafeApply("openNums")),
-    OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader.unsafeApply("openNumsStr")),
+    string.optional[HeadersStruct]("str", _.str).addHints(smithy.api.HttpHeader("str")),
+    int.optional[HeadersStruct]("int", _.int).addHints(smithy.api.HttpHeader("int")),
+    timestamp.optional[HeadersStruct]("ts1", _.ts1).addHints(smithy.api.HttpHeader("ts1")),
+    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpHeader("ts2")),
+    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpHeader("ts3")),
+    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpHeader("ts4")),
+    boolean.optional[HeadersStruct]("b", _.b).addHints(smithy.api.HttpHeader("b")),
+    StringList.underlyingSchema.optional[HeadersStruct]("sl", _.sl).addHints(smithy.api.HttpHeader("sl")),
+    Numbers.schema.optional[HeadersStruct]("ie", _.ie).addHints(smithy.api.HttpHeader("nums")),
+    OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader("openNums")),
+    OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader("openNumsStr")),
     StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(smithy.api.HttpPrefixHeaders("foo-")),
   ){
     HeadersStruct.apply

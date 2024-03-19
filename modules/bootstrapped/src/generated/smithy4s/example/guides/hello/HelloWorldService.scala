@@ -26,7 +26,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
-    smithy.api.Cors(origin = smithy.api.NonEmptyString.unsafeApply("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(smithy.api.NonEmptyString.unsafeApply("Authorization"))), additionalExposedHeaders = Some(List(smithy.api.NonEmptyString.unsafeApply("X-Smithy4s")))),
+    smithy.api.Cors(origin = smithy.api.NonEmptyString("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(smithy.api.NonEmptyString("Authorization"))), additionalExposedHeaders = Some(List(smithy.api.NonEmptyString("X-Smithy4s")))),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -81,7 +81,7 @@ object HelloWorldServiceOperation {
     val schema: OperationSchema[Unit, Nothing, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.hello", "SayWorld"))
       .withInput(unit)
       .withOutput(World.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("GET"), uri = smithy.api.NonEmptyString.unsafeApply("/hello"), code = 200), smithy.api.Readonly())
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200), smithy.api.Readonly())
     def wrap(input: Unit): SayWorld = SayWorld()
   }
 }

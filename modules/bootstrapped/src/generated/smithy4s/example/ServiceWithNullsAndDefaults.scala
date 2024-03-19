@@ -78,7 +78,7 @@ object ServiceWithNullsAndDefaultsOperation {
     val schema: OperationSchema[OperationInput, Nothing, OperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Operation"))
       .withInput(OperationInput.schema)
       .withOutput(OperationOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString.unsafeApply("POST"), uri = smithy.api.NonEmptyString.unsafeApply("/operation/{requiredLabel}"), code = 200))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/operation/{requiredLabel}"), code = 200))
     def wrap(input: OperationInput): Operation = Operation(input)
   }
 }

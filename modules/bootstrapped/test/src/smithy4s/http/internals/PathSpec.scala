@@ -34,8 +34,8 @@ class PathSpec() extends munit.FunSuite {
       val schemaA = schema
         .addHints(
           Http(
-            method = NonEmptyString.unsafeApply("GET"),
-            uri = NonEmptyString.unsafeApply("/{label}"),
+            method = NonEmptyString("GET"),
+            uri = NonEmptyString("/{label}"),
             code = 200
           )
         )
@@ -132,8 +132,8 @@ class PathSpec() extends munit.FunSuite {
       )(_ => ())
       .addHints(
         Http(
-          method = NonEmptyString.unsafeApply("GET"),
-          uri = NonEmptyString.unsafeApply("/{label}/const/{secondLabel}"),
+          method = NonEmptyString("GET"),
+          uri = NonEmptyString("/{label}/const/{secondLabel}"),
           code = 200
         )
       )
@@ -154,8 +154,8 @@ class PathSpec() extends munit.FunSuite {
       )(_ => ())
       .addHints(
         Http(
-          method = NonEmptyString.unsafeApply("GET"),
-          uri = NonEmptyString.unsafeApply("/{label}/const/{greedyLabel+}"),
+          method = NonEmptyString("GET"),
+          uri = NonEmptyString("/{label}/const/{greedyLabel+}"),
           code = 200
         )
       )
