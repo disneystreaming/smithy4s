@@ -28,7 +28,7 @@ class PatternSpec extends munit.FunSuite {
       .fromSchema(UnicodeRegexString.schema)
       .decode(Document.fromString(s))
 
-    assertEquals(result, Right(UnicodeRegexString(s)))
+    assertEquals(result, Right(UnicodeRegexString.unsafeApply(s)))
   }
 
 }
