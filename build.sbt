@@ -637,6 +637,34 @@ lazy val xml = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
+ * Module that contains protobuf encoders/decoders for the generated
+ * types.
+ */
+lazy val protobuf = projectMatrix
+  .in(file("modules/protobuf"))
+  .dependsOn(
+    core,
+    bootstrapped % "test->test",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      if (virtualAxes.value.contains(VirtualAxis.jvm)) {
+        "com.google.protobuf" % "protobuf-java" % "3.24.0"
+      } else {
+        "com.thesamet.scalapb" %% "protobuf-runtime-scala" % "0.8.14"
+      },
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
  * Module that contains common code which relies on fs2.
  */
 lazy val fs2 = projectMatrix
