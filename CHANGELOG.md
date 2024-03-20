@@ -1,5 +1,9 @@
 # 0.19.0
 
+## Documentation fix
+
+Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`
+
 ## Reworked enumerations / the EnumerationSchema to eliminate a OOM pitfall and improve ergonomics of SchemaVisitor
 
 ## Remove localhost from default URI in [#1341](https://github.com/disneystreaming/smithy4s/pull/1341)
