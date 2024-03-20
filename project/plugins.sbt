@@ -20,7 +20,7 @@ addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.6")
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.8.1",
   "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4",
-  "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
+  "com.thesamet.scalapb" %% "compilerplugin" % "0.11.15"
 )
 
 addDependencyTreePlugin

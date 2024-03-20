@@ -12,7 +12,6 @@ private[protobuf] object CodecInputStreamPlatform {
       case bbb: Blob.ByteBufferBlob =>
         CodedInputStream.newInstance(bbb.toArray)
       case qb: Blob.QueueBlob =>
-        import scala.jdk.CollectionConverters._
         CodedInputStream.newInstance(qb.toArray)
     }
 
