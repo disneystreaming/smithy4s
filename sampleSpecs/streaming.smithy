@@ -20,6 +20,7 @@ operation GetStreamedObject {
 structure PutStreamedObjectInput {
     @required
     key: String,
+    @documentation("data docs")
     data: StreamedBlob
 }
 
