@@ -15,10 +15,12 @@ addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.17"
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.1")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.3")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "1.5.15")
+addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.6")
 
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.8.1",
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4"
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4",
+  "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
 )
 
 addDependencyTreePlugin
