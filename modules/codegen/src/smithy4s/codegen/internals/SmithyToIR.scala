@@ -951,6 +951,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shape
             .members()
             .asScala
+            .filterNot(isStreaming)
             .map { member =>
               val memberDocs =
                 member.getTrait(classOf[DocumentationTrait]).asScala

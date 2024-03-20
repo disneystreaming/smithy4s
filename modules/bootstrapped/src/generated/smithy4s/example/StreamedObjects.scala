@@ -15,9 +15,6 @@ import smithy4s.schema.StreamingSchema
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
 
-  /** @param data
-    *   data docs
-    */
   def putStreamedObject(key: String): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
   def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
@@ -86,7 +83,6 @@ object StreamedObjectsOperation {
       .withInput(PutStreamedObjectInput.schema)
       .withOutput(unit)
       .withStreamedInput(StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Documentation("data docs"), smithy.api.Default(smithy4s.Document.fromString("")))))
-      .withHints()
     def wrap(input: PutStreamedObjectInput): PutStreamedObject = PutStreamedObject(input)
   }
   final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {

@@ -7,9 +7,6 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-/** @param data
-  *   data docs
-  */
 final case class PutStreamedObjectInput(key: String)
 
 object PutStreamedObjectInput extends ShapeTag.Companion[PutStreamedObjectInput] {
