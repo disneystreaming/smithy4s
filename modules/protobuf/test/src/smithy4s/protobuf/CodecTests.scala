@@ -3,17 +3,11 @@ package smithy4s.protobuf
 import munit._
 import smithy4s.schema.Schema
 import scalapb.GeneratedMessage
-import java.util.UUID
-// import smithy4s.Document
-// import smithy4s.Timestamp
 import smithy4s.Blob
 import smithy4s.ConstraintError
 import smithy4s.example.protobuf
 
 class CodecTests() extends FunSuite {
-
-  val uuid0 = new UUID(0, 0)
-  val uuid = new UUID(1, 1)
 
   test("Integers") {
     checkFull(
@@ -113,53 +107,12 @@ class CodecTests() extends FunSuite {
     )
   }
 
-  // test("UUID") {
-  //   val uuid1 = UUID.randomUUID()
-  //   val uuid2 = UUID.randomUUID()
-  //   checkFull(
-  //     protobuf.UUIDWrapper(
-  //       Some(uuid1),
-  //       Some(uuid2)
-  //     ),
-  //     protobuf.protobuf.UUIDWrapper(
-  //       uuid1.toString,
-  //       Some(
-  //         alloy.protobuf.types.CompactUUID(
-  //           uuid2.getMostSignificantBits(),
-  //           uuid2.getLeastSignificantBits()
-  //         )
-  //       )
-  //     )
-  //   )
-  // }
-
   test("UUID empty") {
     checkFull(
       protobuf.UUIDWrapper(None, None),
       protobuf.protobuf.UUIDWrapper("", None)
     )
   }
-
-  // test("timestamps") {
-  //   val timestamp = Timestamp(512, 1024)
-
-  //   val protoTimestamp = com.google.protobuf.Timestamp
-  //     .newBuilder()
-  //     .setSeconds(512)
-  //     .setNanos(1024)
-  //     .build()
-  //   val protoTimestampBytes = protoTimestamp.toByteArray()
-  //   val timestampCodec = ProtobufCodec.fromSchema(Schema.timestamp)
-  //   val parsedTimestamp =
-  //     timestampCodec.unsafeReadBlob(Blob(protoTimestampBytes))
-
-  //   val timestampBytes = timestampCodec.writeBlob(timestamp)
-  //   val parsedProtoTimestamp =
-  //     com.google.protobuf.Timestamp.parseFrom(timestampBytes.toArray)
-
-  //   assertEquals(parsedTimestamp, timestamp)
-  //   assertEquals(parsedProtoTimestamp, protoTimestamp)
-  // }
 
   test("Scalar list") {
     checkFull(
@@ -367,45 +320,6 @@ class CodecTests() extends FunSuite {
       )
     )
   }
-
-  // test("Documents") {
-  //   import com.google.protobuf._
-  //   import com.google.protobuf.util._
-  //   import Document.syntax._
-  //   val document = obj(
-  //     "null" -> nullDoc,
-  //     "boolean" -> true,
-  //     "number" -> 42.23d,
-  //     "string" -> "John Doe",
-  //     "array" -> array(false, 1, "two"),
-  //     "object" -> obj("nested" -> "Hello")
-  //   )
-
-  //   val json = """|{
-  //                 |  "null": null,
-  //                 |  "boolean": true,
-  //                 |  "number": 42.23,
-  //                 |  "string": "John Doe",
-  //                 |  "array" : [false, 1, "two"],
-  //                 |  "object": {
-  //                 |    "nested": "Hello"
-  //                 |  }
-  //                 |}
-  //                 |""".stripMargin
-
-  //   val protoJsonBuilder = Value.newBuilder()
-  //   JsonFormat.parser().ignoringUnknownFields().merge(json, protoJsonBuilder)
-  //   val protoJson = protoJsonBuilder.build()
-  //   val protoJsonBytes = protoJson.toByteArray()
-  //   val documentCodec = ProtobufCodec.fromSchema(Schema.document)
-  //   val parsedDocument = documentCodec.unsafeReadBlob(Blob(protoJsonBytes))
-
-  //   val documentBytes = documentCodec.writeBlob(document)
-  //   val parsedProtoJson = Value.parseFrom(documentBytes.toArray)
-
-  //   assertEquals(parsedDocument, document)
-  //   assertEquals(parsedProtoJson, protoJson)
-  // }
 
   test("Refinement") {
     val range = smithy.api.Range(Some(BigDecimal(1.0)), Some(BigDecimal(10.0)))

@@ -649,15 +649,18 @@ lazy val protobuf = projectMatrix
   )
   .settings(
     isMimaEnabled := false,
-    libraryDependencies ++= Seq(
-      if (virtualAxes.value.contains(VirtualAxis.jvm)) {
-        "com.google.protobuf" % "protobuf-java" % "3.24.0"
-      } else {
-        "com.thesamet.scalapb" %% "protobuf-runtime-scala" % "0.8.14"
-      },
-      Dependencies.Weaver.cats.value % Test
-    ),
     libraryDependencies ++= munitDeps.value,
+    libraryDependencies ++= {
+      if (virtualAxes.value.contains(VirtualAxis.jvm))
+        Seq(
+          "com.google.protobuf" % "protobuf-java" % "3.24.0",
+          "com.google.protobuf" % "protobuf-java-util" % "3.24.0" % Test
+        )
+      else
+        Seq(
+          "com.thesamet.scalapb" %% "protobuf-runtime-scala" % "0.8.14"
+        )
+    },
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)

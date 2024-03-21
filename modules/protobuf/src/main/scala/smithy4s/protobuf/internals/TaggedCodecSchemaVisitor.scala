@@ -7,6 +7,7 @@ import smithy4s.{Schema => _, _}
 import alloy.proto.ProtoIndex
 import alloy.proto.ProtoNumType
 import alloy.proto.ProtoInlinedOneOf
+import alloy.proto.ProtoTimestampFormat
 import alloy.proto.ProtoWrapped
 import java.util.UUID
 import smithy4s.protobuf.internals.TaggedCodec._
@@ -54,8 +55,13 @@ class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec]) extends
       case PBlob       => wrapLen(ByteArrayCodec).imap(Blob(_), _.toArray)
       case PBigDecimal => wrapLen(StringCodec).imap(bigDecimalConversion)
       case PBigInt     => wrapLen(StringCodec).imap(bigIntegerConversion)
-      case PTimestamp  => protoTimestampSchema.compile(this)
-      case PDocument   => protoJsonSchema.compile(this)
+      case PTimestamp =>
+        if (hints.get(ProtoTimestampFormat).contains(ProtoTimestampFormat.EPOCH_MILLIS)) {
+          protoTimestampMillisecondsSchema.compile(this)
+        } else {
+          protoTimestampSchema.compile(this)
+        }
+      case PDocument => protoJsonSchema.compile(this)
     }
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
   }
@@ -86,6 +92,11 @@ class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec]) extends
       Schema.long.required[Timestamp]("seconds", _.epochSecond).addHints(ProtoIndex(1)),
       Schema.int.required[Timestamp]("nanos", _.nano).addHints(ProtoIndex(2))
     )(Timestamp(_, _))
+
+  private val protoTimestampMillisecondsSchema = Schema
+    .struct(
+      Schema.long.required[Timestamp]("milliseconds", _.epochMilli).addHints(ProtoIndex(1))
+    )(Timestamp.fromEpochMilli)
 
   // see https://protobuf.dev/reference/protobuf/google.protobuf/#value
   // see https://github.com/protocolbuffers/protobuf/blob/5b32936822e64b796fa18fcff53df2305c6b7686/src/google/protobuf/struct.proto#L62
