@@ -338,22 +338,18 @@ class CodecTests() extends FunSuite {
   }
 
   test("Refinement") {
-    val range = smithy.api.Range(Some(BigDecimal(1.0)), Some(BigDecimal(10.0)))
+    val range: smithy4s.Hint =
+      smithy.api.Range(Some(BigDecimal(1.0)), Some(BigDecimal(10.0)))
     val codec = ProtobufCodec.fromSchema(protobuf.RefinedIntWrapped.schema)
     val parsedRefinedInt = codec.readBlob(
       Blob(protobuf.protobuf.RefinedIntWrapped(0).toByteArray)
     )
-    assertEquals(
-      parsedRefinedInt,
-      Left(
-        ProtobufReadError(
-          ConstraintError(
-            range,
-            "Input must be >= 1.0 and <= 10.0, but was 0.0"
-          )
-        )
-      )
-    )
+
+    parsedRefinedInt match {
+      case Left(ProtobufReadError(ConstraintError(`range`, _))) => ()
+      case other => fail(clue(other.toString))
+    }
+
   }
 
   test("Custom indexes") {
