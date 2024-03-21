@@ -178,7 +178,7 @@ object Timestamp extends TimestampCompanionPlatform {
   def fromEpochMilli(epochMilli: Long): Timestamp = {
     val secs = java.lang.Math.floorDiv(epochMilli, 1000)
     val mos = java.lang.Math.floorMod(epochMilli, 1000)
-    Timestamp(secs, (mos * 1000_000).toInt)
+    Timestamp(secs, (mos * 1000000).toInt)
   }
 
   private val digits: Array[Short] = Array(

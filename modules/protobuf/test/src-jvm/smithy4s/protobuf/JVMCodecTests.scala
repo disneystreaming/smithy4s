@@ -62,7 +62,7 @@ class JVMCodecTests() extends FunSuite {
   }
 
   test("Timestamps (epoch seconds)") {
-    val timestamp = Timestamp(512, 333 * 1000_000)
+    val timestamp = Timestamp(512, 333 * 1000000)
     val epochMilli = timestamp.epochMilli
     val timestampSchema = smithy4s.schema.Schema.timestamp
       .addHints(alloy.proto.ProtoTimestampFormat.EPOCH_MILLIS.widen)

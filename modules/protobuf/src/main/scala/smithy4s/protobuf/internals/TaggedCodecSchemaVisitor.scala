@@ -83,7 +83,7 @@ class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec]) extends
       Schema.long.addHints(ProtoIndex(1)),
       Schema.long.addHints(ProtoIndex(2))
     )
-    .biject { case (most, least) => new UUID(most, least) }(uuid =>
+    .biject { longTuple: (Long, Long) => new UUID(longTuple._1, longTuple._2) }(uuid =>
       (uuid.getMostSignificantBits(), uuid.getLeastSignificantBits())
     )
 
