@@ -16,14 +16,15 @@
 
 package smithy4s.protobuf
 
-import com.google.protobuf.CodedOutputStream
+import alloy.proto.ProtoIndex
 import com.google.protobuf.CodedInputStream
+import com.google.protobuf.CodedOutputStream
 import smithy4s._
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
 import smithy4s.protobuf.internals.TaggedCodec
 import smithy4s.protobuf.internals.TaggedCodec._
-import alloy.proto.ProtoIndex
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.Schema
+
 import java.io.InputStream
 import java.io.OutputStream
 

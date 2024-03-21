@@ -16,28 +16,29 @@
 
 package smithy4s.protobuf.internals
 
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.CompilationCache
-import smithy4s.schema._
-import smithy4s.{Schema => _, _}
+import alloy.proto.ProtoCompactUUID
 import alloy.proto.ProtoIndex
-import alloy.proto.ProtoNumType
 import alloy.proto.ProtoInlinedOneOf
+import alloy.proto.ProtoNumType
 import alloy.proto.ProtoTimestampFormat
 import alloy.proto.ProtoWrapped
-import java.util.UUID
+import smithy4s.Document.DArray
+import smithy4s.Document.DBoolean
+import smithy4s.Document.DNull
+import smithy4s.Document.DNumber
+import smithy4s.Document.DObject
+import smithy4s.Document.DString
 import smithy4s.protobuf.internals.TaggedCodec._
+import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.ClosedIntEnum
 import smithy4s.schema.EnumTag.ClosedStringEnum
 import smithy4s.schema.EnumTag.OpenIntEnum
 import smithy4s.schema.EnumTag.OpenStringEnum
-import smithy4s.Document.DNumber
-import smithy4s.Document.DArray
-import smithy4s.Document.DNull
-import smithy4s.Document.DBoolean
-import smithy4s.Document.DString
-import smithy4s.Document.DObject
-import alloy.proto.ProtoCompactUUID
+import smithy4s.schema.SchemaVisitor
+import smithy4s.schema._
+import smithy4s.{Schema => _, _}
+
+import java.util.UUID
 
 // scalafmt: {maxColumn = 120}
 class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec]) extends SchemaVisitor.Cached[TaggedCodec] {

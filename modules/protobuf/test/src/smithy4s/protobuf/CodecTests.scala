@@ -17,11 +17,11 @@
 package smithy4s.protobuf
 
 import munit._
-import smithy4s.schema.Schema
 import scalapb.GeneratedMessage
 import smithy4s.Blob
 import smithy4s.ConstraintError
 import smithy4s.example.protobuf
+import smithy4s.schema.Schema
 
 class CodecTests() extends FunSuite {
 

@@ -16,8 +16,8 @@
 
 package smithy4s.protobuf.internals
 
-import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.CodedInputStream
+import com.google.protobuf.CodedOutputStream
 
 private[internals] trait PrimitiveCodec[A] { self =>
   def wireType: Int

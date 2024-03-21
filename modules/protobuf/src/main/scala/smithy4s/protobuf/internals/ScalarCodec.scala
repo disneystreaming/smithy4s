@@ -16,10 +16,10 @@
 
 package smithy4s.protobuf.internals
 
-import com.google.protobuf.CodedOutputStream
-import com.google.protobuf.CodedInputStream
 import alloy.proto.ProtoNumType
 import alloy.proto.ProtoNumType._
+import com.google.protobuf.CodedInputStream
+import com.google.protobuf.CodedOutputStream
 
 /** A codec for primitive types that are considered Scalar (that is with a wire
   * type that is not length-delimited)
