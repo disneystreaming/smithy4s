@@ -64,6 +64,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
+  protobuf,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -88,7 +89,8 @@ lazy val docs =
       `aws-http4s` % "compile -> compile",
       complianceTests,
       dynamic,
-      bootstrapped
+      bootstrapped,
+      protobuf
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
