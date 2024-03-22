@@ -16,7 +16,7 @@
 
 package smithy4s.protobuf.internals
 
-object Wire {
+private[internals] object Wire {
 
   def encodeTag(protoIndex: Int, wireType: Int): Int =
     (protoIndex << 3) | wireType

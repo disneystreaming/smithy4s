@@ -41,7 +41,8 @@ import smithy4s.{Schema => _, _}
 import java.util.UUID
 
 // scalafmt: {maxColumn = 120}
-class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec]) extends SchemaVisitor.Cached[TaggedCodec] {
+private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec])
+    extends SchemaVisitor.Cached[TaggedCodec] {
 
   def primitive[P](
       shapeId: ShapeId,

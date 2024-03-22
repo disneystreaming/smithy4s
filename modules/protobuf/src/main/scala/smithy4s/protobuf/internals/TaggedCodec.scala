@@ -28,7 +28,7 @@ import scala.collection.mutable.Buffer
 
 import TaggedCodec._
 
-sealed trait TaggedCodec[A] {
+private[protobuf] sealed trait TaggedCodec[A] {
   def wireType: Int
   def isPrimitive: Boolean
   def prepareWrite(protoIndex: Int, a: A): WriteNode
@@ -60,7 +60,7 @@ sealed trait TaggedCodec[A] {
 
 }
 
-object TaggedCodec {
+private[protobuf] object TaggedCodec {
 
   final case class ScalarFieldCodec[A](
       underlying: ScalarCodec[A]

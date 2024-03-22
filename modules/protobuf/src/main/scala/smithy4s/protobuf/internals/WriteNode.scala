@@ -35,7 +35,7 @@ private[internals] abstract class WriteNode(val serialisedSize: Int) {
   def write(os: CodedOutputStream): Unit
 }
 
-object WriteNode {
+private[internals] object WriteNode {
 
   val empty: WriteNode = new WriteNode(0) {
     def write(os: CodedOutputStream): Unit = ()
