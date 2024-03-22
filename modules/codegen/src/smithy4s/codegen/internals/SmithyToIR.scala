@@ -35,8 +35,6 @@ import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -932,6 +930,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
+  private def streamingOperation(
+      op: OperationShape
+  ): (Option[Shape], Option[Shape]) = {
+    def forTarget(id: ShapeId): Option[MemberShape] = {
+      model.getShape(id).asScala.flatMap { shape =>
+        shape.members().asScala.find(isStreaming)
+      }
+    }
+    (
+      op.getInput().asScala.flatMap(forTarget),
+      op.getOutput().asScala.flatMap(forTarget)
+    )
+  }
+
   private def documentationHint(shape: Shape): Option[Hint] = {
     def split(s: String) =
       s.replace("*/", "\\*\\/").linesIterator.toList
@@ -939,6 +951,48 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .getTrait(classOf[DocumentationTrait])
       .asScala
       .foldMap(doc => split(doc.getValue()))
+
+    val operationDocs: List[String] = {
+      shape
+        .asOperationShape()
+        .asScala
+        .toList
+        .flatMap { op =>
+          streamingOperation(op) match {
+            case (Some(in), Some(out)) =>
+              val maybeDoc = for {
+                inMem <- in
+                  .asMemberShape()
+                  .asScala
+                  .map(_.getMemberName)
+                outMem <- out
+                  .asMemberShape()
+                  .asScala
+                  .map(_.getMemberName)
+              } yield s"This operation uses @streaming on both the input (${inMem}) and the output (${outMem})"
+              maybeDoc.toList
+            case (Some(in), None) =>
+              val maybeDoc = for {
+                inMem <- in
+                  .asMemberShape()
+                  .asScala
+                  .map(_.getMemberName)
+              } yield s"This operation uses @streaming on the input (${inMem})."
+              maybeDoc.toList
+            case (None, Some(out)) =>
+              val maybeDoc = for {
+                outMem <- out
+                  .asMemberShape()
+                  .asScala
+                  .map(_.getMemberName)
+              } yield s"This operation uses @streaming on the output (${outMem})."
+              maybeDoc.toList
+            case (None, None) =>
+              List.empty
+          }
+        }
+    }
+
     def getMemberDocs(shape: Shape): Map[String, List[String]] =
       shape match {
         case _: UnionShape => Map.empty
@@ -971,8 +1025,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
     val memberDocs = getMemberDocs(shape)
-    if (shapeDocs.nonEmpty || memberDocs.nonEmpty) {
-      Some(Hint.Documentation(shapeDocs, memberDocs))
+    val allShapeDocs = shapeDocs ++ operationDocs
+    if (allShapeDocs.nonEmpty || memberDocs.nonEmpty) {
+      Some(Hint.Documentation(allShapeDocs, memberDocs))
     } else None
   }
 

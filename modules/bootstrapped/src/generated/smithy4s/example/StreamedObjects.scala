@@ -15,7 +15,9 @@ import smithy4s.schema.StreamingSchema
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
 
+  /** This operation uses {@literal @}streaming on the input (data). */
   def putStreamedObject(key: String): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
+  /** This operation uses {@literal @}streaming on the output (data). */
   def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
   def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
