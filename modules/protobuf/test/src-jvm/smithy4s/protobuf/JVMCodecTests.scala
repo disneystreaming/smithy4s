@@ -30,7 +30,7 @@ class JVMCodecTests() extends FunSuite {
 
   test("UUID") {
     val uuid1 = UUID.randomUUID()
-    val uuid2 = UUID.randomUUID()
+    val uuid2 = smithy4s.example.protobuf.CompactUUID(UUID.randomUUID())
     val uuids = protobuf.UUIDWrapper(
       Some(uuid1),
       Some(uuid2)
@@ -39,8 +39,8 @@ class JVMCodecTests() extends FunSuite {
       uuid1.toString,
       Some(
         alloy.protobuf.types.CompactUUID(
-          uuid2.getMostSignificantBits(),
-          uuid2.getLeastSignificantBits()
+          uuid2.value.getMostSignificantBits(),
+          uuid2.value.getLeastSignificantBits()
         )
       )
     )
