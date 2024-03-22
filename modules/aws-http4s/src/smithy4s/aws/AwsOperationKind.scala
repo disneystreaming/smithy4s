@@ -29,10 +29,19 @@ object AwsOperationKind {
   }
 
   @implicitNotFound(
-    "Cannot prove that the operation is a blob upload: it's either meant to upload something else than bytes or has a streamed output"
+    "Cannot prove that the operation is a blob upload"
   )
   sealed trait ByteUpload[StreamedInput, StreamedOutput]
   object ByteUpload {
+    implicit val ByteUpload: ByteUpload[Byte, Nothing] =
+      new ByteUpload[Byte, Nothing] {}
+  }
+
+  @implicitNotFound(
+    "Cannot prove that the operation is a blob download"
+  )
+  sealed trait ByteDownload[StreamedInput, StreamedOutput]
+  object ByteDownload {
     implicit val ByteUpload: ByteUpload[Byte, Nothing] =
       new ByteUpload[Byte, Nothing] {}
   }
