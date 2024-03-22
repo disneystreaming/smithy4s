@@ -576,7 +576,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line".withOutput(${op.output.schemaRef})",
           op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
-          Option(op.hints).filter(_.nonEmpty).map(h => line".withHints(${memberHints(h)})")
+          memberHints(op.hints).surroundIfNotEmpty(line".withHints(", line")")
         ),
         line"def wrap(input: ${op.input}): $opNameRef = ${opNameRef}($input)"
       ),

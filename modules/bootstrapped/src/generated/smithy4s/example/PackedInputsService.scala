@@ -77,7 +77,6 @@ object PackedInputsServiceOperation {
     val schema: OperationSchema[PackedInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "PackedInputOperation"))
       .withInput(PackedInput.schema)
       .withOutput(unit)
-      .withHints()
     def wrap(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }
 }

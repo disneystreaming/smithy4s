@@ -131,6 +131,13 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
     }
   }
 
+  def surroundIfNotEmpty(before: Line, after: Line): Line = {
+    if (segments.isEmpty) this
+    else {
+      new Line(before.segments ++ self.segments ++ after.segments)
+    }
+  }
+
   def appendIf(condition: this.type => Boolean)(other: Line): Line =
     if (condition(this)) this + other else this
 
