@@ -24,10 +24,14 @@ import org.http4s.ember.client.EmberClientBuilder
 import com.amazonaws.{s3 => smithyS3}
 import smithy4s.aws._
 import java.net.URI
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object Main extends IOApp.Simple {
 
   val keyName = "overlay/production/main/index.html"
+  val newBytesName = "overlay/david/bytes-todelete.txt"
+  val newFileName = "overlay/david/file-todelete.txt"
   val bucketName = "apiregistry-general"
 
   override def run: IO[Unit] =
@@ -62,6 +66,7 @@ object Main extends IOApp.Simple {
     import software.amazon.awssdk.services.s3.S3Client
     import software.amazon.awssdk.services.s3.model._
     import software.amazon.awssdk.regions.Region
+    import software.amazon.awssdk.core.sync.RequestBody
     import software.amazon.awssdk.utils.AttributeMap
     import software.amazon.awssdk.http.SdkHttpConfigurationOption.TRUST_ALL_CERTIFICATES
 
@@ -94,7 +99,7 @@ object Main extends IOApp.Simple {
           .build()
       )
     )(s3 => IO.delay(s3.close()))
-    client.flatMap(makeS3).use { s3 =>
+    def getObject(s3: S3Client): IO[Unit] = {
       val getObjectRequest = GetObjectRequest
         .builder()
         .key(keyName)
@@ -102,6 +107,34 @@ object Main extends IOApp.Simple {
         .build()
       val get = IO.blocking(s3.getObjectAsBytes(getObjectRequest).asByteArray())
       get.flatMap { bytes => IO.println(s"got ${bytes.size} bytes") }
+    }
+    def putObject(s3: S3Client, data: Array[Byte]): IO[Unit] = {
+      val req =
+        PutObjectRequest
+          .builder()
+          .key(newBytesName)
+          .bucket(bucketName)
+          .build()
+      val body = RequestBody.fromBytes(data)
+      val put = IO.blocking(s3.putObject(req, body))
+      put.flatMap { resp => IO.println(s"upload bytes ${resp.checksumSHA1()}") }
+    }
+    def putObjectFile(s3: S3Client, path: Path): IO[Unit] = {
+      val req =
+        PutObjectRequest.builder().key(newFileName).bucket(bucketName).build()
+      val body = RequestBody.fromFile(path)
+      val put = IO.blocking(s3.putObject(req, body))
+      put.flatMap { resp => IO.println(s"upload file ${resp.checksumSHA1()}") }
+    }
+    client.flatMap(makeS3).use { s3 =>
+      getObject(s3) *>
+        putObject(s3, "my data is in s3".getBytes()) *>
+        putObjectFile(
+          s3,
+          Paths.get(
+            "/Users/David.Francoeur/workspace/dev/smithy4s/series-0.19/LICENSE"
+          )
+        )
     }
   }
 
