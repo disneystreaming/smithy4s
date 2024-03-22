@@ -44,6 +44,11 @@ object AwsClient {
       .map(_.build(awsEnv))
       .liftTo[Resource[F, *]]
 
+  def streamingClient[Alg[_[_, _, _, _, _]], F[_]: Async: Compression](
+      service: smithy4s.Service[Alg],
+      awsEnv: AwsEnvironment[F]
+  ): Resource[F, AwsClient[Alg, F]] = ???
+
   def prepare[Alg[_[_, _, _, _, _]]](
       service: smithy4s.Service[Alg]
   ): Either[AwsClientInitialisationError, AWSInterpreterBuilder[Alg]] =
