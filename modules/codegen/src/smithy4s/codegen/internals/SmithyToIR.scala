@@ -16,27 +16,28 @@
 
 package smithy4s.codegen.internals
 
+import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
-import smithy4s.meta.VectorTrait
-import smithy4s.meta.AdtTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
 import smithy4s.meta.TypeclassTrait
-import alloy.StructurePatternTrait
+import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
+import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -525,6 +526,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shapeId.getName()
         )
 
+      private def canBeRenderedAsValidatedNewtype(shapeId: ShapeId): Boolean = {
+        shapeId.getNamespace() != smithyNamespace
+      }
+
       private sealed trait ExternalTypeInfo
       private object ExternalTypeInfo {
         case class RefinementInfo(trt: RefinementTrait) extends ExternalTypeInfo
@@ -619,7 +624,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           !isUnboxedPrimitive(shape.getId())
         ) {
           val isUnwrapped = isUnwrappedShape(shape)
-          if (isUnwrapped || !hasConstraints(shape)) {
+          val canBeValidated = canBeRenderedAsValidatedNewtype(shape.getId())
+          if (isUnwrapped || !(hasConstraints(shape) && canBeValidated)) {
             Type
               .Alias(
                 shape.getId().getNamespace(),

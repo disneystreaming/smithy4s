@@ -16,8 +16,9 @@
 
 package smithy4s.codegen
 
-import sbt._
 import sbt.Keys._
+import sbt._
+
 import Smithy4sCodegenPlugin.autoImport._
 
 private final case class SmithyBuildData(

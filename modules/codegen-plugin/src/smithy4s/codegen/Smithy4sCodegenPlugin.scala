@@ -19,7 +19,10 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
-import scala.util.{Success, Try}
+
+import scala.util.Success
+import scala.util.Try
+
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
@@ -278,23 +281,22 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                 ) =>
               val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
                 cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
-              ) {
-                case (changed, prevResult) =>
-                  if (changed || prevResult.isEmpty) {
-                    val file =
-                      (config / smithy4sGeneratedSmithyMetadataFile).value
-                    IO.write(
-                      file,
-                      s"""$$version: "2"
-                         |metadata smithy4sWildcardArgument = "$wildcardArg"
-                         |metadata smithy4sRenderOptics = $shouldGenerateOptics
-                         |metadata smithy4sRenderValidatedNewtypes = $shouldRenderValidatedNewtypes
-                         |""".stripMargin
-                    )
-                    Seq(file)
-                  } else {
-                    prevResult.get
-                  }
+              ) { case (changed, prevResult) =>
+                if (changed || prevResult.isEmpty) {
+                  val file =
+                    (config / smithy4sGeneratedSmithyMetadataFile).value
+                  IO.write(
+                    file,
+                    s"""$$version: "2"
+                       |metadata smithy4sWildcardArgument = "$wildcardArg"
+                       |metadata smithy4sRenderOptics = $shouldGenerateOptics
+                       |metadata smithy4sRenderValidatedNewtypes = $shouldRenderValidatedNewtypes
+                       |""".stripMargin
+                  )
+                  Seq(file)
+                } else {
+                  prevResult.get
+                }
               }
               lastOutput(changed)
           }

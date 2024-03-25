@@ -1,15 +1,26 @@
-namespace smithy4s.example
+namespace newtypes.validated
 
 use smithy4s.meta#unwrap
+use alloy#simpleRestJson
 
 @length(min: 1, max: 10)
-string SimpleValidatedString
+string ValidatedCity
+
+@length(min: 1, max: 10)
+string ValidatedName
 
 @unwrap
 @length(min: 1, max: 10)
-string UnwrappedValidatedString
+string ValidatedCountry
 
-structure TestValidatedNewTypes {
-  one: SimpleValidatedString
-  two: UnwrappedValidatedString
+structure Person {
+  @httpLabel
+  @required
+  name: ValidatedName
+
+  @httpQuery("town")
+  town: ValidatedCity
+
+  @httpQuery("country")
+  country: ValidatedCountry
 }

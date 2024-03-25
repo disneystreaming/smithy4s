@@ -19,12 +19,12 @@ package smithy4s.codegen.internals
 import cats.~>
 
 import Type.Alias
+import Type.Nullable
 import Type.PrimitiveType
+import Type.ValidatedAlias
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
-import smithy4s.codegen.internals.Type.Nullable
-import smithy4s.codegen.internals.Type.ValidatedAlias
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {

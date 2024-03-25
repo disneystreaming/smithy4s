@@ -14,17 +14,20 @@
  *  limitations under the License.
  */
 
-package demo
+package newtypes.validated
 
-import smithy4s.example.{ SimpleValidatedString, TestValidatedNewTypes }
+import newtypes.validated._
 
 object Main extends App {
   try {
-    val validatedStringOrError: Either[String, SimpleValidatedString] = SimpleValidatedString("test")
+    val cityOrError: Either[String, ValidatedCity] = ValidatedCity("test-city")
+    val nameOrError: Either[String, ValidatedName] = ValidatedName("test-name")
+    val country: String = "test-country"
+
     println(
-      validatedStringOrError match {
-        case Right(value) => s"Success: ${TestValidatedNewTypes(value, "unwraped string test")}"
-        case Left(error) => s"Error: $error"
+      (nameOrError, cityOrError) match {
+        case (Right(name), Right(city)) => s"Success: ${Person(name, Some(city), Some("unwraped string test"))}"
+        case _ => s"Error"
       }
     )
   } catch {
