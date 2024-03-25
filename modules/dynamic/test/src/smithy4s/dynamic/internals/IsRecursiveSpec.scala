@@ -1,7 +1,5 @@
 package smithy4s.dynamic.internals
 
-import smithy4s.dynamic.internals.recursiveVertices
-
 class IsRecursiveSpec() extends munit.FunSuite {
 
   test("detect recursive vertices - example 1") {
