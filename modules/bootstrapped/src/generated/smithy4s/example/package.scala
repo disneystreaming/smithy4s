@@ -41,6 +41,7 @@ package object example {
   type Weather[F[_]] = smithy4s.kinds.FunctorAlgebra[WeatherGen, F]
   val Weather = WeatherGen
 
+  type UnwrappedValidatedString = smithy4s.example.UnwrappedValidatedString.Type
   type PublishersList = smithy4s.example.PublishersList.Type
   type TestString = smithy4s.example.TestString.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
@@ -60,6 +61,7 @@ package object example {
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type TestIdRefList = smithy4s.example.TestIdRefList.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
+  type ValidatedString = smithy4s.example.ValidatedString.Type
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type

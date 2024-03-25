@@ -110,7 +110,9 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
+      Schema
+        .struct(kField, vField)((_, _))
+        .addHints(UrlFormName("entry"))
     }
     compile(Schema.vector(kvSchema).addHints(hints))
       .map(_.toMap)

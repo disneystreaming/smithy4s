@@ -484,4 +484,103 @@ final class RendererSpec extends munit.FunSuite {
       )
     )
   }
+
+  test("newtype with constraint and smithy4sRenderValidatedNewtypes=false") {
+    val smithy = """
+                   |$version: "2"
+                   |
+                   |metadata smithy4sRenderValidatedNewtypes=false
+                   |
+                   |namespace smithy4s
+                   |
+                   |@length(min: 1, max: 10)
+                   |string MyValidatedString
+                   |
+                   |structure ValidatedFoo {
+                   |  mvs: MyValidatedString
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains("object MyValidatedString extends Newtype[String]")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains(
+          "final case class ValidatedFoo(mvs: Option[MyValidatedString] = None)"
+        )
+      )
+    )
+  }
+
+  test("newtype with constraint and smithy4sRenderValidatedNewtypes=true") {
+    val smithy = """
+                   |$version: "2"
+                   |
+                   |metadata smithy4sRenderValidatedNewtypes=true
+                   |
+                   |namespace smithy4s
+                   |
+                   |@length(min: 1, max: 10)
+                   |string MyValidatedString
+                   |
+                   |structure ValidatedFoo {
+                   |  mvs: MyValidatedString
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains("object MyValidatedString extends NewtypeValidated[String]")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains(
+          "final case class ValidatedFoo(mvs: Option[MyValidatedString] = None)"
+        )
+      )
+    )
+  }
+
+  test(
+    "unwrapped newtype with constraint and smithy4sRenderValidatedNewtypes=true"
+  ) {
+    val smithy = """
+                   |$version: "2"
+                   |
+                   |metadata smithy4sRenderValidatedNewtypes=true
+                   |
+                   |namespace smithy4s
+                   |
+                   |use smithy4s.meta#unwrap
+                   |
+                   |@unwrap
+                   |@length(min: 1, max: 10)
+                   |string MyValidatedString
+                   |
+                   |structure ValidatedFoo {
+                   |  mvs: MyValidatedString
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains("object MyValidatedString extends Newtype[String]")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains("final case class ValidatedFoo(mvs: Option[String] = None)")
+      )
+    )
+  }
 }
