@@ -249,7 +249,7 @@ In order to implement any server-side interpreters, it is required to have a lis
 
 For instance, smithy provides a `@http` trait out of the box that can annotate operations :
 
-```kotlin
+```smithy
 service KVStore {
   operations: [Get, Put]
 }

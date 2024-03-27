@@ -39,7 +39,7 @@ Smithy provides the following "primitive" types out of the box.
 
 Smithy lets you define custom names for primitive types:
 
-```kotlin
+```smithy
 namespace foo
 
 integer Age
@@ -52,7 +52,7 @@ These get translated as unboxed type wrappers, or `newtypes`, that look like a c
 
 Smithy provides 3 different shapes of collections: lists, sets, and maps. They translate to the corresponding `scala.collection` types in the generated Scala code.
 
-```kotlin
+```smithy
 namespace foo
 
 list IntList {
@@ -74,7 +74,7 @@ map AgeMap {
 
 Smithy supports two types of enums, for string and integers :
 
-```kotlin
+```smithy
 enum FooBar {
   FOO = "foo"
   BAR = "bar"
@@ -93,7 +93,7 @@ intEnum FaceCard {
 
 Structures are product types. In Scala, they naturally translate to case classes.
 
-```kotlin
+```smithy
 namespace foo
 
 structure Person {
@@ -111,7 +111,7 @@ Unions are coproduct types. In Scala, they quite naturally translate to sealed t
 
 Union members can target any data shape, be it a structure or a primitive type.
 
-```kotlin
+```smithy
 namespace foo
 
 structure Cat {
@@ -134,7 +134,7 @@ union Animal {
 
 Operations are essentially an optional Input, an optional Output, and an optional list of errors. Inputs, outputs and errors all have to be structure shapes.
 
-```kotlin
+```smithy
 namespace foo
 
 operation Greet {
@@ -171,7 +171,7 @@ The `getMessage` method of the throwable is implemented in terms of the followin
 
 Services are basically a list of operations, and an optional list of errors.
 
-```kotlin
+```smithy
 namespace foo
 
 service HelloService {

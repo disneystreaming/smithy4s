@@ -17,7 +17,7 @@ This value is set using metadata which means that the setting will be applied to
 
 `FULL` means that default values are rendered for all field types. For example:
 
-```kotlin
+```smithy
 metadata smithy4sDefaultRenderMode = "FULL"
 
 structure FullExample {
@@ -42,7 +42,7 @@ Notice how the fields above are ordered. The reason for this is that fields are 
 
 #### OPTION_ONLY
 
-```kotlin
+```smithy
 metadata smithy4sDefaultRenderMode = "OPTION_ONLY"
 
 structure OptionExample {
@@ -63,7 +63,7 @@ Now `one` doesn't have a default rendered and as such it is placed first in the 
 
 #### NONE
 
-```kotlin
+```smithy
 metadata smithy4sDefaultRenderMode = "NONE"
 
 structure OptionExample {

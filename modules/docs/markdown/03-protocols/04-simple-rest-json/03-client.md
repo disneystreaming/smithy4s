@@ -66,7 +66,7 @@ Here are some examples to show more what this looks like.
 
 Example smithy model:
 
-```kotlin
+```smithy
 operation TestOp {
   ...
   errors: [NotFoundError, ServiceUnavailableError, CatchAllClientError, CatchAllServerError]
@@ -106,7 +106,7 @@ And here are some scenarios using this example model. For all of these, assume t
 
 However, adding another error to the operation that looks like:
 
-```kotlin
+```smithy
 @error("client")
 structure AnotherError {
   message: String
@@ -126,7 +126,7 @@ Notice that the 400 status code cannot be properly mapped. This is because there
 
 Adding another error type to the operation that looks like:
 
-```kotlin
+```smithy
 @httpError(404)
 @error("client")
 structure AnotherNotFoundError {

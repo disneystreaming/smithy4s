@@ -10,7 +10,7 @@ This is because the union will create another case class to contain your structu
 
 For example:
 
-```kotlin
+```smithy
 union OrderType {
   inStore: InStoreOrder
 }
@@ -42,7 +42,7 @@ The sealed hierarchy `OrderType` has a member named `InStoreCase`. This is becau
 
 Adding the `smithy4s.meta#adt` trait to a `OrderType` union changes how the code for that union is generated.
 
-```kotlin
+```smithy
 @adt // added the adt trait here
 union OrderType {
   inStore: InStoreOrder
@@ -84,7 +84,7 @@ rendered schemas equivalent, even if the case class is rendered in a different p
 
 The `adt` trait has some extra functionality in place to improve ergonomics when working with the generated code. Specifically, the smithy4s code generation will extract all common mixins from the structure members the union targets and move them to the level of the sealed trait that represents the adt. This is easier to conceptualize with an example:
 
-```kotlin
+```smithy
 @adt
 union OrderType {
   inStore: InStoreOrder
@@ -143,7 +143,7 @@ Below we will explore the `smithy4s.meta#adtMember` trait. This trait is mutuall
 
 Here is an example of using the `adtMember` trait:
 
-```kotlin
+```smithy
 union OrderType {
   inStore: InStoreOrder
 }

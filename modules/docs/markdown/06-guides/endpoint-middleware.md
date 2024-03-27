@@ -35,7 +35,7 @@ def prepareWithHints(
 
 Let's look at the smithy specification that we will use for this guide. First, let's define the service.
 
-```kotlin
+```smithy
 $version: "2"
 
 namespace smithy4s.example.guides.auth
@@ -55,7 +55,7 @@ Here we defined a service that has two operations, `SayWorld` and `HealthCheck`.
 
 Next, let's define our first operation, `SayWorld`:
 
-```kotlin
+```smithy
 @readonly
 @http(method: "GET", uri: "/hello", code: 200)
 operation SayWorld {
@@ -69,7 +69,7 @@ structure World {
 
 There is nothing authentication-specific defined with this operation, this means that the operation inherits the service-defined authentication scheme (`httpBearerAuth` in this case). Let's contrast this with the `HealthCheck` operation:
 
-```kotlin
+```smithy
 @readonly
 @http(method: "GET", uri: "/health", code: 200)
 @auth([])
@@ -85,7 +85,7 @@ Notice that on this operation we have added the `@auth([])` trait with an empty 
 
 Finally, let's define the `NotAuthorizedError` that will be returned when an authentication token is missing or invalid.
 
-```kotlin
+```smithy
 @error("client")
 @httpError(401)
 structure NotAuthorizedError {

@@ -7,7 +7,7 @@ By default, Smithy4s generates methods the parameters of which map to the fields
 
 For instance :
 
-```kotlin
+```smithy
 service PackedInputsService {
   version: "1.0.0"
   operations: [PackedInputOperation]

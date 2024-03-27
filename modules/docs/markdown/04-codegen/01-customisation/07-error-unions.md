@@ -5,7 +5,7 @@ title: Error Unions representation
 
 By default, smithy4s renders service operations errors as ADTs. For example the following spec:
 
-```kotlin
+```smithy
 operation Operation {
   input: Unit,
   output: Unit,

@@ -7,7 +7,7 @@ Smithy supports `list` and `set`, Smithy4s renders that to `List[A]` and `Set[A]
 
 Smithy4s has support for two specialized collection types: `Vector` and `IndexedSeq`. The following examples show how to use them:
 
-```kotlin
+```smithy
 use smithy4s.meta#indexedSeq
 use smithy4s.meta#vector
 
