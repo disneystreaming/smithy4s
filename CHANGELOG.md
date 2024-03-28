@@ -1,3 +1,7 @@
+# 0.18.16
+
+* Adds a `smithy4s-protobuf` module, containing derivation logic for protobuf codecs. See https://github.com/disneystreaming/smithy4s/pull/1455
+
 # 0.18.15
 
 * Add support for injecting endpoint-specific middlewares in AWS clients
