@@ -57,7 +57,7 @@ object HttpRequest {
       def map[A, B](req: HttpRequest[A])(f: A => B): HttpRequest[B] = req.map(f)
     }
 
-  private[http] object Writer {
+  object Writer {
 
     def restSchemaCompiler[Body](
         metadataEncoders: CachedSchemaCompiler[Metadata.Encoder],
@@ -88,7 +88,7 @@ object HttpRequest {
       }
     }
 
-    private def metadataWriter[Body]: Writer[Body, Metadata] = {
+    def metadataWriter[Body]: Writer[Body, Metadata] = {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
         val newUri =

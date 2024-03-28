@@ -256,7 +256,7 @@ object HttpResponse {
 
   }
 
-  private def extractMetadata[F[_]](
+  def extractMetadata[F[_]](
       liftToF: PolyFunction[Either[MetadataError, *], F]
   ): PolyFunction[Metadata.Decoder, Decoder[F, Any, *]] =
     GenericDecoder

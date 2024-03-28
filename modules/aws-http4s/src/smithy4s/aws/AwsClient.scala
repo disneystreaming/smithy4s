@@ -31,6 +31,8 @@ import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 import smithy4s.http.HttpMethod
+import smithy4s.schema.{Schema, StreamingSchema}
+import smithy4s.capability.MonadThrowLike
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {
@@ -47,7 +49,11 @@ object AwsClient {
   def streamingClient[Alg[_[_, _, _, _, _]], F[_]: Async: Compression](
       service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
-  ): Resource[F, AwsClient[Alg, F]] = ???
+  ): Resource[F, AwsClient[Alg, F]] =
+    prepare(service)
+      .leftWiden[Throwable]
+      .map(_.buildFull(awsEnv))
+      .liftTo[Resource[F, *]]
 
   def prepare[Alg[_[_, _, _, _, _]]](
       service: smithy4s.Service[Alg]
@@ -69,6 +75,18 @@ object AwsClient {
       awsService: AwsService,
       val service: smithy4s.Service[Alg]
   ) {
+
+    // private def streamingCompiler[F[_]: Async: Compression](
+    //     awsEnv: AwsEnvironment[F]
+    // ): PolyFunction5[service.Endpoint, AwsCall[F, *, *, *, *, *]] = {
+    //   new PolyFunction5[service.Endpoint, AwsCall[F, *, *, *, *, *]] {
+    //     override def apply[I, E, O, SI, SO](
+    //         fa: service.Endpoint[I, E, O, SI, SO]
+    //     ): AwsCall[F, I, E, O, SI, SO] = {
+    //       service.
+    //     }
+    //   }
+    // }
 
     private def compiler[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
@@ -144,12 +162,91 @@ object AwsClient {
 
     // TODO : uncomment below when we start supporting streaming.
 
-    // def buildFull[F[_]: Async: Compression](
-    //     awsEnv: AwsEnvironment[F]
-    // ): AwsClient[Alg, F] =
-    //   service.fromPolyFunction(
-    //     service.functorInterpreter(compiler[F](awsEnv)).andThen(AwsCall.liftEffect[F])
-    //   )
+    def buildFull[F[_]: Async: Compression](
+        awsEnv: AwsEnvironment[F]
+    ): AwsClient[Alg, F] = {
+      service.fromPolyFunction(interpreter[F](awsEnv))
+    }
+
+    def interpreter[F[_]: Async: Compression](
+        awsEnv: AwsEnvironment[F]
+    ): service.Interpreter[AwsCall[F, *, *, *, *, *]] =
+      new service.Interpreter[AwsCall[F, *, *, *, *, *]] {
+        override def apply[I, E, O, SI, SO](
+            operation: service.Operation[I, E, O, SI, SO]
+        ): AwsCall[F, I, E, O, SI, SO] = {
+          val input = service.input(operation)
+          val endpoint = service.endpoint(operation)
+          val awsEndpoint = new AwsClientEndpoint[F, I, E, O, SI, SO](awsEnv, awsService, endpoint.schema)
+          (endpoint.streamedInput, endpoint.streamedOutput) match {
+            case (Some(_), Some(_)) => ??? // todo support biderectional streaming
+            case (Some(_), None)    => ??? // todo support upload streaming
+            case (None, Some(sso)) =>
+              awsEndpoint.downloader(endpoint.input, endpoint.output, sso)(input)
+            case (None, None) => ??? // todo support no streaming
+          }
+        }
+
+      }
+
   }
 
+}
+
+final class AwsClientEndpoint[F[_]: Async: Compression, I, E, O, SI, SO](
+    awsEnv: AwsEnvironment[F],
+    awsService: AwsService,
+    operationSchema: OperationSchema[I, E, O, SI, SO]
+) {
+  val baseRequest: F[HttpRequest[Blob]] = {
+    awsEnv.region.map { region =>
+      val endpointPrefix = awsService.endpointPrefix.getOrElse(operationSchema.id.name)
+      val baseUri = HttpUri(
+        scheme = HttpUriScheme.Https,
+        host = Some(s"$endpointPrefix.$region.amazonaws.com"),
+        port = None,
+        path = IndexedSeq.empty,
+        queryParams = Map.empty,
+        pathParams = None
+      )
+      // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
+      HttpRequest(HttpMethod.POST, baseUri, Map.empty, Blob.empty)
+    }
+  }
+
+  def downloader(
+      si: Schema[I],
+      so: Schema[O],
+      sso: StreamingSchema[SO]
+  )(input: I): AwsCall[F, I, E, O, SI, SO] = {
+    type InputEncoder = I => F[HttpRequest[Blob]]
+    type OutputDecoder = HttpResponse[fs2.Stream[F, Blob]] => Resource[F, (O, fs2.Stream[F, SO])]
+
+    def httpEncoder(req: HttpRequest[Blob]) = Metadata.AwsEncoder
+      .mapK(
+        smithy4s.codecs.Encoder.pipeToWriterK(HttpRequest.Writer.metadataWriter[Blob])
+      )
+      .fromSchema(si)
+      .toEncoder(req)
+
+    val httpDecoder = Metadata.AwsDecoder
+      .mapK(
+        HttpResponse.extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+      )
+      .fromSchema(so)
+
+    val iEncoder: InputEncoder = { input =>
+      baseRequest.map { req =>
+        val encoder = httpEncoder(req)
+        encoder.encode(input)
+      }
+    }
+
+    val oDecoder: OutputDecoder = { res =>
+      httpDecoder.decode(res)
+      ???
+    }
+
+    ???
+  }
 }

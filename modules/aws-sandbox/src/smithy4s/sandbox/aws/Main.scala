@@ -46,16 +46,25 @@ object Main extends IOApp.Simple {
 
   private def smithy4sS3(): IO[Unit] = {
     import smithyS3._
+    implicit val y: AwsOperationKind.ByteUpload[StreamingBlob, Nothing] =
+      new AwsOperationKind.ByteUpload[StreamingBlob, Nothing] {}
+    implicit val x: AwsOperationKind.ByteDownload[Nothing, StreamingBlob] =
+      new AwsOperationKind.ByteDownload[Nothing, StreamingBlob] {}
     val program = for {
       awsEnv <- awsEnvironmentResource
-      s3 <- AwsClient(S3, awsEnv)
-      res <- {
+      s3 <- AwsClient.streamingClient(S3, awsEnv)
+      _ <- {
         // F[GetObjectRequest, S3Operation.GetObjectError, GetObjectOutput, Nothing, StreamingBlob]
-        s3.getObject(BucketName(bucketName), ObjectKey(keyName)).map { output =>
-          IO.println(s"hey s3 ${output}")
+        s3.getObject(BucketName(bucketName), ObjectKey(keyName)).download.map {
+          output =>
+            IO.println(s"hey s3 ${output}")
         }
-      }.toResource
-    } yield res
+      }
+      _ <- s3
+        .putObject(BucketName(bucketName), ObjectKey(keyName))
+        .upload(fs2.Stream.empty)
+        .toResource
+    } yield ()
     program.use_
   }
 

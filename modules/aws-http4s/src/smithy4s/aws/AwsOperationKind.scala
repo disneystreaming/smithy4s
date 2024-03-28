@@ -28,22 +28,29 @@ object AwsOperationKind {
     implicit val unary: Unary[Nothing, Nothing] = new Unary[Nothing, Nothing] {}
   }
 
+  /**
+   * Removed the sealed because I'm unable to define an instance for StreamedBlob that's
+   * found by implicit search
+   */
   @implicitNotFound(
-    "Cannot prove that the operation is a blob upload"
+    "Cannot prove that the operation is a blob upload. No instance of ByteUpload[${StreamedInput}, ${StreamedOutput}]"
   )
-  sealed trait ByteUpload[StreamedInput, StreamedOutput]
+  trait ByteUpload[StreamedInput, StreamedOutput]
   object ByteUpload {
     implicit val ByteUpload: ByteUpload[Byte, Nothing] =
       new ByteUpload[Byte, Nothing] {}
   }
 
+  /**
+   * Removed the sealed because I'm unable to define an instance for StreamedBlob that's
+   * found by implicit search
+   */
   @implicitNotFound(
-    "Cannot prove that the operation is a blob download"
+    "Cannot prove that the operation is a blob download. No instance of ByteDownload[${StreamedInput}, ${StreamedOutput}"
   )
-  sealed trait ByteDownload[StreamedInput, StreamedOutput]
+  trait ByteDownload[StreamedInput, StreamedOutput]
   object ByteDownload {
-    implicit val ByteUpload: ByteUpload[Byte, Nothing] =
-      new ByteUpload[Byte, Nothing] {}
+    implicit val ByteDownload: ByteDownload[Nothing, Byte] =
+      new ByteDownload[Nothing, Byte] {}
   }
-
 }
