@@ -5,7 +5,7 @@ use alloy#UUID
 
 service StreamedObjects {
   version: "1.0.0",
-  operations: [PutStreamedObject, GetStreamedObject]
+  operations: [PutStreamedObject, GetStreamedObject, PutAndGetStreamedObject]
 }
 
 operation PutStreamedObject {
@@ -32,6 +32,11 @@ structure GetStreamedObjectInput {
 
 structure GetStreamedObjectOutput {
   data: StreamedBlob
+}
+
+operation PutAndGetStreamedObject {
+  input: PutStreamedObjectInput,
+  output: GetStreamedObjectOutput
 }
 
 @streaming
