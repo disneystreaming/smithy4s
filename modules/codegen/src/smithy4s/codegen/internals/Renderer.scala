@@ -576,7 +576,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line".withOutput(${op.output.schemaRef})",
           op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
-          Option(op.hints).filter(_.nonEmpty).map(h => line".withHints(${memberHints(h)})")
+          memberHints(op.hints).surroundIfNotEmpty(line".withHints(", line")")
         ),
         line"def wrap(input: ${op.input}): $opNameRef = ${opNameRef}($input)"
       ),
@@ -590,7 +590,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     import sField._
     val mh =
       if (hints.isEmpty) Line.empty
-      else line".addHints(${memberHints(hints)})"
+      else memberHints(hints).surroundIfNotEmpty(line".addHints(", line")")
     line"""$StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
   }
 
@@ -711,10 +711,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
-                val memHints = memberHints(hints)
                 val addMemHints =
-                  if (memHints.nonEmpty) line".addHints($memHints)"
-                  else Line.empty
+                  memberHints(hints).surroundIfNotEmpty(line".addHints(", line")")
                 // format: off
                 line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                 // format: on
@@ -1369,16 +1367,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
         val hintsLine =
-          if (hints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(hints)})"
+          memberHints(hints).surroundIfNotEmpty(line".addMemberHints(", line")")
         line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
       case Type.Map(key, keyHints, value, valueHints) =>
         val keyHintsLine =
-          if (keyHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(keyHints)})"
+          memberHints(keyHints).surroundIfNotEmpty(line".addMemberHints(", line")")
         val valueHintsLine =
-          if (valueHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(valueHints)})"
+          memberHints(valueHints).surroundIfNotEmpty(line".addMemberHints(", line")")
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
