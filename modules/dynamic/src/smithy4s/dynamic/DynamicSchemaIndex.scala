@@ -22,7 +22,7 @@ package dynamic
   * of services and schemas, that can be used to wire protocols together
   * without requiring code generation.
   */
-trait DynamicSchemaIndex {
+trait DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
   def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper]
   def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
     allServices.find(_.service.id == shapeId)
@@ -33,7 +33,7 @@ trait DynamicSchemaIndex {
   def metadata: Map[String, Document]
 }
 
-object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
+object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
 
   /**
     * Loads the model from a dynamic representation of smithy models
@@ -59,5 +59,10 @@ object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
 
     def service: Service[Alg]
   }
+
+  /**
+    * Returns a builder for creating a DynamicSchemaIndex manually
+    */
+  def builder: DynamicSchemaIndexBuilder = DynamicSchemaIndexBuilder()
 
 }

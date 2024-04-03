@@ -571,6 +571,9 @@ lazy val dynamic = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
+    Test / unmanagedClasspath ++= Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs"
+    ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
@@ -583,7 +586,11 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      libraryDependencies += Dependencies.Smithy.model
+      libraryDependencies ++= Seq(
+        Dependencies.Smithy.model,
+        Dependencies.Smithy.diff % Test,
+        Dependencies.Smithy.build % Test
+      )
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
