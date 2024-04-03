@@ -1,3 +1,8 @@
+# 0.18.16
+
+* Add `smithy4s.meta#only` annotation allowing to filter operations in 
+services, intended to reduce the amount of code generated from AWS specs
+
 # 0.18.15
 
 * Add support for injecting endpoint-specific middlewares in AWS clients

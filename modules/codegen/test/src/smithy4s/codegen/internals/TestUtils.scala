@@ -19,6 +19,7 @@ package smithy4s.codegen.internals
 import munit.Assertions
 import munit.Location
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
 
 object TestUtils {
 
@@ -99,6 +100,31 @@ object TestUtils {
       }
       .assemble()
       .unwrap()
+  }
+
+  def loadAndValidateModel(namespaces: String*): Model = {
+    val assembler = Model
+      .assembler()
+      .discoverModels()
+
+    namespaces
+      .foldLeft(assembler) { case (a, model) =>
+        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
+      }
+      .assemble()
+      .unwrap()
+  }
+
+  def serializeModel(model: Model): String = {
+    val sb = new StringBuilder
+    SmithyIdlModelSerializer.builder().build().serialize(model).forEach {
+      (path, contents) =>
+        sb.append(s"// $path\n")
+        sb.append(contents.trim + "\n")
+
+    }
+
+    sb.result()
   }
 
 }

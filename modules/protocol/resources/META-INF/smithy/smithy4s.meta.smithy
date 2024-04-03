@@ -12,6 +12,9 @@ metadata suppressions = [
 namespace smithy4s.meta
 
 @trait(selector: ":is(service, operation)")
+structure only {}
+
+@trait(selector: ":is(service, operation)")
 structure packedInputs {}
 
 /// the adtMember trait can be added to structures that are targeted by
