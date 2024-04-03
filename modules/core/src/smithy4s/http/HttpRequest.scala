@@ -47,7 +47,7 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
-  private[http] type Writer[Body, A] =
+  type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpRequest[Body], A]
   private[http] type Decoder[F[_], Body, A] =
     smithy4s.codecs.Decoder[F, HttpRequest[Body], A]
@@ -96,7 +96,7 @@ object HttpRequest {
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
-    private[http] def hostPrefix[Body, I](
+    def hostPrefix[Body, I](
         httpEndpoint: OperationSchema[I, _, _, _, _]
     ): Writer[Body, I] = {
       HttpHostPrefix(httpEndpoint) match {

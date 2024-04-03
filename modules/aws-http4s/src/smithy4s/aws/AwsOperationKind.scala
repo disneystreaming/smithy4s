@@ -17,6 +17,7 @@
 package smithy4s.aws
 
 import scala.annotation.implicitNotFound
+import smithy4s.Bijection
 
 object AwsOperationKind {
 
@@ -28,10 +29,6 @@ object AwsOperationKind {
     implicit val unary: Unary[Nothing, Nothing] = new Unary[Nothing, Nothing] {}
   }
 
-  /**
-   * Removed the sealed because I'm unable to define an instance for StreamedBlob that's
-   * found by implicit search
-   */
   @implicitNotFound(
     "Cannot prove that the operation is a blob upload. No instance of ByteUpload[${StreamedInput}, ${StreamedOutput}]"
   )
@@ -48,9 +45,15 @@ object AwsOperationKind {
   @implicitNotFound(
     "Cannot prove that the operation is a blob download. No instance of ByteDownload[${StreamedInput}, ${StreamedOutput}"
   )
-  trait ByteDownload[StreamedInput, StreamedOutput]
+  sealed trait ByteDownload[StreamedInput, StreamedOutput] {
+    def apply(value: Byte): StreamedOutput = value.asInstanceOf[StreamedOutput]
+  }
   object ByteDownload {
     implicit val ByteDownload: ByteDownload[Nothing, Byte] =
       new ByteDownload[Nothing, Byte] {}
+    implicit def fromBijection[T](implicit
+        ev: Bijection[Byte, T]
+    ): ByteDownload[Nothing, T] =
+      new ByteDownload[Nothing, T]() { locally(ev) }
   }
 }

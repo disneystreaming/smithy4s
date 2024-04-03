@@ -96,6 +96,13 @@ package object kernel {
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 
+  def toSmithy4sHttpResponseStream[F[_]: Concurrent](res: Response[F]): Smithy4sHttpResponse[fs2.Stream[F, Byte]] = {
+    val headers = res.headers.headers
+      .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
+      .toMap
+    Smithy4sHttpResponse(res.status.code, headers, res.body)
+  }
+
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
     val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
@@ -195,7 +202,7 @@ package object kernel {
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2).toList }
 
-  private def collectBytes[F[_]: Concurrent](
+  def collectBytes[F[_]: Concurrent](
       stream: fs2.Stream[F, Byte]
   ): F[Blob] = stream.chunks.compile
     .to(Chunk)

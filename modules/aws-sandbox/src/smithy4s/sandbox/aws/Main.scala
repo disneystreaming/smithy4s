@@ -46,24 +46,27 @@ object Main extends IOApp.Simple {
 
   private def smithy4sS3(): IO[Unit] = {
     import smithyS3._
-    implicit val y: AwsOperationKind.ByteUpload[StreamingBlob, Nothing] =
-      new AwsOperationKind.ByteUpload[StreamingBlob, Nothing] {}
-    implicit val x: AwsOperationKind.ByteDownload[Nothing, StreamingBlob] =
-      new AwsOperationKind.ByteDownload[Nothing, StreamingBlob] {}
+    // implicit val y: AwsOperationKind.ByteUpload[StreamingBlob, Nothing] =
+    //   new AwsOperationKind.ByteUpload[StreamingBlob, Nothing] {}
+    // implicit val x: AwsOperationKind.ByteDownload[Nothing, StreamingBlob] =
+    //   new AwsOperationKind.ByteDownload[Nothing, StreamingBlob] {
+    //     def apply(byte: Byte): StreamingBlob = StreamingBlob(byte)
+    //   }
     val program = for {
       awsEnv <- awsEnvironmentResource
       s3 <- AwsClient.streamingClient(S3, awsEnv)
-      _ <- {
-        // F[GetObjectRequest, S3Operation.GetObjectError, GetObjectOutput, Nothing, StreamingBlob]
-        s3.getObject(BucketName(bucketName), ObjectKey(keyName)).download.map {
-          output =>
-            IO.println(s"hey s3 ${output}")
-        }
+      res <- {
+        s3.getObject(BucketName(bucketName), ObjectKey(keyName))
+          .download
+          .evalMap { output =>
+            output.payload.compile.count
+          }
       }
-      _ <- s3
-        .putObject(BucketName(bucketName), ObjectKey(keyName))
-        .upload(fs2.Stream.empty)
-        .toResource
+      _ <- IO.println(s"Downloaded $res from S3").toResource
+      // _ <- s3
+      //   .putObject(BucketName(bucketName), ObjectKey(keyName))
+      //   .upload(fs2.Stream.empty)
+      //   .toResource
     } yield ()
     program.use_
   }
@@ -155,7 +158,8 @@ object Main extends IOApp.Simple {
         .map(
           RequestLogger.colored(
             logHeaders = true,
-            logBody = true
+            logBody = true,
+            redactHeadersWhen = _ => false
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]

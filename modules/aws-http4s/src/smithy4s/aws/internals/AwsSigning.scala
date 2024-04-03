@@ -123,7 +123,12 @@ private[aws] object AwsSigning {
               .mkString("&")
 
         // // !\ Important: these must remain in the same order
-        val baseHeadersList = List(
+        val amzHeaders: List[(CIString, String)] = request.headers.headers
+          .filter(_.name.toString.toLowerCase.startsWith("x-amz"))
+          .map(h => (h.name, h.value))
+          .filterNot(_._2 == null)
+
+        val addedHeaders: List[(CIString, String)] = List(
           `Content-Type` -> request.contentType.map(contentType.value(_)).orNull,
           `Host` -> request.uri.host.map(_.renderString).orNull,
           `X-Amz-Date` -> timestamp.conciseDateTime,
@@ -131,12 +136,14 @@ private[aws] object AwsSigning {
           `X-Amz-Target` -> (serviceName + "." + operationName)
         ).filterNot(_._2 == null)
 
-        val canonicalHeadersString = baseHeadersList
+        val allHeaders = (addedHeaders ++ amzHeaders).sortBy(_._1)
+
+        val canonicalHeadersString = allHeaders
           .map { case (key, value) =>
             key.toString.toLowerCase + ":" + value.trim
           }
           .mkString(newline)
-        lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
+        lazy val signedHeadersString = allHeaders.map(_._1).map(_.toString.toLowerCase()).mkString(";")
 
         val payloadHash = sha256HexDigest(body.toArray)
         val pathString = request.uri.path.toAbsolute.renderString
@@ -171,7 +178,7 @@ private[aws] object AwsSigning {
         val signature = toHexString(hmacSha256(stringToSign, signatureKey))
         val authHeaderValue = s"${algorithm} Credential=${credentials.accessKeyId}/$credentialsScope, SignedHeaders=$signedHeadersString, Signature=$signature"
         val authHeader = Headers("Authorization" -> authHeaderValue)
-        val baseHeaders = Headers(baseHeadersList.map { case (k, v) => Header.Raw(k, v) })
+        val baseHeaders = Headers(addedHeaders.map { case (k, v) => Header.Raw(k, v) })
         authHeader ++ baseHeaders
       }
 

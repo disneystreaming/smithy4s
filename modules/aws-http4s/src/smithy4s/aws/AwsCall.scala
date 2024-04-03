@@ -35,9 +35,13 @@ sealed trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
   def upload(payload: Stream[F, StreamedInput])(implicit ev: AwsOperationKind.ByteUpload[StreamedInput, StreamedOutput]): F[Output]
 
   def download(implicit ev: AwsOperationKind.ByteDownload[StreamedInput, StreamedOutput]) : Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]
+
+  def wideUpload[SI]: AwsCall[F, Input, Err, Output, SI, StreamedOutput] = this.asInstanceOf[AwsCall[F, Input, Err, Output, SI, StreamedOutput]]
+
+  def wideDownload[SO]: AwsCall[F, Input, Err, Output, StreamedInput, SO] = this.asInstanceOf[AwsCall[F, Input, Err, Output, StreamedInput, SO]]
 }
 
-case class AwsDownloadResult[F[_], O, SO](metadata: O, payload: Stream[F, O])
+case class AwsDownloadResult[F[_], O, SO](metadata: O, payload: Stream[F, SO])
 
 object AwsCall {
 
@@ -53,10 +57,12 @@ object AwsCall {
     def download(implicit ev: AwsOperationKind.ByteDownload[StreamedInput,Nothing]): Resource[F,AwsDownloadResult[F,Output,Nothing]] = sys.error("Impossible call")
   }
 
-  private final case class BlobDownloadAwsCall[F[_], Input, Err, Output, StreamedOutput](downloadResult: Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]) extends AwsCall[F, Input, Err, Output, Nothing, StreamedOutput]{
+  def download[F[_], Input, Err, Output, StreamedOutput](res: (Byte => StreamedOutput) => Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]): AwsCall[F, Input, Err, Output, Nothing, StreamedOutput] = new BlobDownloadAwsCall(res)
+
+  private final case class BlobDownloadAwsCall[F[_], Input, Err, Output, StreamedOutput](downloadResult: (Byte => StreamedOutput) => Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]) extends AwsCall[F, Input, Err, Output, Nothing, StreamedOutput]{
     def run(implicit ev: AwsOperationKind.Unary[Nothing,StreamedOutput]): F[Output] = sys.error("Impossible call")
     def upload(payload: Stream[F, Nothing])(implicit ev: AwsOperationKind.ByteUpload[Nothing,StreamedOutput]): F[Output] = sys.error("Impossible call")
-    def download(implicit ev: AwsOperationKind.ByteDownload[Nothing,StreamedOutput]): Resource[F,AwsDownloadResult[F,Output,StreamedOutput]] = downloadResult
+    def download(implicit ev: AwsOperationKind.ByteDownload[Nothing,StreamedOutput]): Resource[F,AwsDownloadResult[F,Output,StreamedOutput]] = downloadResult(ev.apply)
   }
 
 

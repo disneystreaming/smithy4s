@@ -31,8 +31,17 @@ import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 import smithy4s.http.HttpMethod
-import smithy4s.schema.{Schema, StreamingSchema}
+import smithy4s.schema.{Schema, ErrorSchema, StreamingSchema}
 import smithy4s.capability.MonadThrowLike
+import smithy4s.capability.Zipper
+import smithy4s.codecs.Decoder
+import org.http4s.Request
+import smithy4s.codecs.PayloadError
+import smithy4s.xml.internals.XmlStartingPath
+import smithy4s.xml.Xml
+import smithy4s.Hints
+import org.http4s.Header
+import org.typelevel.ci._
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {
@@ -177,12 +186,19 @@ object AwsClient {
         ): AwsCall[F, I, E, O, SI, SO] = {
           val input = service.input(operation)
           val endpoint = service.endpoint(operation)
-          val awsEndpoint = new AwsClientEndpoint[F, I, E, O, SI, SO](awsEnv, awsService, endpoint.schema)
+          val middleware = AwsSigning.middleware(awsEnv).prepare(service)(endpoint)
+          val awsEndpoint = new AwsClientEndpoint[F, I, E, O, SI, SO](awsEnv, awsService, endpoint.schema, middleware)
           (endpoint.streamedInput, endpoint.streamedOutput) match {
             case (Some(_), Some(_)) => ??? // todo support biderectional streaming
             case (Some(_), None)    => ??? // todo support upload streaming
             case (None, Some(sso)) =>
-              awsEndpoint.downloader(endpoint.input, endpoint.output, sso)(input)
+              awsEndpoint.downloader(
+                endpoint.input,
+                endpoint.error,
+                endpoint.output,
+                sso,
+                input
+              )
             case (None, None) => ??? // todo support no streaming
           }
         }
@@ -196,8 +212,17 @@ object AwsClient {
 final class AwsClientEndpoint[F[_]: Async: Compression, I, E, O, SI, SO](
     awsEnv: AwsEnvironment[F],
     awsService: AwsService,
-    operationSchema: OperationSchema[I, E, O, SI, SO]
+    operationSchema: OperationSchema[I, E, O, SI, SO],
+    middleware: Client[F] => Client[F]
 ) {
+  val requiredHeader =
+    Header.Raw(ci"x-amz-content-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+  val shaMiddleware: Client[F] => Client[F] = { client =>
+    Client { req =>
+      client.run(req.putHeaders(requiredHeader))
+    }
+  }
+  private val finalClient = (middleware.andThen(shaMiddleware))(awsEnv.httpClient)
   val baseRequest: F[HttpRequest[Blob]] = {
     awsEnv.region.map { region =>
       val endpointPrefix = awsService.endpointPrefix.getOrElse(operationSchema.id.name)
@@ -216,37 +241,113 @@ final class AwsClientEndpoint[F[_]: Async: Compression, I, E, O, SI, SO](
 
   def downloader(
       si: Schema[I],
+      se: Option[ErrorSchema[E]],
       so: Schema[O],
-      sso: StreamingSchema[SO]
-  )(input: I): AwsCall[F, I, E, O, SI, SO] = {
-    type InputEncoder = I => F[HttpRequest[Blob]]
-    type OutputDecoder = HttpResponse[fs2.Stream[F, Blob]] => Resource[F, (O, fs2.Stream[F, SO])]
+      sso: StreamingSchema[SO],
+      input: I
+  ): AwsCall[F, I, E, O, SI, SO] = {
+    type InputEncoder = I => F[Request[F]]
+    // how to carry the http4s response resource over in smithy4s httpresponse
+    type OutputDecoder = (Byte => SO) => Resource[F, Response[F]] => Resource[F, AwsDownloadResult[F, O, SO]]
 
-    def httpEncoder(req: HttpRequest[Blob]) = Metadata.AwsEncoder
+    val inputEncoders = Metadata.AwsEncoder
       .mapK(
         smithy4s.codecs.Encoder.pipeToWriterK(HttpRequest.Writer.metadataWriter[Blob])
       )
-      .fromSchema(si)
-      .toEncoder(req)
 
-    val httpDecoder = Metadata.AwsDecoder
-      .mapK(
-        HttpResponse.extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+    val inputWriter: HttpRequest.Writer[Blob, I] =
+      HttpEndpoint.cast(operationSchema).toOption match {
+        case Some(httpEndpoint) => {
+          val httpInputEncoder =
+            HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint)
+          val requestEncoder = inputEncoders.fromSchema(si)
+          httpInputEncoder.combine(requestEncoder)
+        }
+        case None => inputEncoders.fromSchema(si)
+      }
+
+    val httpDecoder = {
+      val zipper = Zipper[Decoder[F, HttpResponse[fs2.Stream[F, Byte]], *]]
+      val metadataDecoder = Metadata.AwsDecoder
+        .mapK(
+          HttpResponse.extractMetadata[F](MonadThrowLike.liftEitherK[F, MetadataError])
+        )
+        .fromSchema(so)
+
+      val bodyDecoder =
+        new Decoder[F, HttpResponse[fs2.Stream[F, Byte]], fs2.Stream[F, Byte]]() {
+          override def decode(in: HttpResponse[fs2.Stream[F, Byte]]): F[fs2.Stream[F, Byte]] = Async[F].pure(in.body)
+        }
+
+      zipper
+        .zipMap(metadataDecoder, bodyDecoder) { case (a, b) => (a, b) }
+        .compose[Response[F]](smithy4s.http4s.kernel.toSmithy4sHttpResponseStream(_))
+    }
+
+    val httpErrorDecoder = {
+      val bodyDecoder = Xml.decoders.mapK(
+        Decoder
+          .of[Blob]
+          .liftPolyFunction(
+            MonadThrowLike
+              .liftEitherK[F, PayloadError]
+              .andThen(HttpContractError.fromPayloadErrorK[F])
+          )
       )
-      .fromSchema(so)
+
+      val errorBodyDecoder =
+        HttpResponse.Decoder.restSchemaCompiler(Metadata.AwsDecoder, bodyDecoder, None)
+
+      val addErrorStartingPath = (_: Hints).add(XmlStartingPath(List("Response", "Errors", "Error")))
+      val discriminatorDecoders =
+        Xml.decoders.contramapSchema(Schema.transformHintsLocallyK(addErrorStartingPath))
+
+      def toStrict(blob: Blob): F[(Blob, Blob)] = Async[F].pure((blob, blob))
+
+      HttpResponse.Decoder.forErrorAsThrowable(
+        se,
+        errorBodyDecoder,
+        AwsErrorTypeDecoder.fromResponse(discriminatorDecoders),
+        toStrict
+      )
+
+    }
 
     val iEncoder: InputEncoder = { input =>
       baseRequest.map { req =>
-        val encoder = httpEncoder(req)
-        encoder.encode(input)
+        smithy4s.http4s.kernel.fromSmithy4sHttpRequest(
+          inputWriter.write(req, input)
+        )
       }
     }
 
-    val oDecoder: OutputDecoder = { res =>
-      httpDecoder.decode(res)
-      ???
+    val oDecoder: OutputDecoder = {
+      convert =>
+        { res_ =>
+          res_.evalTap(r => r.bodyText.compile.string.flatMap(b => Async[F].delay(println(b)))).evalMap { response =>
+            if (response.status.isSuccess)
+              httpDecoder
+                .decode(response)
+                .map { case (o, stream) =>
+                  AwsDownloadResult[F, O, SO](o, stream.map(convert))
+                }
+            else
+              smithy4s.http4s.kernel
+                .toSmithy4sHttpResponse(response)
+                .flatMap(httpErrorDecoder.decode)
+                .flatMap { err => Async[F].raiseError[AwsDownloadResult[F, O, SO]](err) }
+          }
+        }
     }
 
-    ???
+    AwsCall
+      .download[F, I, E, O, SO] { convert =>
+        val run = Resource.eval(iEncoder(input)).flatMap { request => finalClient.run(request) }
+        oDecoder(convert)(run)
+      }
+      // to resolve:
+      // [error] [aws-http4s]  found   : smithy4s.aws.AwsCall[F,I,E,O,Nothing,SO]
+      // [error] [aws-http4s]  required: smithy4s.aws.AwsCall[F,I,E,O,SI,SO]
+      .wideUpload[SI]
   }
 }
