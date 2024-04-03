@@ -125,25 +125,11 @@ private[dynamic] object Compiler {
         shapeId -> ClosureVisitor(shapeId, shape)
     }
 
+    private val recursiveShapesSet = recursiveVertices(closureMap)
+
     private def isRecursive(
-        id: ShapeId,
-        visited: Set[ShapeId] = Set.empty
-    ): Boolean = {
-      def transitiveClosure(
-          _id: ShapeId,
-          visited: Set[ShapeId]
-      ): Set[ShapeId] = {
-        val newVisited = visited + _id
-        val neighbours = closureMap.getOrElse(_id, Set.empty)
-        val nonVisitedNeighbours = neighbours.filterNot(newVisited)
-        val neighbourClosures =
-          nonVisitedNeighbours.flatMap(transitiveClosure(_, newVisited))
-        neighbours ++ neighbourClosures
-      }
-      val closure = transitiveClosure(id, Set.empty)
-      // A type is recursive if it's referenced in its own closure
-      closure.contains(id)
-    }
+        id: ShapeId
+    ): Boolean = recursiveShapesSet.contains(id)
 
     private def schema(idRef: IdRef): Eval[Schema[DynData]] = Eval.defer {
       schemaMap(
