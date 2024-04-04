@@ -68,7 +68,7 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
   // scalafmt: {maxColumn = 120}
   trait Builder {
 
-    def addService[Alg[_[_, _, _, _, _]]](service: Service[Alg]): Builder
+    def addService[Alg[_[_, _, _, _, _]]](implicit service: Service[Alg]): Builder
     def addSchema[A](implicit schema: Schema[A]): Builder
 
     final def addAll(convertibles: SmithyConvertible*): Builder =
@@ -112,9 +112,7 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
     /**
     * Add a `smithy4s.Service` which will be included when building the `DynamicSchemaIndex`
     */
-    def addService[Alg0[_[_, _, _, _, _]]](
-        service: Service[Alg0]
-    ): Builder =
+    def addService[Alg0[_[_, _, _, _, _]]](implicit service: Service[Alg0]): Builder =
       this.copy(services = this.services :+ WrappedService(service))
 
     /**
