@@ -19,7 +19,6 @@ package smithy4s.dynamic
 import software.amazon.smithy.model._
 import software.amazon.smithy.model.node._
 import scala.jdk.CollectionConverters._
-import scala.jdk.FunctionConverters._
 import software.amazon.smithy.build.transforms.FilterSuppressions
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
@@ -153,7 +152,7 @@ object ModelWrapper {
       .create()
       .filterTraits(
         model,
-        ((_: Shape, trt: Trait) => trt.toShapeId() != BoxTrait.ID).asJava
+        ((_: Shape, trt: Trait) => trt.toShapeId() != BoxTrait.ID)
       )
     new ModelWrapper(noBoxModel)
   }

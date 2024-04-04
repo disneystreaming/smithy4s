@@ -63,6 +63,86 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
   /**
     * Returns a builder for creating a DynamicSchemaIndex manually
     */
-  def builder: DynamicSchemaIndexBuilder = DynamicSchemaIndexBuilder()
+  def builder: Builder = new BuilderImpl(List.empty, Map.empty)
+
+  // scalafmt: {maxColumn = 120}
+  trait Builder {
+
+    def addService[Alg[_[_, _, _, _, _]]](service: Service[Alg]): Builder
+    def addSchema[A](implicit schema: Schema[A]): Builder
+
+    final def addAll(convertibles: SmithyConvertible*): Builder =
+      convertibles.foldLeft(this) {
+        case (builder, fs: SmithyConvertible.FromService[alg]) => builder.addService(fs.service)
+        case (builder, fs: SmithyConvertible.FromSchema[a])    => builder.addSchema(fs.schema)
+      }
+
+    def build(): DynamicSchemaIndex
+
+  }
+
+  sealed trait SmithyConvertible
+  object SmithyConvertible {
+
+    implicit def serviceToSmithyConvertible[Alg[_[_, _, _, _, _]]](service: Service[Alg]): SmithyConvertible =
+      FromService(service)
+
+    implicit def schemaToSmithyConvertible[A](schema: Schema[A]): SmithyConvertible =
+      FromSchema(schema)
+
+    protected[DynamicSchemaIndex] final case class FromService[Alg[_[_, _, _, _, _]]](service: Service[Alg])
+        extends SmithyConvertible
+    protected[DynamicSchemaIndex] final case class FromSchema[A](schema: Schema[A]) extends SmithyConvertible
+  }
+  private final case class WrappedService[Alg0[_[_, _, _, _, _]]](
+      val svc: Service[Alg0]
+  ) extends DynamicSchemaIndex.ServiceWrapper {
+    type Alg[P[_, _, _, _, _]] = Alg0[P]
+    def service: Service[Alg] = svc
+  }
+
+  /**
+  * Builder for creating a `DynamicSchemaIndex` manually
+  */
+  private final case class BuilderImpl(
+      services: List[DynamicSchemaIndex.ServiceWrapper],
+      schemas: Map[ShapeId, Schema[_]]
+  ) extends Builder {
+
+    /**
+    * Add a `smithy4s.Service` which will be included when building the `DynamicSchemaIndex`
+    */
+    def addService[Alg0[_[_, _, _, _, _]]](
+        service: Service[Alg0]
+    ): Builder =
+      this.copy(services = this.services :+ WrappedService(service))
+
+    /**
+    * Add a `smithy4s.Schema`s which will be included when building the `DynamicSchemaIndex`
+    */
+    def addSchema[A](implicit schema: Schema[A]): Builder =
+      this.copy(schemas = (this.schemas + (schema.shapeId -> schema)))
+
+    /**
+    * Build the DynamicSchemaIndex using the information in this builder.
+    *
+    * Note that the functions in this `DynamicSchemaIndex`, including `getServices`,
+    * `allSchemas`, and `getSchema` will only return the items that were placed into
+    * the builder directly and NOT the transitive values. Additionally, the metadata
+    * is always empty.
+    */
+    def build(): DynamicSchemaIndex =
+      new DynamicSchemaIndex {
+        def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper] =
+          services
+
+        def allSchemas: Iterable[Schema[_]] = schemas.values
+
+        def getSchema(shapeId: ShapeId): Option[Schema[_]] =
+          schemas.get(shapeId)
+
+        def metadata: Map[String, Document] = Map.empty
+      }
+  }
 
 }
