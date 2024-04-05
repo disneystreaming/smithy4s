@@ -114,17 +114,4 @@ object TestUtils {
       .assemble()
       .unwrap()
   }
-
-  def serializeModel(model: Model): String = {
-    val sb = new StringBuilder
-    SmithyIdlModelSerializer.builder().build().serialize(model).forEach {
-      (path, contents) =>
-        sb.append(s"// $path\n")
-        sb.append(contents.trim + "\n")
-
-    }
-
-    sb.result()
-  }
-
 }

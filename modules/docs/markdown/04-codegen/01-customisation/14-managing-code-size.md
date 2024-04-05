@@ -39,9 +39,9 @@ You start with the [smithy4s.g8 template](https://github.com/disneystreaming/smi
 
 As you run `compile` in your build tool, you can see that there are 428 files being compiled. Uh-oh.
 
-Those 428 files cover the entirety of Comprehend's [84 operations](https://docs.aws.amazon.com/comprehend/latest/APIReference/API_Operations.html) and all the dataclasses supporting them. But we don't need all of these operations - we only care about [DetectSentiment](https://docs.aws.amazon.com/comprehend/latest/APIReference/API_DetectSentiment.html).
+Those 428 files cover the entirety of Comprehend's [84 operations](https://docs.aws.amazon.com/comprehend/latest/APIReference/API_Operations.html) and all the datatypes supporting them. But we don't need all of these operations - we only care about [DetectSentiment](https://docs.aws.amazon.com/comprehend/latest/APIReference/API_DetectSentiment.html).
 
-### @only annotation
+### `@only` annotation
 
 To express exactly that, Smithy4s ships with a built-in annotation `smithy4s.meta#only`, which can be applied to operations (and **operations only**) that you would like to keep in generated code, along with all the other Smithy shapes they reference. 
 
@@ -64,7 +64,6 @@ namespace my.code
 use smithy4s.meta#only
 
 apply com.amazonaws.comprehend#DetectSentiment @only
-apply com.amazonaws.comprehend#CreateEntityRecognizer @only
 ```
 
 The namespace here doesn't matter. `com.amazonaws.comprehend#DetectSentiment` is a fully qualified name referring to the `DetectSentiment` operation in AWS Comprehend.
