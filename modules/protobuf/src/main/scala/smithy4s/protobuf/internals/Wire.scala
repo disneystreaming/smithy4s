@@ -30,10 +30,10 @@ private[internals] object Wire {
   //
   // NB : not ascribing types to get special encoding in bytecode.
   object WireType {
-    val Varint = 0x00
-    val Fixed64 = 0x01
-    val LengthDelimited = 0x02
-    val Fixed32 = 0x05
+    final val Varint = 0x00
+    final val Fixed64 = 0x01
+    final val LengthDelimited = 0x02
+    final val Fixed32 = 0x05
   }
 
 }
