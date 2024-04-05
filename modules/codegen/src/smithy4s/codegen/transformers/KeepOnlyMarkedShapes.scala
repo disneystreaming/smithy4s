@@ -31,7 +31,7 @@ class KeepOnlyMarkedShapes extends ProjectionTransformer {
   private val annotationName = "smithy4s.meta#only"
   private val protectedNamespaces = Set("smithy.api")
 
-  private def log(msg: Any) = {
+  private def log(msg: => Any) = {
     // Uncomment to actually see the logs
     // System.err.println(
     //   s"[KeepOnlyMarkedShapes]: $msg"
