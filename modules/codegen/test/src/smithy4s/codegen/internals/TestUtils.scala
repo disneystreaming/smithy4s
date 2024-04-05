@@ -101,4 +101,16 @@ object TestUtils {
       .unwrap()
   }
 
+  def loadAndValidateModel(namespaces: String*): Model = {
+    val assembler = Model
+      .assembler()
+      .discoverModels()
+
+    namespaces
+      .foldLeft(assembler) { case (a, model) =>
+        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
+      }
+      .assemble()
+      .unwrap()
+  }
 }
