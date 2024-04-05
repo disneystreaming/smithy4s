@@ -6,13 +6,13 @@ title: Managing code size
 As we currently do not have plans to publish pre-compiled AWS client artifacts,
 users are advised to generate the code for services they use as part of their own build setup.
 
-While the process is streamlined, it immediately presents a unique challenge - the amount of generated 
+While the process is streamlined, it immediately presents a unique challenge - the amount of generated
 code is quite large even for moderately sized AWS services, it can run into hundreds of files for various
 operations, data structures, and newtypes.
 
-Incremental compilation available in all Scala build tools generally handles this well: after compiling the mountain of files once, you are unlikely to ever have to recompile them again, unless you explicitly clean the cache. 
+Incremental compilation available in all Scala build tools generally handles this well: after compiling the mountain of files once, you are unlikely to ever have to recompile them again, unless you explicitly clean the cache.
 
-But there are situations where incremental compilation is not available – for example, on CI, or if building a deployment artifact from scratch. In those situations this amount of code can become problematic. 
+But there are situations where incremental compilation is not available – for example, on CI, or if building a deployment artifact from scratch. In those situations this amount of code can become problematic.
 
 Additionally, smaller code size in a Smithy4s application has a positive effect on application startup time, and allows you to build smaller, leaner JARs. With Scala Native and Scala.js this will also result in smaller binary/bundle sizes.
 
@@ -31,7 +31,7 @@ To demonstrate this approach better, let's immediately start with an example.
 
 Let's say you decided to build a service that uses [AWS Comprehend](https://docs.aws.amazon.com/comprehend/latest/dg/sdk-general-information-section.html) to detect sentiment in text provided by the user.
 
-You start with the [smithy4s.g8 template](https://github.com/disneystreaming/smithy4s.g8/), and, following the [documentation](01-aws.md), instruct Smithy4s plugin to generate you a client SDK for Comprehend:
+You start with the [smithy4s.g8 template](https://github.com/disneystreaming/smithy4s.g8/), and, following the [AWS support documentation](../../03-protocols/03-aws/01-aws.md), instruct Smithy4s plugin to generate you a client SDK for Comprehend:
 
 ```scala
     smithy4sAwsSpecs ++= Seq(AWS.comprehend)
@@ -43,7 +43,7 @@ Those 428 files cover the entirety of Comprehend's [84 operations](https://docs.
 
 ### `@only` annotation
 
-To express exactly that, Smithy4s ships with a built-in annotation `smithy4s.meta#only`, which can be applied to operations (and **operations only**) that you would like to keep in generated code, along with all the other Smithy shapes they reference. 
+To express exactly that, Smithy4s ships with a built-in annotation `smithy4s.meta#only`, which can be applied to operations (and **operations only**) that you would like to keep in generated code, along with all the other Smithy shapes they reference.
 
 The exact semantics of the annotation are as follows:
 
