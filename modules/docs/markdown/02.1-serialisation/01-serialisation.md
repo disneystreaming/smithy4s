@@ -35,7 +35,7 @@ The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotn
 This module is provided at the following coordinates :
 
 ```
-sbt : "com.disneystreaming.smithy4s"  % "smithy4s-json" % "@VERSION@"
+sbt : "com.disneystreaming.smithy4s" %% "smithy4s-json" % "@VERSION@"
 mill : "com.disneystreaming.smithy4s::smithy4s-json:@VERSION@"
 ```
 
@@ -70,7 +70,7 @@ By default, `smithy4s-json` abides by the semantics of :
 The `smithy4s-xml` module provides [fs2-data](https://fs2-data.gnieh.org/documentation/xml/) encoders/decoders that can read/write generated data-types from/to XML bytes/strings. It is provided at the following coordinates :
 
 ```
-sbt : "com.disneystreaming.smithy4s"  % "smithy4s-xml" % "@VERSION@"
+sbt : "com.disneystreaming.smithy4s" %% "smithy4s-xml" % "@VERSION@"
 mill : "com.disneystreaming.smithy4s::smithy4s-xml:@VERSION@"
 ```
 
@@ -98,7 +98,7 @@ By default, `smithy4s-xml` abides by the semantics of :
 The `smithy4s-protobuf` module provides [protocol-buffers](https://protobuf.dev/) codecs that can read/write generated data-types from protobuf-encoded bytes.
 
 ```
-sbt : "com.disneystreaming.smithy4s"  % "smithy4s-protobuf" % "@VERSION@"
+sbt : "com.disneystreaming.smithy4s" %% "smithy4s-protobuf" % "@VERSION@"
 mill : "com.disneystreaming.smithy4s::smithy4s-protobuf:@VERSION@"
 ```
 
