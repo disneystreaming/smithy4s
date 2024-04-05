@@ -19,7 +19,6 @@ package smithy4s.codegen.internals
 import munit.Assertions
 import munit.Location
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
 
 object TestUtils {
 
