@@ -1,3 +1,7 @@
+# 0.18.16
+
+* Add support for converting smithy4s services and schemas to smithy models
+
 # 0.18.15
 
 * Add support for injecting endpoint-specific middlewares in AWS clients
