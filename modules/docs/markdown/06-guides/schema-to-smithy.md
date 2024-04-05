@@ -33,7 +33,6 @@ If you wish to render the smithy `Model` as a String, smithy-model provides a me
 ```scala mdoc
 import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
 import scala.jdk.CollectionConverters._
-import scala.jdk.StreamConverters._
 import java.nio.file.Path
 
 val smithyFiles: Map[Path, String] = 
