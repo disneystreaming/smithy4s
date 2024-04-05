@@ -895,7 +895,7 @@ lazy val bootstrapped = projectMatrix
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
-    Test / fork := true,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
     exampleGeneratedResourcesOutput := (Compile / resourceDirectory).value,
     cleanFiles ++= Seq(
