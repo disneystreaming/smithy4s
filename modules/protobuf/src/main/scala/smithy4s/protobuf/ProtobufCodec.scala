@@ -34,7 +34,7 @@ trait ProtobufCodec[A] {
   final def readBlob(blob: Blob): Either[ProtobufReadError, A] = try {
     Right(unsafeReadBlob(blob))
   } catch {
-    case e: Throwable => Left(ProtobufReadError(e))
+    case scala.util.control.NonFatal(e) => Left(ProtobufReadError(e))
   }
   def unsafeReadBlob(blob: Blob): A
   def unsafeReadInputStream(inputStream: InputStream, closeAfter: Boolean): A

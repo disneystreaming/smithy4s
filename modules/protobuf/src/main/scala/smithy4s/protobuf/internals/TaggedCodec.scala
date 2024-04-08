@@ -71,7 +71,7 @@ private[protobuf] object TaggedCodec {
     def write(protoIndex: Int, a: A, os: CodedOutputStream): Unit =
       underlying.writeTag(protoIndex, a, os)
     def prepareWrite(protoIndex: Int, a: A): WriteNode = {
-      if (a == underlying.zero) {
+      if (underlying.isZero(a)) {
         WriteNode.empty
       } else prepareNonEmptyWrite(protoIndex, a)
     }
@@ -101,7 +101,7 @@ private[protobuf] object TaggedCodec {
     def oneOfTags: Option[Seq[Int]] = None
 
     def prepareWrite(protoIndex: Int, a: A): WriteNode = {
-      if (a == underlying.zero) {
+      if (underlying.isZero(a)) {
         WriteNode.empty
       } else prepareNonEmptyWrite(protoIndex, a)
     }
