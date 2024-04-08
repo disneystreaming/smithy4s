@@ -197,6 +197,16 @@ class CodecTests() extends FunSuite {
     )
   }
 
+  test("MessageWrapper (required fields recover from absence of value)") {
+    val proto = protobuf.protobuf.MessageWrapper(None)
+    val smithy = protobuf.MessageWrapper(protobuf.Integers(0, 0, 0, 0, 0))
+
+    val codec = ProtobufCodec[protobuf.MessageWrapper]
+    val protoBytes = Blob(proto.toByteArray)
+    val smithyParsed = codec.unsafeReadBlob(protoBytes)
+    assertEquals(smithyParsed, smithy)
+  }
+
   test("MessageWrapper (zeros)") {
     checkFull(
       protobuf.MessageWrapper(protobuf.Integers(0, 0, 0, 0, 0)),
