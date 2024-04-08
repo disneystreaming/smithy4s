@@ -200,8 +200,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
   ): TaggedCodec[E] = tag match {
     case ClosedIntEnum | ClosedStringEnum =>
       val allIndexed = values.forall(_.hints.has(ProtoIndex))
+      val noneIndexed = values.forall(!_.hints.has(ProtoIndex))
+      assert(
+        allIndexed || noneIndexed,
+        "Either all enum values should have explicit proto indexes, or none should have them"
+      )
       val indexedValues = values.zipWithIndex.map { case (ev, index) =>
-        val protoIndex = if (allIndexed) ev.hints.get(ProtoIndex).map(_.value).getOrElse(index) else index
+        val protoIndex = if (allIndexed) ev.hints.get(ProtoIndex).get.value else index
         (protoIndex, ev.value)
       }
       val default = indexedValues.find(_._1 == 0).get._2
@@ -237,8 +242,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
     }
 
     val allIndexed = fields.forall(_.hints.has(ProtoIndex))
+    val noneIndexed = fields.forall(!_.hints.has(ProtoIndex))
+    assert(
+      allIndexed || noneIndexed,
+      "Either all structure fields should have explicit proto indexes, or none should have them"
+    )
     val fieldCodecs = fields.zipWithIndex.map { case (field, index) =>
-      val protoIndex: Int = if (allIndexed) field.hints.get(ProtoIndex).map(_.value).getOrElse(index + 1) else index + 1
+      val protoIndex: Int = if (allIndexed) field.hints.get(ProtoIndex).get.value else index + 1
       compileField(field, protoIndex)
     }
 
@@ -255,8 +265,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       TaggedCodec.OneOfAlternative(protoIndex, alt.schema.compile(this), alt.inject, alt.project)
     }
     val allIndexed = alternatives.forall(_.hints.has(ProtoIndex))
+    val noneIndexed = alternatives.forall(!_.hints.has(ProtoIndex))
+    assert(
+      allIndexed || noneIndexed,
+      "Either all union alternatives should have explicit proto indexes, or none should have them"
+    )
     val altCodecs = alternatives.zipWithIndex.map { case (alt, index) =>
-      val protoIndex: Int = if (allIndexed) alt.hints.get(ProtoIndex).map(_.value).getOrElse(index + 1) else index + 1
+      val protoIndex: Int = if (allIndexed) alt.hints.get(ProtoIndex).get.value else index + 1
       compileAlt(alt, protoIndex)
     }
 
