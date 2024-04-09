@@ -16,33 +16,34 @@
 
 package smithy4s.codegen.internals
 
-import cats.data.NonEmptyList
+import Type.Alias
+import alloy.StructurePatternTrait
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
+import smithy4s.meta.TypeclassTrait
 import smithy4s.meta.VectorTrait
-import smithy4s.meta.AdtTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
-import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
+import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
-import Type.Alias
-import smithy4s.meta.TypeclassTrait
+import cats.data.NonEmptyList
+import software.amazon.smithy.model.traits.DefaultTrait
 
 private[codegen] object SmithyToIR {
 

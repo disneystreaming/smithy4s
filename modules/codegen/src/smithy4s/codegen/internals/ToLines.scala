@@ -16,11 +16,11 @@
 
 package smithy4s.codegen.internals
 
+import LineSegment.Literal
+import LineSegment.NameRef
+import cats.Foldable
 import cats.kernel.Monoid
 import cats.syntax.all._
-
-import LineSegment.{Literal, NameRef}
-import cats.Foldable
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists

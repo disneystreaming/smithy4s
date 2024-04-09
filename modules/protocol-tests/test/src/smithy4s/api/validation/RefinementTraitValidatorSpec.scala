@@ -18,8 +18,8 @@ package smithy4s.api.validation
 
 import smithy4s.meta.validation.RefinementTraitValidator
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.validation._
 

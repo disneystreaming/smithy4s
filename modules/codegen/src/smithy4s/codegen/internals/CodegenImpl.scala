@@ -24,9 +24,9 @@ import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model.transform.ModelTransformer
 
 import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.transform.ModelTransformer
 
 private[codegen] object CodegenImpl { self =>
 

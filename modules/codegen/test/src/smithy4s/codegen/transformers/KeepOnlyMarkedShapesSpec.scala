@@ -17,9 +17,9 @@
 package smithy4s.codegen.transformers
 
 import software.amazon.smithy.build.TransformContext
+import software.amazon.smithy.model.shapes.ShapeId
 
 import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.shapes.ShapeId
 
 final class KeepOnlyMarkedShapesSpec extends munit.FunSuite {
   import smithy4s.codegen.internals.TestUtils._
