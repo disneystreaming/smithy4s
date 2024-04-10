@@ -21,6 +21,7 @@ import smithy4s.Hint
 
 sealed trait ProtobufReadError extends Throwable
 
+// scalafmt: { maxColumn = 120}
 object ProtobufReadError {
   final case class Other private (cause: Throwable) extends ProtobufReadError {
     override def getMessage() = "Failed to decode protobuf message"
@@ -28,6 +29,7 @@ object ProtobufReadError {
   }
 
   object Other {
+    def apply(cause: Throwable): Other = new Other(cause)
     def unapply(error: Other): Some[Other] = Some(error)
   }
 
@@ -43,9 +45,9 @@ object ProtobufReadError {
   }
 
   object MissingRequiredField {
-    def unapply(error: MissingRequiredField): Some[MissingRequiredField] = Some(
-      error
-    )
+    def apply(shapeId: ShapeId, fieldName: String, index: Int): MissingRequiredField =
+      new MissingRequiredField(shapeId, fieldName, index)
+    def unapply(error: MissingRequiredField): Some[MissingRequiredField] = Some(error)
   }
 
   final case class ViolatedConstraint private (
@@ -59,9 +61,8 @@ object ProtobufReadError {
   }
 
   object ViolatedConstraint {
-    def unapply(error: ViolatedConstraint): Some[ViolatedConstraint] = Some(
-      error
-    )
+    def apply(hint: Hint, message: String): ViolatedConstraint = new ViolatedConstraint(hint, message)
+    def unapply(error: ViolatedConstraint): Some[ViolatedConstraint] = Some(error)
   }
 
 }
