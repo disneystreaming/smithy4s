@@ -27,10 +27,13 @@ import smithy4s.schema.CollectionTag
 import scala.collection.mutable.Buffer
 
 import TaggedCodec._
+import smithy4s.protobuf.ProtobufReadError
+import smithy4s.ShapeId
 
 private[protobuf] sealed trait TaggedCodec[A] {
   def wireType: Int
   def isPrimitive: Boolean
+  def isMessage: Boolean
   def prepareWrite(protoIndex: Int, a: A): WriteNode
   def prepareNonEmptyWrite(protoIndex: Int, a: A): WriteNode
   def prepareRead(): ReadNode[A]
@@ -67,6 +70,7 @@ private[protobuf] object TaggedCodec {
   ) extends TaggedCodec[A] {
     def wireType: Int = underlying.wireType
     def isPrimitive: Boolean = true
+    def isMessage: Boolean = false
     def oneOfTags: Option[Seq[Int]] = None
     def write(protoIndex: Int, a: A, os: CodedOutputStream): Unit =
       underlying.writeTag(protoIndex, a, os)
@@ -98,6 +102,7 @@ private[protobuf] object TaggedCodec {
   ) extends TaggedCodec[A] {
     def wireType: Int = underlying.wireType
     def isPrimitive: Boolean = true
+    def isMessage: Boolean = false
     def oneOfTags: Option[Seq[Int]] = None
 
     def prepareWrite(protoIndex: Int, a: A): WriteNode = {
@@ -129,6 +134,7 @@ private[protobuf] object TaggedCodec {
       collectionTag: CollectionTag[C]
   ) extends TaggedCodec[C[A]] {
     def isPrimitive: Boolean = false
+    def isMessage: Boolean = false
     def wireType: Int = Wire.WireType.LengthDelimited
     def oneOfTags: Option[Seq[Int]] = None
 
@@ -183,6 +189,7 @@ private[protobuf] object TaggedCodec {
   ) extends TaggedCodec[C[A]] {
     def wireType: Int = codec.wireType
     def isPrimitive: Boolean = false
+    def isMessage: Boolean = false
     def oneOfTags: Option[Seq[Int]] = None
 
     def prepareWrite(protoIndex: Int, ca: C[A]): WriteNode =
@@ -229,7 +236,6 @@ private[protobuf] object TaggedCodec {
   object FieldTags {
     case class Simple(protoIndex: Int) extends FieldTags
     case class OneOf(tags: Seq[Int]) extends FieldTags
-
   }
 
   final case class FieldCodec[S, A](
@@ -260,6 +266,7 @@ private[protobuf] object TaggedCodec {
   ) extends TaggedCodec[A] {
 
     def isPrimitive: Boolean = false
+    def isMessage: Boolean = true
     def wireType: Int = Wire.WireType.LengthDelimited
     def oneOfTags: Option[Seq[Int]] = None
 
@@ -388,6 +395,7 @@ private[protobuf] object TaggedCodec {
     def oneOfTags: Option[Seq[Int]] = Some(alts.map(_.tag).toList)
 
     def isPrimitive: Boolean = false
+    def isMessage: Boolean = false
 
     def prepareWrite(u: U): WriteNode = {
       val index = ordinal(u)
@@ -421,6 +429,7 @@ private[protobuf] object TaggedCodec {
       from: B => A
   ) extends TaggedCodec[B] {
     def isPrimitive: Boolean = underlying.isPrimitive
+    def isMessage: Boolean = underlying.isMessage
     def wireType: Int = underlying.wireType
     def oneOfTags: Option[Seq[Int]] = underlying.oneOfTags
 
@@ -436,6 +445,7 @@ private[protobuf] object TaggedCodec {
   final case class OptionCodec[A](underlying: TaggedCodec[A])
       extends TaggedCodec[Option[A]] {
     def isPrimitive: Boolean = underlying.isPrimitive
+    def isMessage: Boolean = underlying.isMessage
     def wireType = underlying.wireType
     def oneOfTags: Option[Seq[Int]] = underlying.oneOfTags
 
@@ -462,9 +472,44 @@ private[protobuf] object TaggedCodec {
     }
   }
 
+  final case class StrictlyRequiredCodec[A](
+      shapeId: ShapeId,
+      field: String,
+      protoIndex: Int,
+      underlying: TaggedCodec[A]
+  ) extends TaggedCodec[A] {
+    def isPrimitive: Boolean = underlying.isPrimitive
+    def isMessage: Boolean = underlying.isMessage
+    def wireType = underlying.wireType
+    def oneOfTags: Option[Seq[Int]] = underlying.oneOfTags
+
+    def prepareWrite(protoIndex: Int, a: A): WriteNode =
+      underlying.prepareWrite(protoIndex: Int, a)
+
+    def prepareNonEmptyWrite(protoIndex: Int, a: A): WriteNode =
+      prepareWrite(protoIndex, a)
+
+    override def prepareRead(): ReadNode[A] = new ReadNode[A] {
+      val readA = underlying.prepareRead()
+      var wasRead: Boolean = false
+      def readOne(is: CodedInputStream): Unit = {
+        readA.readOne(is)
+        wasRead = readA.wasRead
+      }
+      def readOne(tag: Int, is: CodedInputStream): Unit = {
+        readA.readOne(tag, is)
+        wasRead = readA.wasRead
+      }
+      def complete(): A = if (wasRead) readA.complete()
+      else
+        throw ProtobufReadError.MissingRequiredField(shapeId, field, protoIndex)
+    }
+  }
+
   final case class RecursiveCodec[A](suspended: Lazy[TaggedCodec[A]])
       extends TaggedCodec[A] {
     def isPrimitive: Boolean = false
+    def isMessage: Boolean = true
     def wireType = suspended.value.wireType
     def oneOfTags: Option[Seq[Int]] = None
 
@@ -510,6 +555,7 @@ private[protobuf] object TaggedCodec {
       extends TaggedCodec[E] {
     def wireType: Int = Wire.WireType.Varint
     def isPrimitive: Boolean = true
+    def isMessage: Boolean = false
 
     val enumToIntMap = rest.map(_.swap).toMap + (default -> 0)
     val intToEnumMap = rest.toMap

@@ -39,6 +39,8 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import java.util.UUID
+import smithy.api.Required
+import smithy4s.protobuf.ProtobufReadError
 
 // scalafmt: {maxColumn = 120}
 private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec])
@@ -237,7 +239,10 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
         case Some(oneOfTags) =>
           TaggedCodec.FieldCodec(FieldTags.OneOf(oneOfTags), codec, field.get)
         case _ =>
-          TaggedCodec.FieldCodec(FieldTags.Simple(protoIndex), codec, field.get)
+          val maybeRequiredCodec = if (field.hints.has(Required) && codec.isMessage) {
+            TaggedCodec.StrictlyRequiredCodec(shapeId, field.label, protoIndex, codec)
+          } else codec
+          TaggedCodec.FieldCodec(FieldTags.Simple(protoIndex), maybeRequiredCodec, field.get)
       }
     }
 
@@ -287,7 +292,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
   def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): TaggedCodec[B] = this(schema).imap(refinement.asThrowingFunction, refinement.from)
+  ): TaggedCodec[B] = {
+    val throwingTo: A => B = refinement.asFunction andThen {
+      case Left(error)  => throw ProtobufReadError.ViolatedConstraint(error.hint, error.message)
+      case Right(value) => value
+    }
+    this(schema).imap(throwingTo, refinement.from)
+  }
 
   def lazily[A](suspend: Lazy[Schema[A]]): TaggedCodec[A] =
     RecursiveCodec(suspend.map(this.apply))

@@ -19,9 +19,9 @@ package smithy4s.protobuf
 import munit._
 import scalapb.GeneratedMessage
 import smithy4s.Blob
-import smithy4s.ConstraintError
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
+import smithy4s.ShapeId
 
 class CodecTests() extends FunSuite {
 
@@ -197,14 +197,22 @@ class CodecTests() extends FunSuite {
     )
   }
 
-  test("MessageWrapper (required fields recover from absence of value)") {
+  test(
+    "MessageWrapper (required message fields fail from an absence of value)"
+  ) {
     val proto = protobuf.protobuf.MessageWrapper(None)
-    val smithy = protobuf.MessageWrapper(protobuf.Integers(0, 0, 0, 0, 0))
 
     val codec = ProtobufCodec[protobuf.MessageWrapper]
     val protoBytes = Blob(proto.toByteArray)
-    val smithyParsed = codec.unsafeReadBlob(protoBytes)
-    assertEquals(smithyParsed, smithy)
+    val smithyParsed = codec.readBlob(protoBytes)
+    val expected = Left(
+      ProtobufReadError.MissingRequiredField(
+        ShapeId("smithy4s.example.protobuf", "MessageWrapper"),
+        "message",
+        1
+      )
+    )
+    assertEquals(smithyParsed, expected)
   }
 
   test("MessageWrapper (zeros)") {
@@ -356,7 +364,8 @@ class CodecTests() extends FunSuite {
     )
 
     parsedRefinedInt match {
-      case Left(ProtobufReadError(ConstraintError(`range`, _))) => ()
+      case Left(e: ProtobufReadError.ViolatedConstraint) if e.hint == range =>
+        ()
       case other => fail(clue(other.toString))
     }
 

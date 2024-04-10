@@ -16,7 +16,52 @@
 
 package smithy4s.protobuf
 
-case class ProtobufReadError(cause: Throwable) extends Throwable {
-  override def getMessage() = "Failed to decode protobuf message"
-  override def getCause(): Throwable = cause
+import smithy4s.ShapeId
+import smithy4s.Hint
+
+sealed trait ProtobufReadError extends Throwable
+
+object ProtobufReadError {
+  final case class Other private (cause: Throwable) extends ProtobufReadError {
+    override def getMessage() = "Failed to decode protobuf message"
+    override def getCause(): Throwable = cause
+  }
+
+  object Other {
+    def unapply(error: Other): Some[Other] = Some(error)
+  }
+
+  final case class MissingRequiredField private (
+      shapeId: ShapeId,
+      fieldName: String,
+      index: Int
+  ) extends ProtobufReadError
+      with scala.util.control.NoStackTrace {
+
+    override def getMessage(): String =
+      s"Required message field $fieldName (index $index) of $shapeId was missing"
+  }
+
+  object MissingRequiredField {
+    def unapply(error: MissingRequiredField): Some[MissingRequiredField] = Some(
+      error
+    )
+  }
+
+  final case class ViolatedConstraint private (
+      hint: Hint,
+      message: String
+  ) extends ProtobufReadError
+      with scala.util.control.NoStackTrace {
+
+    override def getMessage(): String =
+      s"Constraint violated ($hint): $message"
+  }
+
+  object ViolatedConstraint {
+    def unapply(error: ViolatedConstraint): Some[ViolatedConstraint] = Some(
+      error
+    )
+  }
+
 }
