@@ -212,7 +212,10 @@ lazy val core = projectMatrix
         .map(f => (f, f.relativeTo(base)))
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    }
+    },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
