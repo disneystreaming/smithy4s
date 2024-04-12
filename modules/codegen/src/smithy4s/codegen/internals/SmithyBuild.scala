@@ -17,7 +17,9 @@
 package smithy4s.codegen
 package internals
 
-import upickle.default._
+import io.circe.Codec
+import io.circe.generic.semiauto._
+import io.circe.syntax._
 
 private[internals] final case class SmithyBuild(
     version: String,
@@ -25,8 +27,8 @@ private[internals] final case class SmithyBuild(
     maven: SmithyBuildMaven
 )
 private[codegen] object SmithyBuild {
-  implicit val codecs: ReadWriter[SmithyBuild] = macroRW
-  def writeJson(sb: SmithyBuild): String = write(sb, indent = 4)
+  implicit val codecs: Codec[SmithyBuild] = deriveCodec
+  def writeJson(sb: SmithyBuild): String = sb.asJson.spaces4
 }
 
 private[internals] final case class SmithyBuildMaven(
@@ -34,12 +36,12 @@ private[internals] final case class SmithyBuildMaven(
     repositories: Seq[SmithyBuildMavenRepository]
 )
 private[codegen] object SmithyBuildMaven {
-  implicit val codecs: ReadWriter[SmithyBuildMaven] = macroRW
+  implicit val codecs: Codec[SmithyBuildMaven] = deriveCodec
 }
 
 private[internals] final case class SmithyBuildMavenRepository(
     url: String
 )
 private[codegen] object SmithyBuildMavenRepository {
-  implicit val codecs: ReadWriter[SmithyBuildMavenRepository] = macroRW
+  implicit val codecs: Codec[SmithyBuildMavenRepository] = deriveCodec
 }
