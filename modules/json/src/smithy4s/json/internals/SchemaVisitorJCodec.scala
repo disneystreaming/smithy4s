@@ -1059,27 +1059,6 @@ private[smithy4s] class SchemaVisitorJCodec(
           }
         } else in.decodeError("Expected JSON object")
       }
-
-      // if (in.isNextToken('{')) {
-      //   var result: U = null.asInstanceOf[U]
-      //   if (in.isNextToken('}'))
-      //     in.decodeError("Expected a single non-null key/value pair")
-      //   else {
-      //     in.rollbackToken()
-      //     val key = in.readKeyAsString()
-      //     cursor.push(key)
-      //     val handler = handlerMap.get(key)
-      //     if (handler eq null) in.discriminatorValueError(key)
-      //     result = handler(cursor, in)
-      //     cursor.pop()
-      //     if (in.isNextToken('}')) result
-      //     else {
-      //       in.rollbackToken()
-      //       in.decodeError(s"Expected no other set field after $key")
-      //     }
-      //   }
-      // } else in.decodeError("Expected JSON object")
-
       val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
         def apply[A](label: String, instance: Schema[A]): Writer[A] = {
           val jsonLabel =
