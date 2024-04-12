@@ -862,7 +862,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
       val node = tr.toNode()
-      val targetTpe = shape.getTarget.tpe.get
+      val targetTpe = shape.tpe.get
       // Constructing the initial value for the refold
       val nodeAndType = targetTpe match {
         case Alias(_, _, tpe, true) => NodeAndType(node, tpe)

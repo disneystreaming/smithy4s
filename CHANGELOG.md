@@ -1,7 +1,8 @@
 # 0.18.16
 
+* Fixes bug leading to refined case-class fields being rendered with default values of the wrong type
 * Add support for converting smithy4s services and schemas to smithy models
-* Add `smithy4s.meta#only` annotation allowing to filter operations in 
+* Add `smithy4s.meta#only` annotation allowing to filter operations in
 services, intended to reduce the amount of code generated from AWS specs
 
 # 0.18.15
