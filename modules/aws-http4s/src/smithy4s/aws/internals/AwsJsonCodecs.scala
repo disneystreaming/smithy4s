@@ -38,6 +38,7 @@ private[aws] object AwsJsonCodecs {
         .withFlexibleCollectionsSupport(true)
         .withHintMask(hintMask)
         .withMaxArity(Int.MaxValue)
+        .withLenientTaggedUnionDecoding
     )
 
   private[aws] val jsonDecoders = jsonPayloadCodecs.decoders

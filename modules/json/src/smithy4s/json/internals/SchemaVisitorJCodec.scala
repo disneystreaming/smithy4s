@@ -45,6 +45,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
     preserveMapOrder: Boolean,
+    lenientTaggedUnionDecoding: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -1001,6 +1002,111 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.encodeError("Cannot use coproducts as keys")
     }
 
+  private def lenientTaggedUnion[U](
+      alternatives: Vector[Alt[U, _]]
+  )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
+    new JCodec[U] {
+      val expecting: String = "tagged-union"
+
+      override def canBeKey: Boolean = false
+
+      def jsonLabel[A](alt: Alt[U, A]): String =
+        alt.hints.get(JsonName) match {
+          case None    => alt.label
+          case Some(x) => x.value
+        }
+
+      private[this] val handlerMap =
+        new util.HashMap[String, (Cursor, JsonReader) => U] {
+          def handler[A](alt: Alt[U, A]) = {
+            val codec = apply(alt.schema)
+            (cursor: Cursor, reader: JsonReader) =>
+              alt.inject(cursor.decode(codec, reader))
+          }
+
+          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+        }
+
+      def decodeValue(cursor: Cursor, in: JsonReader): U = {
+        var result: U = null.asInstanceOf[U]
+        if (in.isNextToken('{')) {
+          // In this case, metadata and payload are mixed together
+          // and values field values must be sought from either.
+          if (!in.isNextToken('}')) {
+            in.rollbackToken()
+            while ({
+              val key = in.readKeyAsString()
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.skip()
+              else if (in.isNextToken('n')) {
+                in.readNullOrError((), "expected null")
+              } else {
+                in.rollbackToken()
+                if (result != null) {
+                  in.decodeError("Expected a single non-null value")
+                } else {
+                  result = handler(cursor, in)
+                }
+              }
+              in.isNextToken(',')
+            }) ()
+            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
+          }
+          if (result != null) {
+            result
+          } else {
+            in.decodeError("Expected a single non-null value")
+          }
+        } else in.decodeError("Expected JSON object")
+      }
+
+      // if (in.isNextToken('{')) {
+      //   var result: U = null.asInstanceOf[U]
+      //   if (in.isNextToken('}'))
+      //     in.decodeError("Expected a single non-null key/value pair")
+      //   else {
+      //     in.rollbackToken()
+      //     val key = in.readKeyAsString()
+      //     cursor.push(key)
+      //     val handler = handlerMap.get(key)
+      //     if (handler eq null) in.discriminatorValueError(key)
+      //     result = handler(cursor, in)
+      //     cursor.pop()
+      //     if (in.isNextToken('}')) result
+      //     else {
+      //       in.rollbackToken()
+      //       in.decodeError(s"Expected no other set field after $key")
+      //     }
+      //   }
+      // } else in.decodeError("Expected JSON object")
+
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
+        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+          val jsonLabel =
+            instance.hints.get(JsonName).map(_.value).getOrElse(label)
+          val jcodecA = instance.compile(self)
+          a =>
+            out => {
+              out.writeObjectStart()
+              out.writeKey(jsonLabel)
+              jcodecA.encodeValue(a, out)
+              out.writeObjectEnd()
+            }
+        }
+      }
+      val writer = dispatch.compile(precompiler)
+
+      def encodeValue(u: U, out: JsonWriter): Unit = {
+        writer(u)(out)
+      }
+
+      def decodeKey(in: JsonReader): U =
+        in.decodeError("Cannot use coproducts as keys")
+
+      def encodeKey(u: U, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
+    }
+
   private def untaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] = new JCodec[U] {
@@ -1139,7 +1245,9 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[U] = hints match {
     case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
     case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
-    case _                     => taggedUnion(alternatives)(dispatch)
+    case _ =>
+      if (lenientTaggedUnionDecoding) lenientTaggedUnion(alternatives)(dispatch)
+      else taggedUnion(alternatives)(dispatch)
   }
 
   override def enumeration[E](
