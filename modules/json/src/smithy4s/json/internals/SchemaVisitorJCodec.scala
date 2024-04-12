@@ -1030,8 +1030,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
         var result: U = null.asInstanceOf[U]
         if (in.isNextToken('{')) {
-          // In this case, metadata and payload are mixed together
-          // and values field values must be sought from either.
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
@@ -1449,8 +1447,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       ): scala.collection.Map[String, Any] => Z = {
         val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
-          // In this case, metadata and payload are mixed together
-          // and values field values must be sought from either.
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
@@ -1466,9 +1462,8 @@ private[smithy4s] class SchemaVisitorJCodec(
         // At this point, we have parsed the json and retrieved
         // all the values that interest us for the construction
         // of our domain object.
-        // We therefore reconcile the values pulled from the json
-        // with the ones pull the metadata, and call the constructor
-        // on it.
+        // We re-order the values following the order of the schema
+        // fields before calling the constructor.
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
