@@ -28,7 +28,7 @@ private[codegen] object SmithyBuildJson {
       repositories: Seq[String]
   ): String = {
     SmithyBuild.writeJson(
-      SmithyBuild(
+      SmithyBuild.Serializable(
         version = "1.0",
         imports,
         SmithyBuildMaven(

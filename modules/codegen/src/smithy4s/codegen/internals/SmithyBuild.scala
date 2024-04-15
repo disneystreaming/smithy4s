@@ -17,18 +17,48 @@
 package smithy4s.codegen
 package internals
 
-import io.circe.Codec
-import io.circe.generic.semiauto._
+import cats.syntax.all._
+import io.circe._
 import io.circe.syntax._
+import io.circe.generic.semiauto._
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.openapi.OpenApiConfig
+
+import scala.collection.Seq
+import scala.reflect.ClassTag
+import scala.util.Try
 
 private[internals] final case class SmithyBuild(
     version: String,
-    imports: Seq[String],
-    maven: SmithyBuildMaven
-)
+    imports: Option[Seq[String]],
+    plugins: Option[Seq[SmithyBuildPlugin]],
+    maven: Option[SmithyBuildMaven]
+) {
+  def getPlugin[T <: SmithyBuildPlugin](implicit
+      classTag: ClassTag[T]
+  ): Option[T] =
+    plugins.flatMap(_.collectFirst { case t: T => t })
+}
+
 private[codegen] object SmithyBuild {
-  implicit val codecs: Codec[SmithyBuild] = deriveCodec
-  def writeJson(sb: SmithyBuild): String = sb.asJson.spaces4
+  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = (c: HCursor) =>
+    c.keys match {
+      case None => DecodingFailure("Expected JSON object", c.history).asLeft
+      case Some(keys) =>
+        keys.toSeq.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+    }
+
+  case class Serializable(
+      version: String,
+      imports: Seq[String],
+      maven: SmithyBuildMaven
+  )
+
+  implicit val decoder: Decoder[SmithyBuild] = deriveDecoder
+
+  implicit val serializableEncoder: Encoder[Serializable] = deriveEncoder
+
+  def writeJson(sb: SmithyBuild.Serializable): String = sb.asJson.spaces4
 }
 
 private[internals] final case class SmithyBuildMaven(
@@ -44,4 +74,28 @@ private[internals] final case class SmithyBuildMavenRepository(
 )
 private[codegen] object SmithyBuildMavenRepository {
   implicit val codecs: Codec[SmithyBuildMavenRepository] = deriveCodec
+}
+
+private[codegen] sealed trait SmithyBuildPlugin
+
+private[codegen] object SmithyBuildPlugin {
+  def decode(key: String): Decoder[SmithyBuildPlugin] = key match {
+    case "openapi" => Decoder[OpenApi].widen
+    case other =>
+      Decoder.failedWithMessage(
+        s"Plugin $other is not supported by smithy4s. Currently supported plugins: openapi"
+      )
+  }
+
+  case class OpenApi(config: OpenApiConfig) extends SmithyBuildPlugin
+
+  object OpenApi {
+    implicit val decoder: Decoder[OpenApi] = Decoder[JsonObject].emapTry {
+      obj =>
+        Try {
+          val config = OpenApiConfig.fromNode(Node.parse(obj.toJson.noSpaces))
+          OpenApi(config)
+        }
+    }
+  }
 }

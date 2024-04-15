@@ -17,11 +17,13 @@
 package smithy4s.codegen.internals
 
 import smithy4s.codegen.SmithyBuildJson
+import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.openapi.OpenApiVersion
 
 final class SmithyBuildSpec extends munit.FunSuite {
   test("generate json") {
     val actual = SmithyBuild.writeJson(
-      SmithyBuild(
+      SmithyBuild.Serializable(
         "1.0",
         List("src/"),
         SmithyBuildMaven(List("dep"), List(SmithyBuildMavenRepository("repo")))
@@ -132,4 +134,41 @@ final class SmithyBuildSpec extends munit.FunSuite {
     )
   }
 
+
+  test("Can parse OpenAPI") {
+    val input =
+      """
+        |{
+        |   "version": "1.0",
+        |   "plugins": {
+        |        "openapi": {
+        |            "service": "example.weather#Weather",
+        |            "version": "3.1.0"
+        |        }
+        |   }
+        |}""".stripMargin
+
+    val actual = io.circe.parser
+      .decode[SmithyBuild](input)
+      .left
+      .map(x => throw x)
+      .merge
+
+    // OpenApiConfig doesn't override equals, so we need to check expected == actual in pieces:
+    assertEquals(actual.maven, None)
+    assertEquals("1.0", actual.version)
+    assertEquals(actual.imports, None)
+    val actualOpenApiConfig = actual
+      .getPlugin[SmithyBuildPlugin.OpenApi]
+      .getOrElse(fail("No OpenAPI plugin on parsed smithy-build"))
+      .config
+    assertEquals(
+      ShapeId.from("example.weather#Weather"),
+      actualOpenApiConfig.getService.toShapeId
+    )
+    assertEquals(
+      OpenApiVersion.VERSION_3_1_0,
+      actualOpenApiConfig.getVersion
+    )
+  }
 }
