@@ -30,22 +30,31 @@ import scala.util.Try
 
 private[internals] final case class SmithyBuild(
     version: String,
-    imports: Option[Seq[String]],
-    plugins: Option[Seq[SmithyBuildPlugin]],
+    imports: Seq[os.FilePath],
+    plugins: Seq[SmithyBuildPlugin],
     maven: Option[SmithyBuildMaven]
 ) {
   def getPlugin[T <: SmithyBuildPlugin](implicit
       classTag: ClassTag[T]
   ): Option[T] =
-    plugins.flatMap(_.collectFirst { case t: T => t })
+    plugins.collectFirst { case t: T => t }
 }
 
 private[codegen] object SmithyBuild {
+  // automatically map absence of value to empty Seq in order to clean up the case class API for later use
+  implicit def optionalSeqDecoder[T](implicit base: Decoder[T]): Decoder[Seq[T]] =
+    Decoder.decodeOption(Decoder.decodeSeq[T]).map(_.getOrElse(Seq.empty))
+
+  implicit val pathDecoder: Decoder[os.FilePath] =
+    Decoder.decodeString.emapTry { raw =>
+      Try(os.FilePath(raw))
+    }
+
   implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = (c: HCursor) =>
     c.keys match {
       case None => DecodingFailure("Expected JSON object", c.history).asLeft
       case Some(keys) =>
-        keys.toSeq.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+        keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
     }
 
   case class Serializable(
@@ -59,6 +68,17 @@ private[codegen] object SmithyBuild {
   implicit val serializableEncoder: Encoder[Serializable] = deriveEncoder
 
   def writeJson(sb: SmithyBuild.Serializable): String = sb.asJson.spaces4
+
+  def readJson(in: String): SmithyBuild = parser
+    .decode[SmithyBuild](in)
+    .left
+    .map(err =>
+      throw new IllegalArgumentException(
+        s"Input is not a valid smithy-build.json file",
+        err
+      )
+    )
+    .merge
 }
 
 private[internals] final case class SmithyBuildMaven(

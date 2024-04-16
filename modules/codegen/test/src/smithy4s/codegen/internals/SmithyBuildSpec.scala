@@ -135,11 +135,12 @@ final class SmithyBuildSpec extends munit.FunSuite {
   }
 
 
-  test("Can parse OpenAPI") {
+  test("Can parse smithy-build file with OpenAPI plugin") {
     val input =
       """
         |{
         |   "version": "1.0",
+        |   "imports": [ "foo.smithy", "some/directory" ],
         |   "plugins": {
         |        "openapi": {
         |            "service": "example.weather#Weather",
@@ -157,7 +158,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
     // OpenApiConfig doesn't override equals, so we need to check expected == actual in pieces:
     assertEquals(actual.maven, None)
     assertEquals("1.0", actual.version)
-    assertEquals(actual.imports, None)
+    assertEquals(Set[os.FilePath](os.FilePath("foo.smithy"), os.FilePath("some/directory")), actual.imports.toSet)
     val actualOpenApiConfig = actual
       .getPlugin[SmithyBuildPlugin.OpenApi]
       .getOrElse(fail("No OpenAPI plugin on parsed smithy-build"))
