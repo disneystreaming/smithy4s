@@ -206,7 +206,7 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
-    val smithyBuild = smithyBuild().map(_.path)
+    val smithyBuildFile = smithyBuild().map(_.path)
 
     val allLocalJars =
       smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
@@ -223,7 +223,7 @@ trait Smithy4sModule extends ScalaModule {
       dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars,
-      smithyBuild = smithyBuild
+      smithyBuild = smithyBuildFile
     )
 
     Smithy4s.generateToDisk(args)
