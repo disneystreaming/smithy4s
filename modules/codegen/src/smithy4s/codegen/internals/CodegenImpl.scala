@@ -24,6 +24,7 @@ import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.openapi.OpenApiConfig
 
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.transform.ModelTransformer
@@ -31,10 +32,19 @@ import software.amazon.smithy.model.transform.ModelTransformer
 private[codegen] object CodegenImpl { self =>
 
   def generate(args: CodegenArgs): CodegenResult = {
+    val smithyBuild = args.smithyBuild
+      .map(os.read)
+      .map(SmithyBuild.readJson(_))
+    val smithyBuildSpecs =
+      smithyBuild.toList.flatMap(_.imports).map(_.resolveFrom(os.pwd))
+    val smithyBuildDependencies =
+      smithyBuild.flatMap(_.maven).toList.flatMap(_.dependencies)
+    val smithyBuildRepositories =
+      smithyBuild.flatMap(_.maven).toList.flatMap(_.repositories).map(_.url)
     val (classloader, model): (ClassLoader, Model) = internals.ModelLoader.load(
-      args.specs.map(_.toIO).toSet,
-      args.dependencies,
-      args.repositories,
+      (args.specs ++ smithyBuildSpecs).map(_.toIO).toSet,
+      (args.dependencies ++ smithyBuildDependencies).distinct,
+      (args.repositories ++ smithyBuildRepositories).distinct,
       withAwsTypeTransformer(args.transformers),
       args.discoverModels,
       args.localJars
@@ -64,12 +74,19 @@ private[codegen] object CodegenImpl { self =>
     } else (List.empty, List.empty)
 
     val openApiFiles = if (!args.skipOpenapi) {
-      alloy.openapi.convert(model, args.allowedNS, classloader).map {
-        case OpenApiConversionResult(_, serviceId, outputString) =>
+      val openApiConfig: Unit => OpenApiConfig = _ =>
+        smithyBuild
+          .flatMap(_.getPlugin[SmithyBuildPlugin.OpenApi])
+          .map(_.config)
+          .getOrElse(new OpenApiConfig())
+
+      alloy.openapi
+        .convertWithConfig(model, args.allowedNS, openApiConfig, classloader)
+        .map { case OpenApiConversionResult(_, serviceId, outputString) =>
           val name = serviceId.getNamespace() + "." + serviceId.getName()
           val openapiFile = (args.resourceOutput / (name + ".json"))
           CodegenEntry.FromMemory(openapiFile, outputString)
-      }
+        }
     } else List.empty
 
     val protoFiles = if (!args.skipProto) {
