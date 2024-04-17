@@ -56,7 +56,7 @@ val maybePerson = personDecoder.decode(Blob(personJSON))
 
 By default, `smithy4s-json` abides by the semantics of :
 
-* [official smithy traits], including:
+* [official smithy traits](https://smithy.io/2.0/spec/protocol-traits.html), including:
   * [jsonName](https://smithy.io/2.0/spec/protocol-traits.html#jsonname-trait)
   * [timestampFormat](https://smithy.io/2.0/spec/protocol-traits.html#timestampformat-trait)
   * [sparse](https://smithy.io/2.0/spec/type-refinement-traits.html#sparse-trait)
