@@ -4,6 +4,7 @@
 * Add support for converting smithy4s services and schemas to smithy models
 * Add `smithy4s.meta#only` annotation allowing to filter operations in
 services, intended to reduce the amount of code generated from AWS specs
+* Add support for passing custom OpenAPI config via a `smithy-build.json` file
 
 # 0.18.15
 
