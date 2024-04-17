@@ -17,6 +17,7 @@
 package smithy4s.aws
 
 import scala.annotation.implicitNotFound
+import smithy4s.Bijection
 
 object AwsOperationKind {
 
@@ -29,12 +30,29 @@ object AwsOperationKind {
   }
 
   @implicitNotFound(
-    "Cannot prove that the operation is a blob upload: it's either meant to upload something else than bytes or has a streamed output"
+    "Cannot prove that the operation is a blob upload. No instance of ByteUpload[${StreamedInput}, ${StreamedOutput}]"
   )
   sealed trait ByteUpload[StreamedInput, StreamedOutput]
   object ByteUpload {
     implicit val ByteUpload: ByteUpload[Byte, Nothing] =
       new ByteUpload[Byte, Nothing] {}
+
+    implicit def fromBijection[T: Bijection[Byte, *]]: ByteUpload[T, Nothing] =
+      new ByteUpload[T, Nothing]() {}
   }
 
+  @implicitNotFound(
+    "Cannot prove that the operation is a blob download. No instance of ByteDownload[${StreamedInput}, ${StreamedOutput}"
+  )
+  sealed trait ByteDownload[StreamedInput, StreamedOutput] {
+    def apply(value: Byte): StreamedOutput = value.asInstanceOf[StreamedOutput]
+  }
+  object ByteDownload {
+    implicit val ByteDownload: ByteDownload[Nothing, Byte] =
+      new ByteDownload[Nothing, Byte] {}
+
+    implicit def fromBijection[T: Bijection[Byte, *]]
+        : ByteDownload[Nothing, T] =
+      new ByteDownload[Nothing, T]() {}
+  }
 }
