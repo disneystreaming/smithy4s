@@ -428,7 +428,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
-    val smithyBuild = (conf / smithyBuild).value.map(os.Path(_))
+    val smithyBuildValue = (conf / smithyBuild).value.map(os.Path(_))
     val codegenArgs = CodegenArgs(
       filePaths.map(os.Path(_)).toList,
       output = os.Path(outputPath),
@@ -441,7 +441,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       dependencies = List.empty,
       transformers = transforms,
       localJars = localJars,
-      smithyBuild = smithyBuild
+      smithyBuild = smithyBuildValue
     )
 
     val cached =
