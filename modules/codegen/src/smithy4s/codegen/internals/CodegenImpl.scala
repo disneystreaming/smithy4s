@@ -35,16 +35,10 @@ private[codegen] object CodegenImpl { self =>
     val smithyBuild = args.smithyBuild
       .map(os.read)
       .map(SmithyBuild.readJson(_))
-    val smithyBuildSpecs =
-      smithyBuild.toList.flatMap(_.imports).map(_.resolveFrom(os.pwd))
-    val smithyBuildDependencies =
-      smithyBuild.flatMap(_.maven).toList.flatMap(_.dependencies)
-    val smithyBuildRepositories =
-      smithyBuild.flatMap(_.maven).toList.flatMap(_.repositories).map(_.url)
     val (classloader, model): (ClassLoader, Model) = internals.ModelLoader.load(
-      (args.specs ++ smithyBuildSpecs).map(_.toIO).toSet,
-      (args.dependencies ++ smithyBuildDependencies).distinct,
-      (args.repositories ++ smithyBuildRepositories).distinct,
+      args.specs.map(_.toIO).toSet,
+      args.dependencies,
+      args.repositories,
       withAwsTypeTransformer(args.transformers),
       args.discoverModels,
       args.localJars
