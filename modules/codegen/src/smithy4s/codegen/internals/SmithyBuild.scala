@@ -42,7 +42,9 @@ private[internals] final case class SmithyBuild(
 
 private[codegen] object SmithyBuild {
   // automatically map absence of value to empty Seq in order to clean up the case class API for later use
-  implicit def optionalSeqDecoder[T](implicit base: Decoder[T]): Decoder[Seq[T]] =
+  implicit def optionalSeqDecoder[T](implicit
+      base: Decoder[T]
+  ): Decoder[Seq[T]] =
     Decoder.decodeOption(Decoder.decodeSeq[T]).map(_.getOrElse(Seq.empty))
 
   implicit val pathDecoder: Decoder[os.FilePath] =
@@ -50,13 +52,15 @@ private[codegen] object SmithyBuild {
       Try(os.FilePath(raw))
     }
 
-  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = Decoder.decodeOption { (c: HCursor) =>
-    c.keys match {
-      case None => DecodingFailure("Expected JSON object", c.history).asLeft
-      case Some(keys) =>
-        keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = Decoder
+    .decodeOption { (c: HCursor) =>
+      c.keys match {
+        case None => DecodingFailure("Expected JSON object", c.history).asLeft
+        case Some(keys) =>
+          keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+      }
     }
-  }.map(_.getOrElse(Seq.empty))
+    .map(_.getOrElse(Seq.empty))
 
   case class Serializable(
       version: String,

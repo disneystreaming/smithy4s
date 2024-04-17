@@ -94,9 +94,10 @@ object CodegenCommand {
       .orNone
 
   val smithyBuildOpt: Opts[Option[os.Path]] =
-    Opts.option[os.Path](
-      "smithy-build",
-      "Path of smithy-build.json file containing smithy build arguments"
+    Opts
+      .option[os.Path](
+        "smithy-build",
+        "Path of smithy-build.json file containing smithy build arguments"
       )
       .orNone
 

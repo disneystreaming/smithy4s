@@ -58,7 +58,7 @@ trait Smithy4sModule extends ScalaModule {
 
   def generateOpenApiSpecs: T[Boolean] = true
 
-  def smithyBuild : T[Option[PathRef]] = None
+  def smithyBuild: T[Option[PathRef]] = None
 
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
