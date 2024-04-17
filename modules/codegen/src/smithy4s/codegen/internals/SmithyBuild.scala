@@ -50,12 +50,13 @@ private[codegen] object SmithyBuild {
       Try(os.FilePath(raw))
     }
 
-  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = (c: HCursor) =>
+  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = Decoder.decodeOption { (c: HCursor) =>
     c.keys match {
       case None => DecodingFailure("Expected JSON object", c.history).asLeft
       case Some(keys) =>
         keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
     }
+  }.map(_.getOrElse(Seq.empty))
 
   case class Serializable(
       version: String,
@@ -74,7 +75,7 @@ private[codegen] object SmithyBuild {
     .left
     .map(err =>
       throw new IllegalArgumentException(
-        s"Input is not a valid smithy-build.json file",
+        s"Input is not a valid smithy-build.json file: ${err.getMessage}",
         err
       )
     )
@@ -86,6 +87,8 @@ private[internals] final case class SmithyBuildMaven(
     repositories: Seq[SmithyBuildMavenRepository]
 )
 private[codegen] object SmithyBuildMaven {
+  import SmithyBuild.optionalSeqDecoder
+
   implicit val codecs: Codec[SmithyBuildMaven] = deriveCodec
 }
 

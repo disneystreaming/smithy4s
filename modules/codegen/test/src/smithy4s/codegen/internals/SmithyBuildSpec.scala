@@ -172,4 +172,24 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actualOpenApiConfig.getVersion
     )
   }
+
+  test("Can parse smithy-build file with no optional fields") {
+    val input =
+      """
+        |{
+        |   "version": "1.0"
+        |}""".stripMargin
+
+    val actual = io.circe.parser
+      .decode[SmithyBuild](input)
+      .left
+      .map(x => throw x)
+      .merge
+
+
+    assertEquals(actual.maven, None)
+    assertEquals("1.0", actual.version)
+    assertEquals(Set.empty[os.FilePath], actual.imports.toSet)
+    assertEquals(Set.empty[SmithyBuildPlugin], actual.plugins.toSet)
+  }
 }
