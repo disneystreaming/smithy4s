@@ -41,7 +41,7 @@ private[internals] final case class SmithyBuild(
 }
 
 private[codegen] object SmithyBuild {
-  // automatically map absence of value to empty Seq in order to clean up the case class API for later use
+  // automatically map absence of value to empty Seq for ease of use
   implicit def optionalSeqDecoder[T](implicit
       base: Decoder[T]
   ): Decoder[Seq[T]] =
@@ -62,6 +62,11 @@ private[codegen] object SmithyBuild {
     }
     .map(_.getOrElse(Seq.empty))
 
+  /* Class containing only the subset of the smithy-build.json properties that need
+   * to be serialized when creating a smithy-build.json file. Allows us to skip
+   * things that are both unnecessary and very complicated to serialize,
+   * such as OpenApiConfig.
+   */
   case class Serializable(
       version: String,
       imports: Seq[String],
