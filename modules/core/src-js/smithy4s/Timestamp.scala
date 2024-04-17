@@ -21,6 +21,9 @@ import scalajs.js.Date
 import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private (epochSecond: Long, nano: Int) {
+
+  def epochMilli: Long = epochSecond * 1000 + nano / 1000000
+
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano
@@ -255,15 +258,15 @@ object Timestamp {
   }
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
-
-  /** JS platform only method */
-  def fromDate(x: Date): Timestamp = {
-    val currentMillis = x.valueOf()
+  def fromEpochMilli(epochMilli: Long): Timestamp = {
     Timestamp(
-      (currentMillis / 1000).toLong,
-      (currentMillis % 1000).toInt * 1000000
+      (epochMilli / 1000),
+      (epochMilli % 1000).toInt * 1000000
     )
   }
+
+  /** JS platform only method */
+  def fromDate(x: Date): Timestamp = fromEpochMilli(x.valueOf().toLong)
 
   def nowUTC(): Timestamp = fromDate(new Date())
 
