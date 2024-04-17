@@ -1,5 +1,6 @@
 ---
 sidebar_label: Middlewares
+title: Middlewares
 ---
 
 It is not the purpose of Smithy4s to reach feature-parity with the official Java SDK, in particular when it comes to retry policies and metrics. However, it's important for Smithy4s to empower users to wire custom behaviour in the AWS clients it provides.

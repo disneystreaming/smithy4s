@@ -39,7 +39,7 @@ private[codegen] object CodegenImpl { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      withAwsTypeTransformer(args.transformers),
+      withBuiltinTransformers(args.transformers),
       args.discoverModels,
       args.localJars
     )
@@ -198,7 +198,7 @@ private[codegen] object CodegenImpl { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      withAwsTypeTransformer(args.transformers),
+      withBuiltinTransformers(args.transformers),
       discoverModels = false,
       args.localJars
     )
@@ -210,7 +210,13 @@ private[codegen] object CodegenImpl { self =>
     )
   }
 
-  private def withAwsTypeTransformer(transformers: List[String]): List[String] =
-    transformers :+ AwsConstraintsRemover.name :+ AwsStandardTypesTransformer.name :+ OpenEnumTransformer.name
+  private def withBuiltinTransformers(
+      transformers: List[String]
+  ): List[String] =
+    transformers :+
+      AwsConstraintsRemover.name :+
+      AwsStandardTypesTransformer.name :+
+      OpenEnumTransformer.name :+
+      KeepOnlyMarkedShapes.name
 
 }

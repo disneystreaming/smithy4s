@@ -11,6 +11,9 @@ metadata suppressions = [
 
 namespace smithy4s.meta
 
+@trait(selector: ":is(operation)")
+structure only {}
+
 @trait(selector: ":is(service, operation)")
 structure packedInputs {}
 
