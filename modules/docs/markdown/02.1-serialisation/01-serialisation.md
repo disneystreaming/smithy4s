@@ -102,7 +102,7 @@ sbt : "com.disneystreaming.smithy4s" %% "smithy4s-protobuf" % "@VERSION@"
 mill : "com.disneystreaming.smithy4s::smithy4s-protobuf:@VERSION@"
 ```
 
-The entrypoint for XML parsing/writing is `smithy4s.protobuf.Protobuf`. See below for example usage.
+The entrypoint for Protobuf parsing/writing is `smithy4s.protobuf.Protobuf`. See below for example usage.
 
 ```scala mdoc:reset
 import smithy4s.example.hello.Person
