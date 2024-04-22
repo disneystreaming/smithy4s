@@ -151,17 +151,21 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def scalaVersion = "2.13.10"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "smithy-build"
-      override def smithyBuild = Some(PathRef(millSourcePath / "smithy-build.json"))
+      override def smithyBuild =
+        Some(PathRef(millSourcePath / "smithy-build.json"))
     }
     val ev =
       testKit.staticTestEvaluator(foo)(FullName("smithy-build"))
 
     compileWorks(foo, ev)
-    val openApiFile = ev.outPath / "smithy4sResourceOutputDir.dest" / "resources" / "smithy4s.example.ObjectService.json"
-    checkFileExist(openApiFile,
-      shouldExist = true)
+    val openApiFile =
+      ev.outPath / "smithy4sResourceOutputDir.dest" / "resources" / "smithy4s.example.ObjectService.json"
+    checkFileExist(openApiFile, shouldExist = true)
     val openApiJson = os.read(openApiFile)
-    assert(openApiJson.contains("X-Bar"), "Smithy Build openApi configuration was not applied")
+    assert(
+      openApiJson.contains("X-Bar"),
+      "Smithy Build openApi configuration was not applied"
+    )
   }
 
   test("multi-module codegen works") {
