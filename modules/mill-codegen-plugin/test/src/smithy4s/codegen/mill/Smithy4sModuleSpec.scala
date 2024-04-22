@@ -157,7 +157,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       testKit.staticTestEvaluator(foo)(FullName("smithy-build"))
 
     compileWorks(foo, ev)
-    val openApiFile = ev.outPath / "smithy4sResourceOutputDir.dest" / "resources" / "service.Foo.json"
+    val openApiFile = ev.outPath / "smithy4sResourceOutputDir.dest" / "resources" / "smithy4s.example.ObjectService.json"
     checkFileExist(openApiFile,
       shouldExist = true)
     val openApiJson = os.read(openApiFile)
