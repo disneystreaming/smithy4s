@@ -6,7 +6,7 @@ import smithy4s.example.ConstrainedMap
 
 class ConstraintsSmokeSpec extends FunSuite {
 
-  test("list members with length trait are rendered as lenght refinements") {
+  test("list members with length trait are rendered as length refinements") {
     matches(ConstrainedList.schema) {
       case Schema.BijectionSchema(
             Schema.CollectionSchema(
