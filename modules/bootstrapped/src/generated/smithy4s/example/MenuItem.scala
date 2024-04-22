@@ -15,14 +15,12 @@ object MenuItem extends ShapeTag.Companion[MenuItem] {
   val hints: Hints = Hints.empty
 
   // constructor using the original order from the spec
-  private def make(food: Food, price: Float): MenuItem = MenuItem(food, price)
+  private def make(food: Food, price: Float, tags: Option[List[String]], extraData: Option[Map[String, String]]): MenuItem = MenuItem(food, price, tags, extraData)
 
   implicit val schema: Schema[MenuItem] = struct(
     Food.schema.required[MenuItem]("food", _.food),
     float.required[MenuItem]("price", _.price),
     Tags.underlyingSchema.optional[MenuItem]("tags", _.tags),
     ExtraData.underlyingSchema.optional[MenuItem]("extraData", _.extraData),
-  ){
-    MenuItem.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }
