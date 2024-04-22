@@ -1,3 +1,7 @@
+# 0.18.17
+
+* Constraints applied to list or map members are now correctly rendered in the generated code.
+
 # 0.18.16
 
 * Fixes bug leading to refined case-class fields being rendered with default values of the wrong type

@@ -60,6 +60,17 @@ abstract class PizzaSpec
     "price" -> Json.fromFloatOrNull(9.0f)
   )
 
+  def menuItemWithTags(tags: List[String]) = menuItem deepMerge Json.obj(
+    "tags" -> Json.arr(tags.map(Json.fromString): _*)
+  )
+
+  def menuItemWithExtraData(map: Map[String, String]) =
+    menuItem deepMerge Json.obj(
+      "extraData" -> Json.obj(map.map { case (k, v) =>
+        k -> Json.fromString(v)
+      }.toSeq: _*)
+    )
+
   routerTest("path that returns NotFound") { case (client, uri, log) =>
     val getPizza = GET(
       menuItem,
@@ -113,6 +124,67 @@ abstract class PizzaSpec
       expect(body == expectedBody) &&
       expect(discriminator == Some("PriceError"))
     }
+  }
+
+  routerTest("Negative: send payload with bad list items") {
+    (client, uri, log) =>
+      val badMenuItem = menuItemWithTags(List("a" * 11))
+      for {
+        res <- client.send[Json](
+          POST(badMenuItem, uri / "restaurant" / "bad1" / "menu" / "item"),
+          log
+        )
+      } yield {
+        val (code, _, body) = res
+        val payload = body.hcursor.downField("payload")
+        val message = payload.get[String]("message")
+        val path = payload.get[String]("path")
+        expect(code == 400) &&
+        expect(
+          message == Right("length required to be >= 1 and <= 10, but was 11")
+        ) &&
+        expect(path == Right(".tags.0"))
+      }
+  }
+
+  routerTest("Negative: send payload with a bad map key") {
+    (client, uri, log) =>
+      val badMenuItem = menuItemWithExtraData(Map("a" -> "foo"))
+      for {
+        res <- client.send[Json](
+          POST(badMenuItem, uri / "restaurant" / "bad2" / "menu" / "item"),
+          log
+        )
+      } yield {
+        val (code, _, body) = res
+        val payload = body.hcursor.downField("payload")
+        val message = payload.get[String]("message")
+        val path = payload.get[String]("path")
+        expect(code == 400) &&
+        expect(message == Right("length required to be >= 2, but was 1")) &&
+        expect(path == Right(".extraData"))
+      }
+  }
+
+  routerTest("Negative: send payload witha bad map value") {
+    (client, uri, log) =>
+      val badMenuItem = menuItemWithExtraData(Map("aa" -> "f" * 11))
+      for {
+        res <- client.send[Json](
+          POST(badMenuItem, uri / "restaurant" / "bad2" / "menu" / "item"),
+          log
+        )
+      } yield {
+        val (code, _, body) = res
+        val payload = body.hcursor.downField("payload")
+        val message = payload.get[String]("message")
+        val path = payload.get[String]("path")
+        expect(code == 400) &&
+        expect(
+          message == Right("length required to be >= 2 and <= 10, but was 11")
+        ) &&
+        expect(path == Right(".extraData.0"))
+      }
   }
 
   routerTest("Negative: default parsing error") { (client, uri, log) =>
