@@ -1360,17 +1360,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        val hintsLine =
-          if (hints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(hints)})"
-        line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
+        val hintsAndConstraints = hintsAndConstraintsLine(hints)
+        line"${NameRef(col)}(${member.schemaRef}$hintsAndConstraints)"
       case Type.Map(key, keyHints, value, valueHints) =>
-        val keyHintsLine =
-          if (keyHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(keyHints)})"
-        val valueHintsLine =
-          if (valueHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(valueHints)})"
+        val keyHintsLine = hintsAndConstraintsLine(keyHints)
+        val valueHintsLine = hintsAndConstraintsLine(valueHints)
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1480,6 +1474,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         .intercalate(Line.empty)
     }
+  }
+
+  private def hintsAndConstraintsLine(hints: List[Hint]): Line = {
+    val hintsLine =
+      if (hints.isEmpty) Line.empty
+      else line".addMemberHints(${memberHints(hints)})"
+    val constraintsLine = renderConstraintValidation(hints)
+    line"$hintsLine$constraintsLine"
   }
 
   private def shapeTag(name: NameRef): Line =
