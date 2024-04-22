@@ -403,8 +403,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (inputDirs ++ generatedFiles)
         .filter(_.exists())
         .toList
-    val outputPath = (conf / smithy4sOutputDir).value
-    val resourceOutputPath = (conf / smithy4sResourceDir).value
+    val outputPath = (conf / smithy4sOutputDir).value / "smithy4s"
+    val resourceOutputPath = (conf / smithy4sResourceDir).value / "smithy4s"
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
@@ -424,7 +424,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
     val codegenArgs = CodegenArgs(
-      filePaths.map(os.Path(_)).toList,
+      filePaths.sorted.map(os.Path(_)).toList,
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
@@ -433,8 +433,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       excludedNS = excludedNamespaces,
       repositories = res,
       dependencies = List.empty,
-      transformers = transforms,
-      localJars = localJars
+      transformers = transforms.sorted,
+      localJars = localJars.sorted
     )
 
     val cached =
@@ -443,14 +443,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       ) {
         Function.untupled {
           Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
-            s.cacheStoreFactory.make("output")
+            s.cacheDirectory / "smithy4s-output"
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
+              s.log.debug("Regenerating managed sources")
               val resPaths = smithy4s.codegen.Codegen
                 .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {
+              s.log.debug("Using cached version of outputs")
               outputs.getOrElse(Seq.empty)
             }
           }
