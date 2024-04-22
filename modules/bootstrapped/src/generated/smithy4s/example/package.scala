@@ -60,6 +60,7 @@ package object example {
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type TestIdRefList = smithy4s.example.TestIdRefList.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
+  type ConstrainedList = smithy4s.example.ConstrainedList.Type
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
@@ -72,6 +73,7 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
   type FancyList = smithy4s.example.FancyList.Type
+  type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   type StringList = smithy4s.example.StringList.Type
   /** Multiple line doc comment for another string
@@ -81,6 +83,7 @@ package object example {
   type AnotherString = smithy4s.example.AnotherString.Type
   type PublisherId = smithy4s.example.PublisherId.Type
   type SomeValue = smithy4s.example.SomeValue.Type
+  type Tags = smithy4s.example.Tags.Type
   /** @param member
     *   listFoo
     */
@@ -98,6 +101,7 @@ package object example {
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type TestIdRefSet = smithy4s.example.TestIdRefSet.Type
   type TestIdRefKeyMap = smithy4s.example.TestIdRefKeyMap.Type
+  type ExtraData = smithy4s.example.ExtraData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
   type PNG = smithy4s.example.PNG.Type

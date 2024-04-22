@@ -34,6 +34,7 @@ object Dependencies {
     val alloyVersion = "0.3.6"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
+    val protobuf = org % "alloy-protobuf" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
   }
 
