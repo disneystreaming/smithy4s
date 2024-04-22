@@ -698,9 +698,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProtocol(product.nameRef, hints),
         newline,
         renderLenses(product, hints),
+        locally {
+          val params =
+            fields.sortBy(_.originalIndex).map(fieldToRenderLine(_, noDefault = true)).intercalate(Line.comma)
+          val args = fields.map(f => Line(f.name)).intercalate(Line.comma)
+          lines(
+            line"// constructor using the original order from the spec",
+            line"private def make($params): ${product.nameRef} = ${product.nameRef}($args)"
+          ).when(fields.nonEmpty)
+        },
+        newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, modifier, hints) =>
+            fields.sortBy(_.originalIndex).map { case Field(fieldName, realName, tpe, modifier, _, hints) =>
               val fieldBuilder = modifier.typeMod match {
                 case Field.TypeModification.None if modifier.required     => "required"
                 case Field.TypeModification.None                          => "field"
@@ -727,8 +737,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
-              .block(line"${product.nameRef}.apply")
-              .appendToLast(".withId(id).addHints(hints)")
+              .appendToLast("(make).withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -737,8 +746,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
               .block(
-                line"arr => new ${product.nameRef}".args(
-                  fields.zipWithIndex.map { case (field, idx) =>
+                line"arr => make".args(
+                  fields.sortBy(_.originalIndex).zipWithIndex.map { case (field, idx) =>
                     line"arr($idx).asInstanceOf[${Line.fieldType(field)}]"
                   }
                 )

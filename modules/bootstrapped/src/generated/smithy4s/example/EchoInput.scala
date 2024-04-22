@@ -14,11 +14,12 @@ object EchoInput extends ShapeTag.Companion[EchoInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(pathParam: String, queryParam: Option[String], body: EchoBody): EchoInput = EchoInput(pathParam, body, queryParam)
+
   implicit val schema: Schema[EchoInput] = struct(
     string.validated(smithy.api.Length(min = Some(10L), max = None)).required[EchoInput]("pathParam", _.pathParam).addHints(smithy.api.HttpLabel()),
-    EchoBody.schema.required[EchoInput]("body", _.body).addHints(smithy.api.HttpPayload()),
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[EchoInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
-  ){
-    EchoInput.apply
-  }.withId(id).addHints(hints)
+    EchoBody.schema.required[EchoInput]("body", _.body).addHints(smithy.api.HttpPayload()),
+  )(make).withId(id).addHints(hints)
 }

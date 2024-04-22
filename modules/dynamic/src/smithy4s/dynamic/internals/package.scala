@@ -22,4 +22,27 @@ package object internals {
   private[internals] type DynStruct = Array[DynData]
   private[internals] type DynAlt = (Int, DynData)
 
+  private[internals] def recursiveVertices[A](map: Map[A, Set[A]]): Set[A] = {
+    import scala.collection.mutable.{Set => MSet}
+    import scala.collection.immutable.ListSet
+    val provenRecursive: MSet[A] = MSet.empty
+    val provenNotRecursive: MSet[A] = MSet.empty
+
+    def crawl(key: A, seen: ListSet[A]): Unit = {
+      if (provenNotRecursive(key)) ()
+      else if (seen(key)) {
+        // dropping elements that don't belong to the "recursive path"
+        provenRecursive ++= seen.dropWhile(_ != key)
+      } else
+        map.get(key) match {
+          case None => ()
+          case Some(values) =>
+            values.foreach(crawl(_, seen + key))
+            if (!provenRecursive(key)) provenNotRecursive += key
+        }
+    }
+
+    map.keySet.foreach(crawl(_, ListSet.empty))
+    provenRecursive.toSet
+  }
 }

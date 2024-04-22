@@ -8,7 +8,7 @@ lazy val root = project
         "version",
         "src/main/smithy",
         "software.amazon.smithy:smithy-waiters:1.38.0",
-        "com.disneystreaming.alloy:alloy-core:0.2.8",
+        s"com.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",
         "com.disneystreaming.smithy4s:smithy4s-protocol:",
         "custom",
         "attribute"

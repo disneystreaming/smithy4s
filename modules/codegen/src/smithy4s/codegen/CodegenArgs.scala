@@ -35,6 +35,7 @@ final case class CodegenArgs(
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)
   def skipResources: Boolean = skip(FileType.Resource)
+  def skipProto: Boolean = skip(FileType.Proto)
 }
 
 sealed abstract class FileType(val name: String)
@@ -50,6 +51,7 @@ object FileType {
   case object Scala extends FileType("scala")
   case object Openapi extends FileType("openapi")
   case object Resource extends FileType("resource")
+  case object Proto extends FileType("proto")
 
   val values = List(Scala, Openapi, Resource)
 }

@@ -147,6 +147,7 @@ private[internals] object CollisionAvoidance {
       field.name,
       modType(field.tpe),
       field.modifier,
+      field.originalIndex,
       field.hints.map(modHint)
     )
   }

@@ -20,9 +20,10 @@ object EnvVarString extends ShapeTag.Companion[EnvVarString] {
     smithy.api.Documentation(s"This is meant to be used with $${ENV_VAR}"),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(member: Option[String]): EnvVarString = EnvVarString(member)
+
   implicit val schema: Schema[EnvVarString] = struct(
     string.optional[EnvVarString]("member", _.member).addHints(smithy.api.Documentation(s"This is meant to be used with $$ENV_VAR")),
-  ){
-    EnvVarString.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

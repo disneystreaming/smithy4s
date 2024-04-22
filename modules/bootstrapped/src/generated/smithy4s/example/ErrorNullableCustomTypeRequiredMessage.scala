@@ -19,9 +19,10 @@ object ErrorNullableCustomTypeRequiredMessage extends ShapeTag.Companion[ErrorNu
     smithy.api.Error.SERVER.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Nullable[CustomErrorMessageType]): ErrorNullableCustomTypeRequiredMessage = ErrorNullableCustomTypeRequiredMessage(message)
+
   implicit val schema: Schema[ErrorNullableCustomTypeRequiredMessage] = struct(
     CustomErrorMessageType.schema.nullable.required[ErrorNullableCustomTypeRequiredMessage]("message", _.message),
-  ){
-    ErrorNullableCustomTypeRequiredMessage.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

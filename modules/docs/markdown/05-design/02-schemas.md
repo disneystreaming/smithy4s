@@ -58,7 +58,7 @@ structure metadata {
 integer MyInt
 ```
 
-When processing this Smithy model, Smithy4s renders a `case class Metadata(description: String)`, with an assocaited `ShapeTag[Metadata]` instance, and the following expression in the companion object of `MyInt`:
+When processing this Smithy model, Smithy4s renders a `case class Metadata(description: String)`, with an associated `ShapeTag[Metadata]` instance, and the following expression in the companion object of `MyInt`:
 
 ```scala
 val hints = Hints(

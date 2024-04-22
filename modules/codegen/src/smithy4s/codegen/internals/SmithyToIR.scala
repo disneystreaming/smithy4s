@@ -342,13 +342,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
 
       override def enumShape(shape: EnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
           .zipWithIndex
-          .map { case ((name, value), index) =>
-            val member = shape.getMember(name).get()
-
+          .map { case (member, index) =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = value,
               intValue = index,
@@ -372,12 +373,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
-          .map { case (name, value) =>
-            val member = shape.getMember(name).get()
-
+          .map { member =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = name,
               intValue = value,
@@ -860,7 +862,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
       val node = tr.toNode()
-      val targetTpe = shape.getTarget.tpe.get
+      val targetTpe = shape.tpe.get
       // Constructing the initial value for the refold
       val nodeAndType = targetTpe match {
         case Alias(_, _, tpe, true) => NodeAndType(node, tpe)
@@ -986,6 +988,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
+        // remove box trait
+        .filterNot(_.toShapeId() == BoxTrait.ID): @nowarn(
+        "msg=class BoxTrait in package traits is deprecated"
+      )
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
@@ -1031,12 +1037,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hintsExtractor(member) ++ default ++ noDefault
           )
         }
+        .zipWithIndex
         .collect {
-          case (name, Some(tpe: Type.ExternalType), modifier, hints) =>
+          case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, modifier, newHints)
-          case (name, Some(tpe), modifier, hints) =>
-            Field(name, tpe, modifier, hints)
+            Field(name, tpe, modifier, index, newHints)
+          case ((name, Some(tpe), modifier, hints), index) =>
+            Field(name, tpe, modifier, index, hints)
         }
         .toList
 
@@ -1230,13 +1237,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.getFieldsPlain
         val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, mod, _)
+          case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
             val node = map.get(realName).getOrElse {
               mod.default.get.node
             } // value or default must be present if type is not wrapped
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(_, realName, tpe, _, _) =>
+          case Field(_, realName, tpe, _, _, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))

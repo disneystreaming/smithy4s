@@ -14,11 +14,12 @@ object Permission extends ShapeTag.Companion[Permission] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(read: Option[Boolean], write: Option[Boolean], directory: Option[Boolean]): Permission = Permission(read, write, directory)
+
   implicit val schema: Schema[Permission] = struct(
     boolean.optional[Permission]("read", _.read),
     boolean.optional[Permission]("write", _.write),
     boolean.optional[Permission]("directory", _.directory),
-  ){
-    Permission.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

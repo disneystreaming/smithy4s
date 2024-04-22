@@ -30,17 +30,17 @@ final class SmithyBuildSpec extends munit.FunSuite {
     assertEquals(
       actual,
       """|{
-         |    "version": "1.0",
-         |    "imports": [
+         |    "version" : "1.0",
+         |    "imports" : [
          |        "src/"
          |    ],
-         |    "maven": {
-         |        "dependencies": [
+         |    "maven" : {
+         |        "dependencies" : [
          |            "dep"
          |        ],
-         |        "repositories": [
+         |        "repositories" : [
          |            {
-         |                "url": "repo"
+         |                "url" : "repo"
          |            }
          |        ]
          |    }
@@ -73,18 +73,61 @@ final class SmithyBuildSpec extends munit.FunSuite {
     assertEquals(
       actual,
       """|{
-         |    "version": "1.0",
-         |    "imports": [
+         |    "version" : "1.0",
+         |    "imports" : [
          |        "src/main/smithy"
          |    ],
-         |    "maven": {
-         |        "dependencies": [
+         |    "maven" : {
+         |        "dependencies" : [
          |            "oterh",
          |            "dep1"
          |        ],
-         |        "repositories": []
+         |        "repositories" : [
+         |        ]
          |    },
-         |    "custom": "attribute"
+         |    "custom" : "attribute"
+         |}""".stripMargin
+    )
+  }
+
+  test("merge two json de-duplicating arrays") {
+    val actual = SmithyBuildJson.merge(
+      """|{
+         |  "version": "1.0",
+         |  "imports": ["src/main/smithy"],
+         |  "maven": {
+         |    "dependencies": ["oterh", "dep1"],
+         |    "repositories": []
+         |  }
+         |}
+         |""".stripMargin,
+      """|{
+         |  "version": "1.0",
+         |  "imports": ["src/main/smithy"],
+         |  "maven": {
+         |    "dependencies": ["dep1"],
+         |    "repositories": []
+         |  },
+         |  "custom": "attribute"
+         |}
+         |""".stripMargin
+    )
+    assertEquals(
+      actual,
+      """|{
+         |    "version" : "1.0",
+         |    "imports" : [
+         |        "src/main/smithy"
+         |    ],
+         |    "maven" : {
+         |        "dependencies" : [
+         |            "oterh",
+         |            "dep1"
+         |        ],
+         |        "repositories" : [
+         |        ]
+         |    },
+         |    "custom" : "attribute"
          |}""".stripMargin
     )
   }

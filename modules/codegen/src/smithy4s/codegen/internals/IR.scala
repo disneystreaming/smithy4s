@@ -132,6 +132,7 @@ private[internals] case class Field(
     realName: String,
     tpe: Type,
     modifier: Field.Modifier,
+    originalIndex: Int,
     hints: List[Hint]
 )
 
@@ -193,9 +194,10 @@ private[internals] object Field {
       name: String,
       tpe: Type,
       modifier: Modifier,
+      originalIndex: Int,
       hints: List[Hint] = Nil
   ): Field =
-    Field(name, name, tpe, modifier, hints)
+    Field(name, name, tpe, modifier, originalIndex, hints)
 
 }
 

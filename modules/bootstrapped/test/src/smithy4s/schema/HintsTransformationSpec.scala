@@ -214,7 +214,12 @@ class HintsTransformationSpec() extends FunSuite {
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): Count[E] = { e =>
-      count(hints) + count(total(e).hints)
+      count(hints) + count(
+        values
+          .find(_.value == total(e).value)
+          .getOrElse(sys.error("Unknown enum value"))
+          .hints
+      )
     }
 
     def struct[S](

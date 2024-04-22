@@ -1,3 +1,41 @@
+# 0.18.16
+
+* Fixes bug leading to refined case-class fields being rendered with default values of the wrong type
+* Adds a `smithy4s-protobuf` module, containing derivation logic for protobuf codecs. See https://github.com/disneystreaming/smithy4s/pull/1455
+* Add support for converting smithy4s services and schemas to smithy models
+* Add `smithy4s.meta#only` annotation allowing to filter operations in
+services, intended to reduce the amount of code generated from AWS specs
+
+# 0.18.15
+
+* Add support for injecting endpoint-specific middlewares in AWS clients
+* Fixes a bug in the parsing of AWS credentials files
+
+# 0.18.14
+
+* Add support for decoding Document representations of untagged unions
+* Update aws-http4s clients using json to have a maxArity of Int.MaxValue
+
+# 0.18.13
+
+* Enable generation of protobuf specifications from smithy specifications.
+* modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
+
+# 0.18.12
+
+* fix issue where schemas for fields of generated big structs (over 22 fields in size) would not be ordered correctly
+
+# 0.18.11
+
+* smithy4s Structure schemas are now retaining the original order of fields, as per the specification.
+* Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+In addition, the semantics of `transformHintsTransitively` have been changed: the transformation no longer modifies the hints on the result of the `total` function.
+* smithy4s-core now contains the generated code for the alloy.proto namespace
+
+# 0.18.10
+
+* Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
+
 # 0.18.9
 
 * Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
