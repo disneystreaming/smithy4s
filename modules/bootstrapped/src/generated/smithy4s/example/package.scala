@@ -60,6 +60,7 @@ package object example {
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type TestIdRefList = smithy4s.example.TestIdRefList.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
+  type ConstrainedList = smithy4s.example.ConstrainedList.Type
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
@@ -72,6 +73,7 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
   type FancyList = smithy4s.example.FancyList.Type
+  type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   type StringList = smithy4s.example.StringList.Type
   /** Multiple line doc comment for another string
