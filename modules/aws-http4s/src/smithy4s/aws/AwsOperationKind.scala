@@ -32,7 +32,9 @@ object AwsOperationKind {
   @implicitNotFound(
     "Cannot prove that the operation is a blob upload. No instance of ByteUpload[${StreamedInput}, ${StreamedOutput}]"
   )
-  sealed trait ByteUpload[StreamedInput, StreamedOutput]
+  sealed trait ByteUpload[StreamedInput, StreamedOutput] {
+    def apply(value: StreamedInput): Byte = value.asInstanceOf[Byte]
+  }
   object ByteUpload {
     implicit val ByteUpload: ByteUpload[Byte, Nothing] =
       new ByteUpload[Byte, Nothing] {}

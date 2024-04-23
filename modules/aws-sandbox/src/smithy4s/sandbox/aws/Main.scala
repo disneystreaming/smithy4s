@@ -19,53 +19,136 @@ package sandbox
 package aws
 
 import cats.effect._
-import com.amazonaws.cloudwatch
-import com.amazonaws.ec2
 import org.http4s.client.middleware.RequestLogger
 import org.http4s.ember.client.EmberClientBuilder
+import com.amazonaws.{s3 => smithyS3}
 import smithy4s.aws._
+import java.net.URI
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object Main extends IOApp.Simple {
 
-  override def run: IO[Unit] = awsEnvironmentResource.use { awsEnvironment =>
-    // Per
-    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
-    // CloudWatch is one of a few services that use the awsQuery protocol.
-    AwsClient(cloudwatch.CloudWatch, awsEnvironment).use(cloudWatchClient =>
-      listAll[
-        cloudwatch.NextToken,
-        cloudwatch.ListMetricsOutput,
-        cloudwatch.Metric
-      ](
-        listF = maybeNextToken =>
-          cloudWatchClient.listMetrics(
-            // This is just a simple way of reducing the size of the results while
-            // still exercising the pagination handler.
-            namespace = Some("AWS/S3"),
-            nextToken = maybeNextToken
-          ),
-        accessResults = _.metrics.toList.flatten,
-        accessNextToken = _.nextToken
+  val keyName = "overlay/production/main/index.html"
+  val newBytesName = "overlay/david/bytes-todelete.txt"
+  val newFileName = "overlay/david/file-todelete.txt"
+  val bucketName = "apiregistry-general"
+
+  override def run: IO[Unit] =
+    awsS3().attempt.flatMap(print) *> smithy4sS3().attempt.flatMap(print)
+
+  private def print[B](either: Either[Throwable, B]): IO[Unit] =
+    either match {
+      case Left(value) =>
+        IO.consoleForIO.printStackTrace(value)
+      case Right(value) => IO.println(value)
+    }
+
+  private def smithy4sS3(): IO[Unit] = {
+    import smithyS3._
+    val program = for {
+      awsEnv <- awsEnvironmentResource
+      s3 <- AwsClient.streamingClient(S3, awsEnv)
+      res <- {
+        s3.getObject(BucketName(bucketName), ObjectKey(keyName))
+          .download
+          .evalMap { output =>
+            output.payload.compile.count
+          }
+      }
+      _ <- IO.println(s"Downloaded $res from S3").toResource
+      bytes = "bytes".getBytes()
+      _ <- s3
+        .putObject(BucketName(bucketName), ObjectKey(newBytesName))
+        .upload(
+          AwsStrictInput(
+            fs2.Stream
+              .emits(bytes.toSeq)
+              .map(b => StreamingBlob(b)),
+            bytes.length.toLong
+          )
+        )
+        .toResource
+    } yield ()
+    program.use_
+  }
+
+  private def awsS3(): IO[Unit] = {
+    import software.amazon.awssdk.http.SdkHttpClient
+    import software.amazon.awssdk.http.apache.ProxyConfiguration
+    import software.amazon.awssdk.http.apache.ApacheHttpClient
+    import software.amazon.awssdk.services.s3.S3Client
+    import software.amazon.awssdk.services.s3.model._
+    import software.amazon.awssdk.regions.Region
+    import software.amazon.awssdk.core.sync.RequestBody
+    import software.amazon.awssdk.utils.AttributeMap
+    import software.amazon.awssdk.http.SdkHttpConfigurationOption.TRUST_ALL_CERTIFICATES
+
+    val pc = ProxyConfiguration
+      .builder()
+      .endpoint(URI.create("http://localhost:8080"))
+      .build()
+
+    val client =
+      Resource.make(
+        IO.delay(
+          ApacheHttpClient
+            .builder()
+            .proxyConfiguration(pc)
+            .buildWithDefaults(
+              AttributeMap
+                .builder()
+                .put(TRUST_ALL_CERTIFICATES, java.lang.Boolean.TRUE)
+                .build()
+            )
+        )
+      )(c => IO.delay(c.close()))
+
+    def makeS3(client: SdkHttpClient) = Resource.make(
+      IO.delay(
+        S3Client
+          .builder()
+          .httpClient(client)
+          .region(Region.US_EAST_1)
+          .build()
       )
-        .map(_.size)
-        .flatMap(size => IO.println(s"Found $size metrics"))
-    )
-    // Per
-    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
-    // EC2 is the only service that use the ec2Query protocol.
-    AwsClient(ec2.EC2, awsEnvironment).use(ec2Client =>
-      listAll[String, ec2.DescribeInstanceStatusResult, ec2.InstanceStatus](
-        listF = maybeNextToken =>
-          ec2Client.describeInstanceStatus(
-            maxResults = 100,
-            nextToken = maybeNextToken
-          ),
-        accessResults = _.instanceStatuses.toList.flatten,
-        accessNextToken = _.nextToken
-      )
-        .map(_.size)
-        .flatMap(size => IO.println(s"Found $size instance statuses"))
-    )
+    )(s3 => IO.delay(s3.close()))
+    def getObject(s3: S3Client): IO[Unit] = {
+      val getObjectRequest = GetObjectRequest
+        .builder()
+        .key(keyName)
+        .bucket(bucketName)
+        .build()
+      val get = IO.blocking(s3.getObjectAsBytes(getObjectRequest).asByteArray())
+      get.flatMap { bytes => IO.println(s"got ${bytes.size} bytes") }
+    }
+    def putObject(s3: S3Client, data: Array[Byte]): IO[Unit] = {
+      val req =
+        PutObjectRequest
+          .builder()
+          .key(newBytesName)
+          // .checksumAlgorithm(ChecksumAlgorithm.SHA256)
+          .bucket(bucketName)
+          .build()
+      val body = RequestBody.fromBytes(data)
+      val put = IO.blocking(s3.putObject(req, body))
+      put.flatMap { resp => IO.println(s"upload bytes ${resp.checksumSHA1()}") }
+    }
+    def putObjectFile(s3: S3Client, path: Path): IO[Unit] = {
+      val req =
+        PutObjectRequest.builder().key(newFileName).bucket(bucketName).build()
+      val body = RequestBody.fromFile(path)
+      val put = IO.blocking(s3.putObject(req, body))
+      put.flatMap { resp => IO.println(s"upload file ${resp.checksumSHA1()}") }
+    }
+    client.flatMap(makeS3).use { s3 =>
+      getObject(s3) *>
+        putObject(s3, "my data is in s3".getBytes()) *>
+        putObjectFile(
+          s3,
+          Paths.get("../../../LICENSE")
+        )
+    }
   }
 
   private val awsEnvironmentResource: Resource[IO, AwsEnvironment[IO]] =
@@ -76,7 +159,8 @@ object Main extends IOApp.Simple {
         .map(
           RequestLogger.colored(
             logHeaders = true,
-            logBody = true
+            logBody = true,
+            redactHeadersWhen = _ => false
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]
@@ -89,32 +173,4 @@ object Main extends IOApp.Simple {
       ),
       IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
     )
-
-  // This is probably something that's gonna get reimplemented a lot in
-  // user-land. Perhaps we could use pagination hints from the specs to avoid
-  // having to manually wire up the accessors, and to generate synthetic service
-  // functions that handle pagination?
-  private def listAll[NextToken, ListOutput, Result](
-      listF: Option[NextToken] => IO[ListOutput],
-      accessResults: ListOutput => List[Result],
-      accessNextToken: ListOutput => Option[NextToken],
-      acc: List[Result] = List.empty,
-      maybeNextToken: Option[NextToken] = None
-  ): IO[List[Result]] =
-    for {
-      listOutput <- listF(maybeNextToken)
-      accumulatedResults = acc ::: accessResults(listOutput)
-      result <- accessNextToken(listOutput) match {
-        case None => IO.pure(accumulatedResults)
-        case Some(nextNextToken) =>
-          listAll(
-            listF,
-            accessResults,
-            accessNextToken,
-            accumulatedResults,
-            Some(nextNextToken)
-          )
-      }
-    } yield result
-
 }

@@ -32,7 +32,7 @@ sealed trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
     * Uploads a payload and returns an effect, provided it is proven that the call has a
     * streamed input of type Byte, and no streamed output.
     */
-  def upload(payload: Stream[F, StreamedInput])(implicit ev: AwsOperationKind.ByteUpload[StreamedInput, StreamedOutput]): F[Output]
+  def upload(payload: AwsStrictInput[F, StreamedInput])(implicit ev: AwsOperationKind.ByteUpload[StreamedInput, StreamedOutput]): F[Output]
 
   def download(implicit ev: AwsOperationKind.ByteDownload[StreamedInput, StreamedOutput]) : Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]
 
@@ -48,6 +48,7 @@ sealed trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
 }
 
 case class AwsDownloadResult[F[_], O, SO](metadata: O, payload: Stream[F, SO])
+case class AwsStrictInput[F[_], SI](payload: Stream[F, SI], length: Long)
 
 object AwsCall {
 
@@ -55,13 +56,15 @@ object AwsCall {
 
   private final case class UnaryAwsCall[F[_], Input, Err, Output](run : F[Output]) extends AwsCall[F, Input, Err, Output, Nothing, Nothing]{
     def run(implicit ev: AwsOperationKind.Unary[Nothing,Nothing]): F[Output] = run
-    def upload(payload: Stream[F, Nothing])(implicit ev: AwsOperationKind.ByteUpload[Nothing,Nothing]): F[Output] = uncallable
+    def upload(payload: AwsStrictInput[F, Nothing])(implicit ev: AwsOperationKind.ByteUpload[Nothing,Nothing]): F[Output] = uncallable
     def download(implicit ev: AwsOperationKind.ByteDownload[Nothing,Nothing]): Resource[F,AwsDownloadResult[F,Output,Nothing]] = sys.error("Impossible calls")
   }
 
-  private final case class BlobUploadAwsCall[F[_], Input, Err, Output, StreamedInput](uploadFunction: Stream[F, StreamedInput] => F[Output]) extends AwsCall[F, Input, Err, Output, StreamedInput, Nothing]{
+  def upload[F[_], Input, Err, Output, StreamedInput](res: (StreamedInput => Byte) => AwsStrictInput[F, StreamedInput] => F[Output]): AwsCall[F, Input, Err, Output, StreamedInput, Nothing] = new BlobUploadAwsCall(res)
+
+  private final case class BlobUploadAwsCall[F[_], Input, Err, Output, StreamedInput](uploadFunction: (StreamedInput => Byte) => AwsStrictInput[F, StreamedInput] => F[Output]) extends AwsCall[F, Input, Err, Output, StreamedInput, Nothing]{
     def run(implicit ev: AwsOperationKind.Unary[StreamedInput,Nothing]): F[Output] = uncallable
-    def upload(payload: Stream[F, StreamedInput])(implicit ev: AwsOperationKind.ByteUpload[StreamedInput,Nothing]): F[Output] = uploadFunction(payload)
+    def upload(payload: AwsStrictInput[F, StreamedInput])(implicit ev: AwsOperationKind.ByteUpload[StreamedInput,Nothing]): F[Output] = uploadFunction(ev.apply)(payload)
     def download(implicit ev: AwsOperationKind.ByteDownload[StreamedInput,Nothing]): Resource[F,AwsDownloadResult[F,Output,Nothing]] = uncallable
   }
 
@@ -69,7 +72,7 @@ object AwsCall {
 
   private final case class BlobDownloadAwsCall[F[_], Input, Err, Output, StreamedOutput](downloadResult: (Byte => StreamedOutput) => Resource[F, AwsDownloadResult[F, Output, StreamedOutput]]) extends AwsCall[F, Input, Err, Output, Nothing, StreamedOutput]{
     def run(implicit ev: AwsOperationKind.Unary[Nothing,StreamedOutput]): F[Output] = uncallable
-    def upload(payload: Stream[F, Nothing])(implicit ev: AwsOperationKind.ByteUpload[Nothing,StreamedOutput]): F[Output] = uncallable
+    def upload(payload: AwsStrictInput[F, Nothing])(implicit ev: AwsOperationKind.ByteUpload[Nothing,StreamedOutput]): F[Output] = uncallable
     def download(implicit ev: AwsOperationKind.ByteDownload[Nothing,StreamedOutput]): Resource[F,AwsDownloadResult[F,Output,StreamedOutput]] = downloadResult(ev.apply)
   }
 }

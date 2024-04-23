@@ -932,7 +932,8 @@ lazy val `aws-sandbox` = projectMatrix
   .settings(
     Compile / allowedNamespaces := Seq(
       "com.amazonaws.cloudwatch",
-      "com.amazonaws.ec2"
+      "com.amazonaws.ec2",
+      "com.amazonaws.s3"
     ),
     genSmithy(Compile),
     // Ignore deprecation warnings here - it's all generated code, anyway.
@@ -941,10 +942,12 @@ lazy val `aws-sandbox` = projectMatrix
     ),
     smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
-      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
+      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10",
+      "com.disneystreaming.smithy" % "aws-s3-spec" % "2023.02.10"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
+      "software.amazon.awssdk" % "s3" % "2.25.11",
       Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true

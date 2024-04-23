@@ -62,6 +62,7 @@ object HttpUnaryServerCodecs {
     def build(): UnaryServerCodecs.Make[F, Request, Response]
   }
 
+  // todo rename this class
   private case class HttpUnaryClientCodecsBuilderImpl[F[_], Request, Response](
       baseResponse: OperationSchema[_, _, _, _, _] => F[HttpResponse[Blob]],
       requestBodyDecoders: BlobDecoder.Compiler,

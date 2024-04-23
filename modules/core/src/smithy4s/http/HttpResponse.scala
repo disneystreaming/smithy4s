@@ -71,7 +71,7 @@ final case class HttpResponse[+A](
 object HttpResponse {
   private[http] type Writer[Body, A] =
     smithy4s.codecs.Writer[HttpResponse[Body], A]
-  private[http] type Decoder[F[_], Body, A] =
+  type Decoder[F[_], Body, A] =
     smithy4s.codecs.Decoder[F, HttpResponse[Body], A]
 
   private[http] def isStatusCodeSuccess(statusCode: Int): Boolean =
@@ -161,7 +161,7 @@ object HttpResponse {
 
   }
 
-  private[http] object Decoder {
+  object Decoder {
 
     def restSchemaCompiler[F[_]: MonadThrowLike, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
@@ -212,7 +212,7 @@ object HttpResponse {
     * the correct alternative, based on some discriminator, and
     * then upcasts the error as a throwable
     */
-    private[http] def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
+    def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
         maybeErrorSchema: Option[ErrorSchema[E]],
         decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
         discriminate: HttpResponse[Body] => F[HttpDiscriminator],
@@ -256,7 +256,7 @@ object HttpResponse {
 
   }
 
-  private def extractMetadata[F[_]](
+  def extractMetadata[F[_]](
       liftToF: PolyFunction[Either[MetadataError, *], F]
   ): PolyFunction[Metadata.Decoder, Decoder[F, Any, *]] =
     GenericDecoder
