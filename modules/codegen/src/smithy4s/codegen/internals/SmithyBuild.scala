@@ -122,12 +122,35 @@ private[codegen] object SmithyBuildPlugin {
   case class OpenApi(config: OpenApiConfig) extends SmithyBuildPlugin
 
   object OpenApi {
-    implicit val decoder: Decoder[OpenApi] = Decoder[JsonObject].emapTry {
-      obj =>
-        Try {
-          val config = OpenApiConfig.fromNode(Node.parse(obj.toJson.noSpaces))
-          OpenApi(config)
-        }
+    private val nodeFolder: Json.Folder[Node] = new Json.Folder[Node] {
+      import scala.jdk.CollectionConverters._
+      override def onNull: Node = Node.nullNode()
+
+      override def onBoolean(value: Boolean): Node = Node.from(value)
+
+      override def onNumber(value: JsonNumber): Node =
+        // try to avoid rounding errors from double conversion if we possibly can
+        value.toInt
+          .map(Node.from(_))
+          .orElse(value.toLong.map(Node.from(_)))
+          .getOrElse(Node.from(value.toDouble))
+
+      override def onString(value: String): Node = Node.from(value)
+
+      override def onArray(value: Vector[Json]): Node =
+        Node.arrayNode(value.map(_.foldWith(this)): _*)
+
+      override def onObject(value: JsonObject): Node =
+        Node.objectNode(value.toMap.map { case (name, json) =>
+          Node.from(name) -> json.foldWith(this)
+        }.asJava)
+    }
+
+    implicit val decoder: Decoder[OpenApi] = Decoder[Json].emapTry { obj =>
+      Try {
+        val config = OpenApiConfig.fromNode(obj.foldWith(nodeFolder))
+        OpenApi(config)
+      }
     }
   }
 }
