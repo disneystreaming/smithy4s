@@ -20,7 +20,7 @@ import cats.data.ValidatedNel
 import cats.syntax.all._
 
 final case class CodegenArgs(
-    specs: List[os.Path],
+    specs: List[PathRef],
     output: os.Path,
     resourceOutput: os.Path,
     skip: Set[FileType],
@@ -30,12 +30,13 @@ final case class CodegenArgs(
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
-    localJars: List[os.Path]
+    localJars: List[PathRef]
 ) {
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)
   def skipResources: Boolean = skip(FileType.Resource)
   def skipProto: Boolean = skip(FileType.Proto)
+
 }
 
 sealed abstract class FileType(val name: String)

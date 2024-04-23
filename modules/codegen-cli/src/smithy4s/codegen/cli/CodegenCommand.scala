@@ -24,6 +24,7 @@ import smithy4s.codegen.CodegenArgs
 import smithy4s.codegen.FileType
 
 import Options._
+import smithy4s.codegen.PathRef
 
 object CodegenCommand {
 
@@ -116,7 +117,7 @@ object CodegenCommand {
             defaultDependencies ++ dependencies.getOrElse(List.empty)
           }
           CodegenArgs(
-            specsArgs,
+            specsArgs.map(PathRef(_)),
             output.getOrElse(os.pwd),
             resourseOutput.getOrElse(os.pwd),
             skip,
@@ -126,7 +127,7 @@ object CodegenCommand {
             repositories.getOrElse(List.empty),
             dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
-            localJars.getOrElse(List.empty)
+            localJars.getOrElse(List.empty).map(PathRef(_))
           )
       }
 

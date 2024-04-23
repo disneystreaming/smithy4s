@@ -21,6 +21,7 @@ import smithy4s.codegen.FileType
 import weaver._
 
 import Defaults.defaultDependencies
+import smithy4s.codegen.PathRef
 
 object CommandParsingSpec extends FunSuite {
 
@@ -81,7 +82,7 @@ object CommandParsingSpec extends FunSuite {
               specs = List(
                 os.pwd / "sampleSpecs" / "pizza.smithy",
                 os.pwd / "sampleSpecs" / "example.smithy"
-              ),
+              ).map(PathRef(_)),
               output = os.pwd / "target",
               resourceOutput = os.pwd / "target" / "openapi",
               skip = Set(FileType.Openapi, FileType.Scala),
@@ -94,7 +95,7 @@ object CommandParsingSpec extends FunSuite {
               localJars = List(
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
-              )
+              ).map(PathRef(_))
             )
           )
         )

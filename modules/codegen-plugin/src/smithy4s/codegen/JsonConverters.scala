@@ -30,24 +30,30 @@ private[smithy4s] object JsonConverters {
   // This serialises a path by providing a hash of the content it points to.
   // Because the hash is part of the Json, this allows SBT to detect when a file
   // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
-  implicit val pathFormat: JsonFormat[os.Path] =
-    BasicJsonProtocol.projectFormat[os.Path, HashFileInfo](
+  implicit val pathRefFormat: JsonFormat[PathRef] =
+    BasicJsonProtocol.projectFormat[PathRef, HashFileInfo](
       p => {
-        if (os.isFile(p)) FileInfo.hash(p.toIO)
+        if (os.isFile(p.underlying)) FileInfo.hash(p.underlying.toIO)
         else
           // If the path is a directory, we get the hashes of all files
           // then hash the concatenation of the hash's bytes.
           FileInfo.hash(
-            p.toIO,
+            p.underlying.toIO,
             Hash(
-              os.walk(p)
+              os.walk(p.underlying)
                 .map(_.toIO)
                 .map(Hash(_))
                 .foldLeft(Array.emptyByteArray)(_ ++ _)
             )
           )
       },
-      hash => os.Path(hash.file)
+      hash => PathRef(os.Path(hash.file))
+    )
+
+  implicit val pathFormat: JsonFormat[os.Path] =
+    BasicJsonProtocol.projectFormat[os.Path, String](
+      p => p.toString,
+      str => os.Path(str)
     )
 
   implicit val fileTypeFormat: JsonFormat[FileType] =
@@ -61,7 +67,7 @@ private[smithy4s] object JsonConverters {
     )
 
   // format: off
-  type GenTarget = List[os.Path] :*: String :*: String :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
+  type GenTarget = List[PathRef] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[PathRef] :*: LNil
   // format: on
 
   // `output` and `resourceOutput` are intentionally serialized as strings
@@ -70,8 +76,8 @@ private[smithy4s] object JsonConverters {
   implicit val codegenArgsIso = LList.iso[CodegenArgs, GenTarget](
     { ca: CodegenArgs =>
       ("specs", ca.specs) :*:
-        ("output", ca.output.toString) :*:
-        ("resourceOutput", ca.resourceOutput.toString) :*:
+        ("output", ca.output) :*:
+        ("resourceOutput", ca.resourceOutput) :*:
         ("skip", ca.skip) :*:
         ("discoverModels", ca.discoverModels) :*:
         ("allowedNS", ca.allowedNS) :*:
@@ -96,8 +102,8 @@ private[smithy4s] object JsonConverters {
           (_, localJars) :*: LNil =>
         CodegenArgs(
           specs,
-          os.Path(output),
-          os.Path(resourceOutput),
+          output,
+          resourceOutput,
           skip,
           discoverModels,
           allowedNS,
