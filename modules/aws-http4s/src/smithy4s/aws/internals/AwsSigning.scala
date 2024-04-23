@@ -120,6 +120,7 @@ private[aws] object AwsSigning {
               .mkString("&")
 
         val amzHeaders: List[(CIString, String)] = request.headers.headers
+          .filter(_.name.toString.toLowerCase.startsWith("x-amz"))
           .map(h => (h.name, h.value))
           .filterNot(_._2 == null)
 
