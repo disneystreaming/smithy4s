@@ -1,5 +1,10 @@
+# 0.18.17
+
+* Constraints applied to list or map members are now correctly rendered in the generated code.
+
 # 0.18.16
 
+* Fixes bug leading to refined case-class fields being rendered with default values of the wrong type
 * Adds a `smithy4s-protobuf` module, containing derivation logic for protobuf codecs. See https://github.com/disneystreaming/smithy4s/pull/1455
 * Add support for converting smithy4s services and schemas to smithy models
 * Add `smithy4s.meta#only` annotation allowing to filter operations in
