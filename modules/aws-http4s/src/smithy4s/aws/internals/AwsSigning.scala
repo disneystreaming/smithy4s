@@ -125,8 +125,12 @@ private[aws] object AwsSigning {
           .filterNot(_._2 == null)
 
         // It is assumed that the hash value is computed before this middleware run
-        // via another middleware. If it is not, we use a default unsigned value
-        val payloadHash = amzHeaders.find(_._1 == `X-Amz-Content-SHA256`).map(_._2).getOrElse(AwsPayloadSignature.UnsignedPayload.headerValue)
+        // via another middleware. If it is not, we use a default value.
+        val contentSha = amzHeaders.find(_._1 == `X-Amz-Content-SHA256`)
+        val payloadHash = contentSha.map(_._2).getOrElse(AwsPayloadSignature.UnsignedPayload.headerValue)
+        val missingContentShaHeader =
+          if (contentSha.isEmpty) List(`X-Amz-Content-SHA256` -> AwsPayloadSignature.UnsignedPayload.headerValue)
+          else List.empty
 
         val addedHeaders: List[(CIString, String)] = List(
           `Content-Type` -> request.contentType.map(contentType.value(_)).orNull,
@@ -134,7 +138,9 @@ private[aws] object AwsSigning {
           `X-Amz-Date` -> timestamp.conciseDateTime,
           `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
           `X-Amz-Target` -> (serviceName + "." + operationName)
-        ).filterNot(_._2 == null)
+        ).filterNot(_._2 == null) ++
+          // we also include the header, if it was not because it is required
+          missingContentShaHeader
 
         // Headers included in the signature needs to be sorted alphabetically
         val allHeaders = (addedHeaders ++ amzHeaders).sortBy(_._1)
