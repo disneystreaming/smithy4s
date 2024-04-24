@@ -411,7 +411,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
     val localJars =
       (conf / smithy4sAllDependenciesAsJars).value.toList.sorted
-        .map(p => PathRef(os.Path(p)))
+        .map(p => os.Path(p))
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
@@ -424,7 +424,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
-    val specs = filePaths.sorted.map(p => PathRef(os.Path(p))).toList
+    val specs = filePaths.sorted.map(p => os.Path(p)).toList
     val codegenArgs = CodegenArgs(
       specs,
       output = os.Path(outputPath),

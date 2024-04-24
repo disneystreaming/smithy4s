@@ -32,12 +32,12 @@ private[codegen] object CodegenImpl { self =>
 
   def generate(args: CodegenArgs): CodegenResult = {
     val (classloader, model): (ClassLoader, Model) = internals.ModelLoader.load(
-      args.specs.map(_.underlying.toIO).toSet,
+      args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
       withBuiltinTransformers(args.transformers),
       args.discoverModels,
-      args.localJars.map(_.underlying)
+      args.localJars
     )
 
     val (scalaFiles, smithyResources) = if (!args.skipScala) {
@@ -56,7 +56,7 @@ private[codegen] object CodegenImpl { self =>
       val resources = if (!skipResource) {
         SmithyResources.produce(
           args.resourceOutput,
-          args.specs.map(_.underlying),
+          args.specs,
           generatedNamespaces
         )
       } else List.empty[CodegenEntry]

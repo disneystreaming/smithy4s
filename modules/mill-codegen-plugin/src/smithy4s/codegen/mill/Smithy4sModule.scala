@@ -34,7 +34,6 @@ import mill.api.JarManifest
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
-import smithy4s.codegen
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -192,7 +191,6 @@ trait Smithy4sModule extends ScalaModule {
       .map(_.path)
       .filter(os.exists(_))
       .toList
-      .map(codegen.PathRef(_))
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
@@ -212,7 +210,6 @@ trait Smithy4sModule extends ScalaModule {
         .map(_.path)
         .iterator
         .to(List)
-        .map(codegen.PathRef(_))
 
     val args = CodegenArgs(
       specs = specFiles,

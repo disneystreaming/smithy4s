@@ -75,7 +75,7 @@ private[smithy4s] object JsonConverters {
   // See https://github.com/disneystreaming/smithy4s/issues/1495 for reference on this decision
   implicit val codegenArgsIso = LList.iso[CodegenArgs, GenTarget](
     { ca: CodegenArgs =>
-      ("specs", ca.specs) :*:
+      ("specs", ca.specs.map(PathRef(_))) :*:
         ("output", ca.output) :*:
         ("resourceOutput", ca.resourceOutput) :*:
         ("skip", ca.skip) :*:
@@ -85,7 +85,7 @@ private[smithy4s] object JsonConverters {
         ("repositories", ca.repositories) :*:
         ("dependencies", ca.dependencies) :*:
         ("transformers", ca.transformers) :*:
-        ("localJars", ca.localJars) :*:
+        ("localJars", ca.localJars.map(PathRef(_))) :*:
         LNil
     },
     {
@@ -101,7 +101,7 @@ private[smithy4s] object JsonConverters {
           (_, transformers) :*:
           (_, localJars) :*: LNil =>
         CodegenArgs(
-          specs,
+          specs.map(_.underlying),
           output,
           resourceOutput,
           skip,
@@ -111,7 +111,7 @@ private[smithy4s] object JsonConverters {
           repositories,
           dependencies,
           transformers,
-          localJars
+          localJars.map(_.underlying)
         )
     }
   )
