@@ -445,7 +445,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       ) {
         Function.untupled {
           Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
-            s.cacheDirectory / "smithy4s-output"
+            s.cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
               s.log.debug("Regenerating managed sources")
