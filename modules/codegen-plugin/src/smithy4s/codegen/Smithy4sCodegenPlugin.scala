@@ -416,7 +416,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
       }
-    val transforms = (conf / smithy4sModelTransformers).value.sorted
+    val transforms = (conf / smithy4sModelTransformers).value
     val s = (conf / streams).value
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
