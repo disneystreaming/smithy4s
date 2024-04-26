@@ -404,7 +404,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         .filter(_.exists())
         .toList
     val outputPath = (conf / smithy4sOutputDir).value / "smithy4s"
-    val resourceOutputPath = (conf / smithy4sResourceDir).value / "smithy4s"
+    val resourceOutputPath = (conf / smithy4sResourceDir).value
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =

@@ -5,7 +5,6 @@ $ absent bar/target/scala-2.13/src_managed/main/scala/smithy4s/foo/Foo.scala
 $ absent bar/target/scala-2.13/src_managed/main/scala/smithy4s/foodir/FooDir.scala
 $ exists foo/target/scala-2.13/src_managed/main/scala/smithy4s/foo/Foo.scala
 $ exists foo/target/scala-2.13/src_managed/main/scala/smithy4s/foodir/FooDir.scala
-> pause
 # check if code can run, this can reveal runtime issues# such as initialization errors
 > bar/run
 
