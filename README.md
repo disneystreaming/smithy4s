@@ -4,6 +4,7 @@
 [![Discord](https://img.shields.io/discord/1045676621761347615.svg?label=&logo=discord&logoColor=ffffff&color=404244&labelColor=6A7EC2)](https://discord.gg/wvVga94s8r)
 # smithy4s
 
+
 ## Usage
 
 **For usage information, check out the [Documentation](https://disneystreaming.github.io/smithy4s/)**
