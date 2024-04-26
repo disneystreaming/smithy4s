@@ -2,7 +2,7 @@
 > run
 
 # This new type was not flattened because it has range constraints
-$ exists  smithy_output/com/amazonaws/dynamodb/ListTablesInputLimit.scala
+$ exists  smithy_output/smithy4s/com/amazonaws/dynamodb/ListTablesInputLimit.scala
 
 # Flattened and removed by the projection transformer
--$ exists smithy_output/com/amazonaws/dynamodb/Long.scala
+-$ exists smithy_output/smithy4s/com/amazonaws/dynamodb/Long.scala
