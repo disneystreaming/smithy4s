@@ -23,7 +23,7 @@ import io.circe.syntax._
 
 private[internals] final case class SmithyBuild(
     version: String,
-    imports: Seq[String],
+    imports: Set[String],
     maven: SmithyBuildMaven
 )
 private[codegen] object SmithyBuild {
@@ -32,8 +32,8 @@ private[codegen] object SmithyBuild {
 }
 
 private[internals] final case class SmithyBuildMaven(
-    dependencies: Seq[String],
-    repositories: Seq[SmithyBuildMavenRepository]
+    dependencies: Set[String],
+    repositories: Set[SmithyBuildMavenRepository]
 )
 private[codegen] object SmithyBuildMaven {
   implicit val codecs: Codec[SmithyBuildMaven] = deriveCodec

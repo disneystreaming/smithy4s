@@ -21,14 +21,14 @@ import sbt.Keys._
 import Smithy4sCodegenPlugin.autoImport._
 
 private final case class SmithyBuildData(
-    imports: Seq[String],
-    deps: Seq[String],
-    repos: Seq[String]
+    imports: Set[String],
+    deps: Set[String],
+    repos: Set[String]
 ) {
   def addAll(
-      imports: Seq[String],
-      deps: Seq[String],
-      repos: Seq[String]
+      imports: Set[String],
+      deps: Set[String],
+      repos: Set[String]
   ): SmithyBuildData = {
     SmithyBuildData(
       this.imports ++ imports,
@@ -71,7 +71,7 @@ private[codegen] object GenerateSmithyBuild {
       rootDir: File
   ): SmithyBuildData =
     extracted.structure.allProjectRefs
-      .foldLeft(SmithyBuildData(Seq.empty, Seq.empty, Seq.empty)) {
+      .foldLeft(SmithyBuildData(Set.empty, Set.empty, Set.empty)) {
         case (gsb, pr) =>
           gsb.addAll(
             extractImports(pr, extracted.structure.data, rootDir),
@@ -83,7 +83,7 @@ private[codegen] object GenerateSmithyBuild {
   private def extractDeps(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] = {
+  ): Set[String] = {
     val scalaBin = (pr / scalaBinaryVersion).get(settings)
 
     (pr / libraryDependencies)
@@ -92,31 +92,33 @@ private[codegen] object GenerateSmithyBuild {
       .flatten
       .filter(_.configurations.exists(_.contains(Smithy4s.name)))
       .flatMap(Smithy4sCodegenPlugin.moduleIdEncode(_, scalaBin))
-      .distinct
+      .toSet
   }
 
   private def extractRepos(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] =
+  ): Set[String] = {
+    println("extract Repos")
     (pr / resolvers)
       .get(settings)
       .toList
       .flatten
       .collect(prepareResolvers)
-      .distinct
+      .toSet
+  }
 
   private def extractImports(
       pr: ProjectRef,
       settings: Settings[Scope],
       rootDir: File
-  ): Seq[String] =
+  ): Set[String] =
     (pr / Compile / smithy4sInputDirs)
       .get(settings)
       .toList
       .flatten
       .collect(prepareInputDirs(rootDir))
-      .distinct
+      .toSet
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root

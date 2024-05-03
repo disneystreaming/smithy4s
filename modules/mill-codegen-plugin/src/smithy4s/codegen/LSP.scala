@@ -36,7 +36,7 @@ object LSP extends ExternalModule {
 
     val depsTask = Target
       .traverse(s4sModules)(_.smithy4sAllDeps)
-      .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)).distinct)
+      .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)).toSet)
 
     val reposTask = Target
       .traverse(s4sModules)(_.repositoriesTask)
@@ -44,7 +44,7 @@ object LSP extends ExternalModule {
         _.flatten.collect {
           case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
             r.root
-        }.distinct
+        }.toSet
       }
 
     val importsTask = Target
@@ -53,7 +53,7 @@ object LSP extends ExternalModule {
         _.flatten
           .map(p => p.path.relativeTo(rootPath))
           .map(rp => "./" + rp.toString)
-          .distinct
+          .toSet
       )
 
     Target.command {

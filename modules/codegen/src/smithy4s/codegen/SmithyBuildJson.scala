@@ -23,9 +23,9 @@ import io.circe.{Json, parser}
 
 private[codegen] object SmithyBuildJson {
   def toJson(
-      imports: Seq[String],
-      dependencies: Seq[String],
-      repositories: Seq[String]
+      imports: Set[String],
+      dependencies: Set[String],
+      repositories: Set[String]
   ): String = {
     SmithyBuild.writeJson(
       SmithyBuild(
