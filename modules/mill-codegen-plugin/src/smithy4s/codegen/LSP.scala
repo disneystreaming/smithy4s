@@ -26,6 +26,8 @@ import mmill.eval.Evaluator
 import smithy4s.codegen.SmithyBuildJson
 import smithy4s.codegen.mill.Smithy4sModule
 
+import scala.collection.immutable.ListSet
+
 object LSP extends ExternalModule {
   lazy val millDiscover = mmill.define.Discover[this.type]
 
@@ -36,16 +38,19 @@ object LSP extends ExternalModule {
 
     val depsTask = Target
       .traverse(s4sModules)(_.smithy4sAllDeps)
-      .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)).toSet)
+      .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)))
+      .map(s => ListSet(s: _*))
 
     val reposTask = Target
       .traverse(s4sModules)(_.repositoriesTask)
       .map {
-        _.flatten.collect {
-          case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
-            r.root
-        }.toSet
+        _.flatten
+          .collect {
+            case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
+              r.root
+          }
       }
+      .map(s => ListSet(s: _*))
 
     val importsTask = Target
       .traverse(s4sModules)(_.smithy4sInputDirs)
@@ -53,8 +58,8 @@ object LSP extends ExternalModule {
         _.flatten
           .map(p => p.path.relativeTo(rootPath))
           .map(rp => "./" + rp.toString)
-          .toSet
       )
+      .map(s => ListSet(s: _*))
 
     Target.command {
       val json = SmithyBuildJson.toJson(importsTask(), depsTask(), reposTask())
