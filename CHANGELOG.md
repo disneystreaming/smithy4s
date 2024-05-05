@@ -1,6 +1,7 @@
 # 0.18.17
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
+* Fix a bug when using `adt` with mixins, see #1457
 
 # 0.18.16
 
