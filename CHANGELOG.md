@@ -1,6 +1,7 @@
 # 0.18.17
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
+* Fix an issue with duplicated entries in generated smithy-build.json file (#1491)
 
 # 0.18.16
 

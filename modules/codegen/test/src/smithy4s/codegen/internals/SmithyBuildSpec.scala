@@ -17,14 +17,18 @@
 package smithy4s.codegen.internals
 
 import smithy4s.codegen.SmithyBuildJson
+import scala.collection.immutable.ListSet
 
 final class SmithyBuildSpec extends munit.FunSuite {
   test("generate json") {
     val actual = SmithyBuild.writeJson(
       SmithyBuild(
         "1.0",
-        List("src/"),
-        SmithyBuildMaven(List("dep"), List(SmithyBuildMavenRepository("repo")))
+        ListSet("src/"),
+        SmithyBuildMaven(
+          ListSet("dep"),
+          ListSet(SmithyBuildMavenRepository("repo"))
+        )
       )
     )
     assertEquals(
