@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "plugins": {
+    "openapi": {
+      "service": "smithy4s.example#ObjectService",
+      "version": "3.1.0",
+      "substitutions": {
+        "X-Foo": "X-Bar"
+      }
+    }
+  }
+}

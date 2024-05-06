@@ -2,6 +2,7 @@
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
 * Fix an issue with duplicated entries in generated smithy-build.json file (#1491)
+* Add support for passing custom OpenAPI config via a `smithy-build.json` file
 
 # 0.18.16
 

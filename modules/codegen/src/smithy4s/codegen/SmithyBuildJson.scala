@@ -30,7 +30,7 @@ private[codegen] object SmithyBuildJson {
       repositories: ListSet[String]
   ): String = {
     SmithyBuild.writeJson(
-      SmithyBuild(
+      SmithyBuild.Serializable(
         version = "1.0",
         imports,
         SmithyBuildMaven(
