@@ -27,7 +27,10 @@ final class SmithyBuildSpec extends munit.FunSuite {
       SmithyBuild.Serializable(
         "1.0",
         ListSet("src/"),
-        SmithyBuildMaven(ListSet("dep"), ListSet(SmithyBuildMavenRepository("repo")))
+        SmithyBuildMaven(
+          ListSet("dep"),
+          ListSet(SmithyBuildMavenRepository("repo"))
+        )
       )
     )
     assertEquals(
