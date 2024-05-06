@@ -24,14 +24,14 @@ import io.circe.generic.semiauto._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.openapi.OpenApiConfig
 
-import scala.collection.Seq
+import scala.collection.Set
 import scala.reflect.ClassTag
 import scala.util.Try
 
 private[internals] final case class SmithyBuild(
     version: String,
-    imports: Seq[os.FilePath],
-    plugins: Seq[SmithyBuildPlugin],
+    imports: Set[os.FilePath],
+    plugins: Set[SmithyBuildPlugin],
     maven: Option[SmithyBuildMaven]
 ) {
   def getPlugin[T <: SmithyBuildPlugin](implicit
@@ -42,25 +42,25 @@ private[internals] final case class SmithyBuild(
 
 private[codegen] object SmithyBuild {
   // automatically map absence of value to empty Seq for ease of use
-  implicit def optionalSeqDecoder[T](implicit
+  implicit def optionalSetDecoder[T](implicit
       base: Decoder[T]
-  ): Decoder[Seq[T]] =
-    Decoder.decodeOption(Decoder.decodeSeq[T]).map(_.getOrElse(Seq.empty))
+  ): Decoder[Set[T]] =
+    Decoder.decodeOption(Decoder.decodeSet[T]).map(_.getOrElse(Set.empty))
 
   implicit val pathDecoder: Decoder[os.FilePath] =
     Decoder.decodeString.emapTry { raw =>
       Try(os.FilePath(raw))
     }
 
-  implicit val pluginDecoder: Decoder[Seq[SmithyBuildPlugin]] = Decoder
+  implicit val pluginDecoder: Decoder[Set[SmithyBuildPlugin]] = Decoder
     .decodeOption { (c: HCursor) =>
       c.keys match {
         case None => DecodingFailure("Expected JSON object", c.history).asLeft
         case Some(keys) =>
-          keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+          keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key))).map(_.toSet)
       }
     }
-    .map(_.getOrElse(Seq.empty))
+    .map(_.getOrElse(Set.empty))
 
   /* Class containing only the subset of the smithy-build.json properties that need
    * to be serialized when creating a smithy-build.json file. Allows us to skip
@@ -69,7 +69,7 @@ private[codegen] object SmithyBuild {
    */
   case class Serializable(
       version: String,
-      imports: Seq[String],
+      imports: Set[String],
       maven: SmithyBuildMaven
   )
 
@@ -92,11 +92,11 @@ private[codegen] object SmithyBuild {
 }
 
 private[internals] final case class SmithyBuildMaven(
-    dependencies: Seq[String],
-    repositories: Seq[SmithyBuildMavenRepository]
+    dependencies: Set[String],
+    repositories: Set[SmithyBuildMavenRepository]
 )
 private[codegen] object SmithyBuildMaven {
-  import SmithyBuild.optionalSeqDecoder
+  import SmithyBuild.optionalSetDecoder
 
   implicit val codecs: Codec[SmithyBuildMaven] = deriveCodec
 }

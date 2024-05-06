@@ -19,14 +19,15 @@ package smithy4s.codegen.internals
 import smithy4s.codegen.SmithyBuildJson
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
+import scala.collection.immutable.ListSet
 
 final class SmithyBuildSpec extends munit.FunSuite {
   test("generate json") {
     val actual = SmithyBuild.writeJson(
       SmithyBuild.Serializable(
         "1.0",
-        List("src/"),
-        SmithyBuildMaven(List("dep"), List(SmithyBuildMavenRepository("repo")))
+        ListSet("src/"),
+        SmithyBuildMaven(ListSet("dep"), ListSet(SmithyBuildMavenRepository("repo")))
       )
     )
     assertEquals(
