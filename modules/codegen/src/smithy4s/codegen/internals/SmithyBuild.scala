@@ -57,7 +57,9 @@ private[codegen] object SmithyBuild {
       c.keys match {
         case None => DecodingFailure("Expected JSON object", c.history).asLeft
         case Some(keys) =>
-          keys.toList.traverse(key => c.get(key)(SmithyBuildPlugin.decode(key))).map(_.toSet)
+          keys.toList
+            .traverse(key => c.get(key)(SmithyBuildPlugin.decode(key)))
+            .map(_.toSet)
       }
     }
     .map(_.getOrElse(Set.empty))
