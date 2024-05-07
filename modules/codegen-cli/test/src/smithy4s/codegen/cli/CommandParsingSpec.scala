@@ -40,7 +40,8 @@ object CommandParsingSpec extends FunSuite {
               repositories = Nil,
               dependencies = defaultDependencies,
               transformers = Nil,
-              localJars = Nil
+              localJars = Nil,
+              smithyBuild = None
             )
           )
         )
@@ -60,6 +61,8 @@ object CommandParsingSpec extends FunSuite {
         "scala",
         "--skip",
         "openapi",
+        "--smithy-build",
+        "smithy-build.json",
         "--allowed-ns",
         "name1,name2",
         "--repositories",
@@ -94,7 +97,8 @@ object CommandParsingSpec extends FunSuite {
               localJars = List(
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
-              )
+              ),
+              smithyBuild = Some(os.pwd / "smithy-build.json")
             )
           )
         )
