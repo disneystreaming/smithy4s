@@ -1,6 +1,6 @@
 # 0.18.18
 
-* Fix an issue in the ADT trait validators that would sometimes fail validation while it shouldn't.
+* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't.
 
 # 0.18.17
 
