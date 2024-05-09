@@ -1,3 +1,7 @@
+# 0.18.18
+
+* Fix an issue in the ADT trait validators that would sometimes fail validation while it shouldn't.
+
 # 0.18.17
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
