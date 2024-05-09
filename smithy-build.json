@@ -3,7 +3,7 @@
   "imports": ["./sampleSpecs", "./modules/protocol/resources"],
   "maven": {
     "dependencies": [
-      "software.amazon.smithy:smithy-protocol-test-traits:1.48.0",
+      "software.amazon.smithy:smithy-protocol-test-traits:1.49.0",
       "com.disneystreaming.alloy:alloy-core:0.3.8"
     ]
   }

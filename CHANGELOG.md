@@ -14,7 +14,7 @@ For your applications' safety, when upgrading beyond `0.18.17`, make sure all yo
 
  We apologize for the inconvenience.
 
-* Update smithy: 1.45.0 to 1.48.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+* Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
 
 # 0.18.17
 
