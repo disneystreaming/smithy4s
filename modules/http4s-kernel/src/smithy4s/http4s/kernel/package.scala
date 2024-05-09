@@ -99,6 +99,7 @@ package object kernel {
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
     val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
+
     Uri(
       path = path,
       authority = authority,
@@ -107,8 +108,15 @@ package object kernel {
           case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
           case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
         }
-      }
-    ).withMultiValueQueryParams(uri.queryParams)
+      },
+      query = Query.fromVector(
+        uri.queryParams
+        .toVector
+        .flatMap{ case(key, values) =>
+          values.map(value => key -> value)
+        }
+      )
+    )
   }
 
   /**
@@ -186,12 +194,8 @@ package object kernel {
 
   private[smithy4s] def getQueryParams[F[_]](
       uri: Uri
-  ): Map[String, List[String]] =
+  ): Map[String, List[Option[String]]] =
     uri.query.pairs
-      .collect {
-        case (name, None)        => name -> "true"
-        case (name, Some(value)) => name -> value
-      }
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2).toList }
 
