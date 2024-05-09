@@ -19,16 +19,17 @@ package smithy4s.codegen
 import sbt._
 import sbt.Keys._
 import Smithy4sCodegenPlugin.autoImport._
+import scala.collection.immutable.ListSet
 
 private final case class SmithyBuildData(
-    imports: Seq[String],
-    deps: Seq[String],
-    repos: Seq[String]
+    imports: ListSet[String],
+    deps: ListSet[String],
+    repos: ListSet[String]
 ) {
   def addAll(
-      imports: Seq[String],
-      deps: Seq[String],
-      repos: Seq[String]
+      imports: ListSet[String],
+      deps: ListSet[String],
+      repos: ListSet[String]
   ): SmithyBuildData = {
     SmithyBuildData(
       this.imports ++ imports,
@@ -71,7 +72,7 @@ private[codegen] object GenerateSmithyBuild {
       rootDir: File
   ): SmithyBuildData =
     extracted.structure.allProjectRefs
-      .foldLeft(SmithyBuildData(Seq.empty, Seq.empty, Seq.empty)) {
+      .foldLeft(SmithyBuildData(ListSet.empty, ListSet.empty, ListSet.empty)) {
         case (gsb, pr) =>
           gsb.addAll(
             extractImports(pr, extracted.structure.data, rootDir),
@@ -83,7 +84,7 @@ private[codegen] object GenerateSmithyBuild {
   private def extractDeps(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] = {
+  ): ListSet[String] = {
     val scalaBin = (pr / scalaBinaryVersion).get(settings)
 
     (pr / libraryDependencies)
@@ -92,31 +93,33 @@ private[codegen] object GenerateSmithyBuild {
       .flatten
       .filter(_.configurations.exists(_.contains(Smithy4s.name)))
       .flatMap(Smithy4sCodegenPlugin.moduleIdEncode(_, scalaBin))
-      .distinct
+      .to[ListSet]
   }
 
   private def extractRepos(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] =
+  ): ListSet[String] = {
+    println("extract Repos")
     (pr / resolvers)
       .get(settings)
       .toList
       .flatten
       .collect(prepareResolvers)
-      .distinct
+      .to[ListSet]
+  }
 
   private def extractImports(
       pr: ProjectRef,
       settings: Settings[Scope],
       rootDir: File
-  ): Seq[String] =
+  ): ListSet[String] =
     (pr / Compile / smithy4sInputDirs)
       .get(settings)
       .toList
       .flatten
       .collect(prepareInputDirs(rootDir))
-      .distinct
+      .to[ListSet]
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root
