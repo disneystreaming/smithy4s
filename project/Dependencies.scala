@@ -31,6 +31,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
+    // TODO: bump after release of smithy 1.48.0 bump
     val alloyVersion = "0.3.7"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
