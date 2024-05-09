@@ -214,7 +214,7 @@ lazy val core = projectMatrix
         .map(f => (f, f.relativeTo(base)))
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    },
+    }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -870,8 +870,7 @@ lazy val complianceTests = projectMatrix
         Dependencies.Pprint.core.value,
         Dependencies.Fs2Data.xml.value
       )
-    },
-
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
