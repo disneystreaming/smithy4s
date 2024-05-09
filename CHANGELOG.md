@@ -1,3 +1,21 @@
+## Maintainers' notice
+
+This file serves as a template for release notes in GitHub releases.
+When adding entries, please treat them as if they could end up in a release any time. This makes it much easier for us to make frequent releases!
+
+Thank you!
+
+# 0.18.18 - binary-breaking changes in `core`
+
+**WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/),
+and it'll most likely cause runtime issues in all applications that use a mix of versions in the ranges `0.18.0 ≤ 0.18.17` and `0.18.18+`.
+
+For your applications' safety, when upgrading beyond `0.18.17`, make sure all your dependencies are compiled against a version of Smithy4s at least equal to `0.18.18`. This can be done with the `whatDependsOn` task in sbt.
+
+ We apologize for the inconvenience.
+
+* Update smithy: 1.45.0 to 1.48.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+
 # 0.18.17
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
