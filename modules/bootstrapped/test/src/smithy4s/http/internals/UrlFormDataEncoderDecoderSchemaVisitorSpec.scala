@@ -195,7 +195,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     expect.same(
       UrlForm
         .Encoder(
-          capitalizeStructAndUnionMemberNames = false,
+          capitalizeStructAndUnionMemberNames = false
         )
         .fromSchema(Foo.schema)
         .encode(Foo(42, defaultValue))
