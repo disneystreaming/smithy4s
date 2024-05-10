@@ -36,6 +36,7 @@ object HasKeywordUnionAdt extends ShapeTag.Companion[HasKeywordUnionAdt] {
 
     val hints: Hints = Hints.empty
 
+
     implicit val schema: Schema[Implicit] = constant(Implicit()).withId(id).addHints(hints)
 
     val alt = schema.oneOf[HasKeywordUnionAdt]("one")

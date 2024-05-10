@@ -120,7 +120,11 @@ object AwsClient {
         .build()
 
       val middleware =
-        AwsSigning.middleware(awsEnv).andThen(compression).andThen(Md5CheckSum.middleware[F])
+        AwsSigning
+          .middleware(awsEnv)
+          .andThen(compression)
+          .andThen(Md5CheckSum.middleware[F])
+          .andThen(awsEnv.endpointMiddleware)
 
       UnaryClientCompiler(
         service,

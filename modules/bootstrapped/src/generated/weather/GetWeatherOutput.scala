@@ -16,9 +16,10 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(weather: String): GetWeatherOutput = GetWeatherOutput(weather)
+
   implicit val schema: Schema[GetWeatherOutput] = struct(
     string.required[GetWeatherOutput]("weather", _.weather),
-  ){
-    GetWeatherOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

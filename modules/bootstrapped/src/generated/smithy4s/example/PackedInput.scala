@@ -14,9 +14,10 @@ object PackedInput extends ShapeTag.Companion[PackedInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(key: String): PackedInput = PackedInput(key)
+
   implicit val schema: Schema[PackedInput] = struct(
     string.required[PackedInput]("key", _.key),
-  ){
-    PackedInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

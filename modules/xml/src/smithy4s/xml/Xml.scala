@@ -78,24 +78,8 @@ object Xml {
       fromSchema(schema, createCache())
   }
 
-  val encoders: BlobEncoder.Compiler = new BlobEncoder.Compiler {
-    type Cache = XmlDocument.Encoder.Cache
-    def createCache(): Cache = XmlDocument.Encoder.createCache()
-    def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {
-      val xmlDocumentEncoder = XmlDocument.Encoder.fromSchema(schema, cache)
-      (a: A) =>
-        Blob {
-          XmlDocument.documentEventifier
-            .eventify(xmlDocumentEncoder.encode(a))
-            .through(render(collapseEmpty = false))
-            .through(fs2.text.utf8.encode[fs2.Pure])
-            .compile
-            .to(Collector.supportsArray(Array))
-        }
-    }
-    def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
-      fromSchema(schema, createCache())
-  }
+  object encoders
+      extends smithy4s.xml.internals.XmlPayloadEncoderCompilerImpl(false)
 
   private val decoderCacheGlobal = XmlDocument.Decoder.createCache()
   private val encoderCacheGlobal = XmlDocument.Encoder.createCache()

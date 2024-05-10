@@ -16,9 +16,10 @@ object TestPathInput extends ShapeTag.Companion[TestPathInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(path: String): TestPathInput = TestPathInput(path)
+
   implicit val schema: Schema[TestPathInput] = struct(
     string.required[TestPathInput]("path", _.path).addHints(smithy.api.HttpLabel()),
-  ){
-    TestPathInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -1,5 +1,6 @@
 ---
 sidebar_label: Localstack
+title: Localstack
 ---
 
 It is a common need to be able to test AWS operations on a local environment. For that, many engineers have turned to [Localstack](https://localstack.cloud/).

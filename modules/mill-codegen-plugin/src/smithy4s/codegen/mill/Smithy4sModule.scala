@@ -58,6 +58,8 @@ trait Smithy4sModule extends ScalaModule {
 
   def generateOpenApiSpecs: T[Boolean] = true
 
+  def smithyBuild: T[Option[PathRef]] = None
+
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
@@ -204,6 +206,8 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
+    val smithyBuildFile = smithyBuild().map(_.path)
+
     val allLocalJars =
       smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
 
@@ -218,7 +222,8 @@ trait Smithy4sModule extends ScalaModule {
       repositories = smithy4sRepositories(),
       dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
-      localJars = allLocalJars
+      localJars = allLocalJars,
+      smithyBuild = smithyBuildFile
     )
 
     Smithy4s.generateToDisk(args)

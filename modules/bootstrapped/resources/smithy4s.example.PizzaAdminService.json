@@ -567,6 +567,14 @@
                     2
                 ]
             },
+            "ExtraData": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 10,
+                    "minLength": 2
+                }
+            },
             "FallbackErrorResponseContent": {
                 "type": "object",
                 "properties": {
@@ -682,6 +690,17 @@
                     "price": {
                         "type": "number",
                         "format": "float"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 10,
+                            "minLength": 1
+                        }
+                    },
+                    "extraData": {
+                        "$ref": "#/components/schemas/ExtraData"
                     }
                 },
                 "required": [

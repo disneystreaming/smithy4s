@@ -100,6 +100,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
+    val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
     val defaultNode =
       member.getTrait(classOf[DefaultTrait]).asScala.map(_.toNode)
     val defaultTypedNode = defaultRenderMode match {
@@ -107,15 +108,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case DefaultRenderMode.OptionOnly => None
       case DefaultRenderMode.NoDefaults => None
     }
-
-    (hasRequired, defaultNode) match {
-      case (false, None) => Field.Modifier.NoModifier
-      case (true, None)  => Field.Modifier.RequiredMod
-      case (false, Some(node)) =>
-        Field.Modifier.DefaultMod(node, defaultTypedNode)
-      case (true, Some(node)) =>
-        Field.Modifier.RequiredDefaultMod(node, defaultTypedNode)
-    }
+    Field.Modifier(
+      hasRequired,
+      hasNullable,
+      defaultNode.map(Field.Default(_, defaultTypedNode))
+    )
   }
 
   def allDecls = allShapes
@@ -238,8 +235,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .asScala
           .toList
           .map(mem => model.expectShape(mem.getTarget))
-        val mixins = memberTargets
-          .map(_.getMixins.asScala.toSet)
+        val mixins: List[Set[ShapeId]] = memberTargets
+          .map(targetShape =>
+            targetShape.getMixins.asScala.toSet
+              .filter(mixinId => doFieldsMatch(mixinId, targetShape.fields))
+          )
 
         val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
 
@@ -343,13 +343,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
 
       override def enumShape(shape: EnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
           .zipWithIndex
-          .map { case ((name, value), index) =>
-            val member = shape.getMember(name).get()
-
+          .map { case (member, index) =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = value,
               intValue = index,
@@ -373,12 +374,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
-          .map { case (name, value) =>
-            val member = shape.getMember(name).get()
-
+          .map { member =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = name,
               intValue = value,
@@ -793,9 +795,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
-  private def imputeZeroValuesOnDefaultTraits(
-      shape: Shape
-  ): List[Trait] = shape.getAllTraits().asScala.values.toList.map {
+  private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
+      tr: Trait
+  ): Trait = tr match {
     case default: DefaultTrait if default.toNode == Node.nullNode =>
       val tpe = shape.asMemberShape().asScala match {
         case Some(memShape) => model.getShape(memShape.getTarget).get.getType
@@ -861,7 +863,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
       val node = tr.toNode()
-      val targetTpe = shape.getTarget.tpe.get
+      val targetTpe = shape.tpe.get
       // Constructing the initial value for the refold
       val nodeAndType = targetTpe match {
         case Alias(_, _, tpe, true) => NodeAndType(node, tpe)
@@ -1032,7 +1034,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def hints(shape: Shape): List[Hint] = {
-    val traits = imputeZeroValuesOnDefaultTraits(shape)
+    val allTraits = shape.getAllTraits().asScala.values.toList
+    val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
+    val traits =
+      if (isNullable) allTraits
+      else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -1041,6 +1047,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
+        // remove box trait
+        .filterNot(_.toShapeId() == BoxTrait.ID): @nowarn(
+        "msg=class BoxTrait in package traits is deprecated"
+      )
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
@@ -1048,7 +1058,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
-        .filterNot(_.toShapeId == RequiredTrait.ID)
+        .filter(tr =>
+          tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
+        )
         .map(unfoldTrait) ++
       maybeTypeclassesHint(shape)
   }
@@ -1084,34 +1096,23 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hintsExtractor(member) ++ default ++ noDefault
           )
         }
+        .zipWithIndex
         .collect {
-          case (name, Some(tpe: Type.ExternalType), modifier, hints) =>
+          case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, modifier, newHints)
-          case (name, Some(tpe), modifier, hints) =>
-            Field(name, tpe, modifier, hints)
+            Field(name, tpe, modifier, index, newHints)
+          case ((name, Some(tpe), modifier, hints), index) =>
+            Field(name, tpe, modifier, index, hints)
         }
         .toList
 
       defaultRenderMode match {
         case DefaultRenderMode.Full =>
-          result.sortBy {
-            _.modifier match {
-              case Field.Modifier.RequiredMod              => 0
-              case Field.Modifier.RequiredDefaultMod(_, _) => 1
-              case Field.Modifier.DefaultMod(_, _)         => 1
-              case Field.Modifier.NoModifier               => 2
-            }
-          }
+          implicit val modifierOrder = Field.Modifier.fullOrder
+          result.sortBy(_.modifier)
         case DefaultRenderMode.OptionOnly =>
-          result.sortBy {
-            _.modifier match {
-              case Field.Modifier.RequiredMod              => 0
-              case Field.Modifier.RequiredDefaultMod(_, _) => 0
-              case Field.Modifier.DefaultMod(_, _)         => 0
-              case Field.Modifier.NoModifier               => 1
-            }
-          }
+          implicit val modifierOrder = Field.Modifier.optionOnlyOrder
+          result.sortBy(_.modifier)
         case DefaultRenderMode.NoDefaults => result
       }
     }
@@ -1295,17 +1296,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.getFieldsPlain
         val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, Field.Modifier.NoModifier, _) =>
+          case Field(_, realName, tpe, mod, _, _)
+              if mod.typeMod == Field.TypeModification.None =>
+            val node = map.get(realName).getOrElse {
+              mod.default.get.node
+            } // value or default must be present if type is not wrapped
+            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
+          case Field(_, realName, tpe, _, _, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))
               case None => TypedNode.FieldTN.OptionalNoneTN
             }
-          case Field(_, realName, tpe, mod, _) =>
-            val node = map.get(realName).getOrElse {
-              mod.default.get
-            } // value or default must be present on required field
-            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
         }
         TypedNode.StructureTN(ref, fieldNames.zip(fields))
       // Union

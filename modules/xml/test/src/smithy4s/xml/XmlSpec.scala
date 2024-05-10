@@ -18,6 +18,7 @@ package smithy4s.xml
 
 import weaver._
 
+import smithy.api.XmlAttribute
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.{ShapeId, Blob}
@@ -37,6 +38,19 @@ object XmlSpec extends FunSuite {
     val encoded = Xml.write[Int](1)
     expect.eql(Some(1), decoded.toOption) &&
     expect(Blob(xml).sameBytesAs(encoded))
+  }
+
+  test("special characters in attributes do not get escaped") {
+    case class Foo(x: String)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = string.required[Foo]("x", _.x).addHints(XmlAttribute())
+        struct(x)(Foo.apply).withId(ShapeId("test", "Foo"))
+      }
+    }
+
+    val encoded = Xml.write[Foo](Foo("x->(y)")).toUTF8String
+    expect.same(encoded, """<Foo x="x->(y)"></Foo>""")
   }
 
 }

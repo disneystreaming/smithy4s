@@ -55,12 +55,13 @@ object OrderType extends ShapeTag.Companion[OrderType] {
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     ).lazily
 
+    // constructor using the original order from the spec
+    private def make(id: OrderNumber, locationId: Option[String]): InStoreOrder = InStoreOrder(id, locationId)
+
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id),
       string.optional[InStoreOrder]("locationId", _.locationId),
-    ){
-      InStoreOrder.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[OrderType]("inStore")
   }

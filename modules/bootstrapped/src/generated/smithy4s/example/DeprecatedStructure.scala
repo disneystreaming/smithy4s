@@ -17,12 +17,13 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(strings: Option[List[String]], other: Option[List[String]], name: Option[String], nameV2: Option[String]): DeprecatedStructure = DeprecatedStructure(strings, other, name, nameV2)
+
   implicit val schema: Schema[DeprecatedStructure] = struct(
     Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings).addHints(smithy.api.Deprecated(message = None, since = None)),
     Strings.underlyingSchema.optional[DeprecatedStructure]("other", _.other),
     string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None)),
     string.optional[DeprecatedStructure]("nameV2", _.nameV2),
-  ){
-    DeprecatedStructure.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }
