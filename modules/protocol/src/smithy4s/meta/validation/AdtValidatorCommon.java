@@ -51,7 +51,7 @@ final class AdtValidatorCommon {
 
 	private static List<Reference> getReferences(Model model, Shape adtMemberShape, Shape adtParent) {
 		return model.getMemberShapes().stream().flatMap(memberShape -> {
-			boolean doesMemberTargetAdtShape = memberShape.getTarget() == adtMemberShape.getId();
+			boolean doesMemberTargetAdtShape = memberShape.getTarget().equals(adtMemberShape.getId());
 			boolean isMemberShapeInDesiredTarget = memberShape.getContainer().equals(adtParent.toShapeId());
 			if (doesMemberTargetAdtShape) {
 				return Stream.of(new Reference(isMemberShapeInDesiredTarget, memberShape.getContainer()));
