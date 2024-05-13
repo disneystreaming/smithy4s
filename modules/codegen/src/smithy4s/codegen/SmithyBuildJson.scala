@@ -25,14 +25,14 @@ import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
   def toJson(
-      imports: ListSet[String],
+      sources: ListSet[String],
       dependencies: ListSet[String],
       repositories: ListSet[String]
   ): String = {
     SmithyBuild.writeJson(
       SmithyBuild.Serializable(
         version = "1.0",
-        imports,
+        sources,
         SmithyBuildMaven(
           dependencies,
           repositories.map(SmithyBuildMavenRepository.apply)

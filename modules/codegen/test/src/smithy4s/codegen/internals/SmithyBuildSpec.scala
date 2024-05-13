@@ -37,7 +37,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/"
          |    ],
          |    "maven" : {
@@ -58,7 +58,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
     val actual = SmithyBuildJson.merge(
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["oterh"],
          |    "repositories": []
@@ -68,7 +68,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |""".stripMargin,
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["dep1"],
          |    "repositories": []
@@ -80,7 +80,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/main/smithy"
          |    ],
          |    "maven" : {
@@ -100,7 +100,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
     val actual = SmithyBuildJson.merge(
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["oterh", "dep1"],
          |    "repositories": []
@@ -109,7 +109,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |""".stripMargin,
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["dep1"],
          |    "repositories": []
@@ -122,7 +122,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/main/smithy"
          |    ],
          |    "maven" : {
@@ -143,7 +143,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       """
         |{
         |   "version": "1.0",
-        |   "imports": [ "foo.smithy", "some/directory" ],
+        |   "sources": [ "foo.smithy", "some/directory" ],
         |   "plugins": {
         |        "openapi": {
         |            "service": "example.weather#Weather",
