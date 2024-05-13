@@ -14,9 +14,10 @@ object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(a: Option[Long]): TestEmptyMixin = TestEmptyMixin(a)
+
   implicit val schema: Schema[TestEmptyMixin] = struct(
     long.optional[TestEmptyMixin]("a", _.a),
-  ){
-    TestEmptyMixin.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

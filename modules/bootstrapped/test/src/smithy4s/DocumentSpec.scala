@@ -22,6 +22,7 @@ import smithy4s.example.IntList
 import alloy.Discriminated
 import munit._
 import smithy4s.example.OperationOutput
+import alloy.Untagged
 
 class DocumentSpec() extends FunSuite {
 
@@ -136,6 +137,30 @@ class DocumentSpec() extends FunSuite {
 
     expect.same(document, expectedDocument)
     expect.same(roundTripped, Right(fooOrBar))
+  }
+
+  test("untagged unions encoding") {
+    implicit val eitherSchema: Schema[Either[Long, String]] = {
+      val left = Schema.long
+      val right = Schema.string
+
+      Schema
+        .either(left, right)
+        .addHints(
+          Untagged()
+        )
+    }
+    val longOrString: Either[Long, String] = Right("hello")
+
+    val document = Document.encode(longOrString)
+    import Document._
+    val expectedDocument =
+      Document.fromString("hello")
+
+    val roundTripped = Document.decode[Either[Long, String]](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(longOrString))
   }
 
   test("discriminated unions encoding - empty structure alternative") {
@@ -538,6 +563,38 @@ class DocumentSpec() extends FunSuite {
       result
     )
 
+  }
+
+  test("Document syntax allows to build documents more concisely") {
+    import Document.syntax._
+
+    val niceSyntaxDocument = obj(
+      "int" -> 1,
+      "boolean" -> true,
+      "long" -> 2L,
+      "string" -> "hello",
+      "nested" -> obj("null" -> nullDoc),
+      "array" -> array("one", "two", "three"),
+      "fromSchema" -> JsonName("name")
+    )
+
+    val expectedDocument = Document.obj(
+      "int" -> Document.DNumber(BigDecimal(1)),
+      "boolean" -> Document.DBoolean(true),
+      "long" -> Document.DNumber(BigDecimal(2)),
+      "string" -> Document.DString("hello"),
+      "nested" -> Document.DObject(Map("null" -> Document.DNull)),
+      "array" -> Document.DArray(
+        IndexedSeq(
+          Document.DString("one"),
+          Document.DString("two"),
+          Document.DString("three")
+        )
+      ),
+      "fromSchema" -> Document.DString("name")
+    )
+
+    assertEquals(niceSyntaxDocument, expectedDocument)
   }
 
 }

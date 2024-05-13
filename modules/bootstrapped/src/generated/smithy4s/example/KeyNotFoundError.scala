@@ -19,9 +19,10 @@ object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): KeyNotFoundError = KeyNotFoundError(message)
+
   implicit val schema: Schema[KeyNotFoundError] = struct(
     string.required[KeyNotFoundError]("message", _.message),
-  ){
-    KeyNotFoundError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

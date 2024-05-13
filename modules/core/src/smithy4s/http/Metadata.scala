@@ -250,16 +250,9 @@ object Metadata {
         schema: Schema[A],
         cache: Cache
     ): Encoder[A] = {
-      val toStatusCode: A => Option[Int] = { a =>
-        schema.compile(new HttpResponseCodeSchemaVisitor()) match {
-          case HttpResponseCodeSchemaVisitor.NoResponseCode =>
-            None
-          case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
-            Some(ext(a))
-          case HttpResponseCodeSchemaVisitor.OptionalResponseCode(ext) =>
-            ext(a)
-        }
-      }
+      val toStatusCode: A => Option[Int] =
+        schema.compile(new HttpResponseCodeSchemaVisitor()).toFunction
+
       val schemaVisitor = new SchemaVisitorMetadataWriter(
         cache,
         commaDelimitedEncoding = awsHeaderEncoding,

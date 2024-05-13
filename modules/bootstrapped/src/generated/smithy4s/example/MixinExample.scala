@@ -17,12 +17,13 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(a: Option[String], b: Option[Int], c: Option[Long], d: Option[Boolean]): MixinExample = MixinExample(a, b, c, d)
+
   implicit val schema: Schema[MixinExample] = struct(
     string.optional[MixinExample]("a", _.a),
     int.optional[MixinExample]("b", _.b),
     long.optional[MixinExample]("c", _.c),
     boolean.optional[MixinExample]("d", _.d),
-  ){
-    MixinExample.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

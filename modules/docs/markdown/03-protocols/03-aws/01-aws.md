@@ -1,5 +1,6 @@
 ---
 sidebar_label: AWS
+title: AWS
 ---
 
 **WARNING: READ THE FOLLOWING, AND USE WITH CAUTION**

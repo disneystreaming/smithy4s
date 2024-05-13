@@ -14,6 +14,74 @@ Previously, URIs constructed with a base URI of `/` would have `localhost` as th
 
 Previously they'd be named after the **member target**, now they will use the name of the member itself (same as in the case of non-ADT unions).
 
+# 0.18.18
+
+* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't.
+
+# 0.18.17
+
+* Constraints applied to list or map members are now correctly rendered in the generated code.
+* Fix an issue with duplicated entries in generated smithy-build.json file (#1491)
+* Add support for passing custom OpenAPI config via a `smithy-build.json` file
+* Fix a bug when using `adt` with mixins, see #1457
+
+# 0.18.16
+
+* Fixes bug leading to refined case-class fields being rendered with default values of the wrong type
+* Adds a `smithy4s-protobuf` module, containing derivation logic for protobuf codecs. See https://github.com/disneystreaming/smithy4s/pull/1455
+* Add support for converting smithy4s services and schemas to smithy models
+* Add `smithy4s.meta#only` annotation allowing to filter operations in
+services, intended to reduce the amount of code generated from AWS specs
+
+# 0.18.15
+
+* Add support for injecting endpoint-specific middlewares in AWS clients
+* Fixes a bug in the parsing of AWS credentials files
+
+# 0.18.14
+
+* Add support for decoding Document representations of untagged unions
+* Update aws-http4s clients using json to have a maxArity of Int.MaxValue
+
+# 0.18.13
+
+* Enable generation of protobuf specifications from smithy specifications.
+* modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
+
+# 0.18.12
+
+* fix issue where schemas for fields of generated big structs (over 22 fields in size) would not be ordered correctly
+
+# 0.18.11
+
+* smithy4s Structure schemas are now retaining the original order of fields, as per the specification.
+* Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+In addition, the semantics of `transformHintsTransitively` have been changed: the transformation no longer modifies the hints on the result of the `total` function.
+* smithy4s-core now contains the generated code for the alloy.proto namespace
+
+# 0.18.10
+
+* Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
+
+# 0.18.9
+
+* Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
+* Generalise implementation of `@httpResponseCode` to later allow for its use in error responses.
+* Fix in Bijection#identity which caused and infinite recursion, fixed in [1401](https://github.com/disneystreaming/smithy4s/pull/1401)
+* Adds a `Field#addHints(hints: Hints)` method
+* Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
+* Adds a `smithy4s.Document.syntax` object, the contents of which can be imported to facilitate the instantiation of documents.
+
+* Added support for `@nullable` on fields, to allow absent values to be handled differently from explicit null
+
+# 0.18.8
+
+* Fix collision avoidance algorithm to cover Scala 3 keywords
+
+# 0.18.7
+
+* Added support for `@httpResponseCode` on newtypes (integer shapes that aren't exactly `smithy.api#Integer`), as well as refinements (e.g. ints with a `@range` constraint).
+
 # 0.18.6
 
 * If a Smithy trait, being a structure shape, had a Scala keyword in its member names, compilation of the generated would fail. In addition, enumeration values that matched a known keyword would have their name erroneously escaped with an underscore in the string literal.

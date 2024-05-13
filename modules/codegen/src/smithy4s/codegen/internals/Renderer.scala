@@ -634,9 +634,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
-      val fieldType =
-        if (field.modifier.none) Line.optional(line"${field.tpe}")
-        else line"${field.tpe}"
+      val fieldType = Line.fieldType(field)
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
     obj(product.nameRef.copy(name = "optics"))(lenses) ++
@@ -698,14 +696,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProtocol(product.nameRef, hints),
         newline,
         renderLenses(product, hints),
+        locally {
+          val params =
+            fields.sortBy(_.originalIndex).map(fieldToRenderLine(_, noDefault = true)).intercalate(Line.comma)
+          val args = fields.map(f => Line(f.name)).intercalate(Line.comma)
+          lines(
+            line"// constructor using the original order from the spec",
+            line"private def make($params): ${product.nameRef} = ${product.nameRef}($args)"
+          ).when(fields.nonEmpty)
+        },
+        newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, modifier, hints) =>
-              val fieldBuilder = modifier match {
-                case Field.Modifier.RequiredMod              => "required"
-                case Field.Modifier.RequiredDefaultMod(_, _) => "required"
-                case Field.Modifier.DefaultMod(_, _)         => "field"
-                case Field.Modifier.NoModifier               => "optional"
+            fields.sortBy(_.originalIndex).map { case Field(fieldName, realName, tpe, modifier, _, hints) =>
+              val fieldBuilder = modifier.typeMod match {
+                case Field.TypeModification.None if modifier.required     => "required"
+                case Field.TypeModification.None                          => "field"
+                case Field.TypeModification.Option                        => "optional"
+                case Field.TypeModification.Nullable if modifier.required => "nullable.required"
+                case Field.TypeModification.Nullable                      => "nullable.field"
+                case Field.TypeModification.OptionNullable                => "nullable.optional"
               }
 
               if (hints.isEmpty) {
@@ -723,8 +733,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
-              .block(line"${product.nameRef}.apply")
-              .appendToLast(".withId(id).addHints(hints)")
+              .appendToLast("(make).withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -733,12 +742,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
               .block(
-                line"arr => new ${product.nameRef}".args(
-                  fields.zipWithIndex.map { case (Field(_, _, tpe, mod, _), idx) =>
-                    val scalaTpe = line"$tpe"
-                    val optional = if (mod.none) Line.optional(scalaTpe) else scalaTpe
-
-                    line"arr($idx).asInstanceOf[$optional]"
+                line"arr => make".args(
+                  fields.sortBy(_.originalIndex).zipWithIndex.map { case (field, idx) =>
+                    line"arr($idx).asInstanceOf[${Line.fieldType(field)}]"
                   }
                 )
               )
@@ -807,17 +813,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderGetMessage(field: Field) = {
-    val hasModifier = !field.modifier.none
-    field match {
-      case field if field.tpe.isResolved && hasModifier =>
-        line"override def getMessage(): $string_ = ${field.name}"
-      case field if field.tpe.isResolved =>
-        line"override def getMessage(): $string_ = ${field.name}.orNull"
-      case field if hasModifier =>
-        line"override def getMessage(): $string_ = ${field.name}.value"
-      case field =>
-        line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
+    val fetchLogic = field.modifier.typeMod match {
+      case Field.TypeModification.OptionNullable if field.tpe.isResolved => line".flatMap(_.toOption).orNull"
+      case Field.TypeModification.OptionNullable                   => line".flatMap(_.toOption).map(_.value).orNull"
+      case Field.TypeModification.Nullable if field.tpe.isResolved => line".toOption.orNull"
+      case Field.TypeModification.Nullable                         => line".toOption.map(_.value).orNull"
+      case Field.TypeModification.Option if field.tpe.isResolved   => line".orNull"
+      case Field.TypeModification.Option                           => line".map(_.value).orNull"
+      case Field.TypeModification.None if field.tpe.isResolved     => Line.empty
+      case Field.TypeModification.None                             => line".value"
     }
+
+    line"override def getMessage(): $string_ = ${field.name}$fetchLogic"
   }
   private def renderErrorSchemaMethods(errorName: NameRef, errors: List[Type]): Lines = {
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
@@ -1186,26 +1193,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       field: Field,
       noDefault: Boolean = false
   ): Line = {
+    val tpeLine = Line.fieldType(field)
     import field._
-    val ` = ` = Literal(" = ")
-    val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
-    val tpeLine = line"$tpe"
-    val tpeAndDefault = if (shouldRenderDefault) {
-      field.modifier match {
-        case Field.Modifier.RequiredMod                          => tpeLine
-        case Field.Modifier.RequiredDefaultMod(_, Some(default)) => tpeLine + ` = ` + renderDefault(default)
-        case Field.Modifier.RequiredDefaultMod(_, None)          => tpeLine
-        case Field.Modifier.DefaultMod(_, Some(default))         => tpeLine + ` = ` + renderDefault(default)
-        case Field.Modifier.DefaultMod(_, None)                  => tpeLine
-        case Field.Modifier.NoModifier => Line.optional(tpeLine) + ` = ` + NameRef("scala.None")
-      }
-    } else if (field.modifier.none) {
-      Line.optional(tpeLine)
-    } else {
-      tpeLine
+
+    val defaultLine: Option[Line] = field.modifier match {
+      // non-required fields with no default get a default of None
+      case Field.Modifier(false, _, None) => Some(NameRef("scala.None").toLine)
+      // nullable with a default of null
+      // (the Some(_) check on the second parameter is necessary in order to correctly render in mode OPTION_ONLY)
+      case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode =>
+        Some(NameRef("smithy4s.Nullable.Null").toLine)
+      // nullable with a default of a value
+      case Field.Modifier(_, true, Some(Field.Default(_, Some(default)))) =>
+        Some {
+          NameRef("smithy4s.Nullable.Value").toLine + Literal("(") + renderDefault(default) + Literal(")")
+        }
+      case Field.Modifier(_, _, Some(Field.Default(_, Some(default)))) => Some(renderDefault(default))
+      case _                                                           => None
     }
 
-    line"$name: " + tpeAndDefault
+    val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
+
+    defaultLine match {
+      case Some(default) if shouldRenderDefault => line"$name: " + tpeLine + Literal(" = ") + default
+      case _                                    => line"$name: " + tpeLine
+    }
   }
 
   private def renderArgs(fields: List[Field]): Line = fields
@@ -1366,14 +1378,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        val hintsLine =
-          memberHints(hints).surroundIfNotEmpty(line".addMemberHints(", line")")
-        line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
+        val hintsAndConstraints = hintsAndConstraintsLine(hints)
+        line"${NameRef(col)}(${member.schemaRef}$hintsAndConstraints)"
       case Type.Map(key, keyHints, value, valueHints) =>
-        val keyHintsLine =
-          memberHints(keyHints).surroundIfNotEmpty(line".addMemberHints(", line")")
-        val valueHintsLine =
-          memberHints(valueHints).surroundIfNotEmpty(line".addMemberHints(", line")")
+        val keyHintsLine = hintsAndConstraintsLine(keyHints)
+        val valueHintsLine = hintsAndConstraintsLine(valueHints)
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1473,6 +1482,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         .intercalate(Line.empty)
     }
+  }
+
+  private def hintsAndConstraintsLine(hints: List[Hint]): Line = {
+    val hintsLine =
+      if (hints.isEmpty) Line.empty
+      else line".addMemberHints(${memberHints(hints)})"
+    val constraintsLine = renderConstraintValidation(hints)
+    line"$hintsLine$constraintsLine"
   }
 
   private def shapeTag(name: NameRef): Line =

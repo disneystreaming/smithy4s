@@ -19,9 +19,10 @@ object TestBody extends ShapeTag.Companion[TestBody] {
     val data: Lens[TestBody, Option[String]] = Lens[TestBody, Option[String]](_.data)(n => a => a.copy(data = n))
   }
 
+  // constructor using the original order from the spec
+  private def make(data: Option[String]): TestBody = TestBody(data)
+
   implicit val schema: Schema[TestBody] = struct(
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestBody]("data", _.data),
-  ){
-    TestBody.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

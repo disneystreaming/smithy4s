@@ -159,7 +159,6 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
         .assemble()
 
     val expected = List(
-      noErrorTrait(union),
       ValidationEvent
         .builder()
         .id("TraitTarget")
@@ -170,6 +169,6 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
         )
         .build()
     )
-    expect(model.getValidationEvents().asScala.toList == expected)
+    expect.same(model.getValidationEvents().asScala.toList, expected)
   }
 }

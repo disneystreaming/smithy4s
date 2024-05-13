@@ -14,10 +14,11 @@ object Creds extends ShapeTag.Companion[Creds] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(user: Option[String], key: Option[String]): Creds = Creds(user, key)
+
   implicit val schema: Schema[Creds] = struct(
     string.optional[Creds]("user", _.user),
     string.optional[Creds]("key", _.key),
-  ){
-    Creds.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -13,5 +13,6 @@ object DescribeEndpointsRequest extends ShapeTag.Companion[DescribeEndpointsRequ
 
   val hints: Hints = Hints.empty
 
+
   implicit val schema: Schema[DescribeEndpointsRequest] = constant(DescribeEndpointsRequest()).withId(id).addHints(hints)
 }

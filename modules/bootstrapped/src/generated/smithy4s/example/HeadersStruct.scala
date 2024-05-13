@@ -18,6 +18,9 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(str: Option[String], int: Option[Int], ts1: Option[Timestamp], ts2: Option[Timestamp], ts3: Option[Timestamp], ts4: Option[Timestamp], b: Option[Boolean], sl: Option[List[String]], ie: Option[Numbers], on: Option[OpenNums], ons: Option[OpenNumsStr], slm: Option[Map[String, String]]): HeadersStruct = HeadersStruct(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm)
+
   implicit val schema: Schema[HeadersStruct] = struct(
     string.optional[HeadersStruct]("str", _.str).addHints(smithy.api.HttpHeader("str")),
     int.optional[HeadersStruct]("int", _.int).addHints(smithy.api.HttpHeader("int")),
@@ -31,7 +34,5 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
     OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader("openNums")),
     OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader("openNumsStr")),
     StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(smithy.api.HttpPrefixHeaders("foo-")),
-  ){
-    HeadersStruct.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

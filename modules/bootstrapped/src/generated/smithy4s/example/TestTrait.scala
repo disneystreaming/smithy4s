@@ -20,9 +20,10 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(orderType: Option[OrderType]): TestTrait = TestTrait(orderType)
+
   implicit val schema: Schema[TestTrait] = recursive(struct(
     OrderType.schema.optional[TestTrait]("orderType", _.orderType),
-  ){
-    TestTrait.apply
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

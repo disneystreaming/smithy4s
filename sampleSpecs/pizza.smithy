@@ -165,6 +165,20 @@ structure MenuItem {
     food: Food
     @required
     price: Float
+    tags: Tags
+    extraData: ExtraData
+}
+
+list Tags {
+    @length(min: 1, max: 10)
+    member: String
+}
+
+map ExtraData {
+    @length(min: 2)
+    key: String
+    @length(min: 2, max: 10)
+    value: String
 }
 
 union Food {

@@ -82,14 +82,17 @@ object Endpoint {
     }
 
     final def andThen(other: Middleware[A]): Middleware[A] =
-      new Middleware[A] {
-        def prepare[Alg[_[_, _, _, _, _]]](
-            service: Service[Alg]
-        )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
-          self
-            .prepare(service)(endpoint)
-            .andThen(other.prepare(service)(endpoint))
-      }
+      if (this == Middleware.NoopMiddleware) { other }
+      else if (other == Middleware.NoopMiddleware) { this }
+      else
+        new Middleware[A] {
+          def prepare[Alg[_[_, _, _, _, _]]](
+              service: Service[Alg]
+          )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
+            self
+              .prepare(service)(endpoint)
+              .andThen(other.prepare(service)(endpoint))
+        }
 
   }
 // format: on
@@ -105,12 +108,28 @@ object Endpoint {
         prepareWithHints(service.hints, endpoint.hints)
     }
 
+    trait Standard[Construct] extends Middleware[Construct] {
+      def prepare(
+          serviceId: ShapeId,
+          endpointId: ShapeId,
+          serviceHints: Hints,
+          endpointHints: Hints
+      ): Construct => Construct
+
+      final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Construct => Construct =
+        prepare(service.id, endpoint.id, service.hints, endpoint.hints)
+    }
+
     def noop[Construct]: Middleware[Construct] =
-      new Middleware[Construct] {
-        override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-            endpoint: service.Endpoint[_, _, _, _, _]
-        ): Construct => Construct = identity
-      }
+      NoopMiddleware.asInstanceOf[Middleware[Construct]]
+
+    private case object NoopMiddleware extends Middleware[Any] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Any => Any = identity[Any]
+    }
 
   }
   def apply[Op[_, _, _, _, _], I, E, O, SI, SO](

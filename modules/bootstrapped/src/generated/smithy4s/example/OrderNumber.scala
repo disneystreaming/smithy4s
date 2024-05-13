@@ -9,9 +9,7 @@ import smithy4s.schema.Schema.int
 
 object OrderNumber extends Newtype[Int] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderNumber")
-  val hints: Hints = Hints(
-    smithy.api.Box(),
-  ).lazily
+  val hints: Hints = Hints.empty
   val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
   implicit val schema: Schema[OrderNumber] = bijection(underlyingSchema, asBijection)
 }

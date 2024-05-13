@@ -61,7 +61,7 @@ private[smithy4s] object JsonConverters {
     )
 
   // format: off
-  type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
+  type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: Option[os.Path] :*: LNil
   // format: on
   implicit val codegenArgsIso = LList.iso[CodegenArgs, GenTarget](
     { ca: CodegenArgs =>
@@ -76,6 +76,7 @@ private[smithy4s] object JsonConverters {
         ("dependencies", ca.dependencies) :*:
         ("transformers", ca.transformers) :*:
         ("localJars", ca.localJars) :*:
+        ("smithyBuild", ca.smithyBuild) :*:
         LNil
     },
     {
@@ -89,7 +90,8 @@ private[smithy4s] object JsonConverters {
           (_, repositories) :*:
           (_, dependencies) :*:
           (_, transformers) :*:
-          (_, localJars) :*: LNil =>
+          (_, localJars) :*:
+          (_, smithyBuild) :*: LNil =>
         CodegenArgs(
           specs,
           output,
@@ -101,7 +103,8 @@ private[smithy4s] object JsonConverters {
           repositories,
           dependencies,
           transformers,
-          localJars
+          localJars,
+          smithyBuild
         )
     }
   )

@@ -18,6 +18,7 @@ package smithy4s
 package internals
 
 import alloy.Discriminated
+import alloy.Nullable
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -32,6 +33,7 @@ import smithy4s.schema._
 import java.util.Base64
 import java.util.UUID
 import scala.collection.immutable.ListMap
+import alloy.Untagged
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -209,12 +211,13 @@ class DocumentDecoderSchemaVisitor(
   def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
     new DocumentDecoder[Option[A]] {
       val decoder = schema.compile(self)
+      val aIsNullable = schema.hints.has(Nullable) && schema.isOption
       def expected = decoder.expected
 
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): Option[A] = if (document == Document.DNull) None
+      ): Option[A] = if (document == Document.DNull && !aIsNullable) None
       else Some(decoder(history, document))
     }
 
@@ -442,6 +445,34 @@ class DocumentDecoderSchemaVisitor(
 
   }
 
+  private def untaggedUnion[S](
+      decoders: DecoderMap[S]
+  ): DocumentDecoder[S] = {
+    val decodersList = decoders.values.toList
+    val len = decodersList.length
+
+    handleUnion { (pp: List[PayloadPath.Segment], document: Document) =>
+      var z: S = null.asInstanceOf[S]
+      var i = 0
+      while (z == null && i < len) {
+        try {
+          z = decodersList(i)(pp, document)
+        } catch {
+          case _: Throwable => i += 1
+        }
+      }
+      if (z == null) {
+        throw new PayloadError(
+          PayloadPath(pp.reverse),
+          "Union",
+          "No valid alternatives found for untagged union"
+        )
+      } else {
+        z
+      }
+    }
+  }
+
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
@@ -463,6 +494,8 @@ class DocumentDecoderSchemaVisitor(
     hints match {
       case Discriminated.hint(discriminated) =>
         discriminatedUnion(discriminated, decoders)
+      case Untagged.hint(_) =>
+        untaggedUnion(decoders)
       case _ =>
         taggedUnion(decoders)
     }

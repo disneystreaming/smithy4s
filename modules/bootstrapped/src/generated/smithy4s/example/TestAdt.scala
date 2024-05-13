@@ -45,14 +45,15 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val hints: Hints = Hints.empty
 
+    // constructor using the original order from the spec
+    private def make(lng: Option[Long], sht: Option[Short], blb: Option[Blob], str: Option[String]): AdtOne = AdtOne(lng, sht, blb, str)
+
     val schema: Schema[AdtOne] = struct(
       long.optional[AdtOne]("lng", _.lng),
       short.optional[AdtOne]("sht", _.sht),
       bytes.optional[AdtOne]("blb", _.blb),
       string.optional[AdtOne]("str", _.str),
-    ){
-      AdtOne.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("one")
   }
@@ -65,13 +66,14 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val hints: Hints = Hints.empty
 
+    // constructor using the original order from the spec
+    private def make(lng: Option[Long], sht: Option[Short], int: Option[Int]): AdtTwo = AdtTwo(lng, sht, int)
+
     val schema: Schema[AdtTwo] = struct(
       long.optional[AdtTwo]("lng", _.lng),
       short.optional[AdtTwo]("sht", _.sht),
       int.optional[AdtTwo]("int", _.int),
-    ){
-      AdtTwo.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("two")
   }
