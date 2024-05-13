@@ -1,3 +1,7 @@
+# 0.18.19
+
+* `smithy4sUpdateLSPConfig`: Replace `imports` with `sources` to be more in line with idiomatic smithy-build config in https://github.com/disneystreaming/smithy4s/pull/1518 (see https://github.com/disneystreaming/smithy4s/issues/1459)
+
 # 0.18.18
 
 * Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't.
