@@ -53,9 +53,9 @@ private[codegen] object GenerateSmithyBuild {
 
     val rootDir = new File(extracted.structure.root)
 
-    val SmithyBuildData(imports, deps, repos) = extractInfo(extracted, rootDir)
+    val SmithyBuildData(sources, deps, repos) = extractInfo(extracted, rootDir)
 
-    val json = SmithyBuildJson.toJson(imports, deps, repos)
+    val json = SmithyBuildJson.toJson(sources, deps, repos)
     val target = rootDir / "smithy-build.json"
     val content = if (target.exists()) {
       val content = IO.readLines(target).mkString("\n")

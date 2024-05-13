@@ -166,7 +166,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
         os.FilePath("foo.smithy"),
         os.FilePath("some/directory")
       ),
-      actual.imports.toSet
+      actual.sources.toSet
     )
     val actualOpenApiConfig = actual
       .getPlugin[SmithyBuildPlugin.OpenApi]
@@ -197,7 +197,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
 
     assertEquals(actual.maven, None)
     assertEquals("1.0", actual.version)
-    assertEquals(Set.empty[os.FilePath], actual.imports.toSet)
+    assertEquals(Set.empty[os.FilePath], actual.sources.toSet)
     assertEquals(Set.empty[SmithyBuildPlugin], actual.plugins.toSet)
   }
 }
