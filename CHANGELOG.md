@@ -5,7 +5,7 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.18 - binary-breaking changes in `core`
+# 0.18.19 - binary-breaking changes in `core`
 
 **WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/),
 and it'll most likely cause runtime issues in all applications that use a mix of versions in the ranges `0.18.0 ≤ 0.18.17` and `0.18.18+`.
@@ -15,6 +15,10 @@ For your applications' safety, when upgrading beyond `0.18.17`, make sure all yo
  We apologize for the inconvenience.
 
 * Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+
+# 0.18.18
+
+* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't. https://github.com/disneystreaming/smithy4s/pull/1514
 
 # 0.18.17
 

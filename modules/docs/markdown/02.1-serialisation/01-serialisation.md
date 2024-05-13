@@ -30,7 +30,7 @@ It is worth noting that, although `Document` is isomorphic to a JSON ADT, its `.
 
 ### JSON
 
-The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotnyuk/jsoniter-scala) encoders/decoders that can read/write generated data-types from/to JSON bytes/strings, without an intermediate JSON ADT. The performance of this module is very competitive are [very competitive](https://plokhotnyuk.github.io/jsoniter-scala/) in the Scala ecosystem.
+The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotnyuk/jsoniter-scala) encoders/decoders that can read/write generated data-types from/to JSON bytes/strings, without an intermediate JSON ADT. The performance of this module is [very competitive](https://plokhotnyuk.github.io/jsoniter-scala/) in the Scala ecosystem.
 
 This module is provided at the following coordinates :
 
