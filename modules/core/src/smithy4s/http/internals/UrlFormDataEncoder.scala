@@ -37,8 +37,9 @@ private[http] trait UrlFormDataEncoder[-A] { self =>
 private[internals] object UrlFormDataEncoder {
 
   implicit val urlFormDataEncoderK
-      : EncoderK[UrlFormDataEncoder, List[UrlForm.FormData]] =
-    new EncoderK[UrlFormDataEncoder, List[UrlForm.FormData]] {
+      : EncoderK.Aux[UrlFormDataEncoder, List[UrlForm.FormData]] =
+    new EncoderK[UrlFormDataEncoder] {
+      type Result = List[UrlForm.FormData]
 
       override def absorb[A](
           f: A => List[UrlForm.FormData]
