@@ -79,7 +79,8 @@ final class SchemaVisitorShow(
         (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"
       }
     }
-    implicit val encoderKShow: EncoderK.Aux[Show, String] =
+
+    implicit val encoderKShow: EncoderK[Show] =
       new EncoderK[Show] {
         type Result = String
 
