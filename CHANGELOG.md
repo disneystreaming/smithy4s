@@ -7,12 +7,13 @@ Thank you!
 
 # 0.18.19 - binary-breaking changes in `core`
 
-**WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/),
-and it'll most likely cause runtime issues in all applications that use a mix of versions in the ranges `0.18.0 ≤ 0.18.17` and `0.18.18+`.
+**WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
 
-For your applications' safety, when upgrading beyond `0.18.17`, make sure all your dependencies are compiled against a version of Smithy4s at least equal to `0.18.18`. This can be done with the `whatDependsOn` task in sbt.
+In the vast majority of applications using Smithy4s, it will not cause runtime issues. However, in the unlikely event that you have custom interpreters that query the `.breakingChanges` field of a `Trait` hint, or have that field populated by a non-stdlib trait/hint, you'll have to ensure that all the libraries pulled by your application are compiled against smithy4s 0.18.19 or above.
 
- We apologize for the inconvenience.
+In sbt, you can check what versions of smithy4s are used by your dependencies using the `whatDependsOn` task.
+
+We apologize for the inconvenience.
 
 * Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
 
