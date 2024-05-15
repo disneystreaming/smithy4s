@@ -60,9 +60,9 @@ package object example {
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type TestIdRefList = smithy4s.example.TestIdRefList.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
-  type ConstrainedList = smithy4s.example.ConstrainedList.Type
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
+  type ConstrainedList = smithy4s.example.ConstrainedList.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type StringSet = smithy4s.example.StringSet.Type
   type Menu = smithy4s.example.Menu.Type

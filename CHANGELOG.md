@@ -16,6 +16,7 @@ In sbt, you can check what versions of smithy4s are used by your dependencies us
 We apologize for the inconvenience.
 
 * Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+* Adds handlers construct to facilitate the decoupling of operation implementations
 
 # 0.18.18
 
