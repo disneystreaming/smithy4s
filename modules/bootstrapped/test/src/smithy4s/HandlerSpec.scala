@@ -48,7 +48,7 @@ class HandlerSpec extends FunSuite {
   test("Handler composition: combineAll ") {
     val ref = new AtomicReference(Map.empty[String, String])
     val kvStore: KVStore[Id] = KVStore
-      .fromHandlers(
+      .fromFunctorHandlers[Id](
         get(ref),
         put(ref),
         delete(ref)

@@ -102,7 +102,7 @@ object EndpointHandler {
     }
 
     def partial: Alg[Kind5[F]#optional] =
-      service.fromPolyFunction(handler.lift(service))
+      service.fromPolyFunction[Kind5[F]#optional](handler.lift(service))
   }
 
   private[smithy4s] def combineAll[Op[_, _, _, _, _], F[_, _, _, _, _]](
