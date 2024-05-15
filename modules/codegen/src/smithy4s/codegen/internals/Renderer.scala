@@ -260,14 +260,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderPackageContents: Lines = {
-    val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(_, name, _, _, _, hints) =>
+    val typeAliases = compilationUnit.declarations
+      .collect { case TypeAlias(_, name, _, _, _, hints) =>
+        (name, hints)
+      }
+      .sortBy(_._1)
+      .map { case (name, hints) =>
         lines(
           documentationAnnotation(hints),
           deprecationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
-    }
+      }
 
     val blk =
       block(
