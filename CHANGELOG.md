@@ -14,6 +14,10 @@ Previously, URIs constructed with a base URI of `/` would have `localhost` as th
 
 Previously they'd be named after the **member target**, now they will use the name of the member itself (same as in the case of non-ADT unions).
 
+## Made `EncoderK`'s second type parameter a type member in [#1519](https://github.com/disneystreaming/smithy4s/pull/1519)
+
+There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
+
 # 0.18.18
 
 * Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't.
