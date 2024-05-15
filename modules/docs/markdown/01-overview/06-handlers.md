@@ -23,7 +23,7 @@ import cats.effect._
 def get(ref: Ref[IO, Map[String, String]]) = KVStoreOperation.Get.handler[IO] { input =>
   ref.get.map(_.get(input.key)).flatMap {
     case Some(value) => IO.pure(Value(value))
-    case None => IO.raiseError(new Exception(s"Key not found: ${input.key}"))
+    case None => IO.raiseError(KeyNotFoundError(s"Key not found: ${input.key}"))
   }
 }
 
