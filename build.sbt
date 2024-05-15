@@ -1,3 +1,7 @@
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.MissingClassProblem
+import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
+import com.typesafe.tools.mima.core.IncompatibleMethTypeProblem
 import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
@@ -214,7 +218,43 @@ lazy val core = projectMatrix
         .map(f => (f, f.relativeTo(base)))
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    }
+    },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    ),
+    mimaBinaryIssueFilters ++= Seq(
+      // Incompatible change from smithy 1.46.0
+      // Introduced in https://github.com/smithy-lang/smithy/pull/2156
+      // Discussed in https://github.com/smithy-lang/smithy/issues/2243
+      // Brought to smithy4s in https://github.com/disneystreaming/smithy4s/pull/1485
+      ProblemFilters.exclude[MissingClassProblem](
+        "smithy.api.TraitChangeSeverity*"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.apply"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.<init>$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.this"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.severity"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.copy"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.copy$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule._2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.apply$default$2"
+      )
+    )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)

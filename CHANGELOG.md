@@ -1,10 +1,30 @@
+## Maintainers' notice
+
+This file serves as a template for release notes in GitHub releases.
+When adding entries, please treat them as if they could end up in a release any time. This makes it much easier for us to make frequent releases!
+
+Thank you!
+
+# 0.18.19 - binary-breaking changes in `core`
+
+**WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
+
+In the vast majority of applications using Smithy4s, it will not cause runtime issues. However, in the unlikely event that you have custom interpreters that query the `.breakingChanges` field of a `Trait` hint, or have that field populated by a non-stdlib trait/hint, you'll have to ensure that all the libraries pulled by your application are compiled against smithy4s 0.18.19 or above.
+
+In sbt, you can check what versions of smithy4s are used by your dependencies using the `whatDependsOn` task.
+
+We apologize for the inconvenience.
+
+* Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+
 # 0.18.18
 
-* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't.
+* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't. https://github.com/disneystreaming/smithy4s/pull/1514
 
 # 0.18.17
 
 * Constraints applied to list or map members are now correctly rendered in the generated code.
+* Makes the json decoding of tagged-unions lenient for AWS
 * Fix an issue with duplicated entries in generated smithy-build.json file (#1491)
 * Add support for passing custom OpenAPI config via a `smithy-build.json` file
 * Fix a bug when using `adt` with mixins, see #1457

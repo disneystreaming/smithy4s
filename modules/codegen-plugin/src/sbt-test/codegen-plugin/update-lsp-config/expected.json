@@ -6,7 +6,7 @@
     ],
     "maven" : {
         "dependencies" : [
-            "com.disneystreaming.alloy:alloy-core:0.3.6"
+            "com.disneystreaming.alloy:alloy-core:0.3.8"
         ],
         "repositories" : [
             {

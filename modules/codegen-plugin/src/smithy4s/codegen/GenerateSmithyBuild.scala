@@ -100,7 +100,6 @@ private[codegen] object GenerateSmithyBuild {
       pr: ProjectRef,
       settings: Settings[Scope]
   ): ListSet[String] = {
-    println("extract Repos")
     (pr / resolvers)
       .get(settings)
       .toList

@@ -28,7 +28,8 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-    capitalizeStructAndUnionMemberNames: Boolean
+    capitalizeStructAndUnionMemberNames: Boolean,
+    alwaysSkipEmptyLists: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
   override def primitive[P](
@@ -60,7 +61,10 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val maybeKey =
       if (hints.has[UrlFormFlattened]) None
       else Option(getKey(member.hints, "member"))
-    val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
+
+    val skipEmpty =
+      hints.toMap.contains(SkipEmpty.keyId) || alwaysSkipEmptyLists
+
     collection =>
       // This is to handle a quirk of the AWS Query protocol at
       // https://github.com/smithy-lang/smithy/blob/f8a846df3c67fa4ae55ecaa57002d22499dc439f/smithy-aws-protocol-tests/model/awsQuery/input-lists.smithy#L43-L57
