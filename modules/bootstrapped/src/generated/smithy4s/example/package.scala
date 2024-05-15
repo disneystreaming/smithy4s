@@ -41,79 +41,79 @@ package object example {
   type Weather[F[_]] = smithy4s.kinds.FunctorAlgebra[WeatherGen, F]
   val Weather = WeatherGen
 
-  type PublishersList = smithy4s.example.PublishersList.Type
-  type TestString = smithy4s.example.TestString.Type
+  /** This is a simple example of a "quoted string" */
+  type AString = smithy4s.example.AString.Type
+  type Age = smithy4s.example.Age.Type
+  /** Multiple line doc comment for another string
+    * Containing a random \*\/ here.
+    * Seriously, it's important to escape special characters.
+    */
+  type AnotherString = smithy4s.example.AnotherString.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
-  type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
+  type BucketName = smithy4s.example.BucketName.Type
   type CSV = smithy4s.example.CSV.Type
+  type ChanceOfRain = smithy4s.example.ChanceOfRain.Type
   type CityId = smithy4s.example.CityId.Type
-  type PersonAge = smithy4s.example.PersonAge.Type
+  type CitySummaries = smithy4s.example.CitySummaries.Type
+  type ConstrainedList = smithy4s.example.ConstrainedList.Type
+  type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
+  type CustomErrorMessageType = smithy4s.example.CustomErrorMessageType.Type
+  type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
-  type StringMap = smithy4s.example.StringMap.Type
-  type ChanceOfRain = smithy4s.example.ChanceOfRain.Type
+  type DogName = smithy4s.example.DogName.Type
+  type ExtraData = smithy4s.example.ExtraData.Type
+  type FancyList = smithy4s.example.FancyList.Type
+  type FreeForm = smithy4s.example.FreeForm.Type
+  type Ingredients = smithy4s.example.Ingredients.Type
+  /** @param member
+    *   listFoo
+    */
+  type ListWithMemberHints = smithy4s.example.ListWithMemberHints.Type
   /** @param key
     *   mapFoo
     * @param value
     *   mapBar
     */
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
-  type TestIdRefList = smithy4s.example.TestIdRefList.Type
-  type CitySummaries = smithy4s.example.CitySummaries.Type
-  /** This is a simple example of a "quoted string" */
-  type AString = smithy4s.example.AString.Type
-  type ConstrainedList = smithy4s.example.ConstrainedList.Type
-  type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
-  type StringSet = smithy4s.example.StringSet.Type
   type Menu = smithy4s.example.Menu.Type
-  type Age = smithy4s.example.Age.Type
-  type OrderNumber = smithy4s.example.OrderNumber.Type
-  type FreeForm = smithy4s.example.FreeForm.Type
-  type SomeInt = smithy4s.example.SomeInt.Type
-  type DogName = smithy4s.example.DogName.Type
-  type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
-  type FancyList = smithy4s.example.FancyList.Type
-  type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
-  type Ingredients = smithy4s.example.Ingredients.Type
-  type StringList = smithy4s.example.StringList.Type
-  /** Multiple line doc comment for another string
-    * Containing a random \*\/ here.
-    * Seriously, it's important to escape special characters.
-    */
-  type AnotherString = smithy4s.example.AnotherString.Type
-  type PublisherId = smithy4s.example.PublisherId.Type
-  type SomeValue = smithy4s.example.SomeValue.Type
-  type Tags = smithy4s.example.Tags.Type
-  /** @param member
-    *   listFoo
-    */
-  type ListWithMemberHints = smithy4s.example.ListWithMemberHints.Type
+  type Name = smithy4s.example.Name.Type
+  type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
+  type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
-  type BucketName = smithy4s.example.BucketName.Type
   type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
-  type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
-  type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
-  type CustomErrorMessageType = smithy4s.example.CustomErrorMessageType.Type
-  type UVIndex = smithy4s.example.UVIndex.Type
+  type ObjectKey = smithy4s.example.ObjectKey.Type
+  type ObjectSize = smithy4s.example.ObjectSize.Type
+  type OrderNumber = smithy4s.example.OrderNumber.Type
+  type PNG = smithy4s.example.PNG.Type
+  type PersonAge = smithy4s.example.PersonAge.Type
+  type PersonEmail = smithy4s.example.PersonEmail.Type
+  type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
+  type PublisherId = smithy4s.example.PublisherId.Type
+  type PublishersList = smithy4s.example.PublishersList.Type
+  type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
+  type SomeInt = smithy4s.example.SomeInt.Type
+  type SomeValue = smithy4s.example.SomeValue.Type
+  type SomeVector = smithy4s.example.SomeVector.Type
+  type SparseStringList = smithy4s.example.SparseStringList.Type
+  type SparseStringMap = smithy4s.example.SparseStringMap.Type
+  type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  type StringList = smithy4s.example.StringList.Type
+  type StringMap = smithy4s.example.StringMap.Type
+  type StringSet = smithy4s.example.StringSet.Type
+  type StringWithEnumTraits = smithy4s.example.StringWithEnumTraits.Type
   @deprecated(message = "N/A", since = "N/A")
   type Strings = smithy4s.example.Strings.Type
-  type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
-  type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
-  type TestIdRefSet = smithy4s.example.TestIdRefSet.Type
+  type Tags = smithy4s.example.Tags.Type
   type TestIdRefKeyMap = smithy4s.example.TestIdRefKeyMap.Type
-  type ExtraData = smithy4s.example.ExtraData.Type
-  type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  type TestIdRefList = smithy4s.example.TestIdRefList.Type
+  type TestIdRefSet = smithy4s.example.TestIdRefSet.Type
+  type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
-  type PNG = smithy4s.example.PNG.Type
-  type StringWithEnumTraits = smithy4s.example.StringWithEnumTraits.Type
-  type Name = smithy4s.example.Name.Type
-  type ObjectKey = smithy4s.example.ObjectKey.Type
+  type TestString = smithy4s.example.TestString.Type
+  type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
+  type UVIndex = smithy4s.example.UVIndex.Type
+  type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
-  type SparseStringList = smithy4s.example.SparseStringList.Type
-  type SomeVector = smithy4s.example.SomeVector.Type
-  type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
-  type SparseStringMap = smithy4s.example.SparseStringMap.Type
-  type ObjectSize = smithy4s.example.ObjectSize.Type
-  type PersonEmail = smithy4s.example.PersonEmail.Type
 
 }
