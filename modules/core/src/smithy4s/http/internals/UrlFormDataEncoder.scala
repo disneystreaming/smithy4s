@@ -36,8 +36,7 @@ private[http] trait UrlFormDataEncoder[-A] { self =>
 
 private[internals] object UrlFormDataEncoder {
 
-  implicit val urlFormDataEncoderK
-      : EncoderK.Aux[UrlFormDataEncoder, List[UrlForm.FormData]] =
+  implicit val urlFormDataEncoderK: EncoderK[UrlFormDataEncoder] =
     new EncoderK[UrlFormDataEncoder] {
       type Result = List[UrlForm.FormData]
 

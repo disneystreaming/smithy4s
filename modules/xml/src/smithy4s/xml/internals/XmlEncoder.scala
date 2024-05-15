@@ -101,7 +101,7 @@ private[smithy4s] trait XmlEncoder[-A] { self =>
 }
 
 object XmlEncoder {
-  implicit val xmlEncoderK: EncoderK.Aux[XmlEncoder, List[XmlContent]] =
+  implicit val xmlEncoderK: EncoderK[XmlEncoder] =
     new EncoderK[XmlEncoder] {
       type Result = List[XmlContent]
       def apply[A](fa: XmlEncoder[A], a: A): List[XmlContent] = fa.encode(a)

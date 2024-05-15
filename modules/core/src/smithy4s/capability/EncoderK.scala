@@ -33,10 +33,7 @@ trait EncoderK[F[_]] extends Contravariant[F] {
 }
 
 object EncoderK {
-  // todo: do we even need this? Arguably you're only going to have one instance per F, and the Result is an implementation detail
-  type Aux[F[_], B] = EncoderK[F] { type Result = B }
-
-  implicit def encoderKForFunction[B]: EncoderK.Aux[* => B, B] =
+  implicit def encoderKForFunction[B]: EncoderK[* => B] =
     new EncoderK[* => B] {
       type Result = B
       def apply[A](fa: A => B, a: A): B = fa(a)

@@ -62,7 +62,7 @@ trait DocumentEncoder[A] { self =>
 
 object DocumentEncoder {
 
-  implicit val encoderKInstance: EncoderK.Aux[DocumentEncoder, Document] =
+  implicit val encoderKInstance: EncoderK[DocumentEncoder] =
     new EncoderK[DocumentEncoder] {
       type Result = Document
       def apply[A](fa: DocumentEncoder[A], a: A): Document = fa.apply(a)
