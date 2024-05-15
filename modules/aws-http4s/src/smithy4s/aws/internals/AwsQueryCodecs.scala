@@ -37,7 +37,7 @@ private[aws] object AwsQueryCodecs {
 
   private[aws] val inputEncoders = {
     UrlForm
-      .Encoder(capitalizeStructAndUnionMemberNames = false)
+      .Encoder(capitalizeStructAndUnionMemberNames = false, alwaysSkipEmptyLists = false)
       .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
   }
 

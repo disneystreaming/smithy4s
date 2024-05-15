@@ -39,6 +39,8 @@ import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
+import smithy4s.json.internals.JsoniterCodecCompilerImpl
+import smithy4s.schema.Schema
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -315,6 +317,28 @@ class SchemaVisitorJCodecTests() extends FunSuite {
         expect(msg.contains("Expected JSON object"))
 
     }
+  }
+
+  test("Lenient union") {
+    val json = """|{
+                  |  "right" : "foo",
+                  |  "left" : null
+                  |}
+                  |""".stripMargin
+
+    val json2 = """|{
+                   |  "right": null,
+                   |  "left" : 1
+                   |}
+                   |""".stripMargin
+    val schema = Schema.either(Schema.int, Schema.string)
+
+    implicit val codec: JsonCodec[Either[Int, String]] =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.withLenientTaggedUnionDecoding
+        .fromSchema(schema)
+
+    expect.same(readFromString[Either[Int, String]](json), Right("foo"))
+    expect.same(readFromString[Either[Int, String]](json2), Left(1))
   }
 
   test("Untagged union are encoded / decoded") {

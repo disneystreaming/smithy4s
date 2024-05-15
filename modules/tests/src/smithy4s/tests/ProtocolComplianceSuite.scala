@@ -132,8 +132,11 @@ abstract class ProtocolComplianceSuite
     val codec: PayloadDecoder[Document] = codecApi.fromSchema(Schema.document)
     codec
       .decode(Blob(bytes))
-      .getOrElse(sys.error("unable to decode smithy model into document"))
-
+      .leftMap(
+        new RuntimeException("unable to decode smithy model into document", _)
+      )
+      .toTry
+      .get
   }
 
   private def runInWeaver(

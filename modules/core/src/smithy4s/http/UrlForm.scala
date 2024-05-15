@@ -195,9 +195,15 @@ object UrlForm {
 
   object Encoder {
 
-    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloyurlformname`. */
     def apply(
         capitalizeStructAndUnionMemberNames: Boolean
+    ): CachedSchemaCompiler[Encoder] =
+      apply(capitalizeStructAndUnionMemberNames, alwaysSkipEmptyLists = false)
+
+    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloy#urlformname`. */
+    def apply(
+        capitalizeStructAndUnionMemberNames: Boolean,
+        alwaysSkipEmptyLists: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
         protected override type Aux[A] = UrlFormDataEncoder[A]
@@ -213,7 +219,8 @@ object UrlForm {
             }
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
-            capitalizeStructAndUnionMemberNames
+            capitalizeStructAndUnionMemberNames,
+            alwaysSkipEmptyLists
           )
           val urlFormDataEncoder = schemaVisitor(schema)
           maybeStaticUrlFormData match {
