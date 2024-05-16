@@ -19,7 +19,8 @@ We apologize for the inconvenience.
 
 * `smithy4sUpdateLSPConfig`: Replace `imports` with `sources` to be more in line with idiomatic smithy-build config in https://github.com/disneystreaming/smithy4s/pull/1518 (see https://github.com/disneystreaming/smithy4s/issues/1459)
 * Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
-* Rendered type aliases are now sorted alphabetically
+* Rendered type aliases are now sorted alphabetically in https://github.com/disneystreaming/smithy4s/pull/1523
+* Adds handlers construct to facilitate the decoupling of operation implementations in https://github.com/disneystreaming/smithy4s/pull/1522
 
 # 0.18.18
 
