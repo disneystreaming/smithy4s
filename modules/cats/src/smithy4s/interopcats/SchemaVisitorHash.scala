@@ -123,7 +123,8 @@ final class SchemaVisitorHash(
     }
 
     // The encoded form that Hash works against for the eqV method, is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean, Int)] {
+    implicit val encoderKInstance: EncoderK[AltHash] = new EncoderK[AltHash] {
+      type Result = (U => Boolean, Int)
       def apply[A](fa: AltHash[A], a: A): (U => Boolean, Int) = {
         ((u: U) => fa.eqv(a, u), fa.hash(a))
       }

@@ -79,8 +79,11 @@ final class SchemaVisitorShow(
         (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"
       }
     }
-    implicit val encoderKShow: EncoderK[Show, String] =
-      new EncoderK[Show, String] {
+
+    implicit val encoderKShow: EncoderK[Show] =
+      new EncoderK[Show] {
+        type Result = String
+
         override def apply[A](fa: Show[A], a: A): String = fa.show(a)
 
         override def absorb[A](f: A => String): Show[A] = Show.show(f)
