@@ -173,10 +173,12 @@ object Blob {
     override def size: Int = buf.remaining()
     override def hashCode = buf.hashCode()
 
-    override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ByteBufferBlob] &&
-      buf.compareTo(other.asInstanceOf[ByteBufferBlob].buf) == 0
-    }
+    override def equals(other: Any): Boolean =
+      other match {
+        case otherBlob: Blob => sameBytesAs(otherBlob)
+        case _               => false
+      }
+
   }
 
   final class ArraySliceBlob private[smithy4s] (val arr: Array[Byte], val offset: Int, val length: Int) extends Blob {
@@ -214,14 +216,11 @@ object Blob {
       MurmurHash3.mixLast(h, length)
     }
 
-    override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ArraySliceBlob] && {
-        val o = other.asInstanceOf[ArraySliceBlob]
-        offset == o.offset &&
-        length == o.length &&
-        java.util.Arrays.equals(arr, o.arr)
+    override def equals(other: Any): Boolean =
+      other match {
+        case otherBlob: Blob => sameBytesAs(otherBlob)
+        case _               => false
       }
-    }
 
   }
 
@@ -251,6 +250,19 @@ object Blob {
       }
     }
     def isEmpty: Boolean = size == 0
+
+    override def hashCode(): Int = {
+      import util.hashing.MurmurHash3
+      var h = MurmurHash3.stringHash("QueueBlob")
+      h = MurmurHash3.mix(h, MurmurHash3.orderedHash(blobs))
+      MurmurHash3.mixLast(h, size)
+    }
+
+    override def equals(other: Any): Boolean =
+      other match {
+        case otherBlob: Blob => sameBytesAs(otherBlob)
+        case _               => false
+      }
 
     override def toString(): String = s"QueueBlob(..., $size)"
   }

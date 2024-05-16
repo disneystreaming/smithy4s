@@ -28,8 +28,11 @@ class BlobSpec() extends FunSuite {
     assert(Blob("foo").sameBytesAs(Blob(ByteBuffer.wrap("foo".getBytes))))
   }
 
-  test("equals depends on underlying data structure") {
-    assert(Blob("foo") != Blob(ByteBuffer.wrap("foo".getBytes)))
+  test("equals does notdepend on underlying data structure") {
+    assert(Blob("foo") == Blob(ByteBuffer.wrap("foo".getBytes)))
+    assert(
+      Blob("foo") == Blob(ByteBuffer.wrap("f".getBytes)).concat(Blob("oo"))
+    )
     assert(Blob("foo") == Blob("foo"))
     assert(
       Blob(ByteBuffer.wrap("foo".getBytes)) == Blob(
@@ -49,6 +52,16 @@ class BlobSpec() extends FunSuite {
 
   test("ByteBufferBlob.hashcode is consistent") {
     def makeBlob(str: String) = Blob(ByteBuffer.wrap(str.getBytes))
+    val blob1 = makeBlob("foo")
+    val blob2 = makeBlob("foo")
+    val blob3 = makeBlob("bar")
+    assertEquals(blob1.hashCode, blob2.hashCode)
+    assertNotEquals(blob1.hashCode, blob3.hashCode)
+  }
+
+  test("QueueBlob.hashcode is consistent") {
+    def makeBlob(str: String) =
+      Blob(str.getBytes).concat(Blob(ByteBuffer.wrap(str.getBytes())))
     val blob1 = makeBlob("foo")
     val blob2 = makeBlob("foo")
     val blob3 = makeBlob("bar")
