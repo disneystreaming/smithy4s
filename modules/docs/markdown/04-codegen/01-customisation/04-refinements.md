@@ -105,7 +105,7 @@ use smithy4s.meta#refinement
 
 apply test#emailFormat @refinement(
   targetType: "myapp.types.Email",
-  providerImport: "myapp.types.providers._"
+  providerImport: "myapp.types.providers._" // or `providerImport: "myapp.types.providers.given"` if you use scala 3
 )
 ```
 
