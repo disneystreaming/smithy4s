@@ -37,7 +37,7 @@ trait EndpointHandler[Op[_, _, _, _, _], F[_, _, _, _, _]] {
   ): AsService[Alg, F] =
     new EndpointHandler.AsServiceImpl[Alg, Op, F](this, service)
 
-  final def orElse(other: EndpointHandler[Op, F]): EndpointHandler[Op, F] =
+  final def or(other: EndpointHandler[Op, F]): EndpointHandler[Op, F] =
     (this, other) match {
       case (Combined(left), Combined(right)) => Combined(left ++ right)
       case (other, Combined(right))          => Combined(other +: right)
@@ -108,7 +108,7 @@ object EndpointHandler {
   private[smithy4s] def combineAll[Op[_, _, _, _, _], F[_, _, _, _, _]](
       handlers: EndpointHandler[Op, F]*
   ): EndpointHandler[Op, F] =
-    handlers.foldLeft(Combined(Vector()))(_ orElse _)
+    handlers.foldLeft[EndpointHandler[Op, F]](Combined(Vector()))(_ or _)
 
   private case class Combined[Op[_, _, _, _, _], F[_, _, _, _, _]](
       handlers: Vector[EndpointHandler[Op, F]]

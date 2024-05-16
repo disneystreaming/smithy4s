@@ -42,8 +42,8 @@ And compose the handlers as such :
 ```scala mdoc:silent
 IO.ref(Map.empty[String, String]).map { ref =>
   get(ref)
-    .orElse(put(ref))
-    .orElse(new delete(ref))
+    .or(put(ref))
+    .or(new delete(ref))
     .asService(KVStore)
     .throwing : KVStore[IO]
 }

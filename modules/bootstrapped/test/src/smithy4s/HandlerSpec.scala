@@ -28,12 +28,12 @@ class HandlerSpec extends FunSuite {
     }
   }
 
-  test("Handler composition: orElse ") {
+  test("Handler composition: combine ") {
 
     val ref = new AtomicReference(Map.empty[String, String])
     val kvStore: KVStore[Id] = get(ref)
-      .orElse(put(ref))
-      .orElse(delete(ref))
+      .or(put(ref))
+      .or(delete(ref))
       .asService(KVStore)
       .throwing
 
