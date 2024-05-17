@@ -19,6 +19,7 @@ package smithy4s.codegen.internals
 import smithy4s.codegen.SmithyBuildJson
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
+
 import scala.collection.immutable.ListSet
 
 final class SmithyBuildSpec extends munit.FunSuite {
@@ -37,7 +38,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/"
          |    ],
          |    "maven" : {
@@ -58,7 +59,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
     val actual = SmithyBuildJson.merge(
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["oterh"],
          |    "repositories": []
@@ -68,7 +69,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |""".stripMargin,
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["dep1"],
          |    "repositories": []
@@ -80,7 +81,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/main/smithy"
          |    ],
          |    "maven" : {
@@ -100,7 +101,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
     val actual = SmithyBuildJson.merge(
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["oterh", "dep1"],
          |    "repositories": []
@@ -109,7 +110,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
          |""".stripMargin,
       """|{
          |  "version": "1.0",
-         |  "imports": ["src/main/smithy"],
+         |  "sources": ["src/main/smithy"],
          |  "maven": {
          |    "dependencies": ["dep1"],
          |    "repositories": []
@@ -122,7 +123,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       actual,
       """|{
          |    "version" : "1.0",
-         |    "imports" : [
+         |    "sources" : [
          |        "src/main/smithy"
          |    ],
          |    "maven" : {
@@ -143,7 +144,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
       """
         |{
         |   "version": "1.0",
-        |   "imports": [ "foo.smithy", "some/directory" ],
+        |   "sources": [ "foo.smithy", "some/directory" ],
         |   "plugins": {
         |        "openapi": {
         |            "service": "example.weather#Weather",
@@ -166,7 +167,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
         os.FilePath("foo.smithy"),
         os.FilePath("some/directory")
       ),
-      actual.imports.toSet
+      actual.sources.toSet
     )
     val actualOpenApiConfig = actual
       .getPlugin[SmithyBuildPlugin.OpenApi]
@@ -197,7 +198,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
 
     assertEquals(actual.maven, None)
     assertEquals("1.0", actual.version)
-    assertEquals(Set.empty[os.FilePath], actual.imports.toSet)
+    assertEquals(Set.empty[os.FilePath], actual.sources.toSet)
     assertEquals(Set.empty[SmithyBuildPlugin], actual.plugins.toSet)
   }
 }

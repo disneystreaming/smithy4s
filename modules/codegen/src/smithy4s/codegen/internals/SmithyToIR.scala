@@ -35,6 +35,9 @@ import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
+import software.amazon.smithy.model.traits.DefaultTrait
+import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
