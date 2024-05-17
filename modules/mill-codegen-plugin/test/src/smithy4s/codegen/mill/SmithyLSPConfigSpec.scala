@@ -63,7 +63,7 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
     val expectedJson = ujson.read {
       s"""|{
           |  "version": "1.0",
-          |  "imports": ["./foo/smithy"],
+          |  "sources": ["./foo/smithy"],
           |  "maven": {
           |    "dependencies": [
           |       "com.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",

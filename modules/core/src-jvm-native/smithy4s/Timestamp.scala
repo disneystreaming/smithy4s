@@ -21,6 +21,9 @@ import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private (epochSecond: Long, nano: Int)
     extends TimestampPlatform {
+
+  def epochMilli: Long = epochSecond * 1000 + nano / 1000000
+
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano
@@ -171,6 +174,12 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 object Timestamp extends TimestampCompanionPlatform {
 
   val epoch = Timestamp(0, 0)
+
+  def fromEpochMilli(epochMilli: Long): Timestamp = {
+    val secs = java.lang.Math.floorDiv(epochMilli, 1000)
+    val mos = java.lang.Math.floorMod(epochMilli, 1000)
+    Timestamp(secs, (mos * 1000000).toInt)
+  }
 
   private val digits: Array[Short] = Array(
     0x3030, 0x3130, 0x3230, 0x3330, 0x3430, 0x3530, 0x3630, 0x3730, 0x3830,

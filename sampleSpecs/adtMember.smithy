@@ -84,3 +84,19 @@ structure PodcastCommon {
 structure Video with [PodcastCommon] {}
 @generateOptics
 structure Audio with [PodcastCommon] {}
+
+
+@mixin
+structure HasName {
+    name: String
+}
+
+structure OtherPerson with [HasName] {
+    @required
+    $name
+}
+
+@adt
+union PersonUnion {
+    p: OtherPerson
+}
