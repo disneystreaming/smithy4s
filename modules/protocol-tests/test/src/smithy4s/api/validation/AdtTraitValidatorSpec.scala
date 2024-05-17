@@ -16,14 +16,15 @@
 
 package smithy4s.api.validation
 
-import weaver._
 import smithy4s.meta.AdtTrait
+import smithy4s.meta.validation.AdtTraitValidator
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.validation.{Severity, ValidationEvent}
+import software.amazon.smithy.model.validation.Severity
+import software.amazon.smithy.model.validation.ValidationEvent
+import weaver._
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.validation.AdtTraitValidator
 
 object AdtTraitValidatorSpec extends FunSuite {
   private val validator = new AdtTraitValidator()

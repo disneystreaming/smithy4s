@@ -18,8 +18,8 @@ package smithy4s.codegen.internals
 
 import org.scalacheck.Gen
 import org.scalacheck.Prop
-import software.amazon.smithy.model.shapes.EnumShape
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.EnumShape
 import software.amazon.smithy.model.shapes.StructureShape
 
 final class RendererSpec extends munit.ScalaCheckSuite {
