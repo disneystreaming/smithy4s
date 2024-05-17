@@ -1,0 +1,20 @@
+{
+    "version" : "1.0",
+    "sources" : [
+        "subproj2/src/main/smithy",
+        "subproj2/target/scala-2.12/src_managed/main/smithy"
+    ],
+    "maven" : {
+        "dependencies" : [
+            "com.disneystreaming.alloy:alloy-core:0.3.8"
+        ],
+        "repositories" : [
+            {
+                "url" : "https://oss.sonatype.org/content/repositories/snapshots"
+            },
+            {
+                "url" : "https://s01.oss.sonatype.org/content/repositories/snapshots"
+            }
+        ]
+    }
+}

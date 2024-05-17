@@ -30,7 +30,7 @@ It is worth noting that, although `Document` is isomorphic to a JSON ADT, its `.
 
 ### JSON
 
-The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotnyuk/jsoniter-scala) encoders/decoders that can read/write generated data-types from/to JSON bytes/strings, without an intermediate JSON ADT. The performance of this module is very competitive are [very competitive](https://plokhotnyuk.github.io/jsoniter-scala/) in the Scala ecosystem.
+The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotnyuk/jsoniter-scala) encoders/decoders that can read/write generated data-types from/to JSON bytes/strings, without an intermediate JSON ADT. The performance of this module is [very competitive](https://plokhotnyuk.github.io/jsoniter-scala/) in the Scala ecosystem.
 
 This module is provided at the following coordinates :
 
@@ -56,7 +56,7 @@ val maybePerson = personDecoder.decode(Blob(personJSON))
 
 By default, `smithy4s-json` abides by the semantics of :
 
-* [official smithy traits], including:
+* [official smithy traits](https://smithy.io/2.0/spec/protocol-traits.html), including:
   * [jsonName](https://smithy.io/2.0/spec/protocol-traits.html#jsonname-trait)
   * [timestampFormat](https://smithy.io/2.0/spec/protocol-traits.html#timestampformat-trait)
   * [sparse](https://smithy.io/2.0/spec/type-refinement-traits.html#sparse-trait)
@@ -102,7 +102,7 @@ sbt : "com.disneystreaming.smithy4s" %% "smithy4s-protobuf" % "@VERSION@"
 mill : "com.disneystreaming.smithy4s::smithy4s-protobuf:@VERSION@"
 ```
 
-The entrypoint for XML parsing/writing is `smithy4s.protobuf.Protobuf`. See below for example usage.
+The entrypoint for Protobuf parsing/writing is `smithy4s.protobuf.Protobuf`. See below for example usage.
 
 ```scala mdoc:reset
 import smithy4s.example.hello.Person

@@ -30,10 +30,10 @@ import software.amazon.smithy.model.loader.ModelManifestException
 
 import java.io.File
 import java.net.URLClassLoader
-import scala.jdk.CollectionConverters._
 import java.nio.file.FileSystems
-import scala.util.Using
 import java.nio.file.Files
+import scala.jdk.CollectionConverters._
+import scala.util.Using
 
 private[codegen] object ModelLoader {
 

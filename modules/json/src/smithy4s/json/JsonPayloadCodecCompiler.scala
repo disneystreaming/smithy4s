@@ -33,6 +33,13 @@ trait JsonPayloadCodecCompiler {
   def withJsoniterCodecCompiler(jsoniterCodecCompiler: JsoniterCodecCompiler): JsonPayloadCodecCompiler
 
   /**
+   * Like withJsoniterCodecCompiler, but allows you to modify the current codec compiler more easily.
+   */
+  def configureJsoniterCodecCompiler(
+      jsoniterCodecCompiler: JsoniterCodecCompiler => JsoniterCodecCompiler
+  ): JsonPayloadCodecCompiler
+
+  /**
     * Changes the jsoniter reader config that is used when parsing json payloads into data.
     */
   def withJsoniterReaderConfig(jsoniterReaderConfig: JsoniterReaderConfig): JsonPayloadCodecCompiler

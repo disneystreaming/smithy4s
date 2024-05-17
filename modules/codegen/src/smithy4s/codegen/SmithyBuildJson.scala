@@ -16,21 +16,24 @@
 
 package smithy4s.codegen
 
+import io.circe.Json
+import io.circe.parser
 import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
 import smithy4s.codegen.internals.SmithyBuildMavenRepository
-import io.circe.{Json, parser}
+
+import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
   def toJson(
-      imports: Seq[String],
-      dependencies: Seq[String],
-      repositories: Seq[String]
+      sources: ListSet[String],
+      dependencies: ListSet[String],
+      repositories: ListSet[String]
   ): String = {
     SmithyBuild.writeJson(
-      SmithyBuild(
+      SmithyBuild.Serializable(
         version = "1.0",
-        imports,
+        sources,
         SmithyBuildMaven(
           dependencies,
           repositories.map(SmithyBuildMavenRepository.apply)

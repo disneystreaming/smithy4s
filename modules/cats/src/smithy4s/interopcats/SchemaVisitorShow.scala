@@ -33,8 +33,8 @@ object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
   ): Show[A] = {
     schema.compile(new SchemaVisitorShow(cache))
   }
-}
 
+}
 final class SchemaVisitorShow(
     val cache: CompilationCache[Show]
 ) extends SchemaVisitor.Cached[Show] { self =>

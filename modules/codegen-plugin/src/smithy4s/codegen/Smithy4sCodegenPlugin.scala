@@ -128,6 +128,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
+    val smithyBuild = taskKey[Option[File]](
+      "smithy-build.json to use for reading build configuration"
+    )
+
     val smithy4sWildcardArgument =
       taskKey[String](
         "String value to use as wildcard argument in types in generated code"
@@ -230,6 +234,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / smithy4sInternalDependenciesAsJars).value ++
         fetch(config / smithy4sAllExternalDependencies).value
     },
+    config / smithyBuild := None,
     config / smithy4sWildcardArgument := {
       // This logic configures the default wildcard argument based on the scala version and scalac options
       // In the following scenarios we use "?" instead of "_"
@@ -421,10 +426,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)
+
     val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
+
     val specs = filePaths.sorted.map(p => os.Path(p)).toList
+
+    val smithyBuildValue = (conf / smithyBuild).value.map(os.Path(_))
+
     val codegenArgs = CodegenArgs(
       specs,
       output = os.Path(outputPath),
@@ -436,7 +446,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       repositories = res,
       dependencies = List.empty,
       transformers = transforms,
-      localJars = localJars
+      localJars = localJars,
+      smithyBuild = smithyBuildValue
     )
 
     val cached =
