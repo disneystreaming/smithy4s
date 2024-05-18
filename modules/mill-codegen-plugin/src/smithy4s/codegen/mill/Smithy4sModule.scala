@@ -192,6 +192,7 @@ trait Smithy4sModule extends ScalaModule {
     val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())
       .map(_.path)
       .filter(os.exists(_))
+      .toList
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
@@ -209,10 +210,13 @@ trait Smithy4sModule extends ScalaModule {
     val smithyBuildFile = smithyBuild().map(_.path)
 
     val allLocalJars =
-      smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
+      smithy4sAllDependenciesAsJars()
+        .map(_.path)
+        .iterator
+        .to(List)
 
     val args = CodegenArgs(
-      specs = specFiles.toList,
+      specs = specFiles,
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
