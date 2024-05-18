@@ -37,6 +37,7 @@ final case class CodegenArgs(
   def skipOpenapi: Boolean = skip(FileType.Openapi)
   def skipResources: Boolean = skip(FileType.Resource)
   def skipProto: Boolean = skip(FileType.Proto)
+
 }
 
 sealed abstract class FileType(val name: String)
