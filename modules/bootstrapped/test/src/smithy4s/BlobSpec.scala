@@ -31,7 +31,7 @@ class BlobSpec() extends ScalaCheckSuite {
       val array = Blob(value)
       val byteBuffer = Blob(ByteBuffer.wrap(bytes))
       val queue = Blob.queue(
-        Queue.from(bytes.map(b => Blob(ByteBuffer.wrap(Array(b))))),
+        Queue(bytes.map(b => Blob(ByteBuffer.wrap(Array(b)))): _*),
         bytes.size
       )
 
