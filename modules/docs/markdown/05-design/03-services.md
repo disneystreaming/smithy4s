@@ -39,9 +39,9 @@ Initially-encoded KVStore algebra :
 ```scala
 sealed trait KVStoreOp[Output]
 object KVStoreOp {
-  case class Put(key: String, value: String)  extends KVStore[Unit]
-  case class Get(key: String)                 extends KVStore[Option[String]]
-  case class Delete(key: String)              extends KVStore[Unit]
+  case class Put(key: String, value: String)  extends KVStoreOp[Unit]
+  case class Get(key: String)                 extends KVStoreOp[Option[String]]
+  case class Delete(key: String)              extends KVStoreOp[Unit]
 }
 ```
 

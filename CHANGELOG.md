@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.20 
+
+* Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
+
 # 0.18.19 - binary-breaking changes in `core`
 
 **WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
@@ -19,8 +23,9 @@ We apologize for the inconvenience.
 
 * `smithy4sUpdateLSPConfig`: Replace `imports` with `sources` to be more in line with idiomatic smithy-build config in https://github.com/disneystreaming/smithy4s/pull/1518 (see https://github.com/disneystreaming/smithy4s/issues/1459)
 * Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
-* Rendered type aliases are now sorted alphabetically
-* Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes.
+* Rendered type aliases are now sorted alphabetically in https://github.com/disneystreaming/smithy4s/pull/1523
+* Add handlers construct to facilitate the decoupling of operation implementations in https://github.com/disneystreaming/smithy4s/pull/1522
+* Improve cache in code generation (sbt) in https://github.com/disneystreaming/smithy4s/pull/1499
 
 # 0.18.18
 

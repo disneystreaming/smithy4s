@@ -16,10 +16,11 @@
 
 package smithy4s.codegen
 
+import io.circe.Json
+import io.circe.parser
 import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
 import smithy4s.codegen.internals.SmithyBuildMavenRepository
-import io.circe.{Json, parser}
 
 import scala.collection.immutable.ListSet
 

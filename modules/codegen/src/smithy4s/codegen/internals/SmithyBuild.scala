@@ -19,8 +19,8 @@ package internals
 
 import cats.syntax.all._
 import io.circe._
-import io.circe.syntax._
 import io.circe.generic.semiauto._
+import io.circe.syntax._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.openapi.OpenApiConfig
 

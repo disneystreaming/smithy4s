@@ -19,6 +19,7 @@ package smithy4s.codegen.internals
 import smithy4s.codegen.SmithyBuildJson
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
+
 import scala.collection.immutable.ListSet
 
 final class SmithyBuildSpec extends munit.FunSuite {
