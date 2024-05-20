@@ -113,6 +113,20 @@ sealed trait Blob {
       }
 
   final def ++(other: Blob) = concat(other)
+
+  override def equals(other: Any): Boolean =
+    other match {
+      case otherBlob: Blob => sameBytesAs(otherBlob)
+      case _               => false
+    }
+
+  override def hashCode(): Int = {
+    import util.hashing.MurmurHash3
+    var h = MurmurHash3.stringHash("Blob")
+    foreach(o => h = MurmurHash3.mix(h, o.##))
+    MurmurHash3.finalizeHash(h, size)
+  }
+
 }
 
 object Blob {
@@ -171,13 +185,6 @@ object Blob {
     override def toString = s"ByteBufferBlob(...)"
     override def isEmpty: Boolean = !buf.hasRemaining()
     override def size: Int = buf.remaining()
-    override def hashCode = buf.hashCode()
-
-    override def equals(other: Any): Boolean =
-      other match {
-        case otherBlob: Blob => sameBytesAs(otherBlob)
-        case _               => false
-      }
 
   }
 
@@ -208,20 +215,6 @@ object Blob {
 
     override def toString(): String = s"ArraySliceBlob(..., $offset, $length)"
 
-    override def hashCode(): Int = {
-      import util.hashing.MurmurHash3
-      var h = MurmurHash3.stringHash("ArraySliceBlob")
-      h = MurmurHash3.mix(h, MurmurHash3.arrayHash(arr))
-      h = MurmurHash3.mix(h, offset)
-      MurmurHash3.mixLast(h, length)
-    }
-
-    override def equals(other: Any): Boolean =
-      other match {
-        case otherBlob: Blob => sameBytesAs(otherBlob)
-        case _               => false
-      }
-
   }
 
   final class QueueBlob private[smithy4s] (val blobs: Queue[Blob], val size: Int) extends Blob {
@@ -250,19 +243,6 @@ object Blob {
       }
     }
     def isEmpty: Boolean = size == 0
-
-    override def hashCode(): Int = {
-      import util.hashing.MurmurHash3
-      var h = MurmurHash3.stringHash("QueueBlob")
-      h = MurmurHash3.mix(h, MurmurHash3.orderedHash(blobs))
-      MurmurHash3.mixLast(h, size)
-    }
-
-    override def equals(other: Any): Boolean =
-      other match {
-        case otherBlob: Blob => sameBytesAs(otherBlob)
-        case _               => false
-      }
 
     override def toString(): String = s"QueueBlob(..., $size)"
   }
