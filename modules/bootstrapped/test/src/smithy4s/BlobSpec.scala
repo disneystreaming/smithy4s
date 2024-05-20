@@ -47,7 +47,7 @@ class BlobSpec() extends ScalaCheckSuite {
     assert(Blob("foo").sameBytesAs(Blob(ByteBuffer.wrap("foo".getBytes))))
   }
 
-  test("equals does notdepend on underlying data structure") {
+  test("equals does not depend on underlying data structure") {
     assert(Blob("foo") == Blob(ByteBuffer.wrap("foo".getBytes)))
     assert(
       Blob("foo") == Blob(ByteBuffer.wrap("f".getBytes)).concat(Blob("oo"))
