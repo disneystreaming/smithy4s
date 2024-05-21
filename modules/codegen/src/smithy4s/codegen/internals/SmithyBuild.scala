@@ -19,8 +19,8 @@ package internals
 
 import cats.syntax.all._
 import io.circe._
-import io.circe.syntax._
 import io.circe.generic.semiauto._
+import io.circe.syntax._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.openapi.OpenApiConfig
 
@@ -30,7 +30,7 @@ import scala.util.Try
 
 private[internals] final case class SmithyBuild(
     version: String,
-    imports: Set[os.FilePath],
+    sources: Set[os.FilePath],
     plugins: Set[SmithyBuildPlugin],
     maven: Option[SmithyBuildMaven]
 ) {
@@ -71,7 +71,7 @@ private[codegen] object SmithyBuild {
    */
   case class Serializable(
       version: String,
-      imports: Set[String],
+      sources: Set[String],
       maven: SmithyBuildMaven
   )
 

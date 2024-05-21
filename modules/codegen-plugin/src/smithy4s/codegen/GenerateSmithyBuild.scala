@@ -22,17 +22,17 @@ import Smithy4sCodegenPlugin.autoImport._
 import scala.collection.immutable.ListSet
 
 private final case class SmithyBuildData(
-    imports: ListSet[String],
+    sources: ListSet[String],
     deps: ListSet[String],
     repos: ListSet[String]
 ) {
   def addAll(
-      imports: ListSet[String],
+      sources: ListSet[String],
       deps: ListSet[String],
       repos: ListSet[String]
   ): SmithyBuildData = {
     SmithyBuildData(
-      this.imports ++ imports,
+      this.sources ++ sources,
       this.deps ++ deps,
       this.repos ++ repos
     )
@@ -53,9 +53,9 @@ private[codegen] object GenerateSmithyBuild {
 
     val rootDir = new File(extracted.structure.root)
 
-    val SmithyBuildData(imports, deps, repos) = extractInfo(extracted, rootDir)
+    val SmithyBuildData(sources, deps, repos) = extractInfo(extracted, rootDir)
 
-    val json = SmithyBuildJson.toJson(imports, deps, repos)
+    val json = SmithyBuildJson.toJson(sources, deps, repos)
     val target = rootDir / "smithy-build.json"
     val content = if (target.exists()) {
       val content = IO.readLines(target).mkString("\n")
@@ -75,7 +75,7 @@ private[codegen] object GenerateSmithyBuild {
       .foldLeft(SmithyBuildData(ListSet.empty, ListSet.empty, ListSet.empty)) {
         case (gsb, pr) =>
           gsb.addAll(
-            extractImports(pr, extracted.structure.data, rootDir),
+            extractSources(pr, extracted.structure.data, rootDir),
             extractDeps(pr, extracted.structure.data),
             extractRepos(pr, extracted.structure.data)
           )
@@ -100,7 +100,6 @@ private[codegen] object GenerateSmithyBuild {
       pr: ProjectRef,
       settings: Settings[Scope]
   ): ListSet[String] = {
-    println("extract Repos")
     (pr / resolvers)
       .get(settings)
       .toList
@@ -109,7 +108,7 @@ private[codegen] object GenerateSmithyBuild {
       .to[ListSet]
   }
 
-  private def extractImports(
+  private def extractSources(
       pr: ProjectRef,
       settings: Settings[Scope],
       rootDir: File

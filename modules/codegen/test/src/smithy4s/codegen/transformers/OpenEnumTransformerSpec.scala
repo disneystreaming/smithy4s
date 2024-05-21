@@ -16,10 +16,10 @@
 
 package smithy4s.codegen.transformers
 
+import alloy.OpenEnumTrait
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes.ShapeId
-import alloy.OpenEnumTrait
 
 final class OpenEnumTransformerSpec extends munit.FunSuite {
 
