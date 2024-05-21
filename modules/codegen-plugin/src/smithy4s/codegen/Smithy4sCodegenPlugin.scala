@@ -188,7 +188,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / sourceManaged).value / "smithy"
     ),
     config / unmanagedSourceDirectories ++= (config / smithy4sInputDirs).value,
-    config / smithy4sOutputDir := (config / sourceManaged).value / "scala",
+    config / smithy4sOutputDir := (config / sourceManaged).value / "smithy4s",
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
@@ -408,7 +408,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (inputDirs ++ generatedFiles)
         .filter(_.exists())
         .toList
-    val outputPath = (conf / smithy4sOutputDir).value / "smithy4s"
+    val outputPath = (conf / smithy4sOutputDir).value
     val resourceOutputPath = (conf / smithy4sResourceDir).value
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
