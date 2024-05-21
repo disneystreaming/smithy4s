@@ -113,6 +113,20 @@ sealed trait Blob {
       }
 
   final def ++(other: Blob) = concat(other)
+
+  override def equals(other: Any): Boolean =
+    other match {
+      case otherBlob: Blob => sameBytesAs(otherBlob)
+      case _               => false
+    }
+
+  override def hashCode(): Int = {
+    import util.hashing.MurmurHash3
+    var h = MurmurHash3.stringHash("Blob")
+    foreach(o => h = MurmurHash3.mix(h, o.##))
+    MurmurHash3.finalizeHash(h, size)
+  }
+
 }
 
 object Blob {
@@ -171,12 +185,7 @@ object Blob {
     override def toString = s"ByteBufferBlob(...)"
     override def isEmpty: Boolean = !buf.hasRemaining()
     override def size: Int = buf.remaining()
-    override def hashCode = buf.hashCode()
 
-    override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ByteBufferBlob] &&
-      buf.compareTo(other.asInstanceOf[ByteBufferBlob].buf) == 0
-    }
   }
 
   final class ArraySliceBlob private[smithy4s] (val arr: Array[Byte], val offset: Int, val length: Int) extends Blob {
@@ -205,23 +214,6 @@ object Blob {
     override def toArrayUnsafe: Array[Byte] = if (arr.length == length && offset == 0) arr else toArray
 
     override def toString(): String = s"ArraySliceBlob(..., $offset, $length)"
-
-    override def hashCode(): Int = {
-      import util.hashing.MurmurHash3
-      var h = MurmurHash3.stringHash("ArraySliceBlob")
-      h = MurmurHash3.mix(h, MurmurHash3.arrayHash(arr))
-      h = MurmurHash3.mix(h, offset)
-      MurmurHash3.mixLast(h, length)
-    }
-
-    override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ArraySliceBlob] && {
-        val o = other.asInstanceOf[ArraySliceBlob]
-        offset == o.offset &&
-        length == o.length &&
-        java.util.Arrays.equals(arr, o.arr)
-      }
-    }
 
   }
 
