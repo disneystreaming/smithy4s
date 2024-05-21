@@ -115,7 +115,7 @@ object Xml {
 
     XmlDocument.documentEventifier
       .eventify(xmlDocument)
-      .through(render(collapseEmpty = false))
+      .through(render.raw(collapseEmpty = false))
   }
 
   private def writeToBytes[A: Schema](a: A): Stream[fs2.Pure, Byte] =
