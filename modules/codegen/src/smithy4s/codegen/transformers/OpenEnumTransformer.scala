@@ -17,10 +17,12 @@
 package smithy4s.codegen.transformers
 
 import alloy.OpenEnumTrait
-import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits._
+
 import java.util.function.Function
 
 @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")

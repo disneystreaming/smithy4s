@@ -128,6 +128,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
+    val smithyBuild = taskKey[Option[File]](
+      "smithy-build.json to use for reading build configuration"
+    )
+
     val smithy4sWildcardArgument =
       taskKey[String](
         "String value to use as wildcard argument in types in generated code"
@@ -230,6 +234,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / smithy4sInternalDependenciesAsJars).value ++
         fetch(config / smithy4sAllExternalDependencies).value
     },
+    config / smithyBuild := None,
     config / smithy4sWildcardArgument := {
       // This logic configures the default wildcard argument based on the scala version and scalac options
       // In the following scenarios we use "?" instead of "_"
@@ -403,14 +408,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (inputDirs ++ generatedFiles)
         .filter(_.exists())
         .toList
-    val outputPath = (conf / smithy4sOutputDir).value
+    val outputPath = (conf / smithy4sOutputDir).value / "smithy4s"
     val resourceOutputPath = (conf / smithy4sResourceDir).value
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
     val localJars =
-      (conf / smithy4sAllDependenciesAsJars).value.map(os.Path(_)).toList
+      (conf / smithy4sAllDependenciesAsJars).value.toList.sorted
+        .map(p => os.Path(p))
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
@@ -420,11 +426,17 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)
+
     val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
+
+    val specs = filePaths.sorted.map(p => os.Path(p)).toList
+
+    val smithyBuildValue = (conf / smithyBuild).value.map(os.Path(_))
+
     val codegenArgs = CodegenArgs(
-      filePaths.map(os.Path(_)).toList,
+      specs,
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
@@ -434,7 +446,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       repositories = res,
       dependencies = List.empty,
       transformers = transforms,
-      localJars = localJars
+      localJars = localJars,
+      smithyBuild = smithyBuildValue
     )
 
     val cached =
@@ -446,11 +459,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
             s.cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
+              s.log.debug("Regenerating managed sources")
               val resPaths = smithy4s.codegen.Codegen
                 .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {
+              s.log.debug("Using cached version of outputs")
               outputs.getOrElse(Seq.empty)
             }
           }

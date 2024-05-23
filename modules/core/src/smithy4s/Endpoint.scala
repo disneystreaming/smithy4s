@@ -19,6 +19,8 @@ package smithy4s
 import smithy4s.schema._
 
 import schema.ErrorSchema
+import smithy4s.kinds.PolyFunction5
+import smithy4s.kinds._
 
 /**
   * A representation of a smithy operation.
@@ -44,7 +46,7 @@ import schema.ErrorSchema
   * be encoded a great many ways, using a great many libraries)
   */
 // scalafmt: {maxColumn = 120}
-trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { self =>
 
   final def mapSchema(
       f: OperationSchema[I, E, O, SI, SO] => OperationSchema[I, E, O, SI, SO]
@@ -70,6 +72,51 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
         err.liftError(throwable).map(err -> _)
       }
   }
+
+  /**
+    * Allows the creation of a handler via lifting a function that returns some functor.
+    */
+  def handler[F[_]](f: I => F[O]): EndpointHandler[Op, Kind1[F]#toKind5] = new Handler[F] {
+    def run(input: I): F[O] = f(input)
+  }
+
+  /**
+    * Allows the creation of a handler via lifting a function that returns some bi-functor.
+    */
+  def errorAwareHandler[F[_, _]](f: I => F[E, O]): EndpointHandler[Op, Kind2[F]#toKind5] = new ErrorAwareHandler[F] {
+    def run(input: I): F[E, O] = f(input)
+  }
+
+  /**
+    * Allows the creation of a hander via object-oriented inheritance.
+    */
+  abstract class Handler[F[_]] extends EndpointHandler[Op, Kind1[F]#toKind5] {
+    def run(input: I): F[O]
+    protected[smithy4s] def lift[Alg[_[_, _, _, _, _]]](
+        service: Service.Aux[Alg, Op]
+    ): PolyFunction5[Op, Kind1[F]#optional5] = new PolyFunction5[Op, Kind1[F]#optional5] {
+      val ord = service.endpoints.indexOf(self)
+
+      def apply[I_, E_, O_, SI_, SO_](op: Op[I_, E_, O_, SI_, SO_]): Option[F[O_]] = if (service.ordinal(op) == ord) {
+        Some(run(service.input(op).asInstanceOf[I]).asInstanceOf[F[O_]])
+      } else None
+    }
+  }
+
+  abstract class ErrorAwareHandler[F[_, _]] extends EndpointHandler[Op, Kind2[F]#toKind5] {
+    def run(input: I): F[E, O]
+    protected[smithy4s] def lift[Alg[_[_, _, _, _, _]]](
+        service: Service.Aux[Alg, Op]
+    ): PolyFunction5[Op, Kind2[F]#optional5] = new PolyFunction5[Op, Kind2[F]#optional5] {
+      val ord = service.endpoints.indexOf(self)
+
+      def apply[I_, E_, O_, SI_, SO_](op: Op[I_, E_, O_, SI_, SO_]): Option[F[E_, O_]] = if (
+        service.ordinal(op) == ord
+      ) {
+        Some(run(service.input(op).asInstanceOf[I]).asInstanceOf[F[E_, O_]])
+      } else None
+    }
+  }
 }
 
 object Endpoint {
@@ -82,14 +129,17 @@ object Endpoint {
     }
 
     final def andThen(other: Middleware[A]): Middleware[A] =
-      new Middleware[A] {
-        def prepare[Alg[_[_, _, _, _, _]]](
-            service: Service[Alg]
-        )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
-          self
-            .prepare(service)(endpoint)
-            .andThen(other.prepare(service)(endpoint))
-      }
+      if (this == Middleware.NoopMiddleware) { other }
+      else if (other == Middleware.NoopMiddleware) { this }
+      else
+        new Middleware[A] {
+          def prepare[Alg[_[_, _, _, _, _]]](
+              service: Service[Alg]
+          )(endpoint: service.Endpoint[_, _, _, _, _]): A => A =
+            self
+              .prepare(service)(endpoint)
+              .andThen(other.prepare(service)(endpoint))
+        }
 
   }
 // format: on
@@ -105,12 +155,28 @@ object Endpoint {
         prepareWithHints(service.hints, endpoint.hints)
     }
 
+    trait Standard[Construct] extends Middleware[Construct] {
+      def prepare(
+          serviceId: ShapeId,
+          endpointId: ShapeId,
+          serviceHints: Hints,
+          endpointHints: Hints
+      ): Construct => Construct
+
+      final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Construct => Construct =
+        prepare(service.id, endpoint.id, service.hints, endpoint.hints)
+    }
+
     def noop[Construct]: Middleware[Construct] =
-      new Middleware[Construct] {
-        override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-            endpoint: service.Endpoint[_, _, _, _, _]
-        ): Construct => Construct = identity
-      }
+      NoopMiddleware.asInstanceOf[Middleware[Construct]]
+
+    private case object NoopMiddleware extends Middleware[Any] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: service.Endpoint[_, _, _, _, _]
+      ): Any => Any = identity[Any]
+    }
 
   }
   def apply[Op[_, _, _, _, _], I, E, O, SI, SO](

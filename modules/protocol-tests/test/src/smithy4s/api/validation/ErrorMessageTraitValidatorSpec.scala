@@ -16,16 +16,16 @@
 
 package smithy4s.api.validation
 
-import weaver._
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.validation.ErrorMessageTraitValidator
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
+import software.amazon.smithy.model.traits.ErrorTrait
+import software.amazon.smithy.model.validation.Severity
+import software.amazon.smithy.model.validation.ValidationEvent
+import weaver._
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.validation.ErrorMessageTraitValidator
-import software.amazon.smithy.model.validation.ValidationEvent
-import software.amazon.smithy.model.validation.Severity
-import software.amazon.smithy.model.traits.ErrorTrait
 
 object ErrorMessageTraitValidatorSpec extends FunSuite {
   private val validator = new ErrorMessageTraitValidator()
@@ -159,7 +159,6 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
         .assemble()
 
     val expected = List(
-      noErrorTrait(union),
       ValidationEvent
         .builder()
         .id("TraitTarget")
@@ -170,6 +169,6 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
         )
         .build()
     )
-    expect(model.getValidationEvents().asScala.toList == expected)
+    expect.same(model.getValidationEvents().asScala.toList, expected)
   }
 }

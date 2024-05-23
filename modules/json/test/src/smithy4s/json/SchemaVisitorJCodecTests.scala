@@ -39,6 +39,8 @@ import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
+import smithy4s.json.internals.JsoniterCodecCompilerImpl
+import smithy4s.schema.Schema
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -315,6 +317,28 @@ class SchemaVisitorJCodecTests() extends FunSuite {
         expect(msg.contains("Expected JSON object"))
 
     }
+  }
+
+  test("Lenient union") {
+    val json = """|{
+                  |  "right" : "foo",
+                  |  "left" : null
+                  |}
+                  |""".stripMargin
+
+    val json2 = """|{
+                   |  "right": null,
+                   |  "left" : 1
+                   |}
+                   |""".stripMargin
+    val schema = Schema.either(Schema.int, Schema.string)
+
+    implicit val codec: JsonCodec[Either[Int, String]] =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.withLenientTaggedUnionDecoding
+        .fromSchema(schema)
+
+    expect.same(readFromString[Either[Int, String]](json), Right("foo"))
+    expect.same(readFromString[Either[Int, String]](json2), Left(1))
   }
 
   test("Untagged union are encoded / decoded") {
@@ -614,6 +638,35 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = """{}"""
     val result = writeToString[String]("default")
     expect.same(result, json)
+  }
+
+  case class Patchable(a: Option[Nullable[Int]])
+
+  object Patchable {
+    implicit val schema: Schema[Patchable] = {
+      val a = Nullable.schema(int).optional[Patchable]("a", _.a)
+      struct(a)(Patchable.apply)
+    }
+  }
+
+  test("JSON patchable: Nullable.Null is encoded as null rather than missing") {
+    val patchable = Patchable(Some(Nullable.Null))
+    val toJson = Json.writePrettyString(patchable)
+    val expectedJson = """|{
+                          |  "a": null
+                          |}""".stripMargin
+    val fromJson = Json.read[Patchable](Blob(expectedJson))
+    assertEquals(toJson, expectedJson)
+    assertEquals(fromJson, Right(patchable))
+  }
+
+  test("JSON patchable: None is encoded as absent") {
+    val patchable = Patchable(None)
+    val toJson = Json.writeBlob(patchable)
+    val expectedJson = Blob("""{}""")
+    val fromJson = Json.read[Patchable](expectedJson)
+    assertEquals(toJson, expectedJson)
+    assertEquals(fromJson, Right(patchable))
   }
 
 }

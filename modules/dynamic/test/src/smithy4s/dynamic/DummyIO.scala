@@ -27,7 +27,7 @@ object DummyIO {
     def raiseError[A](e: Throwable): IO[A] = Left(e)
   }
 
-  trait Suite extends munit.FunSuite {
+  trait Suite extends munit.ScalaCheckSuite {
     override def munitValueTransforms: List[ValueTransform] =
       ioValueTransform :: super.munitValueTransforms
 

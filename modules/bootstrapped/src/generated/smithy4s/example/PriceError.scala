@@ -20,10 +20,11 @@ object PriceError extends ShapeTag.Companion[PriceError] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String, code: Int): PriceError = PriceError(message, code)
+
   implicit val schema: Schema[PriceError] = struct(
     string.required[PriceError]("message", _.message),
     int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE")),
-  ){
-    PriceError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

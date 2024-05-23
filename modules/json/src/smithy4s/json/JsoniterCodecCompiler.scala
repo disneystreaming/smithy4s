@@ -72,6 +72,12 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     */
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler
 
+  /**
+    * Enables lenient decoding of tagged unions, where unset alternatives are encoded as null
+    * values in the json payload. Also ignores unrecognised union keys.
+    */
+  def withLenientTaggedUnionDecoding: JsoniterCodecCompiler
+
 }
 
 object JsoniterCodecCompiler {
@@ -87,7 +93,8 @@ object JsoniterCodecCompiler {
       InputOutput,
       DiscriminatedUnionMember,
       Default,
-      Required
+      Required,
+      Nullable
     )
 
 }

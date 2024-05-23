@@ -54,13 +54,14 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       val durationMillis: Lens[Video, Option[Long]] = Lens[Video, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
     }
 
+    // constructor using the original order from the spec
+    private def make(title: Option[String], url: Option[String], durationMillis: Option[Long]): Video = Video(title, url, durationMillis)
+
     val schema: Schema[Video] = struct(
       string.optional[Video]("title", _.title),
       string.optional[Video]("url", _.url),
       long.optional[Video]("durationMillis", _.durationMillis),
-    ){
-      Video.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("video")
   }
@@ -79,13 +80,14 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       val durationMillis: Lens[Audio, Option[Long]] = Lens[Audio, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
     }
 
+    // constructor using the original order from the spec
+    private def make(title: Option[String], url: Option[String], durationMillis: Option[Long]): Audio = Audio(title, url, durationMillis)
+
     val schema: Schema[Audio] = struct(
       string.optional[Audio]("title", _.title),
       string.optional[Audio]("url", _.url),
       long.optional[Audio]("durationMillis", _.durationMillis),
-    ){
-      Audio.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("audio")
   }

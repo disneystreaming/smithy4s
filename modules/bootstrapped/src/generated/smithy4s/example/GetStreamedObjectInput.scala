@@ -14,9 +14,10 @@ object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput]
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(key: String): GetStreamedObjectInput = GetStreamedObjectInput(key)
+
   implicit val schema: Schema[GetStreamedObjectInput] = struct(
     string.required[GetStreamedObjectInput]("key", _.key),
-  ){
-    GetStreamedObjectInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

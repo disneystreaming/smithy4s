@@ -26,6 +26,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
+import alloy.Nullable
 import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
@@ -44,6 +45,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
     preserveMapOrder: Boolean,
+    lenientTaggedUnionDecoding: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -1000,6 +1002,88 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.encodeError("Cannot use coproducts as keys")
     }
 
+  private def lenientTaggedUnion[U](
+      alternatives: Vector[Alt[U, _]]
+  )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
+    new JCodec[U] {
+      val expecting: String = "tagged-union"
+
+      override def canBeKey: Boolean = false
+
+      def jsonLabel[A](alt: Alt[U, A]): String =
+        alt.hints.get(JsonName) match {
+          case None    => alt.label
+          case Some(x) => x.value
+        }
+
+      private[this] val handlerMap =
+        new util.HashMap[String, (Cursor, JsonReader) => U] {
+          def handler[A](alt: Alt[U, A]) = {
+            val codec = apply(alt.schema)
+            (cursor: Cursor, reader: JsonReader) =>
+              alt.inject(cursor.decode(codec, reader))
+          }
+
+          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+        }
+
+      def decodeValue(cursor: Cursor, in: JsonReader): U = {
+        var result: U = null.asInstanceOf[U]
+        if (in.isNextToken('{')) {
+          if (!in.isNextToken('}')) {
+            in.rollbackToken()
+            while ({
+              val key = in.readKeyAsString()
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.skip()
+              else if (in.isNextToken('n')) {
+                in.readNullOrError((), "expected null")
+              } else {
+                in.rollbackToken()
+                if (result != null) {
+                  in.decodeError("Expected a single non-null value")
+                } else {
+                  result = handler(cursor, in)
+                }
+              }
+              in.isNextToken(',')
+            }) ()
+            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
+          }
+          if (result != null) {
+            result
+          } else {
+            in.decodeError("Expected a single non-null value")
+          }
+        } else in.decodeError("Expected JSON object")
+      }
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
+        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+          val jsonLabel =
+            instance.hints.get(JsonName).map(_.value).getOrElse(label)
+          val jcodecA = instance.compile(self)
+          a =>
+            out => {
+              out.writeObjectStart()
+              out.writeKey(jsonLabel)
+              jcodecA.encodeValue(a, out)
+              out.writeObjectEnd()
+            }
+        }
+      }
+      val writer = dispatch.compile(precompiler)
+
+      def encodeValue(u: U, out: JsonWriter): Unit = {
+        writer(u)(out)
+      }
+
+      def decodeKey(in: JsonReader): U =
+        in.decodeError("Cannot use coproducts as keys")
+
+      def encodeKey(u: U, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
+    }
+
   private def untaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] = new JCodec[U] {
@@ -1138,7 +1222,9 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[U] = hints match {
     case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
     case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
-    case _                     => taggedUnion(alternatives)(dispatch)
+    case _ =>
+      if (lenientTaggedUnionDecoding) lenientTaggedUnion(alternatives)(dispatch)
+      else taggedUnion(alternatives)(dispatch)
   }
 
   override def enumeration[E](
@@ -1237,6 +1323,8 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def option[A](schema: Schema[A]): JCodec[Option[A]] =
     new JCodec[Option[A]] {
       val underlying: JCodec[A] = self(schema)
+      val aIsNullable =
+        schema.hints.has(Nullable) && schema.isOption
       def expecting: String = s"JsNull or ${underlying.expecting}"
       def decodeKey(in: JsonReader): Option[A] = ???
       def encodeKey(x: Option[A], out: JsonWriter): Unit = ???
@@ -1246,7 +1334,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Option[A] =
-        if (in.isNextToken('n'))
+        // if `A` is an option and has nullable, we delegate the handling of `null` to it.
+        // This allows for supporting Json-merge patches, where the absence of value
+        // and the presence of "null" have different meanings.
+        if (in.isNextToken('n') && !aIsNullable)
           in.readNullOrError[Option[A]](None, "Expected null")
         else {
           in.rollbackToken()
@@ -1341,8 +1432,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       ): scala.collection.Map[String, Any] => Z = {
         val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
-          // In this case, metadata and payload are mixed together
-          // and values field values must be sought from either.
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
@@ -1358,9 +1447,8 @@ private[smithy4s] class SchemaVisitorJCodec(
         // At this point, we have parsed the json and retrieved
         // all the values that interest us for the construction
         // of our domain object.
-        // We therefore reconcile the values pulled from the json
-        // with the ones pull the metadata, and call the constructor
-        // on it.
+        // We re-order the values following the order of the schema
+        // fields before calling the constructor.
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]

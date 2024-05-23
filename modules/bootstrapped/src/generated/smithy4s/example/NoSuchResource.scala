@@ -18,9 +18,10 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(resourceType: String): NoSuchResource = NoSuchResource(resourceType)
+
   implicit val schema: Schema[NoSuchResource] = struct(
     string.required[NoSuchResource]("resourceType", _.resourceType),
-  ){
-    NoSuchResource.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

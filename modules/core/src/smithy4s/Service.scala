@@ -172,10 +172,27 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   final def impl[F[_]](compiler: FunctorEndpointCompiler[F]) : Impl[F] = algebra[Kind1[F]#toKind5](compiler)
 
   /**
-   * A monofunctor-specialised version of [[algebra]]
+   * A bifunctor-specialised version of [[algebra]]
    */
   final def errorAware[F[_, _]](compiler: BiFunctorEndpointCompiler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](compiler)
 
+  /**
+    * Allows to turn a list of endpoint handlers into an instance of [[Alg]].
+    */
+  final def fromHandlers[F[_, _, _, _, _]](handlers: EndpointHandler[Operation, F]*): EndpointHandler.AsService[Alg, F] =
+    EndpointHandler.combineAll(handlers:_*).asService(this)
+
+  /**
+    * A functor-specialised version of [[fromHandlers]], to help scala 2.12
+    */
+  final def fromFunctorHandlers[F[_]](handlers: EndpointHandler[Operation, Kind1[F]#toKind5]*) : EndpointHandler.AsService[Alg, Kind1[F]#toKind5]
+    = fromHandlers[Kind1[F]#toKind5](handlers:_*)
+
+  /**
+    * A bifunctor-specialised version of [[fromHandlers]], to help scala 2.12
+    */
+  final def fromBifunctorHandlers[F[_, _]](handlers: EndpointHandler[Operation, Kind2[F]#toKind5]*) : EndpointHandler.AsService[Alg, Kind2[F]#toKind5]
+    = fromHandlers[Kind2[F]#toKind5](handlers:_*)
 }
 
 object Service {

@@ -17,23 +17,23 @@
 package smithy4s.codegen.mill
 
 import coursier.maven.MavenRepository
-import scala.util.{Success, Try}
 import mill._
+import mill.api.JarManifest
 import mill.api.PathRef
 import mill.define.Target
-import mill.scalalib._
-import smithy4s.codegen.{
-  CodegenArgs,
-  Codegen => Smithy4s,
-  FileType,
-  BuildInfo,
-  JarUtils,
-  SMITHY4S_DEPENDENCIES
-}
-import mill.api.JarManifest
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
+import mill.scalalib._
+import smithy4s.codegen.BuildInfo
+import smithy4s.codegen.CodegenArgs
+import smithy4s.codegen.FileType
+import smithy4s.codegen.JarUtils
+import smithy4s.codegen.SMITHY4S_DEPENDENCIES
+import smithy4s.codegen.{Codegen => Smithy4s}
+
+import scala.util.Success
+import scala.util.Try
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -57,6 +57,8 @@ trait Smithy4sModule extends ScalaModule {
   }
 
   def generateOpenApiSpecs: T[Boolean] = true
+
+  def smithyBuild: T[Option[PathRef]] = None
 
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
@@ -190,6 +192,7 @@ trait Smithy4sModule extends ScalaModule {
     val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())
       .map(_.path)
       .filter(os.exists(_))
+      .toList
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
@@ -204,11 +207,16 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
+    val smithyBuildFile = smithyBuild().map(_.path)
+
     val allLocalJars =
-      smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
+      smithy4sAllDependenciesAsJars()
+        .map(_.path)
+        .iterator
+        .to(List)
 
     val args = CodegenArgs(
-      specs = specFiles.toList,
+      specs = specFiles,
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
@@ -218,7 +226,8 @@ trait Smithy4sModule extends ScalaModule {
       repositories = smithy4sRepositories(),
       dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
-      localJars = allLocalJars
+      localJars = allLocalJars,
+      smithyBuild = smithyBuildFile
     )
 
     Smithy4s.generateToDisk(args)

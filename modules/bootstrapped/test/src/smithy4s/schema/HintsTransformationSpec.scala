@@ -214,7 +214,10 @@ class HintsTransformationSpec() extends FunSuite {
         values: List[EnumValue[E]]
     ): Count[E] = { e =>
       count(hints) + count(
-        values.find(_.value == e).map(_.hints).getOrElse(Hints.empty)
+        values
+          .find(_.value == e)
+          .getOrElse(sys.error("Unknown enum value"))
+          .hints
       )
     }
 

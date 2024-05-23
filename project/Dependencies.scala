@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.27.3"
+    val jsoniterScalaVersion = "2.27.6"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,20 +19,29 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.41.1"
+    val smithyVersion = "1.49.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
+    val diff = org % "smithy-diff" % smithyVersion
     val awsTraits = org % "smithy-aws-traits" % smithyVersion
     val waiters = org % "smithy-waiters" % smithyVersion
+    val `aws-protocol-tests` = org % "smithy-aws-protocol-tests" % smithyVersion
   }
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.2.8"
+    val alloyVersion = "0.3.8"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
+    val protobuf = org % "alloy-protobuf" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
+  }
+
+  val Smithytranslate = new {
+    val org = "com.disneystreaming.smithy"
+    val smithyTranslateVersion = "0.5.2"
+    val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 
   val Cats = new {
@@ -60,7 +69,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.9.3"
+    val fs2Version = "3.10.2"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -75,7 +84,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.6"
+    val millVersion = "0.11.7"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -98,10 +107,10 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.2")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.4")
 
   object Http4s {
-    val http4sVersion = "0.23.25"
+    val http4sVersion = "0.23.26"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -119,7 +128,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.8.3"
+    val weaverVersion = "0.8.4"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
@@ -148,9 +157,9 @@ object Dependencies {
   val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.11"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.9.4"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.11.8"
 
-    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.50"
+    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.52"
   }
 
   object AwsSpecSummary {

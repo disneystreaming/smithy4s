@@ -123,7 +123,14 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, smithy4s.json.Json.payloadDecoders))
+        .map(
+          decodeDocument(
+            _,
+            smithy4s.json.Json.payloadCodecs
+              .configureJsoniterCodecCompiler(_.withMaxArity(Int.MaxValue))
+              .decoders
+          )
+        )
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

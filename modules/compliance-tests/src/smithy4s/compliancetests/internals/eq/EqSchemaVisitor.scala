@@ -93,7 +93,8 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     }
 
     // The encoded form that Eq works against is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltEq, U => Boolean] {
+    implicit val encoderKInstance: EncoderK[AltEq] = new EncoderK[AltEq] {
+      type Result = U => Boolean
       def apply[A](fa: AltEq[A], a: A): U => Boolean = { (u: U) =>
         fa.eqv(a, u)
       }

@@ -15,10 +15,11 @@ object IntList extends ShapeTag.Companion[IntList] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(head: Int, tail: Option[smithy4s.example.IntList]): IntList = IntList(head, tail)
+
   implicit val schema: Schema[IntList] = recursive(struct(
     int.required[IntList]("head", _.head),
     smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail),
-  ){
-    IntList.apply
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

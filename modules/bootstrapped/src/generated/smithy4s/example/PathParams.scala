@@ -18,6 +18,9 @@ object PathParams extends ShapeTag.Companion[PathParams] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): PathParams = PathParams(str, int, ts1, ts2, ts3, ts4, b, ie)
+
   implicit val schema: Schema[PathParams] = struct(
     string.required[PathParams]("str", _.str).addHints(smithy.api.HttpLabel()),
     int.required[PathParams]("int", _.int).addHints(smithy.api.HttpLabel()),
@@ -27,7 +30,5 @@ object PathParams extends ShapeTag.Companion[PathParams] {
     timestamp.required[PathParams]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpLabel()),
     boolean.required[PathParams]("b", _.b).addHints(smithy.api.HttpLabel()),
     Numbers.schema.required[PathParams]("ie", _.ie).addHints(smithy.api.HttpLabel()),
-  ){
-    PathParams.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

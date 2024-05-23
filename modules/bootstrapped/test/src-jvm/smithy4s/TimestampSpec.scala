@@ -186,4 +186,20 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       expect.same(formatted, expected)
     }
   }
+
+  property("Convert to/from epoch milliseconds") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp.fromInstant(i)
+      val epochMilli = i.toEpochMilli()
+      val tsEpochMilli = ts.epochMilli
+
+      expect.same(tsEpochMilli, epochMilli)
+
+      val strippedInstant = Instant.ofEpochMilli(i.toEpochMilli)
+      val tsFromStrippedInstant = Timestamp.fromInstant(strippedInstant)
+      val tsFromEpochMilli = Timestamp.fromEpochMilli(epochMilli)
+
+      expect.same(tsFromEpochMilli, tsFromStrippedInstant)
+    }
+  }
 }

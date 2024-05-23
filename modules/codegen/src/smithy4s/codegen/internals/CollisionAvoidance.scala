@@ -17,13 +17,13 @@
 package smithy4s.codegen.internals
 
 import cats.~>
+import smithy4s.codegen.internals.Type.Nullable
 
 import Type.Alias
 import Type.PrimitiveType
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
-import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -147,6 +147,7 @@ private[internals] object CollisionAvoidance {
       field.name,
       modType(field.tpe),
       field.modifier,
+      field.originalIndex,
       field.hints.map(modHint)
     )
   }
@@ -279,7 +280,14 @@ private[internals] object CollisionAvoidance {
     "notify",
     "notifyAll",
     "toString",
-    "wait"
+    "wait",
+
+    // scala 3 "regular" keywords
+    // https://docs.scala-lang.org/scala3/guides/migration/incompat-syntactic.html#restricted-keywords
+    "enum",
+    "export",
+    "given",
+    "then"
   )
 
   class Names() {

@@ -16,22 +16,24 @@
 
 package smithy4s.codegen
 
+import io.circe.Json
+import io.circe.parser
 import smithy4s.codegen.internals.SmithyBuild
 import smithy4s.codegen.internals.SmithyBuildMaven
 import smithy4s.codegen.internals.SmithyBuildMavenRepository
-import upickle.default._
+
+import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
-
   def toJson(
-      imports: Seq[String],
-      dependencies: Seq[String],
-      repositories: Seq[String]
+      sources: ListSet[String],
+      dependencies: ListSet[String],
+      repositories: ListSet[String]
   ): String = {
     SmithyBuild.writeJson(
-      SmithyBuild(
+      SmithyBuild.Serializable(
         version = "1.0",
-        imports,
+        sources,
         SmithyBuildMaven(
           dependencies,
           repositories.map(SmithyBuildMavenRepository.apply)
@@ -43,47 +45,29 @@ private[codegen] object SmithyBuildJson {
   def merge(
       json1: String,
       json2: String
-  ): String = {
-    val j1 = read[ujson.Value](json1)
-    val j2 = read[ujson.Value](json2)
-    val merged = mergeJs(j1, j2)
-    val finalJs = removeArrayDuplicates(merged)
-    finalJs.render(indent = 4)
-  }
+  ): String = (for {
+    j1 <- parser.parse(json1)
+    j2 <- parser.parse(json2)
+    merged = mergeJs(j1, j2)
+  } yield merged).left.map(err => throw err).merge.spaces4
 
   private def mergeJs(
-      v1: ujson.Value,
-      v2: ujson.Value
-  ): ujson.Value = {
-    (v1, v2) match {
-      case (ujson.Obj(obj1), ujson.Obj(obj2)) =>
-        val result = obj2.foldLeft(obj1.toMap) {
-          case (elements, (key, value2)) =>
-            val value = elements.get(key) match {
-              case None =>
-                value2
-              case Some(value1) =>
-                mergeJs(value1, value2)
+      v1: Json,
+      v2: Json
+  ): Json = {
+    (v1.asObject, v2.asObject, v1.asArray, v2.asArray) match {
+      // copied from circe's deepMerge method, however in order to handle concat + deduplication on arrays we need to do it manually here
+      case (Some(lhs), Some(rhs), _, _) =>
+        Json.fromJsonObject(
+          lhs.toIterable.foldLeft(rhs) { case (acc, (key, value)) =>
+            rhs(key).fold(acc.add(key, value)) { r =>
+              acc.add(key, mergeJs(value, r))
             }
-            elements.updated(key, value)
-        }
-        ujson.Obj.from(result)
-      case (arr1: ujson.Arr, arr2: ujson.Arr) =>
-        ujson.Arr(arr1.arr ++ arr2.arr)
-      case (_, _) => v1
-    }
-  }
-
-  private def removeArrayDuplicates(js: ujson.Value): ujson.Value = {
-    js match {
-      case ujson.Obj(obj1) =>
-        ujson.Obj.from(
-          obj1.toList.map { case (key, value) =>
-            key -> removeArrayDuplicates(value)
           }
         )
-      case (arr1: ujson.Arr) => arr1.arr.distinct
-      case x                 => x
+      case (_, _, Some(arr1), Some(arr2)) =>
+        Json.arr((arr1 ++ arr2).distinct: _*)
+      case _ => v1
     }
   }
 }

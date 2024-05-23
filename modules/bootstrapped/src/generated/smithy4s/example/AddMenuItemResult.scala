@@ -16,10 +16,11 @@ object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(itemId: String, added: Timestamp): AddMenuItemResult = AddMenuItemResult(itemId, added)
+
   implicit val schema: Schema[AddMenuItemResult] = struct(
     string.required[AddMenuItemResult]("itemId", _.itemId).addHints(smithy.api.HttpPayload()),
     timestamp.required[AddMenuItemResult]("added", _.added).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpHeader("X-ADDED-AT")),
-  ){
-    AddMenuItemResult.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

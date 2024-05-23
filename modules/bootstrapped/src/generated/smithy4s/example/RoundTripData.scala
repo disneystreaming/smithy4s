@@ -14,12 +14,13 @@ object RoundTripData extends ShapeTag.Companion[RoundTripData] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(label: String, header: Option[String], query: Option[String], body: Option[String]): RoundTripData = RoundTripData(label, header, query, body)
+
   implicit val schema: Schema[RoundTripData] = struct(
     string.required[RoundTripData]("label", _.label).addHints(smithy.api.HttpLabel()),
     string.optional[RoundTripData]("header", _.header).addHints(smithy.api.HttpHeader("HEADER")),
     string.optional[RoundTripData]("query", _.query).addHints(smithy.api.HttpQuery("query")),
     string.optional[RoundTripData]("body", _.body),
-  ){
-    RoundTripData.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

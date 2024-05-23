@@ -88,7 +88,7 @@ private[aws] object AwsEcsQueryCodecs {
   // without UrlFormDataEncoderSchemaVisitor having to be more aware than necessary of these protocol quirks.
   private[aws] val inputEncoders = {
     UrlForm
-      .Encoder(capitalizeStructAndUnionMemberNames = true)
+      .Encoder(capitalizeStructAndUnionMemberNames = true, alwaysSkipEmptyLists = true)
       .mapK { smithy4s.codecs.Encoder.andThenK((form: UrlForm) => Blob(form.render)) }
   }
 

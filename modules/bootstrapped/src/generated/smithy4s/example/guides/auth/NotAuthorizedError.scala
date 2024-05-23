@@ -20,9 +20,10 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
     smithy.api.HttpError(401),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: String): NotAuthorizedError = NotAuthorizedError(message)
+
   implicit val schema: Schema[NotAuthorizedError] = struct(
     string.required[NotAuthorizedError]("message", _.message),
-  ){
-    NotAuthorizedError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

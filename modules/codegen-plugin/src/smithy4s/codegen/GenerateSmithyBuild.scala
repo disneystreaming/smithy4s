@@ -19,19 +19,20 @@ package smithy4s.codegen
 import sbt._
 import sbt.Keys._
 import Smithy4sCodegenPlugin.autoImport._
+import scala.collection.immutable.ListSet
 
 private final case class SmithyBuildData(
-    imports: Seq[String],
-    deps: Seq[String],
-    repos: Seq[String]
+    sources: ListSet[String],
+    deps: ListSet[String],
+    repos: ListSet[String]
 ) {
   def addAll(
-      imports: Seq[String],
-      deps: Seq[String],
-      repos: Seq[String]
+      sources: ListSet[String],
+      deps: ListSet[String],
+      repos: ListSet[String]
   ): SmithyBuildData = {
     SmithyBuildData(
-      this.imports ++ imports,
+      this.sources ++ sources,
       this.deps ++ deps,
       this.repos ++ repos
     )
@@ -52,9 +53,9 @@ private[codegen] object GenerateSmithyBuild {
 
     val rootDir = new File(extracted.structure.root)
 
-    val SmithyBuildData(imports, deps, repos) = extractInfo(extracted, rootDir)
+    val SmithyBuildData(sources, deps, repos) = extractInfo(extracted, rootDir)
 
-    val json = SmithyBuildJson.toJson(imports, deps, repos)
+    val json = SmithyBuildJson.toJson(sources, deps, repos)
     val target = rootDir / "smithy-build.json"
     val content = if (target.exists()) {
       val content = IO.readLines(target).mkString("\n")
@@ -71,10 +72,10 @@ private[codegen] object GenerateSmithyBuild {
       rootDir: File
   ): SmithyBuildData =
     extracted.structure.allProjectRefs
-      .foldLeft(SmithyBuildData(Seq.empty, Seq.empty, Seq.empty)) {
+      .foldLeft(SmithyBuildData(ListSet.empty, ListSet.empty, ListSet.empty)) {
         case (gsb, pr) =>
           gsb.addAll(
-            extractImports(pr, extracted.structure.data, rootDir),
+            extractSources(pr, extracted.structure.data, rootDir),
             extractDeps(pr, extracted.structure.data),
             extractRepos(pr, extracted.structure.data)
           )
@@ -83,7 +84,7 @@ private[codegen] object GenerateSmithyBuild {
   private def extractDeps(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] = {
+  ): ListSet[String] = {
     val scalaBin = (pr / scalaBinaryVersion).get(settings)
 
     (pr / libraryDependencies)
@@ -92,31 +93,32 @@ private[codegen] object GenerateSmithyBuild {
       .flatten
       .filter(_.configurations.exists(_.contains(Smithy4s.name)))
       .flatMap(Smithy4sCodegenPlugin.moduleIdEncode(_, scalaBin))
-      .distinct
+      .to[ListSet]
   }
 
   private def extractRepos(
       pr: ProjectRef,
       settings: Settings[Scope]
-  ): Seq[String] =
+  ): ListSet[String] = {
     (pr / resolvers)
       .get(settings)
       .toList
       .flatten
       .collect(prepareResolvers)
-      .distinct
+      .to[ListSet]
+  }
 
-  private def extractImports(
+  private def extractSources(
       pr: ProjectRef,
       settings: Settings[Scope],
       rootDir: File
-  ): Seq[String] =
+  ): ListSet[String] =
     (pr / Compile / smithy4sInputDirs)
       .get(settings)
       .toList
       .flatten
       .collect(prepareInputDirs(rootDir))
-      .distinct
+      .to[ListSet]
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root

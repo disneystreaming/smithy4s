@@ -23,6 +23,10 @@ import smithy4s.schema.EnumValue
 import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.schema.Schema
+import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.EnumTag
+import org.scalacheck.Prop
+import org.scalacheck.Gen
 
 class EnumSpec extends DummyIO.Suite {
   val model = """
@@ -154,17 +158,17 @@ class EnumSpec extends DummyIO.Suite {
       ShapeId("example", "Smithy20Enum"),
       expectedValues = List(
         EnumValue(
-          stringValue = "Fire",
+          stringValue = "Ice",
           intValue = 0,
-          value = "Fire",
-          name = "FIRE",
+          value = "Ice",
+          name = "ICE",
           hints = Hints.empty
         ),
         EnumValue(
-          stringValue = "Ice",
+          stringValue = "Fire",
           intValue = 1,
-          value = "Ice",
-          name = "ICE",
+          value = "Fire",
+          name = "FIRE",
           hints = Hints.empty
         )
       )
@@ -176,17 +180,17 @@ class EnumSpec extends DummyIO.Suite {
       ShapeId("example", "MyIntEnum"),
       expectedValues = List(
         EnumValue(
-          stringValue = "FIRE",
-          intValue = 10,
-          value = 10,
-          name = "FIRE",
-          hints = Hints.empty
-        ),
-        EnumValue(
           stringValue = "ICE",
           intValue = 42,
           value = 42,
           name = "ICE",
+          hints = Hints.empty
+        ),
+        EnumValue(
+          stringValue = "FIRE",
+          intValue = 10,
+          value = 10,
+          name = "FIRE",
           hints = Hints.empty
         )
       )
@@ -230,20 +234,20 @@ class EnumSpec extends DummyIO.Suite {
       ShapeId("example", "EnumWithTraits"),
       expectedValues = List(
         EnumValue(
-          stringValue = "FIRE",
-          intValue = 0,
-          value = "FIRE",
-          name = "FIRE",
-          hints = Hints.empty
-        ),
-        EnumValue(
           stringValue = "ICE",
-          intValue = 1,
+          intValue = 0,
           value = "ICE",
           name = "ICE",
           hints = Hints(
             ShapeId("smithy.api", "deprecated") -> Document.obj()
           )
+        ),
+        EnumValue(
+          stringValue = "FIRE",
+          intValue = 1,
+          value = "FIRE",
+          name = "FIRE",
+          hints = Hints.empty
         )
       )
     )
@@ -277,6 +281,65 @@ class EnumSpec extends DummyIO.Suite {
 
       decodeEncodeCheck(schema)(Document.fromString("not a known value"))
     }
+  }
+
+  property("Enums members retain the ordering from the smithy specification") {
+    // custom input to avoid scalacheck shrinking
+    case class Input(identifiers: List[String])
+    Prop.forAll(
+      Gen
+        .nonEmptyListOf(Gen.identifier.map(_.toUpperCase()))
+        .map(_.distinct)
+        .map(Input(_))
+    ) { input =>
+      import input.identifiers
+      val stringEnumBuilder = software.amazon.smithy.model.shapes.EnumShape
+        .builder()
+        .id("input#MyStringEnum")
+
+      val intEnumBuilder = software.amazon.smithy.model.shapes.IntEnumShape
+        .builder()
+        .id("input#MyIntEnum")
+      identifiers.foreach(id => stringEnumBuilder.addMember(id, id))
+      identifiers.zipWithIndex.foreach { case (name, value) =>
+        intEnumBuilder.addMember(name, identifiers.size - value)
+      }
+      val stringEnumShape = stringEnumBuilder.build()
+      val intEnumShape = intEnumBuilder.build()
+      val unitShape = software.amazon.smithy.model.shapes.StructureShape
+        .builder()
+        .id("smithy.api#Unit")
+        .build()
+
+      val model = software.amazon.smithy.model.Model
+        .builder()
+        .addShapes(unitShape, stringEnumShape, intEnumShape)
+        .build()
+
+      val index: DynamicSchemaIndex = DynamicSchemaIndex.loadModel(model)
+      val stringEnumSchemaNames = index
+        .getSchema(ShapeId("input", "MyStringEnum"))
+        .toList
+        .flatMap(EnumNamesSchemaVisitor(_))
+
+      val intEnumSchemaNames = index
+        .getSchema(ShapeId("input", "MyIntEnum"))
+        .toList
+        .flatMap(EnumNamesSchemaVisitor(_))
+      assertEquals(stringEnumSchemaNames, identifiers)
+      assertEquals(intEnumSchemaNames, identifiers)
+    }
+  }
+
+  type ConstList[A] = List[String]
+  object EnumNamesSchemaVisitor extends SchemaVisitor.Default[ConstList] {
+    def default[A]: List[String] = List.empty
+    override def enumeration[E](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: EnumTag[E],
+        values: List[EnumValue[E]]
+    ): ConstList[E] = values.map(_.name)
   }
 
   private def decodeEncodeCheck[A](schema: Schema[A])(input: Document) = {
