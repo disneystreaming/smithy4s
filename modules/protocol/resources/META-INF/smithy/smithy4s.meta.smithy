@@ -169,7 +169,7 @@ structure noStackTrace {}
 /// to compile. espically in the case you want to compose refinement types
 /// and other validators. `providerImport` should be an import that the
 /// target shape is required to compile.
-@trait(selector: "* [trait|trait]")
+@trait(selector: "structure :not([trait|error])") // todo remove trait
 structure scalaImports {
     @required
     providerImport: Import

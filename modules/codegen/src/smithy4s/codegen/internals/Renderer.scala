@@ -209,6 +209,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
+  private def renderScalaImports(hints: List[Hint]): Lines = {
+    lines(
+      hints.collect { case Hint.ScalaImports(value) =>
+        LineSegment.Import(value).toLine
+      }
+    )
+  }
+
   /**
    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
    *
@@ -816,6 +824,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(product.hints),
       deprecationAnnotation(product.hints),
+      renderScalaImports(product.hints),
       base
     )
   }
