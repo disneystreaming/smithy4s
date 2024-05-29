@@ -49,6 +49,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create .sbtopts file
+        run: cp .sbtopts.example .sbtopts
+
       - name: Cache
         uses: coursier/cache-action@v6
         with:
@@ -115,6 +118,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create .sbtopts file
+        run: cp .sbtopts.example .sbtopts
+
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
         with:
@@ -152,6 +158,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Create .sbtopts file
+        run: cp .sbtopts.example .sbtopts
 
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
