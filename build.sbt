@@ -388,6 +388,25 @@ lazy val `aws-http4s` = projectMatrix
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
+// Seperated out to help the mill codegen plugin not require "Provided" dependencies in test
+val codegenDeps = Def.setting {
+  Seq(
+    Dependencies.Cats.core.value,
+    Dependencies.Smithy.model,
+    Dependencies.Smithy.build,
+    Dependencies.Alloy.core,
+    Dependencies.Alloy.openapi,
+    Dependencies.Smithytranslate.proto,
+    "com.lihaoyi" %% "os-lib" % "0.9.3",
+    Dependencies.Circe.core.value,
+    Dependencies.Circe.parser.value,
+    Dependencies.Circe.generic.value,
+    Dependencies.collectionsCompat.value,
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    "io.get-coursier" %% "coursier" % "2.1.9"
+  )
+}
+
 /**
  * This module contains the logic used at build time for reading smithy
  * models and rendering Scala (or openapi) code.
@@ -407,21 +426,7 @@ lazy val codegen = projectMatrix
       "alloyVersion" -> Dependencies.Alloy.alloyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
-    libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value,
-      Dependencies.Smithy.model,
-      Dependencies.Smithy.build,
-      Dependencies.Alloy.core,
-      Dependencies.Alloy.openapi,
-      Dependencies.Smithytranslate.proto,
-      "com.lihaoyi" %% "os-lib" % "0.9.3",
-      Dependencies.Circe.core.value,
-      Dependencies.Circe.parser.value,
-      Dependencies.Circe.generic.value,
-      Dependencies.collectionsCompat.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.9"
-    ),
+    libraryDependencies ++= codegenDeps.value,
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
@@ -507,7 +512,13 @@ lazy val millCodegenPlugin = projectMatrix
     name := "mill-codegen-plugin",
     crossVersion := CrossVersion
       .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
-    libraryDependencies ++= Seq(
+    libraryDependencies := codegenDeps.value ++ Seq(
+      Dependencies.Mill.main % Provided,
+      Dependencies.Mill.mainApi % Provided,
+      Dependencies.Mill.scalalib % Provided,
+      Dependencies.Mill.mainTestkit
+    ),
+    Test / libraryDependencies := codegenDeps.value ++ Seq(
       Dependencies.Mill.main,
       Dependencies.Mill.mainApi,
       Dependencies.Mill.scalalib,
