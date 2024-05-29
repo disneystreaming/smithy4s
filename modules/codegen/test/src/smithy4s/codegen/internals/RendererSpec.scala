@@ -491,6 +491,34 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     )
   }
 
+  test(
+    "generated code of a structure that is applied @scalaImports should contain imports"
+  ) {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyStruct @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |structure MyStruct {
+        | str: String
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(_.contains("import smithy4s.providers._")),
+      "generated code should contain imports"
+    )
+  }
+
   property("enumeration order is preserved") {
 
     // custom input to avoid scalacheck shrinking
