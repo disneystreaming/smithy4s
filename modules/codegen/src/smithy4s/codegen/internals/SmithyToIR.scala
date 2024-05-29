@@ -932,7 +932,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case _: GenerateOpticsTrait =>
       Hint.GenerateOptics
     case s: ScalaImportsTrait =>
-      Hint.ScalaImports(s.getProviderImport())
+      Hint.ScalaImports(s.getImports().asScala.toList)
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))

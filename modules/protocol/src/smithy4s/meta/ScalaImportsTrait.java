@@ -16,9 +16,11 @@
 
 package smithy4s.meta;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import software.amazon.smithy.model.SourceException;
 import software.amazon.smithy.model.node.Node;
-import software.amazon.smithy.model.node.ObjectNode;
+import software.amazon.smithy.model.node.ArrayNode;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.AbstractTrait;
 import software.amazon.smithy.model.traits.AbstractTraitBuilder;
@@ -31,31 +33,31 @@ public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBu
 
 	public static final ShapeId ID = ShapeId.from("smithy4s.meta#scalaImports");
 
-	private final String providerImport;
+	private final List<String> imports;
 
 	private ScalaImportsTrait(ScalaImportsTrait.Builder builder) {
 		super(ID, builder.getSourceLocation());
-		this.providerImport = builder.providerImport;
+		this.imports = builder.imports;
 
-		if (providerImport == null) {
-			throw new SourceException("An providerImport must be provided.", getSourceLocation());
+		if (this.imports == null) {
+			throw new SourceException("imports must be provided.", getSourceLocation());
 		}
 	}
 
-	public String getProviderImport() {
-		return this.providerImport;
+	public List<String> getImports() {
+		return this.imports;
 	}
 
 	@Override
 	protected Node createNode() {
-		ObjectNode.Builder builder = Node.objectNodeBuilder();
-		builder.withMember("providerImport", getProviderImport());
+		ArrayNode.Builder builder = ArrayNode.builder();
+    getImports().forEach(s -> builder.withValue(s));
 		return builder.build();
 	}
 
 	@Override
 	public SmithyBuilder<ScalaImportsTrait> toBuilder() {
-		return builder().providerImport(providerImport).sourceLocation(getSourceLocation());
+		return builder().imports(imports).sourceLocation(getSourceLocation());
 	}
 
 	/**
@@ -67,10 +69,10 @@ public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBu
 
 	public static final class Builder extends AbstractTraitBuilder<ScalaImportsTrait, ScalaImportsTrait.Builder> {
 
-		private String providerImport;
+		private List<String> imports;
 
-		public ScalaImportsTrait.Builder providerImport(String providerImport) {
-			this.providerImport = providerImport;
+		public ScalaImportsTrait.Builder imports(List<String> imports) {
+			this.imports = imports;
 			return this;
 		}
 
@@ -89,9 +91,10 @@ public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBu
 
 		@Override
 		public ScalaImportsTrait createTrait(ShapeId target, Node value) {
-			ObjectNode objectNode = value.expectObjectNode();
-			String providerImport = objectNode.getMember("providerImport").map(node -> node.expectStringNode().getValue()).orElse(null);
-			return builder().sourceLocation(value).providerImport(providerImport).build();
+			ArrayNode arrayNode = value.expectArrayNode();
+			List<String> imports = arrayNode.getElements().stream().map(node -> node.expectStringNode().getValue()).collect(Collectors.toList());
+			return builder().sourceLocation(value).imports(imports).build();
 		}
+
 	}
 }

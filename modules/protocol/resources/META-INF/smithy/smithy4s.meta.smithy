@@ -165,12 +165,10 @@ structure generateOptics {}
 structure noStackTrace {}
 
 /// Allows users to manually add imports to files of generated shapes.
-/// This would be helpful when some shape needs a specific import in order
-/// to compile. espically in the case you want to compose refinement types
-/// and other validators. `providerImport` should be an import that the
-/// target shape is required to compile.
+/// This would be helpful when some shape needs specific import(s) in order
+/// to compile. Espically in the case you want to compose refinement types
+/// and other validators.
 @trait(selector: "structure :not([trait|error])") // todo remove trait
-structure scalaImports {
-    @required
-    providerImport: Import
+list scalaImports {
+    member: Import
 }

@@ -211,8 +211,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderScalaImports(hints: List[Hint]): Lines = {
     lines(
-      hints.collect { case Hint.ScalaImports(value) =>
-        LineSegment.Import(value).toLine
+      hints.flatMap {
+        case Hint.ScalaImports(imports) =>
+          imports.map(LineSegment.Import(_).toLine)
+        case _ => Nil
       }
     )
   }
