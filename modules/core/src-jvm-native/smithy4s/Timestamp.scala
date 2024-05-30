@@ -307,8 +307,10 @@ object Timestamp extends TimestampCompanionPlatform {
       val ch1 = s.charAt(pos + 2)
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day < 1 ||
-        (day > 28 && day > maxDayForYearMonth(year, month))
+        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day < 1 || (day > 28 && day > maxDayForYearMonth(
+          year,
+          month
+        ))
       ) error()
       pos += 3
       day
@@ -332,7 +334,7 @@ object Timestamp extends TimestampCompanionPlatform {
       val ch1 = s.charAt(pos + 2)
       val minute = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || minute < 0 || minute > 60
+        ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || minute < 0 || minute > 59
       )
         error()
       pos += 3
@@ -344,7 +346,10 @@ object Timestamp extends TimestampCompanionPlatform {
         val ch0 = s.charAt(pos + 1)
         val ch1 = s.charAt(pos + 2)
         val second = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
-        if (ch0 < '0' || ch1 > '9' || second < 0 || second > 60) error()
+        if (
+          ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || second < 0 || second > 59
+        )
+          error()
         pos += 3
         second
       } else 0

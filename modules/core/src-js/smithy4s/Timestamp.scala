@@ -297,7 +297,8 @@ object Timestamp {
       val ch1 = s.charAt(pos + 1)
       val ch2 = s.charAt(pos + 2)
       val ch3 = s.charAt(pos + 3)
-      val year = ch0 * 1000 + ch1 * 100 + ch2 * 10 + ch3 - 53328 // 53328 == '0' * 1111
+      val year =
+        ch0 * 1000 + ch1 * 100 + ch2 * 10 + ch3 - 53328 // 53328 == '0' * 1111
       if (
         ch0 < '0' || ch0 > '9' || ch1 < '0' || ch1 > '9' || ch2 < '0' || ch2 > '9' || ch3 < '0' || ch3 > '9'
       ) error()
@@ -323,8 +324,10 @@ object Timestamp {
       val ch1 = s.charAt(pos + 2)
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day < 1 ||
-        (day > 28 && day > maxDayForYearMonth(year, month))
+        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day < 1 || (day > 28 && day > maxDayForYearMonth(
+          year,
+          month
+        ))
       ) error()
       pos += 3
       day
@@ -347,7 +350,9 @@ object Timestamp {
       val ch0 = s.charAt(pos + 1)
       val ch1 = s.charAt(pos + 2)
       val minute = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
-      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || minute < 0 || minute > 60)
+      if (
+        ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || minute < 0 || minute > 59
+      )
         error()
       pos += 3
       minute
@@ -358,7 +363,10 @@ object Timestamp {
         val ch0 = s.charAt(pos + 1)
         val ch1 = s.charAt(pos + 2)
         val second = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
-        if (ch0 < '0' || ch1 > '9' || second < 0 || second > 60) error()
+        if (
+          ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || second < 0 || second > 59
+        )
+          error()
         pos += 3
         second
       } else 0
