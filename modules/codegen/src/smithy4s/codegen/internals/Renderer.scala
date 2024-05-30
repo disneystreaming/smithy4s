@@ -1040,7 +1040,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       lines(
         documentationAnnotation(alt.hints),
         deprecationAnnotation(alt.hints),
-        renderScalaImports(alt.hints),
         constructor
       )
     }
@@ -1100,6 +1099,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       ).withSameLineValue(line" self =>")(

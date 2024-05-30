@@ -492,9 +492,10 @@ final class RendererSpec extends munit.ScalaCheckSuite {
   }
 
   test(
-    "generated code of a structure that is applied @scalaImports should contain imports"
+    "generated code of a shape that is applied @scalaImports should contain imports"
   ) {
-    val smithy =
+
+    val structure =
       """
         |$version: "2.0"
         |
@@ -511,12 +512,69 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         |}
         |""".stripMargin
 
-    val contents = generateScalaCode(smithy).values
+    val service =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyService @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |
+        |service MyService {
+        |  version: "1.0.0"
+        |}
+        |""".stripMargin
 
-    assert(
-      contents.exists(_.contains("import smithy4s.providers._")),
-      "generated code should contain imports"
-    )
+    val union =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyUnion @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |union MyUnion {
+        | int: Integer,
+        | str: String
+        |}
+        |""".stripMargin
+
+    val myEnum =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyEnum @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |enum MyEnum {
+        | Right = "right"
+        | Left = "left"
+        |}
+        |""".stripMargin
+
+    List(structure, service, union, myEnum).foreach { smithy =>
+      val contents = generateScalaCode(smithy).values
+
+      assert(
+        contents.exists(_.contains("import smithy4s.providers._")),
+        "generated code should contain imports"
+      )
+    }
+
   }
 
   property("enumeration order is preserved") {
