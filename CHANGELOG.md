@@ -5,7 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.20 
+# 0.18.21
+
+* Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.
+
+# 0.18.20
 
 * Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
 
