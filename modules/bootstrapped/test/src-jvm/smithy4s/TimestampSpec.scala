@@ -169,7 +169,7 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     .ofPattern("yyyyMMdd'T'HHmmssX", Locale.ENGLISH)
     .withZone(ZoneOffset.UTC)
 
-  private val conciseDateTimeWithoutSecondsFormatter = DateTimeFormatter
+  private val dateTimeWithoutSecondsFormatter = DateTimeFormatter
     .ofPattern("yyyy-MM-dd'T'HH:mmX", Locale.ENGLISH)
     .withZone(ZoneOffset.UTC)
 
@@ -193,7 +193,7 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   property("Converts from date time format without seconds") {
     forAll { (i: Instant) =>
-      val str = conciseDateTimeWithoutSecondsFormatter.format(i)
+      val str = dateTimeWithoutSecondsFormatter.format(i)
       val parsed = Timestamp.parse(str, TimestampFormat.DATE_TIME)
       val zdt = i.atZone(ZoneOffset.UTC)
       val expected = Timestamp(
