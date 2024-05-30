@@ -577,6 +577,54 @@ final class RendererSpec extends munit.ScalaCheckSuite {
 
   }
 
+  test("mix refinement and scalaImports work") {
+
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#refinement
+        |use smithy4s.meta#scalaImports
+        |
+        |@trait(selector: "integer")
+        |structure SizeFormat { }
+        |
+        |apply smithy4s#SizeFormat @refinement(
+        |  targetType: "smithy4s.types.Natural"
+        |  providerImport: "smithy4s.providers._"
+        |)
+        |
+        |@SizeFormat
+        |integer Size
+        |
+        |structure Input {
+        |
+        |@range(min: 1, max: 100)
+        |size: Size
+        |
+        |}
+        |
+        |apply smithy4s#Input @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |""".stripMargin
+
+    val allContents = generateScalaCode(smithy)
+
+    assert(
+      allContents("smithy4s.Size").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
+    assert(
+      allContents("smithy4s.Input").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
+  }
+
   property("enumeration order is preserved") {
 
     // custom input to avoid scalacheck shrinking
