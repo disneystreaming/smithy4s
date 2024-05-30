@@ -21,6 +21,9 @@ on:
     # midnight, every Monday and Thursday
     - cron: '0 0 * * 1,4'
 
+env:
+  SBT_MAX_HEAP_SIZE: 6G # Max heap size for sbt
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -49,9 +52,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create .sbtopts file
-        run: cp .sbtopts.example .sbtopts
-
       - name: Cache
         uses: coursier/cache-action@v6
         with:
@@ -66,19 +66,20 @@ jobs:
         run: |
           sbt test_$BUILD_KEY \
               pushRemoteCache_$BUILD_KEY \
-              -J-Xmx4G
+              -J-Xmx$SBT_MAX_HEAP_SIZE
 
       - name: Run plugin tests
         if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
         run: |
-          sbt scripted
+          sbt scripted -J-Xmx$SBT_MAX_HEAP_SIZE
 
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm'
         run: |
           sbt scalafmtCheckAll \
               headerCheck \
-              "docs/mdoc"
+              "docs/mdoc" \
+              -J-Xmx$SBT_MAX_HEAP_SIZE
           (cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build)
 
       - name: Check for untracked changes
@@ -89,7 +90,7 @@ jobs:
 
       - name: Check for Binary Compatibility
         if: matrix.scalaPlatform == 'jvm'
-        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
+        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY -J-Xmx$SBT_MAX_HEAP_SIZE
 
       - name: Upload compilation cache
         uses: actions/upload-artifact@v4
@@ -118,9 +119,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create .sbtopts file
-        run: cp .sbtopts.example .sbtopts
-
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
         with:
@@ -140,7 +138,7 @@ jobs:
       - name: Publish ${{ github.ref }}
         run: |
           echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
-          sbt 'pullRemoteCache; release' -J-Xmx2G
+          sbt 'pullRemoteCache; release' -J-Xmx$SBT_MAX_HEAP_SIZE
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -159,9 +157,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create .sbtopts file
-        run: cp .sbtopts.example .sbtopts
-
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
         with:
@@ -176,7 +171,7 @@ jobs:
         run: echo "SMITHY4S_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
 
       - name: Compile Documentation Markdown Files
-        run: sbt "docs/mdoc"
+        run: sbt "docs/mdoc" -J-Xmx$SBT_MAX_HEAP_SIZE
 
       - name: Build Microsite
         run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
