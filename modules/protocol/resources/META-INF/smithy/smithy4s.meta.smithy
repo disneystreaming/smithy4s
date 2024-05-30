@@ -168,7 +168,7 @@ structure noStackTrace {}
 /// This would be helpful when some shape needs specific import(s) in order
 /// to compile. Espically in the case you want to compose refinement types
 /// and other validators.
-@trait(selector: "structure :not([trait|error])") // todo remove trait
+@trait
 list scalaImports {
     member: Import
 }
