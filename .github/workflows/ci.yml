@@ -22,7 +22,7 @@ on:
     - cron: '0 0 * * 1,4'
 
 env:
-  SBT_MAX_HEAP_SIZE: 6G # Max heap size for sbt
+  SBT_OPTS: "-XX:MaxMetaspaceSize=4G -XX:MaxInlineLevel=20 -Xss2m -Xms512M -Xmx6G -XX:ReservedCodeCacheSize=256M"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -65,21 +65,19 @@ jobs:
       - name: Run tests
         run: |
           sbt test_$BUILD_KEY \
-              pushRemoteCache_$BUILD_KEY \
-              -J-Xmx$SBT_MAX_HEAP_SIZE
+              pushRemoteCache_$BUILD_KEY
 
       - name: Run plugin tests
         if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
         run: |
-          sbt scripted -J-Xmx$SBT_MAX_HEAP_SIZE
+          sbt scripted
 
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm'
         run: |
           sbt scalafmtCheckAll \
               headerCheck \
-              "docs/mdoc" \
-              -J-Xmx$SBT_MAX_HEAP_SIZE
+              "docs/mdoc"
           (cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build)
 
       - name: Check for untracked changes
@@ -90,7 +88,7 @@ jobs:
 
       - name: Check for Binary Compatibility
         if: matrix.scalaPlatform == 'jvm'
-        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY -J-Xmx$SBT_MAX_HEAP_SIZE
+        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
       - name: Upload compilation cache
         uses: actions/upload-artifact@v4
@@ -138,7 +136,7 @@ jobs:
       - name: Publish ${{ github.ref }}
         run: |
           echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
-          sbt 'pullRemoteCache; release' -J-Xmx$SBT_MAX_HEAP_SIZE
+          sbt 'pullRemoteCache; release'
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -171,7 +169,7 @@ jobs:
         run: echo "SMITHY4S_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
 
       - name: Compile Documentation Markdown Files
-        run: sbt "docs/mdoc" -J-Xmx$SBT_MAX_HEAP_SIZE
+        run: sbt "docs/mdoc"
 
       - name: Build Microsite
         run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
