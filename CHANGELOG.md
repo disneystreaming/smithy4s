@@ -5,7 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.20 
+# 0.18.21
+
+* Addition of an new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
+
+# 0.18.20
 
 * Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
 
