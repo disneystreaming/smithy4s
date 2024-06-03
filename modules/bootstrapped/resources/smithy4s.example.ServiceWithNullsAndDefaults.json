@@ -7,12 +7,12 @@
     "paths": {
         "/operation/{requiredLabel}": {
             "post": {
-                "operationId": "Operation",
+                "operationId": "DefaultNullsOperation",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OperationRequestContent"
+                                "$ref": "#/components/schemas/DefaultNullsOperationRequestContent"
                             }
                         }
                     },
@@ -78,7 +78,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Operation 200 response",
+                        "description": "DefaultNullsOperation 200 response",
                         "headers": {
                             "optional-header": {
                                 "schema": {
@@ -102,10 +102,30 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/OperationResponseContent"
+                                    "$ref": "#/components/schemas/DefaultNullsOperationResponseContent"
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/timestamp-operation": {
+            "post": {
+                "operationId": "TimestampOperation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TimestampOperationRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "TimestampOperation 200 response"
                     }
                 }
             }
@@ -113,7 +133,7 @@
     },
     "components": {
         "schemas": {
-            "OperationRequestContent": {
+            "DefaultNullsOperationRequestContent": {
                 "type": "object",
                 "properties": {
                     "optional": {
@@ -132,7 +152,7 @@
                     "requiredWithDefault"
                 ]
             },
-            "OperationResponseContent": {
+            "DefaultNullsOperationResponseContent": {
                 "type": "object",
                 "properties": {
                     "optional": {
@@ -149,6 +169,30 @@
                 },
                 "required": [
                     "requiredWithDefault"
+                ]
+            },
+            "TimestampOperationRequestContent": {
+                "type": "object",
+                "properties": {
+                    "httpDate": {
+                        "type": "string",
+                        "default": "Thu, 23 May 2024 10:20:30 GMT",
+                        "format": "date-time"
+                    },
+                    "epochSeconds": {
+                        "type": "number",
+                        "default": 1716459630
+                    },
+                    "dateTime": {
+                        "type": "string",
+                        "default": "2024-05-23T10:20:30.000Z",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "dateTime",
+                    "epochSeconds",
+                    "httpDate"
                 ]
             }
         }

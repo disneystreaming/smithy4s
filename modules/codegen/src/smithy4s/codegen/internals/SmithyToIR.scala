@@ -44,6 +44,11 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.util.Locale
+import java.time.temporal.ChronoField
+import java.time.format.DateTimeFormatterBuilder
 
 private[codegen] object SmithyToIR {
 
@@ -862,7 +867,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
         nodeAndType.tpe match {
           case _: Type.ExternalType => None
-          case _                    => Some(unfoldNodeAndType(nodeAndType))
+          case _ =>
+            Some(
+              unfoldNodeAndType(
+                nodeAndType,
+                shape.getAllTraits().asScala.values.toList
+              )
+            )
         }
       }
       val node = tr.toNode()
@@ -1225,15 +1236,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldNode(node: Node, shapeId: ShapeId): Fix[TypedNode] = {
     val nodeAndType = NodeAndType(node, shapeId.tpe.get)
-    recursion.ana(unfoldNodeAndType)(nodeAndType)
+    recursion.ana(unfoldNodeAndType(_, Nil))(nodeAndType)
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
     Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
-  private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
-    (layer.node, layer.tpe) match {
+  private def unfoldNodeAndType(
+      layer: NodeAndType,
+      hints: List[Trait]
+  ): TypedNode[NodeAndType] = {
+    val result = (layer.node, layer.tpe) match {
       // Struct
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
@@ -1334,7 +1348,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
-        unfoldNodeAndTypeP(node, p)
+        unfoldNodeAndTypeP(node, p, hints)
       case (node, Type.Collection(collectionType, _, _))
           if node == Node.nullNode =>
         TypedNode.CollectionTN(collectionType, List.empty)
@@ -1356,6 +1370,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         )
       case (node, tpe) => throw UnhandledTraitBinding(node, tpe)
     }
+    result
+  }
 
   private object IdRefCase {
     def unapply(tpe: Type): Boolean = tpe match {
@@ -1374,61 +1390,89 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldNodeAndTypeP(
       node: Node,
-      p: Primitive
-  ): TypedNode[NodeAndType] = (node, p) match {
-    // String
-    case (N.StringNode(str), Primitive.String) =>
-      TypedNode.PrimitiveTN(Primitive.String, str)
-    // Numeric
-    case (N.NumberNode(num), Primitive.Int) =>
-      TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
-    case (N.NumberNode(num), Primitive.Long) =>
-      TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
-    case (N.NumberNode(num), Primitive.Double) =>
-      TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
-    case (N.NumberNode(num), Primitive.Float) =>
-      TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
-    case (N.NumberNode(num), Primitive.Short) =>
-      TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
-    case (N.NumberNode(num), Primitive.BigDecimal) =>
-      TypedNode.PrimitiveTN(Primitive.BigDecimal, BigDecimal(num.doubleValue()))
-    case (N.NumberNode(num), Primitive.BigInteger) =>
-      TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
-    // Boolean
-    case (N.BooleanNode(bool), Primitive.Bool) =>
-      TypedNode.PrimitiveTN(Primitive.Bool, bool)
-    case (node, Primitive.Document) =>
-      TypedNode.PrimitiveTN(Primitive.Document, node)
-    case (node, Primitive.String) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.String, "")
-    case (node, Primitive.Int) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Int, 0)
-    case (node, Primitive.Long) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Long, 0L)
-    case (node, Primitive.Double) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Double, 0.0)
-    case (node, Primitive.Float) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
-    case (node, Primitive.Short) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
-    case (node, Primitive.Byte) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
-    case (node, Primitive.Blob) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
-    case (node, Primitive.Bool) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Bool, false)
-    case (node, Primitive.Timestamp) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(
-        Primitive.Timestamp,
-        java.time.Instant.ofEpochSecond(0)
+      p: Primitive,
+      traits: List[Trait]
+  ): TypedNode[NodeAndType] = {
+    def notSupported(nodeAndPrimitive: (Node, Primitive)) =
+      throw new NotImplementedError(
+        s"Unsupported case: $nodeAndPrimitive"
       )
-    case (_, Primitive.Unit) =>
-      TypedNode.PrimitiveTN(
-        Primitive.Unit,
-        ()
-      )
-    case other =>
-      throw new NotImplementedError(s"Unsupported case: $other")
+    (node, p) match {
+      // String
+      case (N.StringNode(str), Primitive.String) =>
+        TypedNode.PrimitiveTN(Primitive.String, str)
+      // Numeric
+      case (N.NumberNode(num), Primitive.Int) =>
+        TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
+      case (N.NumberNode(num), Primitive.Long) =>
+        TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
+      case (N.NumberNode(num), Primitive.Double) =>
+        TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
+      case (N.NumberNode(num), Primitive.Float) =>
+        TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
+      case (N.NumberNode(num), Primitive.Short) =>
+        TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
+      case (N.NumberNode(num), Primitive.BigDecimal) =>
+        TypedNode.PrimitiveTN(
+          Primitive.BigDecimal,
+          BigDecimal(num.doubleValue())
+        )
+      case (N.NumberNode(num), Primitive.BigInteger) =>
+        TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
+      // Boolean
+      case (N.BooleanNode(bool), Primitive.Bool) =>
+        TypedNode.PrimitiveTN(Primitive.Bool, bool)
+      case (node, Primitive.Document) =>
+        TypedNode.PrimitiveTN(Primitive.Document, node)
+      case (node, Primitive.String) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.String, "")
+      case (node, Primitive.Int) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Int, 0)
+      case (node, Primitive.Long) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Long, 0L)
+      case (node, Primitive.Double) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+      case (node, Primitive.Float) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+      case (node, Primitive.Short) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+      case (node, Primitive.Byte) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+      case (node, Primitive.Blob) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
+      case (node, Primitive.Bool) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Bool, false)
+      case timestamp @ (node, Primitive.Timestamp) =>
+        val format = traits
+          .collectFirst { case t: TimestampFormatTrait =>
+            t.getFormat()
+          }
+          .getOrElse(TimestampFormatTrait.Format.DATE_TIME)
+        val value = (node, format) match {
+          case (N.StringNode(str), TimestampFormatTrait.Format.DATE_TIME) =>
+            Instant.parse(str)
+          case (N.StringNode(str), TimestampFormatTrait.Format.HTTP_DATE) =>
+            val zonedDateTime = ZonedDateTime.parse(str, httpDateFormatter);
+            zonedDateTime.toInstant()
+          case (N.NumberNode(num), TimestampFormatTrait.Format.EPOCH_SECONDS) =>
+            Instant.ofEpochSecond(num.longValue)
+          case _ if node == Node.nullNode => java.time.Instant.ofEpochSecond(0)
+          case _                          => notSupported(timestamp)
+        }
+        TypedNode.PrimitiveTN(Primitive.Timestamp, value)
+      case (_, Primitive.Unit) =>
+        TypedNode.PrimitiveTN(
+          Primitive.Unit,
+          ()
+        )
+      case other =>
+        notSupported(other)
+    }
   }
+
+  private val httpDateFormatter = new DateTimeFormatterBuilder()
+    .appendPattern("EEE, dd MMM yyyy HH:mm:ss z")
+    .parseDefaulting(ChronoField.OFFSET_SECONDS, 0)
+    .toFormatter(Locale.ENGLISH);
 
 }

@@ -1575,7 +1575,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
+        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {
