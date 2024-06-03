@@ -357,6 +357,7 @@ private[internals] object Hint {
       extends Hint
   case object GenerateServiceProduct extends Hint
   case object GenerateOptics extends Hint
+  case class ScalaImports(imports: List[String]) extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

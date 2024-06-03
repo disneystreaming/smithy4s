@@ -163,3 +163,12 @@ structure generateOptics {}
 ///  via extending scala.util.control.NoStackTrace instead of Throwable.
 @trait(selector: "structure :is([trait|error])")
 structure noStackTrace {}
+
+/// Allows users to manually add imports to files of generated shapes.
+/// This would be helpful when some shape needs specific import(s) in order
+/// to compile. Espically in the case you want to compose refinement types
+/// and other validators.
+@trait
+list scalaImports {
+    member: Import
+}
