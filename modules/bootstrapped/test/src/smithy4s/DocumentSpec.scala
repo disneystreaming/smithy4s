@@ -587,14 +587,20 @@ class DocumentSpec() extends FunSuite {
     val result = Document.Decoder
       .fromSchema(TimestampOperationInput.schema)
       .decode(doc)
+    val defaultTimestamp = Timestamp(
+      year = 2024,
+      month = 5,
+      day = 23,
+      hour = 10,
+      minute = 20,
+      second = 30
+    )
     expect.same(
       Right(
         TimestampOperationInput(
-          dateTime =
-            Timestamp.fromInstant(Instant.parse("2024-05-23T10:20:30Z")),
-          httpDate =
-            Timestamp.fromInstant(Instant.parse("2024-05-23T10:20:30Z")),
-          epochSeconds = Timestamp.fromEpochSecond(1716459630L)
+          dateTime = defaultTimestamp,
+          httpDate = defaultTimestamp,
+          epochSeconds = defaultTimestamp
         )
       ),
       result
