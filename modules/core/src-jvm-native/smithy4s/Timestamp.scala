@@ -337,7 +337,7 @@ object Timestamp extends TimestampCompanionPlatform {
         val ch1 = s.charAt(pos + 2)
         if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
         pos += 3
-        ch0 * 10 + ch1 - 528 // 528 == '0' * 11        
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       } else 0
     }
     var epochSecond = toEpochDay(
