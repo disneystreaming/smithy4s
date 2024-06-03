@@ -414,7 +414,7 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       Dependencies.Smithytranslate.proto,
-      "com.lihaoyi" %% "os-lib" % "0.9.3",
+      "com.lihaoyi" %% "os-lib" % "0.10.1",
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
