@@ -24,7 +24,6 @@ import munit._
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
-import java.time.Instant
 
 class DocumentSpec() extends FunSuite {
 
