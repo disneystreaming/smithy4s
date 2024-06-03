@@ -273,85 +273,71 @@ object Timestamp extends TimestampCompanionPlatform {
 
   private[this] def parseDateTime(s: String): Timestamp = {
     val len = s.length
+    if (len < 16) error()
     var pos = 0
     val year = {
-      if (pos + 4 > len) error()
       val ch0 = s.charAt(pos)
       val ch1 = s.charAt(pos + 1)
       val ch2 = s.charAt(pos + 2)
       val ch3 = s.charAt(pos + 3)
-      val year =
-        ch0 * 1000 + ch1 * 100 + ch2 * 10 + ch3 - 53328 // 53328 == '0' * 1111
+      val ch4 = s.charAt(pos + 4)
       if (
         ch0 < '0' || ch0 > '9' || ch1 < '0' || ch1 > '9' || ch2 < '0' || ch2 > '9' || ch3 < '0' || ch3 > '9'
+        || ch4 != '-'
       ) error()
-      pos += 4
-      year
+      pos += 5
+      ch0 * 1000 + ch1 * 100 + ch2 * 10 + ch3 - 53328 // 53328 == '0' * 1111
     }
     val month = {
-      val separator = s.charAt(pos)
-      if (separator != '-' || pos + 3 > len) error()
-      val ch0 = s.charAt(pos + 1)
-      val ch1 = s.charAt(pos + 2)
+      val ch0 = s.charAt(pos)
+      val ch1 = s.charAt(pos + 1)
+      val ch2 = s.charAt(pos + 2)
       val month = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '1' || ch1 < '0' || ch1 > '9' || month < 1 || month > 12
+        ch0 < '0' || ch0 > '1' || ch1 < '0' || ch1 > '9' || month < 1 || month > 12 || ch2 != '-'
       ) error()
       pos += 3
       month
     }
     val day = {
-      val separator = s.charAt(pos)
-      if (separator != '-' || pos + 3 > len) error()
-      val ch0 = s.charAt(pos + 1)
-      val ch1 = s.charAt(pos + 2)
+      val ch0 = s.charAt(pos)
+      val ch1 = s.charAt(pos + 1)
+      val ch2 = s.charAt(pos + 2)
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day < 1 || (day > 28 && day > maxDayForYearMonth(
-          year,
-          month
-        ))
+        ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day == 0 ||
+        (day > 28 && day > maxDayForYearMonth(year, month)) || ch2 != 'T'
       ) error()
       pos += 3
       day
     }
     val hour = {
-      val separator = s.charAt(pos)
-      if (separator != 'T' || pos + 3 > len) error()
-      val ch0 = s.charAt(pos + 1)
-      val ch1 = s.charAt(pos + 2)
+      val ch0 = s.charAt(pos)
+      val ch1 = s.charAt(pos + 1)
+      val ch2 = s.charAt(pos + 2)
       val hour = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
-        ch0 < '0' || ch0 > '2' || ch1 < '0' || ch1 > '9' || hour < 0 || hour > 23
+        ch0 < '0' || ch0 > '2' || ch1 < '0' || ch1 > '9' || hour > 23 || ch2 != ':'
       ) error()
       pos += 3
       hour
     }
     val minute = {
-      val separator = s.charAt(pos)
-      if (separator != ':' || pos + 3 > len) error()
-      val ch0 = s.charAt(pos + 1)
-      val ch1 = s.charAt(pos + 2)
-      val minute = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
-      if (
-        ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || minute < 0 || minute > 59
-      )
+      val ch0 = s.charAt(pos)
+      val ch1 = s.charAt(pos + 1)
+      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9')
         error()
-      pos += 3
-      minute
+      pos += 2
+      ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     }
     val second = {
       val separator = s.charAt(pos)
-      if (separator == ':' && pos + 3 < len) {
+      if (separator == ':') {
         val ch0 = s.charAt(pos + 1)
         val ch1 = s.charAt(pos + 2)
-        val second = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
-        if (
-          ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || second < 0 || second > 59
-        )
-          error()
+        if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
         pos += 3
-        second
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11        
       } else 0
     }
     var epochSecond = toEpochDay(
