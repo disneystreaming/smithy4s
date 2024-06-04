@@ -184,6 +184,28 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
+  property("Converts from date time format without seconds") {
+    forAll { (i: Date) =>
+      val year = i.getUTCFullYear().toInt
+      val month = i.getUTCMonth().toInt + 1 // in js month is 0-11
+      val date = i.getUTCDate().toInt
+      val hours = i.getUTCHours().toInt
+      val minutes = i.getUTCMinutes().toInt
+      val str = f"$year%04d-$month%02d-$date%02dT$hours%02d:$minutes%02dZ"
+      val parsed = Timestamp.parse(str, TimestampFormat.DATE_TIME)
+      val expected = Timestamp(
+        year = year,
+        month = month,
+        day = date,
+        hour = hours,
+        minute = minutes,
+        second = 0,
+        nano = 0
+      )
+      expect.same(parsed, Some(expected))
+    }
+  }
+
   property("Convert to/from epoch milliseconds") {
     forAll { (d: Date) =>
       val epochMilli = d.valueOf().toLong

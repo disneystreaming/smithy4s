@@ -16,9 +16,10 @@
 
 package smithy4s.codegen.internals
 import munit._
-import software.amazon.smithy.model.shapes.ShapeId
-import java.util.stream.Collectors
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.ShapeId
+
+import java.util.stream.Collectors
 import scala.jdk.CollectionConverters._
 
 class ModelLoaderSpec extends FunSuite {

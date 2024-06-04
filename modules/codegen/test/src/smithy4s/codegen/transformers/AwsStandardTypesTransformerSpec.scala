@@ -19,7 +19,8 @@ package smithy4s.codegen.transformers
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
-import software.amazon.smithy.model.shapes.{ModelSerializer, ShapeId}
+import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model.shapes.ShapeId
 
 final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 

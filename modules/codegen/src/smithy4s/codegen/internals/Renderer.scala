@@ -209,6 +209,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
+  private def renderScalaImports(hints: List[Hint]): Lines = {
+    lines(
+      hints.flatMap {
+        case Hint.ScalaImports(imports) =>
+          imports.map(LineSegment.Import(_).toLine)
+        case _ => Nil
+      }
+    )
+  }
+
   /**
    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
    *
@@ -260,14 +270,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderPackageContents: Lines = {
-    val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(_, name, _, _, _, hints) =>
+    val typeAliases = compilationUnit.declarations
+      .collect { case TypeAlias(_, name, _, _, _, hints) =>
+        (name, hints)
+      }
+      .sortBy(_._1)
+      .map { case (name, hints) =>
         lines(
           documentationAnnotation(hints),
           deprecationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
-    }
+      }
 
     val blk =
       block(
@@ -320,6 +334,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
@@ -812,6 +827,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(product.hints),
       deprecationAnnotation(product.hints),
+      renderScalaImports(product.hints),
       base
     )
   }
@@ -1083,6 +1099,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       ).withSameLineValue(line" self =>")(
@@ -1242,6 +1259,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
@@ -1313,6 +1331,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),

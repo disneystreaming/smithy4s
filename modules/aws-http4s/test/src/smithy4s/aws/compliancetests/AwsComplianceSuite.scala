@@ -50,15 +50,12 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
       "QueryIdempotencyTokenAutoFill",
 
       // TODO https://github.com/disneystreaming/smithy4s/issues/1424
-      "AwsJson10DeserializeIgnoreType",
       "AwsJson10ClientPopulatesDefaultValuesInInput",
       "AwsJson10ClientPopulatesDefaultsValuesWhenMissingInResponse",
       "AwsJson10ClientPopulatesNestedDefaultValuesWhenMissing",
       "AwsJson10ClientPopulatesNestedDefaultsWhenMissingInResponseBody",
       "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
-      "AwsJson11DeserializeIgnoreType",
       "RestJsonHttpPayloadWithUnsetUnion",
-      "RestJsonDeserializeIgnoreType",
       "RestXmlHttpPayloadWithUnsetUnion"
     )
     (complianceTest: ComplianceTest[IO]) =>

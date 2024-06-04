@@ -18,8 +18,8 @@ package smithy4s.codegen.internals
 
 import org.scalacheck.Gen
 import org.scalacheck.Prop
-import software.amazon.smithy.model.shapes.EnumShape
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.EnumShape
 import software.amazon.smithy.model.shapes.StructureShape
 
 final class RendererSpec extends munit.ScalaCheckSuite {
@@ -489,6 +489,140 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         )
       )
     )
+  }
+
+  test(
+    "generated code of a shape that is applied @scalaImports should contain imports"
+  ) {
+
+    val structure =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyStruct @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |structure MyStruct {
+        | str: String
+        |}
+        |""".stripMargin
+
+    val service =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyService @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |
+        |service MyService {
+        |  version: "1.0.0"
+        |}
+        |""".stripMargin
+
+    val union =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyUnion @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |union MyUnion {
+        | int: Integer,
+        | str: String
+        |}
+        |""".stripMargin
+
+    val myEnum =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyEnum @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |enum MyEnum {
+        | Right = "right"
+        | Left = "left"
+        |}
+        |""".stripMargin
+
+    List(structure, service, union, myEnum).foreach { smithy =>
+      val contents = generateScalaCode(smithy).values
+
+      assert(
+        contents.exists(_.contains("import smithy4s.providers._")),
+        "generated code should contain imports"
+      )
+    }
+
+  }
+
+  test("mix refinement and scalaImports work") {
+
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#refinement
+        |use smithy4s.meta#scalaImports
+        |
+        |@trait(selector: "integer")
+        |structure SizeFormat { }
+        |
+        |apply smithy4s#SizeFormat @refinement(
+        |  targetType: "smithy4s.types.Natural"
+        |  providerImport: "smithy4s.providers._"
+        |)
+        |
+        |@SizeFormat
+        |integer Size
+        |
+        |structure Input {
+        |
+        |@range(min: 1, max: 100)
+        |size: Size
+        |
+        |}
+        |
+        |apply smithy4s#Input @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |""".stripMargin
+
+    val allContents = generateScalaCode(smithy)
+
+    assert(
+      allContents("smithy4s.Size").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
+    assert(
+      allContents("smithy4s.Input").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
   }
 
   property("enumeration order is preserved") {

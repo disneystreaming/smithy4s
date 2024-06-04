@@ -273,7 +273,7 @@ object Timestamp extends TimestampCompanionPlatform {
 
   private[this] def parseDateTime(s: String): Timestamp = {
     val len = s.length
-    if (len < 19) error()
+    if (len < 16) error()
     var pos = 0
     val year = {
       val ch0 = s.charAt(pos)
@@ -325,18 +325,20 @@ object Timestamp extends TimestampCompanionPlatform {
     val minute = {
       val ch0 = s.charAt(pos)
       val ch1 = s.charAt(pos + 1)
-      val ch2 = s.charAt(pos + 2)
-      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || ch2 != ':')
+      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9')
         error()
-      pos += 3
+      pos += 2
       ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     }
     val second = {
-      val ch0 = s.charAt(pos)
-      val ch1 = s.charAt(pos + 1)
-      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
-      pos += 2
-      ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      val separator = s.charAt(pos)
+      if (separator == ':') {
+        val ch0 = s.charAt(pos + 1)
+        val ch1 = s.charAt(pos + 2)
+        if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+        pos += 3
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      } else 0
     }
     var epochSecond = toEpochDay(
       year,

@@ -39,6 +39,14 @@ private[json] case class JsonPayloadCodecCompilerImpl(
       jsoniterCodecCompiler: JsoniterCodecCompiler
   ): JsonPayloadCodecCompiler =
     copy(jsoniterCodecCompiler = jsoniterCodecCompiler)
+
+  def configureJsoniterCodecCompiler(
+      jsoniterCodecCompiler: JsoniterCodecCompiler => JsoniterCodecCompiler
+  ): JsonPayloadCodecCompiler =
+    copy(jsoniterCodecCompiler =
+      jsoniterCodecCompiler(this.jsoniterCodecCompiler)
+    )
+
   def withJsoniterReaderConfig(
       jsoniterReaderConfig: JsoniterReaderConfig
   ): JsonPayloadCodecCompiler =

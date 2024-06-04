@@ -1,3 +1,7 @@
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.MissingClassProblem
+import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
+import com.typesafe.tools.mima.core.IncompatibleMethTypeProblem
 import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
@@ -7,7 +11,7 @@ import java.io.File
 import sys.process._
 
 ThisBuild / commands ++= createBuildCommands(allModules)
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
@@ -214,7 +218,43 @@ lazy val core = projectMatrix
         .map(f => (f, f.relativeTo(base)))
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    }
+    },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    ),
+    mimaBinaryIssueFilters ++= Seq(
+      // Incompatible change from smithy 1.46.0
+      // Introduced in https://github.com/smithy-lang/smithy/pull/2156
+      // Discussed in https://github.com/smithy-lang/smithy/issues/2243
+      // Brought to smithy4s in https://github.com/disneystreaming/smithy4s/pull/1485
+      ProblemFilters.exclude[MissingClassProblem](
+        "smithy.api.TraitChangeSeverity*"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.apply"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.<init>$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.this"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.severity"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.copy"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.copy$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule._2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.apply$default$2"
+      )
+    )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -374,7 +414,7 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       Dependencies.Smithytranslate.proto,
-      "com.lihaoyi" %% "os-lib" % "0.9.3",
+      "com.lihaoyi" %% "os-lib" % "0.10.1",
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
@@ -664,8 +704,8 @@ lazy val protobuf = projectMatrix
     libraryDependencies ++= {
       if (virtualAxes.value.contains(VirtualAxis.jvm))
         Seq(
-          "com.google.protobuf" % "protobuf-java" % "3.24.0",
-          "com.google.protobuf" % "protobuf-java-util" % "3.24.0" % Test
+          "com.google.protobuf" % "protobuf-java" % "3.24.4",
+          "com.google.protobuf" % "protobuf-java-util" % "3.24.4" % Test
         )
       else
         Seq(

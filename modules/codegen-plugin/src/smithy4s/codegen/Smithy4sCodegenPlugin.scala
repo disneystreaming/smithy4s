@@ -188,7 +188,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / sourceManaged).value / "smithy"
     ),
     config / unmanagedSourceDirectories ++= (config / smithy4sInputDirs).value,
-    config / smithy4sOutputDir := (config / sourceManaged).value / "scala",
+    config / smithy4sOutputDir := (config / sourceManaged).value / "smithy4s",
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
@@ -415,7 +415,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
     val localJars =
-      (conf / smithy4sAllDependenciesAsJars).value.map(os.Path(_)).toList
+      (conf / smithy4sAllDependenciesAsJars).value.toList.sorted
+        .map(p => os.Path(p))
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
@@ -425,12 +426,17 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)
+
     val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
+
+    val specs = filePaths.sorted.map(p => os.Path(p)).toList
+
     val smithyBuildValue = (conf / smithyBuild).value.map(os.Path(_))
+
     val codegenArgs = CodegenArgs(
-      filePaths.map(os.Path(_)).toList,
+      specs,
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
@@ -453,11 +459,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
             s.cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
+              s.log.debug("Regenerating managed sources")
               val resPaths = smithy4s.codegen.Codegen
                 .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {
+              s.log.debug("Using cached version of outputs")
               outputs.getOrElse(Seq.empty)
             }
           }

@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.45.0"
+    val smithyVersion = "1.49.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -40,7 +40,7 @@ object Dependencies {
 
   val Smithytranslate = new {
     val org = "com.disneystreaming.smithy"
-    val smithyTranslateVersion = "0.5.2"
+    val smithyTranslateVersion = "0.5.3"
     val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 
@@ -80,7 +80,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.10.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.0")
   }
 
   object Mill {
@@ -159,7 +159,7 @@ object Dependencies {
   object Webjars {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.11.8"
 
-    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.50"
+    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.52"
   }
 
   object AwsSpecSummary {
