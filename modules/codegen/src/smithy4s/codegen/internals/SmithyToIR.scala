@@ -50,6 +50,7 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
+import scala.util.Try
 
 private[codegen] object SmithyToIR {
 
@@ -868,13 +869,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
         nodeAndType.tpe match {
           case _: Type.ExternalType => None
-          case _ =>
-            Some(
-              unfoldNodeAndType(
-                nodeAndType,
-                shape.getAllTraits().asScala.values.toList
-              )
-            )
+          case _                    => Some(unfoldNodeAndType(nodeAndType))
         }
       }
       val node = tr.toNode()
@@ -1239,17 +1234,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldNode(node: Node, shapeId: ShapeId): Fix[TypedNode] = {
     val nodeAndType = NodeAndType(node, shapeId.tpe.get)
-    recursion.ana(unfoldNodeAndType(_, Nil))(nodeAndType)
+    recursion.ana(unfoldNodeAndType)(nodeAndType)
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
     Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
-  private def unfoldNodeAndType(
-      layer: NodeAndType,
-      hints: List[Trait]
-  ): TypedNode[NodeAndType] = {
+  private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] = {
     val result = (layer.node, layer.tpe) match {
       // Struct
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
@@ -1351,7 +1343,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
-        unfoldNodeAndTypeP(node, p, hints)
+        unfoldNodeAndTypeP(node, p)
       case (node, Type.Collection(collectionType, _, _))
           if node == Node.nullNode =>
         TypedNode.CollectionTN(collectionType, List.empty)
@@ -1393,8 +1385,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldNodeAndTypeP(
       node: Node,
-      p: Primitive,
-      traits: List[Trait]
+      p: Primitive
   ): TypedNode[NodeAndType] = {
     def notSupported(nodeAndPrimitive: (Node, Primitive)) =
       throw new NotImplementedError(
@@ -1446,18 +1437,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case (node, Primitive.Bool) if node == Node.nullNode =>
         TypedNode.PrimitiveTN(Primitive.Bool, false)
       case timestamp @ (node, Primitive.Timestamp) =>
-        val format = traits
-          .collectFirst { case t: TimestampFormatTrait =>
-            t.getFormat()
-          }
-          .getOrElse(TimestampFormatTrait.Format.DATE_TIME)
-        val value = (node, format) match {
-          case (N.StringNode(str), TimestampFormatTrait.Format.DATE_TIME) =>
-            Instant.parse(str)
-          case (N.StringNode(str), TimestampFormatTrait.Format.HTTP_DATE) =>
-            val zonedDateTime = ZonedDateTime.parse(str, httpDateFormatter);
-            zonedDateTime.toInstant()
-          case (N.NumberNode(num), TimestampFormatTrait.Format.EPOCH_SECONDS) =>
+        val value = node match {
+          case N.StringNode(str) =>
+            Try(Instant.parse(str))
+              .orElse(
+                Try(ZonedDateTime.parse(str, httpDateFormatter).toInstant())
+              )
+              .toOption
+              .getOrElse(notSupported(timestamp))
+          case N.NumberNode(num) =>
             Instant.ofEpochSecond(num.longValue)
           case _ if node == Node.nullNode => java.time.Instant.ofEpochSecond(0)
           case _                          => notSupported(timestamp)
