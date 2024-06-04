@@ -5,10 +5,12 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.22
+* Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
+
 # 0.18.21
 
 * Addition of an new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
-* Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
 
 # 0.18.20
 
