@@ -16,7 +16,7 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = map (pkgName: pkgs.${pkgName}) shellPackages;
-          nativeBuildInputs = [ pkgs.openssl pkgs.zlib ];
+          nativeBuildInputs = [ pkgs.openssl pkgs.zlib pkgs.protobuf3_21];
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
@@ -25,6 +25,7 @@
 
           shellHook = ''
             echo "$welcomeMessage"
+            export PROTOC_PATH=${pkgs.protobuf3_21}/bin/protoc
           '';
         };
       }
