@@ -1241,8 +1241,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
-  private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] = {
-    val result = (layer.node, layer.tpe) match {
+  private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
+    (layer.node, layer.tpe) match {
       // Struct
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
@@ -1365,8 +1365,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         )
       case (node, tpe) => throw UnhandledTraitBinding(node, tpe)
     }
-    result
-  }
 
   private object IdRefCase {
     def unapply(tpe: Type): Boolean = tpe match {
