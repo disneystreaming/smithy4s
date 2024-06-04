@@ -36,10 +36,10 @@ object HttpMediaType extends Newtype[String] {
 
     override def default[A]: Option[String] = None
 
-    private def stringMediaType(hints: Hints): Option[String] =
+    private def stringMediaType(hints: Hints): String =
       hints.get(smithy.api.MediaType) match {
-        case Some(mediaType) => Some(mediaType.value)
-        case None            => None
+        case Some(mediaType) => mediaType.value
+        case None            => "text/plain"
       }
 
     override def primitive[P](
@@ -48,7 +48,7 @@ object HttpMediaType extends Newtype[String] {
         tag: Primitive[P]
     ): Option[String] = tag match {
       case Primitive.PString =>
-        stringMediaType(hints)
+        Some(stringMediaType(hints))
 
       case Primitive.PBlob =>
         Some {
@@ -67,7 +67,7 @@ object HttpMediaType extends Newtype[String] {
         tag: EnumTag[E],
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
-    ): Option[String] = stringMediaType(hints)
+    ): Option[String] = Some(stringMediaType(hints))
 
     override def biject[A, B](
         schema: Schema[A],
