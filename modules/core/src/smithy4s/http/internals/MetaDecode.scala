@@ -73,26 +73,29 @@ private[http] sealed abstract class MetaDecode[+A] {
         }
       case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
-          putField(f(values.iterator))
+          putField(f(values.map(Some(_)).iterator))
         }
       case (QueryBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(f(values.head.get)) //FIXME: denisrosca
+            values.head match {
+              case Some(value) => putField(f(value))
+              case None        => throw MetadataError.NotFound(fieldName, binding)
+            }
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(f(values.iterator.map(_.get))) //FIXME: denisrosca
+          putField(f(values.iterator))
         }
       // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
       // when targeting Map[String,String] we take the first value encountered
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
-          val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
+          val iter: Iterator[(FieldName, Option[FieldName])] = metadata.query.iterator
             .map { case (k, values) =>
               if (values.nonEmpty) {
-                k -> values.head.get //FIXME: denisrosca
+                k -> values.head
               } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
           if (iter.nonEmpty) putField(f(iter))
@@ -102,7 +105,7 @@ private[http] sealed abstract class MetaDecode[+A] {
         (metadata, putField) =>
           val iter = metadata.query.iterator
             .map { case (k, values) =>
-              k -> values.map(_.get).iterator //FIXME: denisrosca
+              k -> values.iterator
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
@@ -113,7 +116,7 @@ private[http] sealed abstract class MetaDecode[+A] {
             .collect {
               case (k, values) if k.startsWith(prefix) =>
                 if (values.size == 1) {
-                  k.toString.drop(prefix.length()) -> values.head
+                  k.toString.drop(prefix.length()) -> Some(values.head)
                 } else
                   throw MetadataError.ArityError(fieldName, HeaderBinding(k))
             }
@@ -125,7 +128,7 @@ private[http] sealed abstract class MetaDecode[+A] {
           val iter = metadata.headers.iterator
             .collect {
               case (k, values) if k.startsWith(prefix) =>
-                k.toString.drop(prefix.length()) -> values.iterator
+                k.toString.drop(prefix.length()) -> values.map(Some(_)).iterator
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
@@ -156,13 +159,11 @@ private[http] object MetaDecode {
 
   // format: off
   final case class StringValueMetaDecode[A](f: String => A) extends MetaDecode[A]
-  final case class StringCollectionMetaDecode[A](f: Iterator[String] => A) extends MetaDecode[A]
-  final case class StringMapMetaDecode[A](f: Iterator[(String, String)] => A) extends MetaDecode[A]
-  final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[String])] => A) extends MetaDecode[A]
+  final case class StringCollectionMetaDecode[A](f: Iterator[Option[String]] => A) extends MetaDecode[A]
+  final case class StringMapMetaDecode[A](f: Iterator[(String, Option[String])] => A) extends MetaDecode[A]
+  final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[Option[String]])] => A) extends MetaDecode[A]
   case object EmptyMetaDecode extends MetaDecode[Nothing]
   final case class StructureMetaDecode[A](f: Metadata => Either[MetadataError, A]) extends MetaDecode[A]
-  // final case class SparseStringCollectionMetaDecode[A](f: Iterator[Option[String]] => A) extends MetaDecode[A]
-  // final case class SparseStringMapMetaDecode[A](f: Iterator[(String, Option[String])]) extends MetaDecode[A]
   // format: on
 
   type PutField = Any => Unit
