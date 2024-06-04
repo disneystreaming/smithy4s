@@ -110,11 +110,10 @@ package object kernel {
         }
       },
       query = Query.fromVector(
-        uri.queryParams
-        .toVector
-        .flatMap{ case(key, values) =>
-          values.map(value => key -> value)
-        }
+        uri.queryParams.toVector
+          .flatMap { case (key, values) =>
+            values.map(value => key -> value)
+          }
       )
     )
   }

@@ -80,7 +80,7 @@ private[http] sealed abstract class MetaDecode[+A] {
           if (values.size == 1) {
             values.head match {
               case Some(value) => putField(f(value))
-              case None        => throw MetadataError.NotFound(fieldName, binding)
+              case None => throw MetadataError.NotFound(fieldName, binding)
             }
           } else throw MetadataError.ArityError(fieldName, binding)
         }
@@ -92,12 +92,14 @@ private[http] sealed abstract class MetaDecode[+A] {
       // when targeting Map[String,String] we take the first value encountered
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
-          val iter: Iterator[(FieldName, Option[FieldName])] = metadata.query.iterator
-            .map { case (k, values) =>
-              if (values.nonEmpty) {
-                k -> values.head
-              } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
-            }
+          val iter: Iterator[(FieldName, Option[FieldName])] =
+            metadata.query.iterator
+              .map { case (k, values) =>
+                if (values.nonEmpty) {
+                  k -> values.head
+                } else
+                  throw MetadataError.NotFound(fieldName, QueryParamsBinding)
+              }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
       }

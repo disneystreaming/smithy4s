@@ -49,9 +49,10 @@ case class Metadata(
       v.map(k -> _)
     }
 
-  def queryFlattened: Vector[(String, Option[String])] = query.toVector.flatMap {
-    case (k, v) => v.map(k -> _)
-  }
+  def queryFlattened: Vector[(String, Option[String])] =
+    query.toVector.flatMap { case (k, v) =>
+      v.map(k -> _)
+    }
 
   def addHeader(ciKey: CaseInsensitive, value: String): Metadata = {
     headers.get(ciKey) match {
@@ -75,7 +76,7 @@ case class Metadata(
       case None => copy(query = query + (key -> List(value)))
     }
   def addQueryParamsIfNoExist(key: String, values: String*): Metadata =
-    addQueryParamsIfNotExist(key, values.map(Some(_)):_*)
+    addQueryParamsIfNotExist(key, values.map(Some(_)): _*)
 
   def addQueryParamsIfNotExist(key: String, values: Option[String]*): Metadata =
     query.get(key) match {
@@ -98,7 +99,10 @@ case class Metadata(
   def addMultipleQueryParams(key: String, value: List[String]): Metadata =
     addMultipleQueryParamsOpt(key, value.map(Some(_)))
 
-  def addMultipleQueryParamsOpt(key: String, value: List[Option[String]]): Metadata =
+  def addMultipleQueryParamsOpt(
+      key: String,
+      value: List[Option[String]]
+  ): Metadata =
     query.get(key) match {
       case Some(existing) =>
         copy(query = query + (key -> (existing ++ value)))
@@ -127,7 +131,9 @@ case class Metadata(
     )
   }
 
-  def find(location: HttpBinding): Option[(Option[String], List[Option[String]])] =
+  def find(
+      location: HttpBinding
+  ): Option[(Option[String], List[Option[String]])] =
     location match {
       case HttpBinding.HeaderBinding(httpName) =>
         headers.get(httpName).flatMap {
@@ -139,8 +145,9 @@ case class Metadata(
           case head :: tl => Some((head, tl))
           case Nil        => None
         }
-      case HttpBinding.PathBinding(httpName) => path.get(httpName).map(v => Some(v) -> Nil)
-      case _                                 => None
+      case HttpBinding.PathBinding(httpName) =>
+        path.get(httpName).map(v => Some(v) -> Nil)
+      case _ => None
     }
 }
 

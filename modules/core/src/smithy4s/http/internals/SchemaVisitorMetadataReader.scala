@@ -73,34 +73,41 @@ private[http] class SchemaVisitorMetadataReader(
         val isAwsHeader = hints
           .get(HttpBinding)
           .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
-        
+
         val hasSparse = hints.has(smithy.api.Sparse)
-        
+
         (SchemaVisitorHeaderSplit(member), isAwsHeader, hasSparse) match {
           case (Some(splitFunction), true, false) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
               tag.fromIterator(
-                it.flatMap{
+                it.flatMap {
                   case Some(value) => splitFunction(value)
-                  case None => throw MetadataError.ImpossibleDecoding("Collection does not accept null values")
+                  case None =>
+                    throw MetadataError.ImpossibleDecoding(
+                      "Collection does not accept null values"
+                    )
                 }.map(f)
               )
             }
           case (Some(splitFunction), true, true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
               tag.fromIterator(
-                it.flatMap{
+                it.flatMap {
                   case Some(value) => splitFunction(value)
-                  case None => Seq.empty
+                  case None        => Seq.empty
                 }.map(f)
               )
             }
           case (_, _, _) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(it.map{
+              tag.fromIterator(it.map {
                 case Some(value) => f(value)
-                case None if hasSparse => f("") // fixme: Denis Rosca: This is a hack to make the test pass. We should not be decoding null values.
-                case None => throw MetadataError.ImpossibleDecoding("Collection does not accept null values")
+                case None if hasSparse =>
+                  f("") // fixme: Denis Rosca: This is a hack to make the test pass. We should not be decoding null values.
+                case None =>
+                  throw MetadataError.ImpossibleDecoding(
+                    "Collection does not accept null values"
+                  )
               })
             }
         }
@@ -119,10 +126,13 @@ private[http] class SchemaVisitorMetadataReader(
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[Map[K, V]](map =>
-          map.map { 
-            case (k, Some(v)) => (readK(k), readV(v))
+          map.map {
+            case (k, Some(v))           => (readK(k), readV(v))
             case (k, None) if hasSparse => (readK(k), readV(""))
-            case _ => throw MetadataError.ImpossibleDecoding("Map does not accept null values")
+            case _ =>
+              throw MetadataError.ImpossibleDecoding(
+                "Map does not accept null values"
+              )
           }.toMap
         )
       case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>

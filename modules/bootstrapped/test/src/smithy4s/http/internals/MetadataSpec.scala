@@ -210,7 +210,9 @@ class MetadataSpec() extends FunSuite {
       slm = Some(Map("ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"))
     )
     val expected =
-      Metadata(query = Map("ts4" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT"))))
+      Metadata(query =
+        Map("ts4" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT")))
+      )
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -439,7 +441,9 @@ class MetadataSpec() extends FunSuite {
 
   test("bad data gets caught") {
     val metadata =
-      Metadata(query = Map("ts3" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT"))))
+      Metadata(query =
+        Map("ts3" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT")))
+      )
     val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.WrongType(
       "ts3",
