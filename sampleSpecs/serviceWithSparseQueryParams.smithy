@@ -21,15 +21,10 @@ operation GetOperation {
 structure SparseQueryInput {
     @required
     @httpQuery("foo")
-    foo: SparseFooList
+    foo: SparseStringList
 }
 
 structure SparseQueryOutput {
     @required
-    foo: SparseFooList
-}
-
-@sparse
-list SparseFooList {
-    member: String
+    foo: SparseStringList
 }

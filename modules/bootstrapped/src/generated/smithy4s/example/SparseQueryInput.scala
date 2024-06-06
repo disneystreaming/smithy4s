@@ -17,6 +17,6 @@ object SparseQueryInput extends ShapeTag.Companion[SparseQueryInput] {
   private def make(foo: List[Option[String]]): SparseQueryInput = SparseQueryInput(foo)
 
   implicit val schema: Schema[SparseQueryInput] = struct(
-    SparseFooList.underlyingSchema.required[SparseQueryInput]("foo", _.foo).addHints(smithy.api.HttpQuery("foo")),
+    SparseStringList.underlyingSchema.required[SparseQueryInput]("foo", _.foo).addHints(smithy.api.HttpQuery("foo")),
   )(make).withId(id).addHints(hints)
 }

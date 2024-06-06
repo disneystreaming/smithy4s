@@ -17,6 +17,6 @@ object SparseQueryOutput extends ShapeTag.Companion[SparseQueryOutput] {
   private def make(foo: List[Option[String]]): SparseQueryOutput = SparseQueryOutput(foo)
 
   implicit val schema: Schema[SparseQueryOutput] = struct(
-    SparseFooList.underlyingSchema.required[SparseQueryOutput]("foo", _.foo),
+    SparseStringList.underlyingSchema.required[SparseQueryOutput]("foo", _.foo),
   )(make).withId(id).addHints(hints)
 }

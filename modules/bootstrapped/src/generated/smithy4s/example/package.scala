@@ -97,7 +97,6 @@ package object example {
   type SomeInt = smithy4s.example.SomeInt.Type
   type SomeValue = smithy4s.example.SomeValue.Type
   type SomeVector = smithy4s.example.SomeVector.Type
-  type SparseFooList = smithy4s.example.SparseFooList.Type
   type SparseStringList = smithy4s.example.SparseStringList.Type
   type SparseStringMap = smithy4s.example.SparseStringMap.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
