@@ -21,8 +21,9 @@ import smithy.api.Default
 import smithy4s.example.IntList
 import alloy.Discriminated
 import munit._
-import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
+import smithy4s.example.TimestampOperationInput
 
 class DocumentSpec() extends FunSuite {
 
@@ -423,8 +424,8 @@ class DocumentSpec() extends FunSuite {
 
   test("document encoder - all default") {
     val result = Document.Encoder
-      .fromSchema(OperationOutput.schema)
-      .encode(OperationOutput())
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
 
     expect.same(
       Document.obj(
@@ -444,9 +445,9 @@ class DocumentSpec() extends FunSuite {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(true)
       .fromSchema(
-        OperationOutput.schema
+        DefaultNullsOperationOutput.schema
       )
-      .encode(OperationOutput())
+      .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
         "optional" -> Document.nullDoc,
@@ -470,9 +471,9 @@ class DocumentSpec() extends FunSuite {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
       .fromSchema(
-        OperationOutput.schema
+        DefaultNullsOperationOutput.schema
       )
-      .encode(OperationOutput())
+      .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
         "requiredWithDefault" -> Document.fromString("required-default"),
@@ -489,9 +490,9 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(true)
-      .fromSchema(OperationOutput.schema)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -529,9 +530,9 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
-      .fromSchema(OperationOutput.schema)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -563,6 +564,46 @@ class DocumentSpec() extends FunSuite {
       result
     )
 
+  }
+
+  test("Document encoder - timestamp defaults") {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(TimestampOperationInput.schema)
+      .encode(TimestampOperationInput())
+    expect.same(
+      Document.obj(
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30Z"),
+        "epochSeconds" -> Document.fromLong(1716459630L)
+      ),
+      result
+    )
+  }
+
+  test("Document decoder - timestamp defaults") {
+    val doc = Document.obj()
+    val result = Document.Decoder
+      .fromSchema(TimestampOperationInput.schema)
+      .decode(doc)
+    val defaultTimestamp = Timestamp(
+      year = 2024,
+      month = 5,
+      day = 23,
+      hour = 10,
+      minute = 20,
+      second = 30
+    )
+    expect.same(
+      Right(
+        TimestampOperationInput(
+          dateTime = defaultTimestamp,
+          httpDate = defaultTimestamp,
+          epochSeconds = defaultTimestamp
+        )
+      ),
+      result
+    )
   }
 
   test("Document syntax allows to build documents more concisely") {
