@@ -24,6 +24,7 @@ import smithy4s.http.internals.MetaDecode.StringCollectionMetaDecode
 import smithy4s.http.internals.MetaDecode.StringListMapMetaDecode
 import smithy4s.http.internals.MetaDecode.StringMapMetaDecode
 import smithy4s.http.internals.MetaDecode.StringValueMetaDecode
+import smithy4s.http.internals.MetaDecode.OptionalStringValueMetaDecode
 import smithy4s.http.internals.MetaDecode.StructureMetaDecode
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema._
@@ -69,47 +70,23 @@ private[http] class SchemaVisitorMetadataReader(
   ): MetaDecode[C[A]] = {
     val amendedMember = member.addHints(httpHints(hints))
     self(amendedMember) match {
-      case MetaDecode.StringValueMetaDecode(f) =>
+      case MetaDecode.StringValueMetaDecode(decode) =>
         val isAwsHeader = hints
           .get(HttpBinding)
           .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
-
-        val hasSparse = hints.has(smithy.api.Sparse)
-
-        (SchemaVisitorHeaderSplit(member), isAwsHeader, hasSparse) match {
-          case (Some(splitFunction), true, false) =>
+        (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
+          case (Some(splitFunction), true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(
-                it.flatMap {
-                  case Some(value) => splitFunction(value)
-                  case None =>
-                    throw MetadataError.ImpossibleDecoding(
-                      "Collection does not accept null values"
-                    )
-                }.map(f)
-              )
+              tag.fromIterator(it.flatMap(splitFunction).map(decode))
             }
-          case (Some(splitFunction), true, true) =>
+          case (_, _) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(
-                it.flatMap {
-                  case Some(value) => splitFunction(value)
-                  case None        => Seq.empty
-                }.map(f)
-              )
+              tag.fromIterator(it.map(decode))
             }
-          case (_, _, _) =>
-            MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(it.map {
-                case Some(value) => f(value)
-                case None if hasSparse =>
-                  f("") // fixme: Denis Rosca: This is a hack to make the test pass. We should not be decoding null values.
-                case None =>
-                  throw MetadataError.ImpossibleDecoding(
-                    "Collection does not accept null values"
-                  )
-              })
-            }
+        }
+      case MetaDecode.OptionalStringValueMetaDecode(decode) =>
+        MetaDecode.SparseStringCollectionMetaDecode[C[A]] { it =>
+          tag.fromIterator(it.map(decode))
         }
       case _ => EmptyMetaDecode
     }
@@ -121,19 +98,10 @@ private[http] class SchemaVisitorMetadataReader(
       key: Schema[K],
       value: Schema[V]
   ): MetaDecode[Map[K, V]] = {
-    val hasSparse = hints.has(smithy.api.Sparse)
-
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[Map[K, V]](map =>
-          map.map {
-            case (k, Some(v))           => (readK(k), readV(v))
-            case (k, None) if hasSparse => (readK(k), readV(""))
-            case _ =>
-              throw MetadataError.ImpossibleDecoding(
-                "Map does not accept null values"
-              )
-          }.toMap
+          map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )
       case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
         StringListMapMetaDecode[Map[K, V]](map =>
@@ -263,5 +231,10 @@ private[http] class SchemaVisitorMetadataReader(
     EmptyMetaDecode
 
   override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
-    self(schema).map(Some(_))
+    self(schema) match {
+      case StringValueMetaDecode(f) =>
+        OptionalStringValueMetaDecode[Option[A]](_.map(f))
+      case metaDecode =>
+        metaDecode.map(Some(_))
+    }
 }

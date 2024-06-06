@@ -84,6 +84,8 @@ class SchemaVisitorMetadataWriter(
         self(amendedMember) match {
           case StringValueMetaEncode(f) =>
             StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
+          case OptionalStringValueMetaEncode(f) =>
+            SparseStringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
           case _ => MetaEncode.empty
         }
     }
@@ -93,12 +95,22 @@ class SchemaVisitorMetadataWriter(
   override def option[A](schema: Schema[A]): MetaEncode[Option[A]] =
     self(schema) match {
       case StringValueMetaEncode(f) =>
-        StringValueMetaEncode {
+        OptionalStringValueMetaEncode {
+          case Some(value) => Some(f(value))
+          case None        => None
+        }
+      case OptionalStringValueMetaEncode(f) =>
+        OptionalStringValueMetaEncode {
           case Some(value) => f(value)
-          case None        => ""
+          case None        => None
         }
       case StringListMetaEncode(f) =>
         StringListMetaEncode {
+          case Some(value) => f(value)
+          case None        => List.empty
+        }
+      case SparseStringListMetaEncode(f) =>
+        SparseStringListMetaEncode {
           case Some(value) => f(value)
           case None        => List.empty
         }

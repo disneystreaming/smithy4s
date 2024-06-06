@@ -12,11 +12,14 @@ import smithy4s.example.{ServiceWithSparseQueryParams, SparseQueryOutput}
 import weaver._
 
 object SparseQueryParametersSuite extends SimpleIOSuite with CirceInstances {
-  
+
   test("Server handles sparse query parameters") {
     runServerTest().map { response =>
       assert.same(
-        Json.obj("foo" -> Json.arr(Json.fromString("bar"), Json.Null, Json.fromString("baz"))),
+        Json.obj(
+          "foo" -> Json
+            .arr(Json.fromString("bar"), Json.Null, Json.fromString("baz"))
+        ),
         response
       )
     }
@@ -46,7 +49,10 @@ object SparseQueryParametersSuite extends SimpleIOSuite with CirceInstances {
         for {
           result <- run(
             routes,
-            Request[IO](method = Method.GET, uri = uri"/operation/sparse-query-params?foo=bar&foo&foo=baz")
+            Request[IO](
+              method = Method.GET,
+              uri = uri"/operation/sparse-query-params?foo=bar&foo&foo=baz"
+            )
           )
         } yield result
       }
@@ -57,7 +63,12 @@ object SparseQueryParametersSuite extends SimpleIOSuite with CirceInstances {
   ): IO[TestRequest] = {
     val resources = for {
       promise <- Deferred[IO, Request[IO]].toResource
-      reqBody = Json.obj("foo" -> Json.arr(input.map(_.fold(Json.Null)(Json.fromString)): _*)).toString().getBytes()
+      reqBody = Json
+        .obj(
+          "foo" -> Json.arr(input.map(_.fold(Json.Null)(Json.fromString)): _*)
+        )
+        .toString()
+        .getBytes()
       httpClient: Client[IO] = Client(req =>
         req
           .toStrict(None)
@@ -88,7 +99,9 @@ object SparseQueryParametersSuite extends SimpleIOSuite with CirceInstances {
   case class TestRequest(query: Map[String, List[Option[String]]])
 
   object Impl extends ServiceWithSparseQueryParams[IO] {
-    override def getOperation(foo: List[Option[String]]): IO[SparseQueryOutput] = {
+    override def getOperation(
+        foo: List[Option[String]]
+    ): IO[SparseQueryOutput] = {
       IO.pure(SparseQueryOutput(foo))
     }
   }
