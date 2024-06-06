@@ -75,6 +75,10 @@ private[http] sealed abstract class MetaDecode[+A] {
             putField(f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
+      case (HeaderBinding(h), OptionalStringValueMetaDecode(f)) =>
+        lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
+          putField(f(Some(values.head)))
+        }
       case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
           putField(f(values.iterator))
@@ -90,7 +94,9 @@ private[http] sealed abstract class MetaDecode[+A] {
         }
       case (QueryBinding(h), OptionalStringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
-          putField(f(values.head))
+          if (values.size == 1) {
+            putField(f(values.head))
+          } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
@@ -176,6 +182,17 @@ private[http] sealed abstract class MetaDecode[+A] {
             case Some(statusCode) =>
               // TODO add a specialised case for this
               putField(f(statusCode.toString))
+          }
+      case (StatusCodeBinding, OptionalStringValueMetaDecode(f)) =>
+        (metadata, putField) =>
+          metadata.statusCode match {
+            case None =>
+              sys.error(
+                "Status code is not available and field needs it."
+              )
+            case Some(statusCode) =>
+              // TODO add a specialised case for this
+              putField(f(Some(statusCode.toString)))
           }
       case _ => (metadata: Metadata, buffer) => ()
     }

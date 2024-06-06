@@ -35,13 +35,15 @@ sealed trait MetaEncode[-A] {
         (metadata: Metadata, a: A) => metadata.addPathParam(path, f(a))
       case (HeaderBinding(name), StringValueMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addHeader(name, f(a))
+      case (HeaderBinding(name), OptionalStringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) =>
+          f(a).fold(metadata)(metadata.addHeader(name, _))
       case (HeaderBinding(name), StringListMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addMultipleHeaders(name, f(a))
       case (QueryBinding(name), StringValueMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addQueryParam(name, f(a))
       case (QueryBinding(name), OptionalStringValueMetaEncode(f)) =>
-        (metadata: Metadata, a: A) =>
-          f(a).fold(metadata)(metadata.addQueryParam(name, _))
+        (metadata: Metadata, a: A) => metadata.addQueryParam(name, f(a))
       case (QueryBinding(name), StringListMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           metadata.addMultipleQueryParams(name, f(a))
