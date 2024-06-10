@@ -24,7 +24,7 @@ import sbt.util.Logger
 import sjsonnew._
 import sjsonnew.support.murmurhash.Hasher
 import sjsonnew.support.scalajson.unsafe.Converter
-import sjsonnew.support.scalajson.unsafe.PrettyPrinter
+import sjsonnew.support.scalajson.unsafe.{PrettyPrinter => prettify}
 
 import scala.util.Try
 
@@ -37,8 +37,9 @@ private[codegen] object CachedTask {
       f: (Boolean, I) => O
   ): I => O = { in =>
     def debug(str: String): Unit = logger.debug(s"[smithy4s] $str")
+
     val previousValue = Try(store.read[ValueAndHash[I]]()).toOption
-    val newValueHash = Hasher.hash(in).toOption.getOrElse(-1)
+    val newValueHash = hash(in)
     store.write[ValueAndHash[I]]((in, newValueHash))
 
     previousValue match {
@@ -47,36 +48,36 @@ private[codegen] object CachedTask {
         f(true, in)
 
       case Some((oldValue, previousHash)) =>
-        val serializedOldValue = serializeCodegenArgs(oldValue)
-        val serializedNewValue = serializeCodegenArgs(in)
-
-        (serializedOldValue, serializedNewValue) match {
-          case (Some(oldArgs), Some(newArgs)) if oldArgs != newArgs =>
-            val diff = new Diff(oldArgs, newArgs)
+        (toJson(oldValue), toJson(in)) match {
+          case (Some(oldArgs), Some(newArgs)) if !oldArgs.equals(newArgs) =>
+            val diff = new Diff(prettify(oldArgs), prettify(newArgs))
             val report = diff.createReport(
               "Arguments changed between smithy4s codegen invocations, diff:",
               printObtainedAsStripMargin = false
             )
             debug(report)
             f(true, in)
-          case (_, _) if previousHash != newValueHash =>
+
+          case (_, _) if (previousHash != newValueHash) =>
             debug(
               "Codegen arguments didn't change, but their hashes didn't match. " +
                 "This means file change on paths provided as codegen arguments."
             )
             f(true, in)
+
           case _ =>
             debug("Input didn't change between codegen invocations")
             f(false, in)
         }
+
     }
   }
 
   private type ValueAndHash[I] = (I, Int)
 
-  private def serializeCodegenArgs[I: JsonFormat](args: I): Option[String] =
-    Converter
-      .toJson(args)
-      .map(v => PrettyPrinter(v))
-      .toOption
+  private def toJson[I: JsonFormat](args: I) =
+    Converter.toJson(args).toOption
+
+  private def hash[I: JsonFormat](in: I) =
+    Hasher.hash(in).toOption.getOrElse(-1)
 }
