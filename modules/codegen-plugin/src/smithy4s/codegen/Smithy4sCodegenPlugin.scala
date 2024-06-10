@@ -460,9 +460,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
             s.cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
-              s.log.debug("[smithy4s] Sources will be regenerated")
               s.log.debug(s"[smithy4s] Input changed: $inputChanged")
               s.log.debug(s"[smithy4s] Outputs empty: ${outputs.isEmpty}")
+              s.log.debug("[smithy4s] Sources will be regenerated")
               val resPaths = smithy4s.codegen.Codegen
                 .generateToDisk(args)
                 .toList

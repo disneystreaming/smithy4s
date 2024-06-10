@@ -16,10 +16,13 @@
 
 package smithy4s.codegen
 
+import munit.diff.Diff
 import sbt._
+import sbt.util.CacheImplicits._
 import sbt.util.CacheStore
 import sbt.util.Logger
 import sjsonnew._
+import sjsonnew.support.murmurhash.Hasher
 import sjsonnew.support.scalajson.unsafe.Converter
 import sjsonnew.support.scalajson.unsafe.PrettyPrinter
 
@@ -33,36 +36,43 @@ private[codegen] object CachedTask {
   def inputChanged[I: JsonFormat, O](store: CacheStore, logger: Logger)(
       f: (Boolean, I) => O
   ): I => O = { in =>
-    def debug(str: String): Unit = logger.debug(s"[smithy4s]$str")
-
-    val previousValue = Try(store.read[I]()).toOption
+    def debug(str: String): Unit = logger.debug(s"[smithy4s] $str")
+    val previousValue = Try(store.read[ValueAndHash[I]]()).toOption
+    val newValueHash = Hasher.hash(in).toOption.getOrElse(-1)
+    store.write[ValueAndHash[I]]((in, newValueHash))
 
     previousValue match {
       case None =>
-        debug(
-          "Could not read previous value from inputs, smithy4s codegen needs to be executed."
-        )
-        store.write[I](in)
+        debug("Could not read previous inputs value from cache.")
         f(true, in)
 
-      case Some(oldValue) =>
-        (serializeCodegenArgs(oldValue), serializeCodegenArgs(in)) match {
-          case (Some(oldArgs), Some(newArgs)) if (oldArgs != newArgs) =>
-            val diff = new munit.diff.Diff(oldArgs, newArgs)
+      case Some((oldValue, previousHash)) =>
+        val serializedOldValue = serializeCodegenArgs(oldValue)
+        val serializedNewValue = serializeCodegenArgs(in)
+
+        (serializedOldValue, serializedNewValue) match {
+          case (Some(oldArgs), Some(newArgs)) if oldArgs != newArgs =>
+            val diff = new Diff(oldArgs, newArgs)
             val report = diff.createReport(
               "Arguments changed between smithy4s codegen invocations, diff:",
               printObtainedAsStripMargin = false
             )
             debug(report)
-            store.write[I](in)
             f(true, in)
-          case (_, _) =>
+          case (_, _) if previousHash != newValueHash =>
+            debug(
+              "Codegen arguments didn't change, but their hashes didn't match. " +
+                "This means file change on paths provided as codegen arguments."
+            )
+            f(true, in)
+          case _ =>
             debug("Input didn't change between codegen invocations")
             f(false, in)
         }
     }
-
   }
+
+  private type ValueAndHash[I] = (I, Int)
 
   private def serializeCodegenArgs[I: JsonFormat](args: I): Option[String] =
     Converter
