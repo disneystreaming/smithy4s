@@ -148,8 +148,8 @@ lazy val docs =
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
     Seq(
-      Dependencies.MunitV1.core.value % Test,
-      Dependencies.MunitV1.scalacheck.value % Test
+      Dependencies.MunitMilestone.core.value % Test,
+      Dependencies.MunitMilestone.scalacheck.value % Test
     )
   } else {
     Seq(
