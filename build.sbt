@@ -148,8 +148,8 @@ lazy val docs =
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
     Seq(
-      Dependencies.MunitMilestone.core.value % Test,
-      Dependencies.MunitMilestone.scalacheck.value % Test
+      Dependencies.MunitV1.core.value % Test,
+      Dependencies.MunitV1.scalacheck.value % Test
     )
   } else {
     Seq(
@@ -471,6 +471,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
     },
+    libraryDependencies += Dependencies.MunitV1.diff.value,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
