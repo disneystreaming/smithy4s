@@ -25,8 +25,7 @@
 
           shellHook = ''
             echo "$welcomeMessage"
-            # TODO use pkgs.lib.getExe once nixpkgs are updated
-            export PROTOC_PATH=${pkgs.protobuf3_21}/bin/protoc
+            export PROTOC_PATH=${pkgs.lib.getExe pkgs.protobuf3_21}
           '';
         };
       }
