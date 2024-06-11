@@ -9,14 +9,14 @@
         shellPackages = [
           "jre"
           "sbt"
-          "nodejs-16_x"
+          "nodejs-18_x"
           "yarn"
         ];
       in
       {
         devShells.default = pkgs.mkShell {
           buildInputs = map (pkgName: pkgs.${pkgName}) shellPackages;
-          nativeBuildInputs = [ pkgs.openssl pkgs.zlib pkgs.protobuf3_21];
+          nativeBuildInputs = [ pkgs.openssl pkgs.zlib pkgs.protobuf3_21 ];
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
