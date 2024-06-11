@@ -25,8 +25,8 @@
 
           shellHook = ''
             echo "$welcomeMessage"
-            export PROTOC_PATH=${pkgs.lib.getExe pkgs.protobuf3_21}
           '';
+          PROTOC_PATH = pkgs.lib.getExe pkgs.protobuf3_21;
         };
       }
     );
