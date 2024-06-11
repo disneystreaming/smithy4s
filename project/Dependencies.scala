@@ -139,7 +139,7 @@ object Dependencies {
       )
   }
 
-  class MunitCross(munitVersion: String) {
+  class MunitCross(val munitVersion: String) {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck: Def.Initialize[ModuleID] =
@@ -147,6 +147,10 @@ object Dependencies {
   }
   object Munit extends MunitCross("0.7.29")
   object MunitMilestone extends MunitCross("1.0.0-M6")
+  object MunitV1 extends MunitCross("1.0.0") {
+    val diff: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit-diff" % munitVersion)
+  }
 
   val Scalacheck = new {
     val scalacheckVersion = "1.16.0"
