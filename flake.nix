@@ -2,25 +2,25 @@
   inputs.nixpkgs.url = "github:nixos/nixpkgs";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+  outputs = { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        shellPackages = [
-          "jre"
-          "sbt"
-          "nodejs-18_x"
-          "yarn"
+        shellPackages = with pkgs; [
+          temurin-jre-bin-17
+          nodejs-18_x
+          yarn
+          (pkgs.sbt.override { jre = pkgs.temurin-jre-bin-17; })
         ];
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = map (pkgName: pkgs.${pkgName}) shellPackages;
+          buildInputs = shellPackages;
           nativeBuildInputs = [ pkgs.openssl pkgs.zlib pkgs.protobuf3_21 ];
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
-            ${builtins.concatStringsSep "\n" (map (n : "- ${n}") shellPackages)}
+            ${builtins.concatStringsSep "\n" (map (n : "- ${n.name}") shellPackages)}
           '';
 
           shellHook = ''
