@@ -33,7 +33,11 @@ final case class HttpRequest[+A](
 
   def toMetadata: Metadata = Metadata(
     path = uri.pathParams.getOrElse(Map.empty),
-    query = uri.queryParams.groupBy(_._1).view.mapValues(_.map(_._2)).toMap,
+    query = uri.queryParams
+      .groupBy(_._1)
+      .view
+      .map { case (key, values) => key -> values.map(_._2).toIndexedSeq }
+      .toMap,
     headers = headers
   )
 
