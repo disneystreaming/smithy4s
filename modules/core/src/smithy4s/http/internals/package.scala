@@ -86,8 +86,6 @@ package object internals {
             case (acc, param) =>
               val (k, v) = param.split("=", 2) match {
                 case Array(key) => (key, None)
-                case Array(key, "") =>
-                  (key, None) // FIXME: denisrosca not sure about this
                 case Array(key, value) => (key, Some(value))
               }
               acc.updated(k, acc.getOrElse(k, Seq.empty) :+ v)

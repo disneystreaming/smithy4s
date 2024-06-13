@@ -68,7 +68,7 @@ package object kernel {
       uri.host.map(_.renderString),
       uri.port,
       uri.path.segments.map(_.decoded()),
-      getQueryParams(uri),
+      uri.query.pairs,
       pathParams
     )
   }
@@ -111,9 +111,6 @@ package object kernel {
       },
       query = Query.fromVector(
         uri.queryParams.toVector
-          .flatMap { case (key, values) =>
-            values.map(value => key -> value)
-          }
       )
     )
   }
@@ -190,13 +187,6 @@ package object kernel {
     req.headers.headers.groupBy(_.name).map { case (k, v) =>
       (CaseInsensitive(k.toString), v.map(_.value))
     }
-
-  private[smithy4s] def getQueryParams[F[_]](
-      uri: Uri
-  ): Map[String, List[Option[String]]] =
-    uri.query.pairs
-      .groupBy(_._1)
-      .map { case (k, v) => k -> v.map(_._2).toList }
 
   private def collectBytes[F[_]: Concurrent](
       stream: fs2.Stream[F, Byte]

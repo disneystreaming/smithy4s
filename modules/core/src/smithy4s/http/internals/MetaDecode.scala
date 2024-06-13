@@ -187,8 +187,9 @@ private[http] sealed abstract class MetaDecode[+A] {
         (metadata, putField) =>
           metadata.statusCode match {
             case None =>
-              sys.error(
-                "Status code is not available and field needs it."
+              throw new MetadataError.MissingValueError(
+                fieldName,
+                StatusCodeBinding
               )
             case Some(statusCode) =>
               // TODO add a specialised case for this

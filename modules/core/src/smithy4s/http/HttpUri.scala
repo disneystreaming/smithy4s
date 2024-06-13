@@ -24,7 +24,7 @@ final case class HttpUri(
       * A sequence of URL-decoded URI segment.
       */
     path: IndexedSeq[String],
-    queryParams: Map[String, Seq[Option[String]]],
+    queryParams: IndexedSeq[(String, Option[String])],
     /**
       * Field allowing to store decoded path parameters alongside an http request,
       * once the routing logic has come in effect.
