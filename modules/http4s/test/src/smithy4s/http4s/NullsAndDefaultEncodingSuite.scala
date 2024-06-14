@@ -21,14 +21,15 @@ import org.http4s._
 import org.http4s.implicits._
 import cats.effect.IO
 import smithy4s.example.ServiceWithNullsAndDefaults
-import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultNullsOperationOutput
 import io.circe.Json
 import org.typelevel.ci.CIString
 import org.typelevel.ci._
 import org.http4s.circe.CirceInstances
 import org.http4s.client.Client
-import smithy4s.example.OperationInput
+import smithy4s.example.DefaultNullsOperationInput
 import cats.effect.kernel.Deferred
+import smithy4s.example.TimestampOperationInput
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
@@ -65,7 +66,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   test("client - explicit defaults encoding = false") {
-    runClientTest(explicitDefaults = false, OperationInput())
+    runClientTest(explicitDefaults = false, DefaultNullsOperationInput())
       .map { request =>
         assert.same(
           Map(
@@ -91,7 +92,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   test("client - explicit defaults encoding = true") {
-    runClientTest(explicitDefaults = true, OperationInput())
+    runClientTest(explicitDefaults = true, DefaultNullsOperationInput())
       .map { request =>
         assert.same(
           Map(
@@ -120,8 +121,14 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   object Impl extends ServiceWithNullsAndDefaults[IO] {
-    override def operation(input: OperationInput): IO[OperationOutput] =
-      IO.pure(OperationOutput())
+
+    override def timestampOperation(input: TimestampOperationInput): IO[Unit] =
+      IO.unit
+
+    override def defaultNullsOperation(
+        input: DefaultNullsOperationInput
+    ): IO[DefaultNullsOperationOutput] =
+      IO.pure(DefaultNullsOperationOutput())
   }
 
   private val specHeaders = Set(
@@ -164,7 +171,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
   private def runClientTest(
       explicitDefaults: Boolean,
-      input: OperationInput
+      input: DefaultNullsOperationInput
   ): IO[TestRequest] = {
     val resources = for {
       promise <- Deferred[IO, Request[IO]].toResource
@@ -182,7 +189,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
         .resource
     } yield (promise, client)
     resources.use { case (promise, client) =>
-      client.operation(input) >> promise.get.flatMap { req =>
+      client.defaultNullsOperation(input) >> promise.get.flatMap { req =>
         val labels = req.uri.path.segments
           .map(_.toString)
           .toList

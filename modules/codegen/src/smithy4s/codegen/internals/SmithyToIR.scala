@@ -24,6 +24,8 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
+import smithy4s.meta.ScalaImportsTrait
+import smithy4s.meta.TypeclassTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
@@ -44,6 +46,12 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.util.Locale
+import java.time.temporal.ChronoField
+import java.time.format.DateTimeFormatterBuilder
+import scala.util.Try
 
 private[codegen] object SmithyToIR {
 
@@ -930,6 +938,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.GenerateServiceProduct
     case _: GenerateOpticsTrait =>
       Hint.GenerateOptics
+    case s: ScalaImportsTrait =>
+      Hint.ScalaImports(s.getImports().asScala.toList)
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
@@ -1433,60 +1443,84 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private def unfoldNodeAndTypeP(
       node: Node,
       p: Primitive
-  ): TypedNode[NodeAndType] = (node, p) match {
-    // String
-    case (N.StringNode(str), Primitive.String) =>
-      TypedNode.PrimitiveTN(Primitive.String, str)
-    // Numeric
-    case (N.NumberNode(num), Primitive.Int) =>
-      TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
-    case (N.NumberNode(num), Primitive.Long) =>
-      TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
-    case (N.NumberNode(num), Primitive.Double) =>
-      TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
-    case (N.NumberNode(num), Primitive.Float) =>
-      TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
-    case (N.NumberNode(num), Primitive.Short) =>
-      TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
-    case (N.NumberNode(num), Primitive.BigDecimal) =>
-      TypedNode.PrimitiveTN(Primitive.BigDecimal, BigDecimal(num.doubleValue()))
-    case (N.NumberNode(num), Primitive.BigInteger) =>
-      TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
-    // Boolean
-    case (N.BooleanNode(bool), Primitive.Bool) =>
-      TypedNode.PrimitiveTN(Primitive.Bool, bool)
-    case (node, Primitive.Document) =>
-      TypedNode.PrimitiveTN(Primitive.Document, node)
-    case (node, Primitive.String) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.String, "")
-    case (node, Primitive.Int) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Int, 0)
-    case (node, Primitive.Long) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Long, 0L)
-    case (node, Primitive.Double) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Double, 0.0)
-    case (node, Primitive.Float) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
-    case (node, Primitive.Short) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
-    case (node, Primitive.Byte) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
-    case (node, Primitive.Blob) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
-    case (node, Primitive.Bool) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Bool, false)
-    case (node, Primitive.Timestamp) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(
-        Primitive.Timestamp,
-        java.time.Instant.ofEpochSecond(0)
+  ): TypedNode[NodeAndType] = {
+    def notSupported(nodeAndPrimitive: (Node, Primitive)) =
+      throw new NotImplementedError(
+        s"Unsupported case: $nodeAndPrimitive"
       )
-    case (_, Primitive.Unit) =>
-      TypedNode.PrimitiveTN(
-        Primitive.Unit,
-        ()
-      )
-    case other =>
-      throw new NotImplementedError(s"Unsupported case: $other")
+    (node, p) match {
+      // String
+      case (N.StringNode(str), Primitive.String) =>
+        TypedNode.PrimitiveTN(Primitive.String, str)
+      // Numeric
+      case (N.NumberNode(num), Primitive.Int) =>
+        TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
+      case (N.NumberNode(num), Primitive.Long) =>
+        TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
+      case (N.NumberNode(num), Primitive.Double) =>
+        TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
+      case (N.NumberNode(num), Primitive.Float) =>
+        TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
+      case (N.NumberNode(num), Primitive.Short) =>
+        TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
+      case (N.NumberNode(num), Primitive.BigDecimal) =>
+        TypedNode.PrimitiveTN(
+          Primitive.BigDecimal,
+          BigDecimal(num.doubleValue())
+        )
+      case (N.NumberNode(num), Primitive.BigInteger) =>
+        TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
+      // Boolean
+      case (N.BooleanNode(bool), Primitive.Bool) =>
+        TypedNode.PrimitiveTN(Primitive.Bool, bool)
+      case (node, Primitive.Document) =>
+        TypedNode.PrimitiveTN(Primitive.Document, node)
+      case (node, Primitive.String) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.String, "")
+      case (node, Primitive.Int) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Int, 0)
+      case (node, Primitive.Long) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Long, 0L)
+      case (node, Primitive.Double) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+      case (node, Primitive.Float) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+      case (node, Primitive.Short) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+      case (node, Primitive.Byte) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+      case (node, Primitive.Blob) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
+      case (node, Primitive.Bool) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Bool, false)
+      case timestamp @ (node, Primitive.Timestamp) =>
+        val value = node match {
+          case N.StringNode(str) =>
+            Try(Instant.parse(str))
+              .orElse(
+                Try(ZonedDateTime.parse(str, httpDateFormatter).toInstant())
+              )
+              .toOption
+              .getOrElse(notSupported(timestamp))
+          case N.NumberNode(num) =>
+            Instant.ofEpochSecond(num.longValue)
+          case _ if node == Node.nullNode => java.time.Instant.ofEpochSecond(0)
+          case _                          => notSupported(timestamp)
+        }
+        TypedNode.PrimitiveTN(Primitive.Timestamp, value)
+      case (_, Primitive.Unit) =>
+        TypedNode.PrimitiveTN(
+          Primitive.Unit,
+          ()
+        )
+      case other =>
+        notSupported(other)
+    }
   }
+
+  private val httpDateFormatter = new DateTimeFormatterBuilder()
+    .appendPattern("EEE, dd MMM yyyy HH:mm:ss z")
+    .parseDefaulting(ChronoField.OFFSET_SECONDS, 0)
+    .toFormatter(Locale.ENGLISH);
 
 }

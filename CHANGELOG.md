@@ -25,6 +25,18 @@ Previously they'd be named after the **member target**, now they will use the na
 
 There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
 
+# 0.18.22
+* Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
+
+# 0.18.21
+
+* Addition of a new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
+* Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.
+
+# 0.18.20
+
+* Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
+
 # 0.18.19 - binary-breaking changes in `core`
 
 **WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
