@@ -342,8 +342,12 @@ object Schema {
 
   private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {
     def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]): Schema[B] = {
-      val hint = Hints.Binding.fromValue(c)(refinementProvider.tag)
-      RefinementSchema(schema.addHints(hint), refinementProvider.make(c))
+      apply(refinementProvider.make(c))
+    }
+
+    def apply(refinement: Refinement[A, B]): Schema[B] = {
+      val hint = Hints.Binding.fromValue(refinement.constraint)(refinement.tag)
+      RefinementSchema(schema.addHints(hint), refinement)
     }
   }
 

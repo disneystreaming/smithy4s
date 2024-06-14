@@ -47,6 +47,7 @@ trait Hints {
   final def has[A](implicit key: ShapeTag[A]): Boolean = this.get[A].isDefined
   final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.tag)
+  final def get[T](vnt: ValidatedNewtype[T]): Option[vnt.Type] = get(vnt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
     Hints.fromSeq(all.filter(predicate).toSeq)
   final def filterNot(predicate: Hint => Boolean): Hints =
