@@ -25,7 +25,6 @@ import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
-import smithy4s.meta.TypeclassTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
