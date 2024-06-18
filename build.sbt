@@ -942,6 +942,10 @@ lazy val bootstrapped = projectMatrix
     Compile / PB.protoSources ++= Seq(
       exampleGeneratedResourcesOutput.value
     ),
+    Compile / PB.protocExecutable := sys.env
+      .get("PROTOC_PATH")
+      .map(file(_))
+      .getOrElse((Compile / PB.protocExecutable).value),
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
