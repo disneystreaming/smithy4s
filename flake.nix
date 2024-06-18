@@ -12,11 +12,12 @@
           yarn
           (pkgs.sbt.override { jre = pkgs.temurin-jre-bin-17; })
         ];
+        protobuf = pkgs.protobuf3_21;
       in
       {
         devShells.default = pkgs.mkShell {
           buildInputs = shellPackages;
-          nativeBuildInputs = [ pkgs.openssl pkgs.zlib pkgs.protobuf3_21 ];
+          nativeBuildInputs = [ pkgs.openssl pkgs.zlib protobuf ];
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
@@ -26,7 +27,7 @@
           shellHook = ''
             echo "$welcomeMessage"
           '';
-          PROTOC_PATH = pkgs.lib.getExe pkgs.protobuf3_21;
+          PROTOC_PATH = pkgs.lib.getExe protobuf;
         };
       }
     );
