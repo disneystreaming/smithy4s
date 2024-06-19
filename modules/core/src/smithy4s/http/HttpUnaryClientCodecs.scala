@@ -119,7 +119,7 @@ object HttpUnaryClientCodecs {
 
       val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Writer[Blob, *]] {
         def fromSchema[A](schema: Schema[A]): HttpRequest.Writer[Blob, A] = {
-          val maybeRawMediaType = HttpMediaType.fromSchema(schema).map(_.value)
+          val maybeRawMediaType = if (rawStringsAndBlobPayloads) HttpMediaType.fromSchema(schema).map(_.value) else None
           maybeRawMediaType match {
             case Some(mt) =>
               new HttpRequest.Writer[Blob, A] {
