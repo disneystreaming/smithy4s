@@ -16,8 +16,10 @@
 
 package smithy4s
 
-abstract class ValidatedNewtype[A] extends HasId { self =>
-  opaque type Type = A
+abstract class ValidatedNewtype[A] extends AbstractNewtype[A] { self =>
+  opaque type T = A
+
+  type Type = T
 
   def apply(a: A): Either[String, Type]
 
@@ -29,13 +31,6 @@ abstract class ValidatedNewtype[A] extends HasId { self =>
   extension (orig: Type) def value: A = orig
 
   def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  def schema: Schema[Type]
-
-  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
-    def id: ShapeId = self.id
-    def schema: Schema[Type] = self.schema
-  }
 
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)
