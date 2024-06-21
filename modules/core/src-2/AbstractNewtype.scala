@@ -20,8 +20,8 @@ abstract class AbstractNewtype[A] extends HasId { self =>
   // This encoding originally comes from this library:
   // https://github.com/alexknvl/newtypes#what-does-it-do
   type Base
-  trait _Tag extends Any
-  type Type <: Base with _Tag
+  trait __Tag extends Any
+  type Type <: Base with __Tag
 
   @inline final def value(x: Type): A =
     x.asInstanceOf[A]

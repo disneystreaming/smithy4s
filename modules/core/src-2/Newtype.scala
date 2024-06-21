@@ -18,6 +18,9 @@ package smithy4s
 
 abstract class Newtype[A] extends AbstractNewtype[A] { self =>
 
+  // This is no longer used, but kept to make MiMa happy
+  private[smithy4s] trait _Tag extends Any
+
   @inline final def apply(a: A): Type = a.asInstanceOf[Type]
 
   implicit final class Ops(val self: Type) {
