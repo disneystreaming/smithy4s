@@ -14,18 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.internals
+package smithy4s.codegen
 
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
-private[internals] final case class CodegenRecord(
-    namespaces: List[String]
+private[codegen] final case class CodegenRecord(
+    namespaces: List[String],
+    validatedNewtypes: Option[Boolean]
 )
 
-private[internals] object CodegenRecord {
+private[codegen] object CodegenRecord {
 
   val METADATA_KEY = "smithy4sGenerated"
 
@@ -41,11 +43,13 @@ private[internals] object CodegenRecord {
   def fromNode(node: Node): CodegenRecord = {
     val obj = node.expectObjectNode()
     val arrayNode = obj.expectArrayMember("namespaces")
+    val validatedNewtypes =
+      obj.getBooleanMember("validatedNewtypes").toScala.map(_.getValue())
     val namespaces = arrayNode
       .getElements()
       .asScala
       .map(_.expectStringNode().getValue())
       .toList
-    CodegenRecord(namespaces)
+    CodegenRecord(namespaces, validatedNewtypes)
   }
 }

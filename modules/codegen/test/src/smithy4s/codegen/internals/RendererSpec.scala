@@ -654,4 +654,36 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     }
   }
 
+  test("newtype with constraint and validateNewtype annotation") {
+    val smithy = """
+                   |$version: "2"
+                   |
+                   |namespace smithy4s.example
+                   |
+                   |use smithy4s.meta#validateNewtype
+                   |
+                   |@length(min: 1, max: 10)
+                   |@validateNewtype
+                   |string MyValidatedString
+                   |
+                   |structure ValidatedFoo {
+                   |  mvs: MyValidatedString
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains("object MyValidatedString extends ValidatedNewtype[String]")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains(
+          "final case class ValidatedFoo(mvs: Option[MyValidatedString] = None)"
+        )
+      )
+    )
+  }
 }

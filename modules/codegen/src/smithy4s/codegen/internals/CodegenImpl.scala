@@ -217,6 +217,7 @@ private[codegen] object CodegenImpl { self =>
       AwsConstraintsRemover.name :+
       AwsStandardTypesTransformer.name :+
       OpenEnumTransformer.name :+
-      KeepOnlyMarkedShapes.name
+      KeepOnlyMarkedShapes.name :+
+      ValidatedNewtypesTransformer.name
 
 }

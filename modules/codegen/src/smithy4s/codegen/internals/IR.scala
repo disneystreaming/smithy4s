@@ -103,6 +103,14 @@ private[internals] case class TypeAlias(
     hints: List[Hint] = Nil
 ) extends Decl
 
+private[internals] case class ValidatedTypeAlias(
+    shapeId: ShapeId,
+    name: String,
+    tpe: Type,
+    recursive: Boolean = false,
+    hints: List[Hint] = Nil
+) extends Decl
+
 private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
@@ -304,6 +312,8 @@ private[internals] object Type {
       tpe: Type,
       isUnwrapped: Boolean
   ) extends Type
+  case class ValidatedAlias(namespace: String, name: String, tpe: Type)
+      extends Type
   case class PrimitiveType(prim: Primitive) extends Type
   case class ExternalType(
       name: String,
@@ -358,6 +368,7 @@ private[internals] object Hint {
   case object GenerateServiceProduct extends Hint
   case object GenerateOptics extends Hint
   case class ScalaImports(imports: List[String]) extends Hint
+  case object ValidateNewtype extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }
@@ -448,6 +459,8 @@ private[internals] object TypedNode {
           fields.traverse(_.traverse(_.traverse(f))).map(StructureTN(ref, _))
         case NewTypeTN(ref, target) =>
           f(target).map(NewTypeTN(ref, _))
+        case ValidatedNewTypeTN(ref, target) =>
+          f(target).map(ValidatedNewTypeTN(ref, _))
         case AltTN(ref, altName, alt) =>
           alt.traverse(f).map(AltTN(ref, altName, _))
         case MapTN(values) =>
@@ -478,6 +491,8 @@ private[internals] object TypedNode {
       fields: List[(String, FieldTN[A])]
   ) extends TypedNode[A]
   case class NewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
+  case class ValidatedNewTypeTN[A](ref: Type.Ref, target: A)
+      extends TypedNode[A]
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]

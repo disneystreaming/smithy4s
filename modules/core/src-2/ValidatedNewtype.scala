@@ -16,27 +16,26 @@
 
 package smithy4s
 
-abstract class Newtype[A] extends AbstractNewtype[A] { self =>
-  opaque type T = A
+abstract class ValidatedNewtype[A] extends AbstractNewtype[A] { self =>
 
-  type Type = T
+  @inline def apply(a: A): Either[String, Type]
 
-  extension (orig: Type) def value: A = orig
-
-  def apply(a: A): Newtype.this.Type = a
-
-  def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
-    def to(a: A): Type = self.apply(a)
-    def from(t: Type): A = value(t)
+  @inline final def unsafeApply(a: A): Type = apply(a) match {
+    case Right(value) => value
+    case Left(error)  => throw new IllegalArgumentException(error)
   }
+
+  implicit final class Ops(val self: Type) {
+    @inline final def value: A = ValidatedNewtype.this.value(self)
+  }
+
+  def unapply(t: Type): Some[A] = Some(t.value)
 
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)
   }
 }
 
-object Newtype {
+object ValidatedNewtype {
   private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }
