@@ -19,7 +19,10 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
-import scala.util.{Success, Try}
+
+import scala.util.Success
+import scala.util.Try
+
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
@@ -269,7 +272,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
         ) { case (changed, prevResult) =>
           if (changed || prevResult.isEmpty) {
-            val file = (config / smithy4sGeneratedSmithyMetadataFile).value
+            val file =
+              (config / smithy4sGeneratedSmithyMetadataFile).value
             IO.write(
               file,
               s"""$$version: "2"

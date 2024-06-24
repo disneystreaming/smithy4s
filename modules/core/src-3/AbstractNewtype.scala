@@ -16,27 +16,13 @@
 
 package smithy4s
 
-abstract class Newtype[A] extends AbstractNewtype[A] { self =>
-  opaque type T = A
+abstract class AbstractNewtype[A] extends HasId { self =>
+  type Type
 
-  type Type = T
+  def schema: Schema[Type]
 
-  extension (orig: Type) def value: A = orig
-
-  def apply(a: A): Newtype.this.Type = a
-
-  def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
-    def to(a: A): Type = self.apply(a)
-    def from(t: Type): A = value(t)
+  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
+    def id: ShapeId = self.id
+    def schema: Schema[Type] = self.schema
   }
-
-  object hint {
-    def unapply(h: Hints): Option[Type] = h.get(tag)
-  }
-}
-
-object Newtype {
-  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }

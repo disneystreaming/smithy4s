@@ -14,29 +14,25 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package newtypes.validated
 
-abstract class Newtype[A] extends AbstractNewtype[A] { self =>
-  opaque type T = A
+import newtypes.validated._
 
-  type Type = T
+object Main extends App {
+  try {
+    val cityOrError: Either[String, ValidatedCity] = ValidatedCity("test-city")
+    val nameOrError: Either[String, ValidatedName] = ValidatedName("test-name")
+    val country: String = "test-country"
 
-  extension (orig: Type) def value: A = orig
-
-  def apply(a: A): Newtype.this.Type = a
-
-  def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
-    def to(a: A): Type = self.apply(a)
-    def from(t: Type): A = value(t)
+    println(
+      (nameOrError, cityOrError) match {
+        case (Right(name), Right(city)) => s"Success: ${Person(name, Some(city), Some(country))}"
+        case _ => s"Error"
+      }
+    )
+  } catch {
+    case _: java.lang.ExceptionInInitializerError =>
+      println("failed")
+      sys.exit(1)
   }
-
-  object hint {
-    def unapply(h: Hints): Option[Type] = h.get(tag)
-  }
-}
-
-object Newtype {
-  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }

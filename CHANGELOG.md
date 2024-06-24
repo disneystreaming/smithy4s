@@ -5,10 +5,19 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.23
+
+## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
+
+Add support for rendering constrained newtypes over Smithy primitives as validated newtypes. These types now have an `apply` method which returns either an error or a validated value.
+
 # 0.18.22
+
 * Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
 
 # 0.18.21
+
+## Documentation fix
 
 * Addition of a new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
 * Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.

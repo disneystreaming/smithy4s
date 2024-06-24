@@ -12,3 +12,4 @@ smithy4s.meta.GenerateServiceProductTrait$Provider
 smithy4s.meta.GenerateOpticsTrait$Provider
 smithy4s.meta.OnlyTrait$Provider
 smithy4s.meta.ScalaImportsTrait$Provider
+smithy4s.meta.ValidateNewtypeTrait$Provider

@@ -14,29 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.codegen.internals
 
-abstract class Newtype[A] extends AbstractNewtype[A] { self =>
-  opaque type T = A
-
-  type Type = T
-
-  extension (orig: Type) def value: A = orig
-
-  def apply(a: A): Newtype.this.Type = a
-
-  def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
-    def to(a: A): Type = self.apply(a)
-    def from(t: Type): A = value(t)
-  }
-
-  object hint {
-    def unapply(h: Hints): Option[Type] = h.get(tag)
-  }
-}
-
-object Newtype {
-  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
-}
+private[internals] final case class GeneratedNamespace(
+    namespace: String,
+    validatedNewtypes: Boolean
+)
