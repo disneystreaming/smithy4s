@@ -31,7 +31,6 @@ string Name
 Below is the generated scala class that Smithy4s will generate:
 
 ```scala mdoc:compile-only
-
 import smithy4s._
 import smithy4s.schema.Schema.string
 
