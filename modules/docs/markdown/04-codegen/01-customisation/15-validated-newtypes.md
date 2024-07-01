@@ -3,8 +3,8 @@ sidebar_label: Validated Newtypes
 title: Validated Newtypes
 ---
 
-As of version `0.19.x` Smithy4s has the ability to render constrained newtypes over Smithy primitives as
-"validated" classes in the code it generates. In practice this means that a newtype will now have an 
+As of version `0.18.23` and above, Smithy4s has the ability to render constrained newtypes over Smithy primitives as
+"validated" classes in the code it generates. In practice, this means that a newtype will now have an 
 `apply` method that returns either a validated value or an error.
 
 The way to utilize this feature is through your Smithy specifications by adding a file with the following 
