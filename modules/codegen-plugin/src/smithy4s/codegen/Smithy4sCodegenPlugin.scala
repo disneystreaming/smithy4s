@@ -256,7 +256,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     },
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory = (config / streams).value.cacheStoreFactory
-      val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
+      val cached = Tracked.inputChanged[String, Seq[File]](
         cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
       ) { case (changed, (wildcardArg)) =>
         val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
