@@ -25,6 +25,8 @@ Previously they'd be named after the **member target**, now they will use the na
 
 There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
 
+## Remove `smithy4sRenderOptics` setting from SBT and Mill plugins  in [#1566](https://github.com/disneystreaming/smithy4s/pull/1566)
+
 # 0.18.19 - binary-breaking changes in `core`
 
 **WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
