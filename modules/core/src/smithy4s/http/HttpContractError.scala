@@ -18,11 +18,10 @@ package smithy4s
 package http
 
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.PayloadError
-import smithy4s.codecs.PayloadPath
+import smithy4s.codecs.{PayloadError, PayloadPath}
 import smithy4s.kinds.PolyFunction
-import smithy4s.schema.Schema._
-import smithy4s.schema._
+import smithy4s.schema.*
+import smithy4s.schema.Schema.*
 
 sealed trait HttpContractError
     extends Throwable
@@ -43,10 +42,11 @@ object HttpContractError {
   val schema: Schema[HttpContractError] = {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
     val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
-    val upstreamServiceError = UpstreamServiceError.schema.oneOf[HttpContractError]("upstreamServiceError")
+    val upstreamServiceError = UpstreamServiceError.schema
+      .oneOf[HttpContractError]("upstreamServiceError")
     union(payload, metadata, upstreamServiceError) {
-      case _: HttpPayloadError => 0
-      case _: MetadataError    => 1
+      case _: HttpPayloadError     => 0
+      case _: MetadataError        => 1
       case _: UpstreamServiceError => 2
     }
   }
@@ -73,7 +73,7 @@ object HttpPayloadError {
 }
 
 sealed trait MetadataError extends HttpContractError {
-  import MetadataError._
+  import MetadataError.*
 
   override def getMessage(): String = this match {
     case NotFound(field, location) =>
@@ -182,7 +182,6 @@ object MetadataError {
 case class UpstreamServiceError(message: String) extends HttpContractError {
   override def toString: String =
     s"UpstreamServiceError(message=$message)"
-
 
   override def getMessage: String = message
 }

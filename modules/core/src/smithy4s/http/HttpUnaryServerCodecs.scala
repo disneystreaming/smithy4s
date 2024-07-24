@@ -18,13 +18,8 @@ package smithy4s
 package http
 
 import smithy4s.capability.MonadThrowLike
-import smithy4s.codecs.BlobDecoder
-import smithy4s.codecs.BlobEncoder
-import smithy4s.codecs.Decoder
-import smithy4s.codecs.PayloadError
-import smithy4s.codecs.Writer
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.OperationSchema
+import smithy4s.codecs.*
+import smithy4s.schema.{CachedSchemaCompiler, OperationSchema}
 import smithy4s.server.UnaryServerCodecs
 
 // scalafmt: {maxColumn = 120}
@@ -198,7 +193,7 @@ object HttpUnaryServerCodecs {
           def httpContractErrorEncoder(e: HttpContractError) = {
             val statusCode = e match {
               case _: UpstreamServiceError => 500
-              case _ => 400
+              case _                       => 400
             }
             F.map(base)(httpContractErrorWriters.write(_, e).withStatusCode(statusCode))
           }

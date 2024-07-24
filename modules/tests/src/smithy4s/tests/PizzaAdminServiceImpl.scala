@@ -16,16 +16,15 @@
 
 package smithy4s.tests
 
-import cats.effect._
-import cats.implicits._
+import cats.effect.*
+import cats.effect.std.UUIDGen
+import cats.implicits.*
 import smithy4s.Timestamp
-import smithy4s.example._
+import smithy4s.example.*
 import smithy4s.http.UpstreamServiceError
+import smithy4s.tests.PizzaAdminServiceImpl.*
 
 import java.util.UUID
-
-import PizzaAdminServiceImpl._
-import cats.effect.std.UUIDGen
 
 object PizzaAdminServiceImpl {
   case class Item(food: Food, price: Float, addedAt: Timestamp)
@@ -52,7 +51,9 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
   ): IO[AddMenuItemResult] =
     for {
       _ <- IO.raiseError(Boom).whenA(restaurant == "boom")
-      _ <- IO.raiseError(UpstreamServiceError("Upstream service failure")).whenA(restaurant == "upstreamServiceError")
+      _ <- IO
+        .raiseError(UpstreamServiceError("Upstream service failure"))
+        .whenA(restaurant == "upstreamServiceError")
       _ <- IO
         .raiseError(
           PriceError(
