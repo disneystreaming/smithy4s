@@ -30,6 +30,7 @@ import smithy4s.http.HttpPayloadError
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
+import smithy4s.http.UpstreamServiceError
 import weaver._
 import cats.Show
 import org.http4s.EntityDecoder
@@ -463,6 +464,33 @@ abstract class PizzaSpec
       }
   }
 
+  routerTest("Upstream service error returns 500") { (client, uri, log) =>
+    val badMenuItem = Json.obj(
+      "food" -> pizzaItem,
+      "price" -> Json.fromFloatOrNull(9.0f)
+    )
+
+    for {
+      res <- client.send[Json](
+        POST(badMenuItem, uri / "restaurant" / "upstreamServiceError" / "menu" / "item"),
+        log
+      )
+    } yield {
+      val (code, headers, body) = res
+      val expectedBody =
+        Json.obj(
+          "upstreamServiceError" -> Json.obj(
+            "message" -> Json.fromString("Upstream service failure")
+          )
+        )
+      val discriminator = headers.get("X-Error-Type").flatMap(_.headOption)
+
+      expect(code == 500) &&
+        expect(body == expectedBody) &&
+        expect(discriminator == None)
+    }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(
@@ -476,6 +504,8 @@ abstract class PizzaSpec
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")
+        case UpstreamServiceError(message) =>
+          UpstreamServiceError(message)
         case t: Throwable if !t.isInstanceOf[HttpContractError] =>
           // This pattern allows checking that errors specified in specs
           // do not get intercepted by mapErrors/flatMapErrors methods.

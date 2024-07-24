@@ -195,8 +195,14 @@ object HttpUnaryServerCodecs {
 
           def encodeOutput(o: O) = F.map(base)(outputW.write(_, o))
           def encodeError(e: E) = F.map(base)(errorW.write(_, e))
-          def httpContractErrorEncoder(e: HttpContractError) =
-            F.map(base)(httpContractErrorWriters.write(_, e).withStatusCode(400))
+          def httpContractErrorEncoder(e: HttpContractError) = {
+            val statusCode = e match {
+              case _: UpstreamServiceError => 500
+              case _ => 400
+            }
+            F.map(base)(httpContractErrorWriters.write(_, e).withStatusCode(statusCode))
+          }
+
           def throwableEncoders(throwable: Throwable): F[HttpResponse[Blob]] =
             throwable match {
               case e: HttpContractError => httpContractErrorEncoder(e)
