@@ -43,9 +43,11 @@ object HttpContractError {
   val schema: Schema[HttpContractError] = {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
     val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
-    union(payload, metadata) {
+    val upstreamServiceError = UpstreamServiceError.schema.oneOf[HttpContractError]("upstreamServiceError")
+    union(payload, metadata, upstreamServiceError) {
       case _: HttpPayloadError => 0
       case _: MetadataError    => 1
+      case _: UpstreamServiceError => 2
     }
   }
 
@@ -175,4 +177,19 @@ object MetadataError {
     }
   }
 
+}
+
+case class UpstreamServiceError(message: String) extends HttpContractError {
+  override def toString: String =
+    s"UpstreamServiceError(message=$message)"
+
+
+  override def getMessage: String = message
+}
+
+object UpstreamServiceError {
+  val schema: Schema[UpstreamServiceError] = {
+    val message = string.required[UpstreamServiceError]("message", _.message)
+    struct(message)(UpstreamServiceError.apply)
+  }
 }
