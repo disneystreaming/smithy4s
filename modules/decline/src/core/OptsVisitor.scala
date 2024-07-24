@@ -89,17 +89,17 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       fieldName: CoreHints.FieldName,
       tag: EnumTag[E]
   ): Argument[E] = {
-    val ordinalMap: Map[Int, E] = values.map(v => v.intValue -> v.value).toMap
+    val stringMap: Map[Int, E] = values.map(v => v.intValue -> v.value).toMap
     val nameMap: Map[String, E] =
       values.map(v => v.stringValue -> v.value).toMap
     val extract: String => Option[E] = tag match {
-      case EnumTag.OpenIntEnum(unknown) =>
-        _.toIntOption.map(i => ordinalMap.getOrElse(i, unknown(i)))
-      case EnumTag.ClosedIntEnum =>
-        _.toIntOption.flatMap(ordinalMap.get)
-      case EnumTag.OpenStringEnum(unknown) =>
+      case EnumTag.IntEnum(_, Some(unknown)) =>
+        _.toIntOption.map(i => stringMap.getOrElse(i, unknown(i)))
+      case EnumTag.IntEnum(_, None) =>
+        _.toIntOption.flatMap(stringMap.get)
+      case EnumTag.StringEnum(_, Some(unknown)) =>
         str => Some(nameMap.getOrElse(str, unknown(str)))
-      case EnumTag.ClosedStringEnum =>
+      case EnumTag.StringEnum(_, None) =>
         nameMap.get(_)
     }
     Argument.from("enum") { name =>
@@ -264,8 +264,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Opts[E] = {
     implicit val arg: Argument[E] =
       enumArg(values, FieldName.require(hints), tag)

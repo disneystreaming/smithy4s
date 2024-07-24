@@ -16,9 +16,9 @@
 
 package smithy4s.codecs
 
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.kinds.PolyFunction
 import smithy4s.capability.EncoderK
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * An abstraction that codifies the notion of transforming a piece of data into some output.
@@ -101,8 +101,9 @@ object Encoder {
     */
   def static[Out](out: Out): Encoder[Out, Any] = _ => out
 
-  implicit def encoderEncoderK[In, Out]: EncoderK[Encoder[Out, *], Out] =
-    new EncoderK[Encoder[Out, *], Out] {
+  implicit def encoderEncoderK[In, Out]: EncoderK[Encoder[Out, *]] =
+    new EncoderK[Encoder[Out, *]] {
+      type Result = Out
       def apply[A](fa: Encoder[Out, A], a: A): Out = fa.encode(a)
       def absorb[A](f: A => Out): Encoder[Out, A] = f(_)
     }

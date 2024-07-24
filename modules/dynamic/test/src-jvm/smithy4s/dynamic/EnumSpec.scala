@@ -87,9 +87,9 @@ class EnumSpec extends DummyIO.Suite {
 
   val compiled = Utils.compile(model)
 
-  def assertEnum(
+  def assertEnum[A](
       shapeId: ShapeId,
-      expectedValues: List[EnumValue[_]]
+      expectedValues: List[EnumValue[A]]
   )(implicit
       loc: Location
   ) = {
@@ -116,14 +116,14 @@ class EnumSpec extends DummyIO.Suite {
         EnumValue(
           stringValue = "Ice",
           intValue = 0,
-          value = 0,
+          value = "Ice",
           name = "ICE",
           hints = Hints.empty
         ),
         EnumValue(
           stringValue = "Fire",
           intValue = 1,
-          value = 1,
+          value = "Fire",
           name = "FIRE",
           hints = Hints.empty
         )
@@ -138,14 +138,14 @@ class EnumSpec extends DummyIO.Suite {
         EnumValue(
           stringValue = "Vanilla",
           intValue = 0,
-          value = 0,
+          value = "Vanilla",
           name = "VANILLA",
           hints = Hints.empty
         ),
         EnumValue(
           stringValue = "Ice",
           intValue = 1,
-          value = 1,
+          value = "Ice",
           name = "ICE",
           hints = Hints.empty
         )
@@ -160,14 +160,14 @@ class EnumSpec extends DummyIO.Suite {
         EnumValue(
           stringValue = "Ice",
           intValue = 0,
-          value = 0,
+          value = "Ice",
           name = "ICE",
           hints = Hints.empty
         ),
         EnumValue(
           stringValue = "Fire",
           intValue = 1,
-          value = 1,
+          value = "Fire",
           name = "FIRE",
           hints = Hints.empty
         )
@@ -204,11 +204,11 @@ class EnumSpec extends DummyIO.Suite {
           index
             .getSchema(ShapeId("example", "Smithy20Enum"))
             .getOrElse(fail("Error: shape missing"))
-            .asInstanceOf[Schema[Int]]
+            .asInstanceOf[Schema[String]]
         )
-        .encode(1)
+        .encode("Ice")
 
-      assertEquals(actual, Document.DString("Fire"))
+      assertEquals(actual, Document.DString("Ice"))
     }
   }
 
@@ -236,7 +236,7 @@ class EnumSpec extends DummyIO.Suite {
         EnumValue(
           stringValue = "ICE",
           intValue = 0,
-          value = 0,
+          value = "ICE",
           name = "ICE",
           hints = Hints(
             ShapeId("smithy.api", "deprecated") -> Document.obj()
@@ -245,7 +245,7 @@ class EnumSpec extends DummyIO.Suite {
         EnumValue(
           stringValue = "FIRE",
           intValue = 1,
-          value = 1,
+          value = "FIRE",
           name = "FIRE",
           hints = Hints.empty
         )
@@ -338,8 +338,7 @@ class EnumSpec extends DummyIO.Suite {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): ConstList[E] = values.map(_.name)
   }
 

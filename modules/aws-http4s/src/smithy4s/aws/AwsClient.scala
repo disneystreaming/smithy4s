@@ -74,7 +74,7 @@ object AwsClient {
           val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
           val baseUri = HttpUri(
             scheme = HttpUriScheme.Https,
-            host = s"$endpointPrefix.$region.amazonaws.com",
+            host = Some(s"$endpointPrefix.$region.amazonaws.com"),
             port = None,
             path = IndexedSeq.empty,
             queryParams = Map.empty,

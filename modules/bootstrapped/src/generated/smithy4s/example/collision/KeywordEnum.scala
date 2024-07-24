@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class KeywordEnum(_value: java.lang.String, _name: java.lang.String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class KeywordEnum(_name: java.lang.String, _stringValue: java.lang.String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = KeywordEnum
-  override val value: java.lang.String = _value
   override val name: java.lang.String = _name
+  override val stringValue: java.lang.String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = KeywordEnum
@@ -23,12 +22,11 @@ object KeywordEnum extends Enumeration[KeywordEnum] with ShapeTag.Companion[Keyw
   val hints: Hints = Hints.empty
 
   case object _implicit extends KeywordEnum("implicit", "implicit", 0, Hints.empty)
-  case object _package extends KeywordEnum("class", "package", 1, Hints.empty)
+  case object _package extends KeywordEnum("package", "class", 1, Hints.empty)
 
   val values: List[KeywordEnum] = List(
     _implicit,
     _package,
   )
-  val tag: EnumTag[KeywordEnum] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[KeywordEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[KeywordEnum] = stringEnumeration(values).withId(id).addHints(hints)
 }

@@ -17,33 +17,33 @@
 package smithy4s
 package internals
 
+import alloy.Discriminated
+import alloy.Untagged
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import alloy.Discriminated
 import smithy4s.capability.EncoderK
+import smithy4s.schema.Primitive.PBigDecimal
+import smithy4s.schema.Primitive.PBigInt
+import smithy4s.schema.Primitive.PBlob
+import smithy4s.schema.Primitive.PBoolean
+import smithy4s.schema.Primitive.PByte
+import smithy4s.schema.Primitive.PDocument
+import smithy4s.schema.Primitive.PDouble
+import smithy4s.schema.Primitive.PFloat
+import smithy4s.schema.Primitive.PInt
+import smithy4s.schema.Primitive.PLong
+import smithy4s.schema.Primitive.PShort
+import smithy4s.schema.Primitive.PString
+import smithy4s.schema.Primitive.PTimestamp
+import smithy4s.schema.Primitive.PUUID
 import smithy4s.schema._
 
 import scala.collection.mutable.Builder
 
 import Document._
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PUUID
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PString
-import alloy.Untagged
 
 trait DocumentEncoder[A] { self =>
 
@@ -62,8 +62,9 @@ trait DocumentEncoder[A] { self =>
 
 object DocumentEncoder {
 
-  implicit val encoderKInstance: EncoderK[DocumentEncoder, Document] =
-    new EncoderK[DocumentEncoder, Document] {
+  implicit val encoderKInstance: EncoderK[DocumentEncoder] =
+    new EncoderK[DocumentEncoder] {
+      type Result = Document
       def apply[A](fa: DocumentEncoder[A], a: A): Document = fa.apply(a)
       def absorb[A](f: A => Document): DocumentEncoder[A] =
         new DocumentEncoder[A] {
@@ -171,14 +172,13 @@ class DocumentEncoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): DocumentEncoder[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        from(e => Document.fromInt(total(e).intValue))
-      case _ =>
-        from(e => DString(total(e).stringValue))
+      case EnumTag.IntEnum(value, _) =>
+        from(e => Document.fromInt(value(e)))
+      case EnumTag.StringEnum(value, _) =>
+        from(e => DString(value(e)))
     }
 
   override def struct[S](

@@ -18,6 +18,7 @@ package smithy4s.schema
 
 import smithy4s.PartialData
 import smithy4s.kinds.PolyFunction
+
 import Schema._
 
 /**

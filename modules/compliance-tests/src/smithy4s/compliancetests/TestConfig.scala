@@ -37,11 +37,11 @@ object TestConfig {
   val serverReq = TestConfig(AppliesTo.SERVER, TestType.Request)
   val serverRes = TestConfig(AppliesTo.SERVER, TestType.Response)
   sealed abstract class TestType(
-      val value: String,
+      val stringValue: String,
       val intValue: Int
   ) extends Enumeration.Value {
     type EnumType = TestType
-    def name: String = value
+    def name: String = stringValue
     def hints: Hints = Hints.empty
     def enumeration: Enumeration[EnumType] = TestType
   }

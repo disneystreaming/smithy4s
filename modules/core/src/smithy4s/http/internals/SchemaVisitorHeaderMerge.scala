@@ -17,11 +17,12 @@
 package smithy4s
 package http.internals
 
-import smithy4s.schema._
-import smithy4s.{Hints, ShapeId}
 import smithy4s.Bijection
+import smithy4s.Hints
 import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.schema.Primitive.PString
+import smithy4s.schema._
 
 /**
   * A schema visitor that allows to merge several values into a single, comma-separated header value.
@@ -64,11 +65,10 @@ object SchemaVisitorHeaderMerge
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): AwsMergeableHeader[E] = tag match {
-    case EnumTag.IntEnum() => Some((e: E) => total(e).intValue.toString())
-    case _                 => Some((e: E) => total(e).stringValue)
+    case EnumTag.IntEnum(value, _)    => Some(value(_).toString())
+    case EnumTag.StringEnum(value, _) => Some(value(_))
   }
 
 }

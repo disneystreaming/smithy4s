@@ -17,9 +17,10 @@
 package smithy4s
 package codecs
 
-import schema._
-import smithy4s.schema.Primitive._
 import smithy4s.capability.instances.either._
+import smithy4s.schema.Primitive._
+
+import schema._
 
 object StringAndBlobCodecs {
 
@@ -62,11 +63,10 @@ object StringAndBlobCodecs {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): MaybeBlobDecoder[E] = {
       tag match {
-        case EnumTag.ClosedStringEnum =>
+        case EnumTag.StringEnum(_, None) =>
           Some(new BlobDecoder[E] {
             def decode(blob: Blob): Either[PayloadError, E] = {
               val str = blob.toUTF8String
@@ -83,7 +83,7 @@ object StringAndBlobCodecs {
               }
             }
           })
-        case EnumTag.OpenStringEnum(processUnknown) =>
+        case EnumTag.StringEnum(_, Some(processUnknown)) =>
           Some(new BlobDecoder[E] {
             def decode(blob: Blob): Either[PayloadError, E] = {
               val str = blob.toUTF8String
@@ -155,14 +155,11 @@ object StringAndBlobCodecs {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): MaybeBlobEncoder[E] = {
       tag match {
-        case EnumTag.ClosedStringEnum =>
-          Some(stringEncoder.contramap(total(_: E).stringValue))
-        case EnumTag.OpenStringEnum(_) =>
-          Some(stringEncoder.contramap(total(_: E).stringValue))
+        case EnumTag.StringEnum(value, _) =>
+          Some(stringEncoder.contramap(value))
         case _ => None
       }
     }

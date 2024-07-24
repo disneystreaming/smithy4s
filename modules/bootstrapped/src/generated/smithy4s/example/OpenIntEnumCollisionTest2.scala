@@ -6,13 +6,12 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.optics.Prism
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.openIntEnumeration
 
-sealed abstract class OpenIntEnumCollisionTest2(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class OpenIntEnumCollisionTest2(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OpenIntEnumCollisionTest2
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = OpenIntEnumCollisionTest2
@@ -44,6 +43,5 @@ object OpenIntEnumCollisionTest2 extends Enumeration[OpenIntEnumCollisionTest2] 
     TWO,
     unknown,
   )
-  val tag: EnumTag[OpenIntEnumCollisionTest2] = EnumTag.OpenIntEnum($unknown)
-  implicit val schema: Schema[OpenIntEnumCollisionTest2] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OpenIntEnumCollisionTest2] = openIntEnumeration(values, $unknown).withId(id).addHints(hints)
 }

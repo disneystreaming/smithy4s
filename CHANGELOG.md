@@ -5,26 +5,25 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.23
-
-## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
-
-Add support for rendering constrained newtypes over Smithy primitives as validated newtypes. These types now have an `apply` method which returns either an error or a validated value.
-
-# 0.18.22
-
-* Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
-
-# 0.18.21
+# 0.19.0
 
 ## Documentation fix
 
-* Addition of a new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
-* Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.
+Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`
 
-# 0.18.20
+## Reworked enumerations / the EnumerationSchema to eliminate a OOM pitfall and improve ergonomics of SchemaVisitor
 
-* Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
+## Remove localhost from default URI in [#1341](https://github.com/disneystreaming/smithy4s/pull/1341)
+
+Previously, URIs constructed with a base URI of `/` would have `localhost` as the host. In some cases, that may not be desirable, such as in the case of frontend clients that want to reuse the window's origin. This is now fixed: hostnames are optional in the smithy4s URI model, and default to `None`.
+
+## Smart constructors for `@adt` union members have been renamed in [#1370](https://github.com/disneystreaming/smithy4s/pull/1370)
+
+Previously they'd be named after the **member target**, now they will use the name of the member itself (same as in the case of non-ADT unions).
+
+## Made `EncoderK`'s second type parameter a type member in [#1519](https://github.com/disneystreaming/smithy4s/pull/1519)
+
+There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
 
 # 0.18.19 - binary-breaking changes in `core`
 

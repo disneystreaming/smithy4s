@@ -16,11 +16,14 @@
 
 package smithy4s.internals
 
-import smithy4s.schema._
+import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.http.internals.PathEncode
 import smithy4s.http.internals.PathEncode.MaybePathEncode
-import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.schema._
 
 private[internals] final class SchemaVisitorPatternEncoder(
     segments: List[PatternSegment]
@@ -45,14 +48,13 @@ private[internals] final class SchemaVisitorPatternEncoder(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): MaybePathEncode[E] =
     tag match {
-      case EnumTag.IntEnum() =>
-        PathEncode.from(e => total(e).intValue.toString)
-      case _ =>
-        PathEncode.from(e => total(e).stringValue)
+      case EnumTag.IntEnum(value, _) =>
+        PathEncode.from(value(_).toString)
+      case EnumTag.StringEnum(value, _) =>
+        PathEncode.from(value(_))
     }
 
   override def struct[S](

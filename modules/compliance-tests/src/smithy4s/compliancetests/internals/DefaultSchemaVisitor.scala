@@ -69,8 +69,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Id[E] = values.head.value
 
   override def struct[S](

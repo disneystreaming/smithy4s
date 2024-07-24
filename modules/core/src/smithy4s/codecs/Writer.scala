@@ -16,8 +16,8 @@
 
 package smithy4s.codecs
 
-import smithy4s.schema._
 import smithy4s.capability.EncoderK
+import smithy4s.schema._
 
 /**
   * An abstraction that codifies the notion of modifying a message with some additional information.
@@ -110,8 +110,9 @@ object Writer {
   def noop[Message]: Writer[Message, Any] = (message, _) => message
 
   // format: off
-  implicit def writerEncoderK[Message]: EncoderK[Writer[Message, *], Message => Message] =
-    new EncoderK[Writer[Message, *], Message => Message] {
+  implicit def writerEncoderK[Message]: EncoderK[Writer[Message, *]] =
+    new EncoderK[Writer[Message, *]] {
+      type Result = Message => Message
       def apply[A](fa: Writer[Message, A], a: A): Message => Message = fa.write(_, a)
       def absorb[A](f: A => (Message => Message)): Writer[Message, A] = new Writer[Message, A]{
         def write(message: Message, a: A): Message = f(a)(message)

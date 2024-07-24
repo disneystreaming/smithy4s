@@ -30,10 +30,8 @@ import smithy4s.Document.DObject
 import smithy4s.Document.DString
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
-import smithy4s.schema.EnumTag.ClosedIntEnum
-import smithy4s.schema.EnumTag.ClosedStringEnum
-import smithy4s.schema.EnumTag.OpenIntEnum
-import smithy4s.schema.EnumTag.OpenStringEnum
+import smithy4s.schema.EnumTag.IntEnum
+import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema._
 import smithy4s.{Schema => _, _}
@@ -197,10 +195,9 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): TaggedCodec[E] = tag match {
-    case ClosedIntEnum | ClosedStringEnum =>
+    case IntEnum(_, None) | StringEnum(_, None) =>
       val allIndexed = values.forall(_.hints.has(ProtoIndex))
       val noneIndexed = values.forall(!_.hints.has(ProtoIndex))
       assert(
@@ -214,13 +211,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       val default = indexedValues.find(_._1 == 0).get._2
       val rest = indexedValues.filterNot(_._1 == 0)
       TaggedCodec.ClosedEnumerationCodec(default, rest)
-    case OpenIntEnum(unknown) =>
-      def toInt(e: E) = total(e).intValue
+    case IntEnum(total, Some(unknown)) =>
+      def toInt(e: E) = total(e)
       val intMap = values.map(v => (v.intValue, v.value)).toMap
       def fromInt(i: Int) = intMap.getOrElse(i, unknown(i))
       TaggedCodec.ScalarFieldCodec(ScalarCodec.IntCodec).imap(fromInt, toInt)
-    case OpenStringEnum(unknown) =>
-      def toString(e: E) = total(e).stringValue
+    case StringEnum(total, Some(unknown)) =>
+      def toString(e: E) = total(e)
       val stringMap = values.map(v => (v.stringValue, v.value)).toMap
       def fromString(s: String) = stringMap.getOrElse(s, unknown(s))
       TaggedCodec.NonScalarPrimitiveFieldCodec(NonScalarPrimitiveCodec.StringCodec).imap(fromString, toString)

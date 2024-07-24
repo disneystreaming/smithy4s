@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+
 import kinds._
 
 /**
@@ -75,8 +76,8 @@ object Alt {
     */
   trait Dispatcher[U] {
 
-    def compile[G[_], Result](precompile: Precompiler[G])(implicit
-        encoderK: EncoderK[G, Result]
+    def compile[G[_]](precompile: Precompiler[G])(implicit
+        encoderK: EncoderK[G]
     ): G[U]
 
     def ordinal(u: U): Int
@@ -100,8 +101,8 @@ object Alt {
         alts: Vector[Alt[U, _]],
         ord: U => Int
     ) extends Dispatcher[U] {
-      def compile[F[_], Result](precompile: Precompiler[F])(implicit
-          encoderK: EncoderK[F, Result]
+      def compile[F[_]](precompile: Precompiler[F])(implicit
+          encoderK: EncoderK[F]
       ): F[U] = {
         val compiler = precompile.toPolyFunction[U]
         val builder = scala.collection.mutable.ArrayBuffer[Any]()

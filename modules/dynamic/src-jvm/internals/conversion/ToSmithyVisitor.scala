@@ -168,11 +168,10 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
       shapeId: ScalaShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): ShapeRecorder[ShapeId] = {
     val shape = tag match {
-      case EnumTag.IntEnum() =>
+      case EnumTag.IntEnum(_, _) =>
         val builder = IntEnumShape.builder().id(shapeId.toSmithy)
         values.foreach { value =>
           builder.addMember(

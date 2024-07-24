@@ -61,8 +61,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Option[E] = None
 
   def struct[S](

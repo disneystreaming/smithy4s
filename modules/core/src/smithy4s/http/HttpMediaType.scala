@@ -17,8 +17,8 @@
 package smithy4s
 package http
 
-import smithy4s.schema._
 import smithy4s.Newtype
+import smithy4s.schema._
 
 object HttpMediaType extends Newtype[String] {
 
@@ -65,8 +65,7 @@ object HttpMediaType extends Newtype[String] {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): Option[String] = Some(stringMediaType(hints))
 
     override def biject[A, B](

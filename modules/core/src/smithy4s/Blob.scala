@@ -16,11 +16,11 @@
 
 package smithy4s
 
+import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.util.Base64
 import scala.collection.immutable.Queue
-import java.nio.charset.StandardCharsets
-import java.io.OutputStream
 
 // scalafmt: {maxColumn = 120}
 /**

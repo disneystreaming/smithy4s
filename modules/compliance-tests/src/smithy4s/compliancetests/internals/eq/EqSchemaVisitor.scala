@@ -62,12 +62,11 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Eq[E] =
-    Eq.by { x =>
-      val enumX = total(x)
-      (enumX.intValue, enumX.stringValue)
+    tag match {
+      case EnumTag.StringEnum(value, _) => Eq.by(value)
+      case EnumTag.IntEnum(value, _)    => Eq.by(value)
     }
 
   override def struct[S](
@@ -94,7 +93,8 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     }
 
     // The encoded form that Eq works against is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltEq, U => Boolean] {
+    implicit val encoderKInstance: EncoderK[AltEq] = new EncoderK[AltEq] {
+      type Result = U => Boolean
       def apply[A](fa: AltEq[A], a: A): U => Boolean = { (u: U) =>
         fa.eqv(a, u)
       }

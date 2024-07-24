@@ -79,8 +79,11 @@ final class SchemaVisitorShow(
         (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"
       }
     }
-    implicit val encoderKShow: EncoderK[Show, String] =
-      new EncoderK[Show, String] {
+
+    implicit val encoderKShow: EncoderK[Show] =
+      new EncoderK[Show] {
+        type Result = String
+
         override def apply[A](fa: Show[A], a: A): String = fa.show(a)
 
         override def absorb[A](f: A => String): Show[A] = Show.show(f)
@@ -117,11 +120,12 @@ final class SchemaVisitorShow(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
-  ): Show[E] = Show.show { e =>
-    total(e).stringValue
-  }
+      values: List[EnumValue[E]]
+  ): Show[E] =
+    tag match {
+      case EnumTag.StringEnum(value, _) => Show.show(value)
+      case EnumTag.IntEnum(value, _)    => Show.show(value(_).toString)
+    }
 
   override def struct[S](
       shapeId: ShapeId,

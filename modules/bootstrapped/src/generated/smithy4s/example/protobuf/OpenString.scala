@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.openStringEnumeration
 
-sealed abstract class OpenString(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class OpenString(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OpenString
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = OpenString
@@ -26,7 +25,7 @@ object OpenString extends Enumeration[OpenString] with ShapeTag.Companion[OpenSt
 
   case object FOO extends OpenString("FOO", "FOO", 0, Hints.empty)
   case object BAR extends OpenString("BAR", "BAR", 1, Hints.empty)
-  final case class $Unknown(str: String) extends OpenString(str, "$Unknown", -1, Hints.empty)
+  final case class $Unknown(str: String) extends OpenString("$Unknown", str, -1, Hints.empty)
 
   val $unknown: String => OpenString = $Unknown(_)
 
@@ -34,6 +33,5 @@ object OpenString extends Enumeration[OpenString] with ShapeTag.Companion[OpenSt
     FOO,
     BAR,
   )
-  val tag: EnumTag[OpenString] = EnumTag.OpenStringEnum($unknown)
-  implicit val schema: Schema[OpenString] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OpenString] = openStringEnumeration(values, $unknown).withId(id).addHints(hints)
 }

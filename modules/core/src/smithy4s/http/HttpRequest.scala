@@ -16,11 +16,11 @@
 
 package smithy4s.http
 
-import smithy4s.kinds._
 import smithy4s.capability.Covariant
-import smithy4s.schema._
-import smithy4s.codecs.{Decoder => GenericDecoder}
 import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs.{Decoder => GenericDecoder}
+import smithy4s.kinds._
+import smithy4s.schema._
 
 final case class HttpRequest[+A](
     method: HttpMethod,
@@ -106,10 +106,10 @@ object HttpRequest {
                 request: HttpRequest[Body],
                 input: I
             ): HttpRequest[Body] = {
-              val hostPrefix = prefixEncoder.write(List.empty, input)
+              val hostPrefix = prefixEncoder.write(List.empty, input).mkString
               val oldUri = request.uri
-              val newUri =
-                oldUri.copy(host = s"${hostPrefix.mkString}${oldUri.host}")
+              val prefixedHost = oldUri.host.map(host => s"$hostPrefix$host")
+              val newUri = oldUri.copy(host = prefixedHost)
               request.copy(uri = newUri)
             }
           }

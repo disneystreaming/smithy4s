@@ -24,7 +24,8 @@ package smithy4s.capability
   * to pre-compile codecs for each union member, and dispatch union instances
   * to a specific codec.
   */
-trait EncoderK[F[_], Result] extends Contravariant[F] {
+trait EncoderK[F[_]] extends Contravariant[F] {
+  type Result
   def apply[A](fa: F[A], a: A): Result
   def absorb[A](f: A => Result): F[A]
   def contramap[A, B](fa: F[A])(f: B => A): F[B] =
@@ -32,8 +33,9 @@ trait EncoderK[F[_], Result] extends Contravariant[F] {
 }
 
 object EncoderK {
-  implicit def encoderKForFunction[B]: EncoderK[* => B, B] =
-    new EncoderK[* => B, B] {
+  implicit def encoderKForFunction[B]: EncoderK[* => B] =
+    new EncoderK[* => B] {
+      type Result = B
       def apply[A](fa: A => B, a: A): B = fa(a)
       def absorb[A](f: A => B): A => B = f
     }

@@ -218,7 +218,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     )
     assert(
       definition.contains(
-        """case object TAIL extends Coin("t:a$i\l", "TAIL", 1, Hints.empty)"""
+        """case object TAIL extends Coin("TAIL", "t:a$i\l", 1, Hints.empty)"""
       ),
       "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
     )

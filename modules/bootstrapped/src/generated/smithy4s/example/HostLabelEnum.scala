@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.stringEnumeration
 
-sealed abstract class HostLabelEnum(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class HostLabelEnum(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = HostLabelEnum
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = HostLabelEnum
@@ -29,6 +28,5 @@ object HostLabelEnum extends Enumeration[HostLabelEnum] with ShapeTag.Companion[
     THING1,
     THING2,
   )
-  val tag: EnumTag[HostLabelEnum] = EnumTag.ClosedStringEnum
-  implicit val schema: Schema[HostLabelEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[HostLabelEnum] = stringEnumeration(values).withId(id).addHints(hints)
 }

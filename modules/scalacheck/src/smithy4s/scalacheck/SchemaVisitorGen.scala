@@ -85,8 +85,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Gen[E] =
     Gen.oneOf(values.map(_.value))
   def struct[S](

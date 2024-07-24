@@ -5,13 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.EnumTag
-import smithy4s.schema.Schema.enumeration
+import smithy4s.schema.Schema.intEnumeration
 
-sealed abstract class OneTwo(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+sealed abstract class OneTwo(_name: String, _stringValue: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = OneTwo
-  override val value: String = _value
   override val name: String = _name
+  override val stringValue: String = _stringValue
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
   override def enumeration: Enumeration[EnumType] = OneTwo
@@ -29,6 +28,5 @@ object OneTwo extends Enumeration[OneTwo] with ShapeTag.Companion[OneTwo] {
     ONE,
     TWO,
   )
-  val tag: EnumTag[OneTwo] = EnumTag.ClosedIntEnum
-  implicit val schema: Schema[OneTwo] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OneTwo] = intEnumeration(values).withId(id).addHints(hints)
 }

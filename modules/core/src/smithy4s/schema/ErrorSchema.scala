@@ -16,8 +16,8 @@
 
 package smithy4s.schema
 
-import smithy4s.ShapeTag
 import smithy4s.Hints
+import smithy4s.ShapeTag
 import smithy4s.kinds.PolyFunction
 
 /**

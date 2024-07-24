@@ -211,12 +211,11 @@ class HintsTransformationSpec() extends FunSuite {
         shapeId: ShapeId,
         hints: Hints,
         tag: EnumTag[E],
-        values: List[EnumValue[E]],
-        total: E => EnumValue[E]
+        values: List[EnumValue[E]]
     ): Count[E] = { e =>
       count(hints) + count(
         values
-          .find(_.value == total(e).value)
+          .find(_.value == e)
           .getOrElse(sys.error("Unknown enum value"))
           .hints
       )

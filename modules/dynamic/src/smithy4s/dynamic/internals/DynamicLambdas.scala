@@ -57,4 +57,11 @@ private[internals] object DynamicLambdas {
     }
   }
 
+  case object StringIdentity extends (String => String) {
+    def apply(str: String): String = str
+  }
+
+  case object IntIdentity extends (Int => Int) {
+    def apply(int: Int): Int = int
+  }
 }

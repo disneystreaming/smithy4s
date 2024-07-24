@@ -33,10 +33,12 @@ final class IntEnumSmokeSpec extends FunSuite {
       smithy4s.example.FaceCard.JOKER
     )
     assertEquals(values, expected)
-    assert(
-      smithy4s.example.FaceCard.tag == EnumTag.ClosedIntEnum,
-      "tag should be IntEnum"
-    )
+    smithy4s.example.FaceCard.schema match {
+      case s: smithy4s.schema.Schema.EnumerationSchema[_] =>
+        assert(s.tag.isInstanceOf[EnumTag.IntEnum[_]], "tag should be IntEnum")
+      case _ => fail("schema should be an enumeration schema")
+    }
+
   }
 
 }

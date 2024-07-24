@@ -77,18 +77,14 @@ final class SchemaVisitorHash(
       shapeId: ShapeId,
       hints: Hints,
       tag: EnumTag[E],
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      values: List[EnumValue[E]]
   ): Hash[E] = {
-    implicit val enumValueHash: Hash[EnumValue[E]] =
-      tag match {
-        case EnumTag.IntEnum() =>
-          Hash[Int].contramap(_.intValue)
-        case _ =>
-          Hash[String].contramap(_.stringValue)
-      }
-
-    Hash[EnumValue[E]].contramap(total)
+    tag match {
+      case EnumTag.IntEnum(value, _) =>
+        Hash[Int].contramap(value)
+      case EnumTag.StringEnum(value, _) =>
+        Hash[String].contramap(value)
+    }
   }
 
   override def struct[S](
@@ -127,7 +123,8 @@ final class SchemaVisitorHash(
     }
 
     // The encoded form that Hash works against for the eqV method, is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean, Int)] {
+    implicit val encoderKInstance: EncoderK[AltHash] = new EncoderK[AltHash] {
+      type Result = (U => Boolean, Int)
       def apply[A](fa: AltHash[A], a: A): (U => Boolean, Int) = {
         ((u: U) => fa.eqv(a, u), fa.hash(a))
       }

@@ -17,8 +17,9 @@
 package smithy4s
 package schema
 
-import Schema._
 import scala.reflect.ClassTag
+
+import Schema._
 
 // format: off
 sealed trait Schema[A]{
@@ -42,7 +43,7 @@ sealed trait Schema[A]{
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: CollectionSchema[c, a] => CollectionSchema(newId, s.hints, s.tag, s.member).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(newId, s.hints, s.key, s.value).asInstanceOf[Schema[A]]
-    case EnumerationSchema(_, hints, values, tag, total) => EnumerationSchema(newId, hints, values, tag, total)
+    case EnumerationSchema(_, hints, values, tag) => EnumerationSchema(newId, hints, values, tag)
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
@@ -57,7 +58,7 @@ sealed trait Schema[A]{
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema(s.shapeId, f(s.hints), s.tag, s.member).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key, s.value).asInstanceOf[Schema[A]]
-    case EnumerationSchema(shapeId, hints, values, tag, total) => EnumerationSchema(shapeId, f(hints), values, tag, total)
+    case EnumerationSchema(shapeId, hints, values, tag) => EnumerationSchema(shapeId, f(hints), values, tag)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
@@ -66,13 +67,14 @@ sealed trait Schema[A]{
     case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
+
   final def transformHintsTransitively(f: Hints => Hints): Schema[A] = transformTransitivelyK(new (Schema ~> Schema) {
     def apply[B](fa: Schema[B]): Schema[B] = {
       val base = fa.transformHintsLocally(f)
 
       base match {
-        case EnumerationSchema(shapeId, hints, tag, values, total) =>
-          EnumerationSchema(shapeId, hints, tag, values.map(_.transformHints(f)), total)
+        case EnumerationSchema(shapeId, hints, tag, values) =>
+          EnumerationSchema(shapeId, hints, tag, values.map(_.transformHints(f)))
 
         case other => other
       }
@@ -164,7 +166,7 @@ object Schema {
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
   final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
   final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
-  final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
+  final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
   final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
@@ -207,8 +209,8 @@ object Schema {
     def apply[A](
         fa: Schema[A]
     ): Schema[A] = fa match {
-      case e @ EnumerationSchema(_, _, _, _, _) => underlying(e)
-      case p @ PrimitiveSchema(_, _, _)         => underlying(p)
+      case e @ EnumerationSchema(_, _, _, _) => underlying(e)
+      case p @ PrimitiveSchema(_, _, _)      => underlying(p)
       case u @ UnionSchema(_, _, _, _) =>
         underlying(u.copy(alternatives = u.alternatives.map(handleAlt(_))))
       case BijectionSchema(s, bijection) =>
@@ -293,23 +295,20 @@ object Schema {
     }
   }
 
-  def enumeration[E](total: E => EnumValue[E], tag: EnumTag[E], values: List[EnumValue[E]]): Schema[E] =
-    Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
-
-  def stringEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.ClosedStringEnum, values)
-
-  def intEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.ClosedIntEnum, values)
-
-  def enumeration[E <: Enumeration.Value](tag: EnumTag[E], values: List[E]): Schema[E] =
-    Schema.EnumerationSchema(placeholder, Hints.empty, tag, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
+  def enumeration[E](tag: EnumTag[E], values: List[EnumValue[E]]): Schema[E] =
+    Schema.EnumerationSchema(placeholder, Hints.empty, tag, values)
 
   def stringEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.ClosedStringEnum, values)
+    enumeration(EnumTag.StringEnum[E](_.stringValue, None), values.map(Enumeration.Value.toSchema(_)))
 
   def intEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.ClosedIntEnum, values)
+    enumeration(EnumTag.IntEnum[E](_.intValue, None), values.map(Enumeration.Value.toSchema(_)))
+
+  def openStringEnumeration[E <: Enumeration.Value](values: List[E], unknown: String => E): Schema[E] =
+    enumeration(EnumTag.StringEnum[E](_.stringValue, Some(unknown)), values.map(Enumeration.Value.toSchema(_)))
+
+  def openIntEnumeration[E <: Enumeration.Value](values: List[E], unknown: Int => E): Schema[E] =
+    enumeration(EnumTag.IntEnum[E](_.intValue, Some(unknown)), values.map(Enumeration.Value.toSchema(_)))
 
   def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]): Schema[B] =
     Schema.BijectionSchema(a, bijection)
