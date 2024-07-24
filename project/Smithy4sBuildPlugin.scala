@@ -30,7 +30,7 @@ case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
 object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.19"
-  val Scala213 = "2.13.12"
+  val Scala213 = "2.13.13"
   val Scala3 = "3.3.3"
 
   object autoImport {

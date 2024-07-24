@@ -9,11 +9,13 @@ import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
+import smithy4s.schema.Schema.unit
 
 trait ServiceWithNullsAndDefaultsGen[F[_, _, _, _, _]] {
   self =>
 
-  def operation(input: OperationInput): F[OperationInput, Nothing, OperationOutput, Nothing, Nothing]
+  def defaultNullsOperation(input: DefaultNullsOperationInput): F[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing]
+  def timestampOperation(input: TimestampOperationInput): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
 }
@@ -35,7 +37,8 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   }
 
   val endpoints: Vector[smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation, _, _, _, _, _]] = Vector(
-    ServiceWithNullsAndDefaultsOperation.Operation,
+    ServiceWithNullsAndDefaultsOperation.DefaultNullsOperation,
+    ServiceWithNullsAndDefaultsOperation.TimestampOperation,
   )
 
   def input[I, E, O, SI, SO](op: ServiceWithNullsAndDefaultsOperation[I, E, O, SI, SO]): I = op.input
@@ -60,26 +63,40 @@ sealed trait ServiceWithNullsAndDefaultsOperation[Input, Err, Output, StreamedIn
 object ServiceWithNullsAndDefaultsOperation {
 
   object reified extends ServiceWithNullsAndDefaultsGen[ServiceWithNullsAndDefaultsOperation] {
-    def operation(input: OperationInput): Operation = Operation(input)
+    def defaultNullsOperation(input: DefaultNullsOperationInput): DefaultNullsOperation = DefaultNullsOperation(input)
+    def timestampOperation(input: TimestampOperationInput): TimestampOperation = TimestampOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ServiceWithNullsAndDefaultsGen[P], f: PolyFunction5[P, P1]) extends ServiceWithNullsAndDefaultsGen[P1] {
-    def operation(input: OperationInput): P1[OperationInput, Nothing, OperationOutput, Nothing, Nothing] = f[OperationInput, Nothing, OperationOutput, Nothing, Nothing](alg.operation(input))
+    def defaultNullsOperation(input: DefaultNullsOperationInput): P1[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = f[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing](alg.defaultNullsOperation(input))
+    def timestampOperation(input: TimestampOperationInput): P1[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = f[TimestampOperationInput, Nothing, Unit, Nothing, Nothing](alg.timestampOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = new PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] {
     def apply[I, E, O, SI, SO](op: ServiceWithNullsAndDefaultsOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  final case class Operation(input: OperationInput) extends ServiceWithNullsAndDefaultsOperation[OperationInput, Nothing, OperationOutput, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[F]): F[OperationInput, Nothing, OperationOutput, Nothing, Nothing] = impl.operation(input)
+  final case class DefaultNullsOperation(input: DefaultNullsOperationInput) extends ServiceWithNullsAndDefaultsOperation[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[F]): F[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = impl.defaultNullsOperation(input)
     def ordinal: Int = 0
-    def endpoint: smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,OperationInput, Nothing, OperationOutput, Nothing, Nothing] = Operation
+    def endpoint: smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = DefaultNullsOperation
   }
-  object Operation extends smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,OperationInput, Nothing, OperationOutput, Nothing, Nothing] {
-    val schema: OperationSchema[OperationInput, Nothing, OperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Operation"))
-      .withInput(OperationInput.schema)
-      .withOutput(OperationOutput.schema)
+  object DefaultNullsOperation extends smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] {
+    val schema: OperationSchema[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DefaultNullsOperation"))
+      .withInput(DefaultNullsOperationInput.schema)
+      .withOutput(DefaultNullsOperationOutput.schema)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/operation/{requiredLabel}"), code = 200))
-    def wrap(input: OperationInput): Operation = Operation(input)
+    def wrap(input: DefaultNullsOperationInput): DefaultNullsOperation = DefaultNullsOperation(input)
+  }
+  final case class TimestampOperation(input: TimestampOperationInput) extends ServiceWithNullsAndDefaultsOperation[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[F]): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = impl.timestampOperation(input)
+    def ordinal: Int = 1
+    def endpoint: smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = TimestampOperation
+  }
+  object TimestampOperation extends smithy4s.Endpoint[ServiceWithNullsAndDefaultsOperation,TimestampOperationInput, Nothing, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TimestampOperation"))
+      .withInput(TimestampOperationInput.schema)
+      .withOutput(unit)
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/timestamp-operation"), code = 200))
+    def wrap(input: TimestampOperationInput): TimestampOperation = TimestampOperation(input)
   }
 }
 
