@@ -30,6 +30,7 @@ import smithy4s.http.HttpPayloadError
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
+import smithy4s.http.UpstreamServiceError
 import weaver._
 import cats.Show
 import org.http4s.EntityDecoder
