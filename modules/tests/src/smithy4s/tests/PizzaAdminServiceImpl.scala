@@ -16,13 +16,13 @@
 
 package smithy4s.tests
 
-import cats.effect.*
+import cats.effect._
 import cats.effect.std.UUIDGen
-import cats.implicits.*
+import cats.implicits._
 import smithy4s.Timestamp
-import smithy4s.example.*
+import smithy4s.example._
 import smithy4s.http.UpstreamServiceError
-import smithy4s.tests.PizzaAdminServiceImpl.*
+import smithy4s.tests.PizzaAdminServiceImpl._
 
 import java.util.UUID
 

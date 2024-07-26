@@ -20,8 +20,8 @@ package http
 import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.{PayloadError, PayloadPath}
 import smithy4s.kinds.PolyFunction
-import smithy4s.schema.*
-import smithy4s.schema.Schema.*
+import smithy4s.schema.Schema._
+import smithy4s.schema._
 
 sealed trait HttpContractError
     extends Throwable
@@ -73,7 +73,7 @@ object HttpPayloadError {
 }
 
 sealed trait MetadataError extends HttpContractError {
-  import MetadataError.*
+  import MetadataError._
 
   override def getMessage(): String = this match {
     case NotFound(field, location) =>

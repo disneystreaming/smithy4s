@@ -16,24 +16,23 @@
 
 package smithy4s.tests
 
-import cats.Show
 import cats.data.NonEmptyList
-import cats.effect.*
-import cats.syntax.all.*
-import org.http4s.{EntityDecoder, Request, Uri}
-import org.http4s.circe.*
+import cats.effect._
+import cats.syntax.all._
+import io.circe._
+import org.http4s.Request
+import org.http4s.Uri
+import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
+import smithy4s.http.HttpPayloadError
 import smithy4s.example.PizzaAdminService
-import smithy4s.http.{
-  CaseInsensitive,
-  HttpContractError,
-  HttpPayloadError,
-  UpstreamServiceError
-}
-
-import scala.io.circe.*
+import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpContractError
+import weaver._
+import cats.Show
+import org.http4s.EntityDecoder
 
 abstract class PizzaSpec
     extends IOSuite
