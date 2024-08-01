@@ -82,7 +82,8 @@ class ErrorMessageTraitSpec extends FunSuite {
   }
 
   test("Generated - has message") {
-    val e = ErrorCustomTypeMessage(Some("This is a test."))
+    val e =
+      ErrorCustomTypeMessage(Some(CustomErrorMessageType("This is a test.")))
 
     val expected = "smithy4s.example.ErrorCustomTypeMessage: This is a test."
     expect.eql(e.getMessage, "This is a test.")
