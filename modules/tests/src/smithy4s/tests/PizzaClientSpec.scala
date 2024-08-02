@@ -31,7 +31,10 @@ import smithy4s.example._
 import smithy4s.Timestamp
 import weaver._
 import smithy4s.http.CaseInsensitive
-import smithy4s.http.UnknownErrorResponse
+import smithy4s.http.RawErrorResponse
+import smithy4s.http.FailedDecodeAttempt
+import smithy4s.http.HttpPayloadError
+import smithy4s.http.HttpDiscriminator
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -117,22 +120,52 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity(
         Json.obj("message" -> Json.fromString("generic client error message"))
       ),
-    unknownResponse(
+    rawErrorResponse(
       407,
       Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
-      """{"message":"generic client error message"}"""
+      """{"message":"generic client error message"}""",
+      Some(FailedDecodeAttempt(
+        discriminator = HttpDiscriminator.StatusCode(407),
+        contractError = HttpPayloadError(
+          path = smithy4s.codecs.PayloadPath(List()),
+          expected = "JSON",
+          message = "Unknown error due to unrecognised discriminator"
+        )
+      ))
     )
   )
 
-  private def unknownResponse(
-      code: Int,
-      headers: Map[String, String],
-      body: String
-  ): UnknownErrorResponse =
-    UnknownErrorResponse(
+  clientTestForError(
+    "Handle malformed error response",
+    Response(status = Status.InternalServerError)
+      .withEntity("goodbye world"),
+    rawErrorResponse(
+      500,
+      Map("Content-Length" -> "13", "Content-Type" -> "text/plain; charset=UTF-8"),
+      "goodbye world",
+      Some(FailedDecodeAttempt(
+        discriminator = HttpDiscriminator.StatusCode(500),
+        contractError = HttpPayloadError(
+          path = smithy4s.codecs.PayloadPath(List()),
+          expected = "JSON",
+          message = "Unknown error due to unrecognised discriminator"
+        )
+      ))
+    )
+  )
+
+
+  private def rawErrorResponse(
+     code: Int,
+     headers: Map[String, String],
+     body: String,
+     failedDecodeAttempt: Option[FailedDecodeAttempt]
+  ): RawErrorResponse =
+    RawErrorResponse(
       code,
       headers.map { case (k, v) => CaseInsensitive(k) -> List(v) },
-      body
+      body,
+      failedDecodeAttempt
     )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>

@@ -228,9 +228,9 @@ object HttpResponse {
     * Creates a response decoder that dispatches  the response
     * to a given decoder, based on some discriminator.
     */
-    private def discriminating[F[_], Body, Discriminator, E](
-        discriminate: HttpResponse[Body] => F[Discriminator],
-        select: Discriminator => Option[Decoder[F, Body, E]],
+    private def discriminating[F[_], Body, E](
+        discriminate: HttpResponse[Body] => F[HttpDiscriminator],
+        select: HttpDiscriminator => Option[Decoder[F, Body, E]],
         toStrict: Body => F[(Body, Blob)]
     )(implicit F: MonadThrowLike[F]): Decoder[F, Body, E] =
       new Decoder[F, Body, E] {
@@ -239,13 +239,39 @@ object HttpResponse {
             val strictResponse = response.copy(body = strictBody)
             F.flatMap(discriminate(strictResponse)) { discriminator =>
               select(discriminator) match {
-                case Some(decoder) => decoder.decode(strictResponse)
+                case Some(decoder) =>
+                  F.flatMap(F.handleErrorWith(decoder.decode(strictResponse)) {
+                    case error: HttpContractError =>
+                      F.raiseError(
+                        RawErrorResponse(
+                          response.statusCode,
+                          response.headers,
+                          bodyBlob.toUTF8String,
+                          Some(FailedDecodeAttempt(
+                            discriminator = discriminator,
+                            contractError = error
+                          ))
+                        )
+                      )
+                    case otherError => F.raiseError(otherError)
+                  })(F.pure(_))
                 case None =>
                   F.raiseError(
-                    smithy4s.http.UnknownErrorResponse(
-                      response.statusCode,
-                      response.headers,
-                      bodyBlob.toUTF8String
+                    smithy4s.http.RawErrorResponse(
+                      code = response.statusCode,
+                      headers = response.headers,
+                      body = bodyBlob.toUTF8String,
+                      failedDecodeAttempt = Some(
+                        FailedDecodeAttempt(
+                        discriminator = HttpDiscriminator.StatusCode(response.statusCode),
+                        contractError = HttpPayloadError(
+                          path = smithy4s.codecs.PayloadPath(List()),
+                          expected = "JSON",
+                          message = "Unknown error due to unrecognised discriminator"
+                        )
+                        )
+
+                      )
                     )
                   )
               }

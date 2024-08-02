@@ -21,7 +21,6 @@ import cats.effect.std.UUIDGen
 import cats.implicits._
 import smithy4s.Timestamp
 import smithy4s.example._
-import smithy4s.http.UpstreamServiceError
 import smithy4s.tests.PizzaAdminServiceImpl._
 
 import java.util.UUID
@@ -51,9 +50,6 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
   ): IO[AddMenuItemResult] =
     for {
       _ <- IO.raiseError(Boom).whenA(restaurant == "boom")
-      _ <- IO
-        .raiseError(UpstreamServiceError("Upstream service failure"))
-        .whenA(restaurant == "upstreamServiceError")
       _ <- IO
         .raiseError(
           PriceError(
