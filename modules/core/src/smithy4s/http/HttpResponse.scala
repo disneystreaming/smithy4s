@@ -247,10 +247,12 @@ object HttpResponse {
                           response.statusCode,
                           response.headers,
                           bodyBlob.toUTF8String,
-                          Some(FailedDecodeAttempt(
-                            discriminator = discriminator,
-                            contractError = error
-                          ))
+                          Some(
+                            FailedDecodeAttempt(
+                              discriminator = discriminator,
+                              contractError = error
+                            )
+                          )
                         )
                       )
                     case otherError => F.raiseError(otherError)
@@ -263,14 +265,15 @@ object HttpResponse {
                       body = bodyBlob.toUTF8String,
                       failedDecodeAttempt = Some(
                         FailedDecodeAttempt(
-                        discriminator = HttpDiscriminator.StatusCode(response.statusCode),
-                        contractError = HttpPayloadError(
-                          path = smithy4s.codecs.PayloadPath(List()),
-                          expected = "JSON",
-                          message = "Unknown error due to unrecognised discriminator"
+                          discriminator =
+                            HttpDiscriminator.StatusCode(response.statusCode),
+                          contractError = HttpPayloadError(
+                            path = smithy4s.codecs.PayloadPath(List()),
+                            expected = "object",
+                            message =
+                              "Unknown error due to unrecognised discriminator"
+                          )
                         )
-                        )
-
                       )
                     )
                   )

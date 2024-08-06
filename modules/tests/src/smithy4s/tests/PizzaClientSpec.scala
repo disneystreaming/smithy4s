@@ -124,14 +124,16 @@ abstract class PizzaClientSpec extends IOSuite {
       407,
       Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
       """{"message":"generic client error message"}""",
-      Some(FailedDecodeAttempt(
-        discriminator = HttpDiscriminator.StatusCode(407),
-        contractError = HttpPayloadError(
-          path = smithy4s.codecs.PayloadPath(List()),
-          expected = "JSON",
-          message = "Unknown error due to unrecognised discriminator"
+      Some(
+        FailedDecodeAttempt(
+          discriminator = HttpDiscriminator.StatusCode(407),
+          contractError = HttpPayloadError(
+            path = smithy4s.codecs.PayloadPath(List()),
+            expected = "object",
+            message = "Unknown error due to unrecognised discriminator"
+          )
         )
-      ))
+      )
     )
   )
 
@@ -141,25 +143,29 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity("goodbye world"),
     rawErrorResponse(
       500,
-      Map("Content-Length" -> "13", "Content-Type" -> "text/plain; charset=UTF-8"),
+      Map(
+        "Content-Length" -> "13",
+        "Content-Type" -> "text/plain; charset=UTF-8"
+      ),
       "goodbye world",
-      Some(FailedDecodeAttempt(
-        discriminator = HttpDiscriminator.StatusCode(500),
-        contractError = HttpPayloadError(
-          path = smithy4s.codecs.PayloadPath(List()),
-          expected = "JSON",
-          message = "Unknown error due to unrecognised discriminator"
+      Some(
+        FailedDecodeAttempt(
+          discriminator = HttpDiscriminator.StatusCode(500),
+          contractError = HttpPayloadError(
+            path = smithy4s.codecs.PayloadPath(List()),
+            expected = "object",
+            message = "Unknown error due to unrecognised discriminator"
+          )
         )
-      ))
+      )
     )
   )
 
-
   private def rawErrorResponse(
-     code: Int,
-     headers: Map[String, String],
-     body: String,
-     failedDecodeAttempt: Option[FailedDecodeAttempt]
+      code: Int,
+      headers: Map[String, String],
+      body: String,
+      failedDecodeAttempt: Option[FailedDecodeAttempt]
   ): RawErrorResponse =
     RawErrorResponse(
       code,

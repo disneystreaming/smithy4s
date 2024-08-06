@@ -19,17 +19,22 @@ package smithy4s.tests
 import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
+
 import io.circe._
-import org.http4s.Request
+import org.http4s._
 import org.http4s.Uri
 import org.http4s.circe._
 import org.http4s.client.Client
+import org.typelevel.ci.CIString
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
+import org.http4s.Response
 import smithy4s.http.HttpPayloadError
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.RawErrorResponse
 import weaver._
 import cats.Show
 import org.http4s.EntityDecoder
@@ -42,6 +47,11 @@ abstract class PizzaSpec
   def runServer(
       pizzaService: PizzaAdminService[IO],
       errorAdapter: PartialFunction[Throwable, Throwable]
+  ): Resource[IO, Res]
+
+  def runServerWithClient(
+      pizzaService: PizzaAdminService[IO],
+      clientResponse: Response[IO]
   ): Resource[IO, Res]
 
   val pizzaItem = Json.obj(
@@ -461,6 +471,127 @@ abstract class PizzaSpec
         expect.same(code, 204) &&
         expect.same(body, "")
       }
+  }
+
+  routerTest("Negative: handle error without discriminator") {
+    (client, uri, log) =>
+      val badResponse = org.http4s.Response[IO](
+        status = Status.InternalServerError,
+        body = fs2.Stream.emits("malformed body".getBytes),
+        headers = Headers(
+          Header.Raw(CIString("Content-Length"), "14"),
+          Header.Raw(CIString("Content-Type"), "text/plain")
+        )
+      )
+
+      for {
+        stateRef <- IO.ref(PizzaAdminServiceImpl.State(Map.empty))
+        impl = new PizzaAdminServiceImpl(stateRef)
+        response <- runServerWithClient(
+          impl,
+          badResponse
+        ).use { case (client, uri) =>
+          val request = POST(
+            menuItem,
+            uri / "restaurant" / "boom" / "menu" / "item"
+          )
+          client
+            .run(request)
+            .use { response =>
+              IO.pure(response.status.code)
+            }
+            .attempt
+        }
+
+      } yield {
+        val httpPayloadError = HttpPayloadError(
+          path = smithy4s.codecs.PayloadPath(List()),
+          expected = "object",
+          message = "Unknown error due to unrecognised discriminator"
+        )
+
+        val expectHeaders = Map(
+          CaseInsensitive("Content-Type") -> List("text/plain"),
+          CaseInsensitive("Content-Length") -> List("14")
+        )
+        response match {
+          case Left(
+                RawErrorResponse(code, headers, body, Some(failedDecodeAttempt))
+              ) =>
+            expect(code == 500) &&
+              expect(headers == expectHeaders) &&
+              expect(body.contains("malformed body")) &&
+              expect(
+                failedDecodeAttempt.discriminator == HttpDiscriminator
+                  .StatusCode(500)
+              ) &&
+              expect(failedDecodeAttempt.contractError == httpPayloadError)
+          case _ =>
+            failure("Expected RawErrorResponse with status 500")
+        }
+      }
+  }
+
+  routerTest(
+    "Negative: handle decoder exception for known error with discriminator"
+  ) { (client, uri, log) =>
+    val badResponse = org.http4s.Response[IO](
+      status = Status.InternalServerError,
+      body = fs2.Stream.emits("malformed body".getBytes),
+      headers = Headers(
+        Header.Raw(CIString("Content-Length"), "14"),
+        Header.Raw(CIString("Content-Type"), "text/plain"),
+        Header.Raw(CIString("X-Error-Type"), "GenericServerError")
+      )
+    )
+
+    for {
+      stateRef <- IO.ref(PizzaAdminServiceImpl.State(Map.empty))
+      impl = new PizzaAdminServiceImpl(stateRef)
+      response <- runServerWithClient(
+        impl,
+        badResponse
+      ).use { case (client, uri) =>
+        val request = POST(
+          menuItem,
+          uri / "restaurant" / "boom" / "menu" / "item"
+        )
+        client
+          .run(request)
+          .use { response =>
+            IO.pure(response.status.code)
+          }
+          .attempt
+
+      }
+
+    } yield {
+      val expectHeaders = Map(
+        CaseInsensitive("Content-Length") -> List("14"),
+        CaseInsensitive("Content-Type") -> List("text/plain"),
+        CaseInsensitive("X-Error-Type") -> List("GenericServerError")
+      )
+      response match {
+        case Left(
+              RawErrorResponse(code, headers, body, Some(failedDecodeAttempt))
+            ) =>
+          expect(code == 500) &&
+            expect(headers == expectHeaders) &&
+            expect(body.contains("malformed body")) &&
+            expect(
+              failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
+                "GenericServerError"
+              )
+            ) &&
+            expect(
+              failedDecodeAttempt.contractError.getMessage.contains(
+                "Expected JSON object, offset: 0x00000000, buf:"
+              )
+            )
+        case _ =>
+          failure("Expected RawErrorResponse with status 500")
+      }
+    }
   }
 
   type Res = (Client[IO], Uri)

@@ -70,7 +70,7 @@ object HttpPayloadError {
 }
 
 sealed trait MetadataError extends HttpContractError {
-  import MetadataError.*
+  import MetadataError._
 
   override def getMessage(): String = this match {
     case NotFound(field, location) =>
