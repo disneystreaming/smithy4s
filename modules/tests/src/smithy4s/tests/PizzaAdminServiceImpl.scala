@@ -19,7 +19,6 @@ package smithy4s.tests
 import cats.effect._
 import cats.effect.std.UUIDGen
 import cats.implicits._
-import org.http4s.Response
 import smithy4s.Timestamp
 import smithy4s.example._
 import smithy4s.tests.PizzaAdminServiceImpl._
@@ -28,18 +27,7 @@ import java.util.UUID
 
 object PizzaAdminServiceImpl {
   case class Item(food: Food, price: Float, addedAt: Timestamp)
-  case class State(
-      restaurants: Map[String, Restaurant],
-      responses: Map[String, Response[IO]] = Map.empty
-  ) {
-    def prepResponse(key: String, response: Response[IO]): State =
-      copy(responses = responses.updated(key, response))
-
-    def getResponse(key: String): IO[Response[IO]] =
-      responses
-        .get(key)
-        .liftTo[IO](new Throwable(s"Response not found for key: $key"))
-  }
+  case class State(restaurants: Map[String, Restaurant])
   case class Restaurant(menu: Map[UUID, Item])
 
   case object Boom extends Throwable with scala.util.control.NoStackTrace
