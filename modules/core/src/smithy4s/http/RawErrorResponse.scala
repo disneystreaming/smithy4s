@@ -10,7 +10,12 @@ case class RawErrorResponse(
     val baseMessage = s"status $code, headers: $headers, body:\n$body"
     failedDecodeAttempt match {
       case Some(attempt) =>
-        baseMessage + s"\nFailedDecodeAttempt:\n  discriminator: ${attempt.discriminator}\n  contractError: ${attempt.contractError}"
+        baseMessage +
+          s"""
+             |FailedDecodeAttempt:
+             |  discriminator: ${attempt.discriminator}
+             |  contractError: ${attempt.contractError.getMessage}
+               """.stripMargin
       case None => baseMessage
     }
   }

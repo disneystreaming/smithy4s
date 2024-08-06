@@ -504,28 +504,15 @@ abstract class PizzaSpec
         }
 
       } yield {
-        val httpPayloadError = HttpPayloadError(
-          path = smithy4s.codecs.PayloadPath(List()),
-          expected = "object",
-          message = "Unknown error due to unrecognised discriminator"
-        )
-
         val expectHeaders = Map(
           CaseInsensitive("Content-Type") -> List("text/plain"),
           CaseInsensitive("Content-Length") -> List("14")
         )
         response match {
-          case Left(
-                RawErrorResponse(code, headers, body, Some(failedDecodeAttempt))
-              ) =>
+          case Left(RawErrorResponse(code, headers, body, None)) =>
             expect(code == 500) &&
               expect(headers == expectHeaders) &&
-              expect(body.contains("malformed body")) &&
-              expect(
-                failedDecodeAttempt.discriminator == HttpDiscriminator
-                  .StatusCode(500)
-              ) &&
-              expect(failedDecodeAttempt.contractError == httpPayloadError)
+              expect(body.contains("malformed body"))
           case _ =>
             failure("Expected RawErrorResponse with status 500")
         }
@@ -566,6 +553,17 @@ abstract class PizzaSpec
       }
 
     } yield {
+      val expectedHttpPayloadError = HttpPayloadError(
+        path = smithy4s.codecs.PayloadPath(List()),
+        expected = "object",
+        message =
+          """Expected JSON object, offset: 0x00000000, buf:
+            |+----------+-------------------------------------------------+------------------+
+            ||          |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f | 0123456789abcdef |
+            |+----------+-------------------------------------------------+------------------+
+            || 00000000 | 6d 61 6c 66 6f 72 6d 65 64 20 62 6f 64 79       | malformed body   |
+            |+----------+-------------------------------------------------+------------------+""".stripMargin
+      )
       val expectHeaders = Map(
         CaseInsensitive("Content-Length") -> List("14"),
         CaseInsensitive("Content-Type") -> List("text/plain"),
@@ -584,9 +582,7 @@ abstract class PizzaSpec
               )
             ) &&
             expect(
-              failedDecodeAttempt.contractError.getMessage.contains(
-                "Expected JSON object, offset: 0x00000000, buf:"
-              )
+              failedDecodeAttempt.contractError == expectedHttpPayloadError
             )
         case _ =>
           failure("Expected RawErrorResponse with status 500")

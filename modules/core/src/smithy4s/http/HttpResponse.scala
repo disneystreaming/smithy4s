@@ -240,7 +240,7 @@ object HttpResponse {
             F.flatMap(discriminate(strictResponse)) { discriminator =>
               select(discriminator) match {
                 case Some(decoder) =>
-                  F.flatMap(F.handleErrorWith(decoder.decode(strictResponse)) {
+                  F.handleErrorWith(decoder.decode(strictResponse)) {
                     case error: HttpContractError =>
                       F.raiseError(
                         RawErrorResponse(
@@ -256,25 +256,14 @@ object HttpResponse {
                         )
                       )
                     case otherError => F.raiseError(otherError)
-                  })(F.pure(_))
+                  }
                 case None =>
                   F.raiseError(
                     smithy4s.http.RawErrorResponse(
                       code = response.statusCode,
                       headers = response.headers,
                       body = bodyBlob.toUTF8String,
-                      failedDecodeAttempt = Some(
-                        FailedDecodeAttempt(
-                          discriminator =
-                            HttpDiscriminator.StatusCode(response.statusCode),
-                          contractError = HttpPayloadError(
-                            path = smithy4s.codecs.PayloadPath(List()),
-                            expected = "object",
-                            message =
-                              "Unknown error due to unrecognised discriminator"
-                          )
-                        )
-                      )
+                      failedDecodeAttempt = None
                     )
                   )
               }

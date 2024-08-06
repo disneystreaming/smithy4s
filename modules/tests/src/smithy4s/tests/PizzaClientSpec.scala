@@ -115,22 +115,27 @@ abstract class PizzaClientSpec extends IOSuite {
   )
 
   clientTestForError(
-    "Handle error w/o a discriminator header nor a unique status code",
-    Response(status = Status.ProxyAuthenticationRequired)
-      .withEntity(
-        Json.obj("message" -> Json.fromString("generic client error message"))
-      ),
+    "Handle error  with a discriminator but can't be decoded",
+    Response[IO](status = Status.NotFound)
+      .withEntity("malformed body")
+      .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError")),
     rawErrorResponse(
-      407,
-      Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
-      """{"message":"generic client error message"}""",
+      404,
+      Map("X-Error-Type" -> "NotFoundError"),
+      "malformed body",
       Some(
         FailedDecodeAttempt(
-          discriminator = HttpDiscriminator.StatusCode(407),
+          discriminator = HttpDiscriminator.NameOnly("NotFoundError"),
           contractError = HttpPayloadError(
             path = smithy4s.codecs.PayloadPath(List()),
             expected = "object",
-            message = "Unknown error due to unrecognised discriminator"
+            message =
+              """Expected JSON object, offset: 0x00000000, buf:
+                |+----------+-------------------------------------------------+------------------+
+                ||          |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f | 0123456789abcdef |
+                |+----------+-------------------------------------------------+------------------+
+                || 00000000 | 6d 61 6c 66 6f 72 6d 65 64 20 62 6f 64 79       | malformed body   |
+                |+----------+-------------------------------------------------+------------------+""".stripMargin
           )
         )
       )
@@ -138,26 +143,17 @@ abstract class PizzaClientSpec extends IOSuite {
   )
 
   clientTestForError(
-    "Handle malformed error response",
+    "Handle malformed error response with no discriminator",
     Response(status = Status.InternalServerError)
       .withEntity("goodbye world"),
     rawErrorResponse(
-      500,
-      Map(
+      code = 500,
+      headers = Map(
         "Content-Length" -> "13",
         "Content-Type" -> "text/plain; charset=UTF-8"
       ),
-      "goodbye world",
-      Some(
-        FailedDecodeAttempt(
-          discriminator = HttpDiscriminator.StatusCode(500),
-          contractError = HttpPayloadError(
-            path = smithy4s.codecs.PayloadPath(List()),
-            expected = "object",
-            message = "Unknown error due to unrecognised discriminator"
-          )
-        )
-      )
+      body = "goodbye world",
+      failedDecodeAttempt = None
     )
   )
 
