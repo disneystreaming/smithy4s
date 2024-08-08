@@ -40,7 +40,8 @@ class DynamicHttpProxy(client: Client[IO]) {
           .getOrElse(sys.error("service not found in DSI"))
       }
 
-  val dynamicPizza: IO[PizzaAdminService[IO]] =
+  val
+  dynamicPizza: IO[PizzaAdminService[IO]] =
     dynamicServiceIO
       .flatMap { dsi =>
         SimpleRestJsonBuilder(dsi.service)
