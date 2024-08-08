@@ -21,10 +21,12 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.validation.AbstractValidator;
 import software.amazon.smithy.model.validation.ValidationEvent;
+import software.amazon.smithy.model.validation.Severity;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import software.amazon.smithy.model.selector.Selector;
 
 /**
  * Unions marked with the adt trait must have at least one member. Also, the
@@ -35,27 +37,44 @@ import java.util.stream.Stream;
  */
 public final class AdtTraitValidator extends AbstractValidator {
 
+	private class Reference implements Comparable<Reference>{
+		Shape from;
+		Shape to;
+
+		Reference(Shape from, Shape to) {
+			this.from = from;
+			this.to = to;
+		}
+
+		@Override
+		public int compareTo(Reference o) {
+			return this.from.getId().compareTo(o.from.getId());
+		}
+	}
 	@Override
 	public List<ValidationEvent> validate(Model model) {
-		return model.getShapesWithTrait(AdtTrait.class).stream().flatMap(adtShape -> {
-			Set<Shape> adtMemberShapes = adtShape.asUnionShape()
-					.orElseThrow(() -> new RuntimeException("adt trait may only be used on union shapes")).members()
-					.stream().map(mem -> model.expectShape(mem.getTarget())).collect(Collectors.toSet());
-			List<Shape> nonStructures = adtMemberShapes.stream().filter(mem -> !mem.asStructureShape().isPresent())
-					.collect(Collectors.toList());
-			if (!nonStructures.isEmpty()) {
-				String nonStruct = nonStructures.stream().map(s -> s.getId().toString())
-						.collect(Collectors.joining(", "));
-				return Stream.of(error(adtShape,
-						String.format(
-								"Some members of %s were found to target non-structure shapes. Instead they target %s",
-								adtShape.getId(), nonStruct)));
-			}
-			if (adtMemberShapes.isEmpty()) {
-				return Stream.of(error(adtShape, "unions with the adt trait must contain at least one member"));
-			} else {
-				return AdtValidatorCommon.getReferenceEvents(model, adtMemberShapes, adtShape);
-			}
+
+		Selector magicSelector = Selector.parse(
+			":test(> member > :in(:root([trait|smithy4s.meta#adt] > member > structure)))"
+		);
+
+
+		List<ValidationEvent> nonStructs = model.getUnionShapesWithTrait(AdtTrait.class).stream()
+		.filter(union -> union.getAllMembers().values().stream().filter(mem -> !model.expectShape(mem.getTarget()).isStructureShape()).findAny().isPresent())
+		.map(union -> error2(union, "All members of an adt union must be structures")).collect(Collectors.toList());
+
+		List<ValidationEvent> dupes = magicSelector.select(model).stream().flatMap(parent -> {
+			return parent.getAllMembers().values().stream().map(mem -> new Reference(parent, model.expectShape(mem.getTarget())));
+		}).collect(Collectors.groupingBy(ref -> ref.to)).entrySet().stream().filter(entry -> entry.getValue().size() > 1).map(entry -> {
+			String targets = entry.getValue().stream().map(ref -> ref.from.getId().toString()).sorted().collect(Collectors.joining(", "));
+			return error2(entry.getKey(), "This shape can only be referenced from one adt union, but it's referenced from " + targets);
 		}).collect(Collectors.toList());
+
+		return Stream.concat(nonStructs.stream(), dupes.stream()).collect(Collectors.toList());
+	}
+
+	private static ValidationEvent error2(Shape shape, String message) {
+		return ValidationEvent.builder().id("AdtValidator").sourceLocation(shape.getSourceLocation()).shape(shape)
+				.severity(Severity.ERROR).message(message).build();
 	}
 }
