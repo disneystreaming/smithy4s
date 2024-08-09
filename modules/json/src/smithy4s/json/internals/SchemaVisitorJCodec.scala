@@ -26,6 +26,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
+import alloy.JsonUnknown
 import alloy.Nullable
 import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
@@ -1366,6 +1367,9 @@ private[smithy4s] class SchemaVisitorJCodec(
       case Some(x) => x.value
     }
 
+  private def isForJsonUnknown[Z, A](field: Field[Z, A]): Boolean =
+    field.hints.has(JsonUnknown)
+
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
@@ -1384,24 +1388,41 @@ private[smithy4s] class SchemaVisitorJCodec(
       )
   }
 
+  private def writeLabel(label: String, out: JsonWriter): Unit =
+    if (label.forall(JsonWriter.isNonEscapedAscii)) {
+      out.writeNonEscapedAsciiKey(label)
+    } else out.writeKey(label)
+
   private def fieldEncoder[Z, A](
       field: Field[Z, A]
   ): (Z, JsonWriter) => Unit = {
     val codec = apply(field.schema)
     val jLabel = jsonLabel(field)
-    val writeLabel: JsonWriter => Unit =
-      if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-        _.writeNonEscapedAsciiKey(jLabel)
-      } else _.writeKey(jLabel)
-
     if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
-      writeLabel(out)
+      writeLabel(jLabel, out)
       codec.encodeValue(field.get(z), out)
     } else { (z: Z, out: JsonWriter) =>
       field.foreachUnlessDefault(z) { (a: A) =>
-        writeLabel(out)
+        writeLabel(jLabel, out)
         codec.encodeValue(a, out)
       }
+    }
+  }
+
+  private def jsonUnknownFieldEncoder[Z, A](
+      field: Field[Z, A]
+  ): (Z, JsonWriter) => Unit = { (z: Z, out: JsonWriter) =>
+    field.foreachUnlessDefault(z) {
+      case m: Map[_, _] =>
+        m.foreach { case (label: String, value: Document) =>
+          writeLabel(label, out)
+          documentJCodec.encodeValue(value, out)
+        }
+      case Some(m: Map[_, _]) =>
+        m.foreach { case (label: String, value: Document) =>
+          writeLabel(label, out)
+          documentJCodec.encodeValue(value, out)
+        }
     }
   }
 
@@ -1424,15 +1445,29 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
+      private[this] val (fieldsForUnknown, knownFields) = fields.partition {
+        case (field, _, _) => isForJsonUnknown(field)
+      }
+
+      private[this] val keepUnknown = fieldsForUnknown.nonEmpty
+
+      private[this] val isLabelForUnknownFields: String => Boolean =
+        if (keepUnknown)
+          fieldsForUnknown.map { case (_, label, _) =>
+            label
+          }.toSet
+        else _ => false
+
       private[this] val handlers =
         new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
-          fields.foreach { case (field, jLabel, _) =>
+          knownFields.foreach { case (field, jLabel, _) =>
             put(jLabel, fieldHandler(field))
           }
         }
 
       private[this] val documentEncoders =
-        fields.map(labelledField => fieldEncoder(labelledField._1))
+        knownFields.map(labelledField => fieldEncoder(labelledField._1)) ++
+          fieldsForUnknown.map(f => jsonUnknownFieldEncoder(f._1))
 
       def expecting: String = "object"
 
@@ -1445,14 +1480,21 @@ private[smithy4s] class SchemaVisitorJCodec(
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
+        val unknownValues =
+          if (keepUnknown) ListBuffer[(String, Document)]() else null
         val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
-              val handler = handlers.get(in.readKeyAsString())
-              if (handler eq null) in.skip()
-              else handler(cursor, in, buffer)
+              val key = in.readKeyAsString()
+              val handler = handlers.get(key)
+              if (handler eq null) {
+                if (keepUnknown) {
+                  val value = documentJCodec.decodeValue(cursor, in)
+                  unknownValues += (key -> value)
+                } else in.skip()
+              } else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
             if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
@@ -1467,14 +1509,32 @@ private[smithy4s] class SchemaVisitorJCodec(
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
+          val unknownValue =
+            if (keepUnknown && unknownValues.nonEmpty) {
+              val builder = Map.newBuilder[String, Document]
+              builder ++= unknownValues
+              builder.result()
+            } else null
+
           fields.foreach { case (f, jsonLabel, default) =>
             stage2 += {
-              val value = buffer.get(f.label)
-              if (value == null) {
-                if (default == null)
-                  cursor.requiredFieldError(jsonLabel, jsonLabel)
-                else default
-              } else value
+              if (isLabelForUnknownFields(jsonLabel)) {
+                if (unknownValue == null) {
+                  if (default == null) {
+                    if (f.isRequired) Map.empty
+                    else None
+                  } else default
+                } else {
+                  if (f.isRequired) unknownValue else Some(unknownValue)
+                }
+              } else {
+                val value = buffer.get(f.label)
+                if (value == null) {
+                  if (default == null)
+                    cursor.requiredFieldError(jsonLabel, jsonLabel)
+                  else default
+                } else value
+              }
             }
           }
           const(stage2.result())
