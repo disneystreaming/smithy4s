@@ -1447,10 +1447,10 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val isLabelForUnknownFields =
-        fieldsForUnknown.map { case (_, label, _) =>
-          label
-        }.toSet
+      private val fieldForUnknownDocumentDecoders = fieldsForUnknown.map {
+        case (field, label, _) =>
+          label -> Document.Decoder.fromSchema(field.schema)
+      }.toMap
 
       private[this] val handlers =
         new util.HashMap[String, Handler](knownFields.length << 1, 0.5f) {
@@ -1501,30 +1501,39 @@ private[smithy4s] class SchemaVisitorJCodec(
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
           val unknownValue =
-            if (unknownValues.nonEmpty) {
-              val builder = Map.newBuilder[String, Document]
-              builder ++= unknownValues
-              builder.result()
-            } else null
+            if (unknownValues.nonEmpty) Document.obj(unknownValues) else null
 
           allFields.foreach { case (f, jsonLabel, default) =>
             stage2 += {
-              if (isLabelForUnknownFields(jsonLabel)) {
-                if (unknownValue == null) {
-                  if (default == null) {
-                    if (f.isRequired) Map.empty
-                    else None
-                  } else default
-                } else {
-                  if (f.isRequired) unknownValue else Some(unknownValue)
-                }
-              } else {
-                val value = buffer.get(f.label)
-                if (value == null) {
-                  if (default == null)
-                    cursor.requiredFieldError(jsonLabel, jsonLabel)
-                  else default
-                } else value
+              fieldForUnknownDocumentDecoders.get(jsonLabel) match {
+                case None =>
+                  val value = buffer.get(f.label)
+                  if (value == null) {
+                    if (default == null)
+                      cursor.requiredFieldError(jsonLabel, jsonLabel)
+                    else default
+                  } else value
+
+                case Some(docDecoder) =>
+                  if (unknownValue == null) {
+                    if (default == null) {
+                      docDecoder
+                        .decode(Document.obj())
+                        .getOrElse(
+                          throw new RuntimeException(
+                            s"${cursor.getPath(Nil)} Failed translating a Document.DObject to the type targeted by ${f.label}."
+                          )
+                        )
+                    } else default
+                  } else {
+                    docDecoder
+                      .decode(unknownValue)
+                      .getOrElse(
+                        throw new RuntimeException(
+                          s"${cursor.getPath(Nil)} Failed translating a Document.DObject to the type targeted by ${f.label}."
+                        )
+                      )
+                  }
               }
             }
           }
