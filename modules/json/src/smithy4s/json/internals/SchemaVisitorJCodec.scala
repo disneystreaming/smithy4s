@@ -1586,11 +1586,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
-              val key = in.readKeyAsString()
-              val handler = handlers.get(key)
-              if (handler eq null) {
-                in.skip()
-              } else handler(cursor, in, buffer)
+              val handler = handlers.get(in.readKeyAsString())
+              if (handler eq null) in.skip()
+              else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
             if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
