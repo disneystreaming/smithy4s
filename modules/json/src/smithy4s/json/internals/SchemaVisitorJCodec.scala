@@ -1436,8 +1436,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       (field, jLabel, default)
     }
 
-  private def nonPayloadStruct[Z](
-      fields: LabelledFields[Z],
+  private def structRetainUnknownFields[Z](
+      allFields: LabelledFields[Z],
+      knownFields: LabelledFields[Z],
+      fieldsForUnknown: LabelledFields[Z],
       structHints: Hints
   )(
       const: Vector[Any] => Z,
@@ -1445,21 +1447,13 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val (fieldsForUnknown, knownFields) = fields.partition {
-        case (field, _, _) => isForJsonUnknown(field)
-      }
-
-      private[this] val keepUnknown = fieldsForUnknown.nonEmpty
-
-      private[this] val isLabelForUnknownFields: String => Boolean =
-        if (keepUnknown)
-          fieldsForUnknown.map { case (_, label, _) =>
-            label
-          }.toSet
-        else _ => false
+      private[this] val isLabelForUnknownFields =
+        fieldsForUnknown.map { case (_, label, _) =>
+          label
+        }.toSet
 
       private[this] val handlers =
-        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
+        new util.HashMap[String, Handler](knownFields.length << 1, 0.5f) {
           knownFields.foreach { case (field, jLabel, _) =>
             put(jLabel, fieldHandler(field))
           }
@@ -1480,8 +1474,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val unknownValues =
-          if (keepUnknown) ListBuffer[(String, Document)]() else null
+        val unknownValues = ListBuffer[(String, Document)]()
         val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
@@ -1490,10 +1483,8 @@ private[smithy4s] class SchemaVisitorJCodec(
               val key = in.readKeyAsString()
               val handler = handlers.get(key)
               if (handler eq null) {
-                if (keepUnknown) {
-                  val value = documentJCodec.decodeValue(cursor, in)
-                  unknownValues += (key -> value)
-                } else in.skip()
+                val value = documentJCodec.decodeValue(cursor, in)
+                unknownValues += (key -> value)
               } else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
@@ -1510,13 +1501,13 @@ private[smithy4s] class SchemaVisitorJCodec(
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
           val unknownValue =
-            if (keepUnknown && unknownValues.nonEmpty) {
+            if (unknownValues.nonEmpty) {
               val builder = Map.newBuilder[String, Document]
               builder ++= unknownValues
               builder.result()
             } else null
 
-          fields.foreach { case (f, jsonLabel, default) =>
+          allFields.foreach { case (f, jsonLabel, default) =>
             stage2 += {
               if (isLabelForUnknownFields(jsonLabel)) {
                 if (unknownValue == null) {
@@ -1550,6 +1541,106 @@ private[smithy4s] class SchemaVisitorJCodec(
       def encodeKey(x: Z, out: JsonWriter): Unit =
         out.encodeError("Cannot use products as keys")
     }
+
+  private def structIgnoreUnknownFields[Z](
+      fields: LabelledFields[Z],
+      structHints: Hints
+  )(
+      const: Vector[Any] => Z,
+      encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
+  ): JCodec[Z] =
+    new JCodec[Z] {
+
+      private[this] val handlers =
+        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
+          fields.foreach { case (field, jLabel, _) =>
+            put(jLabel, fieldHandler(field))
+          }
+        }
+
+      private[this] val documentEncoders =
+        fields.map(labelledField => fieldEncoder(labelledField._1))
+
+      def expecting: String = "object"
+
+      override def canBeKey = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
+        decodeValue_(cursor, in)(emptyMetadata)
+
+      private def decodeValue_(
+          cursor: Cursor,
+          in: JsonReader
+      ): scala.collection.Map[String, Any] => Z = {
+        val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
+        if (in.isNextToken('{')) {
+          if (!in.isNextToken('}')) {
+            in.rollbackToken()
+            while ({
+              val key = in.readKeyAsString()
+              val handler = handlers.get(key)
+              if (handler eq null) {
+                in.skip()
+              } else handler(cursor, in, buffer)
+              in.isNextToken(',')
+            }) ()
+            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
+          }
+        } else in.decodeError("Expected JSON object")
+
+        // At this point, we have parsed the json and retrieved
+        // all the values that interest us for the construction
+        // of our domain object.
+        // We re-order the values following the order of the schema
+        // fields before calling the constructor.
+        { (meta: scala.collection.Map[String, Any]) =>
+          meta.foreach(kv => buffer.put(kv._1, kv._2))
+          val stage2 = new VectorBuilder[Any]
+          fields.foreach { case (f, jsonLabel, default) =>
+            stage2 += {
+              val value = buffer.get(f.label)
+              if (value == null) {
+                if (default == null)
+                  cursor.requiredFieldError(jsonLabel, jsonLabel)
+                else default
+              } else value
+            }
+          }
+          const(stage2.result())
+        }
+      }
+
+      def encodeValue(z: Z, out: JsonWriter): Unit =
+        encode(z, out, documentEncoders)
+
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use products as keys")
+
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use products as keys")
+    }
+
+  private def nonPayloadStruct[Z](
+      fields: LabelledFields[Z],
+      structHints: Hints
+  )(
+      const: Vector[Any] => Z,
+      encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
+  ): JCodec[Z] = {
+    val (fieldsForUnknown, knownFields) = fields.partition {
+      case (field, _, _) => isForJsonUnknown(field)
+    }
+
+    if (fieldsForUnknown.isEmpty)
+      structIgnoreUnknownFields(fields, structHints)(const, encode)
+    else
+      structRetainUnknownFields(
+        fields,
+        knownFields,
+        fieldsForUnknown,
+        structHints
+      )(const, encode)
+  }
 
   private def basicStruct[A, S](
       fields: LabelledFields[S],
