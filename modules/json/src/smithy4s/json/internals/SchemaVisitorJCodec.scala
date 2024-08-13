@@ -1411,19 +1411,22 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private def jsonUnknownFieldEncoder[Z, A](
       field: Field[Z, A]
-  ): (Z, JsonWriter) => Unit = { (z: Z, out: JsonWriter) =>
-    field.foreachUnlessDefault(z) {
-      case m: Map[_, _] =>
-        m.foreach { case (label: String, value: Document) =>
-          writeLabel(label, out)
-          documentJCodec.encodeValue(value, out)
+  ): (Z, JsonWriter) => Unit = {
+    val docEncoder = Document.Encoder.fromSchema(field.schema)
+    (z: Z, out: JsonWriter) =>
+      field.foreachUnlessDefault(z) { a =>
+        docEncoder.encode(a) match {
+          case Document.DObject(value) =>
+            value.foreach { case (label: String, value: Document) =>
+              writeLabel(label, out)
+              documentJCodec.encodeValue(value, out)
+            }
+          case _ =>
+            out.encodeError(
+              s"Failed encoding field ${field.label} because it cannot be converted to a JSON object"
+            )
         }
-      case Some(m: Map[_, _]) =>
-        m.foreach { case (label: String, value: Document) =>
-          writeLabel(label, out)
-          documentJCodec.encodeValue(value, out)
-        }
-    }
+      }
   }
 
   private type Fields[Z] = Vector[Field[Z, _]]
