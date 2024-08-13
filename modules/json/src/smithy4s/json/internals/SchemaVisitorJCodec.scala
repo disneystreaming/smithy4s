@@ -1452,7 +1452,9 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       private val fieldForUnknownDocumentDecoders = fieldsForUnknown.map {
         case (field, label, _) =>
-          label -> Document.Decoder.fromSchema(field.schema)
+          label -> Document.Decoder
+            .fromSchema(field.schema)
+            .asInstanceOf[Document.Decoder[Any]]
       }.toMap
 
       private[this] val handlers =
