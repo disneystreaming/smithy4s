@@ -1520,7 +1520,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                       docDecoder
                         .decode(Document.obj())
                         .getOrElse(
-                          throw new RuntimeException(
+                          in.decodeError(
                             s"${cursor.getPath(Nil)} Failed translating a Document.DObject to the type targeted by ${f.label}."
                           )
                         )
@@ -1529,7 +1529,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                     docDecoder
                       .decode(unknownValue)
                       .getOrElse(
-                        throw new RuntimeException(
+                        in.decodeError(
                           s"${cursor.getPath(Nil)} Failed translating a Document.DObject to the type targeted by ${f.label}."
                         )
                       )
