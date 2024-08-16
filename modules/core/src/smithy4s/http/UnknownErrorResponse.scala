@@ -19,7 +19,8 @@ package smithy4s.http
 case class UnknownErrorResponse(
     code: Int,
     headers: Map[CaseInsensitive, Seq[String]],
-    body: String
+    body: String,
+    error: String
 ) extends Throwable {
   override def getMessage(): String =
     s"status $code, headers: $headers, body:\n$body"
