@@ -41,6 +41,12 @@ object HttpErrorSelector {
   def apply[F[_]: Covariant, E](
       maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
+  ): HttpDiscriminator => Option[F[E]] =
+    makeWithReason(maybeErrorSchema, compiler).andThen(_.toOption)
+
+  def makeWithReason[F[_]: Covariant, E](
+      maybeErrorSchema: Option[ErrorSchema[E]],
+      compiler: CachedSchemaCompiler[F]
   ): HttpDiscriminator => Either[String, F[E]] = maybeErrorSchema match {
     case None => _ => Left("error schema not found")
     case Some(errorschema) =>
@@ -61,19 +67,21 @@ object HttpErrorSelector {
   def asThrowable[F[_]: Covariant, E](
       maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Option[F[Throwable]] = asThrowableWithError(maybeErrorSchema, compiler).andThen(_.toOption)
+  ): HttpDiscriminator => Option[F[Throwable]] =
+    asThrowableWithReason(maybeErrorSchema, compiler).andThen(_.toOption)
 
-  def asThrowableWithError[F[_]: Covariant, E](
+  def asThrowableWithReason[F[_]: Covariant, E](
       maybeErrorSchema: Option[ErrorSchema[E]],
       compiler: CachedSchemaCompiler[F]
-  ): HttpDiscriminator => Either[String, F[Throwable]] = maybeErrorSchema match {
-    case None => _ => Left("error schema not found")
-    case Some(errorschema) =>
-      new HttpErrorSelector[F, E](
-        errorschema.alternatives,
-        compiler
-      ).andThen(_.map(Covariant[F].map(_)(errorschema.unliftError)))
-  }
+  ): HttpDiscriminator => Either[String, F[Throwable]] =
+    maybeErrorSchema match {
+      case None => _ => Left("error schema not found")
+      case Some(errorschema) =>
+        new HttpErrorSelector[F, E](
+          errorschema.alternatives,
+          compiler
+        ).andThen(_.map(Covariant[F].map(_)(errorschema.unliftError)))
+    }
 
 }
 

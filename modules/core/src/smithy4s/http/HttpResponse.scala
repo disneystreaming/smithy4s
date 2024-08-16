@@ -203,7 +203,7 @@ object HttpResponse {
     ): Decoder[F, Body, E] =
       discriminating(
         discriminate,
-        HttpErrorSelector(maybeErrorSchema, decoderCompiler),
+        HttpErrorSelector.makeWithReason(maybeErrorSchema, decoderCompiler),
         toStrict
       )
 
@@ -220,7 +220,8 @@ object HttpResponse {
     ): Decoder[F, Body, Throwable] =
       discriminating(
         discriminate,
-        HttpErrorSelector.asThrowableWithError(maybeErrorSchema, decoderCompiler),
+        HttpErrorSelector
+          .asThrowableWithReason(maybeErrorSchema, decoderCompiler),
         toStrict
       )
 
