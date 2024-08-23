@@ -43,6 +43,7 @@ package object example {
 
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
+  type AdditionalProperties = smithy4s.example.AdditionalProperties.Type
   type Age = smithy4s.example.Age.Type
   /** Multiple line doc comment for another string
     * Containing a random \*\/ here.
