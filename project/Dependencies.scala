@@ -31,7 +31,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.3.8"
+    val alloyVersion = "0.3.9"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val protobuf = org % "alloy-protobuf" % alloyVersion
@@ -40,7 +40,7 @@ object Dependencies {
 
   val Smithytranslate = new {
     val org = "com.disneystreaming.smithy"
-    val smithyTranslateVersion = "0.5.2"
+    val smithyTranslateVersion = "0.5.3"
     val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 
@@ -80,7 +80,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.10.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.0")
   }
 
   object Mill {
@@ -139,7 +139,7 @@ object Dependencies {
       )
   }
 
-  class MunitCross(munitVersion: String) {
+  class MunitCross(val munitVersion: String) {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck: Def.Initialize[ModuleID] =
@@ -147,6 +147,10 @@ object Dependencies {
   }
   object Munit extends MunitCross("0.7.29")
   object MunitMilestone extends MunitCross("1.0.0-M6")
+  object MunitV1 extends MunitCross("1.0.0") {
+    val diff: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit-diff" % munitVersion)
+  }
 
   val Scalacheck = new {
     val scalacheckVersion = "1.16.0"

@@ -82,6 +82,7 @@ package object example {
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
   type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
+  type NonValidatedString = smithy4s.example.NonValidatedString.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
@@ -115,5 +116,6 @@ package object example {
   type UVIndex = smithy4s.example.UVIndex.Type
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }

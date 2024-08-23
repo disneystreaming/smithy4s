@@ -2,12 +2,11 @@ $version: "2.0"
 
 metadata suppressions = [
     {
-        id: "UnreferencedShape",
-        namespace: "smithy4s.meta",
+        id: "UnreferencedShape"
+        namespace: "smithy4s.meta"
         reason: "This is a library namespace."
     }
 ]
-
 
 namespace smithy4s.meta
 
@@ -39,26 +38,27 @@ structure adt {}
 // from various formats, Smithy4s will do a best effort to try and back the IndexedSeq
 // the most efficiently possible, often using `ArraySeq` and storing primitive values
 // in unboxed ways.
-@trait(selector: """
+@trait(
+    selector: """
         list
         :not(:test([trait|smithy4s.meta#vector],
-                   [trait|smithy.api#uniqueItems]))""")
+                   [trait|smithy.api#uniqueItems]))"""
+)
 structure indexedSeq {}
 
 // the vector trait can be added to list shapes in order for the generated collection
 // fields to be of type `Vector` instead of `List`
-@trait(selector: """
+@trait(
+    selector: """
         list
         :not(:test([trait|smithy4s.meta#indexedSeq],
-                   [trait|smithy.api#uniqueItems]))""")
+                   [trait|smithy.api#uniqueItems]))"""
+)
 structure vector {}
 
 // the errorMessage trait marks a structure's field as one that will be used
 // for the generated exception's error message.
-@trait(
-    selector: "structure > member",
-    structurallyExclusive: "member"
-)
+@trait(selector: "structure > member", structurallyExclusive: "member")
 structure errorMessage {}
 
 /// Allows specifying a custom type that smithy4s will use for rendering
@@ -88,8 +88,10 @@ structure errorMessage {}
 @trait(selector: "* [trait|trait]")
 structure refinement {
     @required
-    targetType: Classpath,
-    providerImport: Import,
+    targetType: Classpath
+
+    providerImport: Import
+
     parameterised: Boolean = false
 }
 
@@ -105,7 +107,7 @@ string Import
 
 /// This trait is used to signal that this type should not be wrapped
 /// in a newtype at usage sites. For example:
-/// 
+///
 /// @unwrap
 /// string Email
 ///
@@ -134,7 +136,7 @@ structure unwrap {}
 ///
 /// @show
 /// structure Person {
-///   name: String   
+///   name: String
 /// }
 ///
 /// This example would lead to generated code where the Person
@@ -143,7 +145,8 @@ structure unwrap {}
 @trait(selector: "* [trait|trait]")
 structure typeclass {
     @required
-    targetType: Classpath,
+    targetType: Classpath
+
     @required
     interpreter: Classpath
 }
@@ -155,7 +158,7 @@ structure generateServiceProduct {}
 
 /// Placing this trait on a shape will cause the generated
 /// code to have optics (Lenses or Prisms) in the companion
-/// object. 
+/// object.
 @trait(selector: ":is(enum, intEnum, union, structure)")
 structure generateOptics {}
 
@@ -163,3 +166,23 @@ structure generateOptics {}
 ///  via extending scala.util.control.NoStackTrace instead of Throwable.
 @trait(selector: "structure :is([trait|error])")
 structure noStackTrace {}
+
+/// Allows users to manually add imports to files of generated shapes.
+/// This would be helpful when some shape needs specific import(s) in order
+/// to compile. Espically in the case you want to compose refinement types
+/// and other validators.
+@trait
+list scalaImports {
+    member: Import
+}
+
+@trait(
+    selector: """
+        :is(
+            number[trait|range],
+            string[trait|pattern],
+            string[trait|length]
+        )"""
+    conflicts: ["smithy4s.meta#unwrap"]
+)
+structure validateNewtype {}

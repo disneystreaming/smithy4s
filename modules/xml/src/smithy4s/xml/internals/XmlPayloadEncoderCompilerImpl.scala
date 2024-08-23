@@ -33,7 +33,7 @@ private[xml] class XmlPayloadEncoderCompilerImpl(escapeAttributes: Boolean)
       Blob {
         eventifier
           .eventify(xmlDocumentEncoder.encode(a))
-          .through(fs2.data.xml.render(collapseEmpty = false))
+          .through(fs2.data.xml.render.raw(collapseEmpty = false))
           .through(fs2.text.utf8.encode[fs2.Pure])
           .compile
           .to(Collector.supportsArray(Array))
