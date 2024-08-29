@@ -34,6 +34,7 @@ import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
 import smithy4s.http.HttpDiscriminator
+import smithy4s.http.FailedDecodeAttempt
 import smithy4s.http.RawErrorResponse
 import weaver._
 import cats.Show
@@ -509,10 +510,18 @@ abstract class PizzaSpec
           CaseInsensitive("Content-Length") -> List("14")
         )
         response match {
-          case Left(RawErrorResponse(code, headers, body, None)) =>
+          case Left(
+                RawErrorResponse(code, headers, body, failedDecodeAttempt)
+              ) =>
             expect(code == 500) &&
               expect(headers == expectHeaders) &&
-              expect(body.contains("malformed body"))
+              expect(body.contains("malformed body")) &&
+              expect(
+                failedDecodeAttempt == FailedDecodeAttempt
+                  .UnrecognisedDiscriminator(
+                    HttpDiscriminator.StatusCode(500)
+                  )
+              )
           case _ =>
             failure("Expected RawErrorResponse with status 500")
         }
@@ -553,17 +562,6 @@ abstract class PizzaSpec
       }
 
     } yield {
-      val expectedHttpPayloadError = HttpPayloadError(
-        path = smithy4s.codecs.PayloadPath(List()),
-        expected = "object",
-        message =
-          """Expected JSON object, offset: 0x00000000, buf:
-            |+----------+-------------------------------------------------+------------------+
-            ||          |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f | 0123456789abcdef |
-            |+----------+-------------------------------------------------+------------------+
-            || 00000000 | 6d 61 6c 66 6f 72 6d 65 64 20 62 6f 64 79       | malformed body   |
-            |+----------+-------------------------------------------------+------------------+""".stripMargin
-      )
       val expectHeaders = Map(
         CaseInsensitive("Content-Length") -> List("14"),
         CaseInsensitive("Content-Type") -> List("text/plain"),
@@ -571,7 +569,7 @@ abstract class PizzaSpec
       )
       response match {
         case Left(
-              RawErrorResponse(code, headers, body, Some(failedDecodeAttempt))
+              RawErrorResponse(code, headers, body, failedDecodeAttempt)
             ) =>
           expect(code == 500) &&
             expect(headers == expectHeaders) &&
@@ -580,9 +578,6 @@ abstract class PizzaSpec
               failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
                 "GenericServerError"
               )
-            ) &&
-            expect(
-              failedDecodeAttempt.contractError == expectedHttpPayloadError
             )
         case _ =>
           failure("Expected RawErrorResponse with status 500")

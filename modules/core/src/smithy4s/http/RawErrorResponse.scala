@@ -20,24 +20,37 @@ case class RawErrorResponse(
     code: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: String,
-    failedDecodeAttempt: Option[FailedDecodeAttempt]
+    failedDecodeAttempt: FailedDecodeAttempt
 ) extends Throwable {
   override def getMessage(): String = {
     val baseMessage = s"status $code, headers: $headers, body:\n$body"
-    failedDecodeAttempt match {
-      case Some(attempt) =>
-        baseMessage +
-          s"""
-             |FailedDecodeAttempt:
-             |  discriminator: ${attempt.discriminator}
-             |  contractError: ${attempt.contractError.getMessage}
+    baseMessage +
+      s"""
+         |FailedDecodeAttempt:
+         |  ${failedDecodeAttempt.getMessage}
                """.stripMargin
-      case None => baseMessage
-    }
   }
+
+  override def getCause: Throwable = failedDecodeAttempt
 }
 
-case class FailedDecodeAttempt(
-    discriminator: HttpDiscriminator,
-    contractError: HttpContractError
-)
+sealed trait FailedDecodeAttempt extends Throwable {
+  def discriminator: HttpDiscriminator
+  def getMessage: String
+}
+
+object FailedDecodeAttempt {
+  case class UnrecognisedDiscriminator(discriminator: HttpDiscriminator)
+      extends FailedDecodeAttempt {
+    override def getMessage: String =
+      s"Unrecognised descriminator: $discriminator"
+  }
+
+  case class DecodingFailure(
+      discriminator: HttpDiscriminator,
+      contractError: HttpContractError
+  ) extends FailedDecodeAttempt {
+    override def getMessage: String =
+      s"Decoding failed for discriminator: $discriminator with error: ${contractError.getMessage}"
+  }
+}

@@ -247,11 +247,9 @@ object HttpResponse {
                           response.statusCode,
                           response.headers,
                           bodyBlob.toUTF8String,
-                          Some(
-                            FailedDecodeAttempt(
-                              discriminator = discriminator,
-                              contractError = error
-                            )
+                          FailedDecodeAttempt.DecodingFailure(
+                            discriminator = discriminator,
+                            contractError = error
                           )
                         )
                       )
@@ -263,7 +261,10 @@ object HttpResponse {
                       code = response.statusCode,
                       headers = response.headers,
                       body = bodyBlob.toUTF8String,
-                      failedDecodeAttempt = None
+                      failedDecodeAttempt =
+                        FailedDecodeAttempt.UnrecognisedDiscriminator(
+                          discriminator
+                        )
                     )
                   )
               }

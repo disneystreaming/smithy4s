@@ -114,61 +114,67 @@ abstract class PizzaClientSpec extends IOSuite {
     GenericClientError("generic error message for 418")
   )
 
-  clientTestForError(
-    "Handle error  with a discriminator but can't be decoded",
+  clientAssertError[RawErrorResponse](
+    "Handle error with a discriminator but can't be decoded",
     Response[IO](status = Status.NotFound)
       .withEntity("malformed body")
       .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError")),
-    rawErrorResponse(
-      404,
-      Map("X-Error-Type" -> "NotFoundError"),
-      "malformed body",
-      Some(
-        FailedDecodeAttempt(
-          discriminator = HttpDiscriminator.NameOnly("NotFoundError"),
-          contractError = HttpPayloadError(
-            path = smithy4s.codecs.PayloadPath(List()),
-            expected = "object",
-            message =
-              """Expected JSON object, offset: 0x00000000, buf:
-                |+----------+-------------------------------------------------+------------------+
-                ||          |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f | 0123456789abcdef |
-                |+----------+-------------------------------------------------+------------------+
-                || 00000000 | 6d 61 6c 66 6f 72 6d 65 64 20 62 6f 64 79       | malformed body   |
-                |+----------+-------------------------------------------------+------------------+""".stripMargin
-          )
-        )
-      )
-    )
+    error => {
+      error match {
+        case RawErrorResponse(
+              code,
+              headers,
+              body,
+              FailedDecodeAttempt.DecodingFailure(
+                discriminator,
+                HttpPayloadError(path, expected, _)
+              )
+            ) =>
+          expect(code == 404) &&
+            expect(
+              headers == Map(
+                CaseInsensitive("X-Error-Type") -> List("NotFoundError")
+              )
+            ) &&
+            expect(body == "malformed body") &&
+            expect(
+              discriminator == HttpDiscriminator.NameOnly("NotFoundError")
+            ) &&
+            expect(path == smithy4s.codecs.PayloadPath(List())) &&
+            expect(expected == "object")
+        case _ => failure("Unexpected error type or values")
+      }
+    }
   )
 
-  clientTestForError(
+  clientAssertError[RawErrorResponse](
     "Handle malformed error response with no discriminator",
     Response(status = Status.InternalServerError)
       .withEntity("goodbye world"),
-    rawErrorResponse(
-      code = 500,
-      headers = Map(
-        "Content-Length" -> "13",
-        "Content-Type" -> "text/plain; charset=UTF-8"
-      ),
-      body = "goodbye world",
-      failedDecodeAttempt = None
-    )
-  )
+    error => {
+      error match {
+        case RawErrorResponse(
+              code,
+              headers,
+              body,
+              FailedDecodeAttempt.UnrecognisedDiscriminator(discriminator)
+            ) =>
+          expect(code == 500) &&
+            expect(
+              headers == Map(
+                CaseInsensitive("Content-Length") -> List("13"),
+                CaseInsensitive("Content-Type") -> List(
+                  "text/plain; charset=UTF-8"
+                )
+              )
+            ) &&
+            expect(body == "goodbye world") &&
+            expect(discriminator == HttpDiscriminator.StatusCode(500))
+        case _ => failure("Unexpected error type or values")
+      }
 
-  private def rawErrorResponse(
-      code: Int,
-      headers: Map[String, String],
-      body: String,
-      failedDecodeAttempt: Option[FailedDecodeAttempt]
-  ): RawErrorResponse =
-    RawErrorResponse(
-      code,
-      headers.map { case (k, v) => CaseInsensitive(k) -> List(v) },
-      body,
-      failedDecodeAttempt
-    )
+    }
+  )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>
     for {
@@ -241,6 +247,30 @@ abstract class PizzaClientSpec extends IOSuite {
 
       }
     }
+  }
+
+  def clientAssertError[E](
+      name: String,
+      response: Response[IO],
+      assert: E => Expectations
+  )(implicit
+      loc: SourceLocation,
+      ct: scala.reflect.ClassTag[E]
+  ) = {
+    clientTest(name) { (client, backend, log) =>
+      for {
+        _ <- backend.prepResponse(name, response)
+        maybeResult <- client.getMenu(name).attempt
+
+      } yield maybeResult match {
+        case Right(_) => failure("expected failure")
+        case Left(error: E) =>
+          assert(error)
+        case Left(error) =>
+          failure(s"Error of unexpected type: $error")
+      }
+    }
+
   }
 
   def clientTest(name: TestName)(
