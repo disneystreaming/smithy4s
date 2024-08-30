@@ -99,9 +99,10 @@ class DocumentEncoderSchemaVisitor(
       hints
         .get(TimestampFormat)
         .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
-        case DATE_TIME     => ts => DString(ts.format(DATE_TIME))
-        case HTTP_DATE     => ts => DString(ts.format(HTTP_DATE))
-        case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))
+        case DATE_TIME => ts => DString(ts.format(DATE_TIME))
+        case HTTP_DATE => ts => DString(ts.format(HTTP_DATE))
+        case EPOCH_SECONDS =>
+          ts => DNumber(BigDecimal(s"${ts.epochSecond}.${ts.nano}"))
       }
     case PDocument => from(identity)
     case PFloat    => from(float => DNumber(BigDecimal(float.toDouble)))
