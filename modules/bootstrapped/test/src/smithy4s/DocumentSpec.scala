@@ -583,7 +583,7 @@ class DocumentSpec() extends FunSuite {
 
   test("Document encoder - timestamp epoch seconds with nanos") {
     val timestampWithNanos =
-      Timestamp(1716459630L, 500_000_000 /* half a second */ )
+      Timestamp(1716459630L, 500 * 1000 * 1000 /* half a second */ )
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
       .fromSchema(TimestampOperationInput.schema)
