@@ -582,7 +582,8 @@ class DocumentSpec() extends FunSuite {
   }
 
   test("Document encoder - timestamp epoch seconds with nanos") {
-    val timestampWithNanos = Timestamp(1716459630L, 5000000)
+    val timestampWithNanos =
+      Timestamp(1716459630L, 500_000_000 /* half a second */ )
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
       .fromSchema(TimestampOperationInput.schema)
@@ -595,8 +596,8 @@ class DocumentSpec() extends FunSuite {
       )
     expect.same(
       Document.obj(
-        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30.005 GMT"),
-        "dateTime" -> Document.fromString("2024-05-23T10:20:30.005Z"),
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30.500 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30.500Z"),
         "epochSeconds" -> Document.fromBigDecimal(
           BigDecimal("1716459630.500000")
         )
