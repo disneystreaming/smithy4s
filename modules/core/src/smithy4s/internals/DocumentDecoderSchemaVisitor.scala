@@ -375,7 +375,7 @@ class DocumentDecoderSchemaVisitor(
                   throw new PayloadError(
                     PayloadPath((PayloadPath.Segment(jLabel) :: pp).reverse),
                     jLabel,
-                    "Missing required field"
+                    "Required field not found"
                   )
                 } else default
               } else value
@@ -401,7 +401,8 @@ class DocumentDecoderSchemaVisitor(
             }
           }
           val orderedBuffer = Vector.newBuilder[Any]
-          val unknownValue = if (unknownValues.nonEmpty) Document.obj(unknownValues) else null
+          val unknownValue =
+            if (unknownValues.nonEmpty) Document.obj(unknownValues) else null
           labelelledFields.foreach { case (field, jLabel, default) =>
             orderedBuffer += {
               fieldForUnknownDocDecoders.get(jLabel) match {
@@ -414,7 +415,7 @@ class DocumentDecoderSchemaVisitor(
                           (PayloadPath.Segment(jLabel) :: pp).reverse
                         ),
                         jLabel,
-                        "Missing required field"
+                        "Required field not found"
                       )
                     } else default
                   } else value
