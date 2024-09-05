@@ -873,4 +873,30 @@ class DocumentSpec() extends FunSuite {
     assertEquals(res, Right(expected))
   }
 
+  test("unknown field encoding") {
+    val in = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val expected = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+
+    val doc = Document.Encoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .encode(in)
+
+    assertEquals(doc, expected)
+  }
+
 }
