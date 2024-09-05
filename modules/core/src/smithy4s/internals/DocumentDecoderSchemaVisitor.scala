@@ -386,7 +386,7 @@ class DocumentDecoderSchemaVisitor(
     } else {
       val fieldForUnknownDocDecoders = fieldsForUnknown.map {
         case (field, jLabel, _) =>
-          jLabel -> apply(field.schema)
+          jLabel -> apply(field.schema).asInstanceOf[DocumentDecoder[Any]]
       }.toMap
       DocumentDecoder.instance("Structure", "Object") {
         case (pp, DObject(value)) =>
