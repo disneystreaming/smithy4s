@@ -20,15 +20,17 @@ case class RawErrorResponse(
     code: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: String,
-    failedDecodeAttempt: FailedDecodeAttempt
+    private val failedDecodeAttemptField: FailedDecodeAttempt
 ) extends Throwable {
+
+  def failedDecodeAttempt: FailedDecodeAttempt = failedDecodeAttemptField
+
   override def getMessage(): String = {
     val baseMessage = s"status $code, headers: $headers, body:\n$body"
-    baseMessage +
-      s"""
-         |FailedDecodeAttempt:
-         |  ${failedDecodeAttempt.getMessage}
-               """.stripMargin
+    baseMessage + s"""
+                     |FailedDecodeAttempt:
+                     |  ${failedDecodeAttempt.getMessage}
+       """.stripMargin
   }
 
   override def getCause: Throwable = failedDecodeAttempt
@@ -40,10 +42,11 @@ sealed trait FailedDecodeAttempt extends Throwable {
 }
 
 object FailedDecodeAttempt {
+
   case class UnrecognisedDiscriminator(discriminator: HttpDiscriminator)
       extends FailedDecodeAttempt {
     override def getMessage: String =
-      s"Unrecognised descriminator: $discriminator"
+      s"Unrecognised discriminator: $discriminator"
   }
 
   case class DecodingFailure(
