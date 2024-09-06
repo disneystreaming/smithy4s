@@ -326,7 +326,7 @@ class DocumentDecoderSchemaVisitor(
     type Handler =
       (List[PayloadPath.Segment], Document, ju.HashMap[String, Any]) => Unit
 
-    val labelelledFields = fields.map { field =>
+    val labelledFields = fields.map { field =>
       val jLabel = jsonLabel(field)
       val decoded = field.schema.getDefaultValue
       val default = decoded.orNull
@@ -345,7 +345,7 @@ class DocumentDecoderSchemaVisitor(
         )
     }
 
-    val (fieldsForUnknown, knownFields) = labelelledFields.partition {
+    val (fieldsForUnknown, knownFields) = labelledFields.partition {
       case (field, _, _) => isForJsonUnknown(field)
     }
 
@@ -367,7 +367,7 @@ class DocumentDecoderSchemaVisitor(
             }
           }
           val orderedBuffer = Vector.newBuilder[Any]
-          labelelledFields.foreach { case (field, jLabel, default) =>
+          labelledFields.foreach { case (field, jLabel, default) =>
             orderedBuffer += {
               val value = buffer.get(field.label)
               if (value == null) {
@@ -403,7 +403,7 @@ class DocumentDecoderSchemaVisitor(
           val orderedBuffer = Vector.newBuilder[Any]
           val unknownValue =
             if (unknownValues.nonEmpty) Document.obj(unknownValues) else null
-          labelelledFields.foreach { case (field, jLabel, default) =>
+          labelledFields.foreach { case (field, jLabel, default) =>
             orderedBuffer += {
               fieldForUnknownDocDecoders.get(jLabel) match {
                 case None =>
