@@ -81,7 +81,7 @@ class DynamicJsonServerSpec() extends DummyIO.Suite {
   testJsonIO("Dynamic service is correctly wired: Bad Json Input") { jsonIO =>
     val expected = PayloadError(
       PayloadPath("key"),
-      "",
+      "key",
       "Required field not found"
     )
 
