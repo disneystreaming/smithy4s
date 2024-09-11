@@ -84,6 +84,18 @@ object RawErrorResponse {
   ): RawErrorResponse =
     new RawErrorResponse(code, headers, body, failedDecodeAttempt)
 
+  def unapply(response: RawErrorResponse): Option[
+    (Int, Map[CaseInsensitive, Seq[String]], String, FailedDecodeAttempt)
+  ] =
+    Some(
+      (
+        response.code,
+        response.headers,
+        response.body,
+        response.failedDecodeAttempt
+      )
+    )
+
 }
 
 sealed trait FailedDecodeAttempt extends Throwable {
