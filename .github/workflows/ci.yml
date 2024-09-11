@@ -140,8 +140,8 @@ jobs:
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.S01_SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.S01_SONATYPE_USERNAME }}
 
   microsite:
     name: Publish Docs Microsite

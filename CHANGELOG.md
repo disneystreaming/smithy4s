@@ -25,6 +25,12 @@ Previously they'd be named after the **member target**, now they will use the na
 
 There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
 
+# 0.18.24
+
+* Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
+* Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
+
 # 0.18.23
 
 ## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
