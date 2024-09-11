@@ -261,7 +261,7 @@ object HttpResponse {
                       code = response.statusCode,
                       headers = response.headers,
                       body = bodyBlob.toUTF8String,
-                      failedDecodeAttemptField =
+                      failedDecodeAttempt =
                         FailedDecodeAttempt.UnrecognisedDiscriminator(
                           discriminator
                         )

@@ -17,13 +17,52 @@
 package smithy4s.http
 
 case class RawErrorResponse(
-    code: Int,
-    headers: Map[CaseInsensitive, Seq[String]],
-    body: String,
+    private val codeField: Int,
+    private val headersField: Map[CaseInsensitive, Seq[String]],
+    private val bodyField: String,
     private val failedDecodeAttemptField: FailedDecodeAttempt
 ) extends Throwable {
 
+  def code: Int = codeField
+  def headers: Map[CaseInsensitive, Seq[String]] = headersField
+  def body: String = bodyField
   def failedDecodeAttempt: FailedDecodeAttempt = failedDecodeAttemptField
+
+  def withCode(newCode: Int): RawErrorResponse =
+    new RawErrorResponse(
+      newCode,
+      headersField,
+      bodyField,
+      failedDecodeAttemptField
+    )
+
+  def withHeaders(
+      newHeaders: Map[CaseInsensitive, Seq[String]]
+  ): RawErrorResponse =
+    new RawErrorResponse(
+      codeField,
+      newHeaders,
+      bodyField,
+      failedDecodeAttemptField
+    )
+
+  def withBody(newBody: String): RawErrorResponse =
+    new RawErrorResponse(
+      codeField,
+      headersField,
+      newBody,
+      failedDecodeAttemptField
+    )
+
+  def withFailedDecodeAttempt(
+      newFailedDecodeAttempt: FailedDecodeAttempt
+  ): RawErrorResponse =
+    new RawErrorResponse(
+      codeField,
+      headersField,
+      bodyField,
+      newFailedDecodeAttempt
+    )
 
   override def getMessage(): String = {
     val baseMessage = s"status $code, headers: $headers, body:\n$body"
@@ -34,6 +73,17 @@ case class RawErrorResponse(
   }
 
   override def getCause: Throwable = failedDecodeAttempt
+}
+
+object RawErrorResponse {
+  def apply(
+      code: Int,
+      headers: Map[CaseInsensitive, Seq[String]],
+      body: String,
+      failedDecodeAttempt: FailedDecodeAttempt
+  ): RawErrorResponse =
+    new RawErrorResponse(code, headers, body, failedDecodeAttempt)
+
 }
 
 sealed trait FailedDecodeAttempt extends Throwable {
