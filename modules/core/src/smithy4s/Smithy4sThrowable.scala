@@ -18,14 +18,8 @@ package smithy4s
 
 trait Smithy4sThrowable extends Throwable { self: Product =>
 
-  /**
-    * implementing toString, because implementing getMessage
-    * lead to `smithy4s.example.ClientError: smithy4s.example.ClientError(400, "oops")`
-    * which felt weird
-    */
-  override def toString(): String = {
+  private def show(message: String): String = {
     val name = getClass().getName()
-    val message = getLocalizedMessage()
     if (message == null) {
       val sb = new StringBuilder()
       sb.append(name)
@@ -40,5 +34,17 @@ trait Smithy4sThrowable extends Throwable { self: Product =>
     } else {
       s"$name: $message"
     }
+  }
+
+  override def getMessage(): String = this.show(message = null)
+
+  /**
+    * implementing toString, because implementing getMessage
+    * lead to `smithy4s.example.ClientError: smithy4s.example.ClientError(400, "oops")`
+    * which felt weird
+    */
+  override def toString(): String = {
+    val message = getLocalizedMessage()
+    this.show(message = message)
   }
 }

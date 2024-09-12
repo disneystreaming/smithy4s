@@ -54,51 +54,50 @@
             "TestBiggerUnion": {
                 "oneOf": [
                     {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/One"
-                            },
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "tpe": {
-                                        "type": "string",
-                                        "enum": [
-                                            "one"
-                                        ]
-                                    }
-                                },
-                                "required": [
-                                    "tpe"
-                                ]
-                            }
-                        ]
+                        "$ref": "#/components/schemas/TestBiggerUnionOne"
                     },
                     {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/Two"
-                            },
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "tpe": {
-                                        "type": "string",
-                                        "enum": [
-                                            "two"
-                                        ]
-                                    }
-                                },
-                                "required": [
-                                    "tpe"
-                                ]
-                            }
-                        ]
+                        "$ref": "#/components/schemas/TestBiggerUnionTwo"
                     }
                 ],
                 "discriminator": {
-                    "propertyName": "tpe"
+                    "propertyName": "tpe",
+                    "mapping": {
+                        "one": "#/components/schemas/TestBiggerUnionOne",
+                        "two": "#/components/schemas/TestBiggerUnionTwo"
+                    }
                 }
+            },
+            "TestBiggerUnionMixin": {
+                "type": "object",
+                "properties": {
+                    "tpe": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "tpe"
+                ]
+            },
+            "TestBiggerUnionOne": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/One"
+                    },
+                    {
+                        "$ref": "#/components/schemas/TestBiggerUnionMixin"
+                    }
+                ]
+            },
+            "TestBiggerUnionTwo": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Two"
+                    },
+                    {
+                        "$ref": "#/components/schemas/TestBiggerUnionMixin"
+                    }
+                ]
             },
             "Two": {
                 "type": "object",

@@ -68,3 +68,5 @@ version
 
 #smithy cli metadata
 build/smithy/classpath.json
+
+.sbtopts

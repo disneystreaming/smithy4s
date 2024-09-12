@@ -20,9 +20,11 @@ import smithy.api.JsonName
 import smithy.api.Default
 import smithy4s.example.IntList
 import alloy.Discriminated
+import alloy.JsonUnknown
 import munit._
-import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
+import smithy4s.example.TimestampOperationInput
 
 class DocumentSpec() extends FunSuite {
 
@@ -423,8 +425,8 @@ class DocumentSpec() extends FunSuite {
 
   test("document encoder - all default") {
     val result = Document.Encoder
-      .fromSchema(OperationOutput.schema)
-      .encode(OperationOutput())
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
 
     expect.same(
       Document.obj(
@@ -444,9 +446,9 @@ class DocumentSpec() extends FunSuite {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(true)
       .fromSchema(
-        OperationOutput.schema
+        DefaultNullsOperationOutput.schema
       )
-      .encode(OperationOutput())
+      .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
         "optional" -> Document.nullDoc,
@@ -470,9 +472,9 @@ class DocumentSpec() extends FunSuite {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
       .fromSchema(
-        OperationOutput.schema
+        DefaultNullsOperationOutput.schema
       )
-      .encode(OperationOutput())
+      .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
         "requiredWithDefault" -> Document.fromString("required-default"),
@@ -489,9 +491,9 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(true)
-      .fromSchema(OperationOutput.schema)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -529,9 +531,9 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withExplicitDefaultsEncoding(false)
-      .fromSchema(OperationOutput.schema)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -565,6 +567,71 @@ class DocumentSpec() extends FunSuite {
 
   }
 
+  test("Document encoder - timestamp defaults") {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(TimestampOperationInput.schema)
+      .encode(TimestampOperationInput())
+    expect.same(
+      Document.obj(
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30Z"),
+        "epochSeconds" -> Document.fromLong(1716459630L)
+      ),
+      result
+    )
+  }
+
+  test("Document encoder - timestamp epoch seconds with nanos") {
+    val timestampWithNanos =
+      Timestamp(1716459630L, 500 * 1000 * 1000 /* half a second */ )
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(TimestampOperationInput.schema)
+      .encode(
+        TimestampOperationInput(
+          timestampWithNanos,
+          timestampWithNanos,
+          timestampWithNanos
+        )
+      )
+    expect.same(
+      Document.obj(
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30.500 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30.500Z"),
+        "epochSeconds" -> Document.fromBigDecimal(
+          BigDecimal("1716459630.500000")
+        )
+      ),
+      result
+    )
+  }
+
+  test("Document decoder - timestamp defaults") {
+    val doc = Document.obj()
+    val result = Document.Decoder
+      .fromSchema(TimestampOperationInput.schema)
+      .decode(doc)
+    val defaultTimestamp = Timestamp(
+      year = 2024,
+      month = 5,
+      day = 23,
+      hour = 10,
+      minute = 20,
+      second = 30
+    )
+    expect.same(
+      Right(
+        TimestampOperationInput(
+          dateTime = defaultTimestamp,
+          httpDate = defaultTimestamp,
+          epochSeconds = defaultTimestamp
+        )
+      ),
+      result
+    )
+  }
+
   test("Document syntax allows to build documents more concisely") {
     import Document.syntax._
 
@@ -595,6 +662,241 @@ class DocumentSpec() extends FunSuite {
     )
 
     assertEquals(niceSyntaxDocument, expectedDocument)
+  }
+
+  case class JsonUnknownExample(
+      s: String,
+      i: Int,
+      others: Map[String, Document]
+  )
+
+  object JsonUnknownExample {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  object JsonUnknownExampleWithDefault {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  case class JsonUnknownExampleOptional(
+      s: String,
+      i: Int,
+      others: Option[Map[String, Document]]
+  )
+
+  object JsonUnknownExampleOptional {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  object JsonUnknownExampleOptionalWithDefault {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  test("unknown field decoding: no unknown field in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExample("foo", 67, Map.empty)
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: no unknown field in payload with default") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map("default" -> Document.fromBoolean(true))
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleWithDefault.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExampleOptional("foo", 67, None)
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleOptional.jsonUnknownExampleOptionalSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field with default"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(Map("default" -> Document.fromBoolean(true)))
+    )
+
+    val res = Document.Decoder
+      .fromSchema(
+        JsonUnknownExampleOptionalWithDefault.jsonUnknownExampleOptionalSchema
+      )
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: with unknown fields in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75)
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75)
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: with unknown fields in payload, optional field"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75)
+    )
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(
+        Map(
+          "someField" -> Document.obj("a" -> Document.fromString("b")),
+          "someOtherField" -> Document.fromInt(75)
+        )
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleOptional.jsonUnknownExampleOptionalSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: with unknow field explicitely set in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field encoding") {
+    val in = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val expected = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+
+    val doc = Document.Encoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .encode(in)
+
+    assertEquals(doc, expected)
   }
 
 }

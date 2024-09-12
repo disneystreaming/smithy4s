@@ -21,15 +21,37 @@ import munit._
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import scala.util.Using
-class BlobSpec() extends FunSuite {
+import org.scalacheck.Prop._
+import scala.collection.immutable.Queue
+class BlobSpec() extends ScalaCheckSuite {
+
+  property("equals and hashcode contract") {
+    forAll { (value: String) =>
+      val bytes = value.getBytes()
+      val array = Blob(value)
+      val byteBuffer = Blob(ByteBuffer.wrap(bytes))
+      val queue = Blob.queue(
+        Queue(bytes.map(b => Blob(ByteBuffer.wrap(Array(b)))): _*),
+        bytes.size
+      )
+
+      assert(array == byteBuffer)
+      assert(array == queue)
+      assert(array.hashCode() == byteBuffer.hashCode())
+      assert(array.hashCode() == queue.hashCode())
+    }
+  }
 
   test("sameBytesAs works across data structures") {
     assert(Blob("foo").sameBytesAs(Blob("foo".getBytes)))
     assert(Blob("foo").sameBytesAs(Blob(ByteBuffer.wrap("foo".getBytes))))
   }
 
-  test("equals depends on underlying data structure") {
-    assert(Blob("foo") != Blob(ByteBuffer.wrap("foo".getBytes)))
+  test("equals does not depend on underlying data structure") {
+    assert(Blob("foo") == Blob(ByteBuffer.wrap("foo".getBytes)))
+    assert(
+      Blob("foo") == Blob(ByteBuffer.wrap("f".getBytes)).concat(Blob("oo"))
+    )
     assert(Blob("foo") == Blob("foo"))
     assert(
       Blob(ByteBuffer.wrap("foo".getBytes)) == Blob(
@@ -49,6 +71,16 @@ class BlobSpec() extends FunSuite {
 
   test("ByteBufferBlob.hashcode is consistent") {
     def makeBlob(str: String) = Blob(ByteBuffer.wrap(str.getBytes))
+    val blob1 = makeBlob("foo")
+    val blob2 = makeBlob("foo")
+    val blob3 = makeBlob("bar")
+    assertEquals(blob1.hashCode, blob2.hashCode)
+    assertNotEquals(blob1.hashCode, blob3.hashCode)
+  }
+
+  test("QueueBlob.hashcode is consistent") {
+    def makeBlob(str: String) =
+      Blob(str.getBytes).concat(Blob(ByteBuffer.wrap(str.getBytes())))
     val blob1 = makeBlob("foo")
     val blob2 = makeBlob("foo")
     val blob3 = makeBlob("bar")
