@@ -119,23 +119,19 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity("malformed body")
       .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError")),
     error => {
-      error match {
-        case e: RawErrorResponse =>
-          expect(e.code == 404) &&
-            expect(
-              e.headers == Map(
-                CaseInsensitive("X-Error-Type") -> List("NotFoundError")
-              )
-            ) &&
-            expect(e.body == "malformed body") &&
-            expect(
-              e.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
-                "NotFoundError"
-              )
-            ) &&
-            expect(e.failedDecodeAttempt.isInstanceOf[DecodingFailure])
-        case _ => failure("Unexpected error type or values")
-      }
+      expect(error.code == 404) &&
+      expect(
+        error.headers == Map(
+          CaseInsensitive("X-Error-Type") -> List("NotFoundError")
+        )
+      ) &&
+      expect(error.body == "malformed body") &&
+      expect(
+        error.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
+          "NotFoundError"
+        )
+      ) &&
+      expect(error.failedDecodeAttempt.isInstanceOf[DecodingFailure])
     }
   )
 
@@ -144,25 +140,20 @@ abstract class PizzaClientSpec extends IOSuite {
     Response(status = Status.InternalServerError)
       .withEntity("goodbye world"),
     error => {
-      error match {
-        case e: RawErrorResponse =>
-          expect(e.code == 500) &&
-            expect(
-              e.headers == Map(
-                CaseInsensitive("Content-Length") -> List("13"),
-                CaseInsensitive("Content-Type") -> List(
-                  "text/plain; charset=UTF-8"
-                )
-              )
-            ) &&
-            expect(e.body == "goodbye world") &&
-            expect(
-              e.failedDecodeAttempt.discriminator == HttpDiscriminator
-                .StatusCode(500)
-            )
-        case _ => failure("Unexpected error type or values")
-      }
-
+      expect(error.code == 500) &&
+      expect(
+        error.headers == Map(
+          CaseInsensitive("Content-Length") -> List("13"),
+          CaseInsensitive("Content-Type") -> List(
+            "text/plain; charset=UTF-8"
+          )
+        )
+      ) &&
+      expect(error.body == "goodbye world") &&
+      expect(
+        error.failedDecodeAttempt.discriminator == HttpDiscriminator
+          .StatusCode(500)
+      )
     }
   )
 
