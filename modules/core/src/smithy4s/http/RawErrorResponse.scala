@@ -16,7 +16,9 @@
 
 package smithy4s.http
 
-case class RawErrorResponse(
+import scala.annotation.nowarn
+
+case class RawErrorResponse private (
     private val codeField: Int,
     private val headersField: Map[CaseInsensitive, Seq[String]],
     private val bodyField: String,
@@ -84,7 +86,8 @@ object RawErrorResponse {
   ): RawErrorResponse =
     new RawErrorResponse(code, headers, body, failedDecodeAttempt)
 
-  def unapply(response: RawErrorResponse): Option[
+  @nowarn
+  private def unapply(response: RawErrorResponse): Option[
     (Int, Map[CaseInsensitive, Seq[String]], String, FailedDecodeAttempt)
   ] =
     Some(

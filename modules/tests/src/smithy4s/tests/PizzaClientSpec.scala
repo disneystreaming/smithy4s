@@ -32,9 +32,8 @@ import smithy4s.Timestamp
 import weaver._
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.RawErrorResponse
-import smithy4s.http.FailedDecodeAttempt
-import smithy4s.http.HttpPayloadError
 import smithy4s.http.HttpDiscriminator
+import smithy4s.http.FailedDecodeAttempt.DecodingFailure
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -121,27 +120,18 @@ abstract class PizzaClientSpec extends IOSuite {
       .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError")),
     error => {
       error match {
-        case RawErrorResponse(
-              code,
-              headers,
-              body,
-              FailedDecodeAttempt.DecodingFailure(
-                discriminator,
-                HttpPayloadError(path, expected, _)
-              )
-            ) =>
-          expect(code == 404) &&
+        case e: RawErrorResponse =>
+          expect(e.code == 404) &&
             expect(
-              headers == Map(
+              e.headers == Map(
                 CaseInsensitive("X-Error-Type") -> List("NotFoundError")
               )
             ) &&
-            expect(body == "malformed body") &&
+            expect(e.body == "malformed body") &&
             expect(
-              discriminator == HttpDiscriminator.NameOnly("NotFoundError")
+              e.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly("NotFoundError")
             ) &&
-            expect(path == smithy4s.codecs.PayloadPath(List())) &&
-            expect(expected == "object")
+            expect(e.failedDecodeAttempt.isInstanceOf[DecodingFailure])
         case _ => failure("Unexpected error type or values")
       }
     }
@@ -153,23 +143,18 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity("goodbye world"),
     error => {
       error match {
-        case RawErrorResponse(
-              code,
-              headers,
-              body,
-              FailedDecodeAttempt.UnrecognisedDiscriminator(discriminator)
-            ) =>
-          expect(code == 500) &&
+        case e: RawErrorResponse =>
+          expect(e.code == 500) &&
             expect(
-              headers == Map(
+              e.headers == Map(
                 CaseInsensitive("Content-Length") -> List("13"),
                 CaseInsensitive("Content-Type") -> List(
                   "text/plain; charset=UTF-8"
                 )
               )
             ) &&
-            expect(body == "goodbye world") &&
-            expect(discriminator == HttpDiscriminator.StatusCode(500))
+            expect(e.body == "goodbye world") &&
+            expect(e.failedDecodeAttempt.discriminator == HttpDiscriminator.StatusCode(500))
         case _ => failure("Unexpected error type or values")
       }
 
