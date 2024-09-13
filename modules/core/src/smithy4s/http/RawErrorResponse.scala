@@ -19,52 +19,27 @@ package smithy4s.http
 import scala.annotation.nowarn
 
 case class RawErrorResponse private (
-    codeField: Int,
-    headersField: Map[CaseInsensitive, Seq[String]],
-    bodyField: String,
-    failedDecodeAttemptField: FailedDecodeAttempt
+    code: Int,
+    headers: Map[CaseInsensitive, Seq[String]],
+    body: String,
+    failedDecodeAttempt: FailedDecodeAttempt
 ) extends Throwable {
 
-  def code: Int = codeField
-  def headers: Map[CaseInsensitive, Seq[String]] = headersField
-  def body: String = bodyField
-  def failedDecodeAttempt: FailedDecodeAttempt = failedDecodeAttemptField
-
-  def withCode(newCode: Int): RawErrorResponse =
-    new RawErrorResponse(
-      newCode,
-      headersField,
-      bodyField,
-      failedDecodeAttemptField
-    )
+  def withCode(code: Int): RawErrorResponse =
+    copy(code = code)
 
   def withHeaders(
-      newHeaders: Map[CaseInsensitive, Seq[String]]
+      headers: Map[CaseInsensitive, Seq[String]]
   ): RawErrorResponse =
-    new RawErrorResponse(
-      codeField,
-      newHeaders,
-      bodyField,
-      failedDecodeAttemptField
-    )
+    copy(headers = headers)
 
-  def withBody(newBody: String): RawErrorResponse =
-    new RawErrorResponse(
-      codeField,
-      headersField,
-      newBody,
-      failedDecodeAttemptField
-    )
+  def withBody(body: String): RawErrorResponse =
+    copy(body = body)
 
   def withFailedDecodeAttempt(
-      newFailedDecodeAttempt: FailedDecodeAttempt
+      failedDecodeAttempt: FailedDecodeAttempt
   ): RawErrorResponse =
-    new RawErrorResponse(
-      codeField,
-      headersField,
-      bodyField,
-      newFailedDecodeAttempt
-    )
+    copy(failedDecodeAttempt = failedDecodeAttempt)
 
   override def getMessage(): String = {
     val baseMessage = s"status $code, headers: $headers, body:\n$body"
