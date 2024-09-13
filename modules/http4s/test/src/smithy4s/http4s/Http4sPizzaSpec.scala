@@ -19,8 +19,9 @@ package smithy4s.http4s
 import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.Uri
-import org.http4s.client.Client
+import org.http4s.Response
 import org.http4s.implicits._
+import org.http4s.client.Client
 import smithy4s.example.PizzaAdminService
 
 object Http4sPizzaSpec extends smithy4s.tests.PizzaSpec {
@@ -38,6 +39,26 @@ object Http4sPizzaSpec extends smithy4s.tests.PizzaSpec {
         (client, uri)
       }
 
+  }
+
+  def runServerWithClient(
+      pizzaService: PizzaAdminService[IO],
+      clientResponse: Response[IO]
+  ): Resource[IO, Res] = {
+    SimpleRestJsonBuilder
+      .routes(
+        SimpleRestJsonBuilder(PizzaAdminService)
+          .client[IO](Client(_ => Resource.pure(clientResponse)))
+          .make
+          .toTry
+          .get
+      )
+      .resource
+      .map { httpRoutes =>
+        val client = Client.fromHttpApp(httpRoutes.orNotFound)
+        val uri = Uri.unsafeFromString("http://localhost")
+        (client, uri)
+      }
   }
 
 }

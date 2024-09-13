@@ -17,14 +17,13 @@
 package smithy4s.tests
 
 import cats.effect._
+import cats.effect.std.UUIDGen
 import cats.implicits._
 import smithy4s.Timestamp
 import smithy4s.example._
+import smithy4s.tests.PizzaAdminServiceImpl._
 
 import java.util.UUID
-
-import PizzaAdminServiceImpl._
-import cats.effect.std.UUIDGen
 
 object PizzaAdminServiceImpl {
   case class Item(food: Food, price: Float, addedAt: Timestamp)

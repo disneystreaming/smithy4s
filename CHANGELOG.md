@@ -25,6 +25,10 @@ Previously they'd be named after the **member target**, now they will use the na
 
 There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, and interpreters don't need to know what `A` is. For convenience, the type parameter has been moved to a type member.
 
+# Removed `UnknownErrorResponse` in [#1570](https://github.com/disneystreaming/smithy4s/pull/1570)
+
+The error type `smithy4s.http.UnknownErrorResponse` has been replaced with `smithy4s.http.RawErrorResponse`, which provides a more accurate description of an error response that failed to decode, including a full representation of the response code, headers, body and the discriminator if one was found.
+
 # 0.18.24
 
 * Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
