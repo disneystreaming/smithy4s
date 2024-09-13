@@ -510,14 +510,12 @@ abstract class PizzaSpec
           CaseInsensitive("Content-Length") -> List("14")
         )
         response match {
-          case Left(
-                RawErrorResponse(code, headers, body, failedDecodeAttempt)
-              ) =>
-            expect(code == 500) &&
-              expect(headers == expectHeaders) &&
-              expect(body.contains("malformed body")) &&
+          case Left(e: RawErrorResponse) =>
+            expect(e.code == 500) &&
+              expect(e.headers == expectHeaders) &&
+              expect(e.body.contains("malformed body")) &&
               expect(
-                failedDecodeAttempt == FailedDecodeAttempt
+                e.failedDecodeAttempt == FailedDecodeAttempt
                   .UnrecognisedDiscriminator(
                     HttpDiscriminator.StatusCode(500)
                   )
@@ -568,14 +566,12 @@ abstract class PizzaSpec
         CaseInsensitive("X-Error-Type") -> List("GenericServerError")
       )
       response match {
-        case Left(
-              RawErrorResponse(code, headers, body, failedDecodeAttempt)
-            ) =>
-          expect(code == 500) &&
-            expect(headers == expectHeaders) &&
-            expect(body.contains("malformed body")) &&
+        case Left(e: RawErrorResponse) =>
+          expect(e.code == 500) &&
+            expect(e.headers == expectHeaders) &&
+            expect(e.body.contains("malformed body")) &&
             expect(
-              failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
+              e.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
                 "GenericServerError"
               )
             )

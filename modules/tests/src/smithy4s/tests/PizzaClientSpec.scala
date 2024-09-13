@@ -129,7 +129,9 @@ abstract class PizzaClientSpec extends IOSuite {
             ) &&
             expect(e.body == "malformed body") &&
             expect(
-              e.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly("NotFoundError")
+              e.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
+                "NotFoundError"
+              )
             ) &&
             expect(e.failedDecodeAttempt.isInstanceOf[DecodingFailure])
         case _ => failure("Unexpected error type or values")
@@ -154,7 +156,10 @@ abstract class PizzaClientSpec extends IOSuite {
               )
             ) &&
             expect(e.body == "goodbye world") &&
-            expect(e.failedDecodeAttempt.discriminator == HttpDiscriminator.StatusCode(500))
+            expect(
+              e.failedDecodeAttempt.discriminator == HttpDiscriminator
+                .StatusCode(500)
+            )
         case _ => failure("Unexpected error type or values")
       }
 
