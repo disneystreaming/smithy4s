@@ -19,10 +19,10 @@ package smithy4s.http
 import scala.annotation.nowarn
 
 case class RawErrorResponse private (
-    private val codeField: Int,
-    private val headersField: Map[CaseInsensitive, Seq[String]],
-    private val bodyField: String,
-    private val failedDecodeAttemptField: FailedDecodeAttempt
+    codeField: Int,
+    headersField: Map[CaseInsensitive, Seq[String]],
+    bodyField: String,
+    failedDecodeAttemptField: FailedDecodeAttempt
 ) extends Throwable {
 
   def code: Int = codeField
