@@ -21,6 +21,9 @@ on:
     # midnight, every Monday and Thursday
     - cron: '0 0 * * 1,4'
 
+env:
+  SBT_OPTS: "-XX:MaxMetaspaceSize=4G -XX:MaxInlineLevel=20 -Xss2m -Xms512M -Xmx6G -XX:ReservedCodeCacheSize=256M"
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -62,8 +65,7 @@ jobs:
       - name: Run tests
         run: |
           sbt test_$BUILD_KEY \
-              pushRemoteCache_$BUILD_KEY \
-              -J-Xmx4G
+              pushRemoteCache_$BUILD_KEY
 
       - name: Run plugin tests
         if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
@@ -134,12 +136,12 @@ jobs:
       - name: Publish ${{ github.ref }}
         run: |
           echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
-          sbt 'pullRemoteCache; release' -J-Xmx2G
+          sbt 'pullRemoteCache; release'
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.S01_SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.S01_SONATYPE_USERNAME }}
 
   microsite:
     name: Publish Docs Microsite

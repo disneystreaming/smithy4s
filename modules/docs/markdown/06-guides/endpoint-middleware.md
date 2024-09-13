@@ -108,7 +108,6 @@ We will create a server-side middleware that implements the authentication as de
 import smithy4s.example.guides.auth._
 import cats.effect._
 import cats.implicits._
-import org.http4s.implicits._
 import org.http4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s._

@@ -585,7 +585,7 @@ object XmlCodecSpec extends SimpleIOSuite {
         def show(xmlDocument: XmlDocument): String =
           XmlDocument.documentEventifier
             .eventify(xmlDocument)
-            .through(render())
+            .through(render.raw())
             .compile
             .string
       }

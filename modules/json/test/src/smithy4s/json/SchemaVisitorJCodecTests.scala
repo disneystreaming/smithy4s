@@ -18,6 +18,7 @@ package smithy4s
 package json
 
 import alloy.Discriminated
+import alloy.JsonUnknown
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import munit.FunSuite
 import smithy.api.Default
@@ -107,6 +108,70 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       .addHints(
         Discriminated("type")
       )
+  }
+
+  case class JsonUnknownExample(
+      s: String,
+      i: Int,
+      others: Map[String, Document]
+  )
+
+  object JsonUnknownExample {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  object JsonUnknownExampleWithDefault {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  case class JsonUnknownExampleOptional(
+      s: String,
+      i: Int,
+      others: Option[Map[String, Document]]
+  )
+
+  object JsonUnknownExampleOptional {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  object JsonUnknownExampleOptionalWithDefault {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
   }
 
   test(
@@ -667,6 +732,138 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val fromJson = Json.read[Patchable](expectedJson)
     assertEquals(toJson, expectedJson)
     assertEquals(fromJson, Right(patchable))
+  }
+
+  test("unknown field decoding: no unknown field in payload") {
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExample("foo", 67, Map.empty)
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: no unknown field in payload with default") {
+    import JsonUnknownExampleWithDefault._
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map("default" -> Document.fromBoolean(true))
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field"
+  ) {
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExampleOptional("foo", 67, None)
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field with default"
+  ) {
+    import JsonUnknownExampleOptionalWithDefault._
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(Map("default" -> Document.fromBoolean(true)))
+    )
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: with unknown fields in payload") {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75)
+      )
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: with unknown fields in payload, optional field"
+  ) {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75}"""
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(
+        Map(
+          "someField" -> Document.obj("a" -> Document.fromString("b")),
+          "someOtherField" -> Document.fromInt(75)
+        )
+      )
+    )
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: with unknow field explicitely set in payload") {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75, "others": {}}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field encoding") {
+    val in = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val expected = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+
+    val jsonStr = writeToString[JsonUnknownExample](in)
+
+    val doc = readFromString[Document](jsonStr)
+
+    assertEquals(doc, expected)
   }
 
 }
