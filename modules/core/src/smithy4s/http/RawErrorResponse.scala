@@ -18,7 +18,7 @@ package smithy4s.http
 
 import scala.annotation.nowarn
 
-case class RawErrorResponse private (
+final case class RawErrorResponse private (
     code: Int,
     headers: Map[CaseInsensitive, Seq[String]],
     body: String,
@@ -83,17 +83,44 @@ sealed trait FailedDecodeAttempt extends Throwable {
 
 object FailedDecodeAttempt {
 
-  case class UnrecognisedDiscriminator(discriminator: HttpDiscriminator)
-      extends FailedDecodeAttempt {
+  final case class UnrecognisedDiscriminator private (
+      discriminator: HttpDiscriminator
+  ) extends FailedDecodeAttempt {
+
+    def withDiscriminator(
+        discriminator: HttpDiscriminator
+    ): UnrecognisedDiscriminator =
+      copy(discriminator = discriminator)
+
     override def getMessage: String =
       s"Unrecognised discriminator: $discriminator"
   }
 
-  case class DecodingFailure(
+  object UnrecognisedDiscriminator {
+    def apply(discriminator: HttpDiscriminator): UnrecognisedDiscriminator =
+      new UnrecognisedDiscriminator(discriminator)
+  }
+
+  final case class DecodingFailure private (
       discriminator: HttpDiscriminator,
       contractError: HttpContractError
   ) extends FailedDecodeAttempt {
+
+    def withDiscriminator(discriminator: HttpDiscriminator): DecodingFailure =
+      copy(discriminator = discriminator)
+
+    def withContractError(contractError: HttpContractError): DecodingFailure =
+      copy(contractError = contractError)
+
     override def getMessage: String =
       s"Decoding failed for discriminator: $discriminator with error: ${contractError.getMessage}"
+  }
+
+  object DecodingFailure {
+    def apply(
+        discriminator: HttpDiscriminator,
+        contractError: HttpContractError
+    ): DecodingFailure =
+      new DecodingFailure(discriminator, contractError)
   }
 }
