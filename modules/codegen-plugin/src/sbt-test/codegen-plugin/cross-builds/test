@@ -1,0 +1,16 @@
+# generate for Scala 2.13
+> ++ 2.13
+> compile
+
+$ exists target/scala-2.13/src_managed/main/smithy4s/smithy4s/example/Simple.scala
+
+> ++ 3
+> compile
+
+$ exists target/scala-3.3.3/src_managed/main/smithy4s/smithy4s/example/Simple.scala
+
+# switch back to Scala 2.13 and compile again; codegen should not happen a second time
+> ++ 2.13
+> compile
+
+$ newer target/scala-3.3.3/src_managed/main/smithy4s/smithy4s/example/Simple.scala target/scala-2.13/src_managed/main/smithy4s/smithy4s/example/Simple.scala
