@@ -14,3 +14,9 @@ map ConstrainedMap {
     value: String
 }
 
+// Regression test for https://github.com/disneystreaming/smithy4s/issues/1594
+structure HasConstrainedNewtype {
+    @length(min: 1)
+    @required
+    s: CityId
+}
