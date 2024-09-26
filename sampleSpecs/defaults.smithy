@@ -73,6 +73,7 @@ structure DefaultVariants {
 
 structure DefaultInMixinUsageTest with [DefaultInMixinTest] {}
 
+// Regression test for https://github.com/disneystreaming/smithy4s/issues/1592
 structure DefaultNotCapitalized {
     @required
     name: username = "hello"
