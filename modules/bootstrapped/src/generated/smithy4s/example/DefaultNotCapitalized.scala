@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
-final case class DefaultNotCapitalized(name: Username = smithy4s.example.username("hello"))
+final case class DefaultNotCapitalized(name: Username = smithy4s.example.Username("hello"))
 
 object DefaultNotCapitalized extends ShapeTag.Companion[DefaultNotCapitalized] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultNotCapitalized")
