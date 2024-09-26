@@ -117,6 +117,7 @@ package object example {
   type UVIndex = smithy4s.example.UVIndex.Type
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type Username = smithy4s.example.Username.Type
   type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }

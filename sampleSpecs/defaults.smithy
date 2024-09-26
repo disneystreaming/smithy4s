@@ -72,3 +72,10 @@ structure DefaultVariants {
 }
 
 structure DefaultInMixinUsageTest with [DefaultInMixinTest] {}
+
+structure DefaultNotCapitalized {
+    @required
+    name: username = "hello"
+}
+
+string username
