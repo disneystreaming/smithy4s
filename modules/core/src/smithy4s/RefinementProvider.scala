@@ -202,9 +202,14 @@ private[smithy4s] trait LowPriorityImplicits {
       : RefinementProvider[Pattern, E, E] =
     new RefinementProvider.PatternConstraint[E](e => e.value)
 
-  implicit def isomorphismConstraint[C, A, A0](implicit
+  @deprecated("Use isomorphismConstraint2 instead", "0.18.25")
+  private[smithy4s] def isomorphismConstraint[C, A, A0](implicit
       constraintOnA: RefinementProvider.Simple[C, A],
       iso: Bijection[A, A0]
-  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
+  ): RefinementProvider[C, A0, A0] = isomorphismConstraint2
 
+  implicit def isomorphismConstraint2[C, A, A0](implicit
+      iso: Bijection[A, A0],
+      constraintOnA: RefinementProvider.Simple[C, A]
+  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 }
