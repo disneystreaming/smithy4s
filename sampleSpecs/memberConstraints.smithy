@@ -15,8 +15,22 @@ map ConstrainedMap {
 }
 
 // Regression test for https://github.com/disneystreaming/smithy4s/issues/1594
-structure HasConstrainedNewtype {
+structure HasConstrainedNewtypes {
+    // string newtype
     @length(min: 1)
     @required
-    s: CityId
+    a: BucketName
+    // string newtype, double-constrained
+    @length(min: 1)
+    @required
+    b: CityId
+    // int newtype
+    @range(min: 1)
+    c: ObjectSize
+    // list newtype, oh wait these are just lists. Still.
+    @length(min: 1)
+    d: SomeIndexSeq
+    // blob newtype
+    @length(min: 1)
+    e: PNG
 }
