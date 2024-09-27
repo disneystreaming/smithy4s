@@ -71,7 +71,11 @@ object AwsClient {
 
       def baseRequest(endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
         awsEnv.region.map { region =>
-          val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
+          val endpointPrefix =
+            awsService.endpointPrefix
+              .orElse(awsService.arnNamespace.map(_.value))
+              .getOrElse(endpoint.id.name)
+
           val baseUri = HttpUri(
             scheme = HttpUriScheme.Https,
             host = s"$endpointPrefix.$region.amazonaws.com",
