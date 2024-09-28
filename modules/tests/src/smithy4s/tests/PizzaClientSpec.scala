@@ -31,7 +31,9 @@ import smithy4s.example._
 import smithy4s.Timestamp
 import weaver._
 import smithy4s.http.CaseInsensitive
-import smithy4s.http.UnknownErrorResponse
+import smithy4s.http.RawErrorResponse
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.FailedDecodeAttempt.DecodingFailure
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -111,29 +113,49 @@ abstract class PizzaClientSpec extends IOSuite {
     GenericClientError("generic error message for 418")
   )
 
-  clientTestForError(
-    "Handle error w/o a discriminator header nor a unique status code",
-    Response(status = Status.ProxyAuthenticationRequired)
-      .withEntity(
-        Json.obj("message" -> Json.fromString("generic client error message"))
-      ),
-    unknownResponse(
-      407,
-      Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
-      """{"message":"generic client error message"}"""
-    )
+  clientAssertError[RawErrorResponse](
+    "Handle error with a discriminator but can't be decoded",
+    Response[IO](status = Status.NotFound)
+      .withEntity("malformed body")
+      .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError")),
+    error => {
+      expect(error.code == 404) &&
+      expect(
+        error.headers == Map(
+          CaseInsensitive("X-Error-Type") -> List("NotFoundError")
+        )
+      ) &&
+      expect(error.body == "malformed body") &&
+      expect(
+        error.failedDecodeAttempt.discriminator == HttpDiscriminator.NameOnly(
+          "NotFoundError"
+        )
+      ) &&
+      expect(error.failedDecodeAttempt.isInstanceOf[DecodingFailure])
+    }
   )
 
-  private def unknownResponse(
-      code: Int,
-      headers: Map[String, String],
-      body: String
-  ): UnknownErrorResponse =
-    UnknownErrorResponse(
-      code,
-      headers.map { case (k, v) => CaseInsensitive(k) -> List(v) },
-      body
-    )
+  clientAssertError[RawErrorResponse](
+    "Handle malformed error response with no discriminator",
+    Response(status = Status.InternalServerError)
+      .withEntity("goodbye world"),
+    error => {
+      expect(error.code == 500) &&
+      expect(
+        error.headers == Map(
+          CaseInsensitive("Content-Length") -> List("13"),
+          CaseInsensitive("Content-Type") -> List(
+            "text/plain; charset=UTF-8"
+          )
+        )
+      ) &&
+      expect(error.body == "goodbye world") &&
+      expect(
+        error.failedDecodeAttempt.discriminator == HttpDiscriminator
+          .StatusCode(500)
+      )
+    }
+  )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>
     for {
@@ -206,6 +228,30 @@ abstract class PizzaClientSpec extends IOSuite {
 
       }
     }
+  }
+
+  def clientAssertError[E](
+      name: String,
+      response: Response[IO],
+      assert: E => Expectations
+  )(implicit
+      loc: SourceLocation,
+      ct: scala.reflect.ClassTag[E]
+  ) = {
+    clientTest(name) { (client, backend, log) =>
+      for {
+        _ <- backend.prepResponse(name, response)
+        maybeResult <- client.getMenu(name).attempt
+
+      } yield maybeResult match {
+        case Right(_) => failure("expected failure")
+        case Left(error: E) =>
+          assert(error)
+        case Left(error) =>
+          failure(s"Error of unexpected type: $error")
+      }
+    }
+
   }
 
   def clientTest(name: TestName)(

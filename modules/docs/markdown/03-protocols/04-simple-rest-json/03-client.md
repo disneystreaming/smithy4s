@@ -57,10 +57,21 @@ All smithy4s services provide an `X-Error-Type` in responses by default.
 
 #### Status Code
 
-If the `X-Error-Type` header is not defined, smithy4s clients will use the status code to attempt to decide which error type to utilize. It does so as follows:
+If the `X-Error-Type` header is provided, smithy4s clients will attempt to use the status code to decide which error type to utilize. They do so as follows:
 
-1. If there is a single Error type that contains the correct status code in the `httpError` trait, this type will be used. If there are two error types with the same status code, an `UnknownErrorResponse` will be surfaced to the client.
-2. If there is NOT a matching status code, but there is a single error marked with the `error` trait, this error type will be used as long as the returned status code is in the range for either a client or server error. In other words if a single error shape has no status code, but is annotated with `@error("client")` and the returned status code is 404 then this error type will be used. If there are multiple error types with no status code and a matching error type (client/server), then an `UnknownErrorResponse` will be surfaced to the client.
+1. First, we look for an exact match. The response code is compared against the value of the `@httpError` trait on the operation's error types. If there's more than one match, a `RawErrorResponse` is raised. If there were no exact matches, we move on to step 2.
+2. Now, we check the category of the response code: if it's a `4xx` (e.g. 404 or 401), we look for **exactly one** error marked with `@error("client")`. If it's a `5xx`, we look for `@error("server")` instead. Again, in case of more than one match, we raise a `RawErrorResponse`.
+
+#### Total failure of decoding
+
+If all the above methods fail to find a suitable error type to decode the response as, OR if one is found but the response doesn't match its Smithy schema, a `RawErrorResponse` is raised.
+
+The `RawErrorResponse` class carries information about the response that produced it. It also holds information about _why_ it was raised (in a `FailedDecodeAttempt`), e.g.
+
+- the decoding couldn't figure out which error type to use (`FailedDecodeAttempt.UnrecognisedDiscriminator`)
+- an error type was found but it failed to decode (`FailedDecodeAttempt.DecodingFailure`).
+
+#### Examples
 
 Here are some examples to show more what this looks like.
 
@@ -115,12 +126,12 @@ structure AnotherError {
 
 Would result in the following:
 
-| Status Code | Error Selected           |
-| ----------- | ------------------------ |
-| 404         | NotFoundError            |
-| 400         | **UnknownErrorResponse** |
-| 503         | ServiceUnavailableError  |
-| 500         | CatchAllServerError      |
+| Status Code | Error Selected          |
+| ----------- | ----------------------- |
+| 404         | NotFoundError           |
+| 400         | **RawErrorResponse**    |
+| 503         | ServiceUnavailableError |
+| 500         | CatchAllServerError     |
 
 Notice that the 400 status code cannot be properly mapped. This is because there is no exact match AND there are two errors that are labeled with `@error("client")` which also do not have an associated `httpError` trait containing a status code.
 
@@ -136,12 +147,12 @@ structure AnotherNotFoundError {
 
 Will result in the following:
 
-| Status Code | Error Selected           |
-| ----------- | ------------------------ |
-| 404         | **UnknownErrorResponse** |
-| 400         | UnknownErrorResponse     |
-| 503         | ServiceUnavailableError  |
-| 500         | CatchAllServerError      |
+| Status Code | Error Selected          |
+| ----------- | ----------------------- |
+| 404         | **RawErrorResponse**    |
+| 400         | RawErrorResponse        |
+| 503         | ServiceUnavailableError |
+| 500         | CatchAllServerError     |
 
 Now the 404 status code cannot be mapped. This is due to the fact that two different error types are annotated with a 404 `httpError` trait. This means that the smithy4s
 client is not able to decide which of these errors is correct.

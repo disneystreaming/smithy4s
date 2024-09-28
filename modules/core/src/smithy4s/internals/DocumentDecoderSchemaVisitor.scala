@@ -32,8 +32,11 @@ import smithy4s.schema._
 
 import java.util.Base64
 import java.util.UUID
+import java.{util => ju}
 import scala.collection.immutable.ListMap
 import alloy.Untagged
+import alloy.JsonUnknown
+import scala.collection.mutable.ListBuffer
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -307,6 +310,9 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
+  private def isForJsonUnknown[Z, A](field: Field[Z, A]): Boolean =
+    field.hints.has(JsonUnknown)
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -316,58 +322,116 @@ class DocumentDecoderSchemaVisitor(
     def jsonLabel[A](field: Field[S, A]): String =
       field.hints.get(JsonName).map(_.value).getOrElse(field.label)
 
-    def fieldDecoder[A](
-        field: Field[S, A]
-    ): (
-        List[PayloadPath.Segment],
-        Any => Unit,
-        Map[String, Document]
-    ) => Unit = {
-      val jLabel = jsonLabel(field)
+    type Handler =
+      (List[PayloadPath.Segment], Document, ju.HashMap[String, Any]) => Unit
 
-      field.getDefaultValue match {
-        case Some(defaultValue) =>
-          (
-              pp: List[PayloadPath.Segment],
-              buffer: Any => Unit,
-              fields: Map[String, Document]
-          ) =>
-            val path = PayloadPath.Segment(jLabel) :: pp
-            fields
-              .get(jLabel) match {
-              case Some(document) =>
-                buffer(apply(field.schema)(path, document))
-              case None =>
-                buffer(defaultValue)
-            }
-        case None =>
-          (
-              pp: List[PayloadPath.Segment],
-              buffer: Any => Unit,
-              fields: Map[String, Document]
-          ) =>
-            val path = PayloadPath.Segment(jLabel) :: pp
-            fields
-              .get(jLabel) match {
-              case Some(document) =>
-                buffer(apply(field.schema)(path, document))
-              case None =>
-                throw new PayloadError(
-                  PayloadPath(path.reverse),
-                  "",
-                  "Required field not found"
-                )
-            }
-      }
+    val labelledFields = fields.map { field =>
+      val jLabel = jsonLabel(field)
+      val decoded = field.schema.getDefaultValue
+      val default = decoded.orNull
+      (field, jLabel, default)
     }
 
-    val fieldDecoders = fields.map(field => fieldDecoder(field))
+    def fieldHandler[A](field: Field[S, A], jLabel: String): Handler = {
+      val decoder = apply(field.schema)
+      val label = field.label
+      (parentPath, in, mmap) =>
+        val _ = mmap.put(
+          label, {
+            val path = PayloadPath.Segment(jLabel) :: parentPath
+            decoder(path, in)
+          }
+        )
+    }
 
-    DocumentDecoder.instance("Structure", "Object") {
-      case (pp, DObject(value)) =>
-        val buffer = Vector.newBuilder[Any]
-        fieldDecoders.foreach(fd => fd(pp, buffer.+=(_), value))
-        make(buffer.result())
+    val (fieldsForUnknown, knownFields) = labelledFields.partition {
+      case (field, _, _) => isForJsonUnknown(field)
+    }
+
+    val handlers =
+      new ju.HashMap[String, Handler](knownFields.length << 1, 0.5f) {
+        knownFields.foreach { case (field, jLabel, _) =>
+          put(jLabel, fieldHandler(field, jLabel))
+        }
+      }
+
+    if (fieldsForUnknown.isEmpty) {
+      DocumentDecoder.instance("Structure", "Object") {
+        case (pp, DObject(value)) =>
+          val buffer = new ju.HashMap[String, Any](handlers.size << 1, 0.5f)
+          value.foreach { case (key, value) =>
+            val handler = handlers.get(key)
+            if (handler != null) {
+              handler(pp, value, buffer)
+            }
+          }
+          val orderedBuffer = Vector.newBuilder[Any]
+          labelledFields.foreach { case (field, jLabel, default) =>
+            orderedBuffer += {
+              val value = buffer.get(field.label)
+              if (value == null) {
+                if (default == null) {
+                  throw new PayloadError(
+                    PayloadPath((PayloadPath.Segment(jLabel) :: pp).reverse),
+                    jLabel,
+                    "Required field not found"
+                  )
+                } else default
+              } else value
+            }
+          }
+          make(orderedBuffer.result())
+      }
+    } else {
+      val fieldForUnknownDocDecoders = fieldsForUnknown.map {
+        case (field, jLabel, _) =>
+          jLabel -> apply(field.schema).asInstanceOf[DocumentDecoder[Any]]
+      }.toMap
+      DocumentDecoder.instance("Structure", "Object") {
+        case (pp, DObject(value)) =>
+          val buffer = new ju.HashMap[String, Any](handlers.size << 1, 0.5f)
+          val unknownValues = ListBuffer[(String, Document)]()
+          value.foreach { case (key, value) =>
+            val handler = handlers.get(key)
+            if (handler == null) {
+              unknownValues += (key -> value)
+            } else {
+              handler(pp, value, buffer)
+            }
+          }
+          val orderedBuffer = Vector.newBuilder[Any]
+          val unknownValue =
+            if (unknownValues.nonEmpty) Document.obj(unknownValues) else null
+          labelledFields.foreach { case (field, jLabel, default) =>
+            orderedBuffer += {
+              fieldForUnknownDocDecoders.get(jLabel) match {
+                case None =>
+                  val value = buffer.get(field.label)
+                  if (value == null) {
+                    if (default == null) {
+                      throw new PayloadError(
+                        PayloadPath(
+                          (PayloadPath.Segment(jLabel) :: pp).reverse
+                        ),
+                        jLabel,
+                        "Required field not found"
+                      )
+                    } else default
+                  } else value
+                case Some(decoder) =>
+                  if (unknownValue == null) {
+                    if (default == null) {
+                      decoder(Nil, Document.obj())
+                    } else default
+                  } else {
+                    decoder(Nil, unknownValue)
+                  }
+              }
+            }
+          }
+          make(orderedBuffer.result())
+      }
+
     }
   }
 

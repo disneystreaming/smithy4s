@@ -27,6 +27,18 @@ There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, a
 
 ## Remove `smithy4sRenderOptics` setting from SBT and Mill plugins  in [#1566](https://github.com/disneystreaming/smithy4s/pull/1566)
 
+Optics can still be rendered using metadata (global) and traits (selective), the only thing that's been removed is configuration in the build tool.
+
+# Removed `UnknownErrorResponse` in [#1570](https://github.com/disneystreaming/smithy4s/pull/1570)
+
+The error type `smithy4s.http.UnknownErrorResponse` has been replaced with `smithy4s.http.RawErrorResponse`, which provides a more accurate description of an error response that failed to decode, including a full representation of the response code, headers, body and the discriminator if one was found.
+
+# 0.18.24
+
+* Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
+* Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
+
 # 0.18.23
 
 ## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
