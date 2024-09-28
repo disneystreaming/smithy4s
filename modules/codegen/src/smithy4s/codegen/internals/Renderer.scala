@@ -1611,7 +1611,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
-      line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
+      val justParens = line"()"
+      val constructorCall = alt.runDefault match {
+        case `justParens` => Line.empty
+        case more         => line"($more)"
+      }
+
+      line"${ref.show}.${altName.capitalize}Case$constructorCall.widen".write
 
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
