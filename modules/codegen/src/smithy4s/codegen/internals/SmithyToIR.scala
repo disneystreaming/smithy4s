@@ -1305,11 +1305,13 @@ private[codegen] class SmithyToIR(
         val a = if (alt.isAdtMember) {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.ProductAltTN(t)
+        } else if (alt.isUnit) {
+          TypedNode.AltValueTN.UnitAltTN
         } else {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.TypeAltTN(t)
         }
-        TypedNode.AltTN(ref, name, a, alt.isUnit)
+        TypedNode.AltTN(ref, name, a)
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))

@@ -1610,13 +1610,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           false -> line"${ref.show}.unsafeApply($text)"
       })
 
-    case AltTN(ref, altName, AltValueTN.TypeAltTN(alt), isUnit) =>
-      val applyConstructor =
-        line"(${alt.runDefault})".when(!isUnit)
+    case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
+      line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
-      line"${ref.show}.${altName.capitalize}Case$applyConstructor.widen".write
+    case AltTN(ref, altName, AltValueTN.UnitAltTN) =>
+      line"${ref.show}.${altName.capitalize}Case.widen".write
 
-    case AltTN(_, _, AltValueTN.ProductAltTN(alt), _) =>
+    case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
 
     case CollectionTN(collectionType, values) =>
