@@ -5,12 +5,8 @@ title: Optics - Lenses and Prisms
 
 Smithy4s has the ability to render optics (Lens/Prism) instances in the code it generates.
 
-If you're using Smithy4s via `mill` or `sbt`, then you can enable this functionality with the following keys:
-
-* in mill, task: `def smithy4sRenderOptics = true`
-* in sbt, setting: `smithy4sRenderOptics := true`
-
-If you are using Smithy4s via the CLI, then they way to utilize this feature is through your Smithy specifications. The simplest approach is to add a file with the following content to your CLI invocation:
+The way to enable this feature is through your Smithy specifications.
+The simplest approach is to add a file with the following content to your CLI invocation:
 
 ```kotlin
 $version: "2"
