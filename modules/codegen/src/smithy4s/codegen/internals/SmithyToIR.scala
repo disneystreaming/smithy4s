@@ -1048,7 +1048,12 @@ private[codegen] class SmithyToIR(
       maybeTypeclassesHint(shape)
   }
 
-  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+  case class AltInfo(
+      name: String,
+      tpe: Type,
+      isAdtMember: Boolean,
+      isUnit: Boolean
+  )
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
@@ -1151,20 +1156,18 @@ private[codegen] class SmithyToIR(
       shape
         .members()
         .asScala
-        .map { member =>
-          val memberTarget =
-            model.expectShape(member.getTarget)
-          if (isPartOfAdt(memberTarget)) {
-            (member.getMemberName(), member.tpe.map(Left(_)))
-          } else {
-            (member.getMemberName(), member.tpe.map(Right(_)))
+        .flatMap { member =>
+          member.tpe.map { tpe =>
+            val memberTarget = model.expectShape(member.getTarget)
+            val isUnit = memberTarget.getId() == ShapeId.from("smithy.api#Unit")
+
+            AltInfo(
+              member.getMemberName(),
+              tpe,
+              isAdtMember = isPartOfAdt(memberTarget),
+              isUnit = isUnit
+            )
           }
-        }
-        .collect {
-          case (name, Some(Left(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = true)
-          case (name, Some(Right(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
     }
@@ -1306,7 +1309,7 @@ private[codegen] class SmithyToIR(
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.TypeAltTN(t)
         }
-        TypedNode.AltTN(ref, name, a)
+        TypedNode.AltTN(ref, name, a, alt.isUnit)
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))

@@ -229,8 +229,8 @@ private[internals] object CollisionAvoidance {
           NewTypeTN(modRef(ref), target)
         case ValidatedNewTypeTN(ref, target) =>
           ValidatedNewTypeTN(modRef(ref), target)
-        case AltTN(ref, altName, alt) =>
-          AltTN(modRef(ref), altName, alt)
+        case AltTN(ref, altName, alt, isUnit) =>
+          AltTN(modRef(ref), altName, alt, isUnit)
         case MapTN(values) =>
           MapTN(values)
         case CollectionTN(collectionType, values) =>

@@ -461,8 +461,8 @@ private[internals] object TypedNode {
           f(target).map(NewTypeTN(ref, _))
         case ValidatedNewTypeTN(ref, target) =>
           f(target).map(ValidatedNewTypeTN(ref, _))
-        case AltTN(ref, altName, alt) =>
-          alt.traverse(f).map(AltTN(ref, altName, _))
+        case AltTN(ref, altName, alt, isUnit) =>
+          alt.traverse(f).map(AltTN(ref, altName, _, isUnit))
         case MapTN(values) =>
           values
             .traverse { case (k, v) =>
@@ -493,8 +493,12 @@ private[internals] object TypedNode {
   case class NewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
   case class ValidatedNewTypeTN[A](ref: Type.Ref, target: A)
       extends TypedNode[A]
-  case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
-      extends TypedNode[A]
+  case class AltTN[A](
+      ref: Type.Ref,
+      altName: String,
+      alt: AltValueTN[A],
+      isUnit: Boolean
+  ) extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
   case class CollectionTN[A](collectionType: CollectionType, values: List[A])
       extends TypedNode[A]
