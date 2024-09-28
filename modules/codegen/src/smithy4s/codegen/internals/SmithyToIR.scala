@@ -1048,12 +1048,9 @@ private[codegen] class SmithyToIR(
       maybeTypeclassesHint(shape)
   }
 
-  case class AltInfo(
-      name: String,
-      tpe: Type,
-      isAdtMember: Boolean,
-      isUnit: Boolean
-  )
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean) {
+    def isUnit: Boolean = tpe == Type.unit
+  }
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
@@ -1159,13 +1156,11 @@ private[codegen] class SmithyToIR(
         .flatMap { member =>
           member.tpe.map { tpe =>
             val memberTarget = model.expectShape(member.getTarget)
-            val isUnit = tpe == Type.unit
 
             AltInfo(
               member.getMemberName(),
               tpe,
-              isAdtMember = isPartOfAdt(memberTarget),
-              isUnit = isUnit
+              isAdtMember = isPartOfAdt(memberTarget)
             )
           }
         }
