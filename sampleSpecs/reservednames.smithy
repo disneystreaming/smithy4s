@@ -68,6 +68,7 @@ structure TestReservedNamespaceImport {
     package: MyPackageString
 }
 
+// Regression test for https://github.com/disneystreaming/smithy4s/issues/1601
 @MyPackageStringTrait("test")
 string TestReservedNamespaceTrait
 

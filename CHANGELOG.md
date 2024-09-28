@@ -5,10 +5,14 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.25
+
+* Fixes issues in which applications of some Smithy traits would be incorrectly rendered in Scala code (see [#1602](https://github.com/disneystreaming/smithy4s/pull/1602)).
+
 # 0.18.24
 
 * Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
-* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members. 
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
 * Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
 
 # 0.18.23
