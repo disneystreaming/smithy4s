@@ -1159,7 +1159,7 @@ private[codegen] class SmithyToIR(
         .flatMap { member =>
           member.tpe.map { tpe =>
             val memberTarget = model.expectShape(member.getTarget)
-            val isUnit = memberTarget.getId() == ShapeId.from("smithy.api#Unit")
+            val isUnit = tpe == Type.unit
 
             AltInfo(
               member.getMemberName(),
