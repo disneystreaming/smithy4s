@@ -1583,7 +1583,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      line"${ref.show + "." + name + ".widen"}".write
+      line"${ref.show}.$name.widen".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (name, FieldTN.RequiredTN(value)) =>

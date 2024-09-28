@@ -304,7 +304,10 @@ private[internals] object Type {
       valueHints: List[Hint]
   ) extends Type
   case class Ref(namespace: String, name: String) extends Type {
-    def show = namespace + "." + name
+    def show: String = NameRef
+      .splitPath(namespace)
+      .map(CollisionAvoidance.protectKeyword)
+      .mkString(".") + "." + name
   }
   case class Alias(
       namespace: String,

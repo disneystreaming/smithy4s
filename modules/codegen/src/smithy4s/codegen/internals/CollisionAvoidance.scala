@@ -230,6 +230,11 @@ private[internals] object CollisionAvoidance {
         case ValidatedNewTypeTN(ref, target) =>
           ValidatedNewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
+          // note: technically we should probably escape altName here
+          // but it'd only really break if it matched a capitalized keyword,
+          // and Scala has none of those, so it's impossible to write a failing test.
+          // Alt names in this context are always capitalized before being printed
+          // (Renderer.scala:1614 at the time of writing).
           AltTN(modRef(ref), altName, alt)
         case MapTN(values) =>
           MapTN(values)
