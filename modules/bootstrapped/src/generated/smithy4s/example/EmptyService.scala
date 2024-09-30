@@ -12,7 +12,7 @@ trait EmptyServiceGen[F[_, _, _, _, _]] {
   self =>
 
 
-  def transform: Transformation.PartiallyApplied[EmptyServiceGen[F]] = Transformation.of[EmptyServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[EmptyServiceGen[F]] = Transformation.of[EmptyServiceGen[F]](this)
 }
 
 object EmptyServiceGen extends Service.Mixin[EmptyServiceGen, EmptyServiceOperation] {
