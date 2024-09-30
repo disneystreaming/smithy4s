@@ -1613,6 +1613,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
+    case AltTN(ref, altName, AltValueTN.UnitAltTN) =>
+      line"${ref.show}.${altName.capitalize}Case.widen".write
+
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
 
