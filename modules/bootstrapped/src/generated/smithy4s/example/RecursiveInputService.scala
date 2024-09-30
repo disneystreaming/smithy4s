@@ -16,7 +16,7 @@ trait RecursiveInputServiceGen[F[_, _, _, _, _]] {
 
   def recursiveInputOperation(hello: Option[RecursiveInput] = None): F[RecursiveInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](this)
 }
 
 object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, RecursiveInputServiceOperation] {
