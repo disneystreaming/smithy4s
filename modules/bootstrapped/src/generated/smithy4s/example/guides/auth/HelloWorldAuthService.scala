@@ -20,7 +20,7 @@ trait HelloWorldAuthServiceGen[F[_, _, _, _, _]] {
   def sayWorld(): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing]
   def healthCheck(): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](this)
 }
 
 object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, HelloWorldAuthServiceOperation] {

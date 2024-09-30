@@ -21,7 +21,7 @@ trait KVStoreGen[F[_, _, _, _, _]] {
   def put(key: String, value: String): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]
   def delete(key: String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
 }
 
 object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {

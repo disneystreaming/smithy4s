@@ -17,7 +17,7 @@ trait ServiceWithNullsAndDefaultsGen[F[_, _, _, _, _]] {
   def defaultNullsOperation(input: DefaultNullsOperationInput): F[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing]
   def timestampOperation(input: TimestampOperationInput): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
 }
 
 object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndDefaultsGen, ServiceWithNullsAndDefaultsOperation] {

@@ -19,7 +19,7 @@ trait ErrorHandlingServiceExtraErrorsGen[F[_, _, _, _, _]] {
 
   def extraErrorOperation(in: Option[String] = None): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](this)
 }
 
 object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingServiceExtraErrorsGen, ErrorHandlingServiceExtraErrorsOperation] {

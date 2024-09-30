@@ -66,6 +66,7 @@ package object example {
   type ExtraData = smithy4s.example.ExtraData.Type
   type FancyList = smithy4s.example.FancyList.Type
   type FreeForm = smithy4s.example.FreeForm.Type
+  type HasUnionUnitCaseTrait = smithy4s.example.HasUnionUnitCaseTrait.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   /** @param member
     *   listFoo

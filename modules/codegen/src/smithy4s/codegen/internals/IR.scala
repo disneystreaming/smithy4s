@@ -31,6 +31,7 @@ import TypedNode.FieldTN.OptionalSomeTN
 import TypedNode.FieldTN.RequiredTN
 import TypedNode.AltValueTN.ProductAltTN
 import TypedNode.AltValueTN.TypeAltTN
+import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
 
@@ -426,6 +427,7 @@ private[internals] object TypedNode {
     def map[B](f: A => B): AltValueTN[B] = this match {
       case ProductAltTN(value) => ProductAltTN(f(value))
       case TypeAltTN(value)    => TypeAltTN(f(value))
+      case UnitAltTN           => UnitAltTN
     }
   }
   object AltValueTN {
@@ -437,6 +439,7 @@ private[internals] object TypedNode {
           fa match {
             case ProductAltTN(value) => f(value).map(ProductAltTN(_))
             case TypeAltTN(value)    => f(value).map(TypeAltTN(_))
+            case UnitAltTN           => Applicative[G].pure(UnitAltTN)
           }
         def foldLeft[A, B](fa: AltValueTN[A], b: B)(f: (B, A) => B): B = ???
         def foldRight[A, B](fa: AltValueTN[A], lb: Eval[B])(
@@ -446,6 +449,7 @@ private[internals] object TypedNode {
 
     case class ProductAltTN[A](value: A) extends AltValueTN[A]
     case class TypeAltTN[A](value: A) extends AltValueTN[A]
+    case object UnitAltTN extends AltValueTN[Nothing]
   }
 
   implicit val typedNodeTraverse: Traverse[TypedNode] =
