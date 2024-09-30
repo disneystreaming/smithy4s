@@ -18,7 +18,7 @@ trait LibraryGen[F[_, _, _, _, _]] {
   def getBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def buyBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](this)
 }
 
 object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
