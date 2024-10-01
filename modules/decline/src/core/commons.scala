@@ -28,7 +28,7 @@ import java.util.Base64
 
 object commons {
   def toKebabCase(s: String): String =
-    s.replaceAll("([A-Z])", "-$1").toLowerCase.drop(1)
+    s.replaceAll("([A-Z])", "-$1").toLowerCase.stripPrefix("-")
 
   implicit def covariantAnyFunctor[F[_]](implicit
       ev: MonadError[F, ConstraintError]
