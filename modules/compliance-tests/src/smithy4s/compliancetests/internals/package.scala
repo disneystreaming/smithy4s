@@ -18,42 +18,35 @@ package smithy4s
 package compliancetests
 
 import org.http4s.{Header, Headers, Uri}
-import cats.implicits._
 import org.typelevel.ci.CIString
 import java.nio.charset.StandardCharsets
-import scala.collection.immutable.ListMap
 
 package object internals {
 
   private[compliancetests] def splitQuery(
       queryString: String
-  ): (String, String) = {
+  ): (String, Option[String]) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
         (
           k,
-          Uri.decode(
-            toDecode = v,
-            charset = StandardCharsets.UTF_8,
-            plusIsSpace = true
+          Some(
+            Uri.decode(
+              toDecode = v,
+              charset = StandardCharsets.UTF_8,
+              plusIsSpace = true
+            )
           )
         )
-      case Array(k) => (k, "")
+      case Array(k) => (k, None)
     }
   }
 
   private[compliancetests] def parseQueryParams(
       queryParams: Option[List[String]]
-  ): ListMap[String, List[String]] = {
-    queryParams.combineAll
+  ): Vector[(String, Option[String])] = {
+    queryParams.toVector.flatten
       .map(splitQuery)
-      .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
-        case (acc, (k, v)) =>
-          acc.get(k) match {
-            case Some(value) => acc + (k -> (value :+ v))
-            case None        => acc + (k -> List(v))
-          }
-      }
   }
 
   private def escape(str: String): String = {

@@ -121,7 +121,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
       host = None,
       port = None,
       path = IndexedSeq.empty,
-      queryParams = Map.empty,
+      queryParams = IndexedSeq.empty,
       pathParams = None
     )
 }

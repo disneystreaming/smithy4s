@@ -83,6 +83,8 @@ sealed trait MetadataError extends HttpContractError {
       s"Field $field, found in ${location.show}, failed constraint checks with message: $message"
     case ImpossibleDecoding(message) =>
       message
+    case MissingValueError(field, location) =>
+      s"Field $field, found in ${location.show}, is missing a value"
   }
 }
 
@@ -126,6 +128,18 @@ object MetadataError {
     )(ArityError.apply)
   }
 
+  case class MissingValueError(
+      field: String,
+      location: HttpBinding
+  ) extends MetadataError
+
+  object MissingValueError {
+    val schema = struct(
+      string.required[MissingValueError]("field", _.field),
+      HttpBinding.schema.required[MissingValueError]("location", _.location)
+    )(MissingValueError.apply)
+  }
+
   case class FailedConstraint(
       field: String,
       location: HttpBinding,
@@ -158,19 +172,23 @@ object MetadataError {
       FailedConstraint.schema.oneOf[MetadataError]("failedConstraint")
     val impossibleDecoding =
       ImpossibleDecoding.schema.oneOf[MetadataError]("impossibleDecoding")
+    val missingValueError =
+      MissingValueError.schema.oneOf[MetadataError]("missingValueError")
 
     union(
       notFound,
       wrongType,
       arityError,
       failedConstraint,
-      impossibleDecoding
+      impossibleDecoding,
+      missingValueError
     ) {
       case _: NotFound           => 0
       case _: WrongType          => 1
       case _: ArityError         => 2
       case _: FailedConstraint   => 3
       case _: ImpossibleDecoding => 4
+      case _: MissingValueError  => 5
     }
   }
 

@@ -119,7 +119,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(str = Some("hello"))
     val finished =
       Queries(str = Some("hello"), slm = Some(Map("str" -> "hello")))
-    val expected = Metadata(query = Map("str" -> List("hello")))
+    val expected = Metadata(query = Map("str" -> List(Some("hello"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -131,7 +131,7 @@ class MetadataSpec() extends FunSuite {
   test("String length constraint violation") {
     val string = "1" * 11
     val queries = ValidationChecks(str = Some(string))
-    val expected = Metadata(query = Map("str" -> List(string)))
+    val expected = Metadata(query = Map("str" -> List(Some(string))))
     checkRoundTripError(
       queries,
       expected,
@@ -142,7 +142,7 @@ class MetadataSpec() extends FunSuite {
   test("List length constraint violation") {
     val list = List.fill(11)("str")
     val queries = ValidationChecks(lst = Some(list))
-    val expected = Metadata(query = Map("lst" -> list))
+    val expected = Metadata(query = Map("lst" -> list.map(Some(_))))
     checkRoundTripError(
       queries,
       expected,
@@ -153,7 +153,7 @@ class MetadataSpec() extends FunSuite {
   test("Integer range constraint violation") {
     val i = 11
     val queries = ValidationChecks(int = Some(i))
-    val expected = Metadata(query = Map("int" -> List(i.toString)))
+    val expected = Metadata(query = Map("int" -> List(Some(i.toString))))
     checkRoundTripError(
       queries,
       expected,
@@ -164,14 +164,14 @@ class MetadataSpec() extends FunSuite {
   test("Integer query parameter") {
     val queries = Queries(int = Some(123))
     val finished = Queries(int = Some(123), slm = Some(Map("int" -> "123")))
-    val expected = Metadata(query = Map("int" -> List("123")))
+    val expected = Metadata(query = Map("int" -> List(Some("123"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
   test("Boolean query parameter") {
     val queries = Queries(b = Some(true))
     val finished = Queries(b = Some(true), slm = Some(Map("b" -> "true")))
-    val expected = Metadata(query = Map("b" -> List("true")))
+    val expected = Metadata(query = Map("b" -> List(Some("true"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -180,7 +180,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts1 = Some(ts))
     val finished =
       Queries(ts1 = Some(ts), slm = Some(Map("ts1" -> epochString)))
-    val expected = Metadata(query = Map("ts1" -> List(epochString)))
+    val expected = Metadata(query = Map("ts1" -> List(Some(epochString))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -189,7 +189,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts2 = Some(ts))
     val finished =
       Queries(ts2 = Some(ts), slm = Some(Map("ts2" -> epochString)))
-    val expected = Metadata(query = Map("ts2" -> List(epochString)))
+    val expected = Metadata(query = Map("ts2" -> List(Some(epochString))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -198,7 +198,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts3 = Some(ts))
     val finished =
       Queries(ts3 = Some(ts), slm = Some(Map("ts3" -> "1234567890")))
-    val expected = Metadata(query = Map("ts3" -> List("1234567890")))
+    val expected = Metadata(query = Map("ts3" -> List(Some("1234567890"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -210,7 +210,9 @@ class MetadataSpec() extends FunSuite {
       slm = Some(Map("ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"))
     )
     val expected =
-      Metadata(query = Map("ts4" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
+      Metadata(query =
+        Map("ts4" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT")))
+      )
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -218,7 +220,7 @@ class MetadataSpec() extends FunSuite {
     val map =
       Map("hello" -> "a", "world" -> "b")
     val queries = Queries(slm = Some(map))
-    val expected = Metadata(query = map.fmap(Seq(_)))
+    val expected = Metadata(query = map.fmap(a => Seq(Some(a))))
     checkRoundTrip(queries, expected)
   }
 
@@ -226,7 +228,7 @@ class MetadataSpec() extends FunSuite {
     val list = List("hello", "world")
     val queries = Queries(sl = Some(list))
     val finished = Queries(sl = Some(list), slm = Some(Map("sl" -> "hello")))
-    val expected = Metadata(query = Map("sl" -> list))
+    val expected = Metadata(query = Map("sl" -> list.map(Some(_))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -237,7 +239,7 @@ class MetadataSpec() extends FunSuite {
       ie = Some(smithy4s.example.Numbers.ONE),
       slm = Some(Map("nums" -> "1"))
     )
-    val expected = Metadata(query = Map("nums" -> List("1")))
+    val expected = Metadata(query = Map("nums" -> List(Some("1"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -248,7 +250,7 @@ class MetadataSpec() extends FunSuite {
       on = Some(smithy4s.example.OpenNums.$Unknown(101)),
       slm = Some(Map("openNums" -> "101"))
     )
-    val expected = Metadata(query = Map("openNums" -> List("101")))
+    val expected = Metadata(query = Map("openNums" -> List(Some("101"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -259,7 +261,7 @@ class MetadataSpec() extends FunSuite {
       on = Some(smithy4s.example.OpenNums.ONE),
       slm = Some(Map("openNums" -> "1"))
     )
-    val expected = Metadata(query = Map("openNums" -> List("1")))
+    val expected = Metadata(query = Map("openNums" -> List(Some("1"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -271,7 +273,7 @@ class MetadataSpec() extends FunSuite {
       ons = Some(smithy4s.example.OpenNumsStr.$Unknown("test")),
       slm = Some(Map("openNumsStr" -> "test"))
     )
-    val expected = Metadata(query = Map("openNumsStr" -> List("test")))
+    val expected = Metadata(query = Map("openNumsStr" -> List(Some("test"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -282,7 +284,7 @@ class MetadataSpec() extends FunSuite {
       ons = Some(smithy4s.example.OpenNumsStr.ONE),
       slm = Some(Map("openNumsStr" -> "ONE"))
     )
-    val expected = Metadata(query = Map("openNumsStr" -> List("ONE")))
+    val expected = Metadata(query = Map("openNumsStr" -> List(Some("ONE"))))
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -439,7 +441,9 @@ class MetadataSpec() extends FunSuite {
 
   test("bad data gets caught") {
     val metadata =
-      Metadata(query = Map("ts3" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
+      Metadata(query =
+        Map("ts3" -> List(Some("Thu, 01 Jan 1970 00:00:00 GMT")))
+      )
     val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.WrongType(
       "ts3",
@@ -462,7 +466,7 @@ class MetadataSpec() extends FunSuite {
 
   test("too many parameters get caught") {
     val metadata =
-      Metadata(query = Map("ts3" -> List("1", "2", "3")))
+      Metadata(query = Map("ts3" -> List("1", "2", "3").map(Some(_))))
     val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.ArityError(
       "ts3",

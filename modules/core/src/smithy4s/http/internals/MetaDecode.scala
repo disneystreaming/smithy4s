@@ -25,8 +25,12 @@ import HttpBinding._
 private[http] sealed abstract class MetaDecode[+A] {
   def map[B](to: A => B): MetaDecode[B] = this match {
     case StringValueMetaDecode(f) => StringValueMetaDecode(f.andThen(to))
+    case OptionalStringValueMetaDecode(f) =>
+      OptionalStringValueMetaDecode(f.andThen(to))
     case StringCollectionMetaDecode(f) =>
       StringCollectionMetaDecode(f andThen to)
+    case SparseStringCollectionMetaDecode(f) =>
+      SparseStringCollectionMetaDecode(f andThen to)
     case StringMapMetaDecode(f)     => StringMapMetaDecode(f.andThen(to))
     case StringListMapMetaDecode(f) => StringListMapMetaDecode(f.andThen(to))
     case EmptyMetaDecode            => EmptyMetaDecode
@@ -71,6 +75,10 @@ private[http] sealed abstract class MetaDecode[+A] {
             putField(f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
+      case (HeaderBinding(h), OptionalStringValueMetaDecode(f)) =>
+        lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
+          putField(f(Some(values.head)))
+        }
       case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
           putField(f(values.iterator))
@@ -78,12 +86,31 @@ private[http] sealed abstract class MetaDecode[+A] {
       case (QueryBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
+            values.head match {
+              case Some(value) => putField(f(value))
+              case None => throw MetadataError.ArityError(fieldName, binding)
+            }
+          } else throw MetadataError.ArityError(fieldName, binding)
+        }
+      case (QueryBinding(h), OptionalStringValueMetaDecode(f)) =>
+        lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
+          if (values.size == 1) {
             putField(f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(f(values.iterator))
+          val it = values.map {
+            case Some(value) => value
+            case None =>
+              throw MetadataError.MissingValueError(fieldName, binding)
+          }.iterator
+          putField(f(it))
+        }
+      case (QueryBinding(q), SparseStringCollectionMetaDecode(f)) =>
+        lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
+          val it = values.iterator
+          putField(f(it))
         }
       // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
       // when targeting Map[String,String] we take the first value encountered
@@ -92,7 +119,15 @@ private[http] sealed abstract class MetaDecode[+A] {
           val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
             .map { case (k, values) =>
               if (values.nonEmpty) {
-                k -> values.head
+                val v = values.head match {
+                  case Some(value) => value
+                  case None =>
+                    throw MetadataError.MissingValueError(
+                      fieldName,
+                      QueryParamsBinding
+                    )
+                }
+                k -> v
               } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
           if (iter.nonEmpty) putField(f(iter))
@@ -102,7 +137,14 @@ private[http] sealed abstract class MetaDecode[+A] {
         (metadata, putField) =>
           val iter = metadata.query.iterator
             .map { case (k, values) =>
-              k -> values.iterator
+              k -> values.map {
+                case Some(value) => value
+                case None =>
+                  throw MetadataError.MissingValueError(
+                    fieldName,
+                    QueryParamsBinding
+                  )
+              }.iterator
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
@@ -141,6 +183,18 @@ private[http] sealed abstract class MetaDecode[+A] {
               // TODO add a specialised case for this
               putField(f(statusCode.toString))
           }
+      case (StatusCodeBinding, OptionalStringValueMetaDecode(f)) =>
+        (metadata, putField) =>
+          metadata.statusCode match {
+            case None =>
+              throw new MetadataError.MissingValueError(
+                fieldName,
+                StatusCodeBinding
+              )
+            case Some(statusCode) =>
+              // TODO add a specialised case for this
+              putField(f(Some(statusCode.toString)))
+          }
       case _ => (metadata: Metadata, buffer) => ()
     }
   }
@@ -156,7 +210,9 @@ private[http] object MetaDecode {
 
   // format: off
   final case class StringValueMetaDecode[A](f: String => A) extends MetaDecode[A]
+  final case class OptionalStringValueMetaDecode[A](f: Option[String] => A) extends MetaDecode[A]
   final case class StringCollectionMetaDecode[A](f: Iterator[String] => A) extends MetaDecode[A]
+  final case class SparseStringCollectionMetaDecode[A](f: Iterator[Option[String]] => A) extends MetaDecode[A]
   final case class StringMapMetaDecode[A](f: Iterator[(String, String)] => A) extends MetaDecode[A]
   final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[String])] => A) extends MetaDecode[A]
   case object EmptyMetaDecode extends MetaDecode[Nothing]

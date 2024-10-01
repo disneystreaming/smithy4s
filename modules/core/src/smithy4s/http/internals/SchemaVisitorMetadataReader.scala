@@ -24,6 +24,7 @@ import smithy4s.http.internals.MetaDecode.StringCollectionMetaDecode
 import smithy4s.http.internals.MetaDecode.StringListMapMetaDecode
 import smithy4s.http.internals.MetaDecode.StringMapMetaDecode
 import smithy4s.http.internals.MetaDecode.StringValueMetaDecode
+import smithy4s.http.internals.MetaDecode.OptionalStringValueMetaDecode
 import smithy4s.http.internals.MetaDecode.StructureMetaDecode
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema._
@@ -69,19 +70,23 @@ private[http] class SchemaVisitorMetadataReader(
   ): MetaDecode[C[A]] = {
     val amendedMember = member.addHints(httpHints(hints))
     self(amendedMember) match {
-      case MetaDecode.StringValueMetaDecode(f) =>
+      case MetaDecode.StringValueMetaDecode(decode) =>
         val isAwsHeader = hints
           .get(HttpBinding)
           .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
         (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
           case (Some(splitFunction), true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(it.flatMap(splitFunction).map(f))
+              tag.fromIterator(it.flatMap(splitFunction).map(decode))
             }
           case (_, _) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-              tag.fromIterator(it.map(f))
+              tag.fromIterator(it.map(decode))
             }
+        }
+      case MetaDecode.OptionalStringValueMetaDecode(decode) =>
+        MetaDecode.SparseStringCollectionMetaDecode[C[A]] { it =>
+          tag.fromIterator(it.map(decode))
         }
       case _ => EmptyMetaDecode
     }
@@ -226,5 +231,10 @@ private[http] class SchemaVisitorMetadataReader(
     EmptyMetaDecode
 
   override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
-    self(schema).map(Some(_))
+    self(schema) match {
+      case StringValueMetaDecode(f) =>
+        OptionalStringValueMetaDecode[Option[A]](_.map(f))
+      case metaDecode =>
+        metaDecode.map(Some(_))
+    }
 }

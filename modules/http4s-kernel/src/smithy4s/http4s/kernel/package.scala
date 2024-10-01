@@ -68,7 +68,7 @@ package object kernel {
       uri.host.map(_.renderString),
       uri.port,
       uri.path.segments.map(_.decoded()),
-      getQueryParams(uri),
+      uri.query.pairs,
       pathParams
     )
   }
@@ -99,6 +99,7 @@ package object kernel {
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
     val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
+
     Uri(
       path = path,
       authority = authority,
@@ -107,8 +108,11 @@ package object kernel {
           case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
           case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
         }
-      }
-    ).withMultiValueQueryParams(uri.queryParams)
+      },
+      query = Query.fromVector(
+        uri.queryParams.toVector
+      )
+    )
   }
 
   /**
@@ -183,17 +187,6 @@ package object kernel {
     req.headers.headers.groupBy(_.name).map { case (k, v) =>
       (CaseInsensitive(k.toString), v.map(_.value))
     }
-
-  private[smithy4s] def getQueryParams[F[_]](
-      uri: Uri
-  ): Map[String, List[String]] =
-    uri.query.pairs
-      .collect {
-        case (name, None)        => name -> "true"
-        case (name, Some(value)) => name -> value
-      }
-      .groupBy(_._1)
-      .map { case (k, v) => k -> v.map(_._2).toList }
 
   private def collectBytes[F[_]: Concurrent](
       stream: fs2.Stream[F, Byte]

@@ -16,6 +16,8 @@ package object example {
   val PizzaAdminService = PizzaAdminServiceGen
   type FooService[F[_]] = smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
   val FooService = FooServiceGen
+  type ServiceWithSparseQueryParams[F[_]] = smithy4s.kinds.FunctorAlgebra[ServiceWithSparseQueryParamsGen, F]
+  val ServiceWithSparseQueryParams = ServiceWithSparseQueryParamsGen
   type KVStore[F[_]] = smithy4s.kinds.FunctorAlgebra[KVStoreGen, F]
   val KVStore = KVStoreGen
   type ObjectService[F[_]] = smithy4s.kinds.FunctorAlgebra[ObjectServiceGen, F]

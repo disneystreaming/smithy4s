@@ -33,6 +33,8 @@ import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.compliancetests.TestConfig._
 import cats.MonadThrow
 import java.util.concurrent.TimeoutException
+import scala.collection.immutable.ListMap
+
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
@@ -66,13 +68,33 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .fromString(testCase.method)
       .getOrElse(sys.error("Invalid method"))
 
+    val expectedQueryParams: Vector[(String, Option[String])] =
+      parseQueryParams(testCase.queryParams)
+        .foldLeft[ListMap[String, Vector[Option[String]]]](ListMap.empty) {
+          case (acc, (k, v)) =>
+            acc.get(k) match {
+              case Some(value) => acc + (k -> (value :+ v))
+              case None        => acc + (k -> Vector(v))
+            }
+        }
+        .map {
+          // FIXME: replacing single query parameter without value with empty string
+          // to make sure that https://github.com/smithy-lang/smithy/blob/6c42bc9d60a681e63c66f4cde33d7a189a1ff9a6/smithy-aws-protocol-tests/model/restJson1/http-query.smithy#L476-L489
+          // passes.
+          // Previously this was done in `parseQueryParams`.
+          case (k, Vector(None)) => k -> Vector(Some(""))
+          case kv                => kv
+        }
+        .toVector
+        .flatMap { case (k, v) =>
+          v.map(k -> _)
+        }
+
     val expectedUri = baseUri
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri).addEndsWithSlash
       )
-      .withMultiValueQueryParams(
-        parseQueryParams(testCase.queryParams)
-      )
+      .copy(query = Query.fromVector(expectedQueryParams))
 
     val body =
       testCase.body

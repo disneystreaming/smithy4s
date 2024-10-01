@@ -35,13 +35,21 @@ sealed trait MetaEncode[-A] {
         (metadata: Metadata, a: A) => metadata.addPathParam(path, f(a))
       case (HeaderBinding(name), StringValueMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addHeader(name, f(a))
+      case (HeaderBinding(name), OptionalStringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) =>
+          f(a).fold(metadata)(metadata.addHeader(name, _))
       case (HeaderBinding(name), StringListMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addMultipleHeaders(name, f(a))
       case (QueryBinding(name), StringValueMetaEncode(f)) =>
         (metadata: Metadata, a: A) => metadata.addQueryParam(name, f(a))
+      case (QueryBinding(name), OptionalStringValueMetaEncode(f)) =>
+        (metadata: Metadata, a: A) => metadata.addQueryParam(name, f(a))
       case (QueryBinding(name), StringListMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           metadata.addMultipleQueryParams(name, f(a))
+      case (QueryBinding(name), SparseStringListMetaEncode(f)) =>
+        (metadata: Metadata, a: A) =>
+          metadata.addMultipleQueryParamsOpt(name, f(a))
       case (QueryParamsBinding, StringMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
@@ -66,8 +74,12 @@ sealed trait MetaEncode[-A] {
     }
 
   def contramap[B](from: B => A): MetaEncode[B] = this match {
-    case StringValueMetaEncode(f)   => StringValueMetaEncode(from andThen f)
-    case StringListMetaEncode(f)    => StringListMetaEncode(from andThen f)
+    case StringValueMetaEncode(f) => StringValueMetaEncode(from andThen f)
+    case OptionalStringValueMetaEncode(f) =>
+      OptionalStringValueMetaEncode(from andThen f)
+    case StringListMetaEncode(f) => StringListMetaEncode(from andThen f)
+    case SparseStringListMetaEncode(f) =>
+      SparseStringListMetaEncode(from andThen f)
     case StringMapMetaEncode(f)     => StringMapMetaEncode(from andThen f)
     case StringListMapMetaEncode(f) => StringListMapMetaEncode(from andThen f)
     case EmptyMetaEncode            => EmptyMetaEncode
@@ -84,7 +96,9 @@ object MetaEncode {
 
   // format: off
   case class StringValueMetaEncode[A](f: A => String) extends MetaEncode[A]
+  case class OptionalStringValueMetaEncode[A](f: A => Option[String]) extends MetaEncode[A]
   case class StringListMetaEncode[A](f: A => List[String]) extends MetaEncode[A]
+  case class SparseStringListMetaEncode[A](f: A => List[Option[String]]) extends MetaEncode[A]
   case class StringMapMetaEncode[A](f: A => Map[String, String]) extends MetaEncode[A]
   case class StringListMapMetaEncode[A](f: A => Map[String, List[String]]) extends MetaEncode[A]
   case object EmptyMetaEncode extends MetaEncode[Any]

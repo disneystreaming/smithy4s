@@ -1,0 +1,59 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ServiceWithSparseQueryParams",
+        "version": "1.0"
+    },
+    "paths": {
+        "/operation/sparse-query-params": {
+            "get": {
+                "operationId": "GetOperation",
+                "parameters": [
+                    {
+                        "name": "foo",
+                        "in": "query",
+                        "style": "form",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "explode": true,
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetOperationResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GetOperationResponseContent": {
+                "type": "object",
+                "properties": {
+                    "foo": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "foo"
+                ]
+            }
+        }
+    }
+}

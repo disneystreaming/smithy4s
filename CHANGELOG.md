@@ -7,6 +7,11 @@ Thank you!
 
 # 0.19.0
 
+## Update HttpUri model to allow optional query parameters in [1513](https://github.com/disneystreaming/smithy4s/pull/1513)
+
+Change the type of query parameters in `HttpUri` from `queryParams: Map[String, Seq[String]]` to `queryParams: Map[String, Seq[Option[String]]]` to allow
+modeling of sparse collections.
+
 ## Documentation fix
 
 Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`

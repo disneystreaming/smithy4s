@@ -33,7 +33,11 @@ final case class HttpRequest[+A](
 
   def toMetadata: Metadata = Metadata(
     path = uri.pathParams.getOrElse(Map.empty),
-    query = uri.queryParams,
+    query = uri.queryParams
+      .groupBy(_._1)
+      .view
+      .map { case (key, values) => key -> values.map(_._2).toIndexedSeq }
+      .toMap,
     headers = headers
   )
 
@@ -79,10 +83,12 @@ object HttpRequest {
     ): Writer[Body, I] = new Writer[Body, I] {
       def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
         val path = httpEndpoint.path(input)
-        val staticQueries = httpEndpoint.staticQueryParams
         val oldUri = request.uri
         val newUri =
-          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+          oldUri.copy(
+            path = oldUri.path ++ path,
+            queryParams = mapToIndexedSeq(httpEndpoint.staticQueryParams)
+          )
         val method = httpEndpoint.method
         request.copy(method = method, uri = newUri)
       }
@@ -92,7 +98,9 @@ object HttpRequest {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
         val newUri =
-          oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
+          oldUri.copy(queryParams =
+            oldUri.queryParams ++ mapToIndexedSeq(meta.query)
+          )
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
@@ -118,6 +126,8 @@ object HttpRequest {
       }
     }
 
+    private def mapToIndexedSeq[A, B](m: Map[A, Seq[B]]): IndexedSeq[(A, B)] =
+      m.toIndexedSeq.flatMap { case (k, v) => v.map(k -> _) }
   }
 
   object Decoder {
