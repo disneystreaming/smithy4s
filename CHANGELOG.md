@@ -10,7 +10,7 @@ Thank you!
 * Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
 * Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
 * Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
-* Fixes commons.toKebabCase() sometimes drops the first letter (see [#1539](https://github.com/disneystreaming/smithy4s/pull/1539)).
+* Fixes commons.toKebabCase() sometimes drops the first letter (see [#1539](https://github.com/disneystreaming/smithy4s/pull/1603)).
 
 # 0.18.24
 
