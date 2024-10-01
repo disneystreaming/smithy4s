@@ -154,14 +154,27 @@ private[internals] object CollisionAvoidance {
 
   private def modField(field: Field): Field = {
     Field(
-      protectKeyword(uncapitalise(field.name)),
-      field.name,
-      modType(field.tpe),
-      field.modifier,
-      field.originalIndex,
-      field.hints.map(modHint)
+      name = protectKeyword(uncapitalise(field.name)),
+      realName = field.name,
+      tpe = modType(field.tpe),
+      modifier = modModifier(field.modifier),
+      originalIndex = field.originalIndex,
+      hints = field.hints.map(modHint)
     )
   }
+
+  private def modModifier(modifier: Field.Modifier): Field.Modifier =
+    Field.Modifier(
+      required = modifier.required,
+      nullable = modifier.nullable,
+      default = modifier.default.map(modFieldDefault)
+    )
+
+  private def modFieldDefault(default: Field.Default): Field.Default =
+    Field.Default(
+      node = default.node,
+      typedNode = default.typedNode.map(recursion.preprocess(modTypedNode))
+    )
 
   private def modStreamingField(
       streamingField: StreamingField
