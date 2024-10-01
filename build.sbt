@@ -210,6 +210,9 @@ lazy val core = projectMatrix
         }
         .taskValue
     },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    ),
     libraryDependencies += Dependencies.collectionsCompat.value,
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
@@ -471,6 +474,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
     },
+    libraryDependencies += Dependencies.MunitV1.diff.value,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
@@ -941,6 +945,10 @@ lazy val bootstrapped = projectMatrix
     Compile / PB.protoSources ++= Seq(
       exampleGeneratedResourcesOutput.value
     ),
+    Compile / PB.protocExecutable := sys.env
+      .get("PROTOC_PATH")
+      .map(file(_))
+      .getOrElse((Compile / PB.protocExecutable).value),
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),

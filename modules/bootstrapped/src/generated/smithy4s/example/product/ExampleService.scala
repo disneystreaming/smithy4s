@@ -16,7 +16,7 @@ trait ExampleServiceGen[F[_, _, _, _, _]] {
 
   def exampleOperation(a: String): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](this)
 }
 
 trait ExampleServiceProductGen[F[_, _, _, _, _]] {

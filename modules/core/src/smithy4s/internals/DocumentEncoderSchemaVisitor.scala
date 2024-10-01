@@ -23,6 +23,7 @@ import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
+import alloy.JsonUnknown
 import smithy4s.capability.EncoderK
 import smithy4s.schema._
 
@@ -99,9 +100,14 @@ class DocumentEncoderSchemaVisitor(
       hints
         .get(TimestampFormat)
         .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
-        case DATE_TIME     => ts => DString(ts.format(DATE_TIME))
-        case HTTP_DATE     => ts => DString(ts.format(HTTP_DATE))
-        case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))
+        case DATE_TIME => ts => DString(ts.format(DATE_TIME))
+        case HTTP_DATE => ts => DString(ts.format(HTTP_DATE))
+        case EPOCH_SECONDS =>
+          ts =>
+            val epochSecondsWithNanos =
+              BigDecimal(ts.epochSecond) + (BigDecimal(ts.nano) * BigDecimal(10)
+                .pow(-9))
+            DNumber(epochSecondsWithNanos)
       }
     case PDocument => from(identity)
     case PFloat    => from(float => DNumber(BigDecimal(float.toDouble)))
@@ -181,6 +187,9 @@ class DocumentEncoderSchemaVisitor(
         from(e => DString(total(e).stringValue))
     }
 
+  private def isForJsonUnknown(field: Field[_, _]): Boolean =
+    field.hints.has(JsonUnknown)
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -210,7 +219,37 @@ class DocumentEncoderSchemaVisitor(
           }
     }
 
-    val encoders = fields.map(field => fieldEncoder(field))
+    def jsonUnknownFieldEncoder[A](
+        field: Field[S, A]
+    ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
+      val encoder = apply(field.schema)
+      (s, builder) => {
+        if (explicitDefaultsEncoding) {
+          encoder(field.get(s)) match {
+            case Document.DObject(value) => value.foreach(builder += _)
+            case _ =>
+              throw new IllegalArgumentException(
+                s"Failed encoding field ${field.label} because it cannot be converted to a JSON object"
+              )
+          }
+        } else {
+          field.foreachUnlessDefault(s) { a =>
+            encoder(a) match {
+              case Document.DObject(value) => value.foreach(builder += _)
+              case _ =>
+                throw new IllegalArgumentException(
+                  s"Failed encoding field ${field.label} because it cannot be converted to a JSON object"
+                )
+            }
+          }
+        }
+      }
+    }
+
+    val (fieldsForUnknown, knownFields) = fields.partition(isForJsonUnknown)
+
+    val encoders = knownFields.map(field => fieldEncoder(field)) ++
+      fieldsForUnknown.map(field => jsonUnknownFieldEncoder(field))
     new DocumentEncoder[S] {
       def apply(s: S): Document = {
         val builder = Map.newBuilder[String, Document]

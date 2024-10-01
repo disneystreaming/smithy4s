@@ -19,7 +19,10 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
-import scala.util.{Success, Try}
+
+import scala.util.Success
+import scala.util.Try
+
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
@@ -269,7 +272,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
         ) { case (changed, prevResult) =>
           if (changed || prevResult.isEmpty) {
-            val file = (config / smithy4sGeneratedSmithyMetadataFile).value
+            val file =
+              (config / smithy4sGeneratedSmithyMetadataFile).value
             IO.write(
               file,
               s"""$$version: "2"
@@ -451,21 +455,24 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     )
 
     val cached =
-      Tracked.inputChanged[CodegenArgs, Seq[File]](
-        s.cacheStoreFactory.make("input")
+      CachedTask.inputChanged[CodegenArgs, Seq[File]](
+        s.cacheStoreFactory.make("input"),
+        s.log
       ) {
         Function.untupled {
           Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
             s.cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
-              s.log.debug("Regenerating managed sources")
+              s.log.debug(s"[smithy4s] Input changed: $inputChanged")
+              s.log.debug(s"[smithy4s] Outputs empty: ${outputs.isEmpty}")
+              s.log.debug("[smithy4s] Sources will be regenerated")
               val resPaths = smithy4s.codegen.Codegen
                 .generateToDisk(args)
                 .toList
               resPaths.map(path => new File(path.toString))
             } else {
-              s.log.debug("Using cached version of outputs")
+              s.log.debug("[smithy4s] Using cached version of outputs")
               outputs.getOrElse(Seq.empty)
             }
           }
@@ -474,4 +481,5 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     cached(codegenArgs)
   }
+
 }

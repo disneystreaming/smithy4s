@@ -30,6 +30,7 @@ import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
 import smithy4s.meta.TypeclassTrait
+import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -54,7 +55,10 @@ import scala.util.Try
 
 private[codegen] object SmithyToIR {
 
-  def apply(model: Model, namespace: String): CompilationUnit = {
+  def apply(
+      model: Model,
+      namespace: String
+  ): CompilationUnit = {
     val smithyToIR = new SmithyToIR(model, namespace)
     PostProcessor(
       CompilationUnit(namespace, smithyToIR.allDecls, smithyToIR.rendererConfig)
@@ -72,7 +76,10 @@ private[codegen] object SmithyToIR {
 
 }
 
-private[codegen] class SmithyToIR(model: Model, namespace: String) {
+private[codegen] class SmithyToIR(
+    model: Model,
+    namespace: String
+) {
 
   val finder = PathFinder.create(model)
 
@@ -160,6 +167,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               name,
               tpe,
               isUnwrapped,
+              recursive,
+              hints
+            ).some
+          case Type.ValidatedAlias(_, name, tpe) =>
+            ValidatedTypeAlias(
+              shape.getId(),
+              name,
+              tpe,
               recursive,
               hints
             ).some
@@ -613,14 +628,26 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shape.getId() != ShapeId.from(primitiveId) &&
           !isUnboxedPrimitive(shape.getId())
         ) {
-          Type
-            .Alias(
-              shape.getId().getNamespace(),
-              shape.getId().getName(),
-              externalOrBase,
-              isUnwrappedShape(shape)
-            )
-            .some
+          val shouldValidate =
+            shape.hasTrait(classOf[ValidateNewtypeTrait])
+          if (shouldValidate) {
+            Type
+              .ValidatedAlias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase
+              )
+              .some
+          } else {
+            Type
+              .Alias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase,
+                isUnwrappedShape(shape)
+              )
+              .some
+          }
         } else externalOrBase.some
       }
 
@@ -939,6 +966,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.GenerateOptics
     case s: ScalaImportsTrait =>
       Hint.ScalaImports(s.getImports().asScala.toList)
+    case _: ValidateNewtypeTrait =>
+      Hint.ValidateNewtype
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
@@ -1019,7 +1048,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       maybeTypeclassesHint(shape)
   }
 
-  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean) {
+    def isUnit: Boolean = tpe == Type.unit
+  }
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
@@ -1122,20 +1153,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       shape
         .members()
         .asScala
-        .map { member =>
-          val memberTarget =
-            model.expectShape(member.getTarget)
-          if (isPartOfAdt(memberTarget)) {
-            (member.getMemberName(), member.tpe.map(Left(_)))
-          } else {
-            (member.getMemberName(), member.tpe.map(Right(_)))
+        .flatMap { member =>
+          member.tpe.map { tpe =>
+            val memberTarget = model.expectShape(member.getTarget)
+
+            AltInfo(
+              member.getMemberName(),
+              tpe,
+              isAdtMember = isPartOfAdt(memberTarget)
+            )
           }
-        }
-        .collect {
-          case (name, Some(Left(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = true)
-          case (name, Some(Right(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
     }
@@ -1273,6 +1300,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val a = if (alt.isAdtMember) {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.ProductAltTN(t)
+        } else if (alt.isUnit) {
+          TypedNode.AltValueTN.UnitAltTN
         } else {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.TypeAltTN(t)
@@ -1281,6 +1310,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
+      case (node, Type.ValidatedAlias(ns, name, tpe)) =>
+        TypedNode.ValidatedNewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration (Enum Trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =

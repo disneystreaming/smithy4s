@@ -5,10 +5,33 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.25
+
+* Fixes an issue in which refinements wouldn't work on custom simple shapes (newtypes) (see [#1595](https://github.com/disneystreaming/smithy4s/pull/1595))
+* Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
+* Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
+* Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
+* Fixes commons.toKebabCase() sometimes drops the first letter (see [#1603](https://github.com/disneystreaming/smithy4s/pull/1603)).
+
+# 0.18.24
+
+* Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
+* Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
+
+# 0.18.23
+
+## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
+
+Add support for rendering constrained newtypes over Smithy primitives as validated newtypes. These types now have an `apply` method which returns either an error or a validated value.
+
 # 0.18.22
+
 * Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
 
 # 0.18.21
+
+## Documentation fix
 
 * Addition of a new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
 * Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.

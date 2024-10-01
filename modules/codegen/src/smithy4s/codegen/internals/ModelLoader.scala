@@ -51,7 +51,7 @@ private[codegen] object ModelLoader {
     val modelsInJars = deps.flatMap { file =>
       Using.resource(
         // Note: On JDK13+, the second parameter is redundant.
-        FileSystems.newFileSystem(file.toPath(), null)
+        FileSystems.newFileSystem(file.toPath(), null: ClassLoader)
       ) { jarFS =>
         val p = jarFS.getPath("META-INF", "smithy", "manifest")
 

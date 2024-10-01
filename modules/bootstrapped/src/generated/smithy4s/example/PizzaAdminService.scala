@@ -32,7 +32,7 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   def headRequest(): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing]
   def noContentRequest(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
 }
 
 object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdminServiceOperation] {
