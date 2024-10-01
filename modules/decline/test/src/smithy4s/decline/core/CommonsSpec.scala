@@ -2,7 +2,7 @@ package smithy4s.decline.core
 
 import weaver._
 
-object commonsSpec extends FunSuite {
+object CommonsSpec extends FunSuite {
 
   test("toKebabCase base case") {
     expect(
