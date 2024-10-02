@@ -114,7 +114,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     }
 
     val gen: Gen[TestInput] = for {
-      serviceName <- Gen.const("AmazonS3") // Gen.identifier
+      serviceName <- Gen.oneOf(Gen.const("AmazonS3"), Gen.identifier)
       operationName <- Gen.identifier
       timestamp <- Gen.chooseNum(0L, 4102444800L).map(Timestamp.fromEpochSecond)
       accessKeyId <- Gen.identifier
@@ -178,7 +178,10 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       val amendedAwsRequest = awsRequest
         .toBuilder()
         .appendHeader("X-Amz-Target", serviceName + "." + operationName)
-        .appendHeader("X-Amz-Content-SHA256", "required") // this is a magic addition that is understood by the S3 signer
+        .appendHeader(
+          "X-Amz-Content-SHA256",
+          "required"
+        ) // this is a magic addition that is understood by the S3 signer
         .build()
 
       awsSigner.sign(amendedAwsRequest, signerParams)
