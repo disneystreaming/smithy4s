@@ -1617,10 +1617,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"${ref.show}.${altName.capitalize}Case.widen".write
 
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
-      // The `widen` is necessary in Scala 3.
-      // Without it, there are two schemas (the struct and the union) that match the type
-      // for the conversion to Hints.Binding.
-      line"${alt.runDefault}.widen".write
+      alt.runDefault.write
 
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe

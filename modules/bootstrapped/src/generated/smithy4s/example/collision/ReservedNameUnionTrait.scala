@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.string
 object ReservedNameUnionTrait extends Newtype[java.lang.String] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameUnionTrait")
   val hints: Hints = Hints(
-    smithy4s.example.collision.Class.AdtStruct().widen,
+    smithy4s.example.collision.Class.AdtStruct(),
   ).lazily
   val underlyingSchema: Schema[java.lang.String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[ReservedNameUnionTrait] = bijection(underlyingSchema, asBijection)
