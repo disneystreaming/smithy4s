@@ -40,7 +40,7 @@ object Class extends ShapeTag.Companion[Class] {
     val hints: Hints = Hints.empty
 
 
-    implicit val schema: Schema[AdtStruct] = constant(AdtStruct()).withId(id).addHints(hints)
+    val schema: Schema[AdtStruct] = constant(AdtStruct()).withId(id).addHints(hints)
 
     val alt = schema.oneOf[Class]("package")
   }

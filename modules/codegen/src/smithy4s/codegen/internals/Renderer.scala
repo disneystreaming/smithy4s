@@ -776,7 +776,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
+          line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
