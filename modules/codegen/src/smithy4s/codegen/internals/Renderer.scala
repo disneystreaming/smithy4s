@@ -711,7 +711,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       newline,
-      obj(product.nameRef, shapeTag(product.nameRef))(
+      obj(product.nameRef, if (adtParent.isEmpty) shapeTag(product.nameRef) else Line.empty)(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),

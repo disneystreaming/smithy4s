@@ -34,7 +34,7 @@ object Class extends ShapeTag.Companion[Class] {
     def $ordinal: Int = 0
   }
 
-  object AdtStruct extends ShapeTag.Companion[AdtStruct] {
+  object AdtStruct {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "AdtStruct")
 
     val hints: Hints = Hints.empty

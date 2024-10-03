@@ -51,7 +51,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def $ordinal: Int = 2
   }
 
-  object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
+  object DeprecatedUnionProductCase {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
     val hints: Hints = Hints(
@@ -68,7 +68,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def $ordinal: Int = 3
   }
 
-  object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
+  object UnionProductCaseDeprecatedAtCallSite {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
     val hints: Hints = Hints(

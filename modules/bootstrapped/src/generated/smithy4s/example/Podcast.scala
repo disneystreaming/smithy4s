@@ -43,7 +43,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def $ordinal: Int = 0
   }
 
-  object Video extends ShapeTag.Companion[Video] {
+  object Video {
     val id: ShapeId = ShapeId("smithy4s.example", "Video")
 
     val hints: Hints = Hints.empty
@@ -69,7 +69,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def $ordinal: Int = 1
   }
 
-  object Audio extends ShapeTag.Companion[Audio] {
+  object Audio {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
 
     val hints: Hints = Hints.empty
