@@ -37,6 +37,9 @@ import java.nio.charset.StandardCharsets
   */
 private[aws] object AwsSigning {
 
+  // see https://raw.githubusercontent.com/awslabs/aws-sdk-kotlin/main/codegen/sdk/aws-models/s3.json
+  val S3 = "AmazonS3"
+
   def middleware[F[_]: Concurrent](
       awsEnvironment: AwsEnvironment[F]
   ): Endpoint.Middleware[Client[F]] = new Endpoint.Middleware[Client[F]] {
@@ -88,6 +91,12 @@ private[aws] object AwsSigning {
       credentials: F[AwsCredentials],
       region: F[AwsRegion]
   ): Request[F] => F[Request[F]] = {
+
+    // S3 has special rules, in that it expects the X-Amz-Content-SHA256 to be set.
+    val preSign: PreSigner[F] =
+      if (serviceName == S3) new PreSigner.S3InMemorySigned[F]
+      else new PreSigner.Standard[F]
+
     val contentType = org.http4s.headers.`Content-Type`.headerInstance
     val `Content-Type` = contentType.name
 
@@ -106,79 +115,78 @@ private[aws] object AwsSigning {
     }
 
     // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
-    (request: Request[F]) => {
+    (request: Request[F]) =>
+      preSign(request).flatMap { case (payloadHash, preparedRequest) =>
+        val awsHeadersF = (timestamp, credentials, region).mapN { case (timestamp, credentials, region) =>
+          val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
+          val queryParams: Vector[(String, String)] =
+            request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
+          val canonicalQueryString =
+            if (queryParams.isEmpty) ""
+            else
+              queryParams
+                .map { case (k, v) =>
+                  URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
+                }
+                .mkString("&")
 
-      val bodyF = request.body.chunks.compile.to(Chunk).map(_.flatten)
-      val awsHeadersF = (bodyF, timestamp, credentials, region).mapN { case (body, timestamp, credentials, region) =>
-        val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
-        val queryParams: Vector[(String, String)] =
-          request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
-        val canonicalQueryString =
-          if (queryParams.isEmpty) ""
-          else
-            queryParams
-              .map { case (k, v) =>
-                URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
-              }
-              .mkString("&")
+          // // !\ Important: these must remain in the same order
+          val baseHeadersList = List(
+            `Content-Type` -> preparedRequest.contentType.map(contentType.value(_)).orNull,
+            `Host` -> preparedRequest.uri.host.map(_.renderString).orNull,
+            `X-Amz-Content-SHA256` -> preparedRequest.headers.get(`X-Amz-Content-SHA256`).map(_.head.value).orNull,
+            `X-Amz-Date` -> timestamp.conciseDateTime,
+            `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
+            `X-Amz-Target` -> (serviceName + "." + operationName)
+          ).filterNot(_._2 == null)
 
-        // // !\ Important: these must remain in the same order
-        val baseHeadersList = List(
-          `Content-Type` -> request.contentType.map(contentType.value(_)).orNull,
-          `Host` -> request.uri.host.map(_.renderString).orNull,
-          `X-Amz-Date` -> timestamp.conciseDateTime,
-          `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
-          `X-Amz-Target` -> (serviceName + "." + operationName)
-        ).filterNot(_._2 == null)
+          val canonicalHeadersString = baseHeadersList
+            .map { case (key, value) =>
+              key.toString.toLowerCase + ":" + value.trim
+            }
+            .mkString(newline)
+          lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
 
-        val canonicalHeadersString = baseHeadersList
-          .map { case (key, value) =>
-            key.toString.toLowerCase + ":" + value.trim
-          }
-          .mkString(newline)
-        lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
+          val pathString = preparedRequest.uri.path.toAbsolute.renderString
+          val canonicalRequest = new StringBuilder()
+            .append(request.method.name.toUpperCase())
+            .append(newline)
+            .append(pathString)
+            .append(newline)
+            .append(canonicalQueryString)
+            .append(newline)
+            .append(canonicalHeadersString)
+            .append(newline)
+            .append(newline)
+            .append(signedHeadersString)
+            .append(newline)
+            .append(payloadHash)
+            .result()
 
-        val payloadHash = sha256HexDigest(body.toArray)
-        val pathString = request.uri.path.toAbsolute.renderString
-        val canonicalRequest = new StringBuilder()
-          .append(request.method.name.toUpperCase())
-          .append(newline)
-          .append(pathString)
-          .append(newline)
-          .append(canonicalQueryString)
-          .append(newline)
-          .append(canonicalHeadersString)
-          .append(newline)
-          .append(newline)
-          .append(signedHeadersString)
-          .append(newline)
-          .append(payloadHash)
-          .result()
+          val canonicalRequestHash = sha256HexDigest(canonicalRequest)
+          val signatureKey = getSignatureKey(
+            credentials.secretAccessKey,
+            timestamp.conciseDate,
+            region.value,
+            endpointPrefix
+          )
+          val stringToSign = List[String](
+            algorithm,
+            timestamp.conciseDateTime,
+            credentialsScope,
+            canonicalRequestHash
+          ).mkString(newline)
+          val signature = toHexString(hmacSha256(stringToSign, signatureKey))
+          val authHeaderValue = s"${algorithm} Credential=${credentials.accessKeyId}/$credentialsScope, SignedHeaders=$signedHeadersString, Signature=$signature"
+          val authHeader = Headers("Authorization" -> authHeaderValue)
+          val baseHeaders = Headers(baseHeadersList.map { case (k, v) => Header.Raw(k, v) })
+          authHeader ++ baseHeaders
+        }
 
-        val canonicalRequestHash = sha256HexDigest(canonicalRequest)
-        val signatureKey = getSignatureKey(
-          credentials.secretAccessKey,
-          timestamp.conciseDate,
-          region.value,
-          endpointPrefix
-        )
-        val stringToSign = List[String](
-          algorithm,
-          timestamp.conciseDateTime,
-          credentialsScope,
-          canonicalRequestHash
-        ).mkString(newline)
-        val signature = toHexString(hmacSha256(stringToSign, signatureKey))
-        val authHeaderValue = s"${algorithm} Credential=${credentials.accessKeyId}/$credentialsScope, SignedHeaders=$signedHeadersString, Signature=$signature"
-        val authHeader = Headers("Authorization" -> authHeaderValue)
-        val baseHeaders = Headers(baseHeadersList.map { case (k, v) => Header.Raw(k, v) })
-        authHeader ++ baseHeaders
+        awsHeadersF.map { headers =>
+          preparedRequest.transformHeaders(_ ++ headers)
+        }
       }
-
-      awsHeadersF.map { headers =>
-        request.transformHeaders(_ ++ headers)
-      }
-    }
   }
 
   private val newline = System.lineSeparator()
@@ -187,5 +195,31 @@ private[aws] object AwsSigning {
   private val `X-Amz-Security-Token` = CIString("X-Amz-Security-Token")
   private val `X-Amz-Target` = CIString("X-Amz-Target")
   private val algorithm = "AWS4-HMAC-SHA256"
+  private val `X-Amz-Content-SHA256` = CIString("X-Amz-Content-SHA256")
+
+  private sealed trait PreSigner[F[_]] {
+    def apply(request: Request[F]): F[(String, Request[F])]
+  }
+  private object PreSigner {
+    class Standard[F[_]](implicit F: Concurrent[F]) extends PreSigner[F] {
+      def apply(request: Request[F]): F[(String, Request[F])] = {
+        request.body.compile.to(Chunk).map { inMemoryBody =>
+          val payloadHash = sha256HexDigest(inMemoryBody.toArray)
+          val newRequest = request.withBodyStream(fs2.Stream.chunk(inMemoryBody))
+          (payloadHash, newRequest)
+        }
+      }
+    }
+
+    class S3InMemorySigned[F[_]](implicit F: Concurrent[F]) extends PreSigner[F] {
+      def apply(request: Request[F]): F[(String, Request[F])] = {
+        request.body.compile.to(Chunk).map { inMemoryBody =>
+          val payloadHash = sha256HexDigest(inMemoryBody.toArray)
+          val newRequest = request.withBodyStream(fs2.Stream.chunk(inMemoryBody)).transformHeaders(_.put(Header.Raw(`X-Amz-Content-SHA256`, payloadHash)))
+          (payloadHash, newRequest)
+        }
+      }
+    }
+  }
 
 }

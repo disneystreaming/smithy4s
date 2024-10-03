@@ -46,6 +46,8 @@ import java.time.Clock
 import java.time.ZoneId
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
+import software.amazon.awssdk.auth.signer.AwsS3V4Signer
+import software.amazon.awssdk.auth.signer.params.AwsS3V4SignerParams
 
 /**
  * This suite verifies our implementation of the AWS signature algorithm against
@@ -92,9 +94,9 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     val genAwsRequest = for {
       httpMethod <- Gen.oneOf(SdkHttpMethod.values().toList)
       host <- Gen.identifier
-      path <- Gen.listOf(Gen.identifier).map(_.mkString("/"))
+      path <- Gen.listOfN(3, Gen.identifier).map(_.mkString("/"))
       content <- Gen.asciiStr
-      queryParams <- Gen.listOf(Gen.zip(Gen.identifier, Gen.alphaNumStr))
+      queryParams <- Gen.listOfN(3, Gen.zip(Gen.identifier, Gen.alphaNumStr))
     } yield {
       val builder = SdkHttpFullRequest
         .builder()
@@ -112,7 +114,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     }
 
     val gen: Gen[TestInput] = for {
-      serviceName <- Gen.identifier
+      serviceName <- Gen.oneOf(Gen.const("AmazonS3"), Gen.identifier)
       operationName <- Gen.identifier
       timestamp <- Gen.chooseNum(0L, 4102444800L).map(Timestamp.fromEpochSecond)
       accessKeyId <- Gen.identifier
@@ -154,23 +156,53 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     }
 
     val region = Region.of(smithy4sRegion.value)
+    val signedAwsRequest = if (testInput.serviceName == AwsSigning.S3) {
 
-    val params = Aws4SignerParams
-      .builder()
-      .awsCredentials(creds)
-      .signingRegion(region)
-      .signingClockOverride(fixedClock)
-      .signingName(serviceName)
-      .build()
+      val signerParams = AwsS3V4SignerParams
+        .builder()
+        .awsCredentials(creds)
+        .signingRegion(region)
+        .signingClockOverride(fixedClock)
+        .enablePayloadSigning(true)
+        .signingName(serviceName)
+        .build()
 
-    val awsSigner = Aws4Signer.create()
-    // Amending the AWS Request to force the AMZ target as it's added automatically
-    // by our implementation
-    val amendedAwsRequest = awsRequest
-      .toBuilder()
-      .appendHeader("X-Amz-Target", serviceName + "." + operationName)
-      .build()
-    val signedAwsRequest = awsSigner.sign(amendedAwsRequest, params)
+      // yes, this is an S3-specific signer.
+      val awsSigner = AwsS3V4Signer.create()
+
+      // Amending the AWS Request to force the AMZ target as it's added automatically
+      // by our implementation
+      //
+      // The hardcoded "required" header value is understood by the S3 signer as a signal that the `X-Amz-Content-SHA256` header
+      // should be replaced by the hash of the request payload, and that the same hash should be used in the signature.
+      val amendedAwsRequest = awsRequest
+        .toBuilder()
+        .appendHeader("X-Amz-Target", serviceName + "." + operationName)
+        .appendHeader(
+          "X-Amz-Content-SHA256",
+          "required"
+        ) // this is a magic addition that is understood by the S3 signer
+        .build()
+
+      awsSigner.sign(amendedAwsRequest, signerParams)
+    } else {
+      val params = Aws4SignerParams
+        .builder()
+        .awsCredentials(creds)
+        .signingRegion(region)
+        .signingClockOverride(fixedClock)
+        .signingName(serviceName)
+        .build()
+
+      val awsSigner = Aws4Signer.create()
+      // Amending the AWS Request to force the AMZ target as it's added automatically
+      // by our implementation
+      val amendedAwsRequest = awsRequest
+        .toBuilder()
+        .appendHeader("X-Amz-Target", serviceName + "." + operationName)
+        .build()
+      awsSigner.sign(amendedAwsRequest, params)
+    }
 
     val smithy4sSigner = AwsSigning.signingFunction[IO](
       serviceName,
