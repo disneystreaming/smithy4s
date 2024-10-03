@@ -29,7 +29,6 @@ import smithy4s.aws.kernel.AwsCrypto._
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import cats.Applicative
 
 /**
   * A Client middleware that signs http requests before they are sent to AWS.
@@ -197,7 +196,6 @@ private[aws] object AwsSigning {
   private val `X-Amz-Target` = CIString("X-Amz-Target")
   private val algorithm = "AWS4-HMAC-SHA256"
   private val `X-Amz-Content-SHA256` = CIString("X-Amz-Content-SHA256")
-  private val UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
 
   private sealed trait PreSigner[F[_]] {
     def apply(request: Request[F]): F[(String, Request[F])]
@@ -205,7 +203,7 @@ private[aws] object AwsSigning {
   private object PreSigner {
     class Standard[F[_]](implicit F: Concurrent[F]) extends PreSigner[F] {
       def apply(request: Request[F]): F[(String, Request[F])] = {
-        request.body.chunks.compile.to(Chunk).map(_.flatten).map { inMemoryBody =>
+        request.body.compile.to(Chunk).map { inMemoryBody =>
           val payloadHash = sha256HexDigest(inMemoryBody.toArray)
           val newRequest = request.withBodyStream(fs2.Stream.chunk(inMemoryBody))
           (payloadHash, newRequest)
@@ -213,16 +211,9 @@ private[aws] object AwsSigning {
       }
     }
 
-    class S3Unsigned[F[_]](implicit F: Applicative[F]) extends PreSigner[F] {
-      def apply(request: Request[F]): F[(String, Request[F])] = F.pure {
-        val newRequest = request.transformHeaders(_.put(Header.Raw(`X-Amz-Content-SHA256`, UNSIGNED_PAYLOAD)))
-        (UNSIGNED_PAYLOAD, newRequest)
-      }
-    }
-
     class S3InMemorySigned[F[_]](implicit F: Concurrent[F]) extends PreSigner[F] {
       def apply(request: Request[F]): F[(String, Request[F])] = {
-        request.body.chunks.compile.to(Chunk).map(_.flatten).map { inMemoryBody =>
+        request.body.compile.to(Chunk).map { inMemoryBody =>
           val payloadHash = sha256HexDigest(inMemoryBody.toArray)
           val newRequest = request.withBodyStream(fs2.Stream.chunk(inMemoryBody)).transformHeaders(_.put(Header.Raw(`X-Amz-Content-SHA256`, payloadHash)))
           (payloadHash, newRequest)
