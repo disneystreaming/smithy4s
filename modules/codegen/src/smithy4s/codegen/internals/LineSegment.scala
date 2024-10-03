@@ -95,13 +95,17 @@ private[codegen] object LineSegment {
     )
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): NameRef =
-      NameRef(pkg.split("\\.").toList, name, List.empty)
+      NameRef(splitPath(pkg), name, List.empty)
     def apply(fqn: String): NameRef = {
-      val parts = fqn.split("\\.").toList.toNel.get
+      val parts =
+        splitPath(fqn).toNel.getOrElse(sys.error(s"Invalid FQN: $fqn"))
       NameRef(parts.toList.dropRight(1), parts.last, List.empty)
     }
     def apply(fqn: String, typeParams: List[NameRef]): NameRef =
       apply(fqn).copy(typeParams = typeParams)
+
+    private[internals] def splitPath(pkg: String): List[String] =
+      pkg.split("\\.").toList
   }
 
   implicit val lineSegmentShow: Show[LineSegment] = Show.show {

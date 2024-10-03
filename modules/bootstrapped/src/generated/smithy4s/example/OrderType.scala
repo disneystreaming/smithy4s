@@ -48,7 +48,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     def $ordinal: Int = 1
   }
 
-  object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
+  object InStoreOrder {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints: Hints = Hints(
