@@ -266,10 +266,14 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory = (config / streams).value.cacheStoreFactory
       val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
-        cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
+        cacheFactory.make(
+          s"smithy4sGeneratedSmithyFilesInput${scalaVersion.value}"
+        )
       ) { case (changed, (wildcardArg, shouldGenerateOptics)) =>
         val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
-          cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
+          cacheFactory.make(
+            s"smithy4sGeneratedSmithyFilesOutput${scalaVersion.value}"
+          )
         ) { case (changed, prevResult) =>
           if (changed || prevResult.isEmpty) {
             val file =
@@ -456,12 +460,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val cached =
       CachedTask.inputChanged[CodegenArgs, Seq[File]](
-        s.cacheStoreFactory.make("input"),
+        s.cacheStoreFactory.make(s"input${scalaVersion.value}"),
         s.log
       ) {
         Function.untupled {
           Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
-            s.cacheStoreFactory.make("output")
+            s.cacheStoreFactory.make(s"output${scalaVersion.value}")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
               s.log.debug(s"[smithy4s] Input changed: $inputChanged")
