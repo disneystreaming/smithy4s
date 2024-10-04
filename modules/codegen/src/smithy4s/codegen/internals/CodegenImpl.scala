@@ -173,7 +173,7 @@ private[codegen] object CodegenImpl { self =>
 
         // one-per-line list out the duplicates and which sources they come from
         val duplicateMessages = duplicates.map { d =>
-          s"${d._1} is contained in ${d._2.mkString(", ")}"
+          s"${d._1} is contained in \n\t${d._2.mkString("\n\t")}"
         }
 
         throw new IllegalStateException(
