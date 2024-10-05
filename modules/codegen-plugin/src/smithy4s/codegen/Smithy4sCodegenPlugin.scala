@@ -264,16 +264,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / sourceManaged).value / "smithy" / "generated-metadata.smithy"
     },
     config / smithy4sGeneratedSmithyFiles := {
-      val cacheFactory = (config / streams).value.cacheStoreFactory
+      val cacheFactory =
+        (config / streams).value.cacheStoreFactory.sub(scalaVersion.value)
       val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
-        cacheFactory.make(
-          s"smithy4sGeneratedSmithyFilesInput${scalaVersion.value}"
-        )
+        cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
       ) { case (changed, (wildcardArg, shouldGenerateOptics)) =>
         val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
-          cacheFactory.make(
-            s"smithy4sGeneratedSmithyFilesOutput${scalaVersion.value}"
-          )
+          cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
         ) { case (changed, prevResult) =>
           if (changed || prevResult.isEmpty) {
             val file =
@@ -458,14 +455,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       smithyBuild = smithyBuildValue
     )
 
+    val cacheStoreFactory = s.cacheStoreFactory.sub(scalaVersion.value)
     val cached =
       CachedTask.inputChanged[CodegenArgs, Seq[File]](
-        s.cacheStoreFactory.make(s"input${scalaVersion.value}"),
+        cacheStoreFactory.make("input"),
         s.log
       ) {
         Function.untupled {
           Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
-            s.cacheStoreFactory.make(s"output${scalaVersion.value}")
+            cacheStoreFactory.make("output")
           ) { case ((inputChanged, args), outputs) =>
             if (inputChanged || outputs.isEmpty) {
               s.log.debug(s"[smithy4s] Input changed: $inputChanged")
