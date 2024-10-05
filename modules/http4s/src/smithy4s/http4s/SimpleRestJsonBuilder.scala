@@ -35,7 +35,7 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
-  @deprecated(message = "Use builder methods instead", since = "0.18.25")
+  @deprecated(message = "Use .withXXX methods instead", since = "0.18.25")
   def this(
       maxArity: Int,
       explicitDefaultsEncoding: Boolean,
