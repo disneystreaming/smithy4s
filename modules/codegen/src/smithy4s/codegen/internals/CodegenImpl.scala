@@ -236,10 +236,14 @@ private[codegen] object CodegenImpl { self =>
       ValidatedNewtypesTransformer.name
 }
 
-case class RepeatedNamespaceException(duplicates: Seq[(String, Seq[SourceLocation])]) extends IllegalStateException(RepeatedNamespaceException.createMessage(duplicates))
+case class RepeatedNamespaceException(
+    duplicates: Seq[(String, Seq[SourceLocation])]
+) extends IllegalStateException(
+      RepeatedNamespaceException.createMessage(duplicates)
+    )
 
 object RepeatedNamespaceException {
-  def createMessage(duplicates: Seq[(String, Seq[SourceLocation])]):String = {
+  def createMessage(duplicates: Seq[(String, Seq[SourceLocation])]): String = {
     println(duplicates)
 
     val duplicateMessages = duplicates.map { d =>
