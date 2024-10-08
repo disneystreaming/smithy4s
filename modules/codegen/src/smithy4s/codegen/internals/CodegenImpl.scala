@@ -171,15 +171,7 @@ private[codegen] object CodegenImpl { self =>
           .toSeq
           .sortBy(_._1)
 
-        // one-per-line list out the duplicates and which sources they come from
-        val duplicateMessages = duplicates.map { d =>
-          s"${d._1} is contained in \n\t${d._2.mkString("\n\t")}"
-        }
-
-        throw new IllegalStateException(
-          s"""Multiple artifact manifests cannot contain generated code for the same namespace:
-             | ${duplicateMessages.mkString("\n")}""".stripMargin
-        )
+        throw RepeatedNamespaceException(duplicates)
       }
 
       allGeneratedSet
@@ -242,5 +234,18 @@ private[codegen] object CodegenImpl { self =>
       OpenEnumTransformer.name :+
       KeepOnlyMarkedShapes.name :+
       ValidatedNewtypesTransformer.name
+}
 
+case class RepeatedNamespaceException(duplicates: Seq[(String, Seq[SourceLocation])]) extends IllegalStateException(RepeatedNamespaceException.createMessage(duplicates))
+
+object RepeatedNamespaceException {
+  def createMessage(duplicates: Seq[(String, Seq[SourceLocation])]):String = {
+    println(duplicates)
+
+    val duplicateMessages = duplicates.map { d =>
+      s"${d._1} is contained in ${d._2.size} artifacts:\n  ${d._2.mkString("\n  ")}"
+    }
+    s"""Multiple artifact manifests cannot contain generated code for the same namespace:
+       | ${duplicateMessages.mkString("\n")}""".stripMargin
+  }
 }
