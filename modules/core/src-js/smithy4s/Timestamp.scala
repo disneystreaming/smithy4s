@@ -48,14 +48,14 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   }
 
   /**
-    * @return a copy of this timestamp with a milisecond resolution
+    * @return a copy of this timestamp truncated to a miliseconds precision
     */
-  def truncateNanos: Timestamp = copy(nano = (nano / 1000000) * 1000000)
+  def truncateToMillis: Timestamp = copy(nano = (nano / 1000000) * 1000000)
 
   /**
-    * @return a copy of this timestamp with a second resolution
+    * @return a copy of this timestamp truncated to a seconds resolution
     */
-  def truncateMillis: Timestamp = copy(nano = 0)
+  def truncateToSeconds: Timestamp = copy(nano = 0)
 
   override def toString: String = format(TimestampFormat.DATE_TIME)
 

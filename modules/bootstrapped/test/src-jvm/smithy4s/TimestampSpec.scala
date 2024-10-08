@@ -225,9 +225,9 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
-  property("Truncate nanoseconds") {
+  property("Truncate to milliseconds precision") {
     forAll { (i: Instant) =>
-      val ts = Timestamp.fromInstant(i).truncateNanos
+      val ts = Timestamp.fromInstant(i).truncateToMillis
       val strippedInstant = Instant.ofEpochMilli(i.toEpochMilli)
       val tsFromStrippedInstant = Timestamp.fromInstant(strippedInstant)
 
@@ -235,9 +235,9 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
-  property("Truncate milliseconds") {
+  property("Truncate to seconds precision") {
     forAll { (i: Instant) =>
-      val ts = Timestamp.fromInstant(i).truncateMillis
+      val ts = Timestamp.fromInstant(i).truncateToSeconds
       val tsFromStrippedInstant = Timestamp.fromEpochSecond(i.getEpochSecond)
 
       expect.same(ts, tsFromStrippedInstant)
