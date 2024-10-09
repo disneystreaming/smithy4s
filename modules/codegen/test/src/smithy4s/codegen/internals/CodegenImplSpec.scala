@@ -16,8 +16,13 @@
 
 package smithy4s.codegen.internals
 
-import software.amazon.smithy.model.{Model,SourceLocation}
-import software.amazon.smithy.model.node.{Node,ArrayNode,ObjectNode,StringNode}
+import software.amazon.smithy.model.{Model, SourceLocation}
+import software.amazon.smithy.model.node.{
+  Node,
+  ArrayNode,
+  ObjectNode,
+  StringNode
+}
 
 import scala.jdk.CollectionConverters._
 
@@ -40,18 +45,34 @@ final class CodegenImplSpec extends munit.FunSuite {
                     |string GoodBye
                     |""".stripMargin
 
-    //is there a less bad way to get the metadata in?
-    val objectNodeMap = Map[StringNode,Node](new StringNode("namespaces",new SourceLocation("string node in test code")) -> new ArrayNode(List[Node](new StringNode("ns",new SourceLocation("string node in test code"))).asJava,new SourceLocation("objectNodeMap in test code"))).asJava
-    val repeatedNamespaceNode = new ObjectNode(objectNodeMap,new SourceLocation("repeatedNamespaceNode in test code"))
-    val nodeList = List[Node](repeatedNamespaceNode,repeatedNamespaceNode).asJava
-    val smithy4sMetadata = new ArrayNode(nodeList,new SourceLocation("smithy4sMetadata in test code"))
+    val objectNodeMap = Map[StringNode, Node](
+      new StringNode(
+        "namespaces",
+        new SourceLocation("string node in test code")
+      ) -> new ArrayNode(
+        List[Node](
+          new StringNode("ns", new SourceLocation("string node in test code"))
+        ).asJava,
+        new SourceLocation("objectNodeMap in test code")
+      )
+    ).asJava
+    val repeatedNamespaceNode = new ObjectNode(
+      objectNodeMap,
+      new SourceLocation("repeatedNamespaceNode in test code")
+    )
+    val nodeList =
+      List[Node](repeatedNamespaceNode, repeatedNamespaceNode).asJava
+    val smithy4sMetadata = new ArrayNode(
+      nodeList,
+      new SourceLocation("smithy4sMetadata in test code")
+    )
 
     val model = Model
       .assembler()
       .discoverModels()
       .addUnparsedModel("a.smithy", aSmithy)
       .addUnparsedModel("b.smithy", bSmithy)
-      .putMetadata("smithy4sGenerated",smithy4sMetadata)
+      .putMetadata("smithy4sGenerated", smithy4sMetadata)
       .assemble()
       .unwrap()
 
@@ -64,12 +85,19 @@ final class CodegenImplSpec extends munit.FunSuite {
         .toMap
     }
 
-    val expectedMessage = RepeatedNamespaceException.createMessage(Seq(("ns",Seq(
-      new SourceLocation("repeatedNamespaceNode in test code"),
-      new SourceLocation("repeatedNamespaceNode in test code")
-    ))))
+    val expectedMessage = RepeatedNamespaceException.createMessage(
+      Seq(
+        (
+          "ns",
+          Seq(
+            new SourceLocation("repeatedNamespaceNode in test code"),
+            new SourceLocation("repeatedNamespaceNode in test code")
+          )
+        )
+      )
+    )
 
-    interceptMessage[RepeatedNamespaceException](expectedMessage){
+    interceptMessage[RepeatedNamespaceException](expectedMessage) {
       generateScalaCode(model)
     }
   }
