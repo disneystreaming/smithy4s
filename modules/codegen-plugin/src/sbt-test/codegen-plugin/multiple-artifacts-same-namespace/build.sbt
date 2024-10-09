@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.4.2"
+ThisBuild / scalaVersion := "2.13.10"
 
 lazy val a = project
   .enablePlugins(Smithy4sCodegenPlugin)
