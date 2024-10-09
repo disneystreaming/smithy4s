@@ -14,6 +14,7 @@ Thank you!
 * Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
 * Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
 * Fixes commons.toKebabCase() sometimes drops the first letter (see [#1603](https://github.com/disneystreaming/smithy4s/pull/1603)).
+* Add a more informative error message for repeated namespaces (see [#1608](https://github.com/disneystreaming/smithy4s/pull/1608)).
 
 # 0.18.24
 
