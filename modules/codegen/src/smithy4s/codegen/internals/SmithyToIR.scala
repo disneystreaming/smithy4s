@@ -1237,7 +1237,7 @@ private[codegen] class SmithyToIR(
             case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + parent.getName
+                cId.getNamespace + "." + parent.getName.capitalize
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )

@@ -33,7 +33,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     def $ordinal: Int = 0
   }
 
-  object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
+  object TestAdtMemberWithMixin {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
 
     val hints: Hints = Hints.empty

@@ -32,7 +32,7 @@ object PersonUnion extends ShapeTag.Companion[PersonUnion] {
     def $ordinal: Int = 0
   }
 
-  object OtherPerson extends ShapeTag.Companion[OtherPerson] {
+  object OtherPerson {
     val id: ShapeId = ShapeId("smithy4s.example", "OtherPerson")
 
     val hints: Hints = Hints.empty

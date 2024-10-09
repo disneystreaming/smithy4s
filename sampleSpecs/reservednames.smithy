@@ -4,6 +4,7 @@ namespace smithy4s.example.collision
 
 use alloy#simpleRestJson
 use smithy4s.example.package#MyPackageString
+use smithy4s.example.package#MyPackageStringTrait
 
 @simpleRestJson
 service ReservedNameService {
@@ -66,6 +67,10 @@ string String
 structure TestReservedNamespaceImport {
     package: MyPackageString
 }
+
+// Regression test for https://github.com/disneystreaming/smithy4s/issues/1601
+@MyPackageStringTrait("test")
+string TestReservedNamespaceTrait
 
 // trait def
 @trait
@@ -146,3 +151,17 @@ structure Scala3ReservedKeywords {
     export: String
     enum: String
 }
+
+@smithy4s.meta#adt
+@trait
+union class {
+    package: AdtStruct
+}
+
+structure AdtStruct {}
+
+// Regression test for https://github.com/disneystreaming/smithy4s/issues/1601
+@class(package: {
+
+})
+string ReservedNameUnionTrait

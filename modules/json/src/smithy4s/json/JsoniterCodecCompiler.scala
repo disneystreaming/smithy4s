@@ -78,6 +78,12 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     */
   def withLenientTaggedUnionDecoding: JsoniterCodecCompiler
 
+  /**
+    * Enables lenient decoding of numeric values, where numbers may be carried by JSON strings
+    * as well as JSON numbers.
+    */
+  def withLenientNumericDecoding: JsoniterCodecCompiler
+
 }
 
 object JsoniterCodecCompiler {
