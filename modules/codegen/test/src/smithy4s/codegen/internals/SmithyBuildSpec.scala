@@ -22,6 +22,7 @@ import software.amazon.smithy.openapi.OpenApiVersion
 
 import scala.collection.immutable.ListSet
 
+//todo all these should contain com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}
 final class SmithyBuildSpec extends munit.FunSuite {
   test("generate json") {
     val actual = SmithyBuild.writeJson(

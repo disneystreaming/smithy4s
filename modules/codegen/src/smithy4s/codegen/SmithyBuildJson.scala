@@ -30,6 +30,9 @@ private[codegen] object SmithyBuildJson {
       dependencies: ListSet[String],
       repositories: ListSet[String]
   ): String = {
+    //todo hard-code adding this dependency : com.disneystreaming.smithy4s:smithy4s-protocol
+    //com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version} (where BuildInfo is smithy4s.codegen.BuildInfo
+    //todo so what do these dependency strings look like?
     SmithyBuild.writeJson(
       SmithyBuild.Serializable(
         version = "1.0",
