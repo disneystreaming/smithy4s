@@ -25,20 +25,20 @@ import smithy4s.codegen.internals.SmithyBuildMavenRepository
 import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
+
+  val protocolDependency = s"com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
+
   def toJson(
       sources: ListSet[String],
       dependencies: ListSet[String],
       repositories: ListSet[String]
   ): String = {
-    //todo hard-code adding this dependency : com.disneystreaming.smithy4s:smithy4s-protocol
-    //com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version} (where BuildInfo is smithy4s.codegen.BuildInfo
-    //todo so what do these dependency strings look like?
     SmithyBuild.writeJson(
       SmithyBuild.Serializable(
         version = "1.0",
         sources,
         SmithyBuildMaven(
-          dependencies,
+          dependencies+protocolDependency,
           repositories.map(SmithyBuildMavenRepository.apply)
         )
       )
