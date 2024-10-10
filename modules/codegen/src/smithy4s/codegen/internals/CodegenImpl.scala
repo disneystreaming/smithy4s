@@ -243,9 +243,9 @@ case class RepeatedNamespaceException(
     )
 
 object RepeatedNamespaceException {
-  def createMessage(duplicates: Seq[(String, Seq[SourceLocation])]): String = {
-    println(duplicates)
-
+  private def createMessage(
+      duplicates: Seq[(String, Seq[SourceLocation])]
+  ): String = {
     val duplicateMessages = duplicates.map { d =>
       s"${d._1} is contained in ${d._2.size} artifacts:\n  ${d._2.mkString("\n  ")}"
     }

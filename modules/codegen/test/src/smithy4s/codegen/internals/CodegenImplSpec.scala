@@ -37,13 +37,14 @@ final class CodegenImplSpec extends munit.FunSuite {
         |string GoodBye
         |""".stripMargin
 
-    val bSmithy = """namespace ns
-                    |
-                    |// no hello
-                    |// string Hello
-                    |//
-                    |string GoodBye
-                    |""".stripMargin
+    val bSmithy =
+      """namespace ns
+        |
+        |// no hello
+        |// string Hello
+        |//
+        |string GoodBye
+        |""".stripMargin
 
     val objectNodeMap = Map[StringNode, Node](
       new StringNode(
@@ -85,21 +86,20 @@ final class CodegenImplSpec extends munit.FunSuite {
         .toMap
     }
 
-    val expectedMessage = RepeatedNamespaceException.createMessage(
-      Seq(
-        (
-          "ns",
-          Seq(
-            new SourceLocation("repeatedNamespaceNode in test code"),
-            new SourceLocation("repeatedNamespaceNode in test code")
-          )
+    val expectedDuplicates = Seq(
+      (
+        "ns",
+        Seq(
+          new SourceLocation("repeatedNamespaceNode in test code"),
+          new SourceLocation("repeatedNamespaceNode in test code")
         )
       )
     )
 
-    interceptMessage[RepeatedNamespaceException](expectedMessage) {
-      generateScalaCode(model)
-    }
+    val caught: RepeatedNamespaceException =
+      intercept[RepeatedNamespaceException] {
+        generateScalaCode(model)
+      }
+    assertEquals(caught.duplicates, expectedDuplicates)
   }
-
 }
