@@ -16,7 +16,7 @@
 
 package smithy4s.codegen.internals
 
-import smithy4s.codegen.{SmithyBuildJson,BuildInfo}
+import smithy4s.codegen.{SmithyBuildJson, BuildInfo}
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
 
@@ -211,22 +211,22 @@ final class SmithyBuildSpec extends munit.FunSuite {
     assertEquals(
       actual,
       s"""|{
-         |    "version" : "1.0",
-         |    "sources" : [
-         |        "src/"
-         |    ],
-         |    "maven" : {
-         |        "dependencies" : [
-         |            "dep",
-         |            "com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
-         |        ],
-         |        "repositories" : [
-         |            {
-         |                "url" : "repo"
-         |            }
-         |        ]
-         |    }
-         |}""".stripMargin
+          |    "version" : "1.0",
+          |    "sources" : [
+          |        "src/"
+          |    ],
+          |    "maven" : {
+          |        "dependencies" : [
+          |            "dep",
+          |            "com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
+          |        ],
+          |        "repositories" : [
+          |            {
+          |                "url" : "repo"
+          |            }
+          |        ]
+          |    }
+          |}""".stripMargin
     )
   }
 }

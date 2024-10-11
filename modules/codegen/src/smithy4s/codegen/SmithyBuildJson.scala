@@ -26,7 +26,8 @@ import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
 
-  val protocolDependency = s"com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
+  val protocolDependency =
+    s"com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
 
   def toJson(
       sources: ListSet[String],
@@ -38,7 +39,7 @@ private[codegen] object SmithyBuildJson {
         version = "1.0",
         sources,
         SmithyBuildMaven(
-          dependencies+protocolDependency,
+          dependencies + protocolDependency,
           repositories.map(SmithyBuildMavenRepository.apply)
         )
       )
