@@ -46,7 +46,11 @@ private[codegen] object ModelLoader {
       localJars: List[os.Path]
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
-    val deps = resolveDependencies(dependencies, localJars, repositories)
+    val deps = resolveDependencies(
+      BuildInfo.protocolArtifact :: dependencies,
+      localJars,
+      repositories
+    )
 
     val modelsInJars = deps.flatMap { file =>
       Using.resource(
@@ -178,13 +182,10 @@ private[codegen] object ModelLoader {
         classLoader: ClassLoader,
         discoverModels: Boolean
     ): ModelAssembler = {
-      val smithy4sResources = List(
-        "META-INF/smithy/smithy4s.meta.smithy"
-      ).map(classLoader.getResource)
-
-      if (discoverModels) {
+      if (discoverModels)
         assembler.discoverModels(classLoader)
-      } else addImports(smithy4sResources)
+      else
+        assembler
     }
   }
 
