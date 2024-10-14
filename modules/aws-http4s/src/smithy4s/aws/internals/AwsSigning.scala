@@ -60,7 +60,10 @@ private[aws] object AwsSigning {
   ): Client[F] => Client[F] = {
     val endpointPrefix = serviceHints
       .get(_root_.aws.api.Service)
-      .flatMap(_.endpointPrefix)
+      .flatMap { awsService =>
+        awsService.endpointPrefix
+          .orElse(awsService.arnNamespace.map(_.value))
+      }
       .getOrElse(serviceId.name)
       .toLowerCase()
 
