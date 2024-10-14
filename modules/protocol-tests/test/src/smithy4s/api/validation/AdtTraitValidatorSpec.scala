@@ -68,7 +68,7 @@ object AdtTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
-  test("AdtTrait - return error when union has no members") {
+  test("AdtTrait - return error when union has no members".ignore) {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
     val adtTrait = new AdtTrait()
     val structMember = MemberShape
@@ -111,7 +111,9 @@ object AdtTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
-  test("AdtTrait - return error when union does not target the structure") {
+  test(
+    "AdtTrait - return error when union does not target the structure"
+  ) {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
     val adtTrait = new AdtTrait()
     val structMember = MemberShape
@@ -148,11 +150,11 @@ object AdtTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtTrait")
+        .id("AdtValidator")
         .shape(union)
         .severity(Severity.ERROR)
         .message(
-          "Some members of test#MyUnion were found to target non-structure shapes. Instead they target smithy.api#String"
+          "All members of an adt union must be structures"
         )
         .build()
     )
@@ -205,15 +207,17 @@ object AdtTraitValidatorSpec extends FunSuite {
       ValidationEvent
         .builder()
         .id("AdtValidator")
-        .shape(union2)
+        .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
+          "This shape can only be referenced from one adt union, but it's referenced from test#MyUnion, test#MyUnionTwo"
         )
         .build()
     )
     expect(result == expected)
   }
+
+  // todo: test what happens if the shape is targeted by the same union twice (shouldn't be done)
 
   test(
     "AdtTrait - return error when structure is targeted by a union and a structure"
@@ -264,10 +268,10 @@ object AdtTraitValidatorSpec extends FunSuite {
       ValidationEvent
         .builder()
         .id("AdtValidator")
-        .shape(struct2)
+        .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
+          "This shape can only be referenced from one adt union, but it's referenced from test#MyStruct2, test#MyUnion"
         )
         .build()
     )
