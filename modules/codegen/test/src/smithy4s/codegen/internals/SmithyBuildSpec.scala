@@ -16,14 +16,14 @@
 
 package smithy4s.codegen.internals
 
-import smithy4s.codegen.SmithyBuildJson
+import smithy4s.codegen.{SmithyBuildJson, BuildInfo}
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
 
 import scala.collection.immutable.ListSet
 
 final class SmithyBuildSpec extends munit.FunSuite {
-  test("generate json") {
+  test("generate json with SmithyBuild.writeJson") {
     val actual = SmithyBuild.writeJson(
       SmithyBuild.Serializable(
         "1.0",
@@ -200,5 +200,33 @@ final class SmithyBuildSpec extends munit.FunSuite {
     assertEquals("1.0", actual.version)
     assertEquals(Set.empty[os.FilePath], actual.sources.toSet)
     assertEquals(Set.empty[SmithyBuildPlugin], actual.plugins.toSet)
+  }
+
+  test("generate json with SmithyBuildJson.toJson") {
+    val actual = SmithyBuildJson.toJson(
+      ListSet("src/"),
+      ListSet("dep"),
+      ListSet("repo")
+    )
+    assertEquals(
+      actual,
+      s"""|{
+          |    "version" : "1.0",
+          |    "sources" : [
+          |        "src/"
+          |    ],
+          |    "maven" : {
+          |        "dependencies" : [
+          |            "dep",
+          |            "com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
+          |        ],
+          |        "repositories" : [
+          |            {
+          |                "url" : "repo"
+          |            }
+          |        ]
+          |    }
+          |}""".stripMargin
+    )
   }
 }
