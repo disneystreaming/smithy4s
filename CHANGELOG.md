@@ -5,6 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.26
+
+* Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
+* Adds utility types for working with endpoint handlers (see [#1612](https://github.com/disneystreaming/smithy4s/pull/1612))
+
 # 0.18.25
 
 * Add A flag to allow for numerics to be decoded from JSON strings (in smithy4s-json).
