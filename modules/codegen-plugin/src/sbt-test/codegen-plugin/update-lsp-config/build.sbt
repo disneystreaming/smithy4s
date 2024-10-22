@@ -2,7 +2,7 @@ import sbt.io.IO
 val subproj = project
 
 val subproj2 = project.enablePlugins(Smithy4sCodegenPlugin)
-//            "com.disneystreaming.smithy4s:smithy4s-protocol:${smithy4sVersion.value}"
+
 val root = project
   .in(file("."))
   .aggregate(subproj, subproj2)
