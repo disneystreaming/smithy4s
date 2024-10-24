@@ -41,7 +41,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("basic codegen runs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "basic"
     }
@@ -90,9 +90,9 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     val msg1 = """use "_" if major version is not 3"""
-    assertEquals(getArg("2.13.2", Seq()), "_", msg1)
-    assertEquals(getArg("2.13.2", Seq("-source", "future")), "_", msg1)
-    assertEquals(getArg("2.13.2", Seq("-source:future")), "_", msg1)
+    assertEquals(getArg("2.13.15", Seq()), "_", msg1)
+    assertEquals(getArg("2.13.15", Seq("-source", "future")), "_", msg1)
+    assertEquals(getArg("2.13.15", Seq("-source:future")), "_", msg1)
 
     val msg2 =
       """use "?" if major version >= 3.1 or using -source:future or -source future"""
@@ -128,7 +128,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("codegen with dependencies") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "basic"
       override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
@@ -148,7 +148,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("codegen with custom smithy-build.json works") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "smithy-build"
       override def smithyBuild =
@@ -171,14 +171,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test("multi-module codegen works") {
 
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multi-module" / "foo"
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
       override def moduleDeps = Seq(foo)
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multi-module" / "bar"
     }
@@ -220,7 +220,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test("multi-module codegen works with AWS specs upstream") {
 
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.8"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(
         ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
       )
@@ -232,7 +232,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
     object bar extends testKit.BaseModule with Smithy4sModule {
       override def moduleDeps = Seq(foo)
-      override def scalaVersion = "2.13.8"
+      override def scalaVersion = "2.13.15"
       override def millSourcePath = resourcePath / "multi-module-aws" / "bar"
     }
 
@@ -274,14 +274,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   ) {
 
     object foo extends testKit.BaseModule with ScalaModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def millSourcePath =
         resourcePath / "multi-module-no-compile" / "foo"
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
       override def moduleDeps = Seq(foo)
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath =
         resourcePath / "multi-module-no-compile" / "bar"
@@ -303,7 +303,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
         with SbtModule
         with Smithy4sModule
         with PublishModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def repositoriesTask: Task[Seq[Repository]] = T.task {
         val ivy2Local = IvyRepository.fromPattern(
           (localIvyRepo.toNIO.toUri.toString + "/") +: coursier.ivy.Pattern.default,
@@ -325,7 +325,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
     object foo extends Base {
       override def artifactName: T[String] = "foo-mill"
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def smithy4sAllowedNamespaces: T[Option[Set[String]]] =
         Some(Set("aws.api", "foo"))
@@ -339,7 +339,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
     object bar extends Base {
       override def artifactName: T[String] = "bar-mill"
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       // bar depend on foo as a library, and an assumption is made that bar may depend on the same smithy models
       // that foo depended on for its own codegen. Therefore, these are retrieved from foo's manifest,
       // resolved and added to the list of jars to seek smithy models from during code generation
@@ -372,7 +372,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("codegen with aws specs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.15"
       override def ivyDeps = Agg(coreDep)
       override def smithy4sAwsSpecs: T[Seq[String]] = T(
         Seq(AWS.dynamodb)

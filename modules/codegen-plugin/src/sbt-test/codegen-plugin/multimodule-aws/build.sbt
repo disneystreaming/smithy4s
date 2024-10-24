@@ -1,6 +1,6 @@
 import smithy4s.codegen.BuildInfo._
 
-ThisBuild / scalaVersion := "2.13.8"
+ThisBuild / scalaVersion := "2.13.15"
 
 lazy val foo = (project in file("foo"))
   .enablePlugins(Smithy4sCodegenPlugin)
