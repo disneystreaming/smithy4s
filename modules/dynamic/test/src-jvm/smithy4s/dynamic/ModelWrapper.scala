@@ -35,7 +35,7 @@ class ModelWrapper(val model: Model) {
   private final implicit class JavaStreamOps[A](
       stream: java.util.stream.Stream[A]
   ) {
-    def toList: List[A] = stream.collect(Collectors.toList()).asScala.toList
+    def asList: List[A] = stream.collect(Collectors.toList()).asScala.toList
   }
 
   override def equals(obj: Any): Boolean = obj match {
@@ -48,20 +48,20 @@ class ModelWrapper(val model: Model) {
         .newModel(two)
         .compare()
         .getDifferences()
-      val added = diff.addedShapes().toList
+      val added = diff.addedShapes().asList
       val hasChanges =
         diff
           .changedShapes()
-          .toList
+          .asList
           .exists { changed =>
             val addedTraits =
-              changed.addedTraits().toList
+              changed.addedTraits().asList
             val removedTraits = changed
               .removedTraits()
-              .toList
+              .asList
             val changedTraits = changed
               .changedTraits()
-              .toList
+              .asList
               .filterNot { pair =>
                 // compare shapeId and node values to avoid issues with differing java classes
                 pair.getLeft.toShapeId == pair.getRight.toShapeId && pair.getLeft.toNode == pair.getRight.toNode
@@ -73,7 +73,7 @@ class ModelWrapper(val model: Model) {
             addedTraits.nonEmpty || removedTraits.nonEmpty || changedTraits.nonEmpty
           }
       val removed =
-        diff.removedShapes().toList
+        diff.removedShapes().asList
       added.isEmpty && !hasChanges && removed.isEmpty
     case _ => false
   }

@@ -52,7 +52,7 @@ import $ivy.`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSIO
 import smithy4s.codegen.mill._
 
 object foo extends Smithy4sModule {
-  override def scalaVersion = "2.13.10"
+  override def scalaVersion = "2.13.15"
   override def ivyDeps = Agg(
     ivy"com.disneystreaming.smithy4s::smithy4s-aws-http4s:${smithy4sVersion()}",
   )

@@ -18,6 +18,7 @@ import org.scalajs.jsenv.nodejs.NodeJSEnv
 import com.github.sbt.git.SbtGit.git
 import bloop.integrations.sbt.BloopKeys.bloopGenerate
 import java.time.OffsetDateTime
+import de.heikoseeberger.sbtheader.HeaderPlugin
 
 sealed trait Platform
 case object JSPlatform extends Platform
@@ -29,9 +30,9 @@ case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
-  val Scala212 = "2.12.19"
-  val Scala213 = "2.13.13"
-  val Scala3 = "3.3.3"
+  val Scala212 = "2.12.20"
+  val Scala213 = "2.13.15"
+  val Scala3 = "3.3.4"
 
   object autoImport {
     // format: off
@@ -81,7 +82,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     }
   }
 
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && HeaderPlugin
   override def trigger = allRequirements
 
   override def buildSettings: Seq[Setting[_]] = Seq(
