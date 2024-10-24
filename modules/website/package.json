@@ -16,9 +16,9 @@
   "dependencies": {
     "@docusaurus/core": "2.4.3",
     "@docusaurus/preset-classic": "2.4.3",
-    "docusaurus-lunr-search": "3.5.0",
     "@mdx-js/react": "^1.6.21",
     "clsx": "^2.1.1",
+    "docusaurus-lunr-search": "3.5.0",
     "prism-react-renderer": "^2.1.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
@@ -34,5 +34,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "raw-loader": "^4.0.2"
   }
 }
