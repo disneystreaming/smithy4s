@@ -408,7 +408,7 @@ lazy val codegen = projectMatrix
       "smithyVersion" -> Dependencies.Smithy.smithyVersion,
       "alloyOrg" -> Dependencies.Alloy.org,
       "alloyVersion" -> Dependencies.Alloy.alloyVersion,
-      "smithy4sOrg" -> "com.disneystreaming.smithy4s",
+      "smithy4sOrg" -> organization.value,
       "protocolArtifactName" -> "smithy4s-protocol",
     ),
     buildInfoPackage := "smithy4s.codegen",
