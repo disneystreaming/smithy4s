@@ -18,6 +18,7 @@ import org.scalajs.jsenv.nodejs.NodeJSEnv
 import com.github.sbt.git.SbtGit.git
 import bloop.integrations.sbt.BloopKeys.bloopGenerate
 import java.time.OffsetDateTime
+import de.heikoseeberger.sbtheader.HeaderPlugin
 
 sealed trait Platform
 case object JSPlatform extends Platform
@@ -81,7 +82,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     }
   }
 
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && HeaderPlugin
   override def trigger = allRequirements
 
   override def buildSettings: Seq[Setting[_]] = Seq(
