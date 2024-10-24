@@ -9,6 +9,7 @@ Thank you!
 
 * Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
 * Adds utility types for working with endpoint handlers (see [#1612](https://github.com/disneystreaming/smithy4s/pull/1612))
+* Adds `com.disneystreaming.smithy4s:smithy4s-protocol` dependency to the generation of `smithy-build.json` in the `smithy4sUpdateLSPConfig` tasks of the codegen plugins (see [#1610](https://github.com/disneystreaming/smithy4s/pull/1610)).
 
 # 0.18.25
 
@@ -19,7 +20,6 @@ Thank you!
 * Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
 * Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
 * Fixes commons.toKebabCase() sometimes drops the first letter (see [#1603](https://github.com/disneystreaming/smithy4s/pull/1603)).
-* Adds `com.disneystreaming.smithy4s:smithy4s-protocol dependency` to the generation of `smithy-build.json` in the `smithy4sUpdateLspConfig` tasks of the codegen plugins (see [#1610](https://github.com/disneystreaming/smithy4s/pull/1610)).
 
 # 0.18.24
 
