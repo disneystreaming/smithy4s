@@ -9,6 +9,7 @@ Thank you!
 
 * Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
 * Adds utility types for working with endpoint handlers (see [#1612](https://github.com/disneystreaming/smithy4s/pull/1612))
+* Adds `com.disneystreaming.smithy4s:smithy4s-protocol` dependency to the generation of `smithy-build.json` in the `smithy4sUpdateLSPConfig` tasks of the codegen plugins (see [#1610](https://github.com/disneystreaming/smithy4s/pull/1610)).
 
 # 0.18.25
 

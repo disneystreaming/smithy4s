@@ -25,6 +25,10 @@ import smithy4s.codegen.internals.SmithyBuildMavenRepository
 import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
+
+  val protocolDependency =
+    s"${BuildInfo.smithy4sOrg}:${BuildInfo.protocolArtifactName}:${BuildInfo.version}"
+
   def toJson(
       sources: ListSet[String],
       dependencies: ListSet[String],
@@ -35,7 +39,7 @@ private[codegen] object SmithyBuildJson {
         version = "1.0",
         sources,
         SmithyBuildMaven(
-          dependencies,
+          dependencies + protocolDependency,
           repositories.map(SmithyBuildMavenRepository.apply)
         )
       )
