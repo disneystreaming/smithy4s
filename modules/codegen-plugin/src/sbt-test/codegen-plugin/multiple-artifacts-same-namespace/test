@@ -1,0 +1,2 @@
+# smithy4s codegen should fail to compile; both a and b define the same namespace
+-> compile
