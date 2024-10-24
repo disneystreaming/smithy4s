@@ -15,7 +15,7 @@ trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
 
   def testDiscriminated(key: String): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](this)
 }
 
 object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, DiscriminatedServiceOperation] {

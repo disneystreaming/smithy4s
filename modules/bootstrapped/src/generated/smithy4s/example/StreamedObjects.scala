@@ -18,7 +18,7 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
   def putStreamedObject(key: String): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
   def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
-  def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
 }
 
 object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] {

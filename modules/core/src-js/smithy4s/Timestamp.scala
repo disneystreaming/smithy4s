@@ -47,6 +47,16 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
     date
   }
 
+  /**
+    * @return a copy of this timestamp truncated to a miliseconds precision
+    */
+  def truncateToMillis: Timestamp = copy(nano = (nano / 1000000) * 1000000)
+
+  /**
+    * @return a copy of this timestamp truncated to a seconds resolution
+    */
+  def truncateToSeconds: Timestamp = copy(nano = 0)
+
   override def toString: String = format(TimestampFormat.DATE_TIME)
 
   private[this] def formatToString(internalFormat: Int): String = {

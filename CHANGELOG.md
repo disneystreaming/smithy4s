@@ -5,8 +5,24 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.26
+
+* Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
+
+# 0.18.25
+
+* Add A flag to allow for numerics to be decoded from JSON strings (in smithy4s-json).
+* Fixes issues in which applications of some Smithy traits would be incorrectly rendered in Scala code (see [#1602](https://github.com/disneystreaming/smithy4s/pull/1602)).
+* Fixes an issue in which refinements wouldn't work on custom simple shapes (newtypes) (see [#1595](https://github.com/disneystreaming/smithy4s/pull/1595))
+* Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
+* Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
+* Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
+* Fixes commons.toKebabCase() sometimes drops the first letter (see [#1603](https://github.com/disneystreaming/smithy4s/pull/1603)).
+
 # 0.18.24
 
+* Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
 * Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
 
 # 0.18.23

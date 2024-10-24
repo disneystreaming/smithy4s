@@ -1048,7 +1048,9 @@ private[codegen] class SmithyToIR(
       maybeTypeclassesHint(shape)
   }
 
-  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean) {
+    def isUnit: Boolean = tpe == Type.unit
+  }
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
@@ -1151,20 +1153,16 @@ private[codegen] class SmithyToIR(
       shape
         .members()
         .asScala
-        .map { member =>
-          val memberTarget =
-            model.expectShape(member.getTarget)
-          if (isPartOfAdt(memberTarget)) {
-            (member.getMemberName(), member.tpe.map(Left(_)))
-          } else {
-            (member.getMemberName(), member.tpe.map(Right(_)))
+        .flatMap { member =>
+          member.tpe.map { tpe =>
+            val memberTarget = model.expectShape(member.getTarget)
+
+            AltInfo(
+              member.getMemberName(),
+              tpe,
+              isAdtMember = isPartOfAdt(memberTarget)
+            )
           }
-        }
-        .collect {
-          case (name, Some(Left(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = true)
-          case (name, Some(Right(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
     }
@@ -1239,7 +1237,7 @@ private[codegen] class SmithyToIR(
             case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + parent.getName
+                cId.getNamespace + "." + parent.getName.capitalize
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )
@@ -1302,6 +1300,8 @@ private[codegen] class SmithyToIR(
         val a = if (alt.isAdtMember) {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.ProductAltTN(t)
+        } else if (alt.isUnit) {
+          TypedNode.AltValueTN.UnitAltTN
         } else {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.TypeAltTN(t)

@@ -355,7 +355,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         },
         newline,
-        line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        line"final def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       lines(
@@ -711,7 +711,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       newline,
-      obj(product.nameRef, shapeTag(product.nameRef))(
+      obj(product.nameRef, if (adtParent.isEmpty) shapeTag(product.nameRef) else Line.empty)(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
@@ -776,7 +776,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
+          line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -1583,7 +1583,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      line"${ref.show + "." + name + ".widen"}".write
+      line"${ref.show}.$name.widen".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (name, FieldTN.RequiredTN(value)) =>
@@ -1613,8 +1613,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
+    case AltTN(ref, altName, AltValueTN.UnitAltTN) =>
+      line"${ref.show}.${altName.capitalize}Case.widen".write
+
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
-      alt.runDefault.write
+      // The `widen` is necessary in Scala 2.
+      // Without it, there is no ShapeTag to use for the conversion to Hints.Binding.
+      line"${alt.runDefault}.widen".write
 
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe

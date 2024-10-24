@@ -216,4 +216,30 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       expect.same(tsFromEpochMilli, ts)
     }
   }
+
+  property("Truncate to milliseconds precision") {
+    forAll { (d: Date) =>
+      val epochMilli = d.valueOf().toLong
+      val ts = Timestamp.fromDate(d).truncateToMillis
+
+      val strippedDate = new Date(0)
+      strippedDate.setUTCMilliseconds(epochMilli)
+      val tsFromStrippedDate = Timestamp.fromDate(strippedDate)
+
+      expect.same(ts, tsFromStrippedDate)
+    }
+  }
+
+  property("Truncate to seconds precision") {
+    forAll { (d: Date) =>
+      val epochSecond = (d.valueOf() / 1000).toLong
+      val ts = Timestamp.fromDate(d).truncateToMillis
+
+      val strippedDate = new Date(0)
+      strippedDate.setUTCSeconds(epochSecond)
+      val tsFromStrippedDate = Timestamp.fromDate(strippedDate)
+
+      expect.same(ts, tsFromStrippedDate)
+    }
+  }
 }

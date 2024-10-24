@@ -49,7 +49,7 @@ trait DynamoDBGen[F[_, _, _, _, _]] {
     */
   def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](this)
 }
 
 object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {

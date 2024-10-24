@@ -15,7 +15,7 @@ trait WeatherServiceGen[F[_, _, _, _, _]] {
 
   def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
 }
 
 object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherServiceOperation] {
