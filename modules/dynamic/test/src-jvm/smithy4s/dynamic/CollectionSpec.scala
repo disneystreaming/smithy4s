@@ -21,6 +21,10 @@ import model._
 
 class CollectionSpec() extends DummyIO.Suite {
 
+  trait Wat {
+    def demo(s: java.util.stream.Stream[String]) = s.toList
+  }
+
   test("Decode collections with member hints") {
     loadDynamicModel("collections.smithy")
       .map { model =>
