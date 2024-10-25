@@ -18,13 +18,15 @@ package smithy4s.codegen
 
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.SourceLocation
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 
 private[codegen] final case class CodegenRecord(
     namespaces: List[String],
-    validatedNewtypes: Option[Boolean]
+    validatedNewtypes: Option[Boolean],
+    source: SourceLocation
 )
 
 private[codegen] object CodegenRecord {
@@ -50,6 +52,6 @@ private[codegen] object CodegenRecord {
       .asScala
       .map(_.expectStringNode().getValue())
       .toList
-    CodegenRecord(namespaces, validatedNewtypes)
+    CodegenRecord(namespaces, validatedNewtypes, node.getSourceLocation())
   }
 }
