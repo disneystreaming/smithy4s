@@ -14,7 +14,7 @@ addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.9.0")
 addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.17")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.1")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.3")
-addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "1.5.18")
+addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.5")
 addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.7")
 
 libraryDependencies ++= Seq(
