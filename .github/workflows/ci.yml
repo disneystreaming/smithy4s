@@ -122,6 +122,7 @@ jobs:
         uses: coursier/setup-action@v1
         with:
           jvm: temurin:1.17
+          apps: sbt
 
       - name: Cache
         uses: coursier/cache-action@v6
@@ -160,6 +161,7 @@ jobs:
         uses: coursier/setup-action@v1
         with:
           jvm: temurin:1.17
+          apps: sbt
 
       - name: Cache
         uses: coursier/cache-action@v6
