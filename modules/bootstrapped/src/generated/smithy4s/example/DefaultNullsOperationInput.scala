@@ -22,7 +22,7 @@ object DefaultNullsOperationInput extends ShapeTag.Companion[DefaultNullsOperati
   implicit val schema: Schema[DefaultNullsOperationInput] = struct(
     string.optional[DefaultNullsOperationInput]("optional", _.optional),
     string.field[DefaultNullsOperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
-    string.required[DefaultNullsOperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.Default(smithy4s.Document.fromString("required-label-with-default")), smithy.api.HttpLabel()),
+    string.required[DefaultNullsOperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.HttpLabel(), smithy.api.Default(smithy4s.Document.fromString("required-label-with-default"))),
     string.required[DefaultNullsOperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
     string.optional[DefaultNullsOperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
     string.field[DefaultNullsOperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),

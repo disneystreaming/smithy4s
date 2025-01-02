@@ -114,11 +114,12 @@ sealed trait Blob {
 
   final def ++(other: Blob) = concat(other)
 
-  override def equals(other: Any): Boolean =
+  override def equals(other: Any): Boolean = {
     other match {
       case otherBlob: Blob => sameBytesAs(otherBlob)
       case _               => false
     }
+  }
 
   override def hashCode(): Int = {
     import util.hashing.MurmurHash3
