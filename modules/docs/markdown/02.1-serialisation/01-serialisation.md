@@ -61,7 +61,7 @@ By default, `smithy4s-json` abides by the semantics of :
   * [timestampFormat](https://smithy.io/2.0/spec/protocol-traits.html#timestampformat-trait)
   * [sparse](https://smithy.io/2.0/spec/type-refinement-traits.html#sparse-trait)
   * [required](https://smithy.io/2.0/spec/type-refinement-traits.html#required-trait)
-  * [default](https://smithy.io/2.0/spec/type-refinement-traits.html#default-value-serialization). It is worth noting that, by default, Smithy4s chooses to not serialise default values if the when the member is optional.
+  * [default](https://smithy.io/2.0/spec/type-refinement-traits.html#default-value-serialization). It is worth noting that, by default, Smithy4s chooses to not serialise default values when the member is optional.
 * [alloy traits](https://github.com/disneystreaming/alloy/blob/main/docs/serialisation/json.md)
 
 
