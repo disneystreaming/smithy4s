@@ -394,17 +394,8 @@ private[smithy4s] class SchemaVisitorJCodec(
         Timestamp(epochSeconds, ((timestamp - epochSeconds) * 1000000000).toInt)
       }
 
-      def encodeValue(x: Timestamp, out: JsonWriter): Unit = {
-        // TODO: can be improved with out.writeTimestampVal(x.epochSecond, x.nano) when https://github.com/plokhotnyuk/jsoniter-scala/releases/tag/v2.32.0 is used
-        out.writeVal(BigDecimal({
-          val es = java.math.BigDecimal.valueOf(x.epochSecond)
-          if (x.nano == 0) es
-          else
-            es.add(
-              java.math.BigDecimal.valueOf(x.nano.toLong, 9).stripTrailingZeros
-            )
-        }))
-      }
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+        out.writeTimestampVal(x.epochSecond, x.nano)
 
       def decodeKey(in: JsonReader): Timestamp = {
         val timestamp = in.readKeyAsBigDecimal()
