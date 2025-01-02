@@ -394,8 +394,15 @@ private[smithy4s] class SchemaVisitorJCodec(
         Timestamp(epochSeconds, ((timestamp - epochSeconds) * 1000000000).toInt)
       }
 
-      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        out.writeTimestampVal(x.epochSecond, x.nano)
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit = {
+        var epochSecond = x.epochSecond
+        var nano = x.nano
+        if (epochSecond < 0 && nano > 0) {
+          epochSecond += 1
+          nano = 1000000000 - nano
+        }
+        out.writeTimestampVal(epochSecond, nano)
+      }
 
       def decodeKey(in: JsonReader): Timestamp = {
         val timestamp = in.readKeyAsBigDecimal()
