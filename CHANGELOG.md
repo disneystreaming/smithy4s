@@ -8,7 +8,7 @@ Thank you!
 # 0.18.28
 
 * Better support for timestamps before Linux Epoch and trimming the Timestamp nanosecond part (see [#1623](https://github.com/disneystreaming/smithy4s/pull/1623))
-* Adds a special for AWS request signing when S3 is being used.
+* Adds a special for AWS request signing when S3 is being used (see see [#1605](https://github.com/disneystreaming/smithy4s/pull/1605))
 
 # 0.18.27
 
@@ -24,6 +24,8 @@ Thank you!
 
 # 0.18.25
 
+* Add A flag to allow for numerics to be decoded from JSON strings (in smithy4s-json).
+* Fixes issues in which applications of some Smithy traits would be incorrectly rendered in Scala code (see [#1602](https://github.com/disneystreaming/smithy4s/pull/1602)).
 * Fixes an issue in which refinements wouldn't work on custom simple shapes (newtypes) (see [#1595](https://github.com/disneystreaming/smithy4s/pull/1595))
 * Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
 * Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
