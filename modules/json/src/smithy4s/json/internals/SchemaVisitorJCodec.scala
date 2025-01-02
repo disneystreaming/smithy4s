@@ -47,9 +47,13 @@ private[smithy4s] class SchemaVisitorJCodec(
     flexibleCollectionsSupport: Boolean,
     preserveMapOrder: Boolean,
     lenientTaggedUnionDecoding: Boolean,
+    lenientNumericDecoding: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
+
+  private val allowJsonStringNumerics =
+    lenientNumericDecoding || infinitySupport
 
   object PrimitiveJCodecs {
     val boolean: JCodec[Boolean] =
@@ -80,153 +84,194 @@ private[smithy4s] class SchemaVisitorJCodec(
         def encodeKey(x: String, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    val int: JCodec[Int] =
-      new JCodec[Int] {
-        def expecting: String = "int"
+    private abstract class NumericJCodec[A] extends JCodec[A] {
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): A
+      // Allows numerics to be received as JSON Strings
+      def decodeJsonString(cursor: Cursor, in: JsonReader): A
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Int = in.readInt()
+      final def decodeValue(cursor: Cursor, in: JsonReader): A =
+        if (allowJsonStringNumerics) {
+          if (in.isNextToken('"')) {
+            in.rollbackToken()
+            decodeJsonString(cursor, in)
+          } else {
+            in.rollbackToken()
+            decodeJsonNumber(cursor, in)
+          }
+        } else {
+          decodeJsonNumber(cursor, in)
+        }
+    }
 
-        def encodeValue(x: Int, out: JsonWriter): Unit = out.writeVal(x)
+    val int: JCodec[Int] = new NumericJCodec[Int] {
+      def expecting: String = "int"
 
-        def decodeKey(in: JsonReader): Int = in.readKeyAsInt()
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Int =
+        in.readInt()
 
-        def encodeKey(x: Int, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Int =
+        in.readStringAsInt()
 
-    val long: JCodec[Long] =
-      new JCodec[Long] {
-        def expecting: String = "long"
+      def encodeValue(x: Int, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Long = in.readLong()
+      def decodeKey(in: JsonReader): Int = in.readKeyAsInt()
 
-        def encodeValue(x: Long, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeKey(x: Int, out: JsonWriter): Unit = out.writeKey(x)
+    }
 
-        def decodeKey(in: JsonReader): Long = in.readKeyAsLong()
+    val long: JCodec[Long] = new NumericJCodec[Long] {
+      def expecting: String = "long"
 
-        def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Long =
+        in.readLong()
 
-    private val efficientFloat: JCodec[Float] =
-      new JCodec[Float] {
-        def expecting: String = "float"
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Long =
+        in.readStringAsLong()
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Float = in.readFloat()
+      def encodeValue(x: Long, out: JsonWriter): Unit = out.writeVal(x)
 
-        def encodeValue(x: Float, out: JsonWriter): Unit = out.writeVal(x)
+      def decodeKey(in: JsonReader): Long = in.readKeyAsLong()
 
-        def decodeKey(in: JsonReader): Float = in.readKeyAsFloat()
+      def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
+    }
 
-        def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
-      }
+    private val efficientFloat: JCodec[Float] = new NumericJCodec[Float] {
+      def expecting: String = "float"
 
-    private val infinityAllowingFloat: JCodec[Float] = new JCodec[Float] {
-      val expecting: String = "JSON number for numeric values"
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Float =
+        in.readFloat()
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Float =
-        if (in.isNextToken('"')) {
-          in.rollbackToken()
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Float =
+        in.readStringAsFloat()
+
+      def encodeValue(x: Float, out: JsonWriter): Unit = out.writeVal(x)
+
+      def decodeKey(in: JsonReader): Float = in.readKeyAsFloat()
+
+      def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
+    }
+
+    private val infinityAllowingFloat: JCodec[Float] =
+      new NumericJCodec[Float] {
+        val expecting: String = "JSON number for numeric values"
+
+        def decodeJsonString(cursor: Cursor, in: JsonReader): Float = {
+          in.setMark()
           val len = in.readStringAsCharBuf()
           if (in.isCharBufEqualsTo(len, "NaN")) Float.NaN
           else if (in.isCharBufEqualsTo(len, "Infinity")) Float.PositiveInfinity
           else if (in.isCharBufEqualsTo(len, "-Infinity"))
             Float.NegativeInfinity
-          else in.decodeError("illegal float")
-        } else {
-          in.rollbackToken()
+          else {
+            in.rollbackToMark()
+            in.readStringAsFloat()
+          }
+        }
+
+        def decodeJsonNumber(cursor: Cursor, in: JsonReader): Float = {
           in.readFloat()
         }
 
-      def encodeValue(f: Float, out: JsonWriter): Unit =
-        if (java.lang.Float.isFinite(f)) out.writeVal(f)
-        else
-          out.writeNonEscapedAsciiVal {
-            if (f != f) "NaN"
-            else if (f >= 0) "Infinity"
-            else "-Infinity"
-          }
+        def encodeValue(f: Float, out: JsonWriter): Unit =
+          if (java.lang.Float.isFinite(f)) out.writeVal(f)
+          else
+            out.writeNonEscapedAsciiVal {
+              if (f != f) "NaN"
+              else if (f >= 0) "Infinity"
+              else "-Infinity"
+            }
 
-      def decodeKey(in: JsonReader): Float = ???
+        def decodeKey(in: JsonReader): Float = ???
 
-      def encodeKey(x: Float, out: JsonWriter): Unit = ???
-    }
+        def encodeKey(x: Float, out: JsonWriter): Unit = ???
+      }
 
     val float: JCodec[Float] =
       if (infinitySupport) infinityAllowingFloat else efficientFloat
 
-    private val efficientDouble: JCodec[Double] =
-      new JCodec[Double] {
-        def expecting: String = "double"
+    private val efficientDouble: JCodec[Double] = new NumericJCodec[Double] {
+      def expecting: String = "double"
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Double =
-          in.readDouble()
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Double =
+        in.readDouble()
 
-        def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Double =
+        in.readStringAsDouble()
 
-        def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
+      def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
 
-        def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
 
-    private val infinityAllowingDouble: JCodec[Double] = new JCodec[Double] {
-      val expecting: String = "JSON number for numeric values"
+      def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
+    }
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Double =
-        if (in.isNextToken('"')) {
-          in.rollbackToken()
+    private val infinityAllowingDouble: JCodec[Double] =
+      new NumericJCodec[Double] {
+        val expecting: String = "JSON number for numeric values"
+
+        def decodeJsonString(cursor: Cursor, in: JsonReader): Double = {
+          in.setMark()
           val len = in.readStringAsCharBuf()
           if (in.isCharBufEqualsTo(len, "NaN")) Double.NaN
           else if (in.isCharBufEqualsTo(len, "Infinity"))
             Double.PositiveInfinity
           else if (in.isCharBufEqualsTo(len, "-Infinity"))
             Double.NegativeInfinity
-          else in.decodeError("illegal double")
-        } else {
-          in.rollbackToken()
-          in.readDouble()
+          else {
+            in.rollbackToMark()
+            in.readStringAsDouble()
+          }
         }
 
-      def encodeValue(d: Double, out: JsonWriter): Unit =
-        if (java.lang.Double.isFinite(d)) out.writeVal(d)
-        else
-          out.writeNonEscapedAsciiVal {
-            if (d != d) "NaN"
-            else if (d >= 0) "Infinity"
-            else "-Infinity"
-          }
+        def decodeJsonNumber(cursor: Cursor, in: JsonReader): Double =
+          in.readDouble()
 
-      def decodeKey(in: JsonReader): Double = ???
+        def encodeValue(d: Double, out: JsonWriter): Unit =
+          if (java.lang.Double.isFinite(d)) out.writeVal(d)
+          else
+            out.writeNonEscapedAsciiVal {
+              if (d != d) "NaN"
+              else if (d >= 0) "Infinity"
+              else "-Infinity"
+            }
 
-      def encodeKey(x: Double, out: JsonWriter): Unit = ???
-    }
+        def decodeKey(in: JsonReader): Double = ???
+
+        def encodeKey(x: Double, out: JsonWriter): Unit = ???
+      }
 
     val double: JCodec[Double] =
       if (infinitySupport) infinityAllowingDouble else efficientDouble
 
-    val short: JCodec[Short] =
-      new JCodec[Short] {
-        def expecting: String = "short"
+    val short: JCodec[Short] = new NumericJCodec[Short] {
+      def expecting: String = "short"
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Short = in.readShort()
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Short =
+        in.readShort()
 
-        def encodeValue(x: Short, out: JsonWriter): Unit = out.writeVal(x)
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Short =
+        in.readStringAsShort()
 
-        def decodeKey(in: JsonReader): Short = in.readKeyAsShort()
+      def encodeValue(x: Short, out: JsonWriter): Unit = out.writeVal(x)
 
-        def encodeKey(x: Short, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def decodeKey(in: JsonReader): Short = in.readKeyAsShort()
 
-    val byte: JCodec[Byte] =
-      new JCodec[Byte] {
-        def expecting: String = "byte"
+      def encodeKey(x: Short, out: JsonWriter): Unit = out.writeKey(x)
+    }
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Byte = in.readByte()
+    val byte: JCodec[Byte] = new NumericJCodec[Byte] {
+      def expecting: String = "byte"
 
-        def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
+      def decodeJsonNumber(cursor: Cursor, in: JsonReader): Byte = in.readByte()
 
-        def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
+      def decodeJsonString(cursor: Cursor, in: JsonReader): Byte = in.readByte()
 
-        def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
+
+      def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
+
+      def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
+    }
 
     val bytes: JCodec[Blob] =
       new JCodec[Blob] {
@@ -344,16 +389,21 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = {
         val timestamp = in.readBigDecimal(null)
-        val epochSecond = timestamp.toLong
-        Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
+        val epochSeconds =
+          timestamp.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
+        Timestamp(epochSeconds, ((timestamp - epochSeconds) * 1000000000).toInt)
       }
 
       def encodeValue(x: Timestamp, out: JsonWriter): Unit = {
-        if (x.nano == 0) {
-          out.writeVal(x.epochSecond)
-        } else {
-          out.writeVal(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
-        }
+        // TODO: can be improved with out.writeTimestampVal(x.epochSecond, x.nano) when https://github.com/plokhotnyuk/jsoniter-scala/releases/tag/v2.32.0 is used
+        out.writeVal(BigDecimal({
+          val es = java.math.BigDecimal.valueOf(x.epochSecond)
+          if (x.nano == 0) es
+          else
+            es.add(
+              java.math.BigDecimal.valueOf(x.nano.toLong, 9).stripTrailingZeros
+            )
+        }))
       }
 
       def decodeKey(in: JsonReader): Timestamp = {
@@ -931,30 +981,63 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private type Writer[A] = A => JsonWriter => Unit
 
+  private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+      dispatch: Alt.Dispatcher[U]
+  ) extends JCodec[U] {
+
+    val expecting = "tagged-union"
+
+    override def canBeKey: Boolean = false
+
+    def jsonLabel[A](alt: Alt[U, A]): String =
+      alt.hints.get(JsonName) match {
+        case None    => alt.label
+        case Some(x) => x.value
+      }
+
+    protected val handlerMap =
+      new util.HashMap[String, (Cursor, JsonReader) => U] {
+        def handler[A](alt: Alt[U, A]) = {
+          val codec = apply(alt.schema)
+          (cursor: Cursor, reader: JsonReader) =>
+            alt.inject(cursor.decode(codec, reader))
+        }
+
+        alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+      }
+
+    protected val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
+      def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+        val jsonLabel =
+          instance.hints.get(JsonName).map(_.value).getOrElse(label)
+        val jcodecA = instance.compile(self)
+        a =>
+          out => {
+            out.writeObjectStart()
+            out.writeKey(jsonLabel)
+            jcodecA.encodeValue(a, out)
+            out.writeObjectEnd()
+          }
+      }
+    }
+    protected val writer = dispatch.compile(precompiler)
+
+    def encodeValue(u: U, out: JsonWriter): Unit = {
+      writer(u)(out)
+    }
+
+    def decodeKey(in: JsonReader): U =
+      in.decodeError("Cannot use coproducts as keys")
+
+    def encodeKey(u: U, out: JsonWriter): Unit =
+      out.encodeError("Cannot use coproducts as keys")
+
+  }
+
   private def taggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new JCodec[U] {
-      val expecting: String = "tagged-union"
-
-      override def canBeKey: Boolean = false
-
-      def jsonLabel[A](alt: Alt[U, A]): String =
-        alt.hints.get(JsonName) match {
-          case None    => alt.label
-          case Some(x) => x.value
-        }
-
-      private[this] val handlerMap =
-        new util.HashMap[String, (Cursor, JsonReader) => U] {
-          def handler[A](alt: Alt[U, A]) = {
-            val codec = apply(alt.schema)
-            (cursor: Cursor, reader: JsonReader) =>
-              alt.inject(cursor.decode(codec, reader))
-          }
-
-          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
-        }
+    new TaggedUnionJCodec[U](alternatives)(dispatch) {
 
       def decodeValue(cursor: Cursor, in: JsonReader): U =
         if (in.isNextToken('{')) {
@@ -975,59 +1058,12 @@ private[smithy4s] class SchemaVisitorJCodec(
             }
           }
         } else in.decodeError("Expected JSON object")
-
-      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
-        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
-          val jsonLabel =
-            instance.hints.get(JsonName).map(_.value).getOrElse(label)
-          val jcodecA = instance.compile(self)
-          a =>
-            out => {
-              out.writeObjectStart()
-              out.writeKey(jsonLabel)
-              jcodecA.encodeValue(a, out)
-              out.writeObjectEnd()
-            }
-        }
-      }
-      val writer = dispatch.compile(precompiler)
-
-      def encodeValue(u: U, out: JsonWriter): Unit = {
-        writer(u)(out)
-      }
-
-      def decodeKey(in: JsonReader): U =
-        in.decodeError("Cannot use coproducts as keys")
-
-      def encodeKey(u: U, out: JsonWriter): Unit =
-        out.encodeError("Cannot use coproducts as keys")
     }
 
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new JCodec[U] {
-      val expecting: String = "tagged-union"
-
-      override def canBeKey: Boolean = false
-
-      def jsonLabel[A](alt: Alt[U, A]): String =
-        alt.hints.get(JsonName) match {
-          case None    => alt.label
-          case Some(x) => x.value
-        }
-
-      private[this] val handlerMap =
-        new util.HashMap[String, (Cursor, JsonReader) => U] {
-          def handler[A](alt: Alt[U, A]) = {
-            val codec = apply(alt.schema)
-            (cursor: Cursor, reader: JsonReader) =>
-              alt.inject(cursor.decode(codec, reader))
-          }
-
-          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
-        }
-
+    new TaggedUnionJCodec[U](alternatives)(dispatch) {
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
         var result: U = null.asInstanceOf[U]
         if (in.isNextToken('{')) {
@@ -1035,6 +1071,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             while ({
               val key = in.readKeyAsString()
+              cursor.push(key)
               val handler = handlerMap.get(key)
               if (handler eq null) in.skip()
               else if (in.isNextToken('n')) {
@@ -1058,31 +1095,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           }
         } else in.decodeError("Expected JSON object")
       }
-      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
-        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
-          val jsonLabel =
-            instance.hints.get(JsonName).map(_.value).getOrElse(label)
-          val jcodecA = instance.compile(self)
-          a =>
-            out => {
-              out.writeObjectStart()
-              out.writeKey(jsonLabel)
-              jcodecA.encodeValue(a, out)
-              out.writeObjectEnd()
-            }
-        }
-      }
-      val writer = dispatch.compile(precompiler)
 
-      def encodeValue(u: U, out: JsonWriter): Unit = {
-        writer(u)(out)
-      }
-
-      def decodeKey(in: JsonReader): U =
-        in.decodeError("Cannot use coproducts as keys")
-
-      def encodeKey(u: U, out: JsonWriter): Unit =
-        out.encodeError("Cannot use coproducts as keys")
     }
 
   private def untaggedUnion[U](

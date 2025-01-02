@@ -23,6 +23,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import munit.FunSuite
 import smithy.api.Default
 import smithy.api.JsonName
+import smithy.api.TimestampFormat
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
 import smithy4s.example.CheckedOrUnchecked
@@ -174,6 +175,30 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  case class Timestamps(
+      epochSeconds: Timestamp,
+      httpDate: Timestamp,
+      dateTime: Timestamp
+  )
+
+  object Timestamps {
+    def apply(timestamps: Timestamp): Timestamps =
+      Timestamps(timestamps, timestamps, timestamps)
+    implicit val schema: Schema[Timestamps] = {
+      struct(
+        timestamp
+          .required[Timestamps]("epochSeconds", _.epochSeconds)
+          .addHints(TimestampFormat.EPOCH_SECONDS.widen),
+        timestamp
+          .required[Timestamps]("httpDate", _.httpDate)
+          .addHints(TimestampFormat.HTTP_DATE.widen),
+        timestamp
+          .required[Timestamps]("dateTime", _.dateTime)
+          .addHints(TimestampFormat.DATE_TIME.widen)
+      )(Timestamps.apply)
+    }
+  }
+
   test(
     "Compiling a codec for a recursive type should not blow up the stack"
   ) {
@@ -183,6 +208,74 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val roundTripped = readFromString[IntList](json)
     expect.same(result, json)
     expect.same(roundTripped, foo)
+  }
+
+  test("Timestamps before linux epoch are encoded/decoded correctly") {
+    def roundTripCheck(
+        timestamps: Timestamps,
+        expectedEpochSeconds: String,
+        expectedHttpDate: String,
+        expectedDateTime: String
+    ) = {
+      val result = writeToString(timestamps)
+      expect.same(
+        result,
+        s"""{"epochSeconds":$expectedEpochSeconds,"httpDate":"$expectedHttpDate","dateTime":"$expectedDateTime"}"""
+      )
+      val decoded = readFromString[Timestamps](result)
+      expect.same(decoded, timestamps)
+    }
+    roundTripCheck(
+      timestamps = Timestamps(Timestamp(1969, 12, 31, 23, 59, 59, 123)),
+      expectedEpochSeconds = "-0.999999877",
+      expectedHttpDate = "Wed, 31 Dec 1969 23:59:59.000000123 GMT",
+      expectedDateTime = "1969-12-31T23:59:59.000000123Z"
+    )
+  }
+
+  test("Timestamp nanoseconds are encoded/decoded correctly") {
+    def roundTripCheck(
+        nanos: Int,
+        expectedEpochSeconds: String,
+        expectedHttpDate: String,
+        expectedDateTime: String
+    ) = {
+      val timestamps = Timestamps(Timestamp(1970, 1, 1, 10, 11, 12, nanos))
+      val result = writeToString(timestamps)
+      expect.same(
+        result,
+        f"""{"epochSeconds":$expectedEpochSeconds,"httpDate":"$expectedHttpDate","dateTime":"$expectedDateTime"}"""
+      )
+      val decoded = readFromString[Timestamps](result)
+      expect.same(decoded, timestamps)
+    }
+    roundTripCheck(
+      nanos = 123,
+      expectedEpochSeconds = "36672.000000123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.000000123 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.000000123Z"
+    )
+    roundTripCheck(
+      nanos = 1230,
+      expectedEpochSeconds = "36672.00000123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.000001230 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.000001230Z"
+    )
+
+    roundTripCheck(
+      nanos = 123000000,
+      expectedEpochSeconds = "36672.123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.123 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.123Z"
+    )
+
+    roundTripCheck(
+      nanos = 0,
+      expectedEpochSeconds = "36672",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12 GMT",
+      expectedDateTime = "1970-01-01T10:11:12Z"
+    )
+
   }
 
   test("Optional encode from present value") {
@@ -404,6 +497,44 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     expect.same(readFromString[Either[Int, String]](json), Right("foo"))
     expect.same(readFromString[Either[Int, String]](json2), Left(1))
+  }
+
+  test("Lenient and regular unions have the same error messages") {
+    val json = """|{
+                  |  "left" : {"foo": "b"}
+                  |}
+                  |""".stripMargin
+
+    val schema = Schema.either(
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("bar", identity)
+        )(identity),
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("baz", identity)
+        )(identity)
+    )
+
+    val regularCodec =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.fromSchema(schema)
+    val lenientCodec =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.withLenientTaggedUnionDecoding
+        .fromSchema(schema)
+
+    def decodeCheck(codec: JsonCodec[Either[String, String]]) =
+      expect.same(
+        Try(
+          readFromString[Either[String, String]](json)(codec)
+        ).toEither.left.map(_.getMessage),
+        Left("Missing required field (path: .left.bar)")
+      )
+
+    decodeCheck(regularCodec)
+    decodeCheck(lenientCodec)
+
   }
 
   test("Untagged union are encoded / decoded") {

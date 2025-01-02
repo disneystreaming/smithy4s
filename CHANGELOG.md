@@ -5,9 +5,25 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.28
+
+* Better support for timestamps before Linux Epoch and trimming the Timestamp nanosecond part (see [#1623](https://github.com/disneystreaming/smithy4s/pull/1623))
+* Adds a special for AWS request signing when S3 is being used.
+
+# 0.18.27
+
+* Fix for how `NaN` is handled for `Float` and `Double` inside of the `MetadataDecoder` and `Range` constraint `RefinementProvider`
+
+# 0.18.26
+
+* Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
+* Adds utility types for working with endpoint handlers (see [#1612](https://github.com/disneystreaming/smithy4s/pull/1612))
+* Add a more informative error message for repeated namespaces (see [#1608](https://github.com/disneystreaming/smithy4s/pull/1608)).
+* Adds `com.disneystreaming.smithy4s:smithy4s-protocol` dependency to the generation of `smithy-build.json` in the `smithy4sUpdateLSPConfig` tasks of the codegen plugins (see [#1610](https://github.com/disneystreaming/smithy4s/pull/1610)).
+* Fix for the lenient union decoding [bug](https://github.com/disneystreaming/smithy4s/issues/1617) (see[#1620](https://github.com/disneystreaming/smithy4s/pull/1620)).
+
 # 0.18.25
 
-* Adds a special for AWS request signing when S3 is being used.
 * Fixes an issue in which refinements wouldn't work on custom simple shapes (newtypes) (see [#1595](https://github.com/disneystreaming/smithy4s/pull/1595))
 * Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
 * Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).

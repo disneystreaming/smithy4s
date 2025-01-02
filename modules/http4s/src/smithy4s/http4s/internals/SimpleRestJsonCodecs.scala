@@ -24,7 +24,6 @@ import smithy4s.http.HttpDiscriminator
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.json.Json
 import smithy4s.client._
 import smithy4s.codecs.BlobEncoder
 import cats.syntax.all._
@@ -32,30 +31,36 @@ import org.http4s.Response
 import org.http4s.Request
 import org.http4s.Uri
 import smithy4s.http.HttpMethod
+import smithy4s.json.JsonPayloadCodecCompiler
 
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(
-    val maxArity: Int,
+    val jsonCodecs: JsonPayloadCodecCompiler,
     val explicitDefaultsEncoding: Boolean,
     val hostPrefixInjection: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
 
-  private val jsonCodecs = Json.payloadCodecs
-    .withJsoniterCodecCompiler(
-      Json.jsoniter
-        .withHintMask(hintMask)
-        .withMaxArity(maxArity)
-        .withExplicitDefaultsEncoding(explicitDefaultsEncoding)
+  def transformJsonCodecs(f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler): SimpleRestJsonCodecs =
+    new SimpleRestJsonCodecs(f(jsonCodecs), explicitDefaultsEncoding, hostPrefixInjection)
+
+  def withExplicitDefaultEncoding(newExplicitDefaultsEncoding: Boolean): SimpleRestJsonCodecs =
+    new SimpleRestJsonCodecs(
+      jsonCodecs.configureJsoniterCodecCompiler(_.withExplicitDefaultsEncoding(newExplicitDefaultsEncoding)),
+      newExplicitDefaultsEncoding,
+      hostPrefixInjection
     )
+
+  def withHostPrefixInjection(newHostPrefixInjection: Boolean): SimpleRestJsonCodecs =
+    new SimpleRestJsonCodecs(jsonCodecs, explicitDefaultsEncoding, newHostPrefixInjection)
 
   // val mediaType = HttpMediaType("application/json")
   private val payloadEncoders: BlobEncoder.Compiler =
-    jsonCodecs.encoders
+    jsonCodecs.configureJsoniterCodecCompiler(_.withHintMask(hintMask)).encoders
 
   private val payloadDecoders =
-    jsonCodecs.decoders
+    jsonCodecs.configureJsoniterCodecCompiler(_.withHintMask(hintMask)).decoders
 
   // Adding X-Amzn-Errortype as well to facilitate interop with Amazon-issued code-generators.
   private val errorHeaders = List(

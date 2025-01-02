@@ -90,6 +90,14 @@ See the section about [unions](../../04-codegen/02-unions.md) for a detailed des
 
 By default, optional properties (headers, query parameters, structure fields) that are set to `None` and optional properties that are set to default value will be excluded during encoding process. If you wish to change this so that instead they are included and set to `null` explicitly, you can do so by calling `.withExplicitDefaultsEncoding(true)`.
 
+## Other customisations of JSON codec behaviour
+
+The underlying JSON codecs can be configured with a number of options to cater to niche usecases, via the `.transformJsonCodecs` method, which takes a function that takes in and returns a
+`JsonPayloadCodecCompiler`. For instance, by default, the `NaN` and `Infinity` values are not considered valid during parsing `Float` or `Double` values. This can be amended via
+`.transformJsonCodecs(_.configureJsoniterCodecCompiler(_.withInfinitySupport(true)))`.
+
+The customisations are bound to evolve as we uncover new niche cases that warrant adding new pieces of opt-in behaviour. The default behaviour is kept rather strict as it helps keep competitive performance and safety.
+
 ## Supported traits
 
 Here is the list of traits supported by `SimpleRestJson`

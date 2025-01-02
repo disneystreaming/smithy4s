@@ -7,10 +7,10 @@
       let
         pkgs = import nixpkgs { inherit system; };
         shellPackages = with pkgs; [
-          temurin-jre-bin-17
+          temurin-bin-17
           nodejs-18_x
           yarn
-          (pkgs.sbt.override { jre = pkgs.temurin-jre-bin-17; })
+          (pkgs.sbt.override { jre = pkgs.temurin-bin-17; })
         ];
         protobuf = pkgs.protobuf3_21;
       in

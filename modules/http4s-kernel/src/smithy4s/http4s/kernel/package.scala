@@ -204,6 +204,8 @@ package object kernel {
 
   private def toStream[F[_]](
       blob: Blob
-  ): Stream[F, Byte] = Stream.chunk(Chunk.array(blob.toArray))
+  ): Stream[F, Byte] =
+    // Optimisation motivated by https://github.com/http4s/http4s/issues/7539
+    if (blob.isEmpty) Stream.empty else Stream.chunk(Chunk.array(blob.toArray))
 
 }

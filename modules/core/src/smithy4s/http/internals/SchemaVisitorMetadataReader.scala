@@ -37,10 +37,13 @@ import java.util.Base64
   * contains values such as path-parameters, query-parameters, headers, and status code.
   *
   * @param awsHeaderEncoding defines whether the AWS encoding of headers should be expected.
+  * @param allowNaNAndInfiniteValues defines whether or not Double and Float values of 'NaN'
+  * positive/negative infinity should be accepted.
   */
 private[http] class SchemaVisitorMetadataReader(
     val cache: CompilationCache[MetaDecode],
-    awsHeaderEncoding: Boolean
+    awsHeaderEncoding: Boolean,
+    allowNaNAndInfiniteValues: Boolean
 ) extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
@@ -50,6 +53,38 @@ private[http] class SchemaVisitorMetadataReader(
       tag: Primitive[P]
   ): MetaDecode[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
+
+    tag match {
+      case Primitive.PDouble =>
+        val decode: MetaDecode[Double] =
+          primitiveHandler(shapeId, hints, tag, desc)
+        decode.map(d =>
+          if (!allowNaNAndInfiniteValues && (d.isNaN || d.isInfinite))
+            throw MetadataError.ImpossibleDecoding(
+              s"NaN or pos/neg infinity are not allowed for inputs of type $desc"
+            )
+          else d
+        )
+      case Primitive.PFloat =>
+        val decode: MetaDecode[Float] =
+          primitiveHandler(shapeId, hints, tag, desc)
+        decode.map(f =>
+          if (!allowNaNAndInfiniteValues && (f.isNaN || f.isInfinite))
+            throw MetadataError.ImpossibleDecoding(
+              s"NaN or pos/neg infinity are not allowed for inputs of type $desc"
+            )
+          else f
+        )
+      case _ => primitiveHandler(shapeId, hints, tag, desc)
+    }
+  }
+
+  private def primitiveHandler[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P],
+      desc: String
+  ): MetaDecode[P] = {
     val hasMedia = hints.has(smithy.api.MediaType)
     Primitive.stringParser(tag, hints) match {
       case Some(parse) if hasMedia =>

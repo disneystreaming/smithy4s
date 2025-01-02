@@ -17,7 +17,17 @@
 package smithy4s
 package http4s
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024, false, true)
+import smithy4s.json.Json
+import smithy4s.json.JsonPayloadCodecCompiler
+
+object SimpleRestJsonBuilder
+    extends SimpleRestJsonBuilder(
+      new internals.SimpleRestJsonCodecs(
+        jsonCodecs = Json.payloadCodecs,
+        explicitDefaultsEncoding = false,
+        hostPrefixInjection = true
+      )
+    )
 
 class SimpleRestJsonBuilder private (
     simpleRestJsonCodecs: internals.SimpleRestJsonCodecs
@@ -25,6 +35,7 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
+  @deprecated(message = "Use .withXXX methods instead", since = "0.18.25")
   def this(
       maxArity: Int,
       explicitDefaultsEncoding: Boolean,
@@ -32,7 +43,12 @@ class SimpleRestJsonBuilder private (
   ) =
     this(
       new internals.SimpleRestJsonCodecs(
-        maxArity,
+        Json.payloadCodecs
+          .withJsoniterCodecCompiler(
+            Json.jsoniter
+              .withMaxArity(maxArity)
+              .withExplicitDefaultsEncoding(explicitDefaultsEncoding)
+          ),
         explicitDefaultsEncoding,
         hostPrefixInjection
       )
@@ -40,24 +56,28 @@ class SimpleRestJsonBuilder private (
 
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      maxArity,
-      simpleRestJsonCodecs.explicitDefaultsEncoding,
-      simpleRestJsonCodecs.hostPrefixInjection
+      simpleRestJsonCodecs.transformJsonCodecs(
+        _.configureJsoniterCodecCompiler(_.withMaxArity(maxArity))
+      )
     )
 
   def withExplicitDefaultsEncoding(
       explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.maxArity,
-      explicitDefaultsEncoding,
-      simpleRestJsonCodecs.hostPrefixInjection
+      simpleRestJsonCodecs.withExplicitDefaultEncoding(explicitDefaultsEncoding)
     )
 
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.maxArity,
-      simpleRestJsonCodecs.explicitDefaultsEncoding,
-      false
+      simpleRestJsonCodecs.withHostPrefixInjection(false)
     )
+
+  /**
+    * Transforms the underlying JSON codec compiler to change its behaviour.
+    */
+  def transformJsonCodecs(
+      f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler
+  ): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(simpleRestJsonCodecs.transformJsonCodecs(f))
 }

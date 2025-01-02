@@ -161,27 +161,34 @@ object RefinementProvider extends LowPriorityImplicits {
       val N = implicitly[Numeric[N]]
 
       (a: A) =>
-        val value = BigDecimal(N.toDouble(getValue(a)))
-        (range.min, range.max) match {
-          case (Some(min), Some(max)) =>
-            if (value >= min && value <= max) Right(())
-            else
-              Left(
-                s"Input must be >= $min and <= $max, but was $value"
-              )
-          case (None, Some(max)) =>
-            if (value <= max) Right(())
-            else
-              Left(
-                s"Input must be <= $max, but was $value"
-              )
-          case (Some(min), None) =>
-            if (value >= min) Right(())
-            else
-              Left(
-                s"Input must be >= $min, but was $value"
-              )
-          case (None, None) => Right(())
+        val doubleValue = N.toDouble(getValue(a))
+        if (doubleValue.isNaN || doubleValue.isInfinite) {
+          Left(
+            s"Numeric values must not be NaN or pos/neg infinity. Found $doubleValue"
+          )
+        } else {
+          val value = BigDecimal.apply(d = doubleValue)
+          (range.min, range.max) match {
+            case (Some(min), Some(max)) =>
+              if (value >= min && value <= max) Right(())
+              else
+                Left(
+                  s"Input must be >= $min and <= $max, but was $value"
+                )
+            case (None, Some(max)) =>
+              if (value <= max) Right(())
+              else
+                Left(
+                  s"Input must be <= $max, but was $value"
+                )
+            case (Some(min), None) =>
+              if (value >= min) Right(())
+              else
+                Left(
+                  s"Input must be >= $min, but was $value"
+                )
+            case (None, None) => Right(())
+          }
         }
     }
   }

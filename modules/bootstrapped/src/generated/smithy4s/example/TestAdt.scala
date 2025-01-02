@@ -40,7 +40,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 0
   }
 
-  object AdtOne extends ShapeTag.Companion[AdtOne] {
+  object AdtOne {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
 
     val hints: Hints = Hints.empty
@@ -61,7 +61,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 1
   }
 
-  object AdtTwo extends ShapeTag.Companion[AdtTwo] {
+  object AdtTwo {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
     val hints: Hints = Hints.empty

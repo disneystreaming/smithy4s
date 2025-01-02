@@ -186,11 +186,9 @@ class DocumentDecoderSchemaVisitor(
       case EPOCH_SECONDS =>
         DocumentDecoder.instance("Timestamp", "Number") {
           case (_, DNumber(value)) =>
-            val epochSeconds = value.toLong
-            Timestamp(
-              epochSeconds,
-              ((value - epochSeconds) * 1000000000).toInt
-            )
+            val epochSeconds =
+              value.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
+            Timestamp(epochSeconds, ((value - epochSeconds) * 1000000000).toInt)
         }
     }
   }

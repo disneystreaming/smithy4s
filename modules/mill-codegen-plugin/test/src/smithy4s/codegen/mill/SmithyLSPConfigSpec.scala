@@ -36,7 +36,7 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
               )
             )
         }
-        override def scalaVersion = "2.13.10"
+        override def scalaVersion = "2.13.15"
         override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
         override def smithy4sIvyDeps = Agg(
           ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
@@ -67,7 +67,8 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
           |  "maven": {
           |    "dependencies": [
           |       "com.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",
-          |       "software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+          |       "software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}",
+          |       "com.disneystreaming.smithy4s:smithy4s-protocol:${smithy4s.codegen.BuildInfo.version}"
           |    ],
           |    "repositories": [
           |       { "url": "https://some.corpo.example.com/artifactory" }

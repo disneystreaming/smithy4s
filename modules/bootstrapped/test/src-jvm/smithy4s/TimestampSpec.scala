@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -222,6 +222,25 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val tsFromEpochMilli = Timestamp.fromEpochMilli(epochMilli)
 
       expect.same(tsFromEpochMilli, tsFromStrippedInstant)
+    }
+  }
+
+  property("Truncate to milliseconds precision") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp.fromInstant(i).truncateToMillis
+      val strippedInstant = Instant.ofEpochMilli(i.toEpochMilli)
+      val tsFromStrippedInstant = Timestamp.fromInstant(strippedInstant)
+
+      expect.same(ts, tsFromStrippedInstant)
+    }
+  }
+
+  property("Truncate to seconds precision") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp.fromInstant(i).truncateToSeconds
+      val tsFromStrippedInstant = Timestamp.fromEpochSecond(i.getEpochSecond)
+
+      expect.same(ts, tsFromStrippedInstant)
     }
   }
 }

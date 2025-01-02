@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2024 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import munit._
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
+import scala.util.Try
 
 class DocumentSpec() extends FunSuite {
 
@@ -370,6 +371,27 @@ class DocumentSpec() extends FunSuite {
     expect.same(roundTripped, Right(mapTest))
   }
 
+  test("encoding NaN") {
+    // The Document type cannot hold a `NaN` value since it uses BigDecimal to hold numeric values
+    // this test exists to show this. For the same reason, a test on decoding from `NaN` is not necessary
+    // or possible.
+    implicit val schema: Schema[Double] =
+      double.validated(smithy.api.Range(None, Some(BigDecimal(3))))
+
+    val in = Double.NaN
+    val error = Try(Document.encode(in)).failed.get
+    val expectedMessage =
+      if (weaver.Platform.isJS || weaver.Platform.isNative)
+        "For input string: \"NaN\""
+      else
+        "Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+
+    expect.same(
+      error.getMessage,
+      expectedMessage
+    )
+  }
+
   test(
     "optional fields for structs should decode Document.DNull"
   ) {
@@ -605,6 +627,38 @@ class DocumentSpec() extends FunSuite {
       ),
       result
     )
+  }
+
+  test(
+    "Document encoder - timestamp epoch seconds uses correct BigDecimal scale"
+  ) {
+    def check(ts: Timestamp, expectedScale: Int) = {
+      val result = Document.Encoder
+        .fromSchema(TimestampOperationInput.schema)
+        .encode(TimestampOperationInput(ts, ts, ts))
+      inside(result) { case Document.DObject(fields) =>
+        inside(fields.get("epochSeconds")) {
+          case Some(Document.DNumber(bigDecimal)) =>
+            expect.same(bigDecimal.scale, expectedScale)
+        }
+      }
+    }
+    check(Timestamp(1L, 0), 0)
+    check(Timestamp(1L, 500 * 1000 * 1000), 1)
+    check(Timestamp(1L, 123 * 1000 * 1000), 3)
+  }
+
+  test("Document decoder - timestamps before linux epoch") {
+    val doc =
+      Document.obj("epochSeconds" -> Document.fromBigDecimal(-0.999999877))
+    val result = Document.Decoder
+      .fromSchema(TimestampOperationInput.schema)
+      .decode(doc)
+    expect.same(
+      result,
+      Right(TimestampOperationInput(epochSeconds = Timestamp(-1, 123)))
+    )
+
   }
 
   test("Document decoder - timestamp defaults") {
@@ -897,6 +951,14 @@ class DocumentSpec() extends FunSuite {
       .encode(in)
 
     assertEquals(doc, expected)
+  }
+
+  private def inside[A, B](
+      a: A
+  )(assertPF: PartialFunction[A, Unit])(implicit loc: munit.Location) = {
+    assertPF.lift
+      .apply(a)
+      .getOrElse(Assertions.fail("Value did not match the expected pattern"))
   }
 
 }

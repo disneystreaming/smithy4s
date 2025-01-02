@@ -171,15 +171,24 @@ object Metadata {
   implicit def decoderFromSchema[A: Schema]: Decoder[A] =
     Decoder.derivedImplicitInstance
 
-  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
+  object Decoder
+      extends CachedDecoderCompilerImpl(
+        awsHeaderEncoding = false,
+        allowNaNAndInfiniteValues = false
+      ) {
     type Compiler = CachedSchemaCompiler[Decoder]
   }
 
   private[smithy4s] object AwsDecoder
-      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+      extends CachedDecoderCompilerImpl(
+        awsHeaderEncoding = true,
+        allowNaNAndInfiniteValues = true
+      )
 
-  private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
-      extends CachedSchemaCompiler.DerivingImpl[Decoder] {
+  private[http] class CachedDecoderCompilerImpl(
+      awsHeaderEncoding: Boolean,
+      allowNaNAndInfiniteValues: Boolean
+  ) extends CachedSchemaCompiler.DerivingImpl[Decoder] {
     type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: Decoder[A]): Decoder[A] =
@@ -190,7 +199,11 @@ object Metadata {
         cache: CompilationCache[internals.MetaDecode]
     ): Decoder[A] = {
       val metaDecode =
-        new SchemaVisitorMetadataReader(cache, awsHeaderEncoding)(schema)
+        new SchemaVisitorMetadataReader(
+          cache,
+          awsHeaderEncoding,
+          allowNaNAndInfiniteValues
+        )(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(decodeFunction) =>
           decodeFunction(_: Metadata)
