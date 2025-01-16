@@ -953,6 +953,49 @@ class DocumentSpec() extends FunSuite {
     assertEquals(doc, expected)
   }
 
+  test(
+    "Required nullable field with NO default should NOT infer null when value missing"
+  ) {
+    case class Foo(str: Nullable[String])
+    implicit val fieldSchema: Schema[Foo] =
+      Schema
+        .struct[Foo](
+          Schema.string.nullable
+            .required[Foo]("str", _.str)
+        )(Foo.apply)
+
+    val result = Document.decode[Foo](Document.DObject(Map.empty))
+    expect.same(
+      result,
+      Left(
+        smithy4s.codecs.PayloadError(
+          smithy4s.codecs.PayloadPath.parse(".str"),
+          "str",
+          "Required field not found"
+        )
+      )
+    )
+  }
+
+  test(
+    "Required nullable field WITH null default SHOULD infer null when value missing"
+  ) {
+    case class Foo(str: Nullable[String])
+    implicit val fieldSchema: Schema[Foo] =
+      Schema
+        .struct[Foo](
+          Schema.string.nullable
+            .required[Foo]("str", _.str)
+            .addHints(smithy.api.Default(Document.DNull))
+        )(Foo.apply)
+
+    val result = Document.decode[Foo](Document.DObject(Map.empty))
+    expect.same(
+      result,
+      Right(Foo(Nullable.Null))
+    )
+  }
+
   private def inside[A, B](
       a: A
   )(assertPF: PartialFunction[A, Unit])(implicit loc: munit.Location) = {

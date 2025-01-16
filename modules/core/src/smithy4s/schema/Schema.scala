@@ -354,6 +354,9 @@ object Schema {
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
+      if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
+    }
   }
 
   def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =
