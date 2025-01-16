@@ -836,6 +836,49 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, json)
   }
 
+  test(
+    "Required nullable field with NO default should NOT infer null when value missing"
+  ) {
+    case class Foo(str: Nullable[String])
+    implicit val fieldSchema: Schema[Foo] =
+      Schema
+        .struct[Foo](
+          Schema.string.nullable
+            .required[Foo]("str", _.str)
+        )(Foo.apply)
+
+    val result = util.Try(readFromString[Foo]("{}")).toEither
+    expect.same(
+      result,
+      Left(
+        PayloadError(
+          PayloadPath.parse(".str"),
+          "str",
+          "Missing required field"
+        )
+      )
+    )
+  }
+
+  test(
+    "Required nullable field WITH null default SHOULD infer null when value missing"
+  ) {
+    case class Foo(str: Nullable[String])
+    implicit val fieldSchema: Schema[Foo] =
+      Schema
+        .struct[Foo](
+          Schema.string.nullable
+            .required[Foo]("str", _.str)
+            .addHints(smithy.api.Default(Document.DNull))
+        )(Foo.apply)
+
+    val result = readFromString[Foo]("{}")
+    expect.same(
+      result,
+      Foo(Nullable.Null)
+    )
+  }
+
   case class Patchable(a: Option[Nullable[Int]])
 
   object Patchable {
