@@ -89,7 +89,8 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): Option[B] = None
+  ): Option[B] =
+    schema.compile(this).flatMap(refinement.apply(_).toOption)
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value

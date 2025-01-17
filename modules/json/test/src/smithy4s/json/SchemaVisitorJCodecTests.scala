@@ -43,6 +43,7 @@ import scala.collection.immutable.ListMap
 import scala.util.Try
 import smithy4s.json.internals.JsoniterCodecCompilerImpl
 import smithy4s.schema.Schema
+import smithy4s.schema.Field
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -876,6 +877,73 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(
       result,
       Foo(Nullable.Null)
+    )
+  }
+
+  test(
+    "Required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Foo)
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: Field[Bar, Foo] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      readFromString[Bar]("{\"foo\":\"test\"}"),
+      Bar(Foo("test"))
+    )
+    expect.same(
+      readFromString[Bar]("{}"),
+      // Empty string here because null default is implied to be empty string
+      // for a non-nullable string field
+      Bar(Foo(""))
+    )
+  }
+
+  test(
+    "Nullable required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Nullable[Foo])
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: Field[Bar, Nullable[Foo]] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .nullable
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      readFromString[Bar]("{\"foo\":\"test\"}"),
+      Bar(Nullable.value(Foo("test")))
+    )
+    expect.same(
+      readFromString[Bar]("{}"),
+      Bar(Nullable.Null)
     )
   }
 
