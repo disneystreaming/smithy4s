@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.29
+
+* Fix for decoding of required nullable fields and some combinations of refinements with nullable fields (see [#1637](https://github.com/disneystreaming/smithy4s/pull/1637))
+
 # 0.18.28
 
 * Better support for timestamps before Linux Epoch and trimming the Timestamp nanosecond part (see [#1623](https://github.com/disneystreaming/smithy4s/pull/1623))
