@@ -996,6 +996,77 @@ class DocumentSpec() extends FunSuite {
     )
   }
 
+  test(
+    "Required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Foo)
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: smithy4s.schema.Field[Bar, Foo] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      Document.decode[Bar](
+        Document.DObject(Map("foo" -> Document.fromString("test")))
+      ),
+      Right(Bar(Foo("test")))
+    )
+    expect.same(
+      Document.decode[Bar](Document.DObject(Map.empty)),
+      // Empty string here because null default is implied to be empty string
+      // for a non-nullable string field
+      Right(Bar(Foo("")))
+    )
+  }
+
+  test(
+    "Nullable required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Nullable[Foo])
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: smithy4s.schema.Field[Bar, Nullable[Foo]] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .nullable
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      Document.decode[Bar](
+        Document.DObject(Map("foo" -> Document.fromString("test")))
+      ),
+      Right(Bar(Nullable.value(Foo("test"))))
+    )
+    expect.same(
+      Document.decode[Bar](Document.DObject(Map.empty)),
+      Right(Bar(Nullable.Null))
+    )
+  }
+
   private def inside[A, B](
       a: A
   )(assertPF: PartialFunction[A, Unit])(implicit loc: munit.Location) = {
