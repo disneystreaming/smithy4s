@@ -71,7 +71,7 @@ Now let's define an API in Smithy. Create the following file:
 And add the content below:
 
 ```kotlin
-namespace smithy4s.hello
+namespace smithy4s.example.hello
 
 use alloy#simpleRestJson
 
