@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.30
+
+* Add utilities for Service.Builder
+
 # 0.18.29
 
 * Fix for decoding of required nullable fields and some combinations of refinements with nullable fields (see [#1637](https://github.com/disneystreaming/smithy4s/pull/1637))

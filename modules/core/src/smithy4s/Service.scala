@@ -203,6 +203,8 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
     */
   final def fromBifunctorHandlers[F[_, _]](handlers: EndpointHandler[Operation, Kind2[F]#toKind5]*) : FromHandlers[Kind2[F]#toKind5]
     = fromHandlers[Kind2[F]#toKind5](handlers:_*)
+
+  final def toBuilder: Service.Builder[Alg, Operation] = Service.Builder.fromService(this)
 }
 
 object Service {

@@ -120,6 +120,13 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { self =>
 
 object Endpoint {
 
+  def mapSchema[Op[_, _, _, _, _]](
+      f: PolyFunction5[OperationSchema, OperationSchema]
+  ): PolyFunction5[Endpoint[Op, *, *, *, *, *], Endpoint[Op, *, *, *, *, *]] =
+    new PolyFunction5[Endpoint[Op, *, *, *, *, *], Endpoint[Op, *, *, *, *, *]] {
+      def apply[I, E, O, SI, SO](fa: Endpoint[Op, I, E, O, SI, SO]): Endpoint[Op, I, E, O, SI, SO] = fa.mapSchema(f(_))
+    }
+
   trait Middleware[A] { self =>
     def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A
     final def biject[B](to: A => B)(from: B => A): Middleware[B] = new Middleware[B] {

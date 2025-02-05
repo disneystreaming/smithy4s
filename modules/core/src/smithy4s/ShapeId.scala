@@ -20,7 +20,11 @@ import smithy.api.IdRef
 
 final case class ShapeId(namespace: String, name: String) extends HasId {
   def show = s"$namespace#$name"
+
+  def withNamespace(namespace: String): ShapeId = copy(namespace = namespace)
+  def withName(name: String): ShapeId = copy(name = name)
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
+
   override def toString = show
   override def id: ShapeId = this
 }

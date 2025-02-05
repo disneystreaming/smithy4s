@@ -19,6 +19,8 @@ package smithy4s
 package schema
 
 import smithy4s.internals.InputOutput
+import smithy4s.kinds.PolyFunction5
+import smithy4s.kinds.PolyFunction
 
 final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     id: ShapeId,
@@ -95,4 +97,56 @@ final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
   ): OperationSchema[I, E, O, SI, SO2] =
     copy(streamedOutput = streamedOutput.map(f))
 
+}
+
+object OperationSchema {
+  def mapInputK(
+      fk: PolyFunction[Schema, Schema]
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](
+          op: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] =
+        op.mapInput(fk(_))
+    }
+
+  def mapOutputK(
+      fk: PolyFunction[Schema, Schema]
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](
+          op: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] =
+        op.mapOutput(fk(_))
+    }
+
+  def mapErrorK(
+      fk: PolyFunction[ErrorSchema, ErrorSchema]
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](
+          op: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] =
+        op.mapError(fk(_))
+    }
+
+  def mapStreamingInputK(
+      fk: PolyFunction[StreamingSchema, StreamingSchema]
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](
+          op: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] =
+        op.mapStreamedInput(fk(_))
+    }
+
+  def mapStreamingOutputK(
+      fk: PolyFunction[StreamingSchema, StreamingSchema]
+  ): PolyFunction5[OperationSchema, OperationSchema] =
+    new PolyFunction5[OperationSchema, OperationSchema] {
+      def apply[I, E, O, SI, SO](
+          op: OperationSchema[I, E, O, SI, SO]
+      ): OperationSchema[I, E, O, SI, SO] =
+        op.mapStreamedOutput(fk(_))
+    }
 }
