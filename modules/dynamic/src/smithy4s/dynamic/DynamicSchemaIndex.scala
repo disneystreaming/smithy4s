@@ -124,7 +124,7 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
     /**
     * Build the DynamicSchemaIndex using the information in this builder.
     *
-    * Note that the functions in this `DynamicSchemaIndex`, including `getServices`,
+    * Note that the functions in this `DynamicSchemaIndex`, including `allServices`,
     * `allSchemas`, and `getSchema` will only return the items that were placed into
     * the builder directly and NOT the transitive values. Additionally, the metadata
     * is always empty.
