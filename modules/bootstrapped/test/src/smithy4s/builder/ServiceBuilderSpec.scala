@@ -21,7 +21,6 @@ import smithy4s.kinds.PolyFunction5
 import smithy4s.example.FooServiceGen
 import smithy.api.Documentation
 import smithy4s.schema.OperationSchema
-import smithy4s.Schema
 import smithy4s.kinds.PolyFunction
 
 class ServiceBuilderSpec extends FunSuite {
