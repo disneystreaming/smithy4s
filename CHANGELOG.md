@@ -7,7 +7,7 @@ Thank you!
 
 # 0.18.30
 
-* Add utilities for Service.Builder
+* Add utilities for Service.Builder in [#1644](https://github.com/disneystreaming/smithy4s/pull/1644)
 
 # 0.18.29
 
