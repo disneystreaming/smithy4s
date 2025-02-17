@@ -85,7 +85,7 @@ private[codegen] object ModelLoader {
     // Appending all metadata that is not Smithy4s-specific, as well as relevant
     // Smithy4s-related metadata, into the resulting model.
     upstreamModel.getMetadata().asScala.foreach {
-      case (k @ "smithy4sGenerated", _) => ()
+      case (CodegenRecord.METADATA_KEY, _) => ()
       case (k, _) if k.startsWith("smithy4s") =>
         sanitisingModelBuilder.removeMetadataProperty(k)
       case _ => ()
