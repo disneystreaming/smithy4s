@@ -104,7 +104,7 @@ sealed trait Schema[A]{
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
-  final def getDefaultValue: Option[A] = {
+  private final lazy val defaultValue: Option[A] = {
     val maybeDefault = getDefault.flatMap[A] {
       case Document.DNull => this.compile(DefaultValueSchemaVisitor)
       case document => Document.Decoder.fromSchema(this).decode(document).toOption
@@ -112,6 +112,7 @@ sealed trait Schema[A]{
     maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
 
+  final def getDefaultValue: Option[A] = defaultValue
 
   /**
     * When applied on a structure schema, creates a schema that, when compiled into

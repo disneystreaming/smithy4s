@@ -41,7 +41,7 @@ final case class Field[S, A](
   @deprecated("use .schema instead", since = "0.18.0")
   final def instance: Schema[A] = schema
 
-  lazy val getDefaultValue: Option[A] =
+  def getDefaultValue: Option[A] =
     schema.getDefaultValue
 
   def isDefaultValue(a: A): Boolean = getDefaultValue.contains(a)
