@@ -56,7 +56,7 @@ println(bobString) // outputs:
 ## Serializing other data types
 
 If you have data types not defined in the smithy specification, but still want to use the Smithy4s Json module on these data types then a `Schema` will have to be created for the data types.
-More information around creating schemas can be found in the [Datatypes and schemas design guide](/modules/docs/markdown/05-design/02-schemas.md). If the datatype is large and complex enough, then
+More information around creating schemas can be found in the [Datatypes and schemas design guide](05-design/02-schemas.md). If the datatype is large and complex enough, then
 defining the schema for that type could become tedious, especially if any changes to that type need to be made. In this instance it's bettter to just add the datatype to the smithy specification and let
 smithy4s generate the code for you.
 
