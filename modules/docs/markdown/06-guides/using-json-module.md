@@ -32,6 +32,8 @@ structure Address {
 Smithy4s creates a `Schema` for each smithy data type. The json module provides interpreters such that from a `Schema` we can get a Json codec. To use
 it just call the read and write methods on the `Json` object.
 
+> Note: If the `Schema` is non-static, such as a dynamically generated one, then reading and writing Json may result in memory leaks.
+
 ```scala
 import example.{Person, Address}
 import smithy4s.Blob
