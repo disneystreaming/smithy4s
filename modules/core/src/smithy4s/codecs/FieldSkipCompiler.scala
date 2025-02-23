@@ -71,13 +71,11 @@ object FieldSkipCompiler {
       case c: CollectionSchema[f, a] =>
         Some((collectionA: f[a]) => c.tag.isEmpty(collectionA))
       case b: BijectionSchema[inner, a] =>
-        asEmptyCollectionPredicate[F, inner](b.underlying).map(predicateInner =>
-          predicateInner.compose(b.bijection.from)
-        )
+        asEmptyCollectionPredicate[F, inner](b.underlying)
+          .map(_.compose(b.bijection.from))
       case r: RefinementSchema[inner, a] =>
-        asEmptyCollectionPredicate[F, inner](r.underlying).map(predicateInner =>
-          collectionA => predicateInner(r.refinement.from(collectionA))
-        )
+        asEmptyCollectionPredicate[F, inner](r.underlying)
+          .map(_.compose(r.refinement.from))
       case o: OptionSchema[inner] =>
         asEmptyCollectionPredicate(o.underlying)
           .map(predicateInner =>
