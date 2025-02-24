@@ -34,9 +34,9 @@ import smithy4s.codecs.FieldFilter
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
-  test("routes - FieldFilter.SkipIfEmptyOrDefaultOptionals") {
-    runServerTest(fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals).map {
-      response =>
+  test("routes - FieldFilter.SkipUnsetAndDefaultOptionValues") {
+    runServerTest(fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues)
+      .map { response =>
         assert.same(
           Map(
             ci"required-header-with-default" -> "required-header-with-default"
@@ -49,7 +49,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
           ),
           response.body
         )
-    }
+      }
   }
 
   test("routes - FieldFilter.EncodeAll") {
@@ -69,9 +69,9 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
     }
   }
 
-  test("client - FieldFilter.SkipIfEmptyOrDefaultOptionals") {
+  test("client - FieldFilter.SkipUnsetAndDefaultOptionValues") {
     runClientTest(
-      fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals,
+      fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues,
       DefaultNullsOperationInput()
     )
       .map { request =>

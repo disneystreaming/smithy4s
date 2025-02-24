@@ -498,7 +498,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipIfEmptyOrDefaultOptionals)
+      .withFieldFilter(FieldFilter.SkipUnsetAndDefaultOptionValues)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
     expect.same(
@@ -516,7 +516,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipIfEmptyOptionals)
+      .withFieldFilter(FieldFilter.SkipUnsetOptions)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
 
@@ -540,7 +540,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipIfDefaultOptionals)
+      .withFieldFilter(FieldFilter.SkipDefaultOptionValues)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
 
@@ -602,7 +602,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipIfEmptyOrDefaultOptionals)
+      .withFieldFilter(FieldFilter.SkipUnsetAndDefaultOptionValues)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
         DefaultNullsOperationOutput(

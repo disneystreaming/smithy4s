@@ -83,6 +83,26 @@ class JsonCodecApiTests extends FunSuite {
   }
 
   test(
+    "explicit nulls should be used when set"
+  ) {
+    val schemaWithJsonName = Schema
+      .struct[Option[String]]
+      .apply(
+        Schema.string
+          .optional[Option[String]]("a", identity)
+      )(identity)
+
+    val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter.withFieldFilter(FieldFilter.EncodeAll)
+    )
+
+    val codec = capi.encoders.fromSchema(schemaWithJsonName)
+    val encoded = codec.encode(None)
+
+    assertEquals(encoded, Blob("""{"a":null}"""))
+  }
+
+  test(
     "explicit nulls should be parsable regardless of fieldFilter setting"
   ) {
     val withoutNulls = Json.payloadCodecs

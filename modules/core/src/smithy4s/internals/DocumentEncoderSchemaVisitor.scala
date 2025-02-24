@@ -89,7 +89,7 @@ class DocumentEncoderSchemaVisitor(
       cache,
       fieldFilter =
         if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-        else FieldFilter.SkipIfEmptyOrDefaultOptionals
+        else FieldFilter.SkipUnsetAndDefaultOptionValues
     )
 
   def this(cache: CompilationCache[DocumentEncoder]) =

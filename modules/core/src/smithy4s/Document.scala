@@ -107,7 +107,7 @@ object Document {
       message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitDefaultsEncoding = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - explicitDefaultsEncoding = false -> FieldFilter.SkipUnsetAndDefaultOptionValues
    - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
       since = "0.18.30"
@@ -116,7 +116,7 @@ object Document {
         explicitDefaultsEncoding: Boolean
     ): EncoderCompiler = withFieldFilter(
       if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.SkipIfEmptyOrDefaultOptionals
+      else FieldFilter.SkipUnsetAndDefaultOptionValues
     )
 
     def withFieldFilter(
@@ -126,7 +126,7 @@ object Document {
 
   object Encoder
       extends CachedEncoderCompilerImpl(
-        fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals
+        fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues
       )
 
   private[smithy4s] class CachedEncoderCompilerImpl(

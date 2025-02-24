@@ -147,26 +147,30 @@ object FieldFilter {
     }
   }
 
-  private case object skipIfDefaultOptionals
+  private case object skipDefaultOptionValues
       extends FieldFilter.SkipNonRequired {
     def compileOptional[S, A](field: Field[S, A]): Predicate[A] = {
-      // Optional fields have None as their default, so we need to make sure not to skip them here
-      a => a == None || !field.isDefaultValue(a)
+      // do not use field.hasDefaultValue as it returns always true for options
+      if (field.schema.getDefault.isDefined) { a =>
+        !field.isDefaultValue(a)
+      } else {
+        Function.const(true)
+      }
     }
   }
 
-  val SkipIfDefaultOptionals: FieldFilter = skipIfDefaultOptionals
+  val SkipDefaultOptionValues: FieldFilter = skipDefaultOptionValues
 
-  private case object skipIfEmptyOptionals extends FieldFilter.SkipNonRequired {
+  private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
     def compileOptional[S, A](field: Field[S, A]): Predicate[A] = { a =>
       a != None
     }
   }
 
-  val SkipIfEmptyOptionals: FieldFilter = skipIfEmptyOptionals
+  val SkipUnsetOptions: FieldFilter = skipUnsetOptions
 
-  object SkipIfEmptyOrDefaultOptionals extends FieldFilter {
+  object SkipUnsetAndDefaultOptionValues extends FieldFilter {
     def compile[S, A](field: Field[S, A]): Predicate[A] =
-      (SkipIfEmptyOptionals && SkipIfDefaultOptionals).compile(field)
+      (SkipUnsetOptions && SkipDefaultOptionValues).compile(field)
   }
 }

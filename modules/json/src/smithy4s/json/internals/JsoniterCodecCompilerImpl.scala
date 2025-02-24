@@ -89,7 +89,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
       maxArity = JsoniterCodecCompiler.defaultMaxArity,
-      fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals,
+      fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
       preserveMapOrder = false,

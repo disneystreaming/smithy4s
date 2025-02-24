@@ -50,7 +50,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitNulls = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - explicitNulls = false -> FieldFilter.SkipUnsetAndDefaultOptionValues
    - explicitNulls = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
@@ -60,7 +60,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
   ): JsoniterCodecCompiler =
     withFieldFilter(
       if (explicitNulls) FieldFilter.EncodeAll
-      else FieldFilter.SkipIfEmptyOrDefaultOptionals
+      else FieldFilter.SkipUnsetAndDefaultOptionValues
     )
 
   /**

@@ -97,7 +97,7 @@ This method allows you to precisely define the filtering logic using `FieldFilte
 
 Migrating from `withExplicitDefaultsEncoding`
 
-    The previous, default behavior (`None` and default values excluded) is now expressed by `FieldFilter.SkipIfEmptyOrDefaultOptionals`.
+    The previous, default behavior (`None` and default values excluded) is now expressed by `FieldFilter.SkipUnsetAndDefaultOptionValues`.
     The behavior of `.withExplicitDefaultsEncoding(true)` (explicitly encoding null values) can be achieved using `FieldFilter.EncodeAll`.
     The methods `.withExplicitDefaultsEncoding(...)` are now deprecated in favor of `.withFieldFilter(...).`
 
