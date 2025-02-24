@@ -195,7 +195,11 @@ class SchemaVisitorMetadataWriter(
             val shouldRender = fieldFilter.compile(field)
             val value = field.get(s)
             if (shouldRender(value)) {
-              updateFunction(metadata, value)
+              if (value == None) {
+                metadata
+              } else {
+                updateFunction(metadata, value)
+              }
             } else {
               metadata
             }
