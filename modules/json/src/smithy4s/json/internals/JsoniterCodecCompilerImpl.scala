@@ -37,18 +37,6 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
 
   def withMaxArity(max: Int): JsoniterCodecCompiler = copy(maxArity = max)
 
-  @deprecated(
-    message = "Use withFieldSkipCompiler instead",
-    since = "0.18.30"
-  )
-  def withExplicitDefaultsEncoding(
-      explicitDefaultsEncoding: Boolean
-  ): JsoniterCodecCompiler =
-    withFieldSkipCompiler(
-      if (explicitDefaultsEncoding) FieldSkipCompiler.NeverSkip
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
-    )
-
   def withFieldSkipCompiler(
       fieldSkipCompiler: FieldSkipCompiler
   ): JsoniterCodecCompiler =

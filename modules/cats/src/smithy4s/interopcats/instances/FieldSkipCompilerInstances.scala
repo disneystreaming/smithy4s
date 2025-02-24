@@ -23,7 +23,7 @@ private[interopcats] trait FieldSkipCompilerInstances {
 
   implicit val monoid: Monoid[FieldSkipCompiler] =
     new Monoid[FieldSkipCompiler] {
-      def empty: FieldSkipCompiler = FieldSkipCompiler.NeverSkip
+      def empty: FieldSkipCompiler = FieldSkipCompiler.EncodeAll
       def combine(
           x: FieldSkipCompiler,
           y: FieldSkipCompiler

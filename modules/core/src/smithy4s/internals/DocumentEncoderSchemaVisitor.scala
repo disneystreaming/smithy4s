@@ -88,7 +88,7 @@ class DocumentEncoderSchemaVisitor(
     this(
       cache,
       fieldSkipCompiler =
-        if (explicitDefaultsEncoding) FieldSkipCompiler.NeverSkip
+        if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
         else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
     )
 
@@ -97,7 +97,7 @@ class DocumentEncoderSchemaVisitor(
 
   @deprecated
   protected val explicitDefaultsEncoding: Boolean =
-    fieldSkipCompiler == FieldSkipCompiler.NeverSkip
+    fieldSkipCompiler == FieldSkipCompiler.EncodeAll
 
   override def primitive[P](
       shapeId: ShapeId,

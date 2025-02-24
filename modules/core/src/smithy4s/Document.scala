@@ -110,7 +110,7 @@ object Document {
     def withExplicitDefaultsEncoding(
         explicitDefaultsEncoding: Boolean
     ): EncoderCompiler = withFieldSkipCompiler(
-      if (explicitDefaultsEncoding) FieldSkipCompiler.NeverSkip
+      if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
       else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
     )
 

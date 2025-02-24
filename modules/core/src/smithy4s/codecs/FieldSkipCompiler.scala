@@ -59,7 +59,7 @@ object FieldSkipCompiler {
 
   }
 
-  case object NeverSkip extends FieldSkipCompiler {
+  case object EncodeAll extends FieldSkipCompiler {
     def compile[A](field: Field[_, A]): ShouldRender[A] = Function.const(true)
   }
 

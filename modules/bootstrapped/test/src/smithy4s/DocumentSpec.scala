@@ -474,7 +474,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.NeverSkip
+        FieldSkipCompiler.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
@@ -573,7 +573,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.NeverSkip
+        FieldSkipCompiler.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
@@ -1210,7 +1210,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.NeverSkip),
+    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
     TestCase(expectedToSkip = false, FieldSkipCompiler.SkipIfEmptyOptionalCollection),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
@@ -1240,7 +1240,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.NeverSkip),
+    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
     TestCase(expectedToSkip = false, FieldSkipCompiler.SkipIfEmptyOptionalCollection),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
@@ -1272,7 +1272,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.NeverSkip),
+    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
@@ -1302,7 +1302,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.NeverSkip),
+    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection),
     TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>

@@ -32,6 +32,7 @@ import smithy4s.schema.{
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 import java.util.Base64
+import smithy4s.codecs.FieldSkipCompiler
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -48,9 +49,30 @@ import java.util.Base64
 class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode],
     commaDelimitedEncoding: Boolean,
-    explicitDefaultsEncoding: Boolean
+    fieldSkipCompiler: FieldSkipCompiler
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
+
+  @deprecated(
+    message = """Use constructor with FieldSkipCompiler instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldSkipCompiler.SkipNonRequired
+   - explicitDefaultsEncoding = true -> FieldSkipCompiler.EncodeAll
+ """,
+    since = "0.18.30"
+  )
+  def this(
+      cache: CompilationCache[MetaEncode],
+      commaDelimitedEncoding: Boolean,
+      explicitDefaultsEncoding: Boolean
+  ) = this(
+    cache,
+    commaDelimitedEncoding,
+    if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
+    else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+  )
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -170,16 +192,13 @@ class SchemaVisitorMetadataWriter(
           val encoder = self(field.schema.addHints(Hints(binding)))
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
-            if (explicitDefaultsEncoding)
-              field.get(s) match {
-                case None => metadata
-                case _    => updateFunction(metadata, field.get(s))
-              }
-            else
-              field.getUnlessDefault(s) match {
-                case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
-                case None              => metadata
-              }
+            val shouldRender = fieldSkipCompiler.compile(field)
+            val value = field.get(s)
+            if (shouldRender(value)) {
+              updateFunction(metadata, value)
+            } else {
+              metadata
+            }
         }
     }
     // pull out the query params field as it must be applied last to the metadata
