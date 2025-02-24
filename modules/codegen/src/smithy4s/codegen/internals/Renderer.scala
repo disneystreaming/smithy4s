@@ -287,28 +287,28 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val serviceAliases =
       compilationUnit.declarations.map(renderDeclPackageContents)
 
-    val blk =
-      block(
-        line"package object ${compilationUnit.namespace.split('.').last}"
-      )(
-        serviceAliases,
-        newline,
-        typeAliases,
-        newline
-      )
+    val packageContents = lines(serviceAliases, newline, typeAliases, newline)
 
-    val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
-    val withParentPackage = if (parts.size > 1) {
-      lines(
-        line"package ${parts.dropRight(1).mkString(".")}",
-        newline,
-        blk
-      )
-    } else blk
+    packageContents.some
+      .filterNot(_.isBlank)
+      .map { contents =>
+        block(
+          line"package object ${compilationUnit.namespace.split('.').last}"
+        )(
+          contents
+        )
+      }
+      .map { blk =>
+        val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
 
-    Some(typeAliases ++ serviceAliases)
-      .filterNot(_.combineAll.isEmpty)
-      .as(withParentPackage)
+        if (parts.size > 1) {
+          lines(
+            line"package ${parts.dropRight(1).mkString(".")}",
+            newline,
+            blk
+          )
+        } else blk
+      }
   }
 
   private def renderDeclPackageContents(decl: Decl): Lines = decl match {
