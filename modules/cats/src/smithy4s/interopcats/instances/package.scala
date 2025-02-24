@@ -22,6 +22,5 @@ package object instances {
       extends HashInstances
       with ShowInstances
       with NullableInstances
-      with FieldSkipCompilerInstances
 
 }
