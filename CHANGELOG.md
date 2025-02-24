@@ -8,6 +8,7 @@ Thank you!
 # 0.18.30
 
 * Add utilities for Service.Builder in [#1644](https://github.com/disneystreaming/smithy4s/pull/1644)
+* Add more support for more flexible encoding of defaults in [#1652](https://github.com/disneystreaming/smithy4s/pull/1652). This brings `FieldFilter` abstraction that replaces `explicitDefaultsEncoding`.
 
 # 0.18.29
 
