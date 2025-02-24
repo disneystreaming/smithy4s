@@ -42,10 +42,10 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     since = "0.18.30"
   )
   def withExplicitDefaultsEncoding(
-      explicitNulls: Boolean
+      explicitDefaultsEncoding: Boolean
   ): JsoniterCodecCompiler =
     withFieldSkipCompiler(
-      if (explicitNulls) FieldSkipCompiler.NeverSkip
+      if (explicitDefaultsEncoding) FieldSkipCompiler.NeverSkip
       else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
     )
 
