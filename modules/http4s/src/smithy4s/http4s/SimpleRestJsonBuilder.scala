@@ -25,7 +25,7 @@ object SimpleRestJsonBuilder
     extends SimpleRestJsonBuilder(
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
-        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals,
+        fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals,
         hostPrefixInjection = true
       )
     )
@@ -43,7 +43,7 @@ class SimpleRestJsonBuilder private (
       hostPrefixInjection: Boolean
   ) = {
     this {
-      val fieldSkipCompiler =
+      val fieldFilter =
         if (explicitDefaultsEncoding) FieldFilter.EncodeAll
         else FieldFilter.SkipIfEmptyOrDefaultOptionals
       new internals.SimpleRestJsonCodecs(
@@ -51,9 +51,9 @@ class SimpleRestJsonBuilder private (
           .withJsoniterCodecCompiler(
             Json.jsoniter
               .withMaxArity(maxArity)
-              .withFieldSkipCompiler(fieldSkipCompiler)
+              .withFieldFilter(fieldFilter)
           ),
-        fieldSkipCompiler,
+        fieldFilter,
         hostPrefixInjection
       )
     }
@@ -67,27 +67,27 @@ class SimpleRestJsonBuilder private (
     )
 
   @deprecated(
-    message = """Use withFieldSkipCompiler instead.
+    message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitDefaultsEncoding = false -> FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
-   - explicitDefaultsEncoding = true -> FieldSkipCompiler.EncodeAll
+   - explicitDefaultsEncoding = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
   )
   def withExplicitDefaultsEncoding(
       explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
-    withFieldSkipCompiler(
+    withFieldFilter(
       if (explicitDefaultsEncoding) FieldFilter.EncodeAll
       else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
-  def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldFilter
+  def withFieldFilter(
+      fieldFilter: FieldFilter
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.withFieldSkipCompiler(fieldSkipCompiler)
+      simpleRestJsonCodecs.withFieldFilter(fieldFilter)
     )
 
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =

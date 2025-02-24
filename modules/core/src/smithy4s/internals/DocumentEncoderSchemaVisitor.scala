@@ -77,7 +77,7 @@ object DocumentEncoder {
 
 class DocumentEncoderSchemaVisitor(
     val cache: CompilationCache[DocumentEncoder],
-    val fieldSkipCompiler: FieldFilter
+    val fieldFilter: FieldFilter
 ) extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
 
@@ -87,7 +87,7 @@ class DocumentEncoderSchemaVisitor(
   ) =
     this(
       cache,
-      fieldSkipCompiler =
+      fieldFilter =
         if (explicitDefaultsEncoding) FieldFilter.EncodeAll
         else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
@@ -97,7 +97,7 @@ class DocumentEncoderSchemaVisitor(
 
   @deprecated
   protected val explicitDefaultsEncoding: Boolean =
-    fieldSkipCompiler == FieldFilter.EncodeAll
+    fieldFilter == FieldFilter.EncodeAll
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -234,7 +234,7 @@ class DocumentEncoderSchemaVisitor(
         .get(JsonName)
         .map(_.value)
         .getOrElse(field.label)
-      val shouldRender = fieldSkipCompiler.compile(field)
+      val shouldRender = fieldFilter.compile(field)
       (s, builder) =>
         val value = field.get(s)
         if (shouldRender(value)) {
@@ -246,7 +246,7 @@ class DocumentEncoderSchemaVisitor(
         field: Field[S, A]
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
       val encoder = apply(field.schema)
-      val shouldRender = fieldSkipCompiler.compile(field)
+      val shouldRender = fieldFilter.compile(field)
       (s, builder) => {
         val value = field.get(s)
         if (shouldRender(value)) {

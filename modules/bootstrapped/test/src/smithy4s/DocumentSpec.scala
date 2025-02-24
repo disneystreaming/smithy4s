@@ -473,7 +473,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
@@ -500,7 +500,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
       .fromSchema(
@@ -522,7 +522,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - FieldRenderPredicateCompiler.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.SkipIfEmptyOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
@@ -548,7 +548,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - FieldRenderPredicateCompiler.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.SkipIfDefaultOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
@@ -572,7 +572,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
@@ -614,7 +614,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldSkipCompiler(
+      .withFieldFilter(
         FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
@@ -1230,7 +1230,7 @@ class DocumentSpec() extends FunSuite {
       val structSchema = struct(arr)(MyStruct.apply)
 
       val result = Document.Encoder
-        .withFieldSkipCompiler(strategy)
+        .withFieldFilter(strategy)
         .fromSchema(structSchema)
         .encode(MyStruct(List.empty))
 
@@ -1260,7 +1260,7 @@ class DocumentSpec() extends FunSuite {
       val structSchema = struct(arr)(MyStruct.apply)
 
       val result = Document.Encoder
-        .withFieldSkipCompiler(strategy)
+        .withFieldFilter(strategy)
         .fromSchema(structSchema)
         .encode(MyStruct(Map.empty))
 
@@ -1292,7 +1292,7 @@ class DocumentSpec() extends FunSuite {
       val structSchema = struct(arr)(MyStruct.apply)
 
       val result = Document.Encoder
-        .withFieldSkipCompiler(strategy)
+        .withFieldFilter(strategy)
         .fromSchema(structSchema)
         .encode(MyStruct(Some(Map.empty)))
 
@@ -1322,7 +1322,7 @@ class DocumentSpec() extends FunSuite {
       val structSchema = struct(arr)(MyStruct.apply)
 
       val result = Document.Encoder
-        .withFieldSkipCompiler(strategy)
+        .withFieldFilter(strategy)
         .fromSchema(structSchema)
         .encode(MyStruct(Some(List.empty)))
 
@@ -1331,12 +1331,12 @@ class DocumentSpec() extends FunSuite {
 
   }
 
-  test("Recursive document structures shoould not blow up FieldSkipCompiler") {
+  test("Recursive document structures shoould not blow up FieldFilter") {
     val recursive: RecursiveListWrapper =
       RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
 
     val document = Document.Encoder
-      .withFieldSkipCompiler(FieldFilter.SkipIfEmptyCollection)
+      .withFieldFilter(FieldFilter.SkipIfEmptyCollection)
       .fromSchema(RecursiveListWrapper.schema)
       .encode(recursive)
     import Document._

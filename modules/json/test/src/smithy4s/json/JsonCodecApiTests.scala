@@ -73,7 +73,7 @@ class JsonCodecApiTests extends FunSuite {
       )(identity)
 
     val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withFieldSkipCompiler(FieldFilter.EncodeAll)
+      Json.jsoniter.withFieldFilter(FieldFilter.EncodeAll)
     )
 
     val codec = capi.encoders.fromSchema(schemaWithJsonName)
@@ -87,7 +87,7 @@ class JsonCodecApiTests extends FunSuite {
   ) {
     val withoutNulls = Json.payloadCodecs
     val withNulls = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withFieldSkipCompiler(FieldFilter.EncodeAll)
+      Json.jsoniter.withFieldFilter(FieldFilter.EncodeAll)
     )
 
     List(withoutNulls, withNulls).foreach { capi =>

@@ -104,28 +104,33 @@ object Document {
 
   trait EncoderCompiler extends CachedSchemaCompiler[Encoder] {
     @deprecated(
-      message = "Use withFieldSkipCompiler instead",
+      message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
+ """,
       since = "0.18.30"
     )
     def withExplicitDefaultsEncoding(
         explicitDefaultsEncoding: Boolean
-    ): EncoderCompiler = withFieldSkipCompiler(
+    ): EncoderCompiler = withFieldFilter(
       if (explicitDefaultsEncoding) FieldFilter.EncodeAll
       else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
-    def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldFilter
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler
   }
 
   object Encoder
       extends CachedEncoderCompilerImpl(
-        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
+        fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
 
   private[smithy4s] class CachedEncoderCompilerImpl(
-      fieldSkipCompiler: FieldFilter
+      fieldFilter: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
 
@@ -137,7 +142,7 @@ object Document {
     ): Encoder[A] = {
       val makeEncoder =
         schema.compile(
-          new DocumentEncoderSchemaVisitor(cache, fieldSkipCompiler)
+          new DocumentEncoderSchemaVisitor(cache, fieldFilter)
         )
       new Encoder[A] {
         def encode(a: A): Document = {
@@ -146,10 +151,10 @@ object Document {
       }
     }
 
-    def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldFilter
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler = new CachedEncoderCompilerImpl(
-      fieldSkipCompiler
+      fieldFilter
     )
   }
 

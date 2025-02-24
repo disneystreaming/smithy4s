@@ -47,31 +47,31 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     * Defaults to false.
     */
   @deprecated(
-    message = """Use withFieldSkipCompiler instead.
+    message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitNulls = false -> FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
-   - explicitNulls = true -> FieldSkipCompiler.EncodeAll
+   - explicitNulls = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - explicitNulls = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
   )
   def withExplicitDefaultsEncoding(
       explicitNulls: Boolean
   ): JsoniterCodecCompiler =
-    withFieldSkipCompiler(
+    withFieldFilter(
       if (explicitNulls) FieldFilter.EncodeAll
       else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   /**
-    * Configures the JSON encoder to use a custom {@link FieldSkipCompiler}, 
+    * Configures the JSON encoder to use a custom {@link FieldFilter}, 
     * allowing fine-grained control over which fields should be skipped during encoding.
     *
-    * @param fieldSkipCompiler an instance of {@link FieldSkipCompiler} responsible for 
+    * @param fieldFilter an instance of {@link FieldFilter} responsible for 
     *                          determining whether a given field should be rendered.
     * @return a new instance of {@link JsoniterCodecCompiler} with the specified field skipping behavior.
     */
-  def withFieldSkipCompiler(fieldSkipCompiler: FieldFilter): JsoniterCodecCompiler
+  def withFieldFilter(fieldFilter: FieldFilter): JsoniterCodecCompiler
 
   /**
    * Changes the behaviour of Json decoders so that they overlook null values in collections

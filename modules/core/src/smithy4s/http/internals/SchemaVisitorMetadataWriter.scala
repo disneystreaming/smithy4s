@@ -49,16 +49,16 @@ import smithy4s.codecs.FieldFilter
 class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode],
     commaDelimitedEncoding: Boolean,
-    fieldSkipCompiler: FieldFilter
+    fieldFilter: FieldFilter
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
 
   @deprecated(
-    message = """Use constructor with FieldSkipCompiler instead.
+    message = """Use constructor with FieldFilter instead.
       
   Mapping:
-   - explicitDefaultsEncoding = false -> FieldSkipCompiler.SkipNonRequired
-   - explicitDefaultsEncoding = true -> FieldSkipCompiler.EncodeAll
+   - explicitDefaultsEncoding = false -> FieldFilter.SkipNonRequired
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
   )
@@ -192,7 +192,7 @@ class SchemaVisitorMetadataWriter(
           val encoder = self(field.schema.addHints(Hints(binding)))
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
-            val shouldRender = fieldSkipCompiler.compile(field)
+            val shouldRender = fieldFilter.compile(field)
             val value = field.get(s)
             if (shouldRender(value)) {
               updateFunction(metadata, value)

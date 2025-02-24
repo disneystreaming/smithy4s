@@ -37,42 +37,42 @@ import smithy4s.codecs.FieldFilter
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(
     val jsonCodecs: JsonPayloadCodecCompiler,
-    val fieldSkipCompiler: FieldFilter,
+    val fieldFilter: FieldFilter,
     val hostPrefixInjection: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
 
   def transformJsonCodecs(f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler): SimpleRestJsonCodecs =
-    new SimpleRestJsonCodecs(f(jsonCodecs), fieldSkipCompiler, hostPrefixInjection)
+    new SimpleRestJsonCodecs(f(jsonCodecs), fieldFilter, hostPrefixInjection)
 
   @deprecated(
-    message = """Use withFieldSkipCompiler instead.
+    message = """Use withFieldFilter instead.
       
   Mapping:
-   - newExplicitDefaultsEncoding = false -> FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
-   - newExplicitDefaultsEncoding = true -> FieldSkipCompiler.EncodeAll
+   - newExplicitDefaultsEncoding = false -> FieldFilter.SkipIfEmptyOrDefaultOptionals
+   - newExplicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
   )
   protected def withExplicitDefaultEncoding(newExplicitDefaultsEncoding: Boolean): SimpleRestJsonCodecs =
-    withFieldSkipCompiler(
+    withFieldFilter(
       if (newExplicitDefaultsEncoding) FieldFilter.EncodeAll else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   @deprecated
-  protected val explicitDefaultsEncoding: Boolean = fieldSkipCompiler == FieldFilter.EncodeAll
+  protected val explicitDefaultsEncoding: Boolean = fieldFilter == FieldFilter.EncodeAll
 
-  def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldFilter
+  def withFieldFilter(
+      fieldFilter: FieldFilter
   ): SimpleRestJsonCodecs = new SimpleRestJsonCodecs(
-    jsonCodecs.configureJsoniterCodecCompiler(_.withFieldSkipCompiler(fieldSkipCompiler)),
-    fieldSkipCompiler,
+    jsonCodecs.configureJsoniterCodecCompiler(_.withFieldFilter(fieldFilter)),
+    fieldFilter,
     hostPrefixInjection
   )
 
   def withHostPrefixInjection(newHostPrefixInjection: Boolean): SimpleRestJsonCodecs =
-    new SimpleRestJsonCodecs(jsonCodecs, fieldSkipCompiler, newHostPrefixInjection)
+    new SimpleRestJsonCodecs(jsonCodecs, fieldFilter, newHostPrefixInjection)
 
   // val mediaType = HttpMediaType("application/json")
   private val payloadEncoders: BlobEncoder.Compiler =
@@ -115,7 +115,7 @@ private[http4s] class SimpleRestJsonCodecs(
       .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
       .withMetadataDecoders(Metadata.Decoder)
       .withMetadataEncoders(
-        Metadata.Encoder.withFieldSkipCompiler(fieldSkipCompiler)
+        Metadata.Encoder.withFieldFilter(fieldFilter)
       )
       .withBaseRequest(_ => baseRequest.pure[F])
       .withRequestMediaType("application/json")

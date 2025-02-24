@@ -49,7 +49,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
     val cache: CompilationCache[JCodec],
-    fieldSkipCompiler: FieldFilter
+    fieldFilter: FieldFilter
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
@@ -1412,7 +1412,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): (Z, JsonWriter) => Unit = {
     val codec = apply(field.schema)
     val jLabel = jsonLabel(field)
-    val shouldRender = fieldSkipCompiler.compile(field)
+    val shouldRender = fieldFilter.compile(field)
     (z: Z, out: JsonWriter) =>
       val a = field.get(z)
       if (shouldRender(a)) {

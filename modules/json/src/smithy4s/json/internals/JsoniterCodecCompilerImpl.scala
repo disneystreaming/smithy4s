@@ -29,7 +29,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     hintMask: Option[HintMask],
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
-    fieldSkipCompiler: FieldFilter
+    fieldFilter: FieldFilter
 ) extends CachedSchemaCompiler.Impl[JCodec]
     with JsoniterCodecCompiler {
 
@@ -37,10 +37,10 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
 
   def withMaxArity(max: Int): JsoniterCodecCompiler = copy(maxArity = max)
 
-  def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldFilter
+  def withFieldFilter(
+      fieldFilter: FieldFilter
   ): JsoniterCodecCompiler =
-    copy(fieldSkipCompiler = fieldSkipCompiler)
+    copy(fieldFilter = fieldFilter)
 
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler =
     copy(hintMask = Some(hintMask))
@@ -73,7 +73,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
       lenientTaggedUnionDecoding,
       lenientNumericDecoding,
       cache,
-      fieldSkipCompiler
+      fieldFilter
     )
     val amendedSchema =
       hintMask
@@ -89,7 +89,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
       maxArity = JsoniterCodecCompiler.defaultMaxArity,
-      fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals,
+      fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
       preserveMapOrder = false,

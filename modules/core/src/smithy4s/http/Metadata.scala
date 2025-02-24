@@ -227,30 +227,30 @@ object Metadata {
 
   trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
     @deprecated(
-      message = """Use withFieldSkipCompiler instead.
+      message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitDefaults = false -> FieldSkipCompiler.SkipNonRequired
-   - explicitDefaults = true -> FieldSkipCompiler.EncodeAll
+   - explicitDefaults = false -> FieldFilter.SkipNonRequired
+   - explicitDefaults = true -> FieldFilter.EncodeAll
  """,
       since = "0.18.30"
     )
     def withExplicitDefaultsEncoding(
         explicitDefaults: Boolean
-    ): EncoderCompiler = withFieldSkipCompiler(
+    ): EncoderCompiler = withFieldFilter(
       if (explicitDefaults) FieldFilter.EncodeAll
       else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
-    def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldFilter
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler
   }
 
   object Encoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = false,
-        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
+        fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals
       ) {
     type Compiler = CachedSchemaCompiler[Encoder]
   }
@@ -258,12 +258,12 @@ object Metadata {
   private[smithy4s] object AwsEncoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = true,
-        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
+        fieldFilter = FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
 
   private[http] class CachedEncoderCompilerImpl(
       awsHeaderEncoding: Boolean,
-      fieldSkipCompiler: FieldFilter
+      fieldFilter: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
 
@@ -281,10 +281,10 @@ object Metadata {
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
-    def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldFilter
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler =
-      new CachedEncoderCompilerImpl(awsHeaderEncoding, fieldSkipCompiler)
+      new CachedEncoderCompilerImpl(awsHeaderEncoding, fieldFilter)
 
     def fromSchema[A](
         schema: Schema[A],
@@ -296,7 +296,7 @@ object Metadata {
       val schemaVisitor = new SchemaVisitorMetadataWriter(
         cache,
         commaDelimitedEncoding = awsHeaderEncoding,
-        fieldSkipCompiler = fieldSkipCompiler
+        fieldFilter = fieldFilter
       )
       schemaVisitor(schema) match {
         case StructureMetaEncode(f) if awsHeaderEncoding => { (a: A) =>
