@@ -22,7 +22,7 @@ import smithy4s.schema.Schema
 trait FieldSkipCompiler { self =>
   def compile[A](
       field: Field[?, A]
-  ): FieldSkipCompiler.ShouldSkip[A]
+  ): FieldSkipCompiler.ShouldRender[A]
 
   def combine(
       other: FieldSkipCompiler
@@ -31,59 +31,59 @@ trait FieldSkipCompiler { self =>
 
       def compile[A](
           field: Field[?, A]
-      ): FieldSkipCompiler.ShouldSkip[A] = {
+      ): FieldSkipCompiler.ShouldRender[A] = {
         val r1 = self.compile(field)
         val r2 = other.compile(field)
-        a => r1(a) || r2(a)
+        a => r1(a) && r2(a)
       }
     }
 }
 
 object FieldSkipCompiler {
 
-  type ShouldSkip[A] = A => Boolean
+  type ShouldRender[A] = A => Boolean
 
   private trait SkipNonRequired extends FieldSkipCompiler {
 
     final def compile[A](
         field: Field[?, A]
-    ): FieldSkipCompiler.ShouldSkip[A] = {
-      if (field.isRequired) Function.const(false)
+    ): FieldSkipCompiler.ShouldRender[A] = {
+      if (field.isRequired) Function.const(true)
       else compileOptional(field)
 
     }
 
     def compileOptional[A](
         field: Field[?, A]
-    ): FieldSkipCompiler.ShouldSkip[A]
+    ): FieldSkipCompiler.ShouldRender[A]
 
   }
 
   case object NeverSkip extends FieldSkipCompiler {
-    def compile[A](field: Field[_, A]): ShouldSkip[A] = Function.const(false)
+    def compile[A](field: Field[_, A]): ShouldRender[A] = Function.const(true)
   }
 
-  private def asEmptyCollectionPredicate[F[_], A](
+  private def asNonEmptyCollectionPredicate[F[_], A](
       schema: Schema[A]
   ): Option[A => Boolean] = {
     import Schema._
     schema match {
       case c: CollectionSchema[f, a] =>
-        Some((collectionA: f[a]) => c.tag.isEmpty(collectionA))
+        Some((collectionA: f[a]) => !c.tag.isEmpty(collectionA))
       case b: BijectionSchema[inner, a] =>
-        asEmptyCollectionPredicate[F, inner](b.underlying)
+        asNonEmptyCollectionPredicate[F, inner](b.underlying)
           .map(_.compose(b.bijection.from))
       case r: RefinementSchema[inner, a] =>
-        asEmptyCollectionPredicate[F, inner](r.underlying)
+        asNonEmptyCollectionPredicate[F, inner](r.underlying)
           .map(_.compose(r.refinement.from))
       case o: OptionSchema[inner] =>
-        asEmptyCollectionPredicate(o.underlying)
+        asNonEmptyCollectionPredicate(o.underlying)
           .map(predicateInner =>
             collectionA => collectionA.exists(predicateInner)
           )
       case _: MapSchema[k, v] =>
-        Some(collectionA => collectionA.isEmpty)
-      case LazySchema(suspend)     => asEmptyCollectionPredicate(suspend.value)
+        Some(collectionA => collectionA.nonEmpty)
+      case LazySchema(suspend) => asNonEmptyCollectionPredicate(suspend.value)
       case _: EnumerationSchema[_] => None
       case _: StructSchema[_]      => None
       case _: UnionSchema[_]       => None
@@ -94,10 +94,10 @@ object FieldSkipCompiler {
   private case object skipIfEmptyOptionalCollection
       extends FieldSkipCompiler.SkipNonRequired {
 
-    def compileOptional[A](field: Field[?, A]): ShouldSkip[A] = {
-      asEmptyCollectionPredicate(field.schema) match {
-        case None          => Function.const(false)
-        case Some(isEmpty) => isEmpty
+    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = {
+      asNonEmptyCollectionPredicate(field.schema) match {
+        case None             => Function.const(true)
+        case Some(isNonEmpty) => isNonEmpty
       }
     }
   }
@@ -107,19 +107,19 @@ object FieldSkipCompiler {
 
   case object SkipIfEmptyCollection extends FieldSkipCompiler {
 
-    def compile[A](field: Field[_, A]): ShouldSkip[A] = {
-      asEmptyCollectionPredicate(field.schema) match {
-        case None          => Function.const(false)
-        case Some(isEmpty) => isEmpty
+    def compile[A](field: Field[_, A]): ShouldRender[A] = {
+      asNonEmptyCollectionPredicate(field.schema) match {
+        case None             => Function.const(true)
+        case Some(isNonEmpty) => isNonEmpty
       }
     }
   }
 
   private case object skipIfDefaultOptionals
       extends FieldSkipCompiler.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): ShouldSkip[A] = {
+    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = {
       // Optional fields have None as their default, so we need to make sure not to skip them here
-      a => a != None && field.isDefaultValue(a)
+      a => a == None || !field.isDefaultValue(a)
     }
   }
 
@@ -127,15 +127,15 @@ object FieldSkipCompiler {
 
   private case object skipIfEmptyOptionals
       extends FieldSkipCompiler.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): ShouldSkip[A] = { a =>
-      a == None
+    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = { a =>
+      a != None
     }
   }
 
   val SkipIfEmptyOptionals: FieldSkipCompiler = skipIfEmptyOptionals
 
   object SkipIfEmptyOrDefaultOptionals extends FieldSkipCompiler {
-    def compile[A](field: Field[_, A]): ShouldSkip[A] =
+    def compile[A](field: Field[_, A]): ShouldRender[A] =
       (SkipIfEmptyOptionals combine SkipIfDefaultOptionals).compile(field)
   }
 }

@@ -234,10 +234,10 @@ class DocumentEncoderSchemaVisitor(
         .get(JsonName)
         .map(_.value)
         .getOrElse(field.label)
-      val shouldSkip = fieldSkipCompiler.compile(field)
+      val shouldRender = fieldSkipCompiler.compile(field)
       (s, builder) =>
         val value = field.get(s)
-        if (!shouldSkip(value)) {
+        if (shouldRender(value)) {
           builder.+=(jsonLabel -> encoder.apply(value))
         }
     }
@@ -246,10 +246,10 @@ class DocumentEncoderSchemaVisitor(
         field: Field[S, A]
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
       val encoder = apply(field.schema)
-      val shouldSkip = fieldSkipCompiler.compile(field)
+      val shouldRender = fieldSkipCompiler.compile(field)
       (s, builder) => {
         val value = field.get(s)
-        if (!shouldSkip(value)) {
+        if (shouldRender(value)) {
           encoder(value) match {
             case Document.DObject(value) => value.foreach(builder += _)
             case _ =>
