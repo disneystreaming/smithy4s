@@ -83,7 +83,7 @@ class JsonCodecApiTests extends FunSuite {
   }
 
   test(
-    "explicit nulls should be parsable regardless of explicitDefaultsEncoding setting"
+    "explicit nulls should be parsable regardless of fieldFilter setting"
   ) {
     val withoutNulls = Json.payloadCodecs
     val withNulls = Json.payloadCodecs.withJsoniterCodecCompiler(

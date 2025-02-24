@@ -519,7 +519,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   test(
-    "document encoder - FieldRenderPredicateCompiler.SkipEmptyOptionals and keep defaults"
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
       .withFieldFilter(
@@ -545,7 +545,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   test(
-    "document encoder - FieldRenderPredicateCompiler.SkipEmptyOptionals and keep defaults"
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
       .withFieldFilter(
