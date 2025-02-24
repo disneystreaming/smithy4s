@@ -409,7 +409,7 @@ lazy val codegen = projectMatrix
       "alloyOrg" -> Dependencies.Alloy.org,
       "alloyVersion" -> Dependencies.Alloy.alloyVersion,
       "smithy4sOrg" -> organization.value,
-      "protocolArtifactName" -> "smithy4s-protocol",
+      "protocolArtifactName" -> "smithy4s-protocol"
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
@@ -981,6 +981,7 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.guides.hello",
       "smithy4s.example.hello",
       "smithy4s.example.test",
+      "smithy4s.example.onlyValidated",
       "smithy4s.example.package",
       "smithy4s.example.protobuf",
       "weather",

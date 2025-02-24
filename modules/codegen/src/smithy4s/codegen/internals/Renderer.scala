@@ -162,8 +162,8 @@ private[internals] object Renderer {
     }
 
     val packageApplicableDecls = unit.declarations.filter {
-      case _: TypeAlias | _: Service => true
-      case _                         => false
+      case _: TypeAlias | _: ValidatedTypeAlias | _: Service => true
+      case _                                                 => false
     }
 
     if (packageApplicableDecls.isEmpty) classes
