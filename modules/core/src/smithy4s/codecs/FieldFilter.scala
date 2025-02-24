@@ -20,8 +20,8 @@ import smithy4s.schema.Field
 import smithy4s.schema.Schema
 
 trait FieldFilter { self =>
-  def compile[A](
-      field: Field[?, A]
+  def compile[S, A](
+      field: Field[S, A]
   ): FieldFilter.Predicate[A]
 
   def &&(other: FieldFilter): FieldFilter =
@@ -41,8 +41,8 @@ object FieldFilter {
   private case class FieldFilterAnd(left: FieldFilter, right: FieldFilter)
       extends FieldFilter {
 
-    def compile[A](
-        field: Field[?, A]
+    def compile[S, A](
+        field: Field[S, A]
     ): FieldFilter.Predicate[A] = {
       val r1 = left.compile(field)
       val r2 = right.compile(field)
@@ -53,8 +53,8 @@ object FieldFilter {
   private case class FieldFilterOr(left: FieldFilter, right: FieldFilter)
       extends FieldFilter {
 
-    def compile[A](
-        field: Field[?, A]
+    def compile[S, A](
+        field: Field[S, A]
     ): FieldFilter.Predicate[A] = {
       val r1 = left.compile(field)
       val r2 = right.compile(field)
@@ -64,8 +64,8 @@ object FieldFilter {
 
   private case class FieldFilterNot(inner: FieldFilter) extends FieldFilter {
 
-    def compile[A](
-        field: Field[?, A]
+    def compile[S, A](
+        field: Field[S, A]
     ): FieldFilter.Predicate[A] = {
       val r1 = inner.compile(field)
       a => !r1(a)
@@ -74,22 +74,22 @@ object FieldFilter {
 
   private trait SkipNonRequired extends FieldFilter {
 
-    final def compile[A](
-        field: Field[?, A]
+    final def compile[S, A](
+        field: Field[S, A]
     ): FieldFilter.Predicate[A] = {
       if (field.isRequired) Function.const(true)
       else compileOptional(field)
 
     }
 
-    def compileOptional[A](
-        field: Field[?, A]
+    def compileOptional[S, A](
+        field: Field[S, A]
     ): FieldFilter.Predicate[A]
 
   }
 
   case object EncodeAll extends FieldFilter {
-    def compile[A](field: Field[_, A]): Predicate[A] = Function.const(true)
+    def compile[S, A](field: Field[S, A]): Predicate[A] = Function.const(true)
   }
 
   private def asNonEmptyCollectionPredicate[F[_], A](
@@ -123,7 +123,7 @@ object FieldFilter {
   private case object skipIfEmptyOptionalCollection
       extends FieldFilter.SkipNonRequired {
 
-    def compileOptional[A](field: Field[?, A]): Predicate[A] = {
+    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
         case None             => Function.const(true)
         case Some(isNonEmpty) => isNonEmpty
@@ -136,7 +136,7 @@ object FieldFilter {
 
   case object SkipIfEmptyCollection extends FieldFilter {
 
-    def compile[A](field: Field[_, A]): Predicate[A] = {
+    def compile[S, A](field: Field[S, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
         case None             => Function.const(true)
         case Some(isNonEmpty) => isNonEmpty
@@ -146,7 +146,7 @@ object FieldFilter {
 
   private case object skipIfDefaultOptionals
       extends FieldFilter.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): Predicate[A] = {
+    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = {
       // Optional fields have None as their default, so we need to make sure not to skip them here
       a => a == None || !field.isDefaultValue(a)
     }
@@ -155,7 +155,7 @@ object FieldFilter {
   val SkipIfDefaultOptionals: FieldFilter = skipIfDefaultOptionals
 
   private case object skipIfEmptyOptionals extends FieldFilter.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): Predicate[A] = { a =>
+    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = { a =>
       a != None
     }
   }
@@ -163,7 +163,7 @@ object FieldFilter {
   val SkipIfEmptyOptionals: FieldFilter = skipIfEmptyOptionals
 
   object SkipIfEmptyOrDefaultOptionals extends FieldFilter {
-    def compile[A](field: Field[_, A]): Predicate[A] =
+    def compile[S, A](field: Field[S, A]): Predicate[A] =
       (SkipIfEmptyOptionals && SkipIfDefaultOptionals).compile(field)
   }
 }
