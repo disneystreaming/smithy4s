@@ -19,13 +19,13 @@ package http4s
 
 import smithy4s.json.Json
 import smithy4s.json.JsonPayloadCodecCompiler
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 object SimpleRestJsonBuilder
     extends SimpleRestJsonBuilder(
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
-        fieldSkipCompiler = FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals,
+        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals,
         hostPrefixInjection = true
       )
     )
@@ -44,8 +44,8 @@ class SimpleRestJsonBuilder private (
   ) = {
     this {
       val fieldSkipCompiler =
-        if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-        else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+        else FieldFilter.SkipIfEmptyOrDefaultOptionals
       new internals.SimpleRestJsonCodecs(
         Json.payloadCodecs
           .withJsoniterCodecCompiler(
@@ -79,12 +79,12 @@ class SimpleRestJsonBuilder private (
       explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
     withFieldSkipCompiler(
-      if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldSkipCompiler
+      fieldSkipCompiler: FieldFilter
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.withFieldSkipCompiler(fieldSkipCompiler)

@@ -27,13 +27,13 @@ import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 class DocumentSpec() extends FunSuite {
 
   private case class TestCase(
       expectedToSkip: Boolean,
-      strategy: FieldSkipCompiler
+      strategy: FieldFilter
   )
 
   test("Recursive document codecs should not blow up the stack") {
@@ -474,7 +474,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.EncodeAll
+        FieldFilter.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
@@ -501,7 +501,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
       .fromSchema(
         DefaultNullsOperationOutput.schema
@@ -523,7 +523,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.SkipIfEmptyOptionals
+        FieldFilter.SkipIfEmptyOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
@@ -549,7 +549,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.SkipIfDefaultOptionals
+        FieldFilter.SkipIfDefaultOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
@@ -573,7 +573,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.EncodeAll
+        FieldFilter.EncodeAll
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
@@ -615,7 +615,7 @@ class DocumentSpec() extends FunSuite {
   ) {
     val result = Document.Encoder
       .withFieldSkipCompiler(
-        FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
@@ -1210,9 +1210,9 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
-    TestCase(expectedToSkip = false, FieldSkipCompiler.SkipIfEmptyOptionalCollection),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection)
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipIfEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1240,9 +1240,9 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
-    TestCase(expectedToSkip = false, FieldSkipCompiler.SkipIfEmptyOptionalCollection),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection)
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipIfEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1272,9 +1272,9 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyOptionalCollection)
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1302,9 +1302,9 @@ class DocumentSpec() extends FunSuite {
   }
 
   List(
-    TestCase(expectedToSkip = false, FieldSkipCompiler.EncodeAll),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyCollection),
-    TestCase(expectedToSkip = true, FieldSkipCompiler.SkipIfEmptyOptionalCollection)
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1336,7 +1336,7 @@ class DocumentSpec() extends FunSuite {
       RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
 
     val document = Document.Encoder
-      .withFieldSkipCompiler(FieldSkipCompiler.SkipIfEmptyCollection)
+      .withFieldSkipCompiler(FieldFilter.SkipIfEmptyCollection)
       .fromSchema(RecursiveListWrapper.schema)
       .encode(recursive)
     import Document._

@@ -39,7 +39,7 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.ListMap
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
@@ -49,7 +49,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
     val cache: CompilationCache[JCodec],
-    fieldSkipCompiler: FieldSkipCompiler
+    fieldSkipCompiler: FieldFilter
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 

@@ -32,12 +32,12 @@ import org.http4s.Request
 import org.http4s.Uri
 import smithy4s.http.HttpMethod
 import smithy4s.json.JsonPayloadCodecCompiler
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(
     val jsonCodecs: JsonPayloadCodecCompiler,
-    val fieldSkipCompiler: FieldSkipCompiler,
+    val fieldSkipCompiler: FieldFilter,
     val hostPrefixInjection: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
@@ -57,14 +57,14 @@ private[http4s] class SimpleRestJsonCodecs(
   )
   protected def withExplicitDefaultEncoding(newExplicitDefaultsEncoding: Boolean): SimpleRestJsonCodecs =
     withFieldSkipCompiler(
-      if (newExplicitDefaultsEncoding) FieldSkipCompiler.EncodeAll else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (newExplicitDefaultsEncoding) FieldFilter.EncodeAll else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   @deprecated
-  protected val explicitDefaultsEncoding: Boolean = fieldSkipCompiler == FieldSkipCompiler.EncodeAll
+  protected val explicitDefaultsEncoding: Boolean = fieldSkipCompiler == FieldFilter.EncodeAll
 
   def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldSkipCompiler
+      fieldSkipCompiler: FieldFilter
   ): SimpleRestJsonCodecs = new SimpleRestJsonCodecs(
     jsonCodecs.configureJsoniterCodecCompiler(_.withFieldSkipCompiler(fieldSkipCompiler)),
     fieldSkipCompiler,

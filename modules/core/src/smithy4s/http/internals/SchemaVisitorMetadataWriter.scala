@@ -32,7 +32,7 @@ import smithy4s.schema.{
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 import java.util.Base64
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -49,7 +49,7 @@ import smithy4s.codecs.FieldSkipCompiler
 class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode],
     commaDelimitedEncoding: Boolean,
-    fieldSkipCompiler: FieldSkipCompiler
+    fieldSkipCompiler: FieldFilter
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
 
@@ -69,8 +69,8 @@ class SchemaVisitorMetadataWriter(
   ) = this(
     cache,
     commaDelimitedEncoding,
-    if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-    else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+    if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+    else FieldFilter.SkipIfEmptyOrDefaultOptionals
   )
 
   override def primitive[P](

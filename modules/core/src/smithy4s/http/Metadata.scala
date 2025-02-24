@@ -23,7 +23,7 @@ import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.CompilationCache
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -238,19 +238,19 @@ object Metadata {
     def withExplicitDefaultsEncoding(
         explicitDefaults: Boolean
     ): EncoderCompiler = withFieldSkipCompiler(
-      if (explicitDefaults) FieldSkipCompiler.EncodeAll
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (explicitDefaults) FieldFilter.EncodeAll
+      else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
     def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldSkipCompiler
+        fieldSkipCompiler: FieldFilter
     ): EncoderCompiler
   }
 
   object Encoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = false,
-        fieldSkipCompiler = FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
       ) {
     type Compiler = CachedSchemaCompiler[Encoder]
   }
@@ -258,12 +258,12 @@ object Metadata {
   private[smithy4s] object AwsEncoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = true,
-        fieldSkipCompiler = FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
 
   private[http] class CachedEncoderCompilerImpl(
       awsHeaderEncoding: Boolean,
-      fieldSkipCompiler: FieldSkipCompiler
+      fieldSkipCompiler: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
 
@@ -273,8 +273,8 @@ object Metadata {
         explicitDefaultsEncoding: Boolean
     ) = this(
       awsHeaderEncoding,
-      if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
     type Aux[A] = internals.MetaEncode[A]
@@ -282,7 +282,7 @@ object Metadata {
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
     def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldSkipCompiler
+        fieldSkipCompiler: FieldFilter
     ): EncoderCompiler =
       new CachedEncoderCompilerImpl(awsHeaderEncoding, fieldSkipCompiler)
 

@@ -23,7 +23,7 @@ import smithy.api._
 import alloy._
 
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 /**
   * A codec compiler that produces jsoniter's JsonCodec
@@ -59,8 +59,8 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
       explicitNulls: Boolean
   ): JsoniterCodecCompiler =
     withFieldSkipCompiler(
-      if (explicitNulls) FieldSkipCompiler.EncodeAll
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (explicitNulls) FieldFilter.EncodeAll
+      else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   /**
@@ -71,7 +71,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     *                          determining whether a given field should be rendered.
     * @return a new instance of {@link JsoniterCodecCompiler} with the specified field skipping behavior.
     */
-  def withFieldSkipCompiler(fieldSkipCompiler: FieldSkipCompiler): JsoniterCodecCompiler
+  def withFieldSkipCompiler(fieldSkipCompiler: FieldFilter): JsoniterCodecCompiler
 
   /**
    * Changes the behaviour of Json decoders so that they overlook null values in collections

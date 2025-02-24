@@ -19,7 +19,7 @@ package internals
 
 import smithy4s.HintMask
 import smithy4s.schema._
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
@@ -29,7 +29,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     hintMask: Option[HintMask],
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
-    fieldSkipCompiler: FieldSkipCompiler
+    fieldSkipCompiler: FieldFilter
 ) extends CachedSchemaCompiler.Impl[JCodec]
     with JsoniterCodecCompiler {
 
@@ -38,7 +38,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def withMaxArity(max: Int): JsoniterCodecCompiler = copy(maxArity = max)
 
   def withFieldSkipCompiler(
-      fieldSkipCompiler: FieldSkipCompiler
+      fieldSkipCompiler: FieldFilter
   ): JsoniterCodecCompiler =
     copy(fieldSkipCompiler = fieldSkipCompiler)
 
@@ -89,7 +89,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
       maxArity = JsoniterCodecCompiler.defaultMaxArity,
-      fieldSkipCompiler = FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals,
+      fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
       preserveMapOrder = false,

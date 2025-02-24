@@ -45,7 +45,7 @@ import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PString
 import alloy.Untagged
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 trait DocumentEncoder[A] { self =>
 
@@ -77,7 +77,7 @@ object DocumentEncoder {
 
 class DocumentEncoderSchemaVisitor(
     val cache: CompilationCache[DocumentEncoder],
-    val fieldSkipCompiler: FieldSkipCompiler
+    val fieldSkipCompiler: FieldFilter
 ) extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
 
@@ -88,8 +88,8 @@ class DocumentEncoderSchemaVisitor(
     this(
       cache,
       fieldSkipCompiler =
-        if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-        else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+        else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
   def this(cache: CompilationCache[DocumentEncoder]) =
@@ -97,7 +97,7 @@ class DocumentEncoderSchemaVisitor(
 
   @deprecated
   protected val explicitDefaultsEncoding: Boolean =
-    fieldSkipCompiler == FieldSkipCompiler.EncodeAll
+    fieldSkipCompiler == FieldFilter.EncodeAll
 
   override def primitive[P](
       shapeId: ShapeId,

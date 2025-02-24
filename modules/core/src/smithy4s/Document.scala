@@ -21,7 +21,7 @@ import smithy4s.schema.CachedSchemaCompiler
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
 import smithy4s.codecs.PayloadError
-import smithy4s.codecs.FieldSkipCompiler
+import smithy4s.codecs.FieldFilter
 
 /**
   * A json-like free-form structure serving as a model for
@@ -110,22 +110,22 @@ object Document {
     def withExplicitDefaultsEncoding(
         explicitDefaultsEncoding: Boolean
     ): EncoderCompiler = withFieldSkipCompiler(
-      if (explicitDefaultsEncoding) FieldSkipCompiler.EncodeAll
-      else FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.SkipIfEmptyOrDefaultOptionals
     )
 
     def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldSkipCompiler
+        fieldSkipCompiler: FieldFilter
     ): EncoderCompiler
   }
 
   object Encoder
       extends CachedEncoderCompilerImpl(
-        fieldSkipCompiler = FieldSkipCompiler.SkipIfEmptyOrDefaultOptionals
+        fieldSkipCompiler = FieldFilter.SkipIfEmptyOrDefaultOptionals
       )
 
   private[smithy4s] class CachedEncoderCompilerImpl(
-      fieldSkipCompiler: FieldSkipCompiler
+      fieldSkipCompiler: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
 
@@ -147,7 +147,7 @@ object Document {
     }
 
     def withFieldSkipCompiler(
-        fieldSkipCompiler: FieldSkipCompiler
+        fieldSkipCompiler: FieldFilter
     ): EncoderCompiler = new CachedEncoderCompilerImpl(
       fieldSkipCompiler
     )

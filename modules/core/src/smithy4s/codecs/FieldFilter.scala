@@ -19,19 +19,19 @@ package smithy4s.codecs
 import smithy4s.schema.Field
 import smithy4s.schema.Schema
 
-trait FieldSkipCompiler { self =>
+trait FieldFilter { self =>
   def compile[A](
       field: Field[?, A]
-  ): FieldSkipCompiler.ShouldRender[A]
+  ): FieldFilter.Predicate[A]
 
   def combine(
-      other: FieldSkipCompiler
-  ): FieldSkipCompiler =
-    new FieldSkipCompiler {
+      other: FieldFilter
+  ): FieldFilter =
+    new FieldFilter {
 
       def compile[A](
           field: Field[?, A]
-      ): FieldSkipCompiler.ShouldRender[A] = {
+      ): FieldFilter.Predicate[A] = {
         val r1 = self.compile(field)
         val r2 = other.compile(field)
         a => r1(a) && r2(a)
@@ -39,15 +39,15 @@ trait FieldSkipCompiler { self =>
     }
 }
 
-object FieldSkipCompiler {
+object FieldFilter {
 
-  type ShouldRender[A] = A => Boolean
+  type Predicate[A] = A => Boolean
 
-  private trait SkipNonRequired extends FieldSkipCompiler {
+  private trait SkipNonRequired extends FieldFilter {
 
     final def compile[A](
         field: Field[?, A]
-    ): FieldSkipCompiler.ShouldRender[A] = {
+    ): FieldFilter.Predicate[A] = {
       if (field.isRequired) Function.const(true)
       else compileOptional(field)
 
@@ -55,12 +55,12 @@ object FieldSkipCompiler {
 
     def compileOptional[A](
         field: Field[?, A]
-    ): FieldSkipCompiler.ShouldRender[A]
+    ): FieldFilter.Predicate[A]
 
   }
 
-  case object EncodeAll extends FieldSkipCompiler {
-    def compile[A](field: Field[_, A]): ShouldRender[A] = Function.const(true)
+  case object EncodeAll extends FieldFilter {
+    def compile[A](field: Field[_, A]): Predicate[A] = Function.const(true)
   }
 
   private def asNonEmptyCollectionPredicate[F[_], A](
@@ -92,9 +92,9 @@ object FieldSkipCompiler {
   }
 
   private case object skipIfEmptyOptionalCollection
-      extends FieldSkipCompiler.SkipNonRequired {
+      extends FieldFilter.SkipNonRequired {
 
-    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = {
+    def compileOptional[A](field: Field[?, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
         case None             => Function.const(true)
         case Some(isNonEmpty) => isNonEmpty
@@ -102,12 +102,12 @@ object FieldSkipCompiler {
     }
   }
 
-  val SkipIfEmptyOptionalCollection: FieldSkipCompiler =
+  val SkipIfEmptyOptionalCollection: FieldFilter =
     skipIfEmptyOptionalCollection
 
-  case object SkipIfEmptyCollection extends FieldSkipCompiler {
+  case object SkipIfEmptyCollection extends FieldFilter {
 
-    def compile[A](field: Field[_, A]): ShouldRender[A] = {
+    def compile[A](field: Field[_, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
         case None             => Function.const(true)
         case Some(isNonEmpty) => isNonEmpty
@@ -116,26 +116,25 @@ object FieldSkipCompiler {
   }
 
   private case object skipIfDefaultOptionals
-      extends FieldSkipCompiler.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = {
+      extends FieldFilter.SkipNonRequired {
+    def compileOptional[A](field: Field[?, A]): Predicate[A] = {
       // Optional fields have None as their default, so we need to make sure not to skip them here
       a => a == None || !field.isDefaultValue(a)
     }
   }
 
-  val SkipIfDefaultOptionals: FieldSkipCompiler = skipIfDefaultOptionals
+  val SkipIfDefaultOptionals: FieldFilter = skipIfDefaultOptionals
 
-  private case object skipIfEmptyOptionals
-      extends FieldSkipCompiler.SkipNonRequired {
-    def compileOptional[A](field: Field[?, A]): ShouldRender[A] = { a =>
+  private case object skipIfEmptyOptionals extends FieldFilter.SkipNonRequired {
+    def compileOptional[A](field: Field[?, A]): Predicate[A] = { a =>
       a != None
     }
   }
 
-  val SkipIfEmptyOptionals: FieldSkipCompiler = skipIfEmptyOptionals
+  val SkipIfEmptyOptionals: FieldFilter = skipIfEmptyOptionals
 
-  object SkipIfEmptyOrDefaultOptionals extends FieldSkipCompiler {
-    def compile[A](field: Field[_, A]): ShouldRender[A] =
+  object SkipIfEmptyOrDefaultOptionals extends FieldFilter {
+    def compile[A](field: Field[_, A]): Predicate[A] =
       (SkipIfEmptyOptionals combine SkipIfDefaultOptionals).compile(field)
   }
 }
