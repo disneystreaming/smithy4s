@@ -112,7 +112,10 @@ object FieldFilter {
           )
       case _: MapSchema[k, v] =>
         Some(collectionA => collectionA.nonEmpty)
-      case LazySchema(suspend) => asNonEmptyCollectionPredicate(suspend.value)
+      case LazySchema(suspend) =>
+        // it is safe to call .value here because we don't recurse into structs/unions schemas,
+        // so we never see the same schema twice in this visitor.
+        asNonEmptyCollectionPredicate(suspend.value)
       case _: EnumerationSchema[_] => None
       case _: StructSchema[_]      => None
       case _: UnionSchema[_]       => None
