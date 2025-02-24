@@ -21,6 +21,7 @@ import smithy.api.JsonName
 import smithy4s.Blob
 import smithy4s.schema.Schema
 import smithy4s.HintMask
+import smithy4s.codecs.FieldFilter
 
 class JsonCodecApiTests extends FunSuite {
 
@@ -72,7 +73,7 @@ class JsonCodecApiTests extends FunSuite {
       )(identity)
 
     val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withExplicitDefaultsEncoding(true)
+      Json.jsoniter.withFieldSkipCompiler(FieldFilter.EncodeAll)
     )
 
     val codec = capi.encoders.fromSchema(schemaWithJsonName)
@@ -86,7 +87,7 @@ class JsonCodecApiTests extends FunSuite {
   ) {
     val withoutNulls = Json.payloadCodecs
     val withNulls = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withExplicitDefaultsEncoding(true)
+      Json.jsoniter.withFieldSkipCompiler(FieldFilter.EncodeAll)
     )
 
     List(withoutNulls, withNulls).foreach { capi =>

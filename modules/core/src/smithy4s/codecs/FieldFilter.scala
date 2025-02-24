@@ -24,24 +24,53 @@ trait FieldFilter { self =>
       field: Field[?, A]
   ): FieldFilter.Predicate[A]
 
-  def combine(
-      other: FieldFilter
-  ): FieldFilter =
-    new FieldFilter {
+  def &&(other: FieldFilter): FieldFilter =
+    FieldFilter.FieldFilterAnd(this, other)
 
-      def compile[A](
-          field: Field[?, A]
-      ): FieldFilter.Predicate[A] = {
-        val r1 = self.compile(field)
-        val r2 = other.compile(field)
-        a => r1(a) && r2(a)
-      }
-    }
+  def ||(other: FieldFilter): FieldFilter =
+    FieldFilter.FieldFilterOr(this, other)
+
+  def !(): FieldFilter = FieldFilter.FieldFilterNot(this)
+
 }
 
 object FieldFilter {
 
   type Predicate[A] = A => Boolean
+
+  private case class FieldFilterAnd(left: FieldFilter, right: FieldFilter)
+      extends FieldFilter {
+
+    def compile[A](
+        field: Field[?, A]
+    ): FieldFilter.Predicate[A] = {
+      val r1 = left.compile(field)
+      val r2 = right.compile(field)
+      a => r1(a) && r2(a)
+    }
+  }
+
+  private case class FieldFilterOr(left: FieldFilter, right: FieldFilter)
+      extends FieldFilter {
+
+    def compile[A](
+        field: Field[?, A]
+    ): FieldFilter.Predicate[A] = {
+      val r1 = left.compile(field)
+      val r2 = right.compile(field)
+      a => r1(a) || r2(a)
+    }
+  }
+
+  private case class FieldFilterNot(inner: FieldFilter) extends FieldFilter {
+
+    def compile[A](
+        field: Field[?, A]
+    ): FieldFilter.Predicate[A] = {
+      val r1 = inner.compile(field)
+      a => !r1(a)
+    }
+  }
 
   private trait SkipNonRequired extends FieldFilter {
 
@@ -135,6 +164,6 @@ object FieldFilter {
 
   object SkipIfEmptyOrDefaultOptionals extends FieldFilter {
     def compile[A](field: Field[_, A]): Predicate[A] =
-      (SkipIfEmptyOptionals combine SkipIfDefaultOptionals).compile(field)
+      (SkipIfEmptyOptionals && SkipIfDefaultOptionals).compile(field)
   }
 }
