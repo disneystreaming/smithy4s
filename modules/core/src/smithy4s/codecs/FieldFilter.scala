@@ -123,7 +123,7 @@ object FieldFilter {
     }
   }
 
-  private case object skipIfEmptyOptionalCollection
+  private case object skipEmptyOptionalCollection
       extends FieldFilter.SkipNonRequired {
 
     def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = {
@@ -134,10 +134,10 @@ object FieldFilter {
     }
   }
 
-  val SkipIfEmptyOptionalCollection: FieldFilter =
-    skipIfEmptyOptionalCollection
+  val SkipEmptyOptionalCollection: FieldFilter =
+    skipEmptyOptionalCollection
 
-  case object SkipIfEmptyCollection extends FieldFilter {
+  case object SkipEmptyCollection extends FieldFilter {
 
     def compile[S, A](field: Field[S, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
@@ -169,8 +169,5 @@ object FieldFilter {
 
   val SkipUnsetOptions: FieldFilter = skipUnsetOptions
 
-  object SkipUnsetAndDefaultOptionValues extends FieldFilter {
-    def compile[S, A](field: Field[S, A]): Predicate[A] =
-      (SkipUnsetOptions && SkipDefaultOptionValues).compile(field)
-  }
+  val Default = SkipUnsetOptions && SkipDefaultOptionValues
 }

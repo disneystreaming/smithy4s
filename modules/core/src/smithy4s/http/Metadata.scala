@@ -239,7 +239,7 @@ object Metadata {
         explicitDefaults: Boolean
     ): EncoderCompiler = withFieldFilter(
       if (explicitDefaults) FieldFilter.EncodeAll
-      else FieldFilter.SkipUnsetAndDefaultOptionValues
+      else FieldFilter.Default
     )
 
     def withFieldFilter(
@@ -250,7 +250,7 @@ object Metadata {
   object Encoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = false,
-        fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues
+        fieldFilter = FieldFilter.Default
       ) {
     type Compiler = CachedSchemaCompiler[Encoder]
   }
@@ -258,7 +258,7 @@ object Metadata {
   private[smithy4s] object AwsEncoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = true,
-        fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues
+        fieldFilter = FieldFilter.Default
       )
 
   private[http] class CachedEncoderCompilerImpl(
@@ -274,7 +274,7 @@ object Metadata {
     ) = this(
       awsHeaderEncoding,
       if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.SkipUnsetAndDefaultOptionValues
+      else FieldFilter.Default
     )
 
     type Aux[A] = internals.MetaEncode[A]

@@ -50,14 +50,14 @@ private[http4s] class SimpleRestJsonCodecs(
     message = """Use withFieldFilter instead.
       
   Mapping:
-   - newExplicitDefaultsEncoding = false -> FieldFilter.SkipUnsetAndDefaultOptionValues
+   - newExplicitDefaultsEncoding = false -> FieldFilter.Default
    - newExplicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
   )
   protected def withExplicitDefaultEncoding(newExplicitDefaultsEncoding: Boolean): SimpleRestJsonCodecs =
     withFieldFilter(
-      if (newExplicitDefaultsEncoding) FieldFilter.EncodeAll else FieldFilter.SkipUnsetAndDefaultOptionValues
+      if (newExplicitDefaultsEncoding) FieldFilter.EncodeAll else FieldFilter.Default
     )
 
   @deprecated

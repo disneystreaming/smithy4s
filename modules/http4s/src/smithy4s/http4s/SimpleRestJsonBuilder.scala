@@ -25,7 +25,7 @@ object SimpleRestJsonBuilder
     extends SimpleRestJsonBuilder(
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
-        fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues,
+        fieldFilter = FieldFilter.Default,
         hostPrefixInjection = true
       )
     )
@@ -45,7 +45,7 @@ class SimpleRestJsonBuilder private (
     this {
       val fieldFilter =
         if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-        else FieldFilter.SkipUnsetAndDefaultOptionValues
+        else FieldFilter.Default
       new internals.SimpleRestJsonCodecs(
         Json.payloadCodecs
           .withJsoniterCodecCompiler(
@@ -70,7 +70,7 @@ class SimpleRestJsonBuilder private (
     message = """Use withFieldFilter instead.
       
   Mapping:
-   - explicitDefaultsEncoding = false -> FieldFilter.SkipUnsetAndDefaultOptionValues
+   - explicitDefaultsEncoding = false -> FieldFilter.Default
    - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
  """,
     since = "0.18.30"
@@ -80,7 +80,7 @@ class SimpleRestJsonBuilder private (
   ): SimpleRestJsonBuilder =
     withFieldFilter(
       if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.SkipUnsetAndDefaultOptionValues
+      else FieldFilter.Default
     )
 
   def withFieldFilter(

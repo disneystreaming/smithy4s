@@ -60,13 +60,13 @@ structure Greeting {
 
 This protocol and its interpreters, are aware of the following traits provided out of the box:
 
-* [all simple shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-shapes)
-* composite data shapes, including collections, unions, structures.
-* [operations and services](https://awslabs.github.io/smithy/1.0/spec/core/model.html#service)
-* [enumerations](https://awslabs.github.io/smithy/1.0/spec/core/constraint-traits.html#enum-trait)
-* [error trait](https://awslabs.github.io/smithy/1.0/spec/core/type-refinement-traits.html#error-trait)
-* [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html)
-* [timestampFormat trait](https://awslabs.github.io/smithy/1.0/spec/core/protocol-traits.html?highlight=timestampformat#timestampformat-trait)
+- [all simple shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-shapes)
+- composite data shapes, including collections, unions, structures.
+- [operations and services](https://awslabs.github.io/smithy/1.0/spec/core/model.html#service)
+- [enumerations](https://awslabs.github.io/smithy/1.0/spec/core/constraint-traits.html#enum-trait)
+- [error trait](https://awslabs.github.io/smithy/1.0/spec/core/type-refinement-traits.html#error-trait)
+- [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html)
+- [timestampFormat trait](https://awslabs.github.io/smithy/1.0/spec/core/protocol-traits.html?highlight=timestampformat#timestampformat-trait)
 
 For the full list, see below.
 
@@ -74,17 +74,17 @@ For the full list, see below.
 
 The `SimpleRestJson` protocol supports 3 different union encodings :
 
-* tagged (default)
-* untagged
-* discriminated
+- tagged (default)
+- untagged
+- discriminated
 
 See the section about [unions](../../04-codegen/02-unions.md) for a detailed description.
 
 ## Json Array Arity
 
-* By default there is a limit on the arity of an array, which is 1024. This is to prevent the server from being overloaded with a large array as this is a vector for attacks.
-* This limit can be changed by setting the maxArity `smithy4s.http4s.SimpleRestJsonBuilder.withMaxArity(.)` to the desired value.
-* an example can be seen in the [client example](03-client.md)
+- By default there is a limit on the arity of an array, which is 1024. This is to prevent the server from being overloaded with a large array as this is a vector for attacks.
+- This limit can be changed by setting the maxArity `smithy4s.http4s.SimpleRestJsonBuilder.withMaxArity(.)` to the desired value.
+- an example can be seen in the [client example](03-client.md)
 
 ## Field Filtering and Explicit Null Encoding
 
@@ -92,12 +92,12 @@ By default, optional properties (headers, query parameters, structure fields) th
 
 Previously, if you wanted to include such fields and explicitly encode them as `null` or their default value, you could use `.withExplicitDefaultsEncoding(true)`.
 
-Now, for more granular control over which fields are included in the encoded output, we have introduced `.withFieldFilter(fieldFilter)`. 
+Now, for more granular control over which fields are included in the encoded output, we have introduced `.withFieldFilter(fieldFilter)`.
 This method allows you to precisely define the filtering logic using `FieldFilter`.
 
 Migrating from `withExplicitDefaultsEncoding`
 
-    The previous, default behavior (`None` and default values excluded) is now expressed by `FieldFilter.SkipUnsetAndDefaultOptionValues`.
+    The previous, default behavior (`None` and default values excluded) is now expressed by `FieldFilter.Default`.
     The behavior of `.withExplicitDefaultsEncoding(true)` (explicitly encoding null values) can be achieved using `FieldFilter.EncodeAll`.
     The methods `.withExplicitDefaultsEncoding(...)` are now deprecated in favor of `.withFieldFilter(...).`
 

@@ -70,7 +70,7 @@ class SchemaVisitorMetadataWriter(
     cache,
     commaDelimitedEncoding,
     if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-    else FieldFilter.SkipUnsetAndDefaultOptionValues
+    else FieldFilter.Default
   )
 
   override def primitive[P](

@@ -34,8 +34,8 @@ import smithy4s.codecs.FieldFilter
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
-  test("routes - FieldFilter.SkipUnsetAndDefaultOptionValues") {
-    runServerTest(fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues)
+  test("routes - FieldFilter.Default") {
+    runServerTest(fieldFilter = FieldFilter.Default)
       .map { response =>
         assert.same(
           Map(
@@ -69,9 +69,9 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
     }
   }
 
-  test("client - FieldFilter.SkipUnsetAndDefaultOptionValues") {
+  test("client - FieldFilter.Default") {
     runClientTest(
-      fieldFilter = FieldFilter.SkipUnsetAndDefaultOptionValues,
+      fieldFilter = FieldFilter.Default,
       DefaultNullsOperationInput()
     )
       .map { request =>

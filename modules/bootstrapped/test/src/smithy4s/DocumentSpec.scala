@@ -498,7 +498,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipUnsetAndDefaultOptionValues)
+      .withFieldFilter(FieldFilter.Default)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
     expect.same(
@@ -602,7 +602,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipUnsetAndDefaultOptionValues)
+      .withFieldFilter(FieldFilter.Default)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
         DefaultNullsOperationOutput(
@@ -1197,7 +1197,7 @@ class DocumentSpec() extends FunSuite {
 
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
-    TestCase(expectedToSkip = false, FieldFilter.SkipIfEmptyOptionalCollection),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
     TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
@@ -1227,7 +1227,7 @@ class DocumentSpec() extends FunSuite {
 
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
-    TestCase(expectedToSkip = false, FieldFilter.SkipIfEmptyOptionalCollection),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
     TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
@@ -1260,7 +1260,7 @@ class DocumentSpec() extends FunSuite {
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
     TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyOptionalCollection)
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1290,7 +1290,7 @@ class DocumentSpec() extends FunSuite {
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
     TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyOptionalCollection)
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
