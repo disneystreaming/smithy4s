@@ -78,11 +78,11 @@ object FieldFilter {
         field: Field[S, A]
     ): FieldFilter.Predicate[A] = {
       if (field.isRequired) Function.const(true)
-      else compileOptional(field)
+      else compileNonRequired(field)
 
     }
 
-    def compileOptional[S, A](
+    def compileNonRequired[S, A](
         field: Field[S, A]
     ): FieldFilter.Predicate[A]
 
@@ -92,7 +92,7 @@ object FieldFilter {
     def compile[S, A](field: Field[S, A]): Predicate[A] = Function.const(true)
   }
 
-  private def asNonEmptyCollectionPredicate[F[_], A](
+  private def asNonEmptyCollectionPredicate[A](
       schema: Schema[A]
   ): Option[A => Boolean] = {
     import Schema._
@@ -100,10 +100,10 @@ object FieldFilter {
       case c: CollectionSchema[f, a] =>
         Some((collectionA: f[a]) => !c.tag.isEmpty(collectionA))
       case b: BijectionSchema[inner, a] =>
-        asNonEmptyCollectionPredicate[F, inner](b.underlying)
+        asNonEmptyCollectionPredicate[inner](b.underlying)
           .map(_.compose(b.bijection.from))
       case r: RefinementSchema[inner, a] =>
-        asNonEmptyCollectionPredicate[F, inner](r.underlying)
+        asNonEmptyCollectionPredicate[inner](r.underlying)
           .map(_.compose(r.refinement.from))
       case o: OptionSchema[inner] =>
         asNonEmptyCollectionPredicate(o.underlying)
@@ -126,7 +126,7 @@ object FieldFilter {
   private case object skipIfEmptyOptionalCollection
       extends FieldFilter.SkipNonRequired {
 
-    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = {
+    def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = {
       asNonEmptyCollectionPredicate(field.schema) match {
         case None             => Function.const(true)
         case Some(isNonEmpty) => isNonEmpty
@@ -149,7 +149,7 @@ object FieldFilter {
 
   private case object skipDefaultOptionValues
       extends FieldFilter.SkipNonRequired {
-    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = {
+    def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = {
       // do not use field.hasDefaultValue as it returns always true for options
       if (field.schema.getDefault.isDefined) { a =>
         !field.isDefaultValue(a)
@@ -162,7 +162,7 @@ object FieldFilter {
   val SkipDefaultOptionValues: FieldFilter = skipDefaultOptionValues
 
   private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
-    def compileOptional[S, A](field: Field[S, A]): Predicate[A] = { a =>
+    def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = { a =>
       a != None
     }
   }
