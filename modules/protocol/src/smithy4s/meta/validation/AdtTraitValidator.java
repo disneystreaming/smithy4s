@@ -69,8 +69,19 @@ public final class AdtTraitValidator extends AbstractValidator {
     .entrySet().stream()
     .filter(entry -> entry.getValue().size() > 1)
     .map(targetWithDuplicateParents -> {
-      String targets = targetWithDuplicateParents.getValue().stream().map(ref -> ref.from.getId().toString()).sorted().collect(Collectors.joining(", "));
-      return error(targetWithDuplicateParents.getKey(), "This shape can only be referenced from one adt union, but it's referenced from " + targets);
+      // String targets = targetWithDuplicateParents.getValue().stream().map(ref -> ref.from.getId().toString()).sorted().collect(Collectors.joining(", "));
+      // for each unique "from" in parents, print the # of its occurrences
+      String targets =
+        targetWithDuplicateParents.getValue().stream()
+          .collect(Collectors.groupingBy(ref -> ref.from))
+          .entrySet().stream()
+          .map(entry -> {
+            String countSuffix =  entry.getValue().size() == 1 ? "" : String.format(" (%d times)", entry.getValue().size());
+            return entry.getKey().getId().toString() + countSuffix;
+          })
+          .sorted()
+          .collect(Collectors.joining(", "));
+      return error(targetWithDuplicateParents.getKey(), "This shape can only be referenced once and from one adt union, but it's referenced from " + targets);
     }).collect(Collectors.toList());
 
     return Stream.concat(nonStructTargets, dupes.stream()).collect(Collectors.toList());

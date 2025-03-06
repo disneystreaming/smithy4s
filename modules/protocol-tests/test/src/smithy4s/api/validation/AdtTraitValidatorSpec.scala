@@ -167,14 +167,69 @@ object AdtTraitValidatorSpec extends FunSuite {
         .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "This shape can only be referenced from one adt union, but it's referenced from test#MyUnion, test#MyUnionTwo"
+          "This shape can only be referenced once and from one adt union, but it's referenced from test#MyUnion, test#MyUnionTwo"
         )
         .build()
     )
     expect(result == expected)
   }
 
-  // todo: test what happens if the shape is targeted by the same union twice (shouldn't be done)
+  test(
+    "AdtTrait - return error when structure is targeted by the same union twice"
+  ) {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtTrait()
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("smithy.api#String")
+      .build()
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
+        .addMember(structMember)
+        .build()
+
+    val unionMember = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember"))
+      .target(struct.getId)
+      .build()
+
+    val unionMember2 = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember2"))
+      .target(struct.getId)
+      .build()
+
+    val union =
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .addMember(unionMember2)
+        .build()
+
+    val model =
+      Model.builder().addShapes(struct, union).build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("AdtTrait")
+        .shape(struct)
+        .severity(Severity.ERROR)
+        .message(
+          "This shape can only be referenced once and from one adt union, but it's referenced from test#MyUnion (2 times)"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
 
   test(
     "AdtTrait - return error when structure is targeted by a union and a structure"
@@ -228,7 +283,7 @@ object AdtTraitValidatorSpec extends FunSuite {
         .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "This shape can only be referenced from one adt union, but it's referenced from test#MyStruct2, test#MyUnion"
+          "This shape can only be referenced once and from one adt union, but it's referenced from test#MyStruct2, test#MyUnion"
         )
         .build()
     )
