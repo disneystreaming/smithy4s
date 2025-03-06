@@ -29,11 +29,8 @@ import java.util.stream.Stream;
 import software.amazon.smithy.model.selector.Selector;
 
 /**
- * Unions marked with the adt trait must have at least one member. Also, the
- * structures that the union targets must NOT be used within any other union.
- *
- * Also checks that the structures targeted are not empty (they must have at
- * least one member).
+ * All the members of an ADT union must be structures.
+ * Also, each such structure can only be referenced once in the whole model (from said union).
  */
 public final class AdtTraitValidator extends AbstractValidator {
   private final Selector adtTargetedMemberSelector = Selector.parse(
@@ -62,7 +59,7 @@ public final class AdtTraitValidator extends AbstractValidator {
       .filter(union -> !union.getAllMembers().values().stream().allMatch(mem -> model.expectShape(mem.getTarget()).isStructureShape()))
       .map(union -> error(union, "All members of an adt union must be structures"));
 
-    List<ValidationEvent> dupes = adtTargetedMemberSelector.shapes(model).flatMap(parent -> {
+    Stream<ValidationEvent> dupes = adtTargetedMemberSelector.shapes(model).flatMap(parent -> {
       return parent.getAllMembers().values().stream().map(mem -> new Reference(parent, model.expectShape(mem.getTarget())));
     })
     .collect(Collectors.groupingBy(ref -> ref.to))
@@ -82,9 +79,9 @@ public final class AdtTraitValidator extends AbstractValidator {
           .collect(Collectors.joining(", "));
 
       return error(targetWithDuplicateParents.getKey(), "This shape can only be referenced once and from one adt union, but it's referenced from " + targets);
-    }).collect(Collectors.toList());
+    });
 
-    return Stream.concat(nonStructTargets, dupes.stream()).collect(Collectors.toList());
+    return Stream.concat(nonStructTargets, dupes).collect(Collectors.toList());
   }
 
 }

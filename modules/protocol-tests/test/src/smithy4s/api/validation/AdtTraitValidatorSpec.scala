@@ -68,9 +68,7 @@ object AdtTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
-  test(
-    "AdtTrait - return error when union does not target the structure"
-  ) {
+  test("AdtTrait - return error when union does not target the structure") {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
     val adtTrait = new AdtTrait()
     val structMember = MemberShape

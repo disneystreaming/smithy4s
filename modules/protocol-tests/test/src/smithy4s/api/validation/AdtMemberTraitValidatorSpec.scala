@@ -93,11 +93,184 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtValidator")
+        .id("AdtMemberTrait")
         .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "test#MyUnion must have exactly one member targeting test#struct"
+          "This shape must be referenced by test#MyUnion because of its smithy4s.meta#adtMember trait"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
+
+  test("return no error when there are duplicate non-adtMember members") {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("smithy.api#String")
+      .build()
+
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
+        .addTrait(adtTrait)
+        .addMember(structMember)
+        .build()
+
+    val unionMember = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember"))
+      .target(struct.getId)
+      .build()
+
+    val unionMemberString1 = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMemberString1"))
+      .target("smithy.api#String")
+      .build()
+
+    val unionMemberString2 = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMemberString2"))
+      .target("smithy.api#String")
+      .build()
+
+    val union =
+      UnionShape
+        .builder()
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .addMember(unionMemberString1)
+        .addMember(unionMemberString2)
+        .build()
+
+    val model =
+      Model.builder().addShapes(struct, union).build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List.empty
+    expect(result == expected)
+  }
+
+  test("return error when structure is targeted by a union twice") {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("smithy.api#String")
+      .build()
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
+        .addTrait(adtTrait)
+        .addMember(structMember)
+        .build()
+
+    val unionMember = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember"))
+      .target(struct.getId)
+      .build()
+
+    val unionMember2 = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember2"))
+      .target(struct.getId)
+      .build()
+
+    val union =
+      UnionShape
+        .builder()
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .addMember(unionMember2)
+        .build()
+
+    val model =
+      Model.builder().addShapes(struct, union).build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("AdtMemberTrait")
+        .shape(unionMember)
+        .severity(Severity.ERROR)
+        .message(
+          "Duplicate reference to shape test#struct in container test#MyUnion - only one is allowed"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
+
+  test("return error when structure is targeted by the wrong union") {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val stringShape = StringShape.builder().id("smithy.api#String").build()
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("test#String")
+      .build()
+
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
+        .addTrait(adtTrait)
+        .addMember(structMember)
+        .build()
+
+    val unionMember = MemberShape
+      .builder()
+      .id(unionShapeId.withMember("unionMember"))
+      .target(stringShape.getId)
+      .build()
+
+    val union =
+      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
+
+    val union2ShapeId = ShapeId.fromParts("test", "MyUnionTwo")
+    val union2Member = MemberShape
+      .builder()
+      .id(union2ShapeId.withMember("unionMember"))
+      .target(struct.getId)
+      .build()
+
+    val union2 =
+      UnionShape.builder().id(union2ShapeId).addMember(union2Member).build()
+
+    val model =
+      Model.builder().addShapes(struct, stringShape, union, union2).build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("AdtMemberTrait")
+        .shape(struct)
+        .severity(Severity.ERROR)
+        .message(
+          "This shape must be referenced by test#MyUnion because of its smithy4s.meta#adtMember trait"
+        )
+        .build(),
+      ValidationEvent
+        .builder()
+        .id("AdtMemberTrait")
+        .shape(union2Member)
+        .severity(Severity.ERROR)
+        .message(
+          "Invalid reference to test#struct - due to its smithy4s.meta#adtMember trait, only test#MyUnion can reference it"
         )
         .build()
     )
@@ -132,6 +305,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val unionMember2 = unionMember.toBuilder
       .id(union2ShapeId.withMember("unionMemberTwo"))
       .build()
+
     val union2 =
       UnionShape.builder().id(union2ShapeId).addMember(unionMember2).build()
 
@@ -143,64 +317,11 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtValidator")
-        .shape(union2)
+        .id("AdtMemberTrait")
+        .shape(unionMember2)
         .severity(Severity.ERROR)
         .message(
-          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
-        )
-        .build()
-    )
-    expect(result == expected)
-  }
-
-  test("return error when structure is targeted by a union and a structure") {
-    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
-    val structMember = MemberShape
-      .builder()
-      .id("test#struct$testing")
-      .target("smithy.api#String")
-      .build()
-    val struct =
-      StructureShape
-        .builder()
-        .id("test#struct")
-        .addTrait(adtTrait)
-        .addMember(structMember)
-        .build()
-
-    val unionMember = MemberShape
-      .builder()
-      .id(unionShapeId.withMember("unionMember"))
-      .target(struct.getId)
-      .build()
-    val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
-
-    val struct2ShapeId = ShapeId.fromParts("test", "MyStruct2")
-    val structMember2 = unionMember.toBuilder
-      .id(struct2ShapeId.withMember("structMember2"))
-      .build()
-    val struct2 = StructureShape
-      .builder()
-      .id(struct2ShapeId)
-      .addMember(structMember2)
-      .build()
-
-    val model =
-      Model.builder().addShapes(struct, union, struct2).build()
-
-    val result = validator.validate(model).asScala.toList
-
-    val expected = List(
-      ValidationEvent
-        .builder()
-        .id("AdtValidator")
-        .shape(struct2)
-        .severity(Severity.ERROR)
-        .message(
-          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
+          "Invalid reference to test#struct - due to its smithy4s.meta#adtMember trait, only test#MyUnion can reference it"
         )
         .build()
     )
