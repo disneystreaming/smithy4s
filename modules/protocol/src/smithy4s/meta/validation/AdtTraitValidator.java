@@ -36,45 +36,44 @@ import software.amazon.smithy.model.selector.Selector;
  * least one member).
  */
 public final class AdtTraitValidator extends AbstractValidator {
+  private final Selector adtTargetedMemberSelector = Selector.parse(
+    String.format(":test(> member > :in(:root([trait|%s] > member > structure)))", AdtTrait.ID.toString())
+  );
 
-	private class Reference implements Comparable<Reference>{
-		Shape from;
-		Shape to;
+  private class Reference implements Comparable<Reference>{
+    Shape from;
+    Shape to;
 
-		Reference(Shape from, Shape to) {
-			this.from = from;
-			this.to = to;
-		}
+    Reference(Shape from, Shape to) {
+      this.from = from;
+      this.to = to;
+    }
 
-		@Override
-		public int compareTo(Reference o) {
-			return this.from.getId().compareTo(o.from.getId());
-		}
-	}
-	@Override
-	public List<ValidationEvent> validate(Model model) {
+    @Override
+    public int compareTo(Reference o) {
+      return this.from.getId().compareTo(o.from.getId());
+    }
+  }
 
-		Selector magicSelector = Selector.parse(
-			":test(> member > :in(:root([trait|smithy4s.meta#adt] > member > structure)))"
-		);
+  @Override
+  public List<ValidationEvent> validate(Model model) {
 
+    Stream<ValidationEvent> nonStructTargets = model.getUnionShapesWithTrait(AdtTrait.class).stream()
+      .filter(union -> !union.getAllMembers().values().stream().allMatch(mem -> model.expectShape(mem.getTarget()).isStructureShape()))
+      .map(union -> error(union, "All members of an adt union must be structures"));
 
-		List<ValidationEvent> nonStructs = model.getUnionShapesWithTrait(AdtTrait.class).stream()
-		.filter(union -> union.getAllMembers().values().stream().filter(mem -> !model.expectShape(mem.getTarget()).isStructureShape()).findAny().isPresent())
-		.map(union -> error2(union, "All members of an adt union must be structures")).collect(Collectors.toList());
+    List<ValidationEvent> dupes = adtTargetedMemberSelector.shapes(model).flatMap(parent -> {
+      return parent.getAllMembers().values().stream().map(mem -> new Reference(parent, model.expectShape(mem.getTarget())));
+    })
+    .collect(Collectors.groupingBy(ref -> ref.to))
+    .entrySet().stream()
+    .filter(entry -> entry.getValue().size() > 1)
+    .map(targetWithDuplicateParents -> {
+      String targets = targetWithDuplicateParents.getValue().stream().map(ref -> ref.from.getId().toString()).sorted().collect(Collectors.joining(", "));
+      return error(targetWithDuplicateParents.getKey(), "This shape can only be referenced from one adt union, but it's referenced from " + targets);
+    }).collect(Collectors.toList());
 
-		List<ValidationEvent> dupes = magicSelector.select(model).stream().flatMap(parent -> {
-			return parent.getAllMembers().values().stream().map(mem -> new Reference(parent, model.expectShape(mem.getTarget())));
-		}).collect(Collectors.groupingBy(ref -> ref.to)).entrySet().stream().filter(entry -> entry.getValue().size() > 1).map(entry -> {
-			String targets = entry.getValue().stream().map(ref -> ref.from.getId().toString()).sorted().collect(Collectors.joining(", "));
-			return error2(entry.getKey(), "This shape can only be referenced from one adt union, but it's referenced from " + targets);
-		}).collect(Collectors.toList());
+    return Stream.concat(nonStructTargets, dupes.stream()).collect(Collectors.toList());
+  }
 
-		return Stream.concat(nonStructs.stream(), dupes.stream()).collect(Collectors.toList());
-	}
-
-	private static ValidationEvent error2(Shape shape, String message) {
-		return ValidationEvent.builder().id("AdtValidator").sourceLocation(shape.getSourceLocation()).shape(shape)
-				.severity(Severity.ERROR).message(message).build();
-	}
 }
