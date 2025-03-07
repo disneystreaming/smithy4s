@@ -28,6 +28,7 @@ import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
 import smithy4s.codecs.FieldFilter
+import smithy4s.refined.NonEmptyList
 
 class DocumentSpec() extends FunSuite {
 
@@ -1354,6 +1355,31 @@ class DocumentSpec() extends FunSuite {
       .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
       .fromSchema(structSchema)
       .encode(MyStruct(Some(MyEnum.NonEmpty(List("a", "b")))))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
+  }
+
+  test("FieldFilter should work with refined schema") {
+    import Document._
+    case class MyStruct(
+        items: Option[NonEmptyList[String]]
+    )
+    val arr = list(string)
+      .refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat())
+      .option
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val nonEmptyList = NonEmptyList(List("a", "b")) match {
+      case Right(nel) => nel
+      case Left(err)  => sys.error(err)
+    }
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(nonEmptyList)))
 
     val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
     expect.same(result, expectedDocument)
