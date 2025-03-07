@@ -81,15 +81,17 @@ private[internals] object Renderer {
   def apply(unit: CompilationUnit): List[Result] = {
     val r = new Renderer(unit)
 
-    val pack = Result(
-      unit.namespace,
-      "package",
-      r.renderPackageContents.list
-        .map(_.segments.toList.map(_.show).mkString)
-        .mkString(
-          System.lineSeparator()
-        )
-    )
+    val packageObjectFile = r.renderPackageContents.map { packageLines =>
+      Result(
+        unit.namespace,
+        "package",
+        packageLines.list
+          .map(_.segments.toList.map(_.show).mkString)
+          .mkString(
+            System.lineSeparator()
+          )
+      )
+    }
 
     val classes = unit.declarations.map { decl =>
       val renderResult = r.renderDecl(decl) ++ newline
@@ -161,13 +163,7 @@ private[internals] object Renderer {
       Result(unit.namespace, decl.name, content)
     }
 
-    val packageApplicableDecls = unit.declarations.filter {
-      case _: TypeAlias | _: Service => true
-      case _                         => false
-    }
-
-    if (packageApplicableDecls.isEmpty) classes
-    else pack :: classes
+    packageObjectFile.toList ::: classes
   }
 
 }
@@ -271,7 +267,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
-  def renderPackageContents: Lines = {
+  def renderPackageContents: Option[Lines] = {
     val typeAliases = compilationUnit.declarations
       .collect {
         case TypeAlias(_, name, _, _, _, hints) =>
@@ -288,24 +284,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         )
       }
 
-    val blk =
-      block(
-        line"package object ${compilationUnit.namespace.split('.').last}"
-      )(
-        compilationUnit.declarations.map(renderDeclPackageContents),
-        newline,
-        typeAliases,
-        newline
-      )
+    val serviceAliases =
+      compilationUnit.declarations.map(renderDeclPackageContents)
 
-    val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
-    if (parts.size > 1) {
-      lines(
-        line"package ${parts.dropRight(1).mkString(".")}",
-        newline,
-        blk
-      )
-    } else blk
+    val packageContents = lines(serviceAliases, newline, typeAliases, newline)
+
+    packageContents.some
+      .filterNot(_.isBlank)
+      .map { contents =>
+        block(
+          line"package object ${compilationUnit.namespace.split('.').last}"
+        )(
+          contents
+        )
+      }
+      .map { blk =>
+        val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
+
+        if (parts.size > 1) {
+          lines(
+            line"package ${parts.dropRight(1).mkString(".")}",
+            newline,
+            blk
+          )
+        } else blk
+      }
   }
 
   private def renderDeclPackageContents(decl: Decl): Lines = decl match {

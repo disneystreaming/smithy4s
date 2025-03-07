@@ -23,6 +23,7 @@ import cats.kernel.Monoid
 import java.util.UUID
 
 import LineSegment._
+import cats.kernel.Eq
 
 private[internals] trait ToLine[A] {
   def render(a: A): Line
@@ -168,5 +169,6 @@ private[internals] object Line {
   val space: Line = Line(" ")
   val dot: Line = Line(".")
   implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ + _)
+  implicit val eq: Eq[Line] = Eq.fromUniversalEquals
 
 }

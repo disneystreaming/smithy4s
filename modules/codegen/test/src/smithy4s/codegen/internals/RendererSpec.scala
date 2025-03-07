@@ -686,4 +686,27 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       )
     )
   }
+
+  // regression test for https://github.com/disneystreaming/smithy4s/issues/1655
+  test("validated newtypes force creation of a package object") {
+    val smithy =
+      """$version: "2"
+        |
+        |namespace smithy4s.example
+        |
+        |use smithy4s.meta#validateNewtype
+        |
+        |@validateNewtype
+        |@length(min: 1)
+        |string SomeValidatedNewtype
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy).keySet
+
+    assert(
+      files.contains("smithy4s.example.package"),
+      files.toString + " should contain smithy4s.example.package"
+    )
+
+  }
 }
