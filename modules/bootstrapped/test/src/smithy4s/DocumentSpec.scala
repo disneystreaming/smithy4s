@@ -1198,7 +1198,7 @@ class DocumentSpec() extends FunSuite {
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
     TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1228,7 +1228,7 @@ class DocumentSpec() extends FunSuite {
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
     TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection)
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
     val expected =
@@ -1259,7 +1259,7 @@ class DocumentSpec() extends FunSuite {
 
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
     TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
@@ -1289,7 +1289,7 @@ class DocumentSpec() extends FunSuite {
 
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
-    TestCase(expectedToSkip = true, FieldFilter.SkipIfEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
     TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
   ).foreach { case TestCase(expectedToSkip, strategy) =>
     val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
@@ -1322,7 +1322,7 @@ class DocumentSpec() extends FunSuite {
       RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
 
     val document = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipIfEmptyCollection)
+      .withFieldFilter(FieldFilter.SkipEmptyCollection)
       .fromSchema(RecursiveListWrapper.schema)
       .encode(recursive)
     import Document._
@@ -1330,6 +1330,33 @@ class DocumentSpec() extends FunSuite {
       obj("items" -> array(obj("items" -> array(obj()))))
 
     expect(document == expectedDocument)
+  }
+
+  test("FieldFilter should work with bijection schema") {
+    import Document._
+    sealed trait MyEnum[+A] {}
+    case object MyEnum {
+      case object Empty extends MyEnum[Nothing]
+      case class NonEmpty[A](value: A) extends MyEnum[A]
+    }
+    case class MyStruct(
+        items: Option[MyEnum[List[String]]]
+    )
+    val arr = list(string).option
+      .biject(to = _.map(a => MyEnum.NonEmpty(a): MyEnum[List[String]]))(from = _.map {
+        case MyEnum.NonEmpty(list) => list
+        case MyEnum.Empty          => List.empty
+      })
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(MyEnum.NonEmpty(List("a", "b")))))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
   }
 
   private def inside[A, B](
