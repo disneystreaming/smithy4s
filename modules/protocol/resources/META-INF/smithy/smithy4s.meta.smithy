@@ -27,13 +27,10 @@ structure packedInputs {}
 @idRef(failWhenMissing: true, selector: "union")
 string adtMember
 
-// note: technically, the structure test in the selector is redundant
-// as it only checks that there exists at least one member that targets a struct.
-// Keeping it for now to avoid model merging issues.
 /// Implies that all members of the union are annotated with the `adtMember` trait.
 /// Further signals that the `sealed trait` for this adt will extend the traits
 /// defined by any mixins that are present on all of the adt members.
-@trait(selector: ":test(union :test(> member > structure), :not([trait|mixin]))")
+@trait(selector: ":test(union, :not([trait|mixin]))")
 structure adt {}
 
 // the indexedSeq trait can be added to list shapes in order for the generated collection
