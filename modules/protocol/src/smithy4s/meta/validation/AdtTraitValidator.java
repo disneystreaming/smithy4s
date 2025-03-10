@@ -33,8 +33,16 @@ import software.amazon.smithy.model.selector.Selector;
  * Also, each such structure can only be referenced once in the whole model (from said union).
  */
 public final class AdtTraitValidator extends AbstractValidator {
+
   private final Selector adtTargetedMemberSelector = Selector.parse(
-    String.format(":test(> member > :in(:root([trait|%s] > member > structure)))", AdtTrait.ID.toString())
+    // First part of the selector: we define an allAdtMembers variable which contains all structures directly referenced by @adt unions.
+    // Second part: we go back to the root of the model and select all shapes that directly refer to any of the above.
+    //
+    // The :root selector is necessary so that the variable correctly captures shapes starting from the root of the model, instead of the use-site of the variable.
+    //
+    // $foo and ${foo} are defining and using a variable, respectively (https://smithy.io/2.0/spec/selectors.html#variables)
+    String.format("$allAdtMembers(:root([trait|%s] > member > structure))", AdtTrait.ID.toString()) +
+                  ":test(> member > :in(${allAdtMembers}))"
   );
 
   private class Reference implements Comparable<Reference>{

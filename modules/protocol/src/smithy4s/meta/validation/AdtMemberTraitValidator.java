@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 public final class AdtMemberTraitValidator extends AbstractValidator {
 
 	private final Selector adtTargettingContainersSelector = Selector.parse(
+		// All shapes that contain at least one member that is an adtMember.
     String.format(":test(> member > [trait|%s])", AdtMemberTrait.ID.toString())
   );
 
