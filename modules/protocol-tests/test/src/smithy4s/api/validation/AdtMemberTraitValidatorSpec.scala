@@ -227,4 +227,70 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
 
     assert(events.contains(expected))
   }
+
+  test(
+    "Using adt and adtMember together is allowed - all members marked with adtMember"
+  ) {
+
+    assembleModel(
+      """$version: "2"
+        |namespace test
+        |
+        |use smithy4s.meta#adt
+        |use smithy4s.meta#adtMember
+        |
+        |@adtMember("test#MyUnion")
+        |structure struct {
+        |  testing: String
+        |}
+        |
+        |@adtMember("test#MyUnion")
+        |structure struct2 {
+        |  testing: String
+        |}
+        |
+        |@adt
+        |union MyUnion {
+        |  unionMember: struct
+        |  unionMember2: struct2
+        |}
+        |""".stripMargin
+    ).unwrap()
+
+    success
+  }
+  test(
+    "Using adt and adtMember together is allowed - some members tagged with adtMember"
+  ) {
+
+    assembleModel(
+      """$version: "2"
+        |namespace test
+        |
+        |use smithy4s.meta#adt
+        |use smithy4s.meta#adtMember
+        |
+        |@adtMember("test#MyUnion")
+        |structure struct {
+        |  testing: String
+        |}
+        |
+        |@adtMember("test#MyUnion")
+        |structure struct2 {
+        |  testing: String
+        |}
+        |
+        |structure struct3 {}
+        |
+        |@adt
+        |union MyUnion {
+        |  unionMember: struct
+        |  unionMember2: struct2
+        |  unionMember3: struct3
+        |}
+        |""".stripMargin
+    ).unwrap()
+
+    success
+  }
 }
