@@ -71,9 +71,18 @@ The options available through `JsoniterCodecCompiler` are:
 Changes the behaviour of the decoders so that they fail after a certain number of elements when decoding arrays and maps. 
 This allows to protect against some DDOS attacks.
 
-### withExplicitDefaultsEncoding
+## withFieldFilter
+
+**default**: FieldFilter.Default
+
+Changes the behaviour of Json encoders. Can be used to skip empty collections or unset optional fields to reduce the size of the final json.
+The default behavior skips unset optional fields or optional fields that have their value equal to the default value.
+
+### withExplicitDefaultsEncoding (deprecated)
 
 **default**: false
+
+This method is deprecated use `withFieldFilter` instead.
 
 Changes the behaviour of Json encoders so that optional values are encoded as
 explicit Json null values.
