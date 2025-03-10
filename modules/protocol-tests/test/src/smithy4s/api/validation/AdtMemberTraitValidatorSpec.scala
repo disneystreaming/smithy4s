@@ -47,6 +47,42 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     success
   }
 
+  test("return an error when the union is a mixin") {
+
+    val events = eventsWithoutLocations(
+      assembleModel(
+        """$version: "2"
+          |namespace test
+          |
+          |use smithy4s.meta#adtMember
+          |
+          |@adtMember("test#MyUnion")
+          |structure struct {
+          |  testing: String
+          |}
+          |
+          |@mixin
+          |union MyUnion {
+          |  unionMember: struct
+          |}
+          |""".stripMargin
+      )
+    )
+
+    val expected =
+      ValidationEvent
+        .builder()
+        .id("TraitValue")
+        .shapeId(ShapeId.fromParts("test", "struct"))
+        .severity(Severity.ERROR)
+        .message(
+          "Error validating trait `smithy4s.meta#adtMember`: Shape ID `test#MyUnion` does not match selector `union :not([trait|mixin])`"
+        )
+        .build()
+
+    assert(events.contains(expected))
+  }
+
   test("return error when union does not target the structure") {
     val events = eventsWithoutLocations(
       assembleModel(

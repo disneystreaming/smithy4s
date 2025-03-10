@@ -52,7 +52,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       .shapeId(ShapeId.fromParts("test", "MyUnion"))
       .severity(Severity.ERROR)
       .message(
-        "Trait `smithy4s.meta#adt` cannot be applied to `test#MyUnion`. This trait may only be applied to shapes that match the following selector: :test(union :not([trait|mixin]))"
+        "Trait `smithy4s.meta#adt` cannot be applied to `test#MyUnion`. This trait may only be applied to shapes that match the following selector: union :not([trait|mixin])"
       )
       .build()
 
