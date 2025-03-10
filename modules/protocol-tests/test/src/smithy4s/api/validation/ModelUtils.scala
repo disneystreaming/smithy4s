@@ -22,6 +22,7 @@ private object ModelUtils {
   def eventsWithoutLocations(
       result: ValidatedResult[?]
   ): List[ValidationEvent] = {
+    if (!result.isBroken()) sys.error("Expected a broken result")
     result.getValidationEvents.asScala.toList.map(e =>
       e.toBuilder.sourceLocation(SourceLocation.NONE).build()
     )

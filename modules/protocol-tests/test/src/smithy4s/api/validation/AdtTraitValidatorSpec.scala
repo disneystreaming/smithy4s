@@ -24,6 +24,41 @@ import ModelUtils._
 
 object AdtTraitValidatorSpec extends FunSuite {
 
+  test("AdtTrait - not allowed on mixins") {
+
+    val events = eventsWithoutLocations(
+      assembleModel(
+        """$version: "2"
+          |namespace test
+          |
+          |use smithy4s.meta#adt
+          |
+          |structure struct {
+          |  testing: String
+          |}
+          |
+          |@adt
+          |@mixin
+          |union MyUnion {
+          |  unionMember: struct
+          |}
+          |""".stripMargin
+      )
+    )
+
+    val expected = ValidationEvent
+      .builder()
+      .id("TraitTarget")
+      .shapeId(ShapeId.fromParts("test", "MyUnion"))
+      .severity(Severity.ERROR)
+      .message(
+        "Trait `smithy4s.meta#adt` cannot be applied to `test#MyUnion`. This trait may only be applied to shapes that match the following selector: :test(union :not([trait|mixin]))"
+      )
+      .build()
+
+    assert(events.contains(expected))
+  }
+
   test("AdtTrait - return no error when union targets the structure") {
     assembleModel(
       """$version: "2"
