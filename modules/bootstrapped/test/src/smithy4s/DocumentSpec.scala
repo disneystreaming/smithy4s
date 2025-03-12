@@ -541,7 +541,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.SkipDefaultOptionValues)
+      .withFieldFilter(FieldFilter.SkipNonRequiredDefaultValues)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
 

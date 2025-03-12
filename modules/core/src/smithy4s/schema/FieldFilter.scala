@@ -147,7 +147,7 @@ object FieldFilter {
     }
   }
 
-  private case object skipDefaultOptionValues
+  private case object skipNonRequiredDefaultValues
       extends FieldFilter.SkipNonRequired {
     def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = {
       // do not use field.hasDefaultValue as it returns always true for options
@@ -159,7 +159,7 @@ object FieldFilter {
     }
   }
 
-  val SkipDefaultOptionValues: FieldFilter = skipDefaultOptionValues
+  val SkipNonRequiredDefaultValues: FieldFilter = skipNonRequiredDefaultValues
 
   private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
     def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = { a =>
@@ -169,5 +169,5 @@ object FieldFilter {
 
   val SkipUnsetOptions: FieldFilter = skipUnsetOptions
 
-  val Default = SkipUnsetOptions && SkipDefaultOptionValues
+  val Default = SkipUnsetOptions && SkipNonRequiredDefaultValues
 }
