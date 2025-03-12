@@ -16,9 +16,6 @@
 
 package smithy4s.schema
 
-import smithy4s.schema.Field
-import smithy4s.schema.Schema
-
 trait FieldFilter { self =>
   def compile[S, A](
       field: Field[S, A]
