@@ -11,6 +11,7 @@ Thank you!
 * Use correct cross path for protobuf-runtime-scala in [#1648](https://github.com/disneystreaming/smithy4s/pull/1648)
 * Force rendering package object when a validated newtype is present in [#1656](https://github.com/disneystreaming/smithy4s/pull/1656)
 * Improve performance of ADT trait validator on larger Smithy models in [#1573](https://github.com/disneystreaming/smithy4s/pull/1573)
+* Move memoization of default values from Field to Schema in [#1651](https://github.com/disneystreaming/smithy4s/pull/1651)
 * Add support for more flexible encoding of defaults in [#1652](https://github.com/disneystreaming/smithy4s/pull/1652). This brings `FieldFilter` abstraction that replaces `explicitDefaultsEncoding`.
 
 # 0.18.29
