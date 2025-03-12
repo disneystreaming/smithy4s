@@ -23,7 +23,7 @@ import smithy.api._
 import alloy._
 
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 /**
   * A codec compiler that produces jsoniter's JsonCodec

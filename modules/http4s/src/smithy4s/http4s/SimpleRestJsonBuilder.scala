@@ -19,7 +19,7 @@ package http4s
 
 import smithy4s.json.Json
 import smithy4s.json.JsonPayloadCodecCompiler
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 object SimpleRestJsonBuilder
     extends SimpleRestJsonBuilder(

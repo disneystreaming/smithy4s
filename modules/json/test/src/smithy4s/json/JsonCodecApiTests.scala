@@ -21,7 +21,7 @@ import smithy.api.JsonName
 import smithy4s.Blob
 import smithy4s.schema.Schema
 import smithy4s.HintMask
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 class JsonCodecApiTests extends FunSuite {
 

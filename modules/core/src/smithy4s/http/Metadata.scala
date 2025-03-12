@@ -23,7 +23,7 @@ import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.CompilationCache
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 /**
   * Datatype containing metadata associated to a http message.

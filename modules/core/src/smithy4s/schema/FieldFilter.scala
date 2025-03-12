@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.codecs
+package smithy4s.schema
 
 import smithy4s.schema.Field
 import smithy4s.schema.Schema

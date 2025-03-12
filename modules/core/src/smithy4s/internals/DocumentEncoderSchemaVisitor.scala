@@ -45,7 +45,7 @@ import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PString
 import alloy.Untagged
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 trait DocumentEncoder[A] { self =>
 

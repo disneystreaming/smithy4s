@@ -30,7 +30,7 @@ import org.http4s.client.Client
 import smithy4s.example.DefaultNullsOperationInput
 import cats.effect.kernel.Deferred
 import smithy4s.example.TimestampOperationInput
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 

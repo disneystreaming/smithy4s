@@ -32,7 +32,7 @@ import org.http4s.Request
 import org.http4s.Uri
 import smithy4s.http.HttpMethod
 import smithy4s.json.JsonPayloadCodecCompiler
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 // scalafmt: {maxColumn = 120}
 private[http4s] class SimpleRestJsonCodecs(

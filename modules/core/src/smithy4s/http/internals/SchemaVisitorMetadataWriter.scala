@@ -32,7 +32,7 @@ import smithy4s.schema.{
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 import java.util.Base64
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 /**
  * This schema visitor works on data that is annotated with :

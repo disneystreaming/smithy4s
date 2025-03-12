@@ -39,7 +39,7 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.ListMap
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,

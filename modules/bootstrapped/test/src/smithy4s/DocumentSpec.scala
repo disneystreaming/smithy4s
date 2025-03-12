@@ -27,7 +27,7 @@ import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
-import smithy4s.codecs.FieldFilter
+import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList
 
 class DocumentSpec() extends FunSuite {
