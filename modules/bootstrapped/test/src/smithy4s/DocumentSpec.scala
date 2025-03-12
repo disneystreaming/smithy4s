@@ -1318,7 +1318,7 @@ class DocumentSpec() extends FunSuite {
 
   }
 
-  test("Recursive document structures shoould not blow up FieldFilter") {
+  test("Recursive document structures should not blow up FieldFilter") {
     val recursive: RecursiveListWrapper =
       RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
 
