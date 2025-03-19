@@ -195,7 +195,7 @@ object FieldFilter {
 
   private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
     def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] =
-      IsNoneVisitor(field.schema)
+      IsNoneVisitor(field.schema).andThen(!_)
   }
 
   val SkipUnsetOptions: FieldFilter = skipUnsetOptions
