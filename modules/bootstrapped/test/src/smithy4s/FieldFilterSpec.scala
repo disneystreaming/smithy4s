@@ -3,7 +3,6 @@ package smithy4s
 import munit.FunSuite
 import smithy4s.schema.FieldFilter
 import smithy4s.schema.Field
-import smithy4s.Schema
 import munit.Location
 
 class FieldFilterSpec extends FunSuite {
