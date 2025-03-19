@@ -19,6 +19,7 @@ package smithy4s.schema
 import smithy4s.Bijection
 import smithy4s.Lazy
 import smithy4s.Refinement
+import alloy.Nullable
 
 trait FieldFilter { self =>
   def compile[S, A](
@@ -169,8 +170,13 @@ object FieldFilter {
         schema: Schema[A],
         bijection: Bijection[A, B]
     ): Predicate[B] = {
-      val inner = this(schema)
-      a => inner(bijection.from(a))
+      if (schema.hints.has(Nullable)) {
+        // nullables are technically never None
+        Function.const(false)
+      } else {
+        val inner = this(schema)
+        a => inner(bijection.from(a))
+      }
     }
 
     override def lazily[A](suspend: Lazy[Schema[A]]): Predicate[A] = {
