@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.31
+
+* Fix an issue with `FieldFilter`'s handling of optional fields that aren't represented by an actual `Option` (e.g. bijections) in [#1662](https://github.com/disneystreaming/smithy4s/pull/1662)
+
 # 0.18.30
 
 * Add utilities for Service.Builder in [#1644](https://github.com/disneystreaming/smithy4s/pull/1644)
