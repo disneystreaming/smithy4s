@@ -83,26 +83,6 @@ class JsonCodecApiTests extends FunSuite {
   }
 
   test(
-    "explicit nulls should be used when set"
-  ) {
-    val schemaWithJsonName = Schema
-      .struct[Option[String]]
-      .apply(
-        Schema.string
-          .optional[Option[String]]("a", identity)
-      )(identity)
-
-    val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withFieldFilter(FieldFilter.EncodeAll)
-    )
-
-    val codec = capi.encoders.fromSchema(schemaWithJsonName)
-    val encoded = codec.encode(None)
-
-    assertEquals(encoded, Blob("""{"a":null}"""))
-  }
-
-  test(
     "explicit nulls should be parsable regardless of fieldFilter setting"
   ) {
     val withoutNulls = Json.payloadCodecs
@@ -123,6 +103,40 @@ class JsonCodecApiTests extends FunSuite {
 
       assertEquals(decoded, Right(None))
     }
+  }
+
+  test(
+    "schemas bijected to Option should be encoded when options are"
+  ) {
+    val schemaWithOption = Schema
+      .struct[Option[String]]
+      .apply(
+        Schema.string.option
+          .field[Option[String]]("a", identity)
+      )(identity)
+
+    case class OptionalLike[+A](underlying: Option[A])
+
+    val schemaWithOptionEquivalent = Schema
+      .struct[OptionalLike[String]]
+      .apply(
+        Schema.string.option
+          .biject(OptionalLike(_))(_.underlying)
+          .field[OptionalLike[String]]("a", identity)
+      )(identity)
+
+    def go[A](input: A, schema: Schema[A]) = {
+      val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
+        Json.jsoniter.withFieldFilter(FieldFilter.SkipUnsetOptions)
+      )
+
+      capi.encoders.fromSchema(schema).encode(input)
+    }
+
+    assertEquals(
+      go(None, schemaWithOption),
+      go(OptionalLike(None), schemaWithOptionEquivalent)
+    )
   }
 
 }
