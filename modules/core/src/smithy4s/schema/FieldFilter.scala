@@ -16,6 +16,10 @@
 
 package smithy4s.schema
 
+import smithy4s.Bijection
+import smithy4s.Lazy
+import smithy4s.Refinement
+
 trait FieldFilter { self =>
   def compile[S, A](
       field: Field[S, A]
@@ -158,10 +162,40 @@ object FieldFilter {
 
   val SkipNonRequiredDefaultValues: FieldFilter = skipNonRequiredDefaultValues
 
-  private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
-    def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] = { a =>
-      a != None
+  private object IsNoneVisitor extends SchemaVisitor.Default[Predicate] {
+    def default[A]: Predicate[A] = Function.const(false)
+
+    override def biject[A, B](
+        schema: Schema[A],
+        bijection: Bijection[A, B]
+    ): Predicate[B] = {
+      val inner = this(schema)
+      a => inner(bijection.from(a))
     }
+
+    override def lazily[A](suspend: Lazy[Schema[A]]): Predicate[A] = {
+      val u = suspend.map(this(_))
+
+      v => u.value(v)
+    }
+
+    override def option[A](
+        schema: Schema[A]
+    ): Predicate[Option[A]] = _ == None
+
+    override def refine[A, B](
+        schema: Schema[A],
+        refinement: Refinement[A, B]
+    ): Predicate[B] = {
+      val u = this(schema)
+
+      v => u(refinement.from(v))
+    }
+  }
+
+  private case object skipUnsetOptions extends FieldFilter.SkipNonRequired {
+    def compileNonRequired[S, A](field: Field[S, A]): Predicate[A] =
+      IsNoneVisitor(field.schema)
   }
 
   val SkipUnsetOptions: FieldFilter = skipUnsetOptions
