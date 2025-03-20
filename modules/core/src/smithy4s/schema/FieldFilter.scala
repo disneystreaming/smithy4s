@@ -170,13 +170,8 @@ object FieldFilter {
         schema: Schema[A],
         bijection: Bijection[A, B]
     ): Predicate[B] = {
-      if (schema.hints.has(Nullable)) {
-        // nullables are technically never None
-        Function.const(false)
-      } else {
-        val inner = this(schema)
-        a => inner(bijection.from(a))
-      }
+      val inner = this(schema)
+      a => inner(bijection.from(a))
     }
 
     override def lazily[A](suspend: Lazy[Schema[A]]): Predicate[A] = {
@@ -187,7 +182,13 @@ object FieldFilter {
 
     override def option[A](
         schema: Schema[A]
-    ): Predicate[Option[A]] = _ == None
+    ): Predicate[Option[A]] = {
+      if (schema.hints.has(Nullable)) {
+        // nullables are technically never None
+        Function.const(false)
+      } else
+        _ == None
+    }
 
     override def refine[A, B](
         schema: Schema[A],
