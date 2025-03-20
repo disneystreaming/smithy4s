@@ -24,6 +24,7 @@ import smithy4s.HintMask
 import smithy4s.schema.FieldFilter
 import smithy.api.Length
 import smithy4s.RefinementProvider
+import smithy4s.Nullable
 
 class JsonCodecApiTests extends FunSuite {
 
@@ -115,7 +116,8 @@ class JsonCodecApiTests extends FunSuite {
         justOption: Option[String],
         bijectedOption: OptionalLike[String],
         refinedOption: Option[String],
-        recursive: Option[Options]
+        recursive: Option[Options],
+        optionalNullable: Option[Nullable[String]]
     )
 
     lazy val schema: Schema[Options] = Schema.recursive {
@@ -131,7 +133,9 @@ class JsonCodecApiTests extends FunSuite {
               RefinementProvider.lengthConstraint(_.fold(0)(_.length))
             )
             .field[Options]("refinedOption", _.justOption),
-          schema.optional[Options]("recursive", _.recursive)
+          schema.optional[Options]("recursive", _.recursive),
+          Schema.string.nullable
+            .optional[Options]("optionalNullable", _.optionalNullable)
         )(Options.apply)
     }
 
@@ -148,7 +152,8 @@ class JsonCodecApiTests extends FunSuite {
             justOption = None,
             bijectedOption = OptionalLike(None),
             refinedOption = None,
-            recursive = None
+            recursive = None,
+            optionalNullable = None
           )
         )
         .toUTF8String,
@@ -167,14 +172,16 @@ class JsonCodecApiTests extends FunSuite {
                 justOption = None,
                 bijectedOption = OptionalLike(None),
                 refinedOption = None,
-                recursive = None
+                recursive = None,
+                optionalNullable = None
               )
-            )
+            ),
+            optionalNullable = Some(Nullable.Null)
           )
         )
         .toUTF8String,
       Blob(
-        """{"justOption":"a","bijectedOption":"a","refinedOption":"a","recursive":{}}"""
+        """{"justOption":"a","bijectedOption":"a","refinedOption":"a","recursive":{},"optionalNullable":null}"""
       ).toUTF8String
     )
   }

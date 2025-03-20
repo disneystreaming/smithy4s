@@ -25,6 +25,14 @@ class FieldFilterSpec extends FunSuite {
     check(Schema.string.nullable, Nullable.Null, true)
   }
 
+  test("SkipUnsetOptions should skip a None if it contains a nullable") {
+    check(Schema.string.nullable.option, None, false)
+  }
+
+  test("SkipUnsetOptions should keep optional null nullables when present") {
+    check(Schema.string.nullable.option, Some(Nullable.Null), true)
+  }
+
   private def check[A](schema: Schema[A], value: A, expectedToKeep: Boolean)(
       implicit loc: Location
   ) = {
