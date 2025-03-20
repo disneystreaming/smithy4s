@@ -18,7 +18,7 @@
     "@docusaurus/preset-classic": "2.4.3",
     "@mdx-js/react": "^1.6.21",
     "clsx": "^2.1.1",
-    "docusaurus-lunr-search": "3.5.0",
+    "docusaurus-lunr-search": "3.6.0",
     "prism-react-renderer": "^2.1.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
