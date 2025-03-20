@@ -16,10 +16,12 @@
 
 package smithy4s.schema
 
-import smithy4s.Bijection
-import smithy4s.Lazy
-import smithy4s.Refinement
+import smithy4s.~>
 import alloy.Nullable
+import smithy4s.schema.Schema.OptionSchema
+import smithy4s.schema.Schema.BijectionSchema
+import smithy4s.schema.Schema.RefinementSchema
+import smithy4s.schema.Schema.LazySchema
 
 trait FieldFilter { self =>
   def compile[S, A](
@@ -163,40 +165,24 @@ object FieldFilter {
 
   val SkipNonRequiredDefaultValues: FieldFilter = skipNonRequiredDefaultValues
 
-  private object IsNoneVisitor extends SchemaVisitor.Default[Predicate] {
-    def default[A]: Predicate[A] = Function.const(false)
+  private object IsNoneVisitor extends (Schema ~> Predicate) {
 
-    override def biject[A, B](
-        schema: Schema[A],
-        bijection: Bijection[A, B]
-    ): Predicate[B] = {
-      val inner = this(schema)
-      a => inner(bijection.from(a))
-    }
-
-    override def lazily[A](suspend: Lazy[Schema[A]]): Predicate[A] = {
-      val u = suspend.map(this(_))
-
-      v => u.value(v)
-    }
-
-    override def option[A](
-        schema: Schema[A]
-    ): Predicate[Option[A]] = {
-      if (schema.hints.has(Nullable)) {
-        // nullables are technically never None
-        Function.const(false)
-      } else
+    def apply[A](schema: Schema[A]): Predicate[A] = schema match {
+      // nullables are technically never None, so we fall through
+      case OptionSchema(underlying) if !underlying.hints.has(Nullable) =>
         _ == None
-    }
 
-    override def refine[A, B](
-        schema: Schema[A],
-        refinement: Refinement[A, B]
-    ): Predicate[B] = {
-      val u = this(schema)
+      case BijectionSchema(underlying, bijection) =>
+        this(underlying).compose(bijection.from)
 
-      v => u(refinement.from(v))
+      case RefinementSchema(underlying, refinement) =>
+        this(underlying).compose(refinement.from)
+
+      case LazySchema(suspend) =>
+        val underlying = suspend.map(this(_))
+        v => underlying.value(v)
+
+      case _ => Function.const(false)
     }
   }
 
