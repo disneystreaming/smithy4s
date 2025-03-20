@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import cats.ApplicativeError
 import cats.effect._
 import cats.syntax.all._
 import org.http4s.HttpRoutes
@@ -211,6 +212,9 @@ abstract class SimpleProtocolBuilder[P](
         }
 
     def resource: Resource[F, HttpRoutes[F]] =
+      make.leftWiden[Throwable].liftTo[Resource[F, *]]
+
+    def resource[I[_]](implicit I: ApplicativeError[I, Throwable]): Resource[I, HttpRoutes[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
   }
