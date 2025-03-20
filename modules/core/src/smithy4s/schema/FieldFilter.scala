@@ -169,8 +169,11 @@ object FieldFilter {
 
     def apply[A](schema: Schema[A]): Predicate[A] = schema match {
       // nullables are technically never None, so we fall through
-      case OptionSchema(underlying) if !underlying.hints.has(Nullable) =>
-        _ == None
+      case OptionSchema(underlying) =>
+        if (underlying.hints.has(Nullable) && !underlying.isOption)
+          Function.const(false)
+        else
+          _ == None
 
       case BijectionSchema(underlying, bijection) =>
         this(underlying).compose(bijection.from)
