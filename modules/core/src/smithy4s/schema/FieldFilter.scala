@@ -178,6 +178,9 @@ object FieldFilter {
       case RefinementSchema(underlying, refinement) =>
         this(underlying).compose(refinement.from)
 
+      // technically, realistically this case is probably not reachable
+      // because a recursive schema be wrapped in an option first, and wouldn't be traversed by this visitor.
+      // could possibly be reached from a recursive list/map
       case LazySchema(suspend) =>
         val underlying = suspend.map(this(_))
         v => underlying.value(v)
