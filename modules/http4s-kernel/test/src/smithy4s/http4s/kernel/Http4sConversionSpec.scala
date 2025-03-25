@@ -39,7 +39,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
   )
 
   http4sToSmithyAndBackUriTest(
-    uri"example.com",
+    uri"//example.com",
     uri"http://example.com/"
   )
 
@@ -109,8 +109,8 @@ object Http4sConversionSpec extends SimpleIOSuite {
   private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri) = {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
       assert.eql(
-        uri"http://localhost/",
-        fromSmithy4sHttpUri(toSmithy4sHttpUri(uri"http://localhost/"))
+        output,
+        fromSmithy4sHttpUri(toSmithy4sHttpUri(input))
       )
     }
   }
