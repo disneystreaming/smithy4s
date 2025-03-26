@@ -39,7 +39,7 @@ import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits.RequiredTrait
-import software.amazon.smithy.model.traits.TimestampFormatTrait
+// import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -837,44 +837,44 @@ private[codegen] class SmithyToIR(
 
     }
 
-  private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
-      tr: Trait
-  ): Trait = tr match {
-    case default: DefaultTrait if default.toNode == Node.nullNode =>
-      val tpe = shape.asMemberShape().asScala match {
-        case Some(memShape) => model.getShape(memShape.getTarget).get.getType
-        case None           => shape.getType
-      }
-      val newNode = tpe match {
-        case ShapeType.STRING      => Node.from("")
-        case ShapeType.MAP         => Node.objectNode()
-        case ShapeType.LIST        => Node.arrayNode()
-        case ShapeType.INTEGER     => Node.from(0)
-        case ShapeType.BIG_DECIMAL => Node.from(0)
-        case ShapeType.BIG_INTEGER => Node.from(0)
-        case ShapeType.LONG        => Node.from(0L)
-        case ShapeType.DOUBLE      => Node.from(0.0d)
-        case ShapeType.SHORT       => Node.from(0: Short)
-        case ShapeType.FLOAT       => Node.from(0.0f)
-        case ShapeType.BOOLEAN     => Node.from(false)
-        case ShapeType.BLOB        => Node.arrayNode()
-        case ShapeType.BYTE        => Node.from(0)
-        case ShapeType.TIMESTAMP =>
-          shape
-            .getTrait(classOf[TimestampFormatTrait])
-            .asScala
-            .map(_.getValue) match {
-            case Some(TimestampFormatTrait.DATE_TIME) =>
-              Node.from("1970-01-01T00:00:00.00Z")
-            case Some(TimestampFormatTrait.HTTP_DATE) =>
-              Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
-            case _ => Node.from(0)
-          }
-        case _ => default.toNode
-      }
-      new DefaultTrait(newNode)
-    case other => other
-  }
+  // private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
+  //     tr: Trait
+  // ): Trait = tr match {
+  //   case default: DefaultTrait if default.toNode == Node.nullNode =>
+  //     val tpe = shape.asMemberShape().asScala match {
+  //       case Some(memShape) => model.getShape(memShape.getTarget).get.getType
+  //       case None           => shape.getType
+  //     }
+  //     val newNode = tpe match {
+  //       case ShapeType.STRING      => Node.from("")
+  //       case ShapeType.MAP         => Node.objectNode()
+  //       case ShapeType.LIST        => Node.arrayNode()
+  //       case ShapeType.INTEGER     => Node.from(0)
+  //       case ShapeType.BIG_DECIMAL => Node.from(0)
+  //       case ShapeType.BIG_INTEGER => Node.from(0)
+  //       case ShapeType.LONG        => Node.from(0L)
+  //       case ShapeType.DOUBLE      => Node.from(0.0d)
+  //       case ShapeType.SHORT       => Node.from(0: Short)
+  //       case ShapeType.FLOAT       => Node.from(0.0f)
+  //       case ShapeType.BOOLEAN     => Node.from(false)
+  //       case ShapeType.BLOB        => Node.arrayNode()
+  //       case ShapeType.BYTE        => Node.from(0)
+  //       case ShapeType.TIMESTAMP =>
+  //         shape
+  //           .getTrait(classOf[TimestampFormatTrait])
+  //           .asScala
+  //           .map(_.getValue) match {
+  //           case Some(TimestampFormatTrait.DATE_TIME) =>
+  //             Node.from("1970-01-01T00:00:00.00Z")
+  //           case Some(TimestampFormatTrait.HTTP_DATE) =>
+  //             Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
+  //           case _ => Node.from(0)
+  //         }
+  //       case _ => default.toNode
+  //     }
+  //     new DefaultTrait(newNode)
+  //   case other => other
+  // }
 
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
@@ -896,6 +896,13 @@ private[codegen] class SmithyToIR(
     val maybeTrait = shape.getTrait(classOf[DefaultTrait])
     if (maybeTrait.isPresent()) {
       val tr = maybeTrait.get()
+
+      if (shape.getMemberName == "item") {
+        println(s"default trait: $tr")
+        println(s"node value: ${Node.prettyPrintJson(tr.toNode())}")
+        println(s"node2 ${tr.toNode().isNullNode()}")
+        println(s"node2 ${tr.toNode().isStringNode()}")
+      }
       // We're short-circuiting when encountering any external type,
       // as we do not have the means to instantiate them in a safe manner.
       def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
@@ -1084,7 +1091,7 @@ private[codegen] class SmithyToIR(
     val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
     val traits =
       if (isNullable) allTraits
-      else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
+      else allTraits
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -1148,9 +1155,14 @@ private[codegen] class SmithyToIR(
         .collect {
           case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, modifier, index, newHints)
+            val r = Field(name, tpe, modifier, index, newHints)
+            r
           case ((name, Some(tpe), modifier, hints), index) =>
-            Field(name, tpe, modifier, index, hints)
+            val r = Field(name, tpe, modifier, index, hints)
+            if (name == "item") {
+              println(s"field: $r")
+            }
+            r
         }
         .toList
 
@@ -1323,7 +1335,7 @@ private[codegen] class SmithyToIR(
   }
 
   private def unfoldNode(node: Node, shapeId: ShapeId): Fix[TypedNode] = {
-    val nodeAndType = NodeAndType(node, shapeId.tpe.get)
+    val nodeAndType = NodeAndType(node, shapeId.tpe.getOrElse(Type.unit))
     recursion.ana(unfoldNodeAndType)(nodeAndType)
   }
 
@@ -1342,10 +1354,17 @@ private[codegen] class SmithyToIR(
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
-            val node = map.get(realName).getOrElse {
-              mod.default.get.node
-            } // value or default must be present if type is not wrapped
-            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
+            println(s"FieldTypeMod:$realName")
+            val node = map
+              .get(realName)
+              .orElse {
+                mod.default.map(
+                  _.node
+                ) // value or default must be present if type is not wrapped
+              }
+              .map(a => TypedNode.FieldTN.RequiredTN(NodeAndType(a, tpe)))
+              .getOrElse(TypedNode.FieldTN.OptionalNoneTN)
+            node
           case Field(_, realName, tpe, _, _, _) =>
             map.get(realName) match {
               case Some(node) =>
@@ -1511,7 +1530,7 @@ private[codegen] class SmithyToIR(
       case (node, Primitive.Document) =>
         TypedNode.PrimitiveTN(Primitive.Document, node)
       case (node, Primitive.String) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.String, "")
+        TypedNode.OptionPrimitiveTN(Primitive.String, None)
       case (node, Primitive.Int) if node == Node.nullNode =>
         TypedNode.PrimitiveTN(Primitive.Int, 0)
       case (node, Primitive.Long) if node == Node.nullNode =>

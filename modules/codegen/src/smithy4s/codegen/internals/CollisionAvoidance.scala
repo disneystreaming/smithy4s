@@ -258,6 +258,8 @@ private[internals] object CollisionAvoidance {
           CollectionTN(collectionType, values)
         case PrimitiveTN(prim, value) =>
           PrimitiveTN(prim, value)
+        case OptionPrimitiveTN(prim, value) =>
+          OptionPrimitiveTN(prim, value)
       }
     }
 

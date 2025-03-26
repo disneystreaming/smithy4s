@@ -26,3 +26,15 @@ structure Dog {
     @required
     name: String
 }
+
+structure Person1 {
+    item: String = null
+}
+
+structure Person2 {
+    item: String
+}
+
+structure Person3 {
+    item: String = ""
+}

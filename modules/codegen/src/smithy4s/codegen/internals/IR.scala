@@ -34,6 +34,7 @@ import TypedNode.AltValueTN.TypeAltTN
 import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
+import smithy4s.codegen.internals.TypedNode.OptionPrimitiveTN
 
 private[internals] case class CompilationUnit(
     rawNamespace: String,
@@ -174,12 +175,21 @@ private[internals] object Field {
       nullable: Boolean,
       default: Option[Default]
   ) {
+
+    private def isDefaultNullish(hint: Fix[TypedNode]): Boolean =
+      hint.unfix match {
+        case OptionPrimitiveTN(_, _) => true
+        case _                       => false
+      }
+
     def typeMod: TypeModification =
       if (!required && nullable && default.isEmpty)
         TypeModification.OptionNullable // nullable without default or required gets rendered as Option[Nullable[T]]
       else if (nullable)
         TypeModification.Nullable // other nullables get rendered as just Nullable[T]
-      else if (!required && default.isEmpty)
+      else if (
+        !required && default.flatMap(d => d.typedNode).forall(isDefaultNullish)
+      )
         TypeModification.Option // normal line without default or required gets rendered as Option[T]
       else
         TypeModification.None // everything else just gets rendered as T
@@ -480,6 +490,8 @@ private[internals] object TypedNode {
           values.traverse(f).map(CollectionTN(collectionType, _))
         case PrimitiveTN(prim, value) =>
           F.pure(PrimitiveTN(prim, value))
+        case OptionPrimitiveTN(prim, value) =>
+          F.pure(OptionPrimitiveTN(prim, value))
       }
       def foldLeft[A, B](fa: TypedNode[A], b: B)(f: (B, A) => B): B = ???
       def foldRight[A, B](fa: TypedNode[A], lb: Eval[B])(
@@ -507,5 +519,6 @@ private[internals] object TypedNode {
       extends TypedNode[A]
   case class PrimitiveTN[T](prim: Primitive.Aux[T], value: T)
       extends TypedNode[Nothing]
-
+  case class OptionPrimitiveTN[T](prim: Primitive.Aux[T], value: Option[T])
+      extends TypedNode[Nothing]
 }

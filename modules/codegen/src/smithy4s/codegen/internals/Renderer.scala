@@ -1626,6 +1626,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         .intercalate(Line.comma)})".writeCollection
     case PrimitiveTN(prim, value) =>
       renderPrimitive[prim.T](prim)(value).write
+    case OptionPrimitiveTN(_, _) => 
+      //TODO assuming that there is null default
+      line"scala.None".write
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
