@@ -34,7 +34,6 @@ import TypedNode.AltValueTN.TypeAltTN
 import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
-import smithy4s.codegen.internals.TypedNode.OptionPrimitiveTN
 
 private[internals] case class CompilationUnit(
     rawNamespace: String,
@@ -176,11 +175,16 @@ private[internals] object Field {
       default: Option[Default]
   ) {
 
-    private def isDefaultNullish(hint: Fix[TypedNode]): Boolean =
-      hint.unfix match {
-        case OptionPrimitiveTN(_, _) => true
-        case _                       => false
-      }
+    private def hasNullValue(hint: Fix[TypedNode]): Boolean = {
+      def check(hint: TypedNode[Boolean]): Boolean =
+        hint match {
+          case TypedNode.PrimitiveTN(_, v) => v == None
+          // case TypedNode.CollectionTN(_, v) => v == None
+          case _ => false
+        }
+
+      recursion.cata(check)(hint)
+    }
 
     def typeMod: TypeModification =
       if (!required && nullable && default.isEmpty)
@@ -188,7 +192,7 @@ private[internals] object Field {
       else if (nullable)
         TypeModification.Nullable // other nullables get rendered as just Nullable[T]
       else if (
-        !required && default.flatMap(d => d.typedNode).forall(isDefaultNullish)
+        !required && default.flatMap(d => d.typedNode).forall(hasNullValue)
       )
         TypeModification.Option // normal line without default or required gets rendered as Option[T]
       else
@@ -490,8 +494,6 @@ private[internals] object TypedNode {
           values.traverse(f).map(CollectionTN(collectionType, _))
         case PrimitiveTN(prim, value) =>
           F.pure(PrimitiveTN(prim, value))
-        case OptionPrimitiveTN(prim, value) =>
-          F.pure(OptionPrimitiveTN(prim, value))
       }
       def foldLeft[A, B](fa: TypedNode[A], b: B)(f: (B, A) => B): B = ???
       def foldRight[A, B](fa: TypedNode[A], lb: Eval[B])(
@@ -517,8 +519,6 @@ private[internals] object TypedNode {
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
   case class CollectionTN[A](collectionType: CollectionType, values: List[A])
       extends TypedNode[A]
-  case class PrimitiveTN[T](prim: Primitive.Aux[T], value: T)
-      extends TypedNode[Nothing]
-  case class OptionPrimitiveTN[T](prim: Primitive.Aux[T], value: Option[T])
+  case class PrimitiveTN[T](prim: Primitive.Aux[T], value: Option[T])
       extends TypedNode[Nothing]
 }

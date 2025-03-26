@@ -1624,10 +1624,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"$map(${values
         .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
         .intercalate(Line.comma)})".writeCollection
-    case PrimitiveTN(prim, value) =>
+    case PrimitiveTN(prim, Some(value)) =>
       renderPrimitive[prim.T](prim)(value).write
-    case OptionPrimitiveTN(_, _) => 
-      //TODO assuming that there is null default
+    case PrimitiveTN(_, None) =>
       line"scala.None".write
   }
 

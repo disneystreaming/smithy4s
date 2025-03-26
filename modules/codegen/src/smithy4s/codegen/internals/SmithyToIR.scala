@@ -39,7 +39,6 @@ import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits.RequiredTrait
-// import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -837,45 +836,6 @@ private[codegen] class SmithyToIR(
 
     }
 
-  // private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
-  //     tr: Trait
-  // ): Trait = tr match {
-  //   case default: DefaultTrait if default.toNode == Node.nullNode =>
-  //     val tpe = shape.asMemberShape().asScala match {
-  //       case Some(memShape) => model.getShape(memShape.getTarget).get.getType
-  //       case None           => shape.getType
-  //     }
-  //     val newNode = tpe match {
-  //       case ShapeType.STRING      => Node.from("")
-  //       case ShapeType.MAP         => Node.objectNode()
-  //       case ShapeType.LIST        => Node.arrayNode()
-  //       case ShapeType.INTEGER     => Node.from(0)
-  //       case ShapeType.BIG_DECIMAL => Node.from(0)
-  //       case ShapeType.BIG_INTEGER => Node.from(0)
-  //       case ShapeType.LONG        => Node.from(0L)
-  //       case ShapeType.DOUBLE      => Node.from(0.0d)
-  //       case ShapeType.SHORT       => Node.from(0: Short)
-  //       case ShapeType.FLOAT       => Node.from(0.0f)
-  //       case ShapeType.BOOLEAN     => Node.from(false)
-  //       case ShapeType.BLOB        => Node.arrayNode()
-  //       case ShapeType.BYTE        => Node.from(0)
-  //       case ShapeType.TIMESTAMP =>
-  //         shape
-  //           .getTrait(classOf[TimestampFormatTrait])
-  //           .asScala
-  //           .map(_.getValue) match {
-  //           case Some(TimestampFormatTrait.DATE_TIME) =>
-  //             Node.from("1970-01-01T00:00:00.00Z")
-  //           case Some(TimestampFormatTrait.HTTP_DATE) =>
-  //             Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
-  //           case _ => Node.from(0)
-  //         }
-  //       case _ => default.toNode
-  //     }
-  //     new DefaultTrait(newNode)
-  //   case other => other
-  // }
-
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
     Type.Ref(shapeId.getNamespace(), shapeId.getName())
@@ -896,13 +856,6 @@ private[codegen] class SmithyToIR(
     val maybeTrait = shape.getTrait(classOf[DefaultTrait])
     if (maybeTrait.isPresent()) {
       val tr = maybeTrait.get()
-
-      if (shape.getMemberName == "item") {
-        println(s"default trait: $tr")
-        println(s"node value: ${Node.prettyPrintJson(tr.toNode())}")
-        println(s"node2 ${tr.toNode().isNullNode()}")
-        println(s"node2 ${tr.toNode().isStringNode()}")
-      }
       // We're short-circuiting when encountering any external type,
       // as we do not have the means to instantiate them in a safe manner.
       def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
@@ -1155,14 +1108,9 @@ private[codegen] class SmithyToIR(
         .collect {
           case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            val r = Field(name, tpe, modifier, index, newHints)
-            r
+            Field(name, tpe, modifier, index, newHints)
           case ((name, Some(tpe), modifier, hints), index) =>
-            val r = Field(name, tpe, modifier, index, hints)
-            if (name == "item") {
-              println(s"field: $r")
-            }
-            r
+            Field(name, tpe, modifier, index, hints)
         }
         .toList
 
@@ -1354,7 +1302,6 @@ private[codegen] class SmithyToIR(
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
-            println(s"FieldTypeMod:$realName")
             val node = map
               .get(realName)
               .orElse {
@@ -1505,67 +1452,72 @@ private[codegen] class SmithyToIR(
     (node, p) match {
       // String
       case (N.StringNode(str), Primitive.String) =>
-        TypedNode.PrimitiveTN(Primitive.String, str)
+        TypedNode.PrimitiveTN(Primitive.String, Some(str))
       // Numeric
       case (N.NumberNode(num), Primitive.Int) =>
-        TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
+        TypedNode.PrimitiveTN(Primitive.Int, Some(num.intValue()))
       case (N.NumberNode(num), Primitive.Long) =>
-        TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
+        TypedNode.PrimitiveTN(Primitive.Long, Some(num.longValue()))
       case (N.NumberNode(num), Primitive.Double) =>
-        TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
+        TypedNode.PrimitiveTN(Primitive.Double, Some(num.doubleValue()))
       case (N.NumberNode(num), Primitive.Float) =>
-        TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
+        TypedNode.PrimitiveTN(Primitive.Float, Some(num.floatValue()))
       case (N.NumberNode(num), Primitive.Short) =>
-        TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
+        TypedNode.PrimitiveTN(Primitive.Short, Some(num.shortValue()))
       case (N.NumberNode(num), Primitive.BigDecimal) =>
         TypedNode.PrimitiveTN(
           Primitive.BigDecimal,
-          BigDecimal(num.doubleValue())
+          Some(BigDecimal(num.doubleValue()))
         )
       case (N.NumberNode(num), Primitive.BigInteger) =>
-        TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
+        TypedNode.PrimitiveTN(
+          Primitive.BigInteger,
+          Some(BigInt(num.intValue()))
+        )
       // Boolean
       case (N.BooleanNode(bool), Primitive.Bool) =>
-        TypedNode.PrimitiveTN(Primitive.Bool, bool)
+        TypedNode.PrimitiveTN(Primitive.Bool, Some(bool))
       case (node, Primitive.Document) =>
-        TypedNode.PrimitiveTN(Primitive.Document, node)
+        TypedNode.PrimitiveTN(Primitive.Document, Some(node))
       case (node, Primitive.String) if node == Node.nullNode =>
-        TypedNode.OptionPrimitiveTN(Primitive.String, None)
+        TypedNode.PrimitiveTN(Primitive.String, None)
       case (node, Primitive.Int) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Int, 0)
+        TypedNode.PrimitiveTN(Primitive.Int, None)
       case (node, Primitive.Long) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Long, 0L)
+        TypedNode.PrimitiveTN(Primitive.Long, None)
       case (node, Primitive.Double) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+        TypedNode.PrimitiveTN(Primitive.Double, None)
       case (node, Primitive.Float) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+        TypedNode.PrimitiveTN(Primitive.Float, None)
       case (node, Primitive.Short) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+        TypedNode.PrimitiveTN(Primitive.Short, None)
       case (node, Primitive.Byte) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+        TypedNode.PrimitiveTN(Primitive.Byte, None)
       case (node, Primitive.Blob) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
+        TypedNode.PrimitiveTN(Primitive.Blob, None)
       case (node, Primitive.Bool) if node == Node.nullNode =>
-        TypedNode.PrimitiveTN(Primitive.Bool, false)
+        TypedNode.PrimitiveTN(Primitive.Bool, None)
       case timestamp @ (node, Primitive.Timestamp) =>
         val value = node match {
           case N.StringNode(str) =>
-            Try(Instant.parse(str))
-              .orElse(
-                Try(ZonedDateTime.parse(str, httpDateFormatter).toInstant())
-              )
-              .toOption
-              .getOrElse(notSupported(timestamp))
+            Some(
+              Try(Instant.parse(str))
+                .orElse(
+                  Try(ZonedDateTime.parse(str, httpDateFormatter).toInstant())
+                )
+                .toOption
+                .getOrElse(notSupported(timestamp))
+            )
           case N.NumberNode(num) =>
-            Instant.ofEpochSecond(num.longValue)
-          case _ if node == Node.nullNode => java.time.Instant.ofEpochSecond(0)
+            Some(Instant.ofEpochSecond(num.longValue))
+          case _ if node == Node.nullNode => None
           case _                          => notSupported(timestamp)
         }
         TypedNode.PrimitiveTN(Primitive.Timestamp, value)
       case (_, Primitive.Unit) =>
         TypedNode.PrimitiveTN(
           Primitive.Unit,
-          ()
+          None
         )
       case other =>
         notSupported(other)
