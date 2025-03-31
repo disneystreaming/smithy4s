@@ -409,7 +409,7 @@ lazy val codegen = projectMatrix
       "alloyOrg" -> Dependencies.Alloy.org,
       "alloyVersion" -> Dependencies.Alloy.alloyVersion,
       "smithy4sOrg" -> organization.value,
-      "protocolArtifactName" -> "smithy4s-protocol",
+      "protocolArtifactName" -> "smithy4s-protocol"
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
@@ -435,7 +435,10 @@ lazy val codegen = projectMatrix
       sourceManaged
         .map(AwsBoilerplate.generate(_))
         .taskValue,
-    }
+    },
+    (Compile / compile) := (Compile / compile)
+      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .value
   )
 
 /**
