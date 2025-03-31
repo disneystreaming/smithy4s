@@ -46,12 +46,18 @@ private[codegen] object ModelLoader {
       localJars: List[os.Path]
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
-    val deps = resolveDependencies(dependencies, localJars, repositories)
+
+    val resolvedDepsAndFiles = resolveDependencies(dependencies, repositories)
+    val resolvedDeps = resolvedDepsAndFiles.map(_._1)
+
+    val deps =
+      resolvedDepsAndFiles.map(_._2) ++
+        localJars
 
     val modelsInJars = deps.flatMap { file =>
       Using.resource(
         // Note: On JDK13+, the second parameter is redundant.
-        FileSystems.newFileSystem(file.toPath(), null: ClassLoader)
+        FileSystems.newFileSystem(file.toNIO, null: ClassLoader)
       ) { jarFS =>
         val p = jarFS.getPath("META-INF", "smithy", "manifest")
 
@@ -75,7 +81,7 @@ private[codegen] object ModelLoader {
       .assembler()
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
-      .addClasspathModels(currentClassLoader, discoverModels)
+      .addClasspathModels(currentClassLoader, discoverModels, resolvedDeps)
       .addImports(modelsInJars)
       .assemble()
       .unwrap()
@@ -92,7 +98,7 @@ private[codegen] object ModelLoader {
     }
 
     val validatorClassLoader = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      val jarUrls = deps.map(_.toIO.toURI().toURL()).toArray
       new URLClassLoader(jarUrls, currentClassLoader)
     }
 
@@ -127,9 +133,8 @@ private[codegen] object ModelLoader {
 
   private def resolveDependencies(
       dependencies: List[String],
-      localJars: List[os.Path],
       repositories: List[String]
-  ): Seq[File] = {
+  ): Seq[(Dependency, os.Path)] = {
     val maybeRepos = RepositoryParser.repositories(repositories).either
     val maybeDeps = DependencyParser
       .dependencies(
@@ -151,16 +156,17 @@ private[codegen] object ModelLoader {
         )
       case Right(d) => d
     }
-    val resolvedDeps: Seq[java.io.File] =
-      if (deps.nonEmpty) {
-        val fetch = Fetch(FileCache())
-          .addRepositories(repos: _*)
-          .addDependencies(deps: _*)
-        fetch.run()
-      } else {
-        Seq.empty
+
+    if (deps.nonEmpty) {
+      val fetch = Fetch(FileCache())
+        .addRepositories(repos: _*)
+        .addDependencies(deps: _*)
+      fetch.runResult().detailedArtifacts.map { case (dep, _, _, f) =>
+        (dep, os.Path(f))
       }
-    resolvedDeps ++ localJars.map(_.toIO)
+    } else {
+      Nil
+    }
   }
 
   implicit class ModelAssemblerOps(assembler: ModelAssembler) {
@@ -176,15 +182,29 @@ private[codegen] object ModelLoader {
 
     def addClasspathModels(
         classLoader: ClassLoader,
-        discoverModels: Boolean
+        discoverModels: Boolean,
+        resolvedDeps: Seq[Dependency]
     ): ModelAssembler = {
+
+      val isProtocolAlreadyIncluded = resolvedDeps
+        .map(_.module)
+        .contains(
+          Module(
+            Organization(BuildInfo.smithy4sOrg),
+            ModuleName("smithy4s-protocol")
+          )
+        )
+
       val smithy4sResources = List(
         "META-INF/smithy/smithy4s.meta.smithy"
       ).map(classLoader.getResource)
 
       if (discoverModels) {
         assembler.discoverModels(classLoader)
-      } else addImports(smithy4sResources)
+      } else if (!isProtocolAlreadyIncluded)
+        assembler.addImports(smithy4sResources)
+      else
+        assembler
     }
   }
 
