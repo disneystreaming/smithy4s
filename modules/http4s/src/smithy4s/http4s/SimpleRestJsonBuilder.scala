@@ -19,12 +19,13 @@ package http4s
 
 import smithy4s.json.Json
 import smithy4s.json.JsonPayloadCodecCompiler
+import smithy4s.schema.FieldFilter
 
 object SimpleRestJsonBuilder
     extends SimpleRestJsonBuilder(
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
-        explicitDefaultsEncoding = false,
+        fieldFilter = FieldFilter.Default,
         hostPrefixInjection = true
       )
     )
@@ -40,19 +41,23 @@ class SimpleRestJsonBuilder private (
       maxArity: Int,
       explicitDefaultsEncoding: Boolean,
       hostPrefixInjection: Boolean
-  ) =
-    this(
+  ) = {
+    this {
+      val fieldFilter =
+        if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+        else FieldFilter.Default
       new internals.SimpleRestJsonCodecs(
         Json.payloadCodecs
           .withJsoniterCodecCompiler(
             Json.jsoniter
               .withMaxArity(maxArity)
-              .withExplicitDefaultsEncoding(explicitDefaultsEncoding)
+              .withFieldFilter(fieldFilter)
           ),
-        explicitDefaultsEncoding,
+        fieldFilter,
         hostPrefixInjection
       )
-    )
+    }
+  }
 
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
@@ -61,11 +66,28 @@ class SimpleRestJsonBuilder private (
       )
     )
 
+  @deprecated(
+    message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldFilter.Default
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
+ """,
+    since = "0.18.30"
+  )
   def withExplicitDefaultsEncoding(
       explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
+    withFieldFilter(
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
+
+  def withFieldFilter(
+      fieldFilter: FieldFilter
+  ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.withExplicitDefaultEncoding(explicitDefaultsEncoding)
+      simpleRestJsonCodecs.withFieldFilter(fieldFilter)
     )
 
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =

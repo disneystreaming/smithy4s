@@ -58,6 +58,7 @@ private[internals] object ToLines {
 
 private[internals] case class Lines(list: List[Line]) {
   def isEmpty: Boolean = list.isEmpty
+  def isBlank: Boolean = list.forall(_.isEmpty)
 
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =

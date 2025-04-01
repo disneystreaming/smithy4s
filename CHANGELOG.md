@@ -5,9 +5,22 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.32
+
+* Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
+
+# 0.18.31
+
+* Fix an issue with `FieldFilter`'s handling of optional fields that aren't represented by an actual `Option` (e.g. bijections) in [#1662](https://github.com/disneystreaming/smithy4s/pull/1662)
+
 # 0.18.30
 
 * Add utilities for Service.Builder in [#1644](https://github.com/disneystreaming/smithy4s/pull/1644)
+* Use correct cross path for protobuf-runtime-scala in [#1648](https://github.com/disneystreaming/smithy4s/pull/1648)
+* Force rendering package object when a validated newtype is present in [#1656](https://github.com/disneystreaming/smithy4s/pull/1656)
+* Improve performance of ADT trait validator on larger Smithy models in [#1573](https://github.com/disneystreaming/smithy4s/pull/1573)
+* Move memoization of default values from Field to Schema in [#1651](https://github.com/disneystreaming/smithy4s/pull/1651)
+* Add support for more flexible encoding of defaults in [#1652](https://github.com/disneystreaming/smithy4s/pull/1652). This brings `FieldFilter` abstraction that replaces `explicitDefaultsEncoding`.
 
 # 0.18.29
 

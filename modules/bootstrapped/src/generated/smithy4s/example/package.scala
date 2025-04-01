@@ -94,6 +94,7 @@ package object example {
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type PublisherId = smithy4s.example.PublisherId.Type
   type PublishersList = smithy4s.example.PublishersList.Type
+  type RecursiveList = smithy4s.example.RecursiveList.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type SomeValue = smithy4s.example.SomeValue.Type

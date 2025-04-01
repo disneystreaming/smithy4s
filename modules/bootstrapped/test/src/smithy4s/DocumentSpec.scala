@@ -19,6 +19,7 @@ package smithy4s
 import smithy.api.JsonName
 import smithy.api.Default
 import smithy4s.example.IntList
+import smithy4s.example.RecursiveListWrapper
 import alloy.Discriminated
 import alloy.JsonUnknown
 import munit._
@@ -26,8 +27,15 @@ import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
+import smithy4s.schema.FieldFilter
+import smithy4s.refined.NonEmptyList
 
 class DocumentSpec() extends FunSuite {
+
+  private case class TestCase(
+      expectedToSkip: Boolean,
+      strategy: FieldFilter
+  )
 
   test("Recursive document codecs should not blow up the stack") {
     val recursive: IntList = IntList(1, Some(IntList(2, Some(IntList(3)))))
@@ -466,11 +474,10 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(true)
-      .fromSchema(
-        DefaultNullsOperationOutput.schema
-      )
+      .withFieldFilter(FieldFilter.EncodeAll)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
+
     expect.same(
       Document.obj(
         "optional" -> Document.nullDoc,
@@ -492,10 +499,8 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
-      .fromSchema(
-        DefaultNullsOperationOutput.schema
-      )
+      .withFieldFilter(FieldFilter.Default)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
@@ -509,10 +514,56 @@ class DocumentSpec() extends FunSuite {
   }
 
   test(
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
+  ) {
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipUnsetOptions)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
+
+    expect.same(
+      Document.obj(
+        "optionalWithDefault" -> Document.fromString("optional-default"),
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "optionalHeaderWithDefault" -> Document.fromString(
+          "optional-header-with-default"
+        ),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+
+  }
+
+  test(
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
+  ) {
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipNonRequiredDefaultValues)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
+
+    expect.same(
+      Document.obj(
+        "optional" -> Document.nullDoc,
+        "optionalHeader" -> Document.nullDoc,
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+
+  }
+
+  test(
     "document encoder - default values overrides + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(true)
+      .withFieldFilter(FieldFilter.EncodeAll)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
         DefaultNullsOperationOutput(
@@ -552,7 +603,7 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
+      .withFieldFilter(FieldFilter.Default)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
         DefaultNullsOperationOutput(
@@ -586,7 +637,6 @@ class DocumentSpec() extends FunSuite {
       ),
       result
     )
-
   }
 
   test("Document encoder - timestamp defaults") {
@@ -1144,6 +1194,195 @@ class DocumentSpec() extends FunSuite {
       Document.decode[Bar](Document.DObject(Map.empty)),
       Right(Bar(Nullable.Null))
     )
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.array()
+        )
+
+    test(s"should ${skipNotSkip} rendering of required lists if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: List[String]
+      )
+      val arr = list(string).required[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(List.empty))
+
+      expect.same(expected, result)
+    }
+
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.obj()
+        )
+
+    test(s"should ${skipNotSkip} rendering of required map if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Map[String, Int]
+      )
+      val arr = map(string, int).required[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Map.empty))
+
+      expect.same(
+        result,
+        expected
+      )
+    }
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.obj()
+        )
+
+    test(s"should ${skipNotSkip} rendering of optional map if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Option[Map[String, Int]]
+      )
+      val arr = map(string, int).optional[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Some(Map.empty)))
+
+      expect.same(result, expected)
+    }
+
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.array()
+        )
+
+    test(s"should ${skipNotSkip} rendering of optional lists if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Option[List[String]]
+      )
+      val arr = list(string).optional[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Some(List.empty)))
+
+      expect.same(result, expected)
+    }
+
+  }
+
+  test("Recursive document structures should not blow up FieldFilter") {
+    val recursive: RecursiveListWrapper =
+      RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
+
+    val document = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyCollection)
+      .fromSchema(RecursiveListWrapper.schema)
+      .encode(recursive)
+    import Document._
+    val expectedDocument =
+      obj("items" -> array(obj("items" -> array(obj()))))
+
+    expect(document == expectedDocument)
+  }
+
+  test("FieldFilter should work with bijection schema") {
+    import Document._
+    sealed trait MyEnum[+A] {}
+    case object MyEnum {
+      case object Empty extends MyEnum[Nothing]
+      case class NonEmpty[A](value: A) extends MyEnum[A]
+    }
+    case class MyStruct(
+        items: Option[MyEnum[List[String]]]
+    )
+    val arr = list(string).option
+      .biject(to = _.map(a => MyEnum.NonEmpty(a): MyEnum[List[String]]))(from = _.map {
+        case MyEnum.NonEmpty(list) => list
+        case MyEnum.Empty          => List.empty
+      })
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(MyEnum.NonEmpty(List("a", "b")))))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
+  }
+
+  test("FieldFilter should work with refined schema") {
+    import Document._
+    case class MyStruct(
+        items: Option[NonEmptyList[String]]
+    )
+    val arr = list(string)
+      .refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat())
+      .option
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val nonEmptyList = NonEmptyList(List("a", "b")) match {
+      case Right(nel) => nel
+      case Left(err)  => sys.error(err)
+    }
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(nonEmptyList)))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
   }
 
   private def inside[A, B](

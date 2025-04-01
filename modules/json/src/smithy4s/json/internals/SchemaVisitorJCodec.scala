@@ -39,16 +39,17 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.ListMap
+import smithy4s.schema.FieldFilter
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
-    explicitDefaultsEncoding: Boolean,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
     preserveMapOrder: Boolean,
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
-    val cache: CompilationCache[JCodec]
+    val cache: CompilationCache[JCodec],
+    fieldFilter: FieldFilter
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
@@ -1411,15 +1412,13 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): (Z, JsonWriter) => Unit = {
     val codec = apply(field.schema)
     val jLabel = jsonLabel(field)
-    if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
-      writeLabel(jLabel, out)
-      codec.encodeValue(field.get(z), out)
-    } else { (z: Z, out: JsonWriter) =>
-      field.foreachUnlessDefault(z) { (a: A) =>
+    val shouldRender = fieldFilter.compile(field)
+    (z: Z, out: JsonWriter) =>
+      val a = field.get(z)
+      if (shouldRender(a)) {
         writeLabel(jLabel, out)
         codec.encodeValue(a, out)
       }
-    }
   }
 
   private def jsonUnknownFieldEncoder[Z, A](

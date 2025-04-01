@@ -32,6 +32,7 @@ import smithy4s.schema.{
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 import java.util.Base64
+import smithy4s.schema.FieldFilter
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -48,9 +49,30 @@ import java.util.Base64
 class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode],
     commaDelimitedEncoding: Boolean,
-    explicitDefaultsEncoding: Boolean
+    fieldFilter: FieldFilter
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
+
+  @deprecated(
+    message = """Use constructor with FieldFilter instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldFilter.SkipNonRequired
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
+ """,
+    since = "0.18.30"
+  )
+  def this(
+      cache: CompilationCache[MetaEncode],
+      commaDelimitedEncoding: Boolean,
+      explicitDefaultsEncoding: Boolean
+  ) = this(
+    cache,
+    commaDelimitedEncoding,
+    if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+    else FieldFilter.Default
+  )
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -170,16 +192,17 @@ class SchemaVisitorMetadataWriter(
           val encoder = self(field.schema.addHints(Hints(binding)))
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
-            if (explicitDefaultsEncoding)
-              field.get(s) match {
-                case None => metadata
-                case _    => updateFunction(metadata, field.get(s))
+            val shouldRender = fieldFilter.compile(field)
+            val value = field.get(s)
+            if (shouldRender(value)) {
+              if (value == None) {
+                metadata
+              } else {
+                updateFunction(metadata, value)
               }
-            else
-              field.getUnlessDefault(s) match {
-                case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
-                case None              => metadata
-              }
+            } else {
+              metadata
+            }
         }
     }
     // pull out the query params field as it must be applied last to the metadata

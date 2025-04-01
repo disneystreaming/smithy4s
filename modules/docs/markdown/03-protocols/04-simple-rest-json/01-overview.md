@@ -86,9 +86,20 @@ See the section about [unions](../../04-codegen/02-unions.md) for a detailed des
 * This limit can be changed by setting the maxArity `smithy4s.http4s.SimpleRestJsonBuilder.withMaxArity(.)` to the desired value.
 * an example can be seen in the [client example](03-client.md)
 
-## Explicit Null Encoding
+## Field Filtering and Explicit Null Encoding
 
-By default, optional properties (headers, query parameters, structure fields) that are set to `None` and optional properties that are set to default value will be excluded during encoding process. If you wish to change this so that instead they are included and set to `null` explicitly, you can do so by calling `.withExplicitDefaultsEncoding(true)`.
+By default, optional properties (headers, query parameters, structure fields) that are set to `None` or their runtime value is equal to their default value are excluded during the encoding process.
+
+Previously, if you wanted to include such fields and explicitly encode them as `null` or their default value, you could use `.withExplicitDefaultsEncoding(true)`.
+
+Now, for more granular control over which fields are included in the encoded output, we have introduced `.withFieldFilter(fieldFilter)`.
+This method allows you to precisely define the filtering logic using `FieldFilter`.
+
+Migrating from `withExplicitDefaultsEncoding`
+
+    The previous, default behavior (`None` and default values excluded) is now expressed by `FieldFilter.Default`.
+    The behavior of `.withExplicitDefaultsEncoding(true)` (explicitly encoding null values) can be achieved using `FieldFilter.EncodeAll`.
+    The methods `.withExplicitDefaultsEncoding(...)` are now deprecated in favor of `.withFieldFilter(...).`
 
 ## Other customisations of JSON codec behaviour
 
