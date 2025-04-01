@@ -8,6 +8,7 @@ Thank you!
 # 0.18.32
 
 * Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
+* More expressive namespace patterns for the codegen in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
 
 # 0.18.31
 

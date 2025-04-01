@@ -102,4 +102,107 @@ final class CodegenImplSpec extends munit.FunSuite {
       }
     assertEquals(caught.duplicates, expectedDuplicates)
   }
+
+  test("applies allowed namespace filter correctly") {
+    namespaceFilterTest(
+      inputNamespaces = List(
+        "allowed.namespace",
+        "allowed.namespace.nested",
+        "not.allowed.namespace"
+      ),
+      allowedNamespaces = List("allowed.namespace")
+    )(expectedCodegenNamespaces = Set("allowed.namespace"))
+  }
+
+  test("applies allowed namespace filter correctly (with wildcard)") {
+    namespaceFilterTest(
+      inputNamespaces = List(
+        "allowed.namespace",
+        "allowed.namespace.nested",
+        "not.allowed.namespace"
+      ),
+      allowedNamespaces = List("allowed.namespace*")
+    )(expectedCodegenNamespaces =
+      Set("allowed.namespace", "allowed.namespace.nested")
+    )
+  }
+
+  test("applies forbidden namespace filter correctly") {
+    namespaceFilterTest(
+      inputNamespaces = List(
+        "allowed.namespace",
+        "allowed.namespace.nested",
+        "forbidden.namespace"
+      ),
+      forbiddenNamespaces = List("forbidden.namespace")
+    )(expectedCodegenNamespaces =
+      Set("allowed.namespace", "allowed.namespace.nested")
+    )
+  }
+
+  test("applies disallowed namespace filter correctly") {
+    namespaceFilterTest(
+      inputNamespaces = List(
+        "forbidden.namespace",
+        "forbidden.namespace.nested",
+        "allowed.namespace"
+      ),
+      forbiddenNamespaces = List("forbidden.namespace*")
+    )(expectedCodegenNamespaces = Set("allowed.namespace"))
+  }
+
+  test(
+    "applies allowed and disallowed correctly - must be both allowed and not excluded"
+  ) {
+    namespaceFilterTest(
+      inputNamespaces = List(
+        "allowed.namespace",
+        "allowed.namespace.nested",
+        "allowed.namespace.forbidden.too",
+        "not.allowed.namespace",
+        "forbidden.namespace"
+      ),
+      allowedNamespaces = List("allowed.namespace*"),
+      forbiddenNamespaces =
+        List("forbidden.namespace", "allowed.namespace.forbidden.too")
+    )(expectedCodegenNamespaces =
+      Set("allowed.namespace", "allowed.namespace.nested")
+    )
+  }
+
+  private def namespaceFilterTest(
+      inputNamespaces: List[String],
+      allowedNamespaces: List[String] = Nil,
+      forbiddenNamespaces: List[String] = Nil
+  )(expectedCodegenNamespaces: Set[String]) = {
+    def mkSpec(namespace: String) = {
+      s"""|
+          |namespace $namespace
+          |
+          |string Dummy
+      """.stripMargin
+    }
+    def mkModel(specs: List[String]): Model = {
+      specs.zipWithIndex
+        .foldLeft(Model.assembler().discoverModels()) {
+          case (builder, (spec, index)) =>
+            builder.addUnparsedModel(s"spec-$index.smithy", spec)
+        }
+        .assemble()
+        .unwrap()
+    }
+    val model = mkModel(inputNamespaces.map(mkSpec))
+    val generatedNamespaces = CodegenImpl
+      .generate(
+        model,
+        Option(allowedNamespaces.toSet).filter(_.nonEmpty),
+        Option(forbiddenNamespaces.toSet).filter(_.nonEmpty)
+      )
+      .map { case (_, result) =>
+        result.namespace
+      }
+      .toSet
+    assertEquals(generatedNamespaces, expectedCodegenNamespaces)
+
+  }
 }
