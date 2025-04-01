@@ -260,12 +260,21 @@ private[codegen] class SmithyToIR(
           .asScala
           .toList
           .map(mem => model.expectShape(mem.getTarget))
+
         val mixins: List[Set[ShapeId]] = memberTargets
           .map(targetShape =>
-            targetShape.getMixins.asScala.toSet
+            {
+              def rec(s: Shape): Set[ShapeId] =
+                s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
+                  rec(model.expectShape(m)) + m
+                }
+
+              rec(targetShape)
+            }
               .filter(mixinId => doFieldsMatch(mixinId, targetShape.fields))
           )
 
+        // todo: I don't think we need this union step, we can just intersect the sets.
         val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
 
         val result = mixins.foldLeft(union)(_ intersect _)
