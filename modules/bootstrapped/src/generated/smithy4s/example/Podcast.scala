@@ -27,8 +27,8 @@ sealed trait Podcast extends PodcastCommon with scala.Product with scala.Seriali
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
 
-  def video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Video = Video(title, url, durationMillis)
-  def audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Audio = Audio(title, url, durationMillis)
+  def video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None): Video = Video(title, url, durationMillis)
+  def audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None): Audio = Audio(title, url, durationMillis)
 
   val id: ShapeId = ShapeId("smithy4s.example", "Podcast")
 
@@ -43,7 +43,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def $ordinal: Int = 0
   }
 
-  object Video extends ShapeTag.Companion[Video] {
+  object Video {
     val id: ShapeId = ShapeId("smithy4s.example", "Video")
 
     val hints: Hints = Hints.empty
@@ -69,7 +69,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def $ordinal: Int = 1
   }
 
-  object Audio extends ShapeTag.Companion[Audio] {
+  object Audio {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
 
     val hints: Hints = Hints.empty

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package smithy4s
 package json
 
 import alloy.Discriminated
+import alloy.JsonUnknown
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import munit.FunSuite
 import smithy.api.Default
 import smithy.api.JsonName
+import smithy.api.TimestampFormat
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
 import smithy4s.example.CheckedOrUnchecked
@@ -41,6 +43,7 @@ import scala.collection.immutable.ListMap
 import scala.util.Try
 import smithy4s.json.internals.JsoniterCodecCompilerImpl
 import smithy4s.schema.Schema
+import smithy4s.schema.Field
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -109,6 +112,94 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       )
   }
 
+  case class JsonUnknownExample(
+      s: String,
+      i: Int,
+      others: Map[String, Document]
+  )
+
+  object JsonUnknownExample {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  object JsonUnknownExampleWithDefault {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  case class JsonUnknownExampleOptional(
+      s: String,
+      i: Int,
+      others: Option[Map[String, Document]]
+  )
+
+  object JsonUnknownExampleOptional {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  object JsonUnknownExampleOptionalWithDefault {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  case class Timestamps(
+      epochSeconds: Timestamp,
+      httpDate: Timestamp,
+      dateTime: Timestamp
+  )
+
+  object Timestamps {
+    def apply(timestamps: Timestamp): Timestamps =
+      Timestamps(timestamps, timestamps, timestamps)
+    implicit val schema: Schema[Timestamps] = {
+      struct(
+        timestamp
+          .required[Timestamps]("epochSeconds", _.epochSeconds)
+          .addHints(TimestampFormat.EPOCH_SECONDS.widen),
+        timestamp
+          .required[Timestamps]("httpDate", _.httpDate)
+          .addHints(TimestampFormat.HTTP_DATE.widen),
+        timestamp
+          .required[Timestamps]("dateTime", _.dateTime)
+          .addHints(TimestampFormat.DATE_TIME.widen)
+      )(Timestamps.apply)
+    }
+  }
+
   test(
     "Compiling a codec for a recursive type should not blow up the stack"
   ) {
@@ -118,6 +209,74 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val roundTripped = readFromString[IntList](json)
     expect.same(result, json)
     expect.same(roundTripped, foo)
+  }
+
+  test("Timestamps before linux epoch are encoded/decoded correctly") {
+    def roundTripCheck(
+        timestamps: Timestamps,
+        expectedEpochSeconds: String,
+        expectedHttpDate: String,
+        expectedDateTime: String
+    ) = {
+      val result = writeToString(timestamps)
+      expect.same(
+        result,
+        s"""{"epochSeconds":$expectedEpochSeconds,"httpDate":"$expectedHttpDate","dateTime":"$expectedDateTime"}"""
+      )
+      val decoded = readFromString[Timestamps](result)
+      expect.same(decoded, timestamps)
+    }
+    roundTripCheck(
+      timestamps = Timestamps(Timestamp(1969, 12, 31, 23, 59, 59, 123)),
+      expectedEpochSeconds = "-0.999999877",
+      expectedHttpDate = "Wed, 31 Dec 1969 23:59:59.000000123 GMT",
+      expectedDateTime = "1969-12-31T23:59:59.000000123Z"
+    )
+  }
+
+  test("Timestamp nanoseconds are encoded/decoded correctly") {
+    def roundTripCheck(
+        nanos: Int,
+        expectedEpochSeconds: String,
+        expectedHttpDate: String,
+        expectedDateTime: String
+    ) = {
+      val timestamps = Timestamps(Timestamp(1970, 1, 1, 10, 11, 12, nanos))
+      val result = writeToString(timestamps)
+      expect.same(
+        result,
+        f"""{"epochSeconds":$expectedEpochSeconds,"httpDate":"$expectedHttpDate","dateTime":"$expectedDateTime"}"""
+      )
+      val decoded = readFromString[Timestamps](result)
+      expect.same(decoded, timestamps)
+    }
+    roundTripCheck(
+      nanos = 123,
+      expectedEpochSeconds = "36672.000000123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.000000123 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.000000123Z"
+    )
+    roundTripCheck(
+      nanos = 1230,
+      expectedEpochSeconds = "36672.00000123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.000001230 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.000001230Z"
+    )
+
+    roundTripCheck(
+      nanos = 123000000,
+      expectedEpochSeconds = "36672.123",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12.123 GMT",
+      expectedDateTime = "1970-01-01T10:11:12.123Z"
+    )
+
+    roundTripCheck(
+      nanos = 0,
+      expectedEpochSeconds = "36672",
+      expectedHttpDate = "Thu, 01 Jan 1970 10:11:12 GMT",
+      expectedDateTime = "1970-01-01T10:11:12Z"
+    )
+
   }
 
   test("Optional encode from present value") {
@@ -339,6 +498,44 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     expect.same(readFromString[Either[Int, String]](json), Right("foo"))
     expect.same(readFromString[Either[Int, String]](json2), Left(1))
+  }
+
+  test("Lenient and regular unions have the same error messages") {
+    val json = """|{
+                  |  "left" : {"foo": "b"}
+                  |}
+                  |""".stripMargin
+
+    val schema = Schema.either(
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("bar", identity)
+        )(identity),
+      Schema
+        .struct[String](
+          Schema.string
+            .required[String]("baz", identity)
+        )(identity)
+    )
+
+    val regularCodec =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.fromSchema(schema)
+    val lenientCodec =
+      JsoniterCodecCompilerImpl.defaultJsoniterCodecCompiler.withLenientTaggedUnionDecoding
+        .fromSchema(schema)
+
+    def decodeCheck(codec: JsonCodec[Either[String, String]]) =
+      expect.same(
+        Try(
+          readFromString[Either[String, String]](json)(codec)
+        ).toEither.left.map(_.getMessage),
+        Left("Missing required field (path: .left.bar)")
+      )
+
+    decodeCheck(regularCodec)
+    decodeCheck(lenientCodec)
+
   }
 
   test("Untagged union are encoded / decoded") {
@@ -640,6 +837,195 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, json)
   }
 
+  test("combinations of required, nullable, and null default") {
+    testFieldCombination(true, true, true)
+    testFieldCombination(false, true, true)
+    testFieldCombination(false, false, true)
+    testFieldCombination(false, false, false)
+    testFieldCombination(true, false, false)
+    testFieldCombination(true, true, false)
+    testFieldCombination(true, false, true)
+    testFieldCombination(false, true, false)
+  }
+
+  private def testFieldCombination(
+      required: Boolean,
+      nullable: Boolean,
+      nullDefault: Boolean
+  )(implicit loc: munit.Location): Unit = {
+    val toDecode = "{}"
+    val hints =
+      if (nullDefault) Hints(smithy.api.Default(Document.DNull))
+      else Hints.empty
+    // scalafmt: { maxColumn: 120 }
+    if (!required && nullDefault) nonRequiredWithDefault(nullable, hints, toDecode)
+    else if (required && nullable) requiredNullable(nullDefault, hints, toDecode)
+    else if (!required && nullable && !nullDefault) nonRequiredNullable(hints, toDecode)
+    else if (required) requiredNonNullable(nullDefault, hints, toDecode)
+    else if (!nullDefault) nonRequiredNonNullable(hints, toDecode)
+  }
+
+  def nonRequiredWithDefault(
+      nullable: Boolean,
+      hints: Hints,
+      toDecode: String
+  )(implicit loc: munit.Location): Unit = {
+    if (nullable) {
+      case class Foo(f: Nullable[String])
+      implicit val schema: Schema[Foo] =
+        Schema.struct(Schema.string.nullable.field[Foo]("f", _.f).addHints(hints))(
+          Foo.apply
+        )
+      val result = util.Try(readFromString[Foo](toDecode))
+      // required = false, nullable = true, nullDefault = true
+      expect.same(result.get, Foo(Nullable.Null))
+    } else {
+      case class Foo(f: String)
+      implicit val schema: Schema[Foo] =
+        Schema.struct(Schema.string.field[Foo]("f", _.f).addHints(hints))(
+          Foo.apply
+        )
+      val result = util.Try(readFromString[Foo](toDecode))
+      // required = false, nullable = false, nullDefault = true
+      expect.same(result.get, Foo(""))
+    }
+  }
+
+  def requiredNullable(
+      nullDefault: Boolean,
+      hints: Hints,
+      toDecode: String
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Nullable[String])
+    implicit val schema: Schema[Foo] =
+      Schema.struct(
+        Schema.string.nullable.required[Foo]("f", _.f).addHints(hints)
+      )(
+        Foo.apply
+      )
+    val result = util.Try(readFromString[Foo](toDecode))
+    if (nullDefault)
+      // required = true, nullable = true, nullDefault = true
+      expect.same(result.get, Foo(Nullable.Null))
+    else
+      // required = true, nullable = true, nullDefault = false
+      expect(result.isFailure)
+  }
+
+  def nonRequiredNullable(
+      hints: Hints,
+      toDecode: String
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Option[Nullable[String]])
+    implicit val schema =
+      Schema.struct(
+        Schema.string.nullable.optional[Foo]("f", _.f).addHints(hints)
+      )(
+        Foo.apply
+      )
+    val result = readFromString[Foo](toDecode)
+    // required = false, nullable = true, nullDefault = false
+    expect.same(result, Foo(None))
+  }
+
+  def requiredNonNullable(
+      nullDefault: Boolean,
+      hints: Hints,
+      toDecode: String
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: String)
+    implicit val schema: Schema[Foo] =
+      Schema.struct(Schema.string.required[Foo]("f", _.f).addHints(hints))(
+        Foo.apply
+      )
+    val result = util.Try(readFromString[Foo](toDecode))
+    // required = true, nullable = false, nullDefault = true
+    if (nullDefault) expect.same(result.get, Foo(""))
+    // required = true, nullable = false, nullDefault = false
+    else expect(result.isFailure)
+  }
+
+  def nonRequiredNonNullable(
+      hints: Hints,
+      toDecode: String
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Option[String])
+    implicit val schema =
+      Schema.struct(Schema.string.optional[Foo]("f", _.f).addHints(hints))(
+        Foo.apply
+      )
+    val result = readFromString[Foo](toDecode)
+    // required = false, nullable = false, nullDefault = false
+    expect.same(result, Foo(None))
+  }
+
+  test(
+    "Required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Foo)
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: Field[Bar, Foo] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      readFromString[Bar]("{\"foo\":\"test\"}"),
+      Bar(Foo("test"))
+    )
+    expect.same(
+      readFromString[Bar]("{}"),
+      // Empty string here because null default is implied to be empty string
+      // for a non-nullable string field
+      Bar(Foo(""))
+    )
+  }
+
+  test(
+    "Nullable required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Nullable[Foo])
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: Field[Bar, Nullable[Foo]] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .nullable
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      readFromString[Bar]("{\"foo\":\"test\"}"),
+      Bar(Nullable.value(Foo("test")))
+    )
+    expect.same(
+      readFromString[Bar]("{}"),
+      Bar(Nullable.Null)
+    )
+  }
+
   case class Patchable(a: Option[Nullable[Int]])
 
   object Patchable {
@@ -667,6 +1053,138 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val fromJson = Json.read[Patchable](expectedJson)
     assertEquals(toJson, expectedJson)
     assertEquals(fromJson, Right(patchable))
+  }
+
+  test("unknown field decoding: no unknown field in payload") {
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExample("foo", 67, Map.empty)
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: no unknown field in payload with default") {
+    import JsonUnknownExampleWithDefault._
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map("default" -> Document.fromBoolean(true))
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field"
+  ) {
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExampleOptional("foo", 67, None)
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field with default"
+  ) {
+    import JsonUnknownExampleOptionalWithDefault._
+    val jsonString = """{"s": "foo", "i": 67}"""
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(Map("default" -> Document.fromBoolean(true)))
+    )
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: with unknown fields in payload") {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75)
+      )
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test(
+    "unknown field decoding: with unknown fields in payload, optional field"
+  ) {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75}"""
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(
+        Map(
+          "someField" -> Document.obj("a" -> Document.fromString("b")),
+          "someOtherField" -> Document.fromInt(75)
+        )
+      )
+    )
+
+    val res = readFromString[JsonUnknownExampleOptional](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field decoding: with unknow field explicitely set in payload") {
+    val jsonString =
+      """{"s": "foo", "i": 67, "someField": {"a": "b"}, "someOtherField": 75, "others": {}}"""
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val res = readFromString[JsonUnknownExample](jsonString)
+
+    assertEquals(res, expected)
+  }
+
+  test("unknown field encoding") {
+    val in = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val expected = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+
+    val jsonStr = writeToString[JsonUnknownExample](in)
+
+    val doc = readFromString[Document](jsonStr)
+
+    assertEquals(doc, expected)
   }
 
 }

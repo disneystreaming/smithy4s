@@ -16,7 +16,7 @@ trait PackedInputsServiceGen[F[_, _, _, _, _]] {
 
   def packedInputOperation(input: PackedInput): F[PackedInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](this)
 }
 
 object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, PackedInputsServiceOperation] {

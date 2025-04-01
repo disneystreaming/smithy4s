@@ -1,7 +1,7 @@
 lazy val p1 = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
-    scalaVersion := "2.13.6",
+    scalaVersion := "2.13.15",
     Compile / smithy4sAllowedNamespaces := List(
       "aws.iam"
     ),

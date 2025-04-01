@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,30 @@ import smithy4s.schema.Schema._
 import munit._
 
 class SchemaVisitorJCodecCustomisationTests extends FunSuite {
+
+  case class FooInt(i: Int)
+  object FooInt {
+    implicit val schema: Schema[FooInt] = {
+      val i = int.required[FooInt]("i", _.i)
+      struct(i)(FooInt.apply)
+    }
+  }
+
+  case class FooShort(s: Short)
+  object FooShort {
+    implicit val schema: Schema[FooShort] = {
+      val s = short.required[FooShort]("s", _.s)
+      struct(s)(FooShort.apply)
+    }
+  }
+
+  case class FooLong(l: Long)
+  object FooLong {
+    implicit val schema: Schema[FooLong] = {
+      val s = long.required[FooLong]("l", _.l)
+      struct(s)(FooLong.apply)
+    }
+  }
 
   case class FooDouble(d: Double)
   object FooDouble {
@@ -177,5 +201,40 @@ class SchemaVisitorJCodecCustomisationTests extends FunSuite {
     val result = readFromString[FooFloat](input)
 
     expect(result.f.isNegInfinity)
+  }
+
+  test("decoding JSON string as a Float") {
+    val input = """{"f" : "1.1" }"""
+    val result = readFromString[FooFloat](input)
+
+    expect.eql(result.f, 1.1f)
+  }
+
+  test("decoding JSON string as a Double") {
+    val input = """{"d" : "1.1" }"""
+    val result = readFromString[FooDouble](input)
+
+    expect.eql(result.d, 1.1d)
+  }
+
+  test("decoding JSON string as an Int") {
+    val input = """{"i" : "1" }"""
+    val result = readFromString[FooInt](input)
+
+    expect.eql(result.i, 1)
+  }
+
+  test("decoding JSON string as a Long") {
+    val input = """{"l" : "1" }"""
+    val result = readFromString[FooLong](input)
+
+    expect.eql(result.l, 1L)
+  }
+
+  test("decoding JSON string as a Short") {
+    val input = """{"s" : "1" }"""
+    val result = readFromString[FooShort](input)
+
+    expect.eql(result.s, 1.toShort)
   }
 }

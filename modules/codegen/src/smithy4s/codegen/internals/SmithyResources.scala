@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package smithy4s.codegen.internals
 import os.RelPath
 import smithy4s.codegen.BuildInfo
 import smithy4s.codegen.CodegenEntry
+import smithy4s.codegen.CodegenRecord
 
 /**
   * This construct aims at adding metadata information to the classpath to let Smithy4s
@@ -49,7 +50,7 @@ private[smithy4s] object SmithyResources {
     val nsString = namespaces.map(ns => s""""$ns"""").mkString(", ")
     val content = s"""|$$version: "2.0"
                       |
-                      |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
+                      |metadata ${CodegenRecord.METADATA_KEY} = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
                       |""".stripMargin
     val trackingFileEntry = CodegenEntry.FromMemory(trackingFile, content)
 

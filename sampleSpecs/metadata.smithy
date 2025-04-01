@@ -72,6 +72,9 @@ structure Queries {
   on: OpenNums
   @httpQuery("openNumsStr")
   ons: OpenNumsStr
+  @httpQuery("dbl")
+  @range(min: 0, max: 100)
+  dbl: Double
   @httpQueryParams
   slm: StringMap
 }

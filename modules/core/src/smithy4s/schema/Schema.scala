@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ sealed trait Schema[A]{
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
-  final def getDefaultValue: Option[A] = {
+  private final lazy val defaultValue: Option[A] = {
     val maybeDefault = getDefault.flatMap[A] {
       case Document.DNull => this.compile(DefaultValueSchemaVisitor)
       case document => Document.Decoder.fromSchema(this).decode(document).toOption
@@ -112,6 +112,7 @@ sealed trait Schema[A]{
     maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
 
+  final def getDefaultValue: Option[A] = defaultValue
 
   /**
     * When applied on a structure schema, creates a schema that, when compiled into
@@ -342,16 +343,21 @@ object Schema {
 
   private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {
     def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]): Schema[B] = {
-      val hint = Hints.Binding.fromValue(c)(refinementProvider.tag)
-      RefinementSchema(schema.addHints(hint), refinementProvider.make(c))
+      apply(refinementProvider.make(c))
+    }
+
+    def apply(refinement: Refinement[A, B]): Schema[B] = {
+      val hint = Hints.Binding.fromValue(refinement.constraint)(refinement.tag)
+      RefinementSchema(schema.addHints(hint), refinement)
     }
   }
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
-    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] =
-      this.apply(schema).map(bijection.to)
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
+      if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
+    }
   }
 
   def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =

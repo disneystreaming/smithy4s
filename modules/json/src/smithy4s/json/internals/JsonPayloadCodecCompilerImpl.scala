@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -79,19 +79,22 @@ private[json] case class JsonPayloadCodecCompilerImpl(
 
       def fromSchema[A](schema: Schema[A], cache: Cache): PayloadDecoder[A] = {
         val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
-        new JsonPayloadDecoder(jcodec)
+        new JsonPayloadDecoder(jcodec, schema.getDefaultValue)
       }
 
       def fromSchema[A](schema: Schema[A]): PayloadDecoder[A] =
         fromSchema(schema, createCache())
     }
 
-  private class JsonPayloadDecoder[A](jcodec: JsonCodec[A])
+  private class JsonPayloadDecoder[A](jcodec: JsonCodec[A], default: Option[A])
       extends PayloadDecoder[A] {
     def decode(blob: Blob): Either[PayloadError, A] = {
       try {
         Right {
-          if (blob.isEmpty) readFromString("{}", jsoniterReaderConfig)(jcodec)
+          if (blob.isEmpty)
+            default.getOrElse(
+              readFromString("{}", jsoniterReaderConfig)(jcodec)
+            )
           else
             blob match {
               case b: Blob.ArraySliceBlob =>

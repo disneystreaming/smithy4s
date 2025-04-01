@@ -24,7 +24,7 @@ trait ObjectCollisionGen[F[_, _, _, _, _]] {
   def _toString(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def _wait(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](this)
 }
 
 object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollisionOperation] {

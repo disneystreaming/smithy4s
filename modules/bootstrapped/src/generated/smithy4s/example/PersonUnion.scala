@@ -22,7 +22,7 @@ sealed trait PersonUnion extends scala.Product with scala.Serializable { self =>
 }
 object PersonUnion extends ShapeTag.Companion[PersonUnion] {
 
-  def otherPerson(name: String):OtherPerson = OtherPerson(name)
+  def otherPerson(name: String): OtherPerson = OtherPerson(name)
 
   val id: ShapeId = ShapeId("smithy4s.example", "PersonUnion")
 
@@ -32,7 +32,7 @@ object PersonUnion extends ShapeTag.Companion[PersonUnion] {
     def $ordinal: Int = 0
   }
 
-  object OtherPerson extends ShapeTag.Companion[OtherPerson] {
+  object OtherPerson {
     val id: ShapeId = ShapeId("smithy4s.example", "OtherPerson")
 
     val hints: Hints = Hints.empty

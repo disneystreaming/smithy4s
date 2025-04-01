@@ -23,7 +23,7 @@ trait FooServiceGen[F[_, _, _, _, _]] {
     */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
 }
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {

@@ -1,15 +1,33 @@
+/*
+ *  Copyright 2021-2025 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s
 
 import munit._
 import smithy4s.kinds.PolyFunction5
 import smithy4s.example.FooServiceGen
 import smithy.api.Documentation
+import smithy4s.schema.OperationSchema
+import smithy4s.kinds.PolyFunction
 
 class ServiceBuilderSpec extends FunSuite {
 
   val service = smithy4s.example.FooService
 
-  val builder = smithy4s.Service.Builder.fromService(service)
+  val builder = service.toBuilder
 
   test(
     "can replace the following values (Id, Version and Hints) using withId, withVersion, withHints"
@@ -73,6 +91,32 @@ class ServiceBuilderSpec extends FunSuite {
       newService.endpoints.map(_.id),
       IndexedSeq(ShapeId("smithy4s.example", "operation1"))
     )
+  }
+
+  test("can easily transform endpoint's inputs using schema PolyFunctions") {
+
+    val fk = new PolyFunction[Schema, Schema] {
+      def apply[A](schema: Schema[A]): Schema[A] =
+        schema.withId(schema.shapeId.withNamespace("replaced"))
+    }
+
+    val result = builder
+      .mapEndpointEach(
+        Endpoint.mapSchema(
+          OperationSchema
+            .mapInputK(fk)
+            .andThen(
+              OperationSchema.mapOutputK(fk)
+            )
+        )
+      )
+      .build
+
+    val namespaces =
+      result.endpoints.map(_.input.shapeId.namespace).toSet ++
+        result.endpoints.map(_.output.shapeId.namespace).toSet
+
+    assert(namespaces == Set("replaced"))
   }
 
 }

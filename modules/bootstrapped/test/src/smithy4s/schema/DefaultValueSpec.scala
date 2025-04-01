@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ final class DefaultValueSpec extends FunSuite {
   test("refined") {
     val b: Schema[Int] =
       Schema.int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
-    testCaseOpt(b, None)
+    testCaseOpt(b, Some(0))
   }
 
   test("recursive") {

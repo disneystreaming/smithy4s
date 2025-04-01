@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 package smithy4s.codegen.internals
 
 import cats.~>
-import smithy4s.codegen.internals.Type.Nullable
 
 import Type.Alias
+import Type.Nullable
 import Type.PrimitiveType
+import Type.ValidatedAlias
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
@@ -86,6 +87,14 @@ private[internals] object CollisionAvoidance {
           rec,
           hints.map(modHint)
         )
+      case ValidatedTypeAlias(shapeId, name, tpe, recursive, hints) =>
+        ValidatedTypeAlias(
+          shapeId,
+          protectKeyword(name.capitalize),
+          modType(tpe),
+          recursive,
+          hints.map(modHint)
+        )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, realName, hints) =>
@@ -128,6 +137,8 @@ private[internals] object CollisionAvoidance {
       val protectedName = protectKeyword(name.capitalize)
       val unwrapped = isUnwrapped | (protectedName != name.capitalize)
       Alias(namespace, protectKeyword(name.capitalize), modType(tpe), unwrapped)
+    case ValidatedAlias(namespace, name, tpe) =>
+      ValidatedAlias(namespace, protectKeyword(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, typeParams, pFqn, under, refinementHint) =>
       ExternalType(
@@ -143,14 +154,27 @@ private[internals] object CollisionAvoidance {
 
   private def modField(field: Field): Field = {
     Field(
-      protectKeyword(uncapitalise(field.name)),
-      field.name,
-      modType(field.tpe),
-      field.modifier,
-      field.originalIndex,
-      field.hints.map(modHint)
+      name = protectKeyword(uncapitalise(field.name)),
+      realName = field.name,
+      tpe = modType(field.tpe),
+      modifier = modModifier(field.modifier),
+      originalIndex = field.originalIndex,
+      hints = field.hints.map(modHint)
     )
   }
+
+  private def modModifier(modifier: Field.Modifier): Field.Modifier =
+    Field.Modifier(
+      required = modifier.required,
+      nullable = modifier.nullable,
+      default = modifier.default.map(modFieldDefault)
+    )
+
+  private def modFieldDefault(default: Field.Default): Field.Default =
+    Field.Default(
+      node = default.node,
+      typedNode = default.typedNode.map(recursion.preprocess(modTypedNode))
+    )
 
   private def modStreamingField(
       streamingField: StreamingField
@@ -216,7 +240,14 @@ private[internals] object CollisionAvoidance {
           )
         case NewTypeTN(ref, target) =>
           NewTypeTN(modRef(ref), target)
+        case ValidatedNewTypeTN(ref, target) =>
+          ValidatedNewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
+          // note: technically we should probably escape altName here
+          // but it'd only really break if it matched a capitalized keyword,
+          // and Scala has none of those, so it's impossible to write a failing test.
+          // Alt names in this context are always capitalized before being printed
+          // (Renderer.scala:1614 at the time of writing).
           AltTN(modRef(ref), altName, alt)
         case MapTN(values) =>
           MapTN(values)
@@ -301,14 +332,17 @@ private[internals] object CollisionAvoidance {
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
     val Schema_ = NameRef("smithy4s", "Schema")
+    val Validator_ = NameRef("smithy4s", "Validator")
     val OperationSchema_ = NameRef("smithy4s.schema", "OperationSchema")
     val FunctorAlgebra_ = NameRef("smithy4s.kinds", "FunctorAlgebra")
     val BiFunctorAlgebra_ = NameRef("smithy4s.kinds", "BiFunctorAlgebra")
+    val Bijection_ = NameRef("smithy4s", "Bijection")
     val StreamingSchema_ = NameRef("smithy4s.schema", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
     val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
+    val ValidatedNewtype_ = NameRef("smithy4s", "ValidatedNewtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")
     val ErrorSchema_ = NameRef("smithy4s.schema", "ErrorSchema")

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.CompilationCache
+import smithy4s.schema.FieldFilter
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -171,15 +172,24 @@ object Metadata {
   implicit def decoderFromSchema[A: Schema]: Decoder[A] =
     Decoder.derivedImplicitInstance
 
-  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
+  object Decoder
+      extends CachedDecoderCompilerImpl(
+        awsHeaderEncoding = false,
+        allowNaNAndInfiniteValues = false
+      ) {
     type Compiler = CachedSchemaCompiler[Decoder]
   }
 
   private[smithy4s] object AwsDecoder
-      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+      extends CachedDecoderCompilerImpl(
+        awsHeaderEncoding = true,
+        allowNaNAndInfiniteValues = true
+      )
 
-  private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
-      extends CachedSchemaCompiler.DerivingImpl[Decoder] {
+  private[http] class CachedDecoderCompilerImpl(
+      awsHeaderEncoding: Boolean,
+      allowNaNAndInfiniteValues: Boolean
+  ) extends CachedSchemaCompiler.DerivingImpl[Decoder] {
     type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: Decoder[A]): Decoder[A] =
@@ -190,7 +200,11 @@ object Metadata {
         cache: CompilationCache[internals.MetaDecode]
     ): Decoder[A] = {
       val metaDecode =
-        new SchemaVisitorMetadataReader(cache, awsHeaderEncoding)(schema)
+        new SchemaVisitorMetadataReader(
+          cache,
+          awsHeaderEncoding,
+          allowNaNAndInfiniteValues
+        )(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(decodeFunction) =>
           decodeFunction(_: Metadata)
@@ -212,13 +226,31 @@ object Metadata {
   type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
   trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
-    def withExplicitDefaultsEncoding(explicitDefaults: Boolean): EncoderCompiler
+    @deprecated(
+      message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitDefaults = false -> FieldFilter.SkipNonRequired
+   - explicitDefaults = true -> FieldFilter.EncodeAll
+ """,
+      since = "0.18.30"
+    )
+    def withExplicitDefaultsEncoding(
+        explicitDefaults: Boolean
+    ): EncoderCompiler = withFieldFilter(
+      if (explicitDefaults) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
+
+    def withFieldFilter(
+        fieldFilter: FieldFilter
+    ): EncoderCompiler
   }
 
   object Encoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = false,
-        explicitDefaultsEncoding = false
+        fieldFilter = FieldFilter.Default
       ) {
     type Compiler = CachedSchemaCompiler[Encoder]
   }
@@ -226,25 +258,33 @@ object Metadata {
   private[smithy4s] object AwsEncoder
       extends CachedEncoderCompilerImpl(
         awsHeaderEncoding = true,
-        explicitDefaultsEncoding = false
+        fieldFilter = FieldFilter.Default
       )
 
   private[http] class CachedEncoderCompilerImpl(
       awsHeaderEncoding: Boolean,
-      explicitDefaultsEncoding: Boolean
+      fieldFilter: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
+
+    @deprecated
+    protected def this(
+        awsHeaderEncoding: Boolean,
+        explicitDefaultsEncoding: Boolean
+    ) = this(
+      awsHeaderEncoding,
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
 
     type Aux[A] = internals.MetaEncode[A]
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
-    def withExplicitDefaultsEncoding(
-        explicitDefaultsEncoding: Boolean
-    ): EncoderCompiler = new CachedEncoderCompilerImpl(
-      awsHeaderEncoding = awsHeaderEncoding,
-      explicitDefaultsEncoding = explicitDefaultsEncoding
-    )
+    def withFieldFilter(
+        fieldFilter: FieldFilter
+    ): EncoderCompiler =
+      new CachedEncoderCompilerImpl(awsHeaderEncoding, fieldFilter)
 
     def fromSchema[A](
         schema: Schema[A],
@@ -256,7 +296,7 @@ object Metadata {
       val schemaVisitor = new SchemaVisitorMetadataWriter(
         cache,
         commaDelimitedEncoding = awsHeaderEncoding,
-        explicitDefaultsEncoding = explicitDefaultsEncoding
+        fieldFilter = fieldFilter
       )
       schemaVisitor(schema) match {
         case StructureMetaEncode(f) if awsHeaderEncoding => { (a: A) =>

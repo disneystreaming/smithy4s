@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ private[codegen] object ModelLoader {
     val modelsInJars = deps.flatMap { file =>
       Using.resource(
         // Note: On JDK13+, the second parameter is redundant.
-        FileSystems.newFileSystem(file.toPath(), null)
+        FileSystems.newFileSystem(file.toPath(), null: ClassLoader)
       ) { jarFS =>
         val p = jarFS.getPath("META-INF", "smithy", "manifest")
 
@@ -85,7 +85,7 @@ private[codegen] object ModelLoader {
     // Appending all metadata that is not Smithy4s-specific, as well as relevant
     // Smithy4s-related metadata, into the resulting model.
     upstreamModel.getMetadata().asScala.foreach {
-      case (k @ "smithy4sGenerated", _) => ()
+      case (CodegenRecord.METADATA_KEY, _) => ()
       case (k, _) if k.startsWith("smithy4s") =>
         sanitisingModelBuilder.removeMetadataProperty(k)
       case _ => ()

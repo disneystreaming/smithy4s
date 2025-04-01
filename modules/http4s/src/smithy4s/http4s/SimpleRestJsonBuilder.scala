@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,18 @@
 package smithy4s
 package http4s
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024, false, true)
+import smithy4s.json.Json
+import smithy4s.json.JsonPayloadCodecCompiler
+import smithy4s.schema.FieldFilter
+
+object SimpleRestJsonBuilder
+    extends SimpleRestJsonBuilder(
+      new internals.SimpleRestJsonCodecs(
+        jsonCodecs = Json.payloadCodecs,
+        fieldFilter = FieldFilter.Default,
+        hostPrefixInjection = true
+      )
+    )
 
 class SimpleRestJsonBuilder private (
     simpleRestJsonCodecs: internals.SimpleRestJsonCodecs
@@ -25,39 +36,70 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
+  @deprecated(message = "Use .withXXX methods instead", since = "0.18.25")
   def this(
       maxArity: Int,
       explicitDefaultsEncoding: Boolean,
       hostPrefixInjection: Boolean
-  ) =
-    this(
+  ) = {
+    this {
+      val fieldFilter =
+        if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+        else FieldFilter.Default
       new internals.SimpleRestJsonCodecs(
-        maxArity,
-        explicitDefaultsEncoding,
+        Json.payloadCodecs
+          .withJsoniterCodecCompiler(
+            Json.jsoniter
+              .withMaxArity(maxArity)
+              .withFieldFilter(fieldFilter)
+          ),
+        fieldFilter,
         hostPrefixInjection
       )
-    )
+    }
+  }
 
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      maxArity,
-      simpleRestJsonCodecs.explicitDefaultsEncoding,
-      simpleRestJsonCodecs.hostPrefixInjection
+      simpleRestJsonCodecs.transformJsonCodecs(
+        _.configureJsoniterCodecCompiler(_.withMaxArity(maxArity))
+      )
     )
 
+  @deprecated(
+    message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldFilter.Default
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
+ """,
+    since = "0.18.30"
+  )
   def withExplicitDefaultsEncoding(
       explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
+    withFieldFilter(
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
+
+  def withFieldFilter(
+      fieldFilter: FieldFilter
+  ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.maxArity,
-      explicitDefaultsEncoding,
-      simpleRestJsonCodecs.hostPrefixInjection
+      simpleRestJsonCodecs.withFieldFilter(fieldFilter)
     )
 
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
-      simpleRestJsonCodecs.maxArity,
-      simpleRestJsonCodecs.explicitDefaultsEncoding,
-      false
+      simpleRestJsonCodecs.withHostPrefixInjection(false)
     )
+
+  /**
+    * Transforms the underlying JSON codec compiler to change its behaviour.
+    */
+  def transformJsonCodecs(
+      f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler
+  ): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(simpleRestJsonCodecs.transformJsonCodecs(f))
 }

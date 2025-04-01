@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,21 +16,16 @@
 
 package smithy4s
 
-abstract class Newtype[A] extends HasId { self =>
-  opaque type Type = A
+abstract class Newtype[A] extends AbstractNewtype[A] { self =>
+  opaque type T = A
 
-  def apply(a: A): Type = a
+  type Type = T
 
   extension (orig: Type) def value: A = orig
 
+  def apply(a: A): Newtype.this.Type = a
+
   def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  def schema: Schema[Type]
-
-  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
-    def id: ShapeId = self.id
-    def schema: Schema[Type] = self.schema
-  }
 
   implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
     def to(a: A): Type = self.apply(a)

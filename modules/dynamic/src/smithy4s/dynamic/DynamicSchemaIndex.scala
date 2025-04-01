@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
     /**
     * Build the DynamicSchemaIndex using the information in this builder.
     *
-    * Note that the functions in this `DynamicSchemaIndex`, including `getServices`,
+    * Note that the functions in this `DynamicSchemaIndex`, including `allServices`,
     * `allSchemas`, and `getSchema` will only return the items that were placed into
     * the builder directly and NOT the transitive values. Additionally, the metadata
     * is always empty.

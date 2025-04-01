@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -184,6 +184,28 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
+  property("Converts from date time format without seconds") {
+    forAll { (i: Date) =>
+      val year = i.getUTCFullYear().toInt
+      val month = i.getUTCMonth().toInt + 1 // in js month is 0-11
+      val date = i.getUTCDate().toInt
+      val hours = i.getUTCHours().toInt
+      val minutes = i.getUTCMinutes().toInt
+      val str = f"$year%04d-$month%02d-$date%02dT$hours%02d:$minutes%02dZ"
+      val parsed = Timestamp.parse(str, TimestampFormat.DATE_TIME)
+      val expected = Timestamp(
+        year = year,
+        month = month,
+        day = date,
+        hour = hours,
+        minute = minutes,
+        second = 0,
+        nano = 0
+      )
+      expect.same(parsed, Some(expected))
+    }
+  }
+
   property("Convert to/from epoch milliseconds") {
     forAll { (d: Date) =>
       val epochMilli = d.valueOf().toLong
@@ -192,6 +214,32 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val tsFromEpochMilli = Timestamp.fromEpochMilli(epochMilli)
       expect.same(tsEpochMilli, epochMilli)
       expect.same(tsFromEpochMilli, ts)
+    }
+  }
+
+  property("Truncate to milliseconds precision") {
+    forAll { (d: Date) =>
+      val epochMilli = d.valueOf().toLong
+      val ts = Timestamp.fromDate(d).truncateToMillis
+
+      val strippedDate = new Date(0)
+      strippedDate.setUTCMilliseconds(epochMilli)
+      val tsFromStrippedDate = Timestamp.fromDate(strippedDate)
+
+      expect.same(ts, tsFromStrippedDate)
+    }
+  }
+
+  property("Truncate to seconds precision") {
+    forAll { (d: Date) =>
+      val epochSecond = (d.valueOf() / 1000).toLong
+      val ts = Timestamp.fromDate(d).truncateToMillis
+
+      val strippedDate = new Date(0)
+      strippedDate.setUTCSeconds(epochSecond)
+      val tsFromStrippedDate = Timestamp.fromDate(strippedDate)
+
+      expect.same(ts, tsFromStrippedDate)
     }
   }
 }

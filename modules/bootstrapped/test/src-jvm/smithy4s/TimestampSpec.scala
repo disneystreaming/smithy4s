@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -169,6 +169,10 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     .ofPattern("yyyyMMdd'T'HHmmssX", Locale.ENGLISH)
     .withZone(ZoneOffset.UTC)
 
+  private val dateTimeWithoutSecondsFormatter = DateTimeFormatter
+    .ofPattern("yyyy-MM-dd'T'HH:mmX", Locale.ENGLISH)
+    .withZone(ZoneOffset.UTC)
+
   property("Converts to concise date format") {
     forAll { (i: Instant) =>
       val ts = Timestamp(i.getEpochSecond, i.getNano)
@@ -187,6 +191,24 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
+  property("Converts from date time format without seconds") {
+    forAll { (i: Instant) =>
+      val str = dateTimeWithoutSecondsFormatter.format(i)
+      val parsed = Timestamp.parse(str, TimestampFormat.DATE_TIME)
+      val zdt = i.atZone(ZoneOffset.UTC)
+      val expected = Timestamp(
+        year = zdt.getYear(),
+        month = zdt.getMonthValue(),
+        day = zdt.getDayOfMonth(),
+        hour = zdt.getHour(),
+        minute = zdt.getMinute(),
+        second = 0,
+        nano = 0
+      )
+      expect.same(parsed, Some(expected))
+    }
+  }
+
   property("Convert to/from epoch milliseconds") {
     forAll { (i: Instant) =>
       val ts = Timestamp.fromInstant(i)
@@ -200,6 +222,25 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val tsFromEpochMilli = Timestamp.fromEpochMilli(epochMilli)
 
       expect.same(tsFromEpochMilli, tsFromStrippedInstant)
+    }
+  }
+
+  property("Truncate to milliseconds precision") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp.fromInstant(i).truncateToMillis
+      val strippedInstant = Instant.ofEpochMilli(i.toEpochMilli)
+      val tsFromStrippedInstant = Timestamp.fromInstant(strippedInstant)
+
+      expect.same(ts, tsFromStrippedInstant)
+    }
+  }
+
+  property("Truncate to seconds precision") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp.fromInstant(i).truncateToSeconds
+      val tsFromStrippedInstant = Timestamp.fromEpochSecond(i.getEpochSecond)
+
+      expect.same(ts, tsFromStrippedInstant)
     }
   }
 }

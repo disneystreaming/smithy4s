@@ -21,7 +21,7 @@ trait HelloServiceGen[F[_, _, _, _, _]] {
   def listen(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def testPath(path: String): F[TestPathInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](this)
 }
 
 object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperation] {

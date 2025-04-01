@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,34 +21,39 @@ import org.http4s._
 import org.http4s.implicits._
 import cats.effect.IO
 import smithy4s.example.ServiceWithNullsAndDefaults
-import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultNullsOperationOutput
 import io.circe.Json
 import org.typelevel.ci.CIString
 import org.typelevel.ci._
 import org.http4s.circe.CirceInstances
 import org.http4s.client.Client
-import smithy4s.example.OperationInput
+import smithy4s.example.DefaultNullsOperationInput
 import cats.effect.kernel.Deferred
+import smithy4s.example.TimestampOperationInput
+import smithy4s.schema.FieldFilter
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
-  test("routes - explicit defaults encoding = false") {
-    runServerTest(explicitDefaults = false).map { response =>
-      assert.same(
-        Map(ci"required-header-with-default" -> "required-header-with-default"),
-        response.headers
-      ) &&
-      assert.same(
-        Json.obj(
-          "requiredWithDefault" -> Json.fromString("required-default")
-        ),
-        response.body
-      )
-    }
+  test("routes - FieldFilter.Default") {
+    runServerTest(fieldFilter = FieldFilter.Default)
+      .map { response =>
+        assert.same(
+          Map(
+            ci"required-header-with-default" -> "required-header-with-default"
+          ),
+          response.headers
+        ) &&
+        assert.same(
+          Json.obj(
+            "requiredWithDefault" -> Json.fromString("required-default")
+          ),
+          response.body
+        )
+      }
   }
 
-  test("routes - explicit defaults encoding = true") {
-    runServerTest(explicitDefaults = true).map { response =>
+  test("routes - FieldFilter.EncodeAll") {
+    runServerTest(fieldFilter = FieldFilter.EncodeAll).map { response =>
       assert.same(
         Map(ci"required-header-with-default" -> "required-header-with-default"),
         response.headers
@@ -64,8 +69,11 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
     }
   }
 
-  test("client - explicit defaults encoding = false") {
-    runClientTest(explicitDefaults = false, OperationInput())
+  test("client - FieldFilter.Default") {
+    runClientTest(
+      fieldFilter = FieldFilter.Default,
+      DefaultNullsOperationInput()
+    )
       .map { request =>
         assert.same(
           Map(
@@ -90,8 +98,11 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       }
   }
 
-  test("client - explicit defaults encoding = true") {
-    runClientTest(explicitDefaults = true, OperationInput())
+  test("client - FieldFilter.EncodeAll") {
+    runClientTest(
+      fieldFilter = FieldFilter.EncodeAll,
+      DefaultNullsOperationInput()
+    )
       .map { request =>
         assert.same(
           Map(
@@ -120,8 +131,14 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   object Impl extends ServiceWithNullsAndDefaults[IO] {
-    override def operation(input: OperationInput): IO[OperationOutput] =
-      IO.pure(OperationOutput())
+
+    override def timestampOperation(input: TimestampOperationInput): IO[Unit] =
+      IO.unit
+
+    override def defaultNullsOperation(
+        input: DefaultNullsOperationInput
+    ): IO[DefaultNullsOperationOutput] =
+      IO.pure(DefaultNullsOperationOutput())
   }
 
   private val specHeaders = Set(
@@ -139,7 +156,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       body: Json
   )
 
-  private def runServerTest(explicitDefaults: Boolean): IO[TestResponse] = {
+  private def runServerTest(fieldFilter: FieldFilter): IO[TestResponse] = {
     def run(
         routes: HttpRoutes[IO],
         req: Request[IO]
@@ -148,7 +165,7 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
         response.as[Json].map(headersToMap(response.headers) -> _)
       }
     SimpleRestJsonBuilder
-      .withExplicitDefaultsEncoding(explicitDefaults)
+      .withFieldFilter(fieldFilter)
       .routes(Impl)
       .resource
       .use { routes =>
@@ -163,8 +180,8 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   }
 
   private def runClientTest(
-      explicitDefaults: Boolean,
-      input: OperationInput
+      fieldFilter: FieldFilter,
+      input: DefaultNullsOperationInput
   ): IO[TestRequest] = {
     val resources = for {
       promise <- Deferred[IO, Request[IO]].toResource
@@ -176,13 +193,13 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
           .toResource
       )
       client <- SimpleRestJsonBuilder
-        .withExplicitDefaultsEncoding(explicitDefaults)
+        .withFieldFilter(fieldFilter)
         .apply(ServiceWithNullsAndDefaults)
         .client(httpClient)
         .resource
     } yield (promise, client)
     resources.use { case (promise, client) =>
-      client.operation(input) >> promise.get.flatMap { req =>
+      client.defaultNullsOperation(input) >> promise.get.flatMap { req =>
         val labels = req.uri.path.segments
           .map(_.toString)
           .toList

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import smithy.api._
 import alloy._
 
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.FieldFilter
 
 /**
   * A codec compiler that produces jsoniter's JsonCodec
@@ -45,7 +46,32 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     *
     * Defaults to false.
     */
-  def withExplicitDefaultsEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
+  @deprecated(
+    message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitNulls = false -> FieldFilter.Default
+   - explicitNulls = true -> FieldFilter.EncodeAll
+ """,
+    since = "0.18.30"
+  )
+  def withExplicitDefaultsEncoding(
+      explicitNulls: Boolean
+  ): JsoniterCodecCompiler =
+    withFieldFilter(
+      if (explicitNulls) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
+
+  /**
+    * Configures the JSON encoder to use a custom {@link FieldFilter}, 
+    * allowing fine-grained control over which fields should be skipped during encoding.
+    *
+    * @param fieldFilter an instance of {@link FieldFilter} responsible for 
+    *                          determining whether a given field should be rendered.
+    * @return a new instance of {@link JsoniterCodecCompiler} with the specified field skipping behavior.
+    */
+  def withFieldFilter(fieldFilter: FieldFilter): JsoniterCodecCompiler
 
   /**
    * Changes the behaviour of Json decoders so that they overlook null values in collections
@@ -78,6 +104,12 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     */
   def withLenientTaggedUnionDecoding: JsoniterCodecCompiler
 
+  /**
+    * Enables lenient decoding of numeric values, where numbers may be carried by JSON strings
+    * as well as JSON numbers.
+    */
+  def withLenientNumericDecoding: JsoniterCodecCompiler
+
 }
 
 object JsoniterCodecCompiler {
@@ -94,7 +126,8 @@ object JsoniterCodecCompiler {
       DiscriminatedUnionMember,
       Default,
       Required,
-      Nullable
+      Nullable,
+      JsonUnknown
     )
 
 }

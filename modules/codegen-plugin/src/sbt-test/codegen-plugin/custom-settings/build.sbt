@@ -1,5 +1,5 @@
 lazy val commonSettings = Def.settings(
-  scalaVersion := "2.13.6",
+  scalaVersion := "2.13.15",
   Compile / smithy4sInputDirs := Seq(
     (ThisBuild / baseDirectory).value / "smithy_input"
   ),

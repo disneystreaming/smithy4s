@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -108,6 +108,16 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    */
   type ErrorAware[F[_, _]] = BiFunctorAlgebra[Alg, F]
 
+  /* *
+    * A short-hand for the result of a MyService.fromFunctorHandlers call.
+   */
+  type FromFunctorHandlers[F[_]] = EndpointHandler.AsService[Alg, Kind1[F]#toKind5]
+
+  /* *
+    * A short-hand for the result of a MyService.fromHandlers call.
+   */
+  type FromHandlers[F[_, _, _, _, _]] = EndpointHandler.AsService[Alg, F]
+
   val service: Service[Alg] = this
   def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]]
 
@@ -179,20 +189,22 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   /**
     * Allows to turn a list of endpoint handlers into an instance of [[Alg]].
     */
-  final def fromHandlers[F[_, _, _, _, _]](handlers: EndpointHandler[Operation, F]*): EndpointHandler.AsService[Alg, F] =
+  final def fromHandlers[F[_, _, _, _, _]](handlers: EndpointHandler[Operation, F]*): FromHandlers[F] =
     EndpointHandler.combineAll(handlers:_*).asService(this)
 
   /**
     * A functor-specialised version of [[fromHandlers]], to help scala 2.12
     */
-  final def fromFunctorHandlers[F[_]](handlers: EndpointHandler[Operation, Kind1[F]#toKind5]*) : EndpointHandler.AsService[Alg, Kind1[F]#toKind5]
+  final def fromFunctorHandlers[F[_]](handlers: EndpointHandler[Operation, Kind1[F]#toKind5]*): FromFunctorHandlers[F]
     = fromHandlers[Kind1[F]#toKind5](handlers:_*)
 
   /**
     * A bifunctor-specialised version of [[fromHandlers]], to help scala 2.12
     */
-  final def fromBifunctorHandlers[F[_, _]](handlers: EndpointHandler[Operation, Kind2[F]#toKind5]*) : EndpointHandler.AsService[Alg, Kind2[F]#toKind5]
+  final def fromBifunctorHandlers[F[_, _]](handlers: EndpointHandler[Operation, Kind2[F]#toKind5]*) : FromHandlers[Kind2[F]#toKind5]
     = fromHandlers[Kind2[F]#toKind5](handlers:_*)
+
+  final def toBuilder: Service.Builder[Alg, Operation] = Service.Builder.fromService(this)
 }
 
 object Service {

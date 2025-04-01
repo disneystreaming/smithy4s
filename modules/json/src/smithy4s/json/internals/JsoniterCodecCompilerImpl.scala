@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,15 +19,17 @@ package internals
 
 import smithy4s.HintMask
 import smithy4s.schema._
+import smithy4s.schema.FieldFilter
 
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
-    explicitDefaultsEncoding: Boolean,
     flexibleCollectionsSupport: Boolean,
     infinitySupport: Boolean,
     preserveMapOrder: Boolean,
     hintMask: Option[HintMask],
-    lenientTaggedUnionDecoding: Boolean
+    lenientTaggedUnionDecoding: Boolean,
+    lenientNumericDecoding: Boolean,
+    fieldFilter: FieldFilter
 ) extends CachedSchemaCompiler.Impl[JCodec]
     with JsoniterCodecCompiler {
 
@@ -35,10 +37,10 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
 
   def withMaxArity(max: Int): JsoniterCodecCompiler = copy(maxArity = max)
 
-  def withExplicitDefaultsEncoding(
-      explicitDefaultsEncoding: Boolean
+  def withFieldFilter(
+      fieldFilter: FieldFilter
   ): JsoniterCodecCompiler =
-    copy(explicitDefaultsEncoding = explicitDefaultsEncoding)
+    copy(fieldFilter = fieldFilter)
 
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler =
     copy(hintMask = Some(hintMask))
@@ -59,15 +61,19 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def withLenientTaggedUnionDecoding: JsoniterCodecCompiler =
     copy(lenientTaggedUnionDecoding = true)
 
+  def withLenientNumericDecoding: JsoniterCodecCompiler =
+    copy(lenientNumericDecoding = true)
+
   def fromSchema[A](schema: Schema[A], cache: Cache): JCodec[A] = {
     val visitor = new SchemaVisitorJCodec(
       maxArity,
-      explicitDefaultsEncoding,
       infinitySupport,
       flexibleCollectionsSupport,
       preserveMapOrder,
       lenientTaggedUnionDecoding,
-      cache
+      lenientNumericDecoding,
+      cache,
+      fieldFilter
     )
     val amendedSchema =
       hintMask
@@ -83,11 +89,12 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
       maxArity = JsoniterCodecCompiler.defaultMaxArity,
-      explicitDefaultsEncoding = false,
+      fieldFilter = FieldFilter.Default,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
       preserveMapOrder = false,
       lenientTaggedUnionDecoding = false,
+      lenientNumericDecoding = false,
       hintMask = Some(JsoniterCodecCompiler.defaultHintMask)
     )
 

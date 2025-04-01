@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,6 +119,13 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { self =>
 }
 
 object Endpoint {
+
+  def mapSchema[Op[_, _, _, _, _]](
+      f: PolyFunction5[OperationSchema, OperationSchema]
+  ): PolyFunction5[Endpoint[Op, *, *, *, *, *], Endpoint[Op, *, *, *, *, *]] =
+    new PolyFunction5[Endpoint[Op, *, *, *, *, *], Endpoint[Op, *, *, *, *, *]] {
+      def apply[I, E, O, SI, SO](fa: Endpoint[Op, I, E, O, SI, SO]): Endpoint[Op, I, E, O, SI, SO] = fa.mapSchema(f(_))
+    }
 
   trait Middleware[A] { self =>
     def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(endpoint: service.Endpoint[_, _, _, _, _]): A => A

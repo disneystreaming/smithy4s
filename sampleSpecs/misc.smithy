@@ -110,3 +110,14 @@ structure RangeCheck {
 // face with sunglasses emoji
 @pattern("^\\uD83D\\uDE0E$")
 string UnicodeRegexString
+
+@trait
+union unionTraitWithUnitCase {
+    u: Unit
+    s: String
+}
+
+@unionTraitWithUnitCase(u: {
+
+})
+string HasUnionUnitCaseTrait

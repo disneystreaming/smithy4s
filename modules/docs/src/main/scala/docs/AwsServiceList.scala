@@ -25,15 +25,15 @@ object AwsServiceList {
 
           println(s"\n#### $emoji ${artifact.service}\n")
           val sbt =
-            s""""${artifact.organization}" % "${artifact.name}" % "${summary.version}""""
+            s"""`"${artifact.organization}" % "${artifact.name}" % "${summary.version}"`"""
           val mill =
-            s"""ivy"${artifact.organization}:${artifact.name}:${summary.version}""""
+            s"""`ivy"${artifact.organization}:${artifact.name}:${summary.version}"`"""
           println(s"* sbt: $sbt")
           println(s"* mill: $mill")
           if (artifact.streamingOperations.nonEmpty) {
             println("")
             println(s"**Unsupported streaming operations**")
-            artifact.streamingOperations.foreach(op => println(s"* $op"))
+            artifact.streamingOperations.foreach(op => println(s"* `$op`"))
           }
         }
       }

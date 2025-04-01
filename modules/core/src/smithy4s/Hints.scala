@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,7 +46,10 @@ trait Hints {
   def get[A](implicit key: ShapeTag[A]): Option[A]
   final def has[A](implicit key: ShapeTag[A]): Boolean = this.get[A].isDefined
   final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
-  final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.tag)
+  private[smithy4s] final def get[T](nt: Newtype[T]): Option[nt.Type] = get(
+    nt.tag
+  )
+  final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
     Hints.fromSeq(all.filter(predicate).toSeq)
   final def filterNot(predicate: Hint => Boolean): Hints =

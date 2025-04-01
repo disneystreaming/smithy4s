@@ -43,6 +43,7 @@ package object example {
 
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
+  type AdditionalProperties = smithy4s.example.AdditionalProperties.Type
   type Age = smithy4s.example.Age.Type
   /** Multiple line doc comment for another string
     * Containing a random \*\/ here.
@@ -65,6 +66,7 @@ package object example {
   type ExtraData = smithy4s.example.ExtraData.Type
   type FancyList = smithy4s.example.FancyList.Type
   type FreeForm = smithy4s.example.FreeForm.Type
+  type HasUnionUnitCaseTrait = smithy4s.example.HasUnionUnitCaseTrait.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   /** @param member
     *   listFoo
@@ -82,6 +84,7 @@ package object example {
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
   type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
+  type NonValidatedString = smithy4s.example.NonValidatedString.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
@@ -91,6 +94,7 @@ package object example {
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type PublisherId = smithy4s.example.PublisherId.Type
   type PublishersList = smithy4s.example.PublishersList.Type
+  type RecursiveList = smithy4s.example.RecursiveList.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type SomeValue = smithy4s.example.SomeValue.Type
@@ -115,5 +119,7 @@ package object example {
   type UVIndex = smithy4s.example.UVIndex.Type
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type Username = smithy4s.example.Username.Type
+  type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }

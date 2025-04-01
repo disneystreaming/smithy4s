@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -89,7 +89,8 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): Option[B] = None
+  ): Option[B] =
+    schema.compile(this).flatMap(refinement.apply(_).toOption)
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value

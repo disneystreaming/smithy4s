@@ -29,8 +29,8 @@ sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product wit
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
 
-  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None):AdtOne = AdtOne(lng, sht, blb, str)
-  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None):AdtTwo = AdtTwo(lng, sht, int)
+  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None): AdtOne = AdtOne(lng, sht, blb, str)
+  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None): AdtTwo = AdtTwo(lng, sht, int)
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 
@@ -40,7 +40,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 0
   }
 
-  object AdtOne extends ShapeTag.Companion[AdtOne] {
+  object AdtOne {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
 
     val hints: Hints = Hints.empty
@@ -61,7 +61,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 1
   }
 
-  object AdtTwo extends ShapeTag.Companion[AdtTwo] {
+  object AdtTwo {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
     val hints: Hints = Hints.empty

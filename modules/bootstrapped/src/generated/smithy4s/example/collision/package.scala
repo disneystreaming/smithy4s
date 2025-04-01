@@ -9,6 +9,8 @@ package object collision {
   type MySet = smithy4s.example.collision.MySet.Type
   type ReservedKeywordTraitExampleCollection = smithy4s.example.collision.ReservedKeywordTraitExampleCollection.Type
   type ReservedKeywordTraitExamplePrimitive = smithy4s.example.collision.ReservedKeywordTraitExamplePrimitive.Type
+  type ReservedNameUnionTrait = smithy4s.example.collision.ReservedNameUnionTrait.Type
   type String = smithy4s.example.collision.String.Type
+  type TestReservedNamespaceTrait = smithy4s.example.collision.TestReservedNamespaceTrait.Type
 
 }

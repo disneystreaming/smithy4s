@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -114,11 +114,12 @@ sealed trait Blob {
 
   final def ++(other: Blob) = concat(other)
 
-  override def equals(other: Any): Boolean =
+  override def equals(other: Any): Boolean = {
     other match {
       case otherBlob: Blob => sameBytesAs(otherBlob)
       case _               => false
     }
+  }
 
   override def hashCode(): Int = {
     import util.hashing.MurmurHash3

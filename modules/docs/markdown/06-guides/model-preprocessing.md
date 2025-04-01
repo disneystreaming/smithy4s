@@ -76,7 +76,7 @@ import mill._
 import scalalib._
 
 object preprocessors extends ScalaModule {
-  def scalaVersion = "2.13.10" // 2.13 to match what Mill uses
+  def scalaVersion = "2.13.15" // 2.13 to match what Mill uses
   def ivyDeps = Agg(
     s"software.amazon.smithy:smithy-build:${smithy4s.codegen.BuildInfo.smithyVersion}"
   )

@@ -16,7 +16,7 @@ trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
 
   def setOp(set: Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](this)
 }
 
 object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverrideServiceGen, ReservedNameOverrideServiceOperation] {

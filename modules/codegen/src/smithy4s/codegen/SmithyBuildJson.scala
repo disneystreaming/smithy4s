@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import smithy4s.codegen.internals.SmithyBuildMavenRepository
 import scala.collection.immutable.ListSet
 
 private[codegen] object SmithyBuildJson {
+
+  val protocolDependency =
+    s"${BuildInfo.smithy4sOrg}:${BuildInfo.protocolArtifactName}:${BuildInfo.version}"
+
   def toJson(
       sources: ListSet[String],
       dependencies: ListSet[String],
@@ -35,7 +39,7 @@ private[codegen] object SmithyBuildJson {
         version = "1.0",
         sources,
         SmithyBuildMaven(
-          dependencies,
+          dependencies + protocolDependency,
           repositories.map(SmithyBuildMavenRepository.apply)
         )
       )

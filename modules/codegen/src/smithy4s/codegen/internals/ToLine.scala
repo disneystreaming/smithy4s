@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import cats.kernel.Monoid
 import java.util.UUID
 
 import LineSegment._
+import cats.kernel.Eq
 
 private[internals] trait ToLine[A] {
   def render(a: A): Line
@@ -66,6 +67,8 @@ private[internals] object ToLine {
         NameRef(ns, name)
       case Type.Alias(_, _, aliased, _) =>
         typeToNameRef(aliased)
+      case Type.ValidatedAlias(ns, name, _) =>
+        NameRef(ns, name)
       case Type.Ref(namespace, name) => NameRef(namespace, name)
       case Type.PrimitiveType(prim)  => primitiveLine(prim)
       case e: Type.ExternalType =>
@@ -166,5 +169,6 @@ private[internals] object Line {
   val space: Line = Line(" ")
   val dot: Line = Line(".")
   implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ + _)
+  implicit val eq: Eq[Line] = Eq.fromUniversalEquals
 
 }

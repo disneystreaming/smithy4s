@@ -23,7 +23,7 @@ sealed trait TestMixinAdt extends scala.Product with scala.Serializable { self =
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
-  def testAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None):TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
+  def testAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None): TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
 
@@ -33,7 +33,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     def $ordinal: Int = 0
   }
 
-  object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
+  object TestAdtMemberWithMixin {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
 
     val hints: Hints = Hints.empty

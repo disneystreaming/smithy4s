@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,15 +81,17 @@ private[internals] object Renderer {
   def apply(unit: CompilationUnit): List[Result] = {
     val r = new Renderer(unit)
 
-    val pack = Result(
-      unit.namespace,
-      "package",
-      r.renderPackageContents.list
-        .map(_.segments.toList.map(_.show).mkString)
-        .mkString(
-          System.lineSeparator()
-        )
-    )
+    val packageObjectFile = r.renderPackageContents.map { packageLines =>
+      Result(
+        unit.namespace,
+        "package",
+        packageLines.list
+          .map(_.segments.toList.map(_.show).mkString)
+          .mkString(
+            System.lineSeparator()
+          )
+      )
+    }
 
     val classes = unit.declarations.map { decl =>
       val renderResult = r.renderDecl(decl) ++ newline
@@ -161,13 +163,7 @@ private[internals] object Renderer {
       Result(unit.namespace, decl.name, content)
     }
 
-    val packageApplicableDecls = unit.declarations.filter {
-      case _: TypeAlias | _: Service => true
-      case _                         => false
-    }
-
-    if (packageApplicableDecls.isEmpty) classes
-    else pack :: classes
+    packageObjectFile.toList ::: classes
   }
 
 }
@@ -187,6 +183,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
+    case vta @ ValidatedTypeAlias(shapeId, _, tpe, recursive, hints) =>
+      renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, tag, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
@@ -207,6 +205,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         line"@deprecated$argListOrEmpty"
       }
+  }
+
+  private def renderScalaImports(hints: List[Hint]): Lines = {
+    lines(
+      hints.flatMap {
+        case Hint.ScalaImports(imports) =>
+          imports.map(LineSegment.Import(_).toLine)
+        case _ => Nil
+      }
+    )
   }
 
   /**
@@ -259,10 +267,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
-  def renderPackageContents: Lines = {
+  def renderPackageContents: Option[Lines] = {
     val typeAliases = compilationUnit.declarations
-      .collect { case TypeAlias(_, name, _, _, _, hints) =>
-        (name, hints)
+      .collect {
+        case TypeAlias(_, name, _, _, _, hints) =>
+          (name, hints)
+        case ValidatedTypeAlias(_, name, _, _, hints) =>
+          (name, hints)
       }
       .sortBy(_._1)
       .map { case (name, hints) =>
@@ -273,24 +284,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         )
       }
 
-    val blk =
-      block(
-        line"package object ${compilationUnit.namespace.split('.').last}"
-      )(
-        compilationUnit.declarations.map(renderDeclPackageContents),
-        newline,
-        typeAliases,
-        newline
-      )
+    val serviceAliases =
+      compilationUnit.declarations.map(renderDeclPackageContents)
 
-    val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
-    if (parts.size > 1) {
-      lines(
-        line"package ${parts.dropRight(1).mkString(".")}",
-        newline,
-        blk
-      )
-    } else blk
+    val packageContents = lines(serviceAliases, newline, typeAliases, newline)
+
+    packageContents.some
+      .filterNot(_.isBlank)
+      .map { contents =>
+        block(
+          line"package object ${compilationUnit.namespace.split('.').last}"
+        )(
+          contents
+        )
+      }
+      .map { blk =>
+        val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
+
+        if (parts.size > 1) {
+          lines(
+            line"package ${parts.dropRight(1).mkString(".")}",
+            newline,
+            blk
+          )
+        } else blk
+      }
   }
 
   private def renderDeclPackageContents(decl: Decl): Lines = decl match {
@@ -324,6 +342,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
@@ -339,7 +358,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         },
         newline,
-        line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        line"final def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       lines(
@@ -695,7 +714,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       newline,
-      obj(product.nameRef, shapeTag(product.nameRef))(
+      obj(product.nameRef, if (adtParent.isEmpty) shapeTag(product.nameRef) else Line.empty)(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
@@ -760,7 +779,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
+          line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -816,6 +835,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(product.hints),
       deprecationAnnotation(product.hints),
+      renderScalaImports(product.hints),
       base
     )
   }
@@ -1019,7 +1039,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+          line"def ${uncapitalise(product.nameDef.name)}($args): ${product.nameRef} = ${product.nameRef}($values)"
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
         case UnionMember.TypeCase(tpe) =>
@@ -1087,6 +1107,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       ).withSameLineValue(line" self =>")(
@@ -1246,6 +1267,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
@@ -1317,6 +1339,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
@@ -1324,6 +1347,50 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         lines(
           line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         ),
+        renderTypeclasses(hints, name)
+      )
+    )
+  }
+
+  private def renderValidatedNewtype(
+      shapeId: ShapeId,
+      name: NameRef,
+      tpe: Type,
+      recursive: Boolean,
+      hints: List[Hint]
+  ): Lines = {
+    val validator = {
+      val tags = hints.collect { case t: Hint.Constraint => t }
+      tags match {
+        case h :: tail =>
+          (
+            line".validating(${renderNativeHint(h.native)})" +:
+              tail.map { tag => line".alsoValidating(${renderNativeHint(tag.native)})" }
+          ).intercalate(Line.empty)
+        case _ => Line.empty
+      }
+    }
+
+    val definition =
+      if (recursive) line"$recursive_("
+      else Line.empty
+    val trailingCalls =
+      line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+    val closing = if (recursive) ")" else ""
+    lines(
+      documentationAnnotation(hints),
+      deprecationAnnotation(hints),
+      obj(name, line"$ValidatedNewtype_[$tpe]")(
+        renderId(shapeId),
+        renderHintsVal(hints),
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
+        lines(
+          line"val validator: $Validator_[$tpe, $name] = $Validator_.of[$tpe, $name]($Bijection_[$tpe, $name](_.asInstanceOf[$name], value(_)))$validator"
+        ),
+        lines(
+          line"implicit val schema: $Schema_[$name] = ${definition}validator.toSchema(underlyingSchema)$closing"
+        ),
+        line"@inline def apply(a: $tpe): Either[String, $name] = validator.validate(a)",
         renderTypeclasses(hints, name)
       )
     )
@@ -1385,6 +1452,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             _,
             false
           ) =>
+        NameRef(ns, s"$name.schema").toLine
+      case Type.ValidatedAlias(ns, name, _) =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
@@ -1517,7 +1586,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      line"${ref.show + "." + name + ".widen"}".write
+      line"${ref.show}.$name.widen".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (name, FieldTN.RequiredTN(value)) =>
@@ -1535,12 +1604,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         else
           false -> line"${ref.show}($text)"
       })
+    case ValidatedNewTypeTN(ref, target) =>
+      Reader(topLevel => {
+        val (wroteCollection, text) = target.run(topLevel)
+        if (wroteCollection && !topLevel)
+          false -> text
+        else
+          false -> line"${ref.show}.unsafeApply($text)"
+      })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
+    case AltTN(ref, altName, AltValueTN.UnitAltTN) =>
+      line"${ref.show}.${altName.capitalize}Case.widen".write
+
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
-      alt.runDefault.write
+      // The `widen` is necessary in Scala 2.
+      // Without it, there is no ShapeTag to use for the conversion to Hints.Binding.
+      line"${alt.runDefault}.widen".write
 
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe
@@ -1575,7 +1657,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
+        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {

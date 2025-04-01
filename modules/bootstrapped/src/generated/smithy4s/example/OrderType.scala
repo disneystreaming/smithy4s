@@ -33,7 +33,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
   def online(online: OrderNumber): OrderType = OnlineCase(online)
   /** For an InStoreOrder a location ID isn't needed */
-  def inStoreOrder(id: OrderNumber, locationId: Option[String] = None):InStoreOrder = InStoreOrder(id, locationId)
+  def inStoreOrder(id: OrderNumber, locationId: Option[String] = None): InStoreOrder = InStoreOrder(id, locationId)
   def preview(): OrderType = OrderType.PreviewCase
 
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
@@ -48,7 +48,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     def $ordinal: Int = 1
   }
 
-  object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
+  object InStoreOrder {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints: Hints = Hints(

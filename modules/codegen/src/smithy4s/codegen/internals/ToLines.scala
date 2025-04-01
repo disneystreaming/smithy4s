@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ private[internals] object ToLines {
 
 private[internals] case class Lines(list: List[Line]) {
   def isEmpty: Boolean = list.isEmpty
+  def isBlank: Boolean = list.forall(_.isEmpty)
 
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =

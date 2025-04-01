@@ -20,5 +20,10 @@ object Age {
         Age.apply,
         (b: Age) => b.value
       )
+
+    implicit val rangeProvider
+        : RefinementProvider.Simple[smithy.api.Range, Age] =
+      RefinementProvider.rangeConstraint(x => x.value)
+
   }
 }
