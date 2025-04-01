@@ -17,5 +17,9 @@
 package smithy4s
 
 package object codegen {
-  val SMITHY4S_DEPENDENCIES = "smithy4sDependencies"
+  val SMITHY4S_DEPENDENCIES: String = "smithy4sDependencies"
+
+  val protocolDependency: String =
+    s"${BuildInfo.smithy4sOrg}:${BuildInfo.protocolArtifactName}:${BuildInfo.version}"
+
 }

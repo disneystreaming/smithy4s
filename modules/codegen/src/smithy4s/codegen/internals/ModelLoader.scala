@@ -47,7 +47,7 @@ private[codegen] object ModelLoader {
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(
-      dependencies :+ s"${BuildInfo.smithy4sOrg}:${BuildInfo.protocolArtifactName}:${BuildInfo.version}",
+      dependencies :+ protocolDependency,
       localJars,
       repositories
     )
