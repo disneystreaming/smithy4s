@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.32
+
+* Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
+
 # 0.18.31
 
 * Fix an issue with `FieldFilter`'s handling of optional fields that aren't represented by an actual `Option` (e.g. bijections) in [#1662](https://github.com/disneystreaming/smithy4s/pull/1662)
