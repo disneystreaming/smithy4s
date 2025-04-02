@@ -1218,7 +1218,7 @@ class DocumentSpec() extends FunSuite {
     roundtripTest(objectCase, SampleOpenUnion.unknown(objectCase))
   }
 
-  test("open tagged union - the key used by the unknown member is not flattened") {
+  test("open tagged union - if the key used by the unknown member appears, it still roundtrips") {
     val input = Document.obj("unknown" -> Document.obj())
     roundtripTest(input, SampleOpenUnion.unknown(input))
   }
