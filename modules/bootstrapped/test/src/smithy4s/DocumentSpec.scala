@@ -1242,7 +1242,7 @@ class DocumentSpec() extends FunSuite {
     )
   }
 
-  test("open discriminated union - unknown tags can be roundtripped".ignore) {
+  test("open discriminated union - unknown tags can be roundtripped") {
     val stringCase = Document.obj(
       "type" -> Document.fromString("brand-new-member"),
       "extra" -> Document.fromString("oh wow i'm a string")
@@ -1257,6 +1257,11 @@ class DocumentSpec() extends FunSuite {
       )
 
     roundtripTest(objectCase, SampleOpenDiscriminatedUnion.unknown(objectCase))
+  }
+
+  test("open tagged union - if the key used by the unknown member appears, it still roundtrips") {
+    val input = Document.obj("type" -> Document.fromString("unknown"), "extra" -> Document.obj())
+    roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
   }
 
   test("open discriminated union with only an unknown member - unknown tags can be roundtripped".ignore) {

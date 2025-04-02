@@ -448,7 +448,8 @@ class DocumentDecoderSchemaVisitor(
 
   private def discriminatedUnion[S](
       discriminated: Discriminated,
-      decoders: DecoderMap[S]
+      decoders: DecoderMap[S],
+      handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S
   ): DocumentDecoder[S] = handleUnion {
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
@@ -458,12 +459,7 @@ class DocumentDecoderSchemaVisitor(
             case Some(value: Document.DString) =>
               decoders.get(value.value) match {
                 case Some(decoder) => decoder(pp, document)
-                case None =>
-                  throw new PayloadError(
-                    PayloadPath(pp.reverse),
-                    "Union",
-                    s"Unknown discriminator: ${value.value}"
-                  )
+                case None => handleUnknownTag(value.value, pp, document)
               }
             case _ =>
               throw new PayloadError(
@@ -484,20 +480,8 @@ class DocumentDecoderSchemaVisitor(
 
   private def taggedUnion[S](
       decoders: DecoderMap[S],
-      maybeJsonUnknown: Option[(List[PayloadPath.Segment], Document) => S]
+      handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S
   ): DocumentDecoder[S] = handleUnion {
-    val handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S =
-      maybeJsonUnknown match {
-        case None =>
-          (key, pp, _) =>
-            throw new PayloadError(
-              PayloadPath(pp.reverse),
-              "Union",
-              s"Unknown discriminator: $key"
-            )
-        case Some(catchAll) => (_, pp, document) => catchAll(pp, document)
-      }
-
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
         case DObject(map) if (map.size == 1) =>
@@ -556,19 +540,30 @@ class DocumentDecoderSchemaVisitor(
     def hasUnknown[A](alt: Alt[U, A]): Boolean =
       alt.schema.hints.has(JsonUnknown)
 
-    val maybeJsonUnknown: Option[(List[PayloadPath.Segment], Document) => U] =
-      alternatives.find(hasUnknown(_)).map { case Alt(_, instance, inject, _) =>
-        (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(pp, doc))
-      }
+    val handleUnknownTag: (String, List[PayloadPath.Segment], Document) => U =
+      alternatives
+        .find(hasUnknown(_))
+        .map { case Alt(_, instance, inject, _) =>
+          val compiled = apply(instance)
+          (_: String, pp: List[PayloadPath.Segment], doc: Document) =>
+            inject(compiled(pp, doc))
+        }
+        .getOrElse { (key, pp, _) =>
+          throw new PayloadError(
+            PayloadPath(pp.reverse),
+            "Union",
+            s"Unknown discriminator: $key"
+          )
+        }
 
     val decoders: DecoderMap[U] =
       alternatives
         .filterNot(hasUnknown(_))
         .map { case alt @ Alt(_, instance, inject, _) =>
           val label = jsonLabel(alt)
+          val compiled = apply(instance)
           val decoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-            inject(apply(instance)(label :: pp, doc))
+            inject(compiled(label :: pp, doc))
           }
           label -> decoder
         }
@@ -576,11 +571,11 @@ class DocumentDecoderSchemaVisitor(
 
     hints match {
       case Discriminated.hint(discriminated) =>
-        discriminatedUnion(discriminated, decoders)
+        discriminatedUnion(discriminated, decoders, handleUnknownTag)
       case Untagged.hint(_) =>
         untaggedUnion(decoders)
       case _ =>
-        taggedUnion(decoders, maybeJsonUnknown)
+        taggedUnion(decoders, handleUnknownTag)
     }
   }
 

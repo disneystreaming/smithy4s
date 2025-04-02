@@ -64,7 +64,7 @@ sealed trait Document extends Product with Serializable {
   }
 
   // Nests this document under the given key.
-  def at(k: String): Document = obj(k -> this)
+  def nest(k: String): Document = obj(k -> this)
 }
 
 object Document {
