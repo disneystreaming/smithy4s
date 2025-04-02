@@ -292,8 +292,10 @@ class DocumentEncoderSchemaVisitor(
             )
             self.apply(schema.addHints(unionMemberHint))
           case Untagged.hint(_) => self.apply(schema)
+          case _ if schema.hints.has(JsonUnknown) =>
+            self.apply(schema)
           case _ =>
-            self.apply(schema).mapDocument(d => Document.obj(jsonLabel -> d))
+            self.apply(schema).mapDocument(_.at(jsonLabel))
         }
       }
     }

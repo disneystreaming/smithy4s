@@ -483,20 +483,28 @@ class DocumentDecoderSchemaVisitor(
   }
 
   private def taggedUnion[S](
-      decoders: DecoderMap[S]
+      decoders: DecoderMap[S],
+      maybeJsonUnknown: Option[(List[PayloadPath.Segment], Document) => S]
   ): DocumentDecoder[S] = handleUnion {
+    val handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S =
+      maybeJsonUnknown match {
+        case None =>
+          (key, pp, _) =>
+            throw new PayloadError(
+              PayloadPath(pp.reverse),
+              "Union",
+              s"Unknown discriminator: $key"
+            )
+        case Some(catchAll) => (_, pp, document) => catchAll(pp, document)
+      }
+
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
         case DObject(map) if (map.size == 1) =>
           val (key: String, value: Document) = map.head
           decoders.get(key) match {
             case Some(decoder) => decoder(pp, value)
-            case None =>
-              throw new PayloadError(
-                PayloadPath(pp.reverse),
-                "Union",
-                s"Unknown discriminator: $key"
-              )
+            case None          => handleUnknownTag(key, pp, document)
           }
         case _ =>
           throw new PayloadError(
@@ -545,14 +553,26 @@ class DocumentDecoderSchemaVisitor(
     def jsonLabel[A](alt: Alt[U, A]): String =
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
+    def hasUnknown[A](alt: Alt[U, A]): Boolean =
+      alt.schema.hints.has(JsonUnknown)
+
+    val maybeJsonUnknown: Option[(List[PayloadPath.Segment], Document) => U] =
+      alternatives.find(hasUnknown(_)).map { case Alt(_, instance, inject, _) =>
+        (pp: List[PayloadPath.Segment], doc: Document) =>
+          inject(apply(instance)(pp, doc))
+      }
+
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
-        val label = jsonLabel(alt)
-        val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(label :: pp, doc))
+      alternatives
+        .filterNot(hasUnknown(_))
+        .map { case alt @ Alt(_, instance, inject, _) =>
+          val label = jsonLabel(alt)
+          val decoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
+            inject(apply(instance)(label :: pp, doc))
+          }
+          label -> decoder
         }
-        jsonLabel(alt) -> encoder
-      }.toMap
+        .toMap
 
     hints match {
       case Discriminated.hint(discriminated) =>
@@ -560,7 +580,7 @@ class DocumentDecoderSchemaVisitor(
       case Untagged.hint(_) =>
         untaggedUnion(decoders)
       case _ =>
-        taggedUnion(decoders)
+        taggedUnion(decoders, maybeJsonUnknown)
     }
   }
 
