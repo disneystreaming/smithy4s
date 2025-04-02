@@ -27,15 +27,25 @@ import smithy4s.example.StructForDiscrimination
 import smithy4s.example.SampleOpenDiscriminatedUnion
 import alloy.Discriminated
 import alloy.JsonUnknown
-import munit._
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
 import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList
+import munit._
+import org.scalacheck.Arbitrary
+import org.scalacheck.Prop.forAll
 
-class DocumentSpec() extends FunSuite {
+class DocumentSpec() extends ScalaCheckSuite {
+
+  private val genDocument =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(Schema.document)
+
+  private val genDocumentMap =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(
+      Schema.map(Schema.string, Schema.document)
+    )
 
   private case class TestCase(
       expectedToSkip: Boolean,
@@ -1223,9 +1233,12 @@ class DocumentSpec() extends FunSuite {
     roundtripTest(input, SampleOpenUnion.unknown(input))
   }
 
-  test("open tagged union with only an unknown member - unknown tags can be roundtripped".ignore) {
-    // todo property test?
-    fail("pending")
+  test("open tagged union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocument, Arbitrary.arbitrary[String]) { (document, tag) =>
+      val input = document.nest(tag)
+
+      roundtripTest(input, OnlyUnknownOpenUnion.unknown(input))
+    }
   }
 
   test("open discriminated union - decoding still fails if the discriminator key is missing") {
@@ -1264,8 +1277,12 @@ class DocumentSpec() extends FunSuite {
     roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
   }
 
-  test("open discriminated union with only an unknown member - unknown tags can be roundtripped".ignore) {
-    fail("pending")
+  test("open discriminated union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocumentMap, Arbitrary.arbitrary[String]) { (documentKeys, tag) =>
+      val input = Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
+
+      roundtripTest(input, OnlyUnknownDiscriminatedOpenUnion.unknown(input))
+    }
   }
 
   private def roundtripTest[T: Document.Encoder: Document.Decoder](input: Document, expectedOutput: T)(implicit

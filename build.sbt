@@ -955,7 +955,7 @@ lazy val exampleGeneratedResourcesOutput =
   */
 lazy val bootstrapped = projectMatrix
   .in(file("modules/bootstrapped"))
-  .dependsOn(cats, `aws-kernel`, complianceTests)
+  .dependsOn(cats, `aws-kernel`, complianceTests, scalacheck)
   .disablePlugins(ScalafixPlugin)
   .settings(
     Compile / headerSources := Nil,
