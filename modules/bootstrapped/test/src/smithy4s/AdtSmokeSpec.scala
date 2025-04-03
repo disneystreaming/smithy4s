@@ -39,9 +39,11 @@ class AdtSmokeSpec() extends FunSuite {
     assertEquals(d3, expected3)
   }
 
+  // NOTE: these `compileErrors` tests can yield false positives if the compilation is cached (this is a "fun" thing about macros).
+  // e.g. you may have to change this code or do `bootstrapped/Test/clean` to check in a fresh state.
   test("@adt unions are subtypes of their members' common transitive mixins") {
     assertEquals(
-      compileErrors("(??? : AdtUnionWithSomeTransitiveMixins) : AdtMixinOne"),
+      compileErrors("(??? : AdtUnionWithSomeTransitiveMixins): AdtMixinOne"),
       ""
     )
   }
