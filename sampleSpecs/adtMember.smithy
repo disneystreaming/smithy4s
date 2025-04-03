@@ -103,19 +103,14 @@ union PersonUnion {
 
 // https://github.com/disneystreaming/smithy4s/issues/1312
 @adt
-union Items {
-    s1: Item1
-    s2: Item2
+union AdtUnionWithSomeTransitiveMixins {
+    s1: AdtMemberWithTransitiveMixin1
+    s2: AdtMemberWithDirectMixin
 }
 
 @mixin
-structure HasHasStuff with [HasStuff] {}
+structure TransitiveMixin with [AdtMixinOne] {}
 
-@mixin
-structure HasStuff {
-    stuff: String
-}
+structure AdtMemberWithTransitiveMixin1 with [TransitiveMixin] {}
 
-structure Item1 with [HasHasStuff] {}
-
-structure Item2 with [HasStuff] {}
+structure AdtMemberWithDirectMixin with [AdtMixinOne] {}
