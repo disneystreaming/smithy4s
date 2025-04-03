@@ -48,13 +48,19 @@ class AdtSmokeSpec() extends FunSuite {
     )
   }
 
-  test("@adt unions are subtypes of their members' common direct&transitive mixins") {
+  test(
+    "@adt unions are subtypes of their members' common direct&transitive mixins"
+  ) {
     assertEquals(
-      compileErrors("(??? : AdtUnionWithTransitiveAndDirectMixins): AdtMixinOne"),
+      compileErrors(
+        "(??? : AdtUnionWithTransitiveAndDirectMixins): AdtMixinOne"
+      ),
       ""
     )
     assertEquals(
-      compileErrors("(??? : AdtUnionWithTransitiveAndDirectMixins): TransitiveMixin"),
+      compileErrors(
+        "(??? : AdtUnionWithTransitiveAndDirectMixins): TransitiveMixin"
+      ),
       ""
     )
   }
