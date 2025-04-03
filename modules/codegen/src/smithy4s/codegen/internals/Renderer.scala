@@ -189,8 +189,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
 
-  private def deprecationAnnotation(hints: List[Hint]): Line = {
-    hints
+  private def deprecationAnnotation(hints: Hints): Line = {
+    hints.values
       .collectFirst { case h: Hint.Deprecated => h }
       .foldMap { dep =>
         val messagePart =
@@ -207,9 +207,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
-  private def renderScalaImports(hints: List[Hint]): Lines = {
+  private def renderScalaImports(hints: Hints): Lines = {
     lines(
-      hints.flatMap {
+      hints.values.flatMap {
         case Hint.ScalaImports(imports) =>
           imports.map(LineSegment.Import(_).toLine)
         case _ => Nil
@@ -234,7 +234,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def documentationAnnotation(
-      hints: List[Hint],
+      hints: Hints,
       skipMemberDocs: Boolean = false
   ): Lines = {
     val atLiteral: String => String = _.replace("@", "{@literal @}")
@@ -244,7 +244,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val literalReplacements: String => String =
       atLiteral.andThen(dollarLiteral).andThen(slashStarLiteral)
 
-    hints
+    hints.values
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] =
@@ -327,7 +327,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       shapeId: ShapeId,
       name: String,
       ops: List[Operation],
-      hints: List[Hint],
+      hints: Hints,
       version: String
   ): Lines = {
 
@@ -545,14 +545,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
       alts <- errorNel.traverse { t =>
-        t.name.map(n => Alt(n, UnionMember.TypeCase(t)))
+        t.name.map(n => Alt(n, UnionMember.TypeCase(t), hints = Hints.empty))
       }
       name = opName + "Error"
     } yield Union(
       ShapeId.fromParts(namespace, op.shapeId.getName() + "Error"),
       name,
       alts,
-      List.empty
+      List.empty,
+      hints = Hints.empty
     )
 
     val renderedErrorUnion = errorUnion.foldMap { case union @ Union(shapeId, _, alts, mixin, recursive, hints) =>
@@ -619,8 +620,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""$StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
   }
 
-  private def renderProtocol(name: NameRef, hints: List[Hint]): Lines = {
-    hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
+  private def renderProtocol(name: NameRef, hints: Hints): Lines = {
+    hints.values.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
       val protocolTraits = protocol.traits
         .map(t => line"""$ShapeId_("${t.namespace}", "${t.name}")""")
         .intercalate(Line.comma)
@@ -643,16 +644,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypeclasses(
-      hints: List[Hint],
+      hints: Hints,
       tpe: NameRef
   ): Lines = {
-    val result = hints.collect { case h: Hint.Typeclass =>
+    val result = hints.values.collect { case h: Hint.Typeclass =>
       renderTypeclass(h, tpe)
     }
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
-  private def renderLenses(product: Product, hints: List[Hint]): Lines = if (
+  private def renderLenses(product: Product, hints: Hints): Lines = if (
     (compilationUnit.rendererConfig.renderOptics || hints.contains(
       Hint.GenerateOptics
     )) && product.fields.nonEmpty
@@ -691,7 +692,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(line"$decl extends $exception$mixinExtensions") {
           fields
             .find { f =>
-              f.hints.contains_(Hint.ErrorMessage) ||
+              f.hints.contains(Hint.ErrorMessage) ||
               f.name === "message"
             }
             .filter {
@@ -888,7 +889,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       alts: NonEmptyList[Alt],
       recursive: Boolean,
-      hints: List[Hint]
+      hints: Hints
   ) = {
     // Only Alts with UnionMember.TypeCase are valid for errors
     val members = alts.collect { case Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
@@ -970,7 +971,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderPrisms(
       unionName: NameRef,
       alts: NonEmptyList[Alt],
-      hints: List[Hint]
+      hints: Hints
   ): Lines = if (
     compilationUnit.rendererConfig.renderOptics || hints.contains(
       Hint.GenerateOptics
@@ -999,7 +1000,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderPrismsEnum(
       enumName: NameRef,
       values: List[EnumValue],
-      hints: List[Hint],
+      hints: Hints,
       isOpen: Boolean
   ): Lines = if (
     compilationUnit.rendererConfig.renderOptics || hints.contains(
@@ -1028,7 +1029,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       alts: NonEmptyList[Alt],
       mixins: List[Type],
       recursive: Boolean,
-      hints: List[Hint],
+      hints: Hints,
       error: Boolean = false
   ): Lines = {
     def smartConstructor(alt: Alt): Lines = {
@@ -1257,7 +1258,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       tag: EnumTag,
       values: List[EnumValue],
-      hints: List[Hint]
+      hints: Hints
   ): Lines = {
     val isOpen = hints.contains(Hint.OpenEnum)
     val isIntEnum = tag match {
@@ -1328,7 +1329,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       tpe: Type,
       recursive: Boolean,
-      hints: List[Hint]
+      hints: Hints
   ): Lines = {
     val definition =
       if (recursive) line"$recursive_("
@@ -1357,10 +1358,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       tpe: Type,
       recursive: Boolean,
-      hints: List[Hint]
+      hints: Hints
   ): Lines = {
     val validator = {
-      val tags = hints.collect { case t: Hint.Constraint => t }
+      val tags = hints.values.collect { case t: Hint.Constraint => t }
       tags match {
         case h :: tail =>
           (
@@ -1531,23 +1532,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }
 
-  def renderHintsVal(hints: List[Hint]): Lines = {
+  def renderHintsVal(hints: Hints): Lines = {
     val lhs = line"val hints: $Hints_"
 
-    hints.flatMap(renderHint) match {
+    hints.values.flatMap(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
         line"$lhs = $Hints_".args(args).appendToLast(".lazily")
     }
   }
 
-  def memberHints(hints: List[Hint]): Line = {
-    val h = hints.map(renderHint).collect { case Some(v) => v }
+  def memberHints(hints: Hints): Line = {
+    val h = hints.values.map(renderHint).collect { case Some(v) => v }
     if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 
-  def renderConstraintValidation(hints: List[Hint]): Line = {
-    val tags = hints.collect { case t: Hint.Constraint => t }
+  def renderConstraintValidation(hints: Hints): Line = {
+    val tags = hints.values.collect { case t: Hint.Constraint => t }
     if (tags.isEmpty) Line.empty
     else {
       tags
@@ -1558,7 +1559,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def hintsAndConstraintsLine(hints: List[Hint]): Line = {
+  private def hintsAndConstraintsLine(hints: Hints): Line = {
     val hintsLine =
       if (hints.isEmpty) Line.empty
       else line".addMemberHints(${memberHints(hints)})"

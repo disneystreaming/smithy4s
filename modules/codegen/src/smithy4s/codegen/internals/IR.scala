@@ -34,6 +34,7 @@ import TypedNode.AltValueTN.TypeAltTN
 import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
+import software.amazon.smithy.model.traits.Trait
 
 private[internals] case class CompilationUnit(
     rawNamespace: String,
@@ -50,7 +51,7 @@ private[internals] case class CompilationUnit(
 private[internals] sealed trait Decl {
   def shapeId: ShapeId
   def name: String
-  def hints: List[Hint]
+  def hints: Hints
   def nameDef: NameDef = NameDef(name)
   def nameRef: NameRef = NameRef(List.empty, name, List.empty)
 }
@@ -59,7 +60,7 @@ private[internals] case class Service(
     shapeId: ShapeId,
     name: String,
     ops: List[Operation],
-    hints: List[Hint],
+    hints: Hints,
     version: String
 ) extends Decl
 
@@ -73,7 +74,7 @@ private[internals] case class Operation(
     output: Type,
     streamedInput: Option[StreamingField],
     streamedOutput: Option[StreamingField],
-    hints: List[Hint] = Nil
+    hints: Hints
 )
 
 private[internals] case class Product(
@@ -82,7 +83,7 @@ private[internals] case class Product(
     fields: List[Field],
     mixins: List[Type],
     recursive: Boolean = false,
-    hints: List[Hint] = Nil,
+    hints: Hints,
     isMixin: Boolean = false
 ) extends Decl
 
@@ -92,7 +93,7 @@ private[internals] case class Union(
     alts: NonEmptyList[Alt],
     mixins: List[Type],
     recursive: Boolean = false,
-    hints: List[Hint] = Nil
+    hints: Hints
 ) extends Decl
 
 private[internals] case class TypeAlias(
@@ -101,7 +102,7 @@ private[internals] case class TypeAlias(
     tpe: Type,
     isUnwrapped: Boolean,
     recursive: Boolean = false,
-    hints: List[Hint] = Nil
+    hints: Hints
 ) extends Decl
 
 private[internals] case class ValidatedTypeAlias(
@@ -109,7 +110,7 @@ private[internals] case class ValidatedTypeAlias(
     name: String,
     tpe: Type,
     recursive: Boolean = false,
-    hints: List[Hint] = Nil
+    hints: Hints
 ) extends Decl
 
 private[internals] case class Enumeration(
@@ -117,14 +118,14 @@ private[internals] case class Enumeration(
     name: String,
     tag: EnumTag,
     values: List[EnumValue],
-    hints: List[Hint]
+    hints: Hints
 ) extends Decl
 private[internals] case class EnumValue(
     value: String,
     intValue: Int,
     name: String,
     realName: String,
-    hints: List[Hint]
+    hints: Hints
 )
 
 private[internals] sealed trait EnumTag
@@ -142,13 +143,13 @@ private[internals] case class Field(
     tpe: Type,
     modifier: Field.Modifier,
     originalIndex: Int,
-    hints: List[Hint]
+    hints: Hints
 )
 
 private[internals] case class StreamingField(
     name: String,
     tpe: Type,
-    hints: List[Hint]
+    hints: Hints
 )
 
 private[internals] object Field {
@@ -204,7 +205,7 @@ private[internals] object Field {
       tpe: Type,
       modifier: Modifier,
       originalIndex: Int,
-      hints: List[Hint] = Nil
+      hints: Hints
   ): Field =
     Field(name, name, tpe, modifier, originalIndex, hints)
 
@@ -227,7 +228,7 @@ private[internals] case class Alt(
     name: String,
     realName: String,
     member: UnionMember,
-    hints: List[Hint]
+    hints: Hints
 )
 
 private[internals] object Alt {
@@ -235,7 +236,7 @@ private[internals] object Alt {
   def apply(
       name: String,
       member: UnionMember,
-      hints: List[Hint] = Nil
+      hints: Hints
   ): Alt = Alt(name, name, member, hints)
 
 }
@@ -291,7 +292,7 @@ private[internals] object Type {
   case class Collection(
       collectionType: CollectionType,
       member: Type,
-      memberHints: List[Hint]
+      memberHints: Hints
   ) extends Type
 
   case class Nullable(
@@ -300,9 +301,9 @@ private[internals] object Type {
 
   case class Map(
       key: Type,
-      keyHints: List[Hint],
+      keyHints: Hints,
       value: Type,
-      valueHints: List[Hint]
+      valueHints: Hints
   ) extends Type
   case class Ref(namespace: String, name: String) extends Type {
     def show: String = NameRef
@@ -336,6 +337,48 @@ private[internals] object CollectionType {
       extends CollectionType(NameRef("scala.collection.immutable.Set"))
   case object Vector extends CollectionType(NameRef("scala.Vector"))
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
+}
+
+private[internals] class Hints private (private val full: List[FullHint]) {
+
+  def mapValues(f: Hint => Hint): Hints =
+    copy(full = full.map(_.mapValue(f)))
+
+  def contains(value: Hint): Boolean = values.contains_(value)
+
+  def isTrait: Boolean = contains(Hint.Trait)
+
+  def filterNot(f: Hint => Boolean): Hints = Hints(
+    full.filterNot(fh => f(fh.value))
+  )
+
+  def ++(other: Hints): Hints = Hints(full ++ other.full)
+  def isEmpty: Boolean = full.isEmpty
+  def nonEmpty: Boolean = !isEmpty
+
+  def values: List[Hint] = full.sortBy(_.shapeId).map(_.value)
+
+  def ::(prefix: FullHint): Hints = Hints(prefix) ++ this
+
+  private def copy(
+      full: List[FullHint]
+  ): Hints = new Hints(full)
+
+}
+object Hints {
+  def apply(hints: FullHint*): Hints = new Hints(hints.toList)
+  def apply(hints: List[FullHint]): Hints = new Hints(hints)
+  val empty: Hints = apply()
+}
+
+private[internals] case class FullHint(shapeId: ShapeId, value: Hint) {
+  def mapValue(f: Hint => Hint): FullHint =
+    copy(value = f(value))
+}
+
+object FullHint {
+  def native(unfold: Trait => Hint.Native)(trt: Trait): FullHint =
+    FullHint(trt.toShapeId(), unfold(trt))
 }
 
 private[internals] sealed trait Hint

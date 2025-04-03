@@ -145,10 +145,7 @@ private[codegen] class SmithyToIR(
       override protected def getDefault(shape: Shape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
 
-        val recursive = hints.exists {
-          case Hint.Trait => true
-          case _          => false
-        }
+        val recursive = hints.isTrait
 
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
@@ -219,10 +216,7 @@ private[codegen] class SmithyToIR(
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
-        val isTrait = hints.exists {
-          case Hint.Trait => true
-          case _          => false
-        }
+        val isTrait = hints.isTrait
         val rec = isRecursive(shape.getId()) || isTrait
 
         val fields = shape.fields
@@ -300,10 +294,7 @@ private[codegen] class SmithyToIR(
           else List.empty
 
         val hints = SmithyToIR.this.hints(shape)
-        val isTrait = hints.exists {
-          case Hint.Trait => true
-          case _          => false
-        }
+        val isTrait = hints.isTrait
         NonEmptyList.fromList(shape.alts).map { case alts =>
           Union(shape.getId(), shape.name, alts, mixins, rec || isTrait, hints)
         }
@@ -387,7 +378,9 @@ private[codegen] class SmithyToIR(
           .toList
 
         val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
-        val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
+        val openEnumHint =
+          if (isOpen) Hints(FullHint(alloy.OpenEnumTrait.ID, Hint.OpenEnum))
+          else Hints.empty
 
         Enumeration(
           shape.getId(),
@@ -417,7 +410,9 @@ private[codegen] class SmithyToIR(
           .toList
 
         val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
-        val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
+        val openEnumHint =
+          if (isOpen) Hints(FullHint(alloy.OpenEnumTrait.ID, Hint.OpenEnum))
+          else Hints.empty
 
         Enumeration(
           shape.getId(),
@@ -668,10 +663,10 @@ private[codegen] class SmithyToIR(
       def booleanShape(x: BooleanShape): Option[Type] =
         primitive(x, "smithy.api#Boolean", Primitive.Bool)
 
-      def getHints(tpe: Type, shape: Shape): List[Hint] = {
+      def getHints(tpe: Type, shape: Shape): Hints = {
         val h = hints(shape)
         tpe match {
-          case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
+          case e: Type.ExternalType => h.filterNot(_ === e.refinementHint)
           case _                    => h
         }
       }
@@ -973,7 +968,7 @@ private[codegen] class SmithyToIR(
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
-  private def documentationHint(shape: Shape): Option[Hint] = {
+  private def documentationHint(shape: Shape): Option[Hint.Documentation] = {
     def split(s: String) =
       s.replace("*/", "\\*\\/").linesIterator.toList
     val shapeDocs = shape
@@ -1016,7 +1011,7 @@ private[codegen] class SmithyToIR(
     } else None
   }
 
-  private def hints(shape: Shape): List[Hint] = {
+  private def hints(shape: Shape): Hints = {
     val allTraits = shape.getAllTraits().asScala.values.toList
     val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
     val traits =
@@ -1038,14 +1033,19 @@ private[codegen] class SmithyToIR(
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint(shape)) ++
-      documentationHint(shape) ++
-      nonConstraintNonMetaTraits
-        .filter(tr =>
-          tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
-        )
-        .map(unfoldTrait) ++
-      maybeTypeclassesHint(shape)
+
+    Hints {
+      traits.mapFilter { trt =>
+        traitToHint(shape).lift(trt).map(FullHint(trt.toShapeId(), _))
+      } ++
+        documentationHint(shape).map(FullHint(DocumentationTrait.ID, _)) ++
+        nonConstraintNonMetaTraits
+          .filter(tr =>
+            tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
+          )
+          .map(FullHint.native(unfoldTrait)) ++
+        maybeTypeclassesHint(shape).map(FullHint(TypeclassTrait.ID, _))
+    }
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean) {
@@ -1059,11 +1059,16 @@ private[codegen] class SmithyToIR(
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
+    private def fieldsInternal(hintsExtractor: Shape => Hints) = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
-          List(Hint.NoDefault)
-        else List.empty
+          Hints(
+            FullHint(
+              ShapeId.from("smithy4s.synthetic#NoDefault"),
+              Hint.NoDefault
+            )
+          )
+        else Hints.empty
       val result = shape
         .members()
         .asScala
@@ -1071,8 +1076,10 @@ private[codegen] class SmithyToIR(
         .map { member =>
           val default =
             if (defaultRenderMode == DefaultRenderMode.Full)
-              maybeDefault(member).toList
-            else List.empty
+              Hints(
+                maybeDefault(member).toList.map(FullHint(DefaultTrait.ID, _))
+              )
+            else Hints.empty
           val modifier = fieldModifier(member)
           (
             member.getMemberName(),
@@ -1114,7 +1121,7 @@ private[codegen] class SmithyToIR(
       * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
       */
     def getFieldsPlain: List[Field] =
-      fieldsInternal(hintsExtractor = _ => List.empty)
+      fieldsInternal(hintsExtractor = _ => Hints.empty)
 
     def alts = {
       shape

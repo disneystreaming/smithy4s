@@ -16,6 +16,8 @@
 
 package smithy4s.codegen.internals
 
+import smithy4s.meta.PackedInputsTrait
+
 private[internals] trait PostProcessor
     extends (CompilationUnit => CompilationUnit) {}
 
@@ -41,7 +43,9 @@ private[internals] object PackedInputsShift extends PostProcessor {
   def transformService(s: Service): Service = {
     if (s.hints.contains(Hint.PackedInputs)) {
       val newOps = s.ops.map { op =>
-        op.copy(hints = Hint.PackedInputs :: op.hints)
+        op.copy(hints =
+          FullHint(PackedInputsTrait.ID, Hint.PackedInputs) :: op.hints
+        )
       }
       s.copy(ops = newOps)
     } else s

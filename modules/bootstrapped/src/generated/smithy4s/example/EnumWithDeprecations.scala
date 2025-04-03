@@ -23,8 +23,8 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("some docs here"),
     smithy.api.Deprecated(message = None, since = None),
+    smithy.api.Documentation("some docs here"),
   ).lazily
 
   @deprecated(message = "N/A", since = "N/A")

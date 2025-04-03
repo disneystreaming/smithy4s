@@ -54,14 +54,14 @@ private[internals] object CollisionAvoidance {
               modType(output),
               streamedInput.map(modStreamingField),
               streamedOutput.map(modStreamingField),
-              hints.map(modHint)
+              hints.mapValues(modHint)
             )
         }
         Service(
           serviceId,
           protectKeyword(name.capitalize),
           newOps,
-          hints.map(modHint),
+          hints.mapValues(modHint),
           version
         )
       case p: Product =>
@@ -73,7 +73,7 @@ private[internals] object CollisionAvoidance {
           alts.map(modAlt),
           mixins.map(modType),
           recursive,
-          hints.map(modHint)
+          hints.mapValues(modHint)
         )
       case TypeAlias(shapeId, name, tpe, isUnwrapped, rec, hints) =>
         val protectedName = protectKeyword(name.capitalize)
@@ -85,7 +85,7 @@ private[internals] object CollisionAvoidance {
           modType(tpe),
           unwrapped,
           rec,
-          hints.map(modHint)
+          hints.mapValues(modHint)
         )
       case ValidatedTypeAlias(shapeId, name, tpe, recursive, hints) =>
         ValidatedTypeAlias(
@@ -93,7 +93,7 @@ private[internals] object CollisionAvoidance {
           protectKeyword(name.capitalize),
           modType(tpe),
           recursive,
-          hints.map(modHint)
+          hints.mapValues(modHint)
         )
       case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
@@ -103,7 +103,7 @@ private[internals] object CollisionAvoidance {
               intValue = intValue,
               name = protectKeyword(name),
               realName = realName,
-              hints.map(modHint)
+              hints.mapValues(modHint)
             )
         }
         Enumeration(
@@ -111,7 +111,7 @@ private[internals] object CollisionAvoidance {
           protectKeyword(name.capitalize),
           tag,
           newValues,
-          hints.map(modHint)
+          hints.mapValues(modHint)
         )
     }
     compilationUnit.copy(declarations = declarations)
@@ -122,14 +122,14 @@ private[internals] object CollisionAvoidance {
       Type.Collection(
         collectionType = collectionType,
         member = modType(member),
-        memberHints = memberHints.map(modHint(_))
+        memberHints = memberHints.mapValues(modHint(_))
       )
     case Type.Map(key, keyHints, value, valueHints) =>
       Type.Map(
         key = modType(key),
-        keyHints = keyHints.map(modHint(_)),
+        keyHints = keyHints.mapValues(modHint(_)),
         value = modType(value),
-        valueHints = valueHints.map(modHint(_))
+        valueHints = valueHints.mapValues(modHint(_))
       )
     case Type.Ref(namespace, name) =>
       Type.Ref(namespace, protectKeyword(name.capitalize))
@@ -159,7 +159,7 @@ private[internals] object CollisionAvoidance {
       tpe = modType(field.tpe),
       modifier = modModifier(field.modifier),
       originalIndex = field.originalIndex,
-      hints = field.hints.map(modHint)
+      hints = field.hints.mapValues(modHint)
     )
   }
 
@@ -182,7 +182,7 @@ private[internals] object CollisionAvoidance {
     StreamingField(
       streamingField.name,
       modType(streamingField.tpe),
-      streamingField.hints.map(modHint)
+      streamingField.hints.mapValues(modHint)
     )
   }
 
@@ -191,7 +191,7 @@ private[internals] object CollisionAvoidance {
       protectKeyword(uncapitalise(alt.name)),
       alt.name,
       alt.member.update(modProduct)(modType),
-      alt.hints.map(modHint)
+      alt.hints.mapValues(modHint)
     )
   }
 
@@ -220,7 +220,7 @@ private[internals] object CollisionAvoidance {
       fields.map(modField),
       mixins.map(modType),
       recursive,
-      hints.map(modHint),
+      hints.mapValues(modHint),
       isMixin
     )
   }
