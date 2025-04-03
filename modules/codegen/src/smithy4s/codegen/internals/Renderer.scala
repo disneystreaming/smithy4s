@@ -1364,8 +1364,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       tags match {
         case h :: tail =>
           (
-            line".validating(${renderNativeHint(h.native)})" +:
-              tail.map { tag => line".alsoValidating(${renderNativeHint(tag.native)})" }
+            line".validating(${renderHint(h.native)})" +:
+              tail.map { tag => line".alsoValidating(${renderHint(tag.native)})" }
           ).intercalate(Line.empty)
         case _ => Line.empty
       }
@@ -1466,7 +1466,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
+        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
       case Nullable(underlying) => line"${underlying.schemaRef}.option"
@@ -1498,7 +1498,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def renderNativeHint(hint: Hint.Native): Line =
+  private def renderHint(hint: Hint.Native): Line =
     recursion
       .cata(renderTypedNode)(hint.typedNode)
       .run(true)
@@ -1509,11 +1509,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       .cata(renderTypedNode)(hint)
       .run(true)
       ._2
-
-  private def renderHint(hint: Hint): Option[Line] = hint match {
-    case h: Hint.Native => renderNativeHint(h).some
-    case _              => None
-  }
 
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
@@ -1534,7 +1529,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderHintsVal(hints: List[Hint]): Lines = {
     val lhs = line"val hints: $Hints_"
 
-    hints.sortBy(_.shapeId).flatMap(renderHint) match {
+    hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
         line"$lhs = $Hints_".args(args).appendToLast(".lazily")
@@ -1542,7 +1537,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def memberHints(hints: List[Hint]): Line = {
-    val h = hints.sortBy(_.shapeId).map(renderHint).collect { case Some(v) => v }
+    val h = hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint)
     if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 
@@ -1552,7 +1547,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else {
       tags
         .map { tag =>
-          line".validated(${renderNativeHint(tag.native)})"
+          line".validated(${renderHint(tag.native)})"
         }
         .intercalate(Line.empty)
     }

@@ -34,24 +34,6 @@ import TypedNode.AltValueTN.TypeAltTN
 import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
-import software.amazon.smithy.model.traits.TraitDefinition
-import software.amazon.smithy.model.traits.ErrorTrait
-import smithy4s.meta.NoStackTraceTrait
-import smithy4s.meta.ErrorMessageTrait
-import smithy4s.meta.PackedInputsTrait
-import software.amazon.smithy.model.traits.ProtocolDefinitionTrait
-import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.DocumentationTrait
-import software.amazon.smithy.model.traits.DeprecatedTrait
-import alloy.OpenEnumTrait
-import smithy4s.meta.VectorTrait
-import smithy4s.meta.IndexedSeqTrait
-import software.amazon.smithy.model.traits.UniqueItemsTrait
-import smithy4s.meta.TypeclassTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
-import smithy4s.meta.ScalaImportsTrait
-import smithy4s.meta.ValidateNewtypeTrait
 
 private[internals] case class CompilationUnit(
     rawNamespace: String,
@@ -356,86 +338,41 @@ private[internals] object CollectionType {
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
-private[internals] sealed trait Hint {
-  def shapeId: ShapeId
-}
+private[internals] sealed trait Hint
 
 private[internals] object Hint {
-  case object Trait extends Hint {
-    def shapeId: ShapeId =
-      TraitDefinition.ID
-  }
-  case object Error extends Hint {
-    def shapeId: ShapeId = ErrorTrait.ID
-  }
-  case object NoStackTrace extends Hint {
-    def shapeId: ShapeId = NoStackTraceTrait.ID
-  }
-  case object PackedInputs extends Hint {
-    def shapeId: ShapeId = PackedInputsTrait.ID
-  }
-  case object NoDefault extends Hint {
-    def shapeId: ShapeId = ShapeId.from("smithy4s.synthetic#NoDefault")
-  }
-  case object ErrorMessage extends Hint {
-    def shapeId: ShapeId = ErrorMessageTrait.ID
-  }
-  case class Constraint(tr: Type.Ref, native: Native) extends Hint {
-    def shapeId: ShapeId = ShapeId.fromParts(tr.namespace, tr.name)
-  }
-  case class Protocol(traits: List[Type.Ref]) extends Hint {
-    def shapeId: ShapeId = ProtocolDefinitionTrait.ID
-  }
-  case class Default(typedNode: Fix[TypedNode]) extends Hint {
-    def shapeId: ShapeId = DefaultTrait.ID
-  }
+  case object Trait extends Hint
+  case object Error extends Hint
+  case object NoStackTrace extends Hint
+  case object PackedInputs extends Hint
+  case object NoDefault extends Hint
+  case object ErrorMessage extends Hint
+  case class Constraint(tr: Type.Ref, native: Native) extends Hint
+  case class Protocol(traits: List[Type.Ref]) extends Hint
+  case class Default(typedNode: Fix[TypedNode]) extends Hint
   case class Documentation(
       docLines: List[String],
       memberDocLines: Map[String, List[String]]
-  ) extends Hint {
-    def shapeId: ShapeId = DocumentationTrait.ID
-  }
+  ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
-      extends Hint {
-    def shapeId: ShapeId = DeprecatedTrait.ID
-  }
+      extends Hint
   // traits that get rendered generically
   case class Native(shapeId: ShapeId, typedNode: Fix[TypedNode]) extends Hint
-  case object IntEnum extends Hint {
-    def shapeId: ShapeId = ShapeId.from("smithy4s.synthetic#IntEnum")
-  }
-  case object OpenEnum extends Hint {
-    def shapeId: ShapeId = OpenEnumTrait.ID
-  }
+  case object IntEnum extends Hint
+  case object OpenEnum extends Hint
 
   sealed trait SpecializedList extends Hint
   object SpecializedList {
-    case object Vector extends SpecializedList {
-      def shapeId: ShapeId = VectorTrait.ID
-    }
-    case object IndexedSeq extends SpecializedList {
-      def shapeId: ShapeId = IndexedSeqTrait.ID
-    }
+    case object Vector extends SpecializedList
+    case object IndexedSeq extends SpecializedList
   }
-  case object UniqueItems extends Hint {
-    def shapeId: ShapeId = UniqueItemsTrait.ID
-  }
+  case object UniqueItems extends Hint
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
-      extends Hint {
-    def shapeId: ShapeId = TypeclassTrait.ID
-  }
-  case object GenerateServiceProduct extends Hint {
-    def shapeId: ShapeId = GenerateServiceProductTrait.ID
-  }
-  case object GenerateOptics extends Hint {
-    def shapeId: ShapeId = GenerateOpticsTrait.ID
-  }
-  case class ScalaImports(imports: List[String]) extends Hint {
-    def shapeId: ShapeId = ScalaImportsTrait.ID
-  }
-  case object ValidateNewtype extends Hint {
-    def shapeId: ShapeId = ValidateNewtypeTrait.ID
-  }
+      extends Hint
+  case object GenerateServiceProduct extends Hint
+  case object GenerateOptics extends Hint
+  case class ScalaImports(imports: List[String]) extends Hint
+  case object ValidateNewtype extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }
