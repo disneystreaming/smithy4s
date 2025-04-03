@@ -199,7 +199,10 @@ private[internals] object CollisionAvoidance {
     Type.Ref(ref.namespace, protectKeyword(ref.name.capitalize))
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
-    Hint.Native(recursion.preprocess(modTypedNode)(hint.typedNode))
+    Hint.Native(
+      hint.shapeId,
+      recursion.preprocess(modTypedNode)(hint.typedNode)
+    )
 
   private def modDefaultHint(hint: Hint.Default): Hint.Default =
     Hint.Default(recursion.preprocess(modTypedNode)(hint.typedNode))

@@ -1534,7 +1534,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderHintsVal(hints: List[Hint]): Lines = {
     val lhs = line"val hints: $Hints_"
 
-    hints.flatMap(renderHint) match {
+    hints.sortBy(_.shapeId).flatMap(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
         line"$lhs = $Hints_".args(args).appendToLast(".lazily")
@@ -1542,7 +1542,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def memberHints(hints: List[Hint]): Line = {
-    val h = hints.map(renderHint).collect { case Some(v) => v }
+    val h = hints.sortBy(_.shapeId).map(renderHint).collect { case Some(v) => v }
     if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 

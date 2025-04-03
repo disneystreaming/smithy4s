@@ -1265,7 +1265,7 @@ private[codegen] class SmithyToIR(
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
-    Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
+    Hint.Native(tr.toShapeId, unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
