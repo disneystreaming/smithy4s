@@ -50,7 +50,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       }
 
     val memberSchemaString =
-      """string.addMemberHints(smithy.api.Documentation("listFoo"), smithy.api.Deprecated(message = None, since = None))"""
+      """string.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("listFoo"))"""
     val requiredString =
       s"""val underlyingSchema: Schema[List[String]] = list($memberSchemaString)"""
     assert(definition.contains(requiredString))
@@ -86,7 +86,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     val keySchemaString =
       """string.addMemberHints(smithy.api.Documentation("mapFoo"))"""
     val valueSchemaString =
-      """int.addMemberHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))"""
+      """int.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("mapBar"))"""
     val requiredString =
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
@@ -158,7 +158,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       "/** this is a HAERT */",
       "@deprecated",
       """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty)""",
-      """override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None)).lazily"""
+      """override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("this is a HAERT")).lazily"""
     )
 
     assert(
@@ -273,7 +273,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       """|  /** this is a HAERT */
          |  @deprecated(message = "typo", since = "0.0.0")
          |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty) {
-         |    override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0"))).lazily
+         |    override val hints: Hints = Hints(smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0")), smithy.api.Documentation("this is a HAERT")).lazily
          |  }""".stripMargin
 
     assert(
