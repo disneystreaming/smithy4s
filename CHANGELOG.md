@@ -7,11 +7,12 @@ Thank you!
 
 # 0.18.32
 
-* codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies ([#837](https://github.com/disneystreaming/smithy4s/issues/837)) in [#1672](https://github.com/disneystreaming/smithy4s/pull/1672)
-* Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
-* More expressive namespace patterns for the codegen in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
-* Enable encoding of Smithy errors prior to applying endpoint-specific middleware in [#1669](https://github.com/disneystreaming/smithy4s/pull/1669)
+* codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies
+* codegen: Add a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
+* codegen: More expressive namespace patterns in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
+* http4s: Allow users to enable encoding of Smithy errors prior to applying endpoint-specific middleware in [#1669](https://github.com/disneystreaming/smithy4s/pull/1669)
 * codegen: Increase determinism in the order of appearance of generated Hints (representation of Smithy traits) in [#1679](https://github.com/disneystreaming/smithy4s/pull/1679)
+* codegen: Allow transitive mixins to be added to the supertypes of an `@adt` union's corresponding Scala trait in [#1673](https://github.com/disneystreaming/smithy4s/pull/1673)
 
 # 0.18.31
 
