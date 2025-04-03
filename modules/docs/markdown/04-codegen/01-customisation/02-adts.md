@@ -135,11 +135,16 @@ case class InStoreOrder(id: String, locationId: String) extends OrderType with H
 case class OnlineOrder(id: String, userId: String) extends OrderType
 ```
 
-Since both `OnlineOrder` and `InStoreOrder` use the `HasId` mixin, that mixin is moved to the `OrderType` level in the generated code. This allows for more flexibility when working with adts. Since only `InStoreOrder` uses the `HasLocation` mixin, that mixin is kept at the level of `InStoreOrder` and extended directly by that case class. 
+Since both `OnlineOrder` and `InStoreOrder` use the `HasId` mixin, that mixin is moved to the `OrderType` level in the generated code. This allows for more flexibility when working with adts. Since only `InStoreOrder` uses the `HasLocation` mixin, that mixin is kept at the level of `InStoreOrder` and extended directly by that case class.
+
+**Note:** since 0.18.32, mixins brought in through an intermediate mixin (transitive mixins) are also included.
 
 ## smithy4s.meta#adtMember Trait
 
-Below we will explore the `smithy4s.meta#adtMember` trait. This trait is mutually exclusive from the `adt` trait described above. It has essentially the same effect as the `adt` trait, with the exception that it DOES NOT extract common mixins to the sealed trait level like the `adt` trait does.
+Below we will explore the `smithy4s.meta#adtMember` trait. This trait is mutually exclusive with the `adt` trait described above. It has essentially the same effect as the `adt` trait, with the following exceptions:
+
+- it **does not** extract common mixins to the sealed trait level like the `adt` trait does
+- you can mix adtMembers and non-adtMembers in the same union.
 
 Here is an example of using the `adtMember` trait:
 
