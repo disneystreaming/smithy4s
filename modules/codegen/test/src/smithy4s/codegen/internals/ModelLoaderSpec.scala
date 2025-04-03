@@ -71,6 +71,16 @@ class ModelLoaderSpec extends FunSuite {
     // nothing failed
   }
 
+  test(
+    "ModelLoader can load a version of Alloy conflicting against the current"
+  ) {
+    doLoad(
+      dependencies = List("com.disneystreaming.alloy:alloy-core:0.1.18"),
+      repositories = Nil
+    )
+    // nothing failed
+  }
+
   test("ModelLoader can load a dependency from s01 if it has a + in the name") {
     val model = doLoad(
       dependencies =
