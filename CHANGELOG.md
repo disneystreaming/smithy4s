@@ -7,7 +7,7 @@ Thank you!
 
 # 0.18.32
 
-* Fixes an issue in which smithy4s-protocol would conflict with its previous versions during codegen ([#837](https://github.com/disneystreaming/smithy4s/issues/837)) in [#1672](https://github.com/disneystreaming/smithy4s/pull/1672)
+* codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies ([#837](https://github.com/disneystreaming/smithy4s/issues/837)) in [#1672](https://github.com/disneystreaming/smithy4s/pull/1672)
 * Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
 * More expressive namespace patterns for the codegen in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
 
