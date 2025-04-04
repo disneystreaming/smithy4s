@@ -19,6 +19,7 @@ package cats.effect.std
 import java.util.UUID
 import cats.effect._
 
+// Shim for https://github.com/typelevel/cats-effect/pull/2945 on CE2
 object UUIDGen {
   def randomUUID[F[_]: Sync]: F[UUID] = Sync[F].delay(UUID.randomUUID())
 }
