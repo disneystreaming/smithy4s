@@ -329,6 +329,7 @@ private[internals] object CollisionAvoidance {
     val ServiceProduct = NameRef("smithy4s", "ServiceProduct")
     val ServiceProductMirror = NameRef("smithy4s", "ServiceProduct.Mirror")
     val Endpoint_ = NameRef("smithy4s", "Endpoint")
+    val Field_ = NameRef("smithy4s.schema", "Field")
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
     val Schema_ = NameRef("smithy4s", "Schema")

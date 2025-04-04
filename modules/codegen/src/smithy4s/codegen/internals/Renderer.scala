@@ -678,6 +678,41 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"final case class ${product.nameDef}($renderedArgs)"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
+    val renderedFields =
+      fields.sortBy(_.originalIndex).map { case Field(fieldName, realName, tpe, modifier, _, hints) =>
+        val fieldBuilder = modifier.typeMod match {
+          case Field.TypeModification.None if modifier.required     => "required"
+          case Field.TypeModification.None                          => "field"
+          case Field.TypeModification.Option                        => "optional"
+          case Field.TypeModification.Nullable if modifier.required => "nullable.required"
+          case Field.TypeModification.Nullable                      => "nullable.field"
+          case Field.TypeModification.OptionNullable                => "nullable.optional"
+        }
+
+        val rendered = if (hints.isEmpty) {
+          line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)"""
+        } else {
+          val memHints = memberHints(hints)
+          val addMemHints =
+            if (memHints.nonEmpty) line".addHints($memHints)"
+            else Line.empty
+                // format: off
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                // format: on
+        }
+        // todo: dedupe this
+        val tpeStr = modifier.typeMod match {
+          case Field.TypeModification.None if modifier.required     => line"$tpe"
+          case Field.TypeModification.None                          => line"$tpe"
+          case Field.TypeModification.Option                        => line"$option[$tpe]"
+          case Field.TypeModification.Nullable if modifier.required => line"$tpe"
+          case Field.TypeModification.Nullable                      => line"Nullable[$tpe]"
+          case Field.TypeModification.OptionNullable                => line"$option[Nullable[$tpe]]"
+        }
+
+        (fieldName, tpeStr, rendered)
+      }
+
     lines(
       if (hints.contains(Hint.Error)) {
         val exception =
@@ -732,34 +767,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         newline,
         if (fields.nonEmpty) {
-          val renderedFields =
-            fields.sortBy(_.originalIndex).map { case Field(fieldName, realName, tpe, modifier, _, hints) =>
-              val fieldBuilder = modifier.typeMod match {
-                case Field.TypeModification.None if modifier.required     => "required"
-                case Field.TypeModification.None                          => "field"
-                case Field.TypeModification.Option                        => "optional"
-                case Field.TypeModification.Nullable if modifier.required => "nullable.required"
-                case Field.TypeModification.Nullable                      => "nullable.field"
-                case Field.TypeModification.OptionNullable                => "nullable.optional"
-              }
-
-              if (hints.isEmpty) {
-                line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)"""
-              } else {
-                val memHints = memberHints(hints)
-                val addMemHints =
-                  if (memHints.nonEmpty) line".addHints($memHints)"
-                  else Line.empty
-                // format: off
-                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
-                // format: on
-              }
-            }
           if (fields.size <= 22) {
             val definition =
               if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
-              .args(renderedFields)
+              .args(renderedFields.map { case (name, _, _) => s"fields.$name" })
               .appendToLast("(make).withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
@@ -767,7 +779,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (recursive) line"$recursive_($struct_.genericArity"
               else line"$struct_.genericArity"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
-              .args(renderedFields)
+              .args(renderedFields.map { case (name, _, _) => s"fields.$name" })
               .block(
                 line"arr => make".args(
                   fields.sortBy(_.originalIndex).zipWithIndex.map { case (field, idx) =>
@@ -782,6 +794,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
+        newline,
+        // todo: skip if no fields
+        block(line"object fields") {
+          renderedFields.map { case (name, tpe, text) =>
+            line"val $name: $Field_[${product.nameRef}, $tpe] = $text"
+          }
+        },
         additionalLines
       )
     )
