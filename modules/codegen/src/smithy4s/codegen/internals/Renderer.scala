@@ -705,7 +705,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case Field.TypeModification.None if modifier.required     => line"$tpe"
           case Field.TypeModification.None                          => line"$tpe"
           case Field.TypeModification.Option                        => line"$option[$tpe]"
-          case Field.TypeModification.Nullable if modifier.required => line"$tpe"
+          case Field.TypeModification.Nullable if modifier.required => line"Nullable[$tpe]"
           case Field.TypeModification.Nullable                      => line"Nullable[$tpe]"
           case Field.TypeModification.OptionNullable                => line"$option[Nullable[$tpe]]"
         }
