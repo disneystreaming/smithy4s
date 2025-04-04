@@ -1642,7 +1642,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
       case Primitive.String     => renderStringLiteral
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>

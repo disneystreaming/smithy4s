@@ -52,6 +52,7 @@ import java.util.Locale
 import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
 import scala.util.Try
+import java.util.UUID
 
 private[codegen] object SmithyToIR {
 
@@ -1490,6 +1491,16 @@ private[codegen] class SmithyToIR(
           Primitive.Unit,
           ()
         )
+      case (node @ N.StringNode(s), Primitive.Uuid) =>
+        Try(UUID.fromString(s))
+          .map(TypedNode.PrimitiveTN(Primitive.Uuid, _))
+          .adaptErr { case e =>
+            new Exception(
+              s"UUID failed validation at codegen time. Defined at: ${node.getSourceLocation()}",
+              e
+            )
+          }
+          .get
       case other =>
         notSupported(other)
     }
