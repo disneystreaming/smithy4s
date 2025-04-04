@@ -27,10 +27,12 @@ import org.http4s.client.Client
 import org.typelevel.ci.CIString
 import smithy4s.Endpoint
 import smithy4s.Service
+import fs2.hashing.Hashing
+import fs2.hashing.HashAlgorithm
 
 private[aws] object Md5CheckSum {
 
-  def middleware[F[_]: Sync]: Endpoint.Middleware[Client[F]] =
+  def middleware[F[_]: Sync: Hashing]: Endpoint.Middleware[Client[F]] =
     new Endpoint.Middleware[Client[F]] {
       def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
           endpoint: service.Endpoint[_, _, _, _, _]
@@ -40,9 +42,15 @@ private[aws] object Md5CheckSum {
         } else client
     }
 
-  private def reqWithChecksum[F[_]: Sync](client: Client[F]): Client[F] = {
+  private def reqWithChecksum[F[_]: Sync: Hashing](
+      client: Client[F]
+  ): Client[F] = {
     val md5HeaderPipe: Pipe[F, Byte, String] =
-      fs2.hash.md5[F] andThen fs2.text.base64.encode[F]
+      _.through(Hashing[F].hash(HashAlgorithm.MD5))
+        .map(_.bytes)
+        .unchunks
+        .through(fs2.text.base64.encode[F])
+
     Client { request =>
       val withChecksum =
         for {

@@ -160,7 +160,7 @@ object Dependencies {
   object AwsSpecSummary {
     val org = "com.disneystreaming.smithy"
     val name = "aws-spec-summary"
-    val awsSpecSummaryVersion = "2025.03.31"
+    val awsSpecSummaryVersion = "2023.09.22"
     val value = org % name % awsSpecSummaryVersion
   }
 
