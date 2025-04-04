@@ -179,8 +179,7 @@ private[internals] object Field {
       def check(hint: TypedNode[Boolean]): Boolean =
         hint match {
           case TypedNode.PrimitiveTN(_, v) => v == None
-          // case TypedNode.CollectionTN(_, v) => v == None
-          case _ => false
+          case _                           => false
         }
 
       recursion.cata(check)(hint)

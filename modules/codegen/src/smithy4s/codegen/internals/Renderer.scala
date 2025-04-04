@@ -1627,7 +1627,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case PrimitiveTN(prim, Some(value)) =>
       renderPrimitive[prim.T](prim)(value).write
     case PrimitiveTN(_, None) =>
-      line"scala.None".write
+      NameRef("scala.None").toLine.write
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
