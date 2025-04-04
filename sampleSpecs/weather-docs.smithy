@@ -2,6 +2,7 @@ $version: "2"
 
 namespace weather
 
+use alloy#nullable
 use alloy#simpleRestJson
 
 @simpleRestJson
@@ -37,4 +38,14 @@ structure Person2 {
 
 structure Person3 {
     item: String = ""
+}
+
+structure Person4 {
+    @nullable
+    item: String = ""
+}
+
+structure Person5 {
+    @nullable
+    item: String = null
 }

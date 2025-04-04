@@ -175,23 +175,15 @@ private[internals] object Field {
       default: Option[Default]
   ) {
 
-    private def hasNullValue(hint: Fix[TypedNode]): Boolean = {
-      def check(hint: TypedNode[Boolean]): Boolean =
-        hint match {
-          case TypedNode.PrimitiveTN(_, v) => v == None
-          case _                           => false
-        }
-
-      recursion.cata(check)(hint)
-    }
-
     def typeMod: TypeModification =
       if (!required && nullable && default.isEmpty)
         TypeModification.OptionNullable // nullable without default or required gets rendered as Option[Nullable[T]]
       else if (nullable)
         TypeModification.Nullable // other nullables get rendered as just Nullable[T]
       else if (
-        !required && default.flatMap(d => d.typedNode).forall(hasNullValue)
+        !required && (default.isEmpty || default.exists(
+          _.node == Node.nullNode
+        ))
       )
         TypeModification.Option // normal line without default or required gets rendered as Option[T]
       else

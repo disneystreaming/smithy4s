@@ -20,7 +20,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
-final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), four: List[String] = List(), seven: Document = smithy4s.Document.nullDoc, eight: Map[String, String] = Map(), five: Option[String] = None, six: Option[Int] = None, nine: Option[Short] = None, ten: Option[Double] = None, eleven: Option[Float] = None, twelve: Option[Long] = None, thirteen: Option[Timestamp] = None, fourteen: Option[Timestamp] = None, fifteen: Option[Timestamp] = None, sixteen: Option[Byte] = None, seventeen: Option[Blob] = None, eighteen: Option[Boolean] = None)
+final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), four: Option[List[String]] = None, five: Option[String] = None, six: Option[Int] = None, seven: Option[Document] = None, eight: Option[Map[String, String]] = None, nine: Option[Short] = None, ten: Option[Double] = None, eleven: Option[Float] = None, twelve: Option[Long] = None, thirteen: Option[Timestamp] = None, fourteen: Option[Timestamp] = None, fifteen: Option[Timestamp] = None, sixteen: Option[Byte] = None, seventeen: Option[Blob] = None, eighteen: Option[Boolean] = None)
 
 object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultTest")
@@ -28,17 +28,17 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val hints: Hints = Hints.empty
 
   // constructor using the original order from the spec
-  private def make(one: Int, two: String, three: List[String], four: List[String], five: Option[String], six: Option[Int], seven: Document, eight: Map[String, String], nine: Option[Short], ten: Option[Double], eleven: Option[Float], twelve: Option[Long], thirteen: Option[Timestamp], fourteen: Option[Timestamp], fifteen: Option[Timestamp], sixteen: Option[Byte], seventeen: Option[Blob], eighteen: Option[Boolean]): DefaultTest = DefaultTest(one, two, three, four, seven, eight, five, six, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
+  private def make(one: Int, two: String, three: List[String], four: Option[List[String]], five: Option[String], six: Option[Int], seven: Option[Document], eight: Option[Map[String, String]], nine: Option[Short], ten: Option[Double], eleven: Option[Float], twelve: Option[Long], thirteen: Option[Timestamp], fourteen: Option[Timestamp], fifteen: Option[Timestamp], sixteen: Option[Byte], seventeen: Option[Blob], eighteen: Option[Boolean]): DefaultTest = DefaultTest(one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
 
   implicit val schema: Schema[DefaultTest] = struct(
     int.field[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.field[DefaultTest]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
     StringList.underlyingSchema.field[DefaultTest]("three", _.three).addHints(smithy.api.Default(smithy4s.Document.array())),
-    StringList.underlyingSchema.field[DefaultTest]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    StringList.underlyingSchema.optional[DefaultTest]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     string.optional[DefaultTest]("five", _.five).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     int.optional[DefaultTest]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    document.field[DefaultTest]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    DefaultStringMap.underlyingSchema.field[DefaultTest]("eight", _.eight).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    document.optional[DefaultTest]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    DefaultStringMap.underlyingSchema.optional[DefaultTest]("eight", _.eight).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     short.optional[DefaultTest]("nine", _.nine).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     double.optional[DefaultTest]("ten", _.ten).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     float.optional[DefaultTest]("eleven", _.eleven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
