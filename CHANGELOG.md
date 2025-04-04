@@ -11,7 +11,7 @@ Thank you!
 * Adds a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
 * More expressive namespace patterns for the codegen in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
 * Enable encoding of Smithy errors prior to applying endpoint-specific middleware in [#1669](https://github.com/disneystreaming/smithy4s/pull/1669)
-* Increases determinism in the order of appearance of generated Hints (representation of Smithy traits) in [#1679](https://github.com/disneystreaming/smithy4s/pull/1679)
+* codegen: Increase determinism in the order of appearance of generated Hints (representation of Smithy traits) in [#1679](https://github.com/disneystreaming/smithy4s/pull/1679)
 
 # 0.18.31
 
