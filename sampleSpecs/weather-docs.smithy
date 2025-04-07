@@ -27,25 +27,3 @@ structure Dog {
     @required
     name: String
 }
-
-structure Person1 {
-    item: String = null
-}
-
-structure Person2 {
-    item: String
-}
-
-structure Person3 {
-    item: String = ""
-}
-
-structure Person4 {
-    @nullable
-    item: String = ""
-}
-
-structure Person5 {
-    @nullable
-    item: String = null
-}

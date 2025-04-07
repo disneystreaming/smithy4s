@@ -3,6 +3,8 @@ package smithy4s.example
 import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Hints
+import smithy4s.Nullable
+import smithy4s.Nullable.Null
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -20,7 +22,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
-final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), four: Option[List[String]] = None, five: Option[String] = None, six: Option[Int] = None, seven: Option[Document] = None, eight: Option[Map[String, String]] = None, nine: Option[Short] = None, ten: Option[Double] = None, eleven: Option[Float] = None, twelve: Option[Long] = None, thirteen: Option[Timestamp] = None, fourteen: Option[Timestamp] = None, fifteen: Option[Timestamp] = None, sixteen: Option[Byte] = None, seventeen: Option[Blob] = None, eighteen: Option[Boolean] = None)
+final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), nineteen: Nullable[Int] = Null, twenty: Nullable[Int] = Null, four: Option[List[String]] = None, five: Option[String] = None, six: Option[Int] = None, seven: Option[Document] = None, eight: Option[Map[String, String]] = None, nine: Option[Short] = None, ten: Option[Double] = None, eleven: Option[Float] = None, twelve: Option[Long] = None, thirteen: Option[Timestamp] = None, fourteen: Option[Timestamp] = None, fifteen: Option[Timestamp] = None, sixteen: Option[Byte] = None, seventeen: Option[Blob] = None, eighteen: Option[Boolean] = None)
 
 object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultTest")
@@ -28,7 +30,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val hints: Hints = Hints.empty
 
   // constructor using the original order from the spec
-  private def make(one: Int, two: String, three: List[String], four: Option[List[String]], five: Option[String], six: Option[Int], seven: Option[Document], eight: Option[Map[String, String]], nine: Option[Short], ten: Option[Double], eleven: Option[Float], twelve: Option[Long], thirteen: Option[Timestamp], fourteen: Option[Timestamp], fifteen: Option[Timestamp], sixteen: Option[Byte], seventeen: Option[Blob], eighteen: Option[Boolean]): DefaultTest = DefaultTest(one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
+  private def make(one: Int, two: String, three: List[String], four: Option[List[String]], five: Option[String], six: Option[Int], seven: Option[Document], eight: Option[Map[String, String]], nine: Option[Short], ten: Option[Double], eleven: Option[Float], twelve: Option[Long], thirteen: Option[Timestamp], fourteen: Option[Timestamp], fifteen: Option[Timestamp], sixteen: Option[Byte], seventeen: Option[Blob], eighteen: Option[Boolean], nineteen: Nullable[Int], twenty: Nullable[Int]): DefaultTest = DefaultTest(one, two, three, nineteen, twenty, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
 
   implicit val schema: Schema[DefaultTest] = struct(
     int.field[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
@@ -49,5 +51,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
     byte.optional[DefaultTest]("sixteen", _.sixteen).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     bytes.optional[DefaultTest]("seventeen", _.seventeen).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
     boolean.optional[DefaultTest]("eighteen", _.eighteen).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    int.nullable.field[DefaultTest]("nineteen", _.nineteen).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    int.nullable.required[DefaultTest]("twenty", _.twenty).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
   )(make).withId(id).addHints(hints)
 }

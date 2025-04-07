@@ -48,6 +48,13 @@ structure DefaultTest {
     seventeen: Blob
     @default
     eighteen: Boolean
+    @default
+    @alloy#nullable
+    nineteen: Integer
+    @default
+    @alloy#nullable
+    @required
+    twenty: Integer
 }
 
 structure DefaultOrderingTest {
