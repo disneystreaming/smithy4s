@@ -23,69 +23,69 @@ import smithy.api.TimestampFormat
 final class DefaultValueSpec extends FunSuite {
 
   test("boolean") {
-    testCase(Schema.boolean, false)
+    testCaseOpt(Schema.boolean, None)
   }
 
   test("int") {
-    testCase(Schema.int, 0)
+    testCaseOpt(Schema.int, None)
   }
 
   test("long") {
-    testCase(Schema.long, 0L)
+    testCaseOpt(Schema.long, None)
   }
 
   test("short") {
-    testCase(Schema.short, 0: Short)
+    testCaseOpt(Schema.short, None)
   }
 
   test("float") {
-    testCase(Schema.float, 0f)
+    testCaseOpt(Schema.float, None)
   }
 
   test("double") {
-    testCase(Schema.double, 0d)
+    testCaseOpt(Schema.double, None)
   }
 
   test("big decimal") {
-    testCase(Schema.bigdecimal, BigDecimal(0))
+    testCaseOpt(Schema.bigdecimal, None)
   }
 
   test("big int") {
-    testCase(Schema.bigint, BigInt(0))
+    testCaseOpt(Schema.bigint, None)
   }
 
   test("string") {
-    testCase(Schema.string, "")
+    testCaseOpt(Schema.string, None)
   }
 
   test("blob") {
-    testCase(Schema.bytes, Blob.empty)
+    testCaseOpt(Schema.bytes, None)
   }
 
   test("timestamp - epoch") {
-    testCase(Schema.timestamp, Timestamp(0, 0))
+    testCaseOpt(Schema.timestamp, None)
   }
 
   test("timestamp - date_time") {
-    testCase(
+    testCaseOpt(
       Schema.timestamp.addHints(TimestampFormat.DATE_TIME.widen),
-      Timestamp(0, 0)
+      None
     )
   }
 
   test("timestamp - http_date") {
-    testCase(
+    testCaseOpt(
       Schema.timestamp.addHints(TimestampFormat.HTTP_DATE.widen),
-      Timestamp(0, 0)
+      None
     )
   }
 
   test("list") {
-    testCase(Schema.list(Schema.int), List.empty[Int])
+    testCaseOpt(Schema.list(Schema.int), None)
   }
 
   test("map") {
-    testCase(Schema.map(Schema.string, Schema.int), Map.empty[String, Int])
+    testCaseOpt(Schema.map(Schema.string, Schema.int), None)
   }
 
   test("struct") {
@@ -127,7 +127,7 @@ final class DefaultValueSpec extends FunSuite {
   test("bijection") {
     case class Foo(x: Int)
     val b: Schema[Foo] = Schema.bijection(Schema.int, Foo(_), _.x)
-    testCase(b, Foo(0))
+    testCaseOpt(b, None)
   }
 
   test("refined") {
@@ -147,6 +147,11 @@ final class DefaultValueSpec extends FunSuite {
     testCaseOpt(Foo.f, None)
   }
 
+  test("nullable") {
+    val b: Schema[Nullable[Int]] = Schema.int.nullable
+    testCaseOpt(b, Some(Nullable.Null))
+  }
+
   private def testCaseOpt[A](schema: Schema[A], expect: Option[A])(implicit
       loc: Location
   ): Unit = {
@@ -154,8 +159,4 @@ final class DefaultValueSpec extends FunSuite {
     val res = sch.getDefaultValue
     assertEquals(res, expect)
   }
-
-  private def testCase[A](schema: Schema[A], expect: A)(implicit
-      loc: Location
-  ): Unit = testCaseOpt(schema, Some(expect))
 }
