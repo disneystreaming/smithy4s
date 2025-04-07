@@ -33,6 +33,23 @@ Optics can still be rendered using metadata (global) and traits (selective), the
 
 The error type `smithy4s.http.UnknownErrorResponse` has been replaced with `smithy4s.http.RawErrorResponse`, which provides a more accurate description of an error response that failed to decode, including a full representation of the response code, headers, body and the discriminator if one was found.
 
+# ⚠️ Behavior Change: Handling of `@default(null)` and `@nullable`
+
+The behavior of `@default(null)` has changed to better align with Smithy semantics.
+
+- **With `@nullable`**:
+  - Renders `smithy.api#default` as `Default(Document.DNull)`.
+  - Scala field uses `Nullable` with default `Nullable.Null`.
+
+- **Without `@nullable`**:
+  - **Breaking change**: previously generated non-optional Scala fields with type-specific defaults (e.g., `0`, `false`).
+  - Now generates **optional (`Option`) fields without default**.
+  - Still renders `Default(Document.DNull)` to preserve model fidelity.
+
+- **In smithy4s-core**:
+  - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
+  - Otherwise, it's treated as the absence of a value.
+
 # 0.18.32
 
 * codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies
