@@ -27,6 +27,7 @@ In `build.sbt`
 
 ```scala
 libraryDependencies ++= Seq(
+  // or smithy4s-aws-kernel if you want the minimal compilable unit
   "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
 )
 // The `AWS` object contains a list of references to artifacts that contain specifications to AWS services.

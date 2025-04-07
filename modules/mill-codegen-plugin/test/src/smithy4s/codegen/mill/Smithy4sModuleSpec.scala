@@ -114,7 +114,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def millSourcePath = resourcePath / "service"
     }
     val ev =
-      testKit.staticTestEvaluator(foo)(FullName(s"codegen-wildcards-compiles"))
+      testKit.staticTestEvaluator(foo)(FullName("codegen-wildcards-compiles"))
 
     compileWorks(foo, ev)
 
