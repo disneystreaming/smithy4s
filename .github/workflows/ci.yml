@@ -63,6 +63,9 @@ jobs:
           jvm: temurin:1.17
           apps: sbt
 
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Run tests
         run: |
           sbt test_$BUILD_KEY \
@@ -124,6 +127,9 @@ jobs:
           jvm: temurin:1.17
           apps: sbt
 
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Cache
         uses: coursier/cache-action@v6
 
@@ -162,6 +168,9 @@ jobs:
         with:
           jvm: temurin:1.17
           apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Cache
         uses: coursier/cache-action@v6
