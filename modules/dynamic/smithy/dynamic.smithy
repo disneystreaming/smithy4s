@@ -17,7 +17,7 @@ use alloy#discriminated
 /// to deserialise from Json.
 structure Model {
   smithy: String,
-  @default
+  @default({})
   metadata: MetadataMap,
   @required
   shapes: ShapeMap
@@ -69,97 +69,97 @@ union Shape {
 }
 
 structure StringShape {
-  @default
+  @default({})
   traits: TraitMap,
-  @default
+  @default({})
   members: MemberMap
 }
 
 structure EnumShape {
-  @default
+  @default({})
   traits: TraitMap,
-  @default
+  @default({})
   members: MemberMap
 }
 
 structure IntEnumShape {
-  @default
+  @default({})
   traits: TraitMap,
-  @default
+  @default({})
   members: MemberMap
 }
 
 structure BlobShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure ByteShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure BooleanShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure IntegerShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure LongShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure ShortShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure FloatShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure DoubleShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure BigDecimalShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure BigIntegerShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure DocumentShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure TimestampShape {
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure ListShape {
   @required
   member: MemberShape,
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure SetShape {
   @required
   member: MemberShape,
-  @default
+  @default({})
   traits: TraitMap
 }
 
@@ -168,14 +168,14 @@ structure MapShape {
   key: MemberShape,
   @required
   value: MemberShape,
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure MemberShape {
   @required
   target: IdRef,
-  @default
+  @default({})
   traits: TraitMap,
 }
 
@@ -189,37 +189,37 @@ map MemberMap {
 }
 
 structure StructureShape {
-  @default
+  @default({})
   members: MemberMap,
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure UnionShape {
-  @default
+  @default({})
   members: MemberMap,
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure OperationShape {
   input: MemberShape,
   output: MemberShape,
-  @default
+  @default([])
   errors: MemberList,
-  @default
+  @default({})
   traits: TraitMap
 }
 
 structure ServiceShape {
   version: String,
-  @default
+  @default([])
   errors: MemberList,
-  @default
+  @default([])
   operations: MemberList,
-  @default
+  @default([])
   resources: MemberList,
-  @default
+  @default({})
   traits: TraitMap
 }
 
@@ -231,9 +231,9 @@ structure ResourceShape {
   update: MemberShape,
   delete: MemberShape,
   list: MemberShape,
-  @default
+  @default([])
   operations: MemberList,
-  @default
+  @default([])
   resources: MemberList
 }
 
