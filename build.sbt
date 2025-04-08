@@ -1078,8 +1078,8 @@ lazy val `aws-sandbox` = projectMatrix
       "-Wconf:cat=deprecation:silent"
     ),
     smithy4sDependencies ++= Seq(
-      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.03.31-8-3edd64-SNAPSHOT",
-      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.03.31-8-3edd64-SNAPSHOT"
+      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.04.08",
+      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.04.08"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
