@@ -77,15 +77,15 @@ object HttpUnaryServerRouter {
     * such as Play.
     */
   def partialFunction[Alg[_[_, _, _, _, _]], F[_], RequestHead, Request, Response](
-      service: smithy4s.Service[Alg]
+      service: smithy4s.Service[Alg],
+      encodeErrorsBeforeMiddleware: Boolean
   )(
       impl: service.Impl[F],
       makeServerCodecs: UnaryServerCodecs.Make[F, Request, Response],
       endpointMiddleware: Endpoint.Middleware[Request => F[Response]],
       getMethod: RequestHead => HttpMethod,
       getUri: RequestHead => HttpUri,
-      addDecodedPathParams: (Request, PathParams) => Request,
-      encodeErrorsBeforeMiddleware: Boolean
+      addDecodedPathParams: (Request, PathParams) => Request
   )(implicit F: MonadThrowLike[F]): PartialFunction[RequestHead, Request => F[Response]] = {
     new PartialFunctionRouter[Alg, service.Operation, F, RequestHead, Request, Response](
       service,
