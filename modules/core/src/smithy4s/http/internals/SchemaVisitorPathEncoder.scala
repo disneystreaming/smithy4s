@@ -78,7 +78,7 @@ object SchemaVisitorPathEncoder
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePathEncode[S] = {
-    type Writer = S => List[String]
+    type Writer = (S, Boolean) => List[String]
 
     def toPathEncoder[A](
         field: Field[S, A],
@@ -89,8 +89,9 @@ object SchemaVisitorPathEncoder
       if (greedy) writer.map(_.encodeGreedy)
       else writer.map(_.encode)
     }
+
     def compile1(path: PathSegment): Option[Writer] = path match {
-      case StaticSegment(value) => Some(Function.const(List(value)))
+      case StaticSegment(value) => Some((_: S, _: Boolean) => List(value))
       case LabelSegment(value) =>
         fields
           .find(_.label == value)
@@ -103,13 +104,15 @@ object SchemaVisitorPathEncoder
 
     def compilePath(path: Vector[PathSegment]): Option[Vector[Writer]] =
       path.traverse(compile1(_))
+
     for {
       httpHint <- hints.get[Http]
       path <- pathSegments(httpHint.uri.value)
       writers <- compilePath(path)
     } yield new PathEncode[S] {
-      def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
-      def encodeGreedy(s: S): List[String] = Nil
+      def encode(s: S, urlEncode: Boolean): List[String] =
+        writers.flatMap(_.apply(s, urlEncode)).toList
+      def encodeGreedy(s: S, urlEncode: Boolean): List[String] = Nil
     }
   }
 

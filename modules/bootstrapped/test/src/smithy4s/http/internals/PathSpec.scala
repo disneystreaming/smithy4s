@@ -138,7 +138,7 @@ class PathSpec() extends munit.FunSuite {
         )
       )
     val result = SchemaVisitorPathEncoder(schema)
-      .map(_.encode(()))
+      .map(_.encode((), true))
 
     expect.eql(
       result,
@@ -160,7 +160,7 @@ class PathSpec() extends munit.FunSuite {
         )
       )
     val result = SchemaVisitorPathEncoder(schema)
-      .map(_.encode(()))
+      .map(_.encode((), true))
 
     expect.eql(
       result,
@@ -170,21 +170,21 @@ class PathSpec() extends munit.FunSuite {
 
   test("Write PathParams for a simple string") {
     expect.eql(
-      util.simpleString.map(_.encode("example")),
+      util.simpleString.map(_.encode("example", true)),
       Some(List("example"))
     )
   }
 
   test("Write PathParams for a byte") {
     expect.eql(
-      util.encodePathAs(byte).map(_.encode(42)),
+      util.encodePathAs(byte).map(_.encode(42, true)),
       Some(List("42"))
     )
   }
 
   test("Write PathParams for an int") {
     expect.eql(
-      util.encodePathAs(int).map(_.encode(42)),
+      util.encodePathAs(int).map(_.encode(42, true)),
       Some(List("42"))
     )
   }
@@ -195,14 +195,14 @@ class PathSpec() extends munit.FunSuite {
     })
 
     expect.eql(
-      util.encodePathAs(double).map(_.encode(42.0)),
+      util.encodePathAs(double).map(_.encode(42.0, true)),
       expected
     )
   }
 
   test("Write PathParams for a boolean") {
     expect.eql(
-      util.encodePathAs(boolean).map(_.encode(true)),
+      util.encodePathAs(boolean).map(_.encode(true, true)),
       Some(List("true"))
     )
   }
@@ -211,7 +211,7 @@ class PathSpec() extends munit.FunSuite {
     val input = "example with all kinds of strange characters / \\ & "
 
     expect.eql(
-      util.simpleString.map(_.encode(input)),
+      util.simpleString.map(_.encode(input, false)),
       Some(List(input))
     )
   }
@@ -222,14 +222,36 @@ class PathSpec() extends munit.FunSuite {
     val input = "example/with/slashes and spaces"
 
     expect.eql(
-      util.simpleString.map(_.encodeGreedy(input)),
+      util.simpleString.map(_.encodeGreedy(input, false)),
       Some(List("example", "with", "slashes and spaces"))
+    )
+  }
+
+  test("Write PathParams for a string with special characters encoded") {
+    val input = "example with all kinds of_strange-characters. / \\ & ~"
+    val expected =
+      "example%20with%20all%20kinds%20of_strange-characters.%20%2F%20%5C%20%26%20~"
+
+    expect.eql(
+      util.simpleString.map(_.encode(input, true)),
+      Some(List(expected))
+    )
+  }
+
+  test(
+    "Write PathParams for a string greedily by splitting it on /, encoded"
+  ) {
+    val input = "example/with/slashes and spaces"
+
+    expect.eql(
+      util.simpleString.map(_.encodeGreedy(input, true)),
+      Some(List("example", "with", "slashes%20and%20spaces"))
     )
   }
 
   test("Write PathParams for unit as None") {
     expect.eql(
-      util.encodePathAs(unit).map(_.encode(())),
+      util.encodePathAs(unit).map(_.encode((), true)),
       None
     )
   }

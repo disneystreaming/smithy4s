@@ -19,12 +19,14 @@ package smithy4s.http.internals
 import smithy4s.capability.Contravariant
 
 trait PathEncode[A] { self =>
-  def encode(a: A): List[String]
-  def encodeGreedy(a: A): List[String]
+  def encode(a: A, urlEncode: Boolean): List[String]
+  def encodeGreedy(a: A, urlEncode: Boolean): List[String]
 
   def contramap[B](from: B => A): PathEncode[B] = new PathEncode[B] {
-    def encode(b: B): List[String] = self.encode(from(b))
-    def encodeGreedy(b: B): List[String] = self.encodeGreedy(from(b))
+    override def encode(b: B, urlEncode: Boolean): List[String] =
+      self.encode(from(b), urlEncode)
+    override def encodeGreedy(b: B, urlEncode: Boolean): List[String] =
+      self.encodeGreedy(from(b), urlEncode)
   }
 }
 
@@ -39,12 +41,20 @@ object PathEncode {
     }
   def raw[A](f: A => String): PathEncode[A] = {
     new PathEncode[A] {
-      def encode(a: A): List[String] = {
-        List(f(a))
+      def encode(a: A, urlEncode: Boolean): List[String] = {
+        val initial = f(a)
+        List {
+          if (urlEncode) encodeUnreserved(initial, false)
+          else initial
+        }
       }
 
-      def encodeGreedy(a: A): List[String] = {
-        f(a).split('/').toList
+      def encodeGreedy(a: A, urlEncode: Boolean): List[String] = {
+        val initial = f(a)
+        (if (urlEncode) encodeUnreserved(initial, true)
+         else initial)
+          .split('/')
+          .toList
       }
     }
   }
@@ -55,4 +65,56 @@ object PathEncode {
     }
   }
   def fromToString[A]: MaybePathEncode[A] = from(_.toString)
+
+  /**
+   * Encodes characters that are not unreserved into a string builder.
+   * [[https://github.com/smithy-lang/smithy-java/blob/7cf74ae295480454d00e905053a212a77cbde34b/io/src/main/java/software/amazon/smithy/java/io/uri/URLEncoding.java#L14 Ported from smithy's `software.amazon.smithy.java.io.uri.URLEncoding`]].
+   * <p>
+   * <code>
+   * unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
+   * </code>
+   * Can optionally handle strings which are meant to encode a path (ie include '/' which should NOT be escaped for paths).
+   *
+   * @param source        The raw string to encode. Note that any existing percent-encoding will be encoded again.
+   * @param ignoreSlashes true if the value is intended to represent a path.
+   */
+  private def encodeUnreserved(
+      source: String,
+      ignoreSlashes: Boolean
+  ): String = {
+    // Encode the path segment and undo some of the assumption of URLEncoder to make it with unreserved.
+    val encoded = java.net.URLEncoder.encode(source, "UTF-8")
+
+    val (output, leftover) =
+      encoded.toCharArray.foldLeft((Vector.empty[Char], Vector.empty[Char])) {
+        case ((acc, Vector()), '+') =>
+          acc ++ Vector('%', '2', '0') -> Vector.empty
+
+        case ((acc, Vector()), '*') =>
+          acc ++ Vector('%', '2', 'A') -> Vector.empty
+
+        case ((acc, Vector()), '%') =>
+          acc -> Vector('%')
+
+        case ((acc, Vector('%')), '7') =>
+          acc -> Vector('%', '7')
+
+        case ((acc, Vector('%')), '2') =>
+          acc -> Vector('%', '2')
+
+        case ((acc, Vector('%', '7')), 'E') =>
+          (acc :+ '~') -> Vector.empty
+
+        case ((acc, Vector('%', '2')), 'F') if ignoreSlashes =>
+          (acc :+ '/') -> Vector.empty
+
+        case ((acc, Vector('%', '2')), 'F') if !ignoreSlashes =>
+          acc ++ Vector('%', '2', 'F') -> Vector.empty
+
+        case ((acc, lookback), c) =>
+          (acc ++ lookback :+ c) -> Vector.empty
+      }
+
+    (output ++ leftover).mkString
+  }
 }

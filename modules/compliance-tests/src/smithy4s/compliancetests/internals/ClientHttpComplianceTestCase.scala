@@ -75,10 +75,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         }
         .toList
 
-    val receivedPathSegments =
-      request.uri.path.segments.map(_.decoded())
-    val expectedPathSegments =
-      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+    val receivedPathSegments = request.uri.path.segments
+    val expectedPathSegments = Uri.Path.unsafeFromString(testCase.uri).segments
 
     val expectedUri = baseUri
       .withPath(Uri.Path.unsafeFromString(testCase.uri))

@@ -17,8 +17,9 @@
 package smithy4s.http4s.kernel
 
 import weaver._
-import org.http4s.implicits._
-import org.http4s.Uri
+import org.http4s.syntax.all._
+import org.http4s._
+import org.http4s.Uri._
 import smithy4s.http.HttpUriScheme
 
 object Http4sConversionSpec extends SimpleIOSuite {
@@ -106,7 +107,10 @@ object Http4sConversionSpec extends SimpleIOSuite {
     )
   }
 
-  private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri) = {
+  private def http4sToSmithyAndBackUriTest(
+      input: Uri,
+      output: Uri
+  ): Unit = {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
       expect.eql(
         output,

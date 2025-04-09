@@ -42,6 +42,10 @@ object HttpEndpointSpec extends SimpleIOSuite {
       throw new NotImplementedError(
         "HttpEndpointOrderingSpec.HttpEndpointDummy.path"
       )
+    override def encodedPath(input: Unit): List[String] =
+      throw new NotImplementedError(
+        "HttpEndpointOrderingSpec.HttpEndpointDummy.encodedPath"
+      )
     override def method: HttpMethod = throw new NotImplementedError(
       "HttpEndpointOrderingSpec.HttpEndpointDummy.method"
     )

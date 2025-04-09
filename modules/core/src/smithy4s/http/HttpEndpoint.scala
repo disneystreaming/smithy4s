@@ -24,7 +24,10 @@ import scala.annotation.tailrec
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
+  @deprecated
   def path(input: I): List[String]
+
+  def encodedPath(input: I): List[String]
 
   // Returns a path template as a list of segments, which can be constant strings or placeholders.
   def path: List[PathSegment]
@@ -69,7 +72,8 @@ object HttpEndpoint {
 
     } yield {
       new HttpEndpoint[I] {
-        def path(input: I): List[String] = encoder.encode(input)
+        def path(input: I): List[String] = encoder.encode(input, false)
+        def encodedPath(input: I): List[String] = encoder.encode(input, true)
         val staticQueryParams: Map[String, Seq[String]] = queryParams
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod

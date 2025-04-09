@@ -38,13 +38,14 @@ import smithy4s.schema.FieldFilter
 private[http4s] class SimpleRestJsonCodecs(
     val jsonCodecs: JsonPayloadCodecCompiler,
     val fieldFilter: FieldFilter,
-    val hostPrefixInjection: Boolean
+    val hostPrefixInjection: Boolean,
+    val rawHttpLabelValues: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
 
   def transformJsonCodecs(f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler): SimpleRestJsonCodecs =
-    new SimpleRestJsonCodecs(f(jsonCodecs), fieldFilter, hostPrefixInjection)
+    new SimpleRestJsonCodecs(f(jsonCodecs), fieldFilter, hostPrefixInjection, rawHttpLabelValues)
 
   @deprecated(
     message = """Use withFieldFilter instead.
@@ -68,11 +69,20 @@ private[http4s] class SimpleRestJsonCodecs(
   ): SimpleRestJsonCodecs = new SimpleRestJsonCodecs(
     jsonCodecs.configureJsoniterCodecCompiler(_.withFieldFilter(fieldFilter)),
     fieldFilter,
-    hostPrefixInjection
+    hostPrefixInjection,
+    rawHttpLabelValues
   )
 
+  def withRawHttpLabelValues(enabled: Boolean): SimpleRestJsonCodecs =
+    new SimpleRestJsonCodecs(
+      jsonCodecs = jsonCodecs,
+      fieldFilter = fieldFilter,
+      hostPrefixInjection = hostPrefixInjection,
+      rawHttpLabelValues = enabled
+    )
+
   def withHostPrefixInjection(newHostPrefixInjection: Boolean): SimpleRestJsonCodecs =
-    new SimpleRestJsonCodecs(jsonCodecs, fieldFilter, newHostPrefixInjection)
+    new SimpleRestJsonCodecs(jsonCodecs, fieldFilter, newHostPrefixInjection, rawHttpLabelValues)
 
   // val mediaType = HttpMediaType("application/json")
   private val payloadEncoders: BlobEncoder.Compiler =
@@ -127,6 +137,7 @@ private[http4s] class SimpleRestJsonCodecs(
       .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
       .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
       .withHostPrefixInjection(hostPrefixInjection)
+      .withRawHttpLabelValues(rawHttpLabelValues)
       .build()
 
   }
