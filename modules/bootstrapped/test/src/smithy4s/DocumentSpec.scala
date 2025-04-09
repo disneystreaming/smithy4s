@@ -1003,15 +1003,16 @@ class DocumentSpec() extends FunSuite {
     assertEquals(doc, expected)
   }
 
-  test("combinations of required, nullable, and null default") {
-    testFieldCombination(true, true, true)
-    testFieldCombination(false, true, true)
-    testFieldCombination(false, false, true)
-    testFieldCombination(false, false, false)
-    testFieldCombination(true, false, false)
-    testFieldCombination(true, true, false)
-    testFieldCombination(true, false, true)
-    testFieldCombination(false, true, false)
+  for {
+    required <- List(true, false)
+    nullable <- List(true, false)
+    nullDefault <- List(true, false)
+  } yield {
+    test(
+      s"combinations of required, nullable, and null default ($required, $nullable, $nullDefault)"
+    ) {
+      testFieldCombination(required, nullable, nullDefault)
+    }
   }
 
   private def testFieldCombination(
@@ -1053,7 +1054,7 @@ class DocumentSpec() extends FunSuite {
         )
       val result = Document.decode[Foo](toDecode)
       // required = false, nullable = false, nullDefault = true
-      expect.same(result.toOption.get, Foo(""))
+      expect.same(result.toOption, None)
     }
   }
 
@@ -1106,7 +1107,7 @@ class DocumentSpec() extends FunSuite {
       )
     val result = Document.decode[Foo](toDecode)
     // required = true, nullable = false, nullDefault = true
-    if (nullDefault) expect.same(result.toOption.get, Foo(""))
+    if (nullDefault) expect.same(result.toOption, None)
     // required = true, nullable = false, nullDefault = false
     else expect(result.isLeft)
   }
@@ -1126,7 +1127,7 @@ class DocumentSpec() extends FunSuite {
   }
 
   test(
-    "Required refined field with null default"
+    "Required refined field with a default"
   ) {
     case class Test()
     object Test extends ShapeTag.Companion[Test] {
@@ -1143,7 +1144,7 @@ class DocumentSpec() extends FunSuite {
           Test()
         )
         .required[Bar]("foo", _.foo)
-        .addHints(smithy.api.Default(Document.DNull))
+        .addHints(smithy.api.Default(Document.fromString("")))
     implicit val schema: Schema[Bar] =
       Schema.struct[Bar](fieldSchema)(Bar.apply)
 
@@ -1155,8 +1156,6 @@ class DocumentSpec() extends FunSuite {
     )
     expect.same(
       Document.decode[Bar](Document.DObject(Map.empty)),
-      // Empty string here because null default is implied to be empty string
-      // for a non-nullable string field
       Right(Bar(Foo("")))
     )
   }
