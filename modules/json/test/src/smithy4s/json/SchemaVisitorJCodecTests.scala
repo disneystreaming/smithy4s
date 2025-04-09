@@ -837,15 +837,16 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, json)
   }
 
-  test("combinations of required, nullable, and null default") {
-    testFieldCombination(true, true, true)
-    testFieldCombination(false, true, true)
-    testFieldCombination(false, false, true)
-    testFieldCombination(false, false, false)
-    testFieldCombination(true, false, false)
-    testFieldCombination(true, true, false)
-    testFieldCombination(true, false, true)
-    testFieldCombination(false, true, false)
+  for {
+    required <- List(true, false)
+    nullable <- List(true, false)
+    nullDefault <- List(true, false)
+  } yield {
+    test(
+      s"combinations of required, nullable, and null default ($required, $nullable, $nullDefault)"
+    ) {
+      testFieldCombination(required, nullable, nullDefault)
+    }
   }
 
   private def testFieldCombination(
@@ -880,14 +881,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       // required = false, nullable = true, nullDefault = true
       expect.same(result.get, Foo(Nullable.Null))
     } else {
-      case class Foo(f: String)
+      case class Foo(f: Option[String])
       implicit val schema: Schema[Foo] =
-        Schema.struct(Schema.string.field[Foo]("f", _.f).addHints(hints))(
+        Schema.struct(Schema.string.optional[Foo]("f", _.f).addHints(hints))(
           Foo.apply
         )
       val result = util.Try(readFromString[Foo](toDecode))
       // required = false, nullable = false, nullDefault = true
-      expect.same(result.get, Foo(""))
+      expect.same(result.get, Foo(None))
     }
   }
 
@@ -940,7 +941,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       )
     val result = util.Try(readFromString[Foo](toDecode))
     // required = true, nullable = false, nullDefault = true
-    if (nullDefault) expect.same(result.get, Foo(""))
+    if (nullDefault) expect.same(result.toOption, None)
     // required = true, nullable = false, nullDefault = false
     else expect(result.isFailure)
   }
@@ -960,7 +961,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test(
-    "Required refined field with null default"
+    "Required refined field with a default"
   ) {
     case class Test()
     object Test extends ShapeTag.Companion[Test] {
@@ -977,7 +978,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
           Test()
         )
         .required[Bar]("foo", _.foo)
-        .addHints(smithy.api.Default(Document.DNull))
+        .addHints(smithy.api.Default(Document.fromString("")))
     implicit val schema: Schema[Bar] =
       Schema.struct[Bar](fieldSchema)(Bar.apply)
 
@@ -987,8 +988,6 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     )
     expect.same(
       readFromString[Bar]("{}"),
-      // Empty string here because null default is implied to be empty string
-      // for a non-nullable string field
       Bar(Foo(""))
     )
   }

@@ -1047,14 +1047,14 @@ class DocumentSpec() extends FunSuite {
       // required = false, nullable = true, nullDefault = true
       expect.same(result.toOption.get, Foo(Nullable.Null))
     } else {
-      case class Foo(f: String)
+      case class Foo(f: Option[String])
       implicit val schema: Schema[Foo] =
-        Schema.struct(Schema.string.field[Foo]("f", _.f).addHints(hints))(
+        Schema.struct(Schema.string.optional[Foo]("f", _.f).addHints(hints))(
           Foo.apply
         )
       val result = Document.decode[Foo](toDecode)
       // required = false, nullable = false, nullDefault = true
-      expect.same(result.toOption, None)
+      expect.same(result.toOption.get, Foo(None))
     }
   }
 
