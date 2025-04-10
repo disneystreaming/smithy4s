@@ -19,43 +19,61 @@ package schema
 
 import munit._
 import smithy.api.TimestampFormat
+import java.time.Instant
 
 final class DefaultValueSpec extends FunSuite {
 
   test("boolean") {
     testCaseOpt(Schema.boolean, None)
+    testCase(Schema.boolean, Document.fromBoolean(true), true)
   }
 
   test("int") {
     testCaseOpt(Schema.int, None)
+    testCase(Schema.int, Document.fromInt(42), 42)
   }
 
   test("long") {
     testCaseOpt(Schema.long, None)
+    testCase(Schema.long, Document.fromLong(42), 42L)
   }
 
   test("short") {
     testCaseOpt(Schema.short, None)
+    testCase(Schema.short, Document.fromInt(42), 42: Short)
   }
 
   test("float") {
     testCaseOpt(Schema.float, None)
+    testCase(Schema.float, Document.fromDouble(42), 42f)
   }
 
   test("double") {
     testCaseOpt(Schema.double, None)
+    testCase(Schema.double, Document.fromDouble(42.0), 42.0)
   }
 
   test("big decimal") {
     testCaseOpt(Schema.bigdecimal, None)
+    testCase(
+      Schema.bigdecimal,
+      Document.fromBigDecimal(BigDecimal(42)),
+      BigDecimal(42)
+    )
   }
 
   test("big int") {
     testCaseOpt(Schema.bigint, None)
+    testCase(
+      Schema.bigint,
+      Document.fromBigDecimal(BigDecimal(BigInt(42))),
+      BigInt(42)
+    )
   }
 
   test("string") {
     testCaseOpt(Schema.string, None)
+    testCase(Schema.string, Document.fromString("42"), "42")
   }
 
   test("blob") {
@@ -64,28 +82,55 @@ final class DefaultValueSpec extends FunSuite {
 
   test("timestamp - epoch") {
     testCaseOpt(Schema.timestamp, None)
+    val ts = Timestamp.fromEpochSecond(Instant.now().getEpochSecond())
+    testCase(
+      Schema.timestamp,
+      Document.fromLong(ts.epochSecond),
+      ts
+    )
   }
 
   test("timestamp - date_time") {
-    testCaseOpt(
-      Schema.timestamp.addHints(TimestampFormat.DATE_TIME.widen),
-      None
+    val s = Schema.timestamp.addHints(TimestampFormat.DATE_TIME.widen)
+    testCaseOpt(s, None)
+    testCase(
+      s,
+      Document.fromString("1985-04-12T23:20:50.52Z"),
+      Timestamp.parse("1985-04-12T23:20:50.52Z", TimestampFormat.DATE_TIME).get
     )
   }
 
   test("timestamp - http_date") {
-    testCaseOpt(
-      Schema.timestamp.addHints(TimestampFormat.HTTP_DATE.widen),
-      None
+    val s = Schema.timestamp.addHints(TimestampFormat.HTTP_DATE.widen)
+    testCaseOpt(s, None)
+    testCase(
+      s,
+      Document.fromString("Tue, 29 Apr 2014 18:30:38 GMT"),
+      Timestamp
+        .parse(
+          "Tue, 29 Apr 2014 18:30:38 GMT",
+          TimestampFormat.HTTP_DATE
+        )
+        .get
     )
   }
 
   test("list") {
     testCaseOpt(Schema.list(Schema.int), None)
+    testCase(
+      Schema.list(Schema.int),
+      Document.array(Document.fromInt(42), Document.fromInt(43)),
+      List(42, 43)
+    )
   }
 
   test("map") {
     testCaseOpt(Schema.map(Schema.string, Schema.int), None)
+    testCase(
+      Schema.map(Schema.string, Schema.int),
+      Document.obj("x" -> Document.fromInt(42), "y" -> Document.fromInt(43)),
+      Map("x" -> 42, "y" -> 43)
+    )
   }
 
   test("struct") {
@@ -95,12 +140,18 @@ final class DefaultValueSpec extends FunSuite {
       Schema.int.optional[Foo]("y", _.y)
     )(Foo.apply)
     testCaseOpt(s, None)
+    testCase(
+      s,
+      Document.obj("x" -> Document.fromInt(42), "y" -> Document.DNull),
+      Foo(42, None)
+    )
   }
 
   test("union") {
     type Foo = Either[Int, String]
     val u: Schema[Foo] = Schema.either(Schema.int, Schema.string)
     testCaseOpt(u, None)
+    testCase(u, Document.fromInt(42), Left(42))
   }
 
   test("enumeration") {
@@ -122,18 +173,21 @@ final class DefaultValueSpec extends FunSuite {
     }
 
     testCaseOpt(FooBar.schema, None)
+    testCase(FooBar.schema, Document.fromString("foo"), FooBar.Foo)
   }
 
   test("bijection") {
     case class Foo(x: Int)
     val b: Schema[Foo] = Schema.bijection(Schema.int, Foo(_), _.x)
     testCaseOpt(b, None)
+    testCase(b, Document.fromInt(42), Foo(42))
   }
 
   test("refined") {
     val b: Schema[Int] =
       Schema.int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
     testCaseOpt(b, None)
+    testCase(b, Document.fromInt(1), 1)
   }
 
   test("recursive") {
@@ -145,11 +199,17 @@ final class DefaultValueSpec extends FunSuite {
       }
     }
     testCaseOpt(Foo.f, None)
+    testCase(
+      Foo.f,
+      Document.obj("foo" -> Document.obj("foo" -> Document.DNull)),
+      Foo(Some(Foo(None)))
+    )
   }
 
   test("nullable") {
     val b: Schema[Nullable[Int]] = Schema.int.nullable
     testCaseOpt(b, Some(Nullable.Null))
+    testCase(b, Document.fromInt(42), Nullable.Value(42))
   }
 
   private def testCaseOpt[A](schema: Schema[A], expect: Option[A])(implicit
@@ -158,5 +218,13 @@ final class DefaultValueSpec extends FunSuite {
     val sch = schema.addHints(smithy.api.Default(Document.DNull))
     val res = sch.getDefaultValue
     assertEquals(res, expect)
+  }
+
+  private def testCase[A](schema: Schema[A], document: Document, expect: A)(
+      implicit loc: Location
+  ): Unit = {
+    val sch = schema.addHints(smithy.api.Default(document))
+    val res = sch.getDefaultValue
+    assertEquals(res, Some(expect))
   }
 }
