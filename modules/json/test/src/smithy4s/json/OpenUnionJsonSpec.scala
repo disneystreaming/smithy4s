@@ -26,6 +26,7 @@ import smithy4s.example.StructForDiscrimination
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 import smithy4s.example.OnlyUnknownOpenUnion
+import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
 
 class OpenUnionJsonSpec() extends ScalaCheckSuite {
 
@@ -115,43 +116,55 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
     )
   }
 
-  // test("open discriminated union - unknown tags can be roundtripped") {
-  //   val stringCase = Document.obj(
-  //     "type" -> Document.fromString("brand-new-member"),
-  //     "extra" -> Document.fromString("oh wow i'm a string")
-  //   )
+  test("open discriminated union - unknown tags can be roundtripped") {
+    val stringCase = Document.obj(
+      "type" -> Document.fromString("brand-new-member"),
+      "extra" -> Document.fromString("oh wow i'm a string")
+    )
 
-  //   roundtripTest(stringCase, SampleOpenDiscriminatedUnion.unknown(stringCase))
+    roundtripTest(
+      Json.writeDocumentAsBlob(stringCase),
+      SampleOpenDiscriminatedUnion.unknown(stringCase)
+    )
 
-  //   val objectCase =
-  //     Document.obj(
-  //       "type" -> Document.fromString("brand-new-obj-member"),
-  //       "inner-key" -> Document.fromInt(42)
-  //     )
+    val objectCase =
+      Document.obj(
+        "type" -> Document.fromString("brand-new-obj-member"),
+        "inner-key" -> Document.fromInt(42)
+      )
 
-  //   roundtripTest(objectCase, SampleOpenDiscriminatedUnion.unknown(objectCase))
-  // }
+    roundtripTest(
+      Json.writeDocumentAsBlob(objectCase),
+      SampleOpenDiscriminatedUnion.unknown(objectCase)
+    )
+  }
 
-  // test(
-  //   "open tagged union - if the key used by the unknown member appears, it still roundtrips"
-  // ) {
-  //   val input = Document.obj(
-  //     "type" -> Document.fromString("unknown"),
-  //     "extra" -> Document.obj()
-  //   )
-  //   roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
-  // }
+  test(
+    "open tagged union - if the key used by the unknown member appears, it still roundtrips"
+  ) {
+    val input = Document.obj(
+      "type" -> Document.fromString("unknown"),
+      "extra" -> Document.obj()
+    )
+    roundtripTest(
+      Json.writeDocumentAsBlob(input),
+      SampleOpenDiscriminatedUnion.unknown(input)
+    )
+  }
 
-  // test(
-  //   "open discriminated union with only an unknown member - unknown tags can be roundtripped"
-  // ) {
-  //   forAll(genDocumentMap, Arbitrary.arbitrary[String]) { (documentKeys, tag) =>
-  //     val input =
-  //       Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
+  test(
+    "open discriminated union with only an unknown member - unknown tags can be roundtripped"
+  ) {
+    forAll(genDocumentMap, Arbitrary.arbitrary[String]) { (documentKeys, tag) =>
+      val input =
+        Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
 
-  //     roundtripTest(input, OnlyUnknownDiscriminatedOpenUnion.unknown(input))
-  //   }
-  // }
+      roundtripTest(
+        Json.writeDocumentAsBlob(input),
+        OnlyUnknownDiscriminatedOpenUnion.unknown(input)
+      )
+    }
+  }
 
   private def roundtripTest[T: Schema](
       input: Blob,

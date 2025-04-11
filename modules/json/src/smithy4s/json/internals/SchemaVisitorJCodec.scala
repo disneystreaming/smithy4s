@@ -982,15 +982,11 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private type Writer[A] = A => JsonWriter => Unit
 
-  private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+  private abstract class UnionJCodec[U](alternatives: Vector[Alt[U, _]])(
       dispatch: Alt.Dispatcher[U]
   ) extends JCodec[U] {
 
-    val expecting = "tagged-union"
-
-    override def canBeKey: Boolean = false
-
-    def jsonLabel[A](alt: Alt[U, A]): String =
+    private def jsonLabel[A](alt: Alt[U, A]): String =
       alt.hints.get(JsonName) match {
         case None    => alt.label
         case Some(x) => x.value
@@ -1014,6 +1010,22 @@ private[smithy4s] class SchemaVisitorJCodec(
           .filterNot(_.hints.has(JsonUnknown))
           .foreach(alt => put(jsonLabel(alt), handler(alt)))
       }
+
+  }
+
+  private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+      dispatch: Alt.Dispatcher[U]
+  ) extends UnionJCodec[U](alternatives)(dispatch) {
+
+    val expecting = "tagged-union"
+
+    override def canBeKey: Boolean = false
+
+    private def handler[A](alt: Alt[U, A]) = {
+      val codec = apply(alt.schema)
+      (cursor: Cursor, reader: JsonReader) =>
+        alt.inject(cursor.decode(codec, reader))
+    }
 
     protected val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
       def apply[A](label: String, instance: Schema[A]): Writer[A] = {
@@ -1185,29 +1197,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       alternatives: Vector[Alt[U, _]],
       discriminated: Discriminated
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new JCodec[U] {
+    new UnionJCodec[U](alternatives)(dispatch) {
       def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
-
-      def jsonLabel[A](alt: Alt[U, A]): String =
-        alt.hints.get(JsonName) match {
-          case None    => alt.label
-          case Some(x) => x.value
-        }
-
-      private[this] val handlerMap =
-        new util.HashMap[String, (Cursor, JsonReader) => U] {
-          def handler[A](
-              alt: Alt[U, A]
-          ): (Cursor, JsonReader) => U = {
-            val codec = apply(alt.schema)
-            (cursor: Cursor, reader: JsonReader) =>
-              alt.inject(cursor.decode(codec, reader))
-          }
-
-          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
-        }
 
       def decodeValue(cursor: Cursor, in: JsonReader): U =
         if (in.isNextToken('{')) {
@@ -1217,7 +1210,8 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToMark()
             in.rollbackToken()
             cursor.push(key)
-            val handler = handlerMap.get(key)
+            var handler = handlerMap.get(key)
+            if (handler eq null) handler = unknownTagHandler
             if (handler eq null) in.discriminatorValueError(key)
             val result = handler(cursor, in)
             cursor.pop()
