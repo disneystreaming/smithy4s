@@ -108,9 +108,8 @@ sealed trait Schema[A]{
 
   private final lazy val defaultValue: Option[A] = {
     val maybeDefault = getDefault.flatMap[A] {
-      case Document.DNull => NullableDefaultVisitor(this)
-      case document => 
-        Document.Decoder.fromSchema(this).decode(document).toOption
+      case Document.DNull => this.compile(NullableDefaultVisitor)
+      case document => Document.Decoder.fromSchema(this).decode(document).toOption
     }
     maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
