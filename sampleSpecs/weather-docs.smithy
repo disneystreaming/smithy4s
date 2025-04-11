@@ -2,7 +2,6 @@ $version: "2"
 
 namespace weather
 
-use alloy#nullable
 use alloy#simpleRestJson
 
 @simpleRestJson
