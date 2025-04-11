@@ -110,10 +110,7 @@ sealed trait Schema[A]{
     val maybeDefault = getDefault.flatMap[A] {
       case Document.DNull => NullableDefaultVisitor(this)
       case document => 
-        println(document)
-        val res = Document.Decoder.fromSchema(this).decode(document)
-        println(res)
-        res.toOption
+        Document.Decoder.fromSchema(this).decode(document).toOption
     }
     maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
@@ -379,13 +376,13 @@ object Schema {
     override def biject[A, B](
         schema: Schema[A],
         bijection: Bijection[A, B]
-    ): Option[B] = {
-      if(schema.hints.has(alloy.Nullable)){
+    ): Option[B] = 
+      if(schema.hints.has(alloy.Nullable)) {
         schema.compile(this).map(bijection.to)
-      }else{
+      } else {
         None
       }
-    }
+    
     override def option[A](schema: Schema[A]): Option[Option[A]] = Some(None)
   }
 
