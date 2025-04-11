@@ -245,9 +245,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   }
 
   def targetScalacOptions(scalaVersion: String) =
-    if (scalaVersion.startsWith("2.12")) Seq("-target:jvm-1.8", "-release", "8")
-    else if (scalaVersion.startsWith("2.13")) Seq("-release", "8")
-    else if (scalaVersion.startsWith("3.")) Seq("-release", "8")
+    if (scalaVersion.startsWith("2.12")) Seq.empty // Scala 2.12 can't emit classfiles that require more than Java 8.
+    else if (scalaVersion.startsWith("2.13")) Seq("-java-output-version:8")
+    else if (scalaVersion.startsWith("3.")) Seq("-java-output-version:8")
     else Seq.empty // when we get Scala 4...
 
   def filterScala3Options(opts: Seq[String]) =
