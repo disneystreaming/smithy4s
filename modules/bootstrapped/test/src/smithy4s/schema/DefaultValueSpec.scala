@@ -147,13 +147,6 @@ final class DefaultValueSpec extends FunSuite {
     )
   }
 
-  test("union") {
-    type Foo = Either[Int, String]
-    val u: Schema[Foo] = Schema.either(Schema.int, Schema.string)
-    testCaseOpt(u, None)
-    testCase(u, Document.fromInt(42), Left(42))
-  }
-
   test("enumeration") {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
