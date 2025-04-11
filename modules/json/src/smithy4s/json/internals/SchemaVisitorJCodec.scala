@@ -996,29 +996,41 @@ private[smithy4s] class SchemaVisitorJCodec(
         case Some(x) => x.value
       }
 
+    private def handler[A](alt: Alt[U, A]) = {
+      val codec = apply(alt.schema)
+      (cursor: Cursor, reader: JsonReader) =>
+        alt.inject(cursor.decode(codec, reader))
+    }
+
+    protected val unknownTagHandler =
+      alternatives
+        .find(_.hints.has(JsonUnknown))
+        .map(handler(_))
+        .orNull
+
     protected val handlerMap =
       new util.HashMap[String, (Cursor, JsonReader) => U] {
-        def handler[A](alt: Alt[U, A]) = {
-          val codec = apply(alt.schema)
-          (cursor: Cursor, reader: JsonReader) =>
-            alt.inject(cursor.decode(codec, reader))
-        }
-
-        alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
+        alternatives
+          .filterNot(_.hints.has(JsonUnknown))
+          .foreach(alt => put(jsonLabel(alt), handler(alt)))
       }
 
     protected val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
       def apply[A](label: String, instance: Schema[A]): Writer[A] = {
-        val jsonLabel =
-          instance.hints.get(JsonName).map(_.value).getOrElse(label)
         val jcodecA = instance.compile(self)
-        a =>
-          out => {
-            out.writeObjectStart()
-            out.writeKey(jsonLabel)
-            jcodecA.encodeValue(a, out)
-            out.writeObjectEnd()
-          }
+
+        if (!instance.hints.has(JsonUnknown)) {
+          val key = instance.hints.get(JsonName).map(_.value).getOrElse(label)
+          a =>
+            out => {
+              out.writeObjectStart()
+              out.writeKey(key)
+              jcodecA.encodeValue(a, out)
+              out.writeObjectEnd()
+            }
+        } else { a => out =>
+          jcodecA.encodeValue(a, out)
+        }
       }
     }
     protected val writer = dispatch.compile(precompiler)
@@ -1040,27 +1052,39 @@ private[smithy4s] class SchemaVisitorJCodec(
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
     new TaggedUnionJCodec[U](alternatives)(dispatch) {
 
-      def decodeValue(cursor: Cursor, in: JsonReader): U =
+      def decodeValue(cursor: Cursor, in: JsonReader): U = {
+        // ! - I'm not sure about this
+        in.setMark()
         if (in.isNextToken('{')) {
           if (in.isNextToken('}'))
             in.decodeError("Expected a single key/value pair")
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
-            cursor.push(key)
             val handler = handlerMap.get(key)
-            if (handler eq null) in.discriminatorValueError(key)
-            val result = handler(cursor, in)
-            cursor.pop()
-            if (in.isNextToken('}')) result
-            else {
-              in.rollbackToken()
-              in.decodeError(s"Expected no other field after $key")
+            if ((handler eq null) && (unknownTagHandler eq null))
+              in.discriminatorValueError(key)
+
+            if (handler ne null) {
+              cursor.push(key)
+              val result = handler(cursor, in)
+              cursor.pop()
+              if (in.isNextToken('}')) result
+              else {
+                in.rollbackToken()
+                in.decodeError(s"Expected no other field after $key")
+              }
+            } else {
+              // ! - I'm not sure about this
+              in.rollbackToMark()
+              unknownTagHandler(cursor, in)
             }
           }
         } else in.decodeError("Expected JSON object")
+      }
     }
 
+  // todo: open unions here too
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
