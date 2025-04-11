@@ -1216,7 +1216,7 @@ class DocumentSpec() extends ScalaCheckSuite {
   }
 
   test("open tagged union - known tags decode normally") {
-    roundtripTest(Document.obj("u" -> Document.obj()), SampleOpenUnion.u)
+    roundtripTest(Document.obj("u" -> Document.obj()), SampleOpenUnion.u())
     roundtripTest(Document.obj("str" -> Document.fromString("hello")), SampleOpenUnion.str("hello"))
   }
 
@@ -1248,7 +1248,7 @@ class DocumentSpec() extends ScalaCheckSuite {
   }
 
   test("open discriminated union - known tags decode normally") {
-    roundtripTest(Document.obj("type" -> Document.fromString("u")), SampleOpenDiscriminatedUnion.u)
+    roundtripTest(Document.obj("type" -> Document.fromString("u")), SampleOpenDiscriminatedUnion.u())
     roundtripTest(
       Document.obj("type" -> Document.fromString("s"), "str" -> Document.fromString("hello")),
       SampleOpenDiscriminatedUnion.s(StructForDiscrimination("hello"))
