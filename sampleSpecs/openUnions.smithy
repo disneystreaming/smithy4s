@@ -19,6 +19,15 @@ union SampleOpenUnion {
     unknown: Document
 }
 
+union RecursiveOpenUnion {
+    rec: RecursiveOpenUnion
+
+    end: Unit
+
+    @jsonUnknown
+    unknown: Document
+}
+
 @discriminated("type")
 union OnlyUnknownDiscriminatedOpenUnion {
     @jsonUnknown
@@ -38,4 +47,19 @@ union SampleOpenDiscriminatedUnion {
 
     @jsonUnknown
     unknown: Document
+}
+
+@discriminated("type")
+union RecursiveDiscriminatedOpenUnion {
+    rec: HasRecursiveDiscriminatedOpenUnion
+
+    end: Unit
+
+    @jsonUnknown
+    unknown: Document
+}
+
+structure HasRecursiveDiscriminatedOpenUnion {
+    @required
+    rec: RecursiveDiscriminatedOpenUnion
 }

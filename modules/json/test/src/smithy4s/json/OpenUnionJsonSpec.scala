@@ -27,6 +27,9 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 import smithy4s.example.OnlyUnknownOpenUnion
 import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
+import smithy4s.example.RecursiveOpenUnion
+import smithy4s.example.RecursiveDiscriminatedOpenUnion
+import smithy4s.example.HasRecursiveDiscriminatedOpenUnion
 
 class OpenUnionJsonSpec() extends ScalaCheckSuite {
 
@@ -91,6 +94,16 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
         OnlyUnknownOpenUnion.unknown(input)
       )
     }
+  }
+
+  test("recursive open union - inner unknown case") {
+    val inner = Document.obj("brand-new-member" -> Document.fromString("foo"))
+    val input = Document.obj("rec" -> inner)
+
+    roundtripTest(
+      Json.writeDocumentAsBlob(input),
+      RecursiveOpenUnion.rec(RecursiveOpenUnion.unknown(inner))
+    )
   }
 
   test(
@@ -164,6 +177,28 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
         OnlyUnknownDiscriminatedOpenUnion.unknown(input)
       )
     }
+  }
+
+  test("recursive open discriminated union - inner unknown case") {
+    val inner = Document.obj(
+      "type" -> Document.fromString("brand-new-member"),
+      "other" -> Document.fromString("foo")
+    )
+
+    val input =
+      Document.obj(
+        "type" -> Document.fromString("rec"),
+        "rec" -> inner
+      )
+
+    roundtripTest(
+      Json.writeDocumentAsBlob(input),
+      RecursiveDiscriminatedOpenUnion.rec(
+        HasRecursiveDiscriminatedOpenUnion(
+          RecursiveDiscriminatedOpenUnion.unknown(inner)
+        )
+      )
+    )
   }
 
   private def roundtripTest[T: Schema](
