@@ -82,9 +82,9 @@ lazy val allModules = Seq(
   complianceTests
 ).flatMap(_.projectRefs)
 
-lazy val docsValidation =
+lazy val docsRendering =
   projectMatrix
-    .in(file("modules/docs-validation"))
+    .in(file("modules/docs-rendering"))
     .enablePlugins(MdocPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
