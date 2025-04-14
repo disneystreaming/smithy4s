@@ -29,11 +29,11 @@ There's usually only one instance of `EncoderK[F, A]` for a particular `F[_]`, a
 
 Optics can still be rendered using metadata (global) and traits (selective), the only thing that's been removed is configuration in the build tool.
 
-# Removed `UnknownErrorResponse` in [#1570](https://github.com/disneystreaming/smithy4s/pull/1570)
+## Removed `UnknownErrorResponse` in [#1570](https://github.com/disneystreaming/smithy4s/pull/1570)
 
 The error type `smithy4s.http.UnknownErrorResponse` has been replaced with `smithy4s.http.RawErrorResponse`, which provides a more accurate description of an error response that failed to decode, including a full representation of the response code, headers, body and the discriminator if one was found.
 
-# ⚠️ Behavior Change: Handling of `@default(null)` and `@nullable`
+## ⚠️ Behavior Change: Handling of `@default(null)` and `@nullable` in [#1667](https://github.com/disneystreaming/smithy4s/pull/1667)
 
 The behavior of `@default(null)` has changed to better align with Smithy semantics.
 
