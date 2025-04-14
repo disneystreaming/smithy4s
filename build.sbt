@@ -7,6 +7,8 @@ import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
+import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, Elem}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 import java.io.File
 import sys.process._
@@ -56,6 +58,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core,
   codegen,
+  docs,
   millCodegenPlugin,
   json,
   xml,
@@ -81,10 +84,22 @@ lazy val allModules = Seq(
   complianceTests
 ).flatMap(_.projectRefs)
 
-lazy val docs =
+val filterOutDependencies: XmlNode => XmlNode = { (node: XmlNode) =>
+  val updatedDeps = new RewriteRule {
+    override def transform(n: XmlNode): XmlNodeSeq = n match {
+      case e: Elem if e != null && e.label == "dependencies" =>
+        <dependencies>
+              </dependencies>
+      case _ => n
+    }
+  }
+  new RuleTransformer(updatedDeps).transform(node).head
+}
+
+lazy val docsValidation =
   projectMatrix
-    .in(file("modules/docs"))
-    .enablePlugins(MdocPlugin, DocusaurusPlugin)
+    .in(file("modules/docs-validation"))
+    .enablePlugins(MdocPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
       `codegen-cli`,
@@ -95,10 +110,11 @@ lazy val docs =
       complianceTests,
       dynamic,
       bootstrapped,
-      protobuf
+      protobuf,
+      docs
     )
     .settings(
-      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "resources" / "markdown",
       mdocVariables := Map(
         "VERSION" -> {
           sys.env
@@ -145,6 +161,15 @@ lazy val docs =
       )
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+
+lazy val docs =
+  projectMatrix
+    .in(file("modules/docs"))
+    .jvmPlatform(
+      autoScalaLibrary = false,
+      scalaVersions = Seq.empty,
+      settings = jvmDimSettings
+    )
 
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
