@@ -84,37 +84,36 @@ object PathEncode {
   ): String = {
     // Encode the path segment and undo some of the assumption of URLEncoder to make it with unreserved.
     val encoded = java.net.URLEncoder.encode(source, "UTF-8")
+    val sink = new StringBuilder(encoded.length)
+    var i = 0
+    while (i < encoded.length) {
+      val c = encoded.charAt(i)
+      c match {
+        case '+' => sink.append("%20")
+        case '*' => sink.append("%2A")
+        case '%' =>
+          encoded.charAt(i + 1) match {
+            case '7'
+                if (i < encoded.length - 1 && encoded.charAt(i + 2) == 'E') =>
+              sink.append('~')
+              i += 2
 
-    val (output, leftover) =
-      encoded.toCharArray.foldLeft((Vector.empty[Char], Vector.empty[Char])) {
-        case ((acc, Vector()), '+') =>
-          acc ++ Vector('%', '2', '0') -> Vector.empty
+            case '2'
+                if (i < encoded.length - 1 && encoded.charAt(
+                  i + 2
+                ) == 'F' && ignoreSlashes) =>
+              sink.append('/')
+              i += 2
 
-        case ((acc, Vector()), '*') =>
-          acc ++ Vector('%', '2', 'A') -> Vector.empty
+            case _ => sink.append(c)
+          }
 
-        case ((acc, Vector()), '%') =>
-          acc -> Vector('%')
-
-        case ((acc, Vector('%')), '7') =>
-          acc -> Vector('%', '7')
-
-        case ((acc, Vector('%')), '2') =>
-          acc -> Vector('%', '2')
-
-        case ((acc, Vector('%', '7')), 'E') =>
-          (acc :+ '~') -> Vector.empty
-
-        case ((acc, Vector('%', '2')), 'F') if ignoreSlashes =>
-          (acc :+ '/') -> Vector.empty
-
-        case ((acc, Vector('%', '2')), 'F') if !ignoreSlashes =>
-          acc ++ Vector('%', '2', 'F') -> Vector.empty
-
-        case ((acc, lookback), c) =>
-          (acc ++ lookback :+ c) -> Vector.empty
+        case _ => sink.append(c)
       }
 
-    (output ++ leftover).mkString
+      i += 1
+    }
+
+    sink.toString
   }
 }
