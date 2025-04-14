@@ -55,6 +55,7 @@ private[aws] object AwsRestJsonCodecs {
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads
+      .withRawHttpLabelValues(false)
       .withRequestMediaType(contentType)
   }
 
