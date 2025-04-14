@@ -1272,7 +1272,7 @@ class DocumentSpec() extends ScalaCheckSuite {
     roundtripTest(objectCase, SampleOpenDiscriminatedUnion.unknown(objectCase))
   }
 
-  test("open tagged union - if the key used by the unknown member appears, it still roundtrips") {
+  test("open discriminated union - if the key used by the unknown member appears, it still roundtrips") {
     val input = Document.obj("type" -> Document.fromString("unknown"), "extra" -> Document.obj())
     roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
   }
