@@ -7,8 +7,6 @@ import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
-import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, Elem}
-import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 import java.io.File
 import sys.process._
@@ -83,18 +81,6 @@ lazy val allModules = Seq(
   guides,
   complianceTests
 ).flatMap(_.projectRefs)
-
-val filterOutDependencies: XmlNode => XmlNode = { (node: XmlNode) =>
-  val updatedDeps = new RewriteRule {
-    override def transform(n: XmlNode): XmlNodeSeq = n match {
-      case e: Elem if e != null && e.label == "dependencies" =>
-        <dependencies>
-              </dependencies>
-      case _ => n
-    }
-  }
-  new RuleTransformer(updatedDeps).transform(node).head
-}
 
 lazy val docsValidation =
   projectMatrix
