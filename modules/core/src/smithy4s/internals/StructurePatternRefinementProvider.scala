@@ -67,7 +67,7 @@ object StructurePatternRefinementProvider {
           )
         )
     (input: A) => {
-      val result = encoder.encode(input, false) // TODO should this encode?
+      val result = encoder.encode(input)
       result.mkString
     }
   }
