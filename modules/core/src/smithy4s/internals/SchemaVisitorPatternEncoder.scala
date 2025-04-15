@@ -36,7 +36,7 @@ private[internals] final class SchemaVisitorPatternEncoder(
       tag: Primitive[P]
   ): MaybePathEncode[P] = {
     Primitive.stringWriter(tag, hints) match {
-      case Some(writer) => PathEncode.from(e => writer(e))
+      case Some(writer) => PathEncode.from(e => writer(e), urlEncode = false)
       case None         => None
     }
   }
@@ -50,9 +50,9 @@ private[internals] final class SchemaVisitorPatternEncoder(
   ): MaybePathEncode[E] =
     tag match {
       case EnumTag.IntEnum() =>
-        PathEncode.from(e => total(e).intValue.toString)
+        PathEncode.from(e => total(e).intValue.toString, urlEncode = false)
       case _ =>
-        PathEncode.from(e => total(e).stringValue)
+        PathEncode.from(e => total(e).stringValue, urlEncode = false)
     }
 
   override def struct[S](
@@ -61,7 +61,7 @@ private[internals] final class SchemaVisitorPatternEncoder(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePathEncode[S] = {
-    type Writer = (S, Boolean) => List[String]
+    type Writer = S => List[String]
 
     def toPathEncoder[A](
         field: Field[S, A]
@@ -71,7 +71,7 @@ private[internals] final class SchemaVisitorPatternEncoder(
 
     def compile1(path: PatternSegment): Option[Writer] = path match {
       case PatternSegment.StaticSegment(value) =>
-        Some((_: S, _: Boolean) => List(value))
+        Some(Function.const(List(value)))
       case PatternSegment.ParameterSegment(value, _) =>
         fields
           .find(_.label == value)
@@ -84,9 +84,9 @@ private[internals] final class SchemaVisitorPatternEncoder(
     for {
       writers <- compilePath(segments.toVector)
     } yield new PathEncode[S] {
-      def encode(s: S, urlEncode: Boolean): List[String] =
-        writers.flatMap(_.apply(s, urlEncode)).toList
-      def encodeGreedy(s: S, urlEncode: Boolean): List[String] = Nil
+      override def encode(s: S): List[String] =
+        writers.flatMap(_.apply(s)).toList
+      override def encodeGreedy(s: S): List[String] = Nil
     }
   }
 

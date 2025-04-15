@@ -19,14 +19,14 @@ package smithy4s.http.internals
 import smithy4s.capability.Contravariant
 
 trait PathEncode[A] { self =>
-  def encode(a: A, urlEncode: Boolean): List[String]
-  def encodeGreedy(a: A, urlEncode: Boolean): List[String]
+  def encode(a: A): List[String]
+  def encodeGreedy(a: A): List[String]
 
   def contramap[B](from: B => A): PathEncode[B] = new PathEncode[B] {
-    override def encode(b: B, urlEncode: Boolean): List[String] =
-      self.encode(from(b), urlEncode)
-    override def encodeGreedy(b: B, urlEncode: Boolean): List[String] =
-      self.encodeGreedy(from(b), urlEncode)
+    override def encode(b: B): List[String] =
+      self.encode(from(b))
+    override def encodeGreedy(b: B): List[String] =
+      self.encodeGreedy(from(b))
   }
 }
 
@@ -39,9 +39,9 @@ object PathEncode {
       def contramap[A, B](fa: PathEncode[A])(f: B => A): PathEncode[B] =
         fa.contramap(f)
     }
-  def raw[A](f: A => String): PathEncode[A] = {
+  def raw[A](f: A => String, urlEncode: Boolean): PathEncode[A] = {
     new PathEncode[A] {
-      def encode(a: A, urlEncode: Boolean): List[String] = {
+      override def encode(a: A): List[String] = {
         val initial = f(a)
         List {
           if (urlEncode) encodeUnreserved(initial, false)
@@ -49,7 +49,7 @@ object PathEncode {
         }
       }
 
-      def encodeGreedy(a: A, urlEncode: Boolean): List[String] = {
+      override def encodeGreedy(a: A): List[String] = {
         val initial = f(a)
         (if (urlEncode) encodeUnreserved(initial, true)
          else initial)
@@ -59,12 +59,13 @@ object PathEncode {
     }
   }
 
-  def from[A](f: A => String): MaybePathEncode[A] = {
+  def from[A](f: A => String, urlEncode: Boolean): MaybePathEncode[A] = {
     Some {
-      raw(f)
+      raw(f, urlEncode)
     }
   }
-  def fromToString[A]: MaybePathEncode[A] = from(_.toString)
+  def fromToString[A](urlEncode: Boolean): MaybePathEncode[A] =
+    from(_.toString, urlEncode)
 
   /**
    * Encodes characters that are not unreserved into a string builder.
