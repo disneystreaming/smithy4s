@@ -23,10 +23,7 @@ import cats._
 import cats.syntax.all._
 import fs2.Chunk
 import org.http4s._
-import org.http4s.Uri.Path.Segment
-import org.http4s.Uri.encode
 import org.http4s.client.Client
-import org.http4s.internal.CharPredicate.AlphaNum
 import org.typelevel.ci.CIString
 import smithy4s._
 import smithy4s.aws.kernel.AwsCrypto._
@@ -47,7 +44,6 @@ private[aws] object AwsSigning {
   val S3Control = "AWSS3ControlServiceV20180820"
 
   private val disableDoubleEncoding: Set[String] = Set(S3, S3Control)
-  private val dotSegments: Set[String] = Set("..", ".")
 
   def middleware[F[_]: Concurrent](
       awsEnvironment: AwsEnvironment[F]
@@ -134,43 +130,23 @@ private[aws] object AwsSigning {
           else {
             // Other services double encode and normalize
 
-            if (preparedRequest.uri.path.segments.exists(s => dotSegments.contains(s.encoded))) {
-              // if any of the segments are dot segments as described by RFC3986§3.3,
-              // defer to the Java path normalization algorithm, because that's what
-              // AWS expects. `org.http4s.Uri.removeDotSegments` sometimes removes too
-              // much; e.g. AWS expects a path of `foo/../..` to be normalized to `/..`;
-              // `removeDotSegments` returns `/` but `Uri#normalize` does the expected.
-              MonadThrow[F].catchNonFatal {
-                val uri = new URI(preparedRequest.uri.scheme.map(_.value).orNull, preparedRequest.uri.host.map(_.renderString).orNull, preparedRequest.uri.path.toAbsolute.renderString, preparedRequest.uri.fragment.orNull)
-                val almostNormalized = uri.normalize().getRawPath
+            MonadThrow[F].catchNonFatal {
+              val uri = new URI(
+                preparedRequest.uri.scheme.map(_.value).orNull,
+                preparedRequest.uri.host.map(_.renderString).orNull,
+                preparedRequest.uri.path.toAbsolute.renderString,
+                preparedRequest.uri.fragment.orNull
+              )
+              val almostNormalized = uri.normalize().getRawPath
 
-                val removeExtraneousTrailingSlash = almostNormalized.endsWith("/") &&
-                  !preparedRequest.uri.path.endsWithSlash &&
-                  almostNormalized.length > 1
-                if (removeExtraneousTrailingSlash)
-                  // normalization can add a final slash when we didn't have one
-                  // originally, so remove it if that's the case
-                  almostNormalized.substring(0, almostNormalized.length - 1)
-                else almostNormalized
-              }
-            } else {
-              // otherwise, let http4s handle normalization and encoding
-              val almostNormalized =
-                Uri
-                  .Path(
-                    preparedRequest.uri.path.toAbsolute.segments
-                      .map(_.encoded)
-                      .map(encode(_, toSkip = AlphaNum ++ "-_.~"))
-                      .map(Segment.encoded),
-                    absolute = true,
-                    endsWithSlash = preparedRequest.uri.path.toAbsolute.endsWithSlash
-                  )
-                  .normalize
-                  .toAbsolute
-
-              (if (preparedRequest.uri.path.endsWithSlash) almostNormalized.addEndsWithSlash
-               else almostNormalized).renderString
-                .pure[F]
+              val removeExtraneousTrailingSlash = almostNormalized.endsWith("/") &&
+                !preparedRequest.uri.path.endsWithSlash &&
+                almostNormalized.length > 1
+              if (removeExtraneousTrailingSlash)
+                // normalization can add a final slash when we didn't have one
+                // originally, so remove it if that's the case
+                almostNormalized.substring(0, almostNormalized.length - 1)
+              else almostNormalized
             }
           }
         }
