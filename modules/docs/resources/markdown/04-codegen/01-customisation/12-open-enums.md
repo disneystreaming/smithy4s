@@ -5,7 +5,7 @@ title: Open Enumerations
 
 By default, `enum` and `intEnum` shapes are considered to be closed and they are rendered as such. This means that it is expected that all possible values that can be in the enum are declared in the Smithy specification. However, there are certain times where you may require an open enumeration, meaning that values can be placed into it which are not declared in the Smithy specification. This can be useful for interoperability with APIs that you don't control, although often times a simple `String` or `Integer` shape will better suit a field where the values are not known beforehand.
 
-Open enumerations can be specified using the `alloy#openEnum` trait ([docs here](https://github.com/disneystreaming/alloy#alloyopenenum)).
+Open enumerations can be specified using the `alloy#openEnum` trait ([docs here](https://github.com/disneystreaming/alloy/blob/main/modules/docs/misc/constraints.md#alloyopenenum)).
 
 ```kotlin
 use alloy#openEnum

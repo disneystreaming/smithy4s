@@ -149,6 +149,41 @@ are  encoded as such
 { "tpe": "second", "int": 42 }
 ```
 
+#### Open unions
+
+By default, `union` shapes in Smithy4s are considered closed.
+
+This means that any tags/discriminators that are not listed in the union's Smithy definition, will not be accepted as valid values in deserialization. As such, adding/removing values to such a union definition is a breaking change.
+
+This behavior is at odds with the current [specification of Smithy](https://smithy.io/2.0/guides/evolving-models.html#updating-unions) as of April 2025:
+
+> Unions in Smithy are considered "open"; it is a backward-compatible change to add new members to a union
+
+It is a design goal of Smithy4s to provide strict type safety for generated code, and open unions stood in the way of that - hence the default behavior of closed unions.
+
+However, you can opt into making your unions open - meaning that adding values to the definition will no longer be a breaking change (assuming the union was already open before such addition!).
+
+This can be done by defining a `document` member in the union, marked with the `alloy#jsonUnknown` trait:
+
+```diff
++ use alloy#jsonUnknown
+
+union Shape {
+  square: Square
++ @jsonUnknown other: Document
+}
+
+structure Square {
+  @required side: Integer
+}
+```
+
+With such a definition, decoders/encoders aware of the trait will capture any instances of the union that are not covered by the remaining members, in a `Document` value that will be transparently written back during serialization.
+
+You can learn more about the details in the [trait's documentation](https://github.com/disneystreaming/alloy/blob/main/modules/docs/serialisation/json.md#open-unions).
+
+**Note:** Open unions via `@jsonUnknown` are only supported in JSON and Document encoders/decoders. Other traits may be added in the future, to open such possibilities in other formats.
+
 ## Union Projections and Visitors
 
 In order to make working with unions more ergonomic, smithy4s provides projection functions and generates visitors for all unions.
