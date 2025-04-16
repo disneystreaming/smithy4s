@@ -17,6 +17,10 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
 
+// for Alloy snapshots
+// as well as any other dependency snapshots.
+ThisBuild / resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import Smithy4sBuildPlugin._
@@ -1200,6 +1204,14 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
         }
       }
 
+    val repos =
+      (config / resolvers).?.value.getOrElse(Seq.empty).map {
+        case m: MavenRepository =>
+          m.root
+      }
+    val repoFlags =
+      if (repos.nonEmpty) List("--repositories", repos.mkString(",")) else Nil
+
     val trackedFiles = List(
       "--dependencies",
       (config / complianceTestDependencies).?.value
@@ -1208,7 +1220,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
           s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
         }
         .mkString(",")
-    )
+    ) ++ repoFlags
 
     cached(trackedFiles)
   }
@@ -1232,6 +1244,11 @@ def genSmithyImpl(config: Configuration) = Def.task {
     (config / smithy4sDependencies).?.value.getOrElse(Seq.empty).map {
       moduleId =>
         s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
+    }
+  val repos =
+    (config / resolvers).?.value.getOrElse(Seq.empty).map {
+      case m: MavenRepository =>
+        m.root
     }
 
   val codegenCp =
@@ -1309,12 +1326,17 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 if (smithy4sDeps.nonEmpty)
                   List("--dependencies", smithy4sDeps.mkString(","))
                 else Nil
+              val reposOpt =
+                if (repos.nonEmpty) List("--repositories", repos.mkString(","))
+                else Nil
+
               val args = outputOpt ++
                 resourceOutputOpt ++
                 allowedNsOpt ++
                 inputs ++
                 skipOpt ++
-                dependenciesOpt
+                dependenciesOpt ++
+                reposOpt
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
