@@ -833,7 +833,10 @@ lazy val http4s = projectMatrix
       Dependencies.Alloy.`protocol-tests`
     ),
     (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
-    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
+    (Test / resourceGenerators) := Seq(
+      // todo: flip ignoreCache back. Or remove it
+      dumpModel(Test, ignoreCache = true).taskValue
+    ),
     (Test / envVars) := {
       val files: Seq[File] =
         (Test / resourceGenerators) {
@@ -1125,7 +1128,10 @@ val complianceTestDependencies =
 
 // writes out a json representation of the smithy model pulled from Smithy4s dependencies config
 // result is cached using the dependency list as the cache key
-def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
+def dumpModel(
+    config: Configuration,
+    ignoreCache: Boolean = false
+): Def.Initialize[Task[Seq[File]]] =
   Def.task {
     val dumpModelCp = (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
@@ -1189,7 +1195,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
             .lastOutput[(Boolean, List[String]), Seq[File]](
               s.cacheStoreFactory.make("output")
             ) { case ((changed, deps), outputs) =>
-              if (changed || outputs.isEmpty) {
+              if (changed || outputs.isEmpty || ignoreCache) {
                 val res =
                   ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
                 val file =
