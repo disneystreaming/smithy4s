@@ -1059,7 +1059,6 @@ private[smithy4s] class SchemaVisitorJCodec(
     new TaggedUnionJCodec[U](alternatives)(dispatch) {
 
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        // ! - I'm not sure about this
         in.setMark()
         if (in.isNextToken('{')) {
           if (in.isNextToken('}'))
@@ -1068,9 +1067,8 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             val key = in.readKeyAsString()
             val handler = handlerMap.get(key)
-            if ((handler eq null) && (unknownTagHandler eq null))
-              in.discriminatorValueError(key)
 
+            // happy path
             if (handler ne null) {
               cursor.push(key)
               val result = handler(cursor, in)
@@ -1080,10 +1078,15 @@ private[smithy4s] class SchemaVisitorJCodec(
                 in.rollbackToken()
                 in.decodeError(s"Expected no other field after $key")
               }
-            } else {
-              // ! - I'm not sure about this
+            }
+            // @jsonUnknown path
+            else if (unknownTagHandler ne null) {
               in.rollbackToMark()
               unknownTagHandler(cursor, in)
+            }
+            // neither a known tag nor jsonUnknown
+            else {
+              in.discriminatorValueError(key)
             }
           }
         } else in.decodeError("Expected JSON object")
