@@ -78,7 +78,7 @@ jobs:
         run: |
           sbt scalafmtCheckAll \
               headerCheck \
-              "docs/mdoc"
+              "docsRendering/mdoc"
           (cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build)
 
       - name: Check for untracked changes

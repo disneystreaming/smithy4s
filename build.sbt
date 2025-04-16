@@ -56,6 +56,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core,
   codegen,
+  docs,
   millCodegenPlugin,
   json,
   xml,
@@ -81,10 +82,10 @@ lazy val allModules = Seq(
   complianceTests
 ).flatMap(_.projectRefs)
 
-lazy val docs =
+lazy val docsRendering =
   projectMatrix
-    .in(file("modules/docs"))
-    .enablePlugins(MdocPlugin, DocusaurusPlugin)
+    .in(file("modules/docs-rendering"))
+    .enablePlugins(MdocPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
       `codegen-cli`,
@@ -95,10 +96,11 @@ lazy val docs =
       complianceTests,
       dynamic,
       bootstrapped,
-      protobuf
+      protobuf,
+      docs
     )
     .settings(
-      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "resources" / "markdown",
       mdocVariables := Map(
         "VERSION" -> {
           sys.env
@@ -145,6 +147,15 @@ lazy val docs =
       )
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+
+lazy val docs =
+  projectMatrix
+    .in(file("modules/docs"))
+    .jvmPlatform(
+      autoScalaLibrary = false,
+      scalaVersions = Seq.empty,
+      settings = jvmDimSettings
+    )
 
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
