@@ -1021,12 +1021,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
     override def canBeKey: Boolean = false
 
-    private def handler[A](alt: Alt[U, A]) = {
-      val codec = apply(alt.schema)
-      (cursor: Cursor, reader: JsonReader) =>
-        alt.inject(cursor.decode(codec, reader))
-    }
-
     protected val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
       def apply[A](label: String, instance: Schema[A]): Writer[A] = {
         val jcodecA = instance.compile(self)
