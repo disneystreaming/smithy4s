@@ -833,10 +833,7 @@ lazy val http4s = projectMatrix
       Dependencies.Alloy.`protocol-tests`
     ),
     (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
-    (Test / resourceGenerators) := Seq(
-      // todo: flip ignoreCache back. Or remove it
-      dumpModel(Test, ignoreCache = true).taskValue
-    ),
+    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / envVars) := {
       val files: Seq[File] =
         (Test / resourceGenerators) {
@@ -1130,6 +1127,7 @@ val complianceTestDependencies =
 // result is cached using the dependency list as the cache key
 def dumpModel(
     config: Configuration,
+    // pass `true` here to make sure this runs on every test run. Useful when working on new protocol compliance tests.
     ignoreCache: Boolean = false
 ): Def.Initialize[Task[Seq[File]]] =
   Def.task {
