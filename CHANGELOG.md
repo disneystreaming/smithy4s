@@ -8,6 +8,7 @@ Thank you!
 # 0.18.34
 
 * codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
+* codegen: Mixins - fix several bugs and a performance regression in [#1701](https://github.com/disneystreaming/smithy4s/pull/1701).
 
 # 0.18.33
 
