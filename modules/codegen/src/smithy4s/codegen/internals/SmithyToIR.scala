@@ -213,7 +213,7 @@ private[codegen] class SmithyToIR(
           fields
             .find(_.name == memberName)
             .forall { field =>
-              field.modifier == fieldModifier(member)
+              field.modifier.typeMod == fieldModifier(member).typeMod
             }
         }
       }

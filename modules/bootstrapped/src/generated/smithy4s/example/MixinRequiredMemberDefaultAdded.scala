@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class MixinRequiredMemberDefaultAdded(description: String = "different description")
+final case class MixinRequiredMemberDefaultAdded(description: String = "different description") extends MixinRequiredMember
 
 object MixinRequiredMemberDefaultAdded extends ShapeTag.Companion[MixinRequiredMemberDefaultAdded] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinRequiredMemberDefaultAdded")
