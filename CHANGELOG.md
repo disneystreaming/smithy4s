@@ -7,6 +7,7 @@ Thank you!
 
 # 0.18.34
 
+* codegen: Consider a mixin field "matching in type" even if it differs by default values in [#1702](https://github.com/disneystreaming/smithy4s/pull/1702).
 * codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
 
 # 0.18.33
