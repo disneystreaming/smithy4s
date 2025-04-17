@@ -231,10 +231,7 @@ private[codegen] class SmithyToIR(
         val rec = isRecursive(shape.getId()) || isTrait
 
         val fields = shape.fields
-        val filteredMixins = shape
-          .getMixins()
-          .asScala
-          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val filteredMixins = getMixinsMatchingFields(shape)
         val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
           .flatMap(_.tpe)
           .toList

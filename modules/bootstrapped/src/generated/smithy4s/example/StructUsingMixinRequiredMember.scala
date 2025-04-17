@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class StructUsingMixinRequiredMember(description: String, extraField: String)
+final case class StructUsingMixinRequiredMember(description: String, extraField: String) extends MixinRequiredMember
 
 object StructUsingMixinRequiredMember extends ShapeTag.Companion[StructUsingMixinRequiredMember] {
   val id: ShapeId = ShapeId("smithy4s.example", "StructUsingMixinRequiredMember")
