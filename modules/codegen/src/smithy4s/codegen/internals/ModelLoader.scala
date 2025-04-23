@@ -29,8 +29,6 @@ import software.amazon.smithy.model.loader.ModelAssembler
 import java.io.File
 import java.net.URLClassLoader
 import scala.jdk.CollectionConverters._
-import java.{util => ju}
-import java.net.URL
 
 private[codegen] object ModelLoader {
 
@@ -49,10 +47,6 @@ private[codegen] object ModelLoader {
     )
 
     val smithyClassLoader = new ClassLoader(null) {
-      override def getResources(name: String): ju.Enumeration[URL] = {
-        import jdk.internal.loader.BootLoader
-        BootLoader.findResources(name)
-      }
       override protected def loadClass(
           name: String,
           resolve: Boolean
