@@ -42,7 +42,6 @@ private[codegen] object CodegenImpl { self =>
       args.dependencies,
       args.repositories,
       withBuiltinTransformers(args.transformers),
-      args.discoverModels,
       args.localJars
     )
 
@@ -237,7 +236,6 @@ private[codegen] object CodegenImpl { self =>
       args.dependencies,
       args.repositories,
       withBuiltinTransformers(args.transformers),
-      discoverModels = false,
       args.localJars
     )
     val flattenedModel =

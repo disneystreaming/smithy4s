@@ -220,7 +220,6 @@ trait Smithy4sModule extends ScalaModule {
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
-      discoverModels = false,
       allowedNS = smithy4sAllowedNamespaces(),
       excludedNS = smithy4sExcludedNamespaces(),
       repositories = smithy4sRepositories(),

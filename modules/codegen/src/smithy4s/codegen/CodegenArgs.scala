@@ -24,7 +24,6 @@ final case class CodegenArgs(
     output: os.Path,
     resourceOutput: os.Path,
     skip: Set[FileType],
-    discoverModels: Boolean,
     allowedNS: Option[Set[String]],
     excludedNS: Option[Set[String]],
     repositories: List[String],

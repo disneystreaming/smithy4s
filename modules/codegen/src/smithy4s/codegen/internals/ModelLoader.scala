@@ -25,15 +25,12 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
-import software.amazon.smithy.model.loader.ModelDiscovery
-import software.amazon.smithy.model.loader.ModelManifestException
 
 import java.io.File
 import java.net.URLClassLoader
-import java.nio.file.FileSystems
-import java.nio.file.Files
 import scala.jdk.CollectionConverters._
-import scala.util.Using
+import java.{util => ju}
+import java.net.URL
 
 private[codegen] object ModelLoader {
 
@@ -42,7 +39,6 @@ private[codegen] object ModelLoader {
       dependencies: List[String],
       repositories: List[String],
       transformers: List[String],
-      discoverModels: Boolean,
       localJars: List[os.Path]
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
@@ -52,26 +48,26 @@ private[codegen] object ModelLoader {
       repositories
     )
 
-    val modelsInJars = deps.flatMap { file =>
-      Using.resource(
-        // Note: On JDK13+, the second parameter is redundant.
-        FileSystems.newFileSystem(file.toPath(), null: ClassLoader)
-      ) { jarFS =>
-        val p = jarFS.getPath("META-INF", "smithy", "manifest")
-
-        // model discovery would throw if we tried to pass a non-existent path
-        if (!Files.exists(p)) Nil
-        else {
-          try ModelDiscovery.findModels(p.toUri().toURL()).asScala.toList
-          catch {
-            case e: ModelManifestException =>
-              System.err.println(
-                s"Unexpected exception while loading model from $file, skipping: $e"
-              )
-              Nil
-          }
+    val smithyClassLoader = new ClassLoader(null) {
+      override def getResources(name: String): ju.Enumeration[URL] = {
+        import jdk.internal.loader.BootLoader
+        BootLoader.findResources(name)
+      }
+      override protected def loadClass(
+          name: String,
+          resolve: Boolean
+      ): Class[?] = {
+        if (name.startsWith("software.amazon.smithy")) {
+          currentClassLoader.loadClass(name);
+        } else {
+          super.loadClass(name, resolve);
         }
       }
+    }
+
+    val validatorClassLoader = locally {
+      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      new URLClassLoader(jarUrls, smithyClassLoader)
     }
 
     // Loading the upstream model
@@ -79,8 +75,7 @@ private[codegen] object ModelLoader {
       .assembler()
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
-      .addClasspathModels(currentClassLoader, discoverModels)
-      .addImports(modelsInJars)
+      .discoverModels(validatorClassLoader)
       .assemble()
       .unwrap()
 
@@ -93,11 +88,6 @@ private[codegen] object ModelLoader {
       case (k, _) if k.startsWith("smithy4s") =>
         sanitisingModelBuilder.removeMetadataProperty(k)
       case _ => ()
-    }
-
-    val validatorClassLoader = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
-      new URLClassLoader(jarUrls, currentClassLoader)
     }
 
     val preTransformationModel =
@@ -176,15 +166,6 @@ private[codegen] object ModelLoader {
     def addImports(urls: Seq[java.net.URL]): ModelAssembler = {
       urls.foreach(assembler.addImport)
       assembler
-    }
-
-    def addClasspathModels(
-        classLoader: ClassLoader,
-        discoverModels: Boolean
-    ): ModelAssembler = {
-      if (discoverModels) {
-        assembler.discoverModels(classLoader)
-      } else assembler
     }
   }
 
