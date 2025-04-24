@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,11 +30,14 @@ final case class CodegenArgs(
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
-    localJars: List[os.Path]
+    localJars: List[os.Path],
+    smithyBuild: Option[os.Path]
 ) {
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)
   def skipResources: Boolean = skip(FileType.Resource)
+  def skipProto: Boolean = skip(FileType.Proto)
+
 }
 
 sealed abstract class FileType(val name: String)
@@ -50,6 +53,7 @@ object FileType {
   case object Scala extends FileType("scala")
   case object Openapi extends FileType("openapi")
   case object Resource extends FileType("resource")
+  case object Proto extends FileType("proto")
 
   val values = List(Scala, Openapi, Resource)
 }

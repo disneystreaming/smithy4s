@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,29 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
       "HostWithPathOperation",
       // We expect users to set idempotency tokens because doing so raises
       // awareness of the need to do so outside of any retry mechanism.
-      "QueryIdempotencyTokenAutoFill"
+      "QueryIdempotencyTokenAutoFill",
+
+      // TODO https://github.com/disneystreaming/smithy4s/issues/1424
+      "AwsJson10ClientPopulatesDefaultValuesInInput",
+      "AwsJson10ClientPopulatesDefaultsValuesWhenMissingInResponse",
+      "AwsJson10ClientPopulatesNestedDefaultValuesWhenMissing",
+      "AwsJson10ClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+      "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
+      "RestJsonHttpPayloadWithUnsetUnion",
+      "RestXmlHttpPayloadWithUnsetUnion",
+
+      // TODO same as above, added between 1.49 and 1.56. Mostly default-related
+      "NullAndEmptyHeaders",
+      "HttpPrefixEmptyHeaders",
+      "HttpEmptyPrefixHeadersRequestClient",
+      "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+      "RestJsonClientPopulatesNestedDefaultValuesWhenMissing",
+      "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
+      "RestJsonClientPopulatesDefaultValuesInInput",
+      "RestJsonNullAndEmptyHeaders",
+      "RestJsonHttpPrefixEmptyHeaders",
+      "RestJsonHttpEmptyPrefixHeadersRequestClient",
+      "AwsJson10ClientErrorCorrectsWithDefaultValuesWhenServerFailsToSerializeRequiredValues"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No

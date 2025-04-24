@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,16 @@ object UnaryServerEndpoint {
       codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
       middleware: (Request => F[Response]) => (Request => F[Response])
   )(implicit F: MonadThrowLike[F]): Request => F[Response] = {
+    apply(interpreter, endpoint, codecs, middleware, encodeErrorsBeforeMiddleware = false)
+  }
+
+  def apply[F[_], Op[_, _, _, _, _], Request, Response, I, E, O, SI, SO](
+      interpreter: FunctorInterpreter[Op, F],
+      endpoint: Endpoint[Op, I, E, O, SI, SO],
+      codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
+      middleware: (Request => F[Response]) => (Request => F[Response]),
+      encodeErrorsBeforeMiddleware: Boolean
+  )(implicit F: MonadThrowLike[F]): Request => F[Response] = {
     def errorResponse(throwable: Throwable): F[Response] = throwable match {
       case endpoint.Error((_, e)) =>
         codecs.errorEncoder(e)
@@ -44,7 +54,14 @@ object UnaryServerEndpoint {
         }
       }
     }
-    val withMiddleware = middleware(base)
+
+    val withErrorsEncoded =
+      if (encodeErrorsBeforeMiddleware)
+        base.andThen { F.handleErrorWith(_)(errorResponse) }
+      else
+        base
+
+    val withMiddleware = middleware(withErrorsEncoded)
     withMiddleware.andThen { F.handleErrorWith(_)(errorResponse) }
 
   }

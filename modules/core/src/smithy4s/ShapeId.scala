@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,11 @@ import smithy.api.IdRef
 
 final case class ShapeId(namespace: String, name: String) extends HasId {
   def show = s"$namespace#$name"
+
+  def withNamespace(namespace: String): ShapeId = copy(namespace = namespace)
+  def withName(name: String): ShapeId = copy(name = name)
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
+
   override def toString = show
   override def id: ShapeId = this
 }

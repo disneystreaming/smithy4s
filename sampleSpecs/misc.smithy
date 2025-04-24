@@ -53,8 +53,9 @@ structure BigStruct {
     a21: Integer
     @required
     a22: Integer
+    a23: String
     @required
-    a23: Integer
+    a24: Integer
 }
 
 @enum([
@@ -109,3 +110,14 @@ structure RangeCheck {
 // face with sunglasses emoji
 @pattern("^\\uD83D\\uDE0E$")
 string UnicodeRegexString
+
+@trait
+union unionTraitWithUnitCase {
+    u: Unit
+    s: String
+}
+
+@unionTraitWithUnitCase(u: {
+
+})
+string HasUnionUnitCaseTrait

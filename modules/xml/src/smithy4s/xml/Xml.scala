@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,24 +78,8 @@ object Xml {
       fromSchema(schema, createCache())
   }
 
-  val encoders: BlobEncoder.Compiler = new BlobEncoder.Compiler {
-    type Cache = XmlDocument.Encoder.Cache
-    def createCache(): Cache = XmlDocument.Encoder.createCache()
-    def fromSchema[A](schema: Schema[A], cache: Cache): BlobEncoder[A] = {
-      val xmlDocumentEncoder = XmlDocument.Encoder.fromSchema(schema, cache)
-      (a: A) =>
-        Blob {
-          XmlDocument.documentEventifier
-            .eventify(xmlDocumentEncoder.encode(a))
-            .through(render(collapseEmpty = false))
-            .through(fs2.text.utf8.encode[fs2.Pure])
-            .compile
-            .to(Collector.supportsArray(Array))
-        }
-    }
-    def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
-      fromSchema(schema, createCache())
-  }
+  object encoders
+      extends smithy4s.xml.internals.XmlPayloadEncoderCompilerImpl(false)
 
   private val decoderCacheGlobal = XmlDocument.Decoder.createCache()
   private val encoderCacheGlobal = XmlDocument.Encoder.createCache()
@@ -131,7 +115,7 @@ object Xml {
 
     XmlDocument.documentEventifier
       .eventify(xmlDocument)
-      .through(render(collapseEmpty = false))
+      .through(render.raw(collapseEmpty = false))
   }
 
   private def writeToBytes[A: Schema](a: A): Stream[fs2.Pure, Byte] =

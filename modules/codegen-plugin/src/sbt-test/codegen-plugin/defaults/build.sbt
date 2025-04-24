@@ -1,7 +1,7 @@
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
-    scalaVersion := "2.13.10",
+    scalaVersion := "2.13.16",
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
       "com.disneystreaming.smithy4s" %% "smithy4s-dynamic" % smithy4sVersion.value
@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
       val expectedLines = Set(
         "version",
         "src/main/smithy",
-        "com.disneystreaming.alloy:alloy-core:0.2.8"
+        s"com.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}"
       )
       val content =
         IO.readLines(baseDirectory.value / "smithy-build.json")

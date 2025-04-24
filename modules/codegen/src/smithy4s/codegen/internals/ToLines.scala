@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package smithy4s.codegen.internals
 
+import cats.Foldable
 import cats.kernel.Monoid
 import cats.syntax.all._
 
-import LineSegment.{Literal, NameRef}
-import cats.Foldable
+import LineSegment.Literal
+import LineSegment.NameRef
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
@@ -57,6 +58,7 @@ private[internals] object ToLines {
 
 private[internals] case class Lines(list: List[Line]) {
   def isEmpty: Boolean = list.isEmpty
+  def isBlank: Boolean = list.forall(_.isEmpty)
 
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =

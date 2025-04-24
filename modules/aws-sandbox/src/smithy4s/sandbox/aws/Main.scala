@@ -57,7 +57,7 @@ object Main extends IOApp.Simple {
       listAll[String, ec2.DescribeInstanceStatusResult, ec2.InstanceStatus](
         listF = maybeNextToken =>
           ec2Client.describeInstanceStatus(
-            maxResults = 100,
+            maxResults = Some(100),
             nextToken = maybeNextToken
           ),
         accessResults = _.instanceStatuses.toList.flatten,

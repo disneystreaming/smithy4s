@@ -14,9 +14,10 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(brands: Option[List[String]]): AddBrandsInput = AddBrandsInput(brands)
+
   implicit val schema: Schema[AddBrandsInput] = struct(
     BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands),
-  ){
-    AddBrandsInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

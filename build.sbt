@@ -1,3 +1,8 @@
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.MissingClassProblem
+import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
+import com.typesafe.tools.mima.core.IncompatibleMethTypeProblem
+import com.typesafe.tools.mima.core.DirectMissingMethodProblem
 import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
@@ -7,7 +12,7 @@ import java.io.File
 import sys.process._
 
 ThisBuild / commands ++= createBuildCommands(allModules)
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
@@ -51,6 +56,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core,
   codegen,
+  docs,
   millCodegenPlugin,
   json,
   xml,
@@ -64,7 +70,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  `aws-sandbox`,
+  protobuf,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -76,10 +82,10 @@ lazy val allModules = Seq(
   complianceTests
 ).flatMap(_.projectRefs)
 
-lazy val docs =
+lazy val docsRendering =
   projectMatrix
-    .in(file("modules/docs"))
-    .enablePlugins(MdocPlugin, DocusaurusPlugin)
+    .in(file("modules/docs-rendering"))
+    .enablePlugins(MdocPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
       `codegen-cli`,
@@ -89,10 +95,12 @@ lazy val docs =
       `aws-http4s` % "compile -> compile",
       complianceTests,
       dynamic,
-      bootstrapped
+      bootstrapped,
+      protobuf,
+      docs
     )
     .settings(
-      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "resources" / "markdown",
       mdocVariables := Map(
         "VERSION" -> {
           sys.env
@@ -140,6 +148,17 @@ lazy val docs =
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
+lazy val docs =
+  projectMatrix
+    .in(file("modules/docs"))
+    .jvmPlatform(
+      autoScalaLibrary = false,
+      scalaVersions = Seq.empty,
+      settings = jvmDimSettings ++ Seq(
+        Compile / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "modules" / "website" / "static"
+      )
+    )
+
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
     Seq(
@@ -177,7 +196,8 @@ lazy val core = projectMatrix
       "smithy.api",
       "smithy.waiters",
       "alloy",
-      "alloy.common"
+      "alloy.common",
+      "alloy.proto"
     ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters
@@ -204,6 +224,9 @@ lazy val core = projectMatrix
         }
         .taskValue
     },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    ),
     libraryDependencies += Dependencies.collectionsCompat.value,
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
@@ -212,7 +235,54 @@ lazy val core = projectMatrix
         .map(f => (f, f.relativeTo(base)))
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    }
+    },
+    scalacOptions ++= Seq(
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+    ),
+    mimaBinaryIssueFilters ++= Seq(
+      // Incompatible change from smithy 1.46.0
+      // Introduced in https://github.com/smithy-lang/smithy/pull/2156
+      // Discussed in https://github.com/smithy-lang/smithy/issues/2243
+      // Brought to smithy4s in https://github.com/disneystreaming/smithy4s/pull/1485
+      ProblemFilters.exclude[MissingClassProblem](
+        "smithy.api.TraitChangeSeverity*"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.apply"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.<init>$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.this"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.severity"
+      ),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy.api.TraitDiffRule.copy"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.copy$default$2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule._2"
+      ),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy.api.TraitDiffRule.apply$default$2"
+      ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy4s.http.HttpUnaryServerRouter#KleisliRouter.this"
+      ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy4s.http.HttpUnaryServerRouter#PartialFunctionRouter.this"
+      ),
+      // Breaking bin-compat to walk back ambiguous methods introduced in
+      // https://github.com/disneystreaming/smithy4s/pull/1669
+      ProblemFilters.exclude[IncompatibleMethTypeProblem](
+        "smithy4s.http.HttpUnaryServerRouter.partialFunction"
+      )
+    )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -315,7 +385,7 @@ lazy val `aws-http4s` = projectMatrix
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
     ),
     Test / complianceTestDependencies := Seq(
-      Dependencies.Alloy.`protocol-tests`
+      Dependencies.Smithy.`aws-protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / smithy4sModelTransformers) := Seq.empty,
@@ -362,7 +432,9 @@ lazy val codegen = projectMatrix
       "smithyOrg" -> Dependencies.Smithy.org,
       "smithyVersion" -> Dependencies.Smithy.smithyVersion,
       "alloyOrg" -> Dependencies.Alloy.org,
-      "alloyVersion" -> Dependencies.Alloy.alloyVersion
+      "alloyVersion" -> Dependencies.Alloy.alloyVersion,
+      "smithy4sOrg" -> organization.value,
+      "protocolArtifactName" -> "smithy4s-protocol"
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
@@ -371,11 +443,14 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
-      "com.lihaoyi" %% "os-lib" % "0.9.3",
-      "com.lihaoyi" %% "upickle" % "3.1.4",
+      Dependencies.Smithytranslate.proto,
+      "com.lihaoyi" %% "os-lib" % "0.10.1",
+      Dependencies.Circe.core.value,
+      Dependencies.Circe.parser.value,
+      Dependencies.Circe.generic.value,
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.8"
+      "io.get-coursier" %% "coursier" % "2.1.24"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -385,7 +460,10 @@ lazy val codegen = projectMatrix
       sourceManaged
         .map(AwsBoilerplate.generate(_))
         .taskValue,
-    }
+    },
+    (Compile / compile) := (Compile / compile)
+      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .value
   )
 
 /**
@@ -426,6 +504,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
     },
+    libraryDependencies += Dependencies.MunitV1.diff.value,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
@@ -441,7 +520,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
-        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
+        (protocolJvm / publishLocal).value
       )
       publishLocal.value
     },
@@ -482,7 +561,7 @@ lazy val millCodegenPlugin = projectMatrix
         (codegen.jvm(Scala213) / publishLocal).value,
 
         // for mill
-        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
+        (protocolJvm / publishLocal).value
       )
       publishLocal.value
     },
@@ -536,6 +615,8 @@ lazy val protocol = projectMatrix
     javacOptions ++= Seq("--release", "8")
   )
 
+lazy val protocolJvm = protocol.jvm(autoScalaLibrary = false)
+
 lazy val protocolTests = projectMatrix
   .in(file("modules/protocol-tests"))
   .jvmPlatform(Seq(Scala213), jvmDimSettings)
@@ -570,6 +651,9 @@ lazy val dynamic = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
+    Test / unmanagedClasspath ++= Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs"
+    ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
@@ -582,7 +666,11 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      libraryDependencies += Dependencies.Smithy.model
+      libraryDependencies ++= Seq(
+        Dependencies.Smithy.model,
+        Dependencies.Smithy.diff % Test,
+        Dependencies.Smithy.build % Test
+      )
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -629,6 +717,37 @@ lazy val xml = projectMatrix
       Dependencies.Weaver.cats.value % Test
     ),
     libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains protobuf encoders/decoders for the generated
+ * types.
+ */
+lazy val protobuf = projectMatrix
+  .in(file("modules/protobuf"))
+  .dependsOn(
+    core,
+    bootstrapped % "test->test",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= munitDeps.value,
+    libraryDependencies ++= {
+      if (virtualAxes.value.contains(VirtualAxis.jvm))
+        Seq(
+          "com.google.protobuf" % "protobuf-java" % "3.24.4",
+          "com.google.protobuf" % "protobuf-java-util" % "3.24.4" % Test
+        )
+      else
+        Seq(
+          "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "0.8.14"
+        )
+    },
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -723,7 +842,12 @@ lazy val http4s = projectMatrix
           Map("MODEL_DUMP" -> file.getAbsolutePath)
         }
         .getOrElse(Map.empty)
-    }
+    },
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy4s.http4s.SimpleProtocolBuilder#RouterBuilder.this"
+      )
+    )
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -834,6 +958,11 @@ lazy val complianceTests = projectMatrix
 lazy val exampleGeneratedOutput =
   settingKey[File]("Output directory where the generated code is going to be.")
 
+lazy val exampleGeneratedResourcesOutput =
+  settingKey[File](
+    "Output directory where the generated resources are going to be."
+  )
+
 /**
   * A project that contains generated code, which can serve as a basis for tests.
   */
@@ -841,10 +970,32 @@ lazy val bootstrapped = projectMatrix
   .in(file("modules/bootstrapped"))
   .dependsOn(cats, `aws-kernel`, complianceTests)
   .disablePlugins(ScalafixPlugin)
-  .disablePlugins(HeaderPlugin)
   .settings(
+    Compile / headerSources := Nil,
+    // Setting ScalaPB to generate Scala code from proto files generated by
+    // smithy4s
+    Compile / PB.generate := {
+      // running smithy codegen before scalapb codegen to have the translated proto
+      genSmithyResources(Compile).taskValue
+      (Compile / PB.generate).value
+    },
+    Compile / PB.protoSources ++= Seq(
+      exampleGeneratedResourcesOutput.value
+    ),
+    Compile / PB.protocExecutable := sys.env
+      .get("PROTOC_PATH")
+      .map(file(_))
+      .getOrElse((Compile / PB.protocExecutable).value),
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    ),
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
-    cleanFiles += exampleGeneratedOutput.value,
+    exampleGeneratedResourcesOutput := (Compile / resourceDirectory).value,
+    cleanFiles ++= Seq(
+      exampleGeneratedOutput.value,
+      exampleGeneratedResourcesOutput.value
+    ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.testTraits,
       Dependencies.Smithy.awsTraits,
@@ -866,6 +1017,7 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.hello",
       "smithy4s.example.test",
       "smithy4s.example.package",
+      "smithy4s.example.protobuf",
       "weather",
       "smithy4s.example.product",
       "smithy4s.example.reservedNameOverride"
@@ -877,7 +1029,7 @@ lazy val bootstrapped = projectMatrix
     libraryDependencies += Dependencies.Http4s.emberServer.value,
     genSmithy(Compile),
     genSmithyOutput := exampleGeneratedOutput.value,
-    genSmithyResourcesOutput := (Compile / resourceDirectory).value,
+    genSmithyResourcesOutput := exampleGeneratedResourcesOutput.value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
@@ -886,7 +1038,9 @@ lazy val bootstrapped = projectMatrix
     libraryDependencies ++=
       munitDeps.value ++ Seq(
         Dependencies.Cats.core.value % Test,
-        Dependencies.Weaver.cats.value % Test
+        Dependencies.Weaver.cats.value % Test,
+        "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+        Dependencies.Alloy.protobuf % "protobuf-src"
       )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -942,8 +1096,8 @@ lazy val `aws-sandbox` = projectMatrix
       "-Wconf:cat=deprecation:silent"
     ),
     smithy4sDependencies ++= Seq(
-      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
-      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
+      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.04.08",
+      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.04.08"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
@@ -956,8 +1110,8 @@ lazy val `aws-sandbox` = projectMatrix
 
 def genSmithy(config: Configuration) = Def.settings(
   Seq(
-    config / sourceGenerators := Seq(genSmithyScala(config).taskValue),
-    config / resourceGenerators := Seq(genSmithyResources(config).taskValue)
+    config / sourceGenerators ++= Seq(genSmithyScala(config).taskValue),
+    config / resourceGenerators ++= Seq(genSmithyResources(config).taskValue)
   )
 )
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
@@ -1182,7 +1336,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
 
 addCommandAlias(
   "ci",
-  "versionDump; clean; scalafmtCheckAll; headerCheck; test; publishLocal; scripted"
+  "versionDump; clean; scalafmtCheckAll; headerCheckAll; test; publishLocal; scripted"
 )
 
 addCommandAlias(

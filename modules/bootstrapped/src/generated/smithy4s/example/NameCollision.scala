@@ -19,7 +19,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   def myOp(): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
   def endpoint(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
 
 object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] {

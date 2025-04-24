@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,7 +110,9 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
+      Schema
+        .struct(kField, vField)((_, _))
+        .addHints(UrlFormName("entry"))
     }
     compile(Schema.vector(kvSchema).addHints(hints))
       .map(_.toMap)

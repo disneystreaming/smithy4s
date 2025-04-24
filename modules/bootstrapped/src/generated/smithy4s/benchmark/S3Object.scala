@@ -16,12 +16,13 @@ object S3Object extends ShapeTag.Companion[S3Object] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(id: String, owner: String, attributes: Attributes, data: Blob): S3Object = S3Object(id, owner, attributes, data)
+
   implicit val schema: Schema[S3Object] = struct(
     string.required[S3Object]("id", _.id),
     string.required[S3Object]("owner", _.owner),
     Attributes.schema.required[S3Object]("attributes", _.attributes),
     bytes.required[S3Object]("data", _.data),
-  ){
-    S3Object.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

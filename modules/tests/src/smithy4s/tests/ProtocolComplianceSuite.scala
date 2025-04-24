@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -132,8 +132,11 @@ abstract class ProtocolComplianceSuite
     val codec: PayloadDecoder[Document] = codecApi.fromSchema(Schema.document)
     codec
       .decode(Blob(bytes))
-      .getOrElse(sys.error("unable to decode smithy model into document"))
-
+      .leftMap(
+        new RuntimeException("unable to decode smithy model into document", _)
+      )
+      .toTry
+      .get
   }
 
   private def runInWeaver(

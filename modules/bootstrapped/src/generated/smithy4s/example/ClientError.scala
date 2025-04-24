@@ -19,10 +19,11 @@ object ClientError extends ShapeTag.Companion[ClientError] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(code: Int, details: String): ClientError = ClientError(code, details)
+
   implicit val schema: Schema[ClientError] = struct(
     int.required[ClientError]("code", _.code),
     string.required[ClientError]("details", _.details),
-  ){
-    ClientError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

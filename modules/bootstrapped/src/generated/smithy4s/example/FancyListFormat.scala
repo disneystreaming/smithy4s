@@ -15,5 +15,6 @@ object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
     smithy.api.Trait(selector = Some("list:test(> member > string)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+
   implicit val schema: Schema[FancyListFormat] = constant(FancyListFormat()).withId(id).addHints(hints)
 }

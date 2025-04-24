@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,12 +65,13 @@ object Main {
         }
         .leftMap { help =>
           System.err.println(help.show)
+          sys.exit(1)
         }
         .merge
     } catch {
       case e: Throwable =>
         e.printStackTrace(System.err)
-        System.exit(1)
+        sys.exit(1)
     } finally {
       System.setErr(out)
     }

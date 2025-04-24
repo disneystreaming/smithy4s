@@ -16,9 +16,10 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
     smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromDouble(1.0d), "a" -> smithy4s.Document.fromDouble(2.0d))),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(status: String): HealthResponse = HealthResponse(status)
+
   implicit val schema: Schema[HealthResponse] = struct(
     string.required[HealthResponse]("status", _.status),
-  ){
-    HealthResponse.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

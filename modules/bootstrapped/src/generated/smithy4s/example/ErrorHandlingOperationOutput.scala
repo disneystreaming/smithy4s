@@ -16,9 +16,10 @@ object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOper
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(out: Option[String]): ErrorHandlingOperationOutput = ErrorHandlingOperationOutput(out)
+
   implicit val schema: Schema[ErrorHandlingOperationOutput] = struct(
     string.optional[ErrorHandlingOperationOutput]("out", _.out),
-  ){
-    ErrorHandlingOperationOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@
 package smithy4s.codegen.transformers
 
 import alloy.OpenEnumTrait
-import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits._
+
 import java.util.function.Function
 
 @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")

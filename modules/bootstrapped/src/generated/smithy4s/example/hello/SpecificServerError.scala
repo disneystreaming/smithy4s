@@ -20,9 +20,10 @@ object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
     smithy.api.HttpError(599),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[String]): SpecificServerError = SpecificServerError(message)
+
   implicit val schema: Schema[SpecificServerError] = struct(
     string.optional[SpecificServerError]("message", _.message),
-  ){
-    SpecificServerError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

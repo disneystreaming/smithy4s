@@ -23,7 +23,7 @@ sealed trait TestMixinAdt extends scala.Product with scala.Serializable { self =
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
-  def testAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None):TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
+  def testAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None): TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
 
@@ -33,17 +33,18 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     def $ordinal: Int = 0
   }
 
-  object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
+  object TestAdtMemberWithMixin {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
 
     val hints: Hints = Hints.empty
 
+    // constructor using the original order from the spec
+    private def make(a: Option[String], b: Option[Int]): TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
+
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       string.optional[TestAdtMemberWithMixin]("a", _.a),
       int.optional[TestAdtMemberWithMixin]("b", _.b),
-    ){
-      TestAdtMemberWithMixin.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestMixinAdt]("test")
   }

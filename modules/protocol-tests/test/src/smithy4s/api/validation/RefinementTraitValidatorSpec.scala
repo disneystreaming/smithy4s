@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package smithy4s.api.validation
 
 import smithy4s.meta.validation.RefinementTraitValidator
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.validation._
 

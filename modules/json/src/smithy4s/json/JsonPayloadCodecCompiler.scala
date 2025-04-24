@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@ trait JsonPayloadCodecCompiler {
     * to tweak the behaviour of Json encoding and decoding alike.
     */
   def withJsoniterCodecCompiler(jsoniterCodecCompiler: JsoniterCodecCompiler): JsonPayloadCodecCompiler
+
+  /**
+   * Like withJsoniterCodecCompiler, but allows you to modify the current codec compiler more easily.
+   */
+  def configureJsoniterCodecCompiler(
+      jsoniterCodecCompiler: JsoniterCodecCompiler => JsoniterCodecCompiler
+  ): JsonPayloadCodecCompiler
 
   /**
     * Changes the jsoniter reader config that is used when parsing json payloads into data.

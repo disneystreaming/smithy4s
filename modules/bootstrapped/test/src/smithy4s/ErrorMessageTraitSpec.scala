@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 package smithy4s
 
 import munit._
-import smithy4s.example.ClientError
-import smithy4s.example.ServerErrorCustomMessage
+import smithy4s.example._
 
 class ErrorMessageTraitSpec extends FunSuite {
 
@@ -34,11 +33,60 @@ class ErrorMessageTraitSpec extends FunSuite {
     )
   }
 
-  test("Generated getMessage") {
+  test(
+    "Custom @errorMessage field works for various nullable/default/required combos"
+  ) {
+    val customMessage = "some custom error message"
+    val errorsWithCustomMessage = List(
+      ErrorCustomTypeMessage(Some(CustomErrorMessageType(customMessage))),
+      ErrorCustomTypeRequiredMessage(CustomErrorMessageType(customMessage)),
+      ErrorNullableMessage(Some(Nullable.Value(customMessage))),
+      ErrorNullableRequiredMessage(Nullable.Value(customMessage)),
+      ErrorNullableCustomTypeMessage(
+        Some(Nullable.Value(CustomErrorMessageType(customMessage)))
+      ),
+      ErrorNullableCustomTypeRequiredMessage(
+        Nullable.Value(CustomErrorMessageType(customMessage))
+      ),
+      ErrorRequiredMessage(customMessage)
+    )
+    val errorsWithNullMessage = List(
+      ErrorCustomTypeMessage(None),
+      ErrorNullableMessage(None),
+      ErrorNullableMessage(Some(Nullable.Null)),
+      ErrorNullableRequiredMessage(Nullable.Null),
+      ErrorNullableCustomTypeMessage(None),
+      ErrorNullableCustomTypeMessage(Some(Nullable.Null)),
+      ErrorNullableCustomTypeRequiredMessage(Nullable.Null),
+      ServerErrorCustomMessage(None)
+    )
+
+    errorsWithCustomMessage.foreach(e =>
+      assertEquals(
+        e.getMessage,
+        customMessage,
+        s"Failed on ${e.getClass.getName}"
+      )
+    )
+    errorsWithNullMessage.foreach(e =>
+      assertEquals(e.getMessage, null, s"Failed on ${e.getClass.getName}")
+    )
+  }
+
+  test("Generated - no message") {
     val e = ClientError(400, "oopsy")
 
     val expected = "smithy4s.example.ClientError(400, oopsy)"
-    expect.eql(e.getMessage, null)
+    expect.eql(e.getMessage, expected)
+    expect.eql(e.toString, s"smithy4s.example.ClientError: $expected")
+  }
+
+  test("Generated - has message") {
+    val e =
+      ErrorCustomTypeMessage(Some(CustomErrorMessageType("This is a test.")))
+
+    val expected = "smithy4s.example.ErrorCustomTypeMessage: This is a test."
+    expect.eql(e.getMessage, "This is a test.")
     expect.eql(e.toString, expected)
   }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,15 +81,17 @@ private[internals] object Renderer {
   def apply(unit: CompilationUnit): List[Result] = {
     val r = new Renderer(unit)
 
-    val pack = Result(
-      unit.namespace,
-      "package",
-      r.renderPackageContents.list
-        .map(_.segments.toList.map(_.show).mkString)
-        .mkString(
-          System.lineSeparator()
-        )
-    )
+    val packageObjectFile = r.renderPackageContents.map { packageLines =>
+      Result(
+        unit.namespace,
+        "package",
+        packageLines.list
+          .map(_.segments.toList.map(_.show).mkString)
+          .mkString(
+            System.lineSeparator()
+          )
+      )
+    }
 
     val classes = unit.declarations.map { decl =>
       val renderResult = r.renderDecl(decl) ++ newline
@@ -161,13 +163,7 @@ private[internals] object Renderer {
       Result(unit.namespace, decl.name, content)
     }
 
-    val packageApplicableDecls = unit.declarations.filter {
-      case _: TypeAlias | _: Service => true
-      case _                         => false
-    }
-
-    if (packageApplicableDecls.isEmpty) classes
-    else pack :: classes
+    packageObjectFile.toList ::: classes
   }
 
 }
@@ -187,6 +183,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
+    case vta @ ValidatedTypeAlias(shapeId, _, tpe, recursive, hints) =>
+      renderValidatedNewtype(shapeId, vta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, tag, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
@@ -207,6 +205,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         line"@deprecated$argListOrEmpty"
       }
+  }
+
+  private def renderScalaImports(hints: List[Hint]): Lines = {
+    lines(
+      hints.flatMap {
+        case Hint.ScalaImports(imports) =>
+          imports.map(LineSegment.Import(_).toLine)
+        case _ => Nil
+      }
+    )
   }
 
   /**
@@ -259,34 +267,48 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
-  def renderPackageContents: Lines = {
-    val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(_, name, _, _, _, hints) =>
+  def renderPackageContents: Option[Lines] = {
+    val typeAliases = compilationUnit.declarations
+      .collect {
+        case TypeAlias(_, name, _, _, _, hints) =>
+          (name, hints)
+        case ValidatedTypeAlias(_, name, _, _, hints) =>
+          (name, hints)
+      }
+      .sortBy(_._1)
+      .map { case (name, hints) =>
         lines(
           documentationAnnotation(hints),
           deprecationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
-    }
+      }
 
-    val blk =
-      block(
-        line"package object ${compilationUnit.namespace.split('.').last}"
-      )(
-        compilationUnit.declarations.map(renderDeclPackageContents),
-        newline,
-        typeAliases,
-        newline
-      )
+    val serviceAliases =
+      compilationUnit.declarations.map(renderDeclPackageContents)
 
-    val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
-    if (parts.size > 1) {
-      lines(
-        line"package ${parts.dropRight(1).mkString(".")}",
-        newline,
-        blk
-      )
-    } else blk
+    val packageContents = lines(serviceAliases, newline, typeAliases, newline)
+
+    packageContents.some
+      .filterNot(_.isBlank)
+      .map { contents =>
+        block(
+          line"package object ${compilationUnit.namespace.split('.').last}"
+        )(
+          contents
+        )
+      }
+      .map { blk =>
+        val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
+
+        if (parts.size > 1) {
+          lines(
+            line"package ${parts.dropRight(1).mkString(".")}",
+            newline,
+            blk
+          )
+        } else blk
+      }
   }
 
   private def renderDeclPackageContents(decl: Decl): Lines = decl match {
@@ -320,6 +342,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
@@ -335,7 +358,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         },
         newline,
-        line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        line"final def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       lines(
@@ -636,9 +659,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
-      val fieldType =
-        if (field.modifier.none) Line.optional(line"${field.tpe}")
-        else line"${field.tpe}"
+      val fieldType = Line.fieldType(field)
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
     obj(product.nameRef.copy(name = "optics"))(lenses) ++
@@ -693,21 +714,33 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       newline,
-      obj(product.nameRef, shapeTag(product.nameRef))(
+      obj(product.nameRef, if (adtParent.isEmpty) shapeTag(product.nameRef) else Line.empty)(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
         renderLenses(product, hints),
+        locally {
+          val params =
+            fields.sortBy(_.originalIndex).map(fieldToRenderLine(_, noDefault = true)).intercalate(Line.comma)
+          val args = fields.map(f => Line(f.name)).intercalate(Line.comma)
+          lines(
+            line"// constructor using the original order from the spec",
+            line"private def make($params): ${product.nameRef} = ${product.nameRef}($args)"
+          ).when(fields.nonEmpty)
+        },
+        newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, modifier, hints) =>
-              val fieldBuilder = modifier match {
-                case Field.Modifier.RequiredMod              => "required"
-                case Field.Modifier.RequiredDefaultMod(_, _) => "required"
-                case Field.Modifier.DefaultMod(_, _)         => "field"
-                case Field.Modifier.NoModifier               => "optional"
+            fields.sortBy(_.originalIndex).map { case Field(fieldName, realName, tpe, modifier, _, hints) =>
+              val fieldBuilder = modifier.typeMod match {
+                case Field.TypeModification.None if modifier.required     => "required"
+                case Field.TypeModification.None                          => "field"
+                case Field.TypeModification.Option                        => "optional"
+                case Field.TypeModification.Nullable if modifier.required => "nullable.required"
+                case Field.TypeModification.Nullable                      => "nullable.field"
+                case Field.TypeModification.OptionNullable                => "nullable.optional"
               }
 
               if (hints.isEmpty) {
@@ -727,8 +760,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
-              .block(line"${product.nameRef}.apply")
-              .appendToLast(".withId(id).addHints(hints)")
+              .appendToLast("(make).withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -737,12 +769,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
               .block(
-                line"arr => new ${product.nameRef}".args(
-                  fields.zipWithIndex.map { case (Field(_, _, tpe, mod, _), idx) =>
-                    val scalaTpe = line"$tpe"
-                    val optional = if (mod.none) Line.optional(scalaTpe) else scalaTpe
-
-                    line"arr($idx).asInstanceOf[$optional]"
+                line"arr => make".args(
+                  fields.sortBy(_.originalIndex).zipWithIndex.map { case (field, idx) =>
+                    line"arr($idx).asInstanceOf[${Line.fieldType(field)}]"
                   }
                 )
               )
@@ -750,7 +779,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
+          line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -806,22 +835,24 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(product.hints),
       deprecationAnnotation(product.hints),
+      renderScalaImports(product.hints),
       base
     )
   }
 
   private def renderGetMessage(field: Field) = {
-    val hasModifier = !field.modifier.none
-    field match {
-      case field if field.tpe.isResolved && hasModifier =>
-        line"override def getMessage(): $string_ = ${field.name}"
-      case field if field.tpe.isResolved =>
-        line"override def getMessage(): $string_ = ${field.name}.orNull"
-      case field if hasModifier =>
-        line"override def getMessage(): $string_ = ${field.name}.value"
-      case field =>
-        line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
+    val fetchLogic = field.modifier.typeMod match {
+      case Field.TypeModification.OptionNullable if field.tpe.isResolved => line".flatMap(_.toOption).orNull"
+      case Field.TypeModification.OptionNullable                   => line".flatMap(_.toOption).map(_.value).orNull"
+      case Field.TypeModification.Nullable if field.tpe.isResolved => line".toOption.orNull"
+      case Field.TypeModification.Nullable                         => line".toOption.map(_.value).orNull"
+      case Field.TypeModification.Option if field.tpe.isResolved   => line".orNull"
+      case Field.TypeModification.Option                           => line".map(_.value).orNull"
+      case Field.TypeModification.None if field.tpe.isResolved     => Line.empty
+      case Field.TypeModification.None                             => line".value"
     }
+
+    line"override def getMessage(): $string_ = ${field.name}$fetchLogic"
   }
   private def renderErrorSchemaMethods(errorName: NameRef, errors: List[Type]): Lines = {
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
@@ -1008,7 +1039,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+          line"def ${uncapitalise(product.nameDef.name)}($args): ${product.nameRef} = ${product.nameRef}($values)"
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
         case UnionMember.TypeCase(tpe) =>
@@ -1076,6 +1107,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       ).withSameLineValue(line" self =>")(
@@ -1186,26 +1218,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       field: Field,
       noDefault: Boolean = false
   ): Line = {
+    val tpeLine = Line.fieldType(field)
     import field._
-    val ` = ` = Literal(" = ")
-    val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
-    val tpeLine = line"$tpe"
-    val tpeAndDefault = if (shouldRenderDefault) {
-      field.modifier match {
-        case Field.Modifier.RequiredMod                          => tpeLine
-        case Field.Modifier.RequiredDefaultMod(_, Some(default)) => tpeLine + ` = ` + renderDefault(default)
-        case Field.Modifier.RequiredDefaultMod(_, None)          => tpeLine
-        case Field.Modifier.DefaultMod(_, Some(default))         => tpeLine + ` = ` + renderDefault(default)
-        case Field.Modifier.DefaultMod(_, None)                  => tpeLine
-        case Field.Modifier.NoModifier => Line.optional(tpeLine) + ` = ` + NameRef("scala.None")
-      }
-    } else if (field.modifier.none) {
-      Line.optional(tpeLine)
-    } else {
-      tpeLine
+
+    val defaultLine: Option[Line] = field.modifier match {
+      // non-required fields with no default get a default of None
+      case Field.Modifier(false, _, None) => Some(NameRef("scala.None").toLine)
+      // nullable with a default of null
+      // (the Some(_) check on the second parameter is necessary in order to correctly render in mode OPTION_ONLY)
+      case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode =>
+        Some(NameRef("smithy4s.Nullable.Null").toLine)
+      // nullable with a default of a value
+      case Field.Modifier(_, true, Some(Field.Default(_, Some(default)))) =>
+        Some {
+          NameRef("smithy4s.Nullable.Value").toLine + Literal("(") + renderDefault(default) + Literal(")")
+        }
+      case Field.Modifier(_, _, Some(Field.Default(_, Some(default)))) => Some(renderDefault(default))
+      case _                                                           => None
     }
 
-    line"$name: " + tpeAndDefault
+    val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
+
+    defaultLine match {
+      case Some(default) if shouldRenderDefault => line"$name: " + tpeLine + Literal(" = ") + default
+      case _                                    => line"$name: " + tpeLine
+    }
   }
 
   private def renderArgs(fields: List[Field]): Line = fields
@@ -1230,6 +1267,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       block(
         line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
       )(
@@ -1301,6 +1339,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
@@ -1308,6 +1347,50 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         lines(
           line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         ),
+        renderTypeclasses(hints, name)
+      )
+    )
+  }
+
+  private def renderValidatedNewtype(
+      shapeId: ShapeId,
+      name: NameRef,
+      tpe: Type,
+      recursive: Boolean,
+      hints: List[Hint]
+  ): Lines = {
+    val validator = {
+      val tags = hints.collect { case t: Hint.Constraint => t }
+      tags match {
+        case h :: tail =>
+          (
+            line".validating(${renderHint(h.native)})" +:
+              tail.map { tag => line".alsoValidating(${renderHint(tag.native)})" }
+          ).intercalate(Line.empty)
+        case _ => Line.empty
+      }
+    }
+
+    val definition =
+      if (recursive) line"$recursive_("
+      else Line.empty
+    val trailingCalls =
+      line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+    val closing = if (recursive) ")" else ""
+    lines(
+      documentationAnnotation(hints),
+      deprecationAnnotation(hints),
+      obj(name, line"$ValidatedNewtype_[$tpe]")(
+        renderId(shapeId),
+        renderHintsVal(hints),
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
+        lines(
+          line"val validator: $Validator_[$tpe, $name] = $Validator_.of[$tpe, $name]($Bijection_[$tpe, $name](_.asInstanceOf[$name], value(_)))$validator"
+        ),
+        lines(
+          line"implicit val schema: $Schema_[$name] = ${definition}validator.toSchema(underlyingSchema)$closing"
+        ),
+        line"@inline def apply(a: $tpe): Either[String, $name] = validator.validate(a)",
         renderTypeclasses(hints, name)
       )
     )
@@ -1357,17 +1440,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        val hintsLine =
-          if (hints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(hints)})"
-        line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
+        val hintsAndConstraints = hintsAndConstraintsLine(hints)
+        line"${NameRef(col)}(${member.schemaRef}$hintsAndConstraints)"
       case Type.Map(key, keyHints, value, valueHints) =>
-        val keyHintsLine =
-          if (keyHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(keyHints)})"
-        val valueHintsLine =
-          if (valueHints.isEmpty) Line.empty
-          else line".addMemberHints(${memberHints(valueHints)})"
+        val keyHintsLine = hintsAndConstraintsLine(keyHints)
+        val valueHintsLine = hintsAndConstraintsLine(valueHints)
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1375,6 +1452,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             _,
             false
           ) =>
+        NameRef(ns, s"$name.schema").toLine
+      case Type.ValidatedAlias(ns, name, _) =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
@@ -1387,7 +1466,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
+        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
       case Nullable(underlying) => line"${underlying.schemaRef}.option"
@@ -1409,7 +1488,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.BigInteger => s"${schemaPkg_}.bigint"
       case Primitive.Uuid       => s"${schemaPkg_}.uuid"
       case Primitive.Document   => s"${schemaPkg_}.document"
-      case Primitive.Nothing    => "???"
+      case Primitive.Nothing    => sys.error("Invalid state: Cannot render Nothing")
     }
 
     def name: Option[String] = tpe match {
@@ -1419,7 +1498,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def renderNativeHint(hint: Hint.Native): Line =
+  private def renderHint(hint: Hint.Native): Line =
     recursion
       .cata(renderTypedNode)(hint.typedNode)
       .run(true)
@@ -1430,11 +1509,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       .cata(renderTypedNode)(hint)
       .run(true)
       ._2
-
-  private def renderHint(hint: Hint): Option[Line] = hint match {
-    case h: Hint.Native => renderNativeHint(h).some
-    case _              => None
-  }
 
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
@@ -1455,7 +1529,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderHintsVal(hints: List[Hint]): Lines = {
     val lhs = line"val hints: $Hints_"
 
-    hints.flatMap(renderHint) match {
+    hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
         line"$lhs = $Hints_".args(args).appendToLast(".lazily")
@@ -1463,7 +1537,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def memberHints(hints: List[Hint]): Line = {
-    val h = hints.map(renderHint).collect { case Some(v) => v }
+    val h = hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint)
     if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 
@@ -1473,10 +1547,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else {
       tags
         .map { tag =>
-          line".validated(${renderNativeHint(tag.native)})"
+          line".validated(${renderHint(tag.native)})"
         }
         .intercalate(Line.empty)
     }
+  }
+
+  private def hintsAndConstraintsLine(hints: List[Hint]): Line = {
+    val hintsLine =
+      if (hints.isEmpty) Line.empty
+      else line".addMemberHints(${memberHints(hints)})"
+    val constraintsLine = renderConstraintValidation(hints)
+    line"$hintsLine$constraintsLine"
   }
 
   private def shapeTag(name: NameRef): Line =
@@ -1499,7 +1581,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      line"${ref.show + "." + name + ".widen"}".write
+      line"${ref.show}.$name.widen".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (name, FieldTN.RequiredTN(value)) =>
@@ -1517,12 +1599,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         else
           false -> line"${ref.show}($text)"
       })
+    case ValidatedNewTypeTN(ref, target) =>
+      Reader(topLevel => {
+        val (wroteCollection, text) = target.run(topLevel)
+        if (wroteCollection && !topLevel)
+          false -> text
+        else
+          false -> line"${ref.show}.unsafeApply($text)"
+      })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
+    case AltTN(ref, altName, AltValueTN.UnitAltTN) =>
+      line"${ref.show}.${altName.capitalize}Case.widen".write
+
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
-      alt.runDefault.write
+      // The `widen` is necessary in Scala 2.
+      // Without it, there is no ShapeTag to use for the conversion to Hints.Binding.
+      line"${alt.runDefault}.widen".write
 
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe
@@ -1536,6 +1631,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
+    // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with gADTs)
     prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
@@ -1547,7 +1643,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
       case Primitive.String     => renderStringLiteral
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
@@ -1557,7 +1653,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
+        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {
@@ -1584,7 +1680,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )})"""
         })
       }
-      case _ => _ => line"null"
+      case Primitive.Nothing => v => (v: Nothing) // this case can't happen
     }
 
   private def renderStringLiteral(raw: String): Line = {

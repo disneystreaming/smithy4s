@@ -18,9 +18,10 @@ object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
     smithy.api.Error.CLIENT.widen,
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(reason: String): UnauthorizedError = UnauthorizedError(reason)
+
   implicit val schema: Schema[UnauthorizedError] = struct(
     string.required[UnauthorizedError]("reason", _.reason),
-  ){
-    UnauthorizedError.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

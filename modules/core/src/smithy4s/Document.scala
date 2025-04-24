@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import smithy4s.schema.CachedSchemaCompiler
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
 import smithy4s.codecs.PayloadError
+import smithy4s.schema.FieldFilter
 
 /**
   * A json-like free-form structure serving as a model for
@@ -91,6 +92,9 @@ object Document {
   def array(values: Iterable[Document]): Document = DArray(
     IndexedSeq.newBuilder.++=(values).result()
   )
+  def obj(kv: Iterable[(String, Document)]): Document = DObject(
+    Map(kv.toSeq: _*)
+  )
   def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
@@ -99,16 +103,34 @@ object Document {
   }
 
   trait EncoderCompiler extends CachedSchemaCompiler[Encoder] {
+    @deprecated(
+      message = """Use withFieldFilter instead.
+      
+  Mapping:
+   - explicitDefaultsEncoding = false -> FieldFilter.Default
+   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
+ """,
+      since = "0.18.30"
+    )
     def withExplicitDefaultsEncoding(
         explicitDefaultsEncoding: Boolean
+    ): EncoderCompiler = withFieldFilter(
+      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
+      else FieldFilter.Default
+    )
+
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler
   }
 
   object Encoder
-      extends CachedEncoderCompilerImpl(explicitDefaultsEncoding = false)
+      extends CachedEncoderCompilerImpl(
+        fieldFilter = FieldFilter.Default
+      )
 
   private[smithy4s] class CachedEncoderCompilerImpl(
-      explicitDefaultsEncoding: Boolean
+      fieldFilter: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
 
@@ -120,7 +142,7 @@ object Document {
     ): Encoder[A] = {
       val makeEncoder =
         schema.compile(
-          new DocumentEncoderSchemaVisitor(cache, explicitDefaultsEncoding)
+          new DocumentEncoderSchemaVisitor(cache, fieldFilter)
         )
       new Encoder[A] {
         def encode(a: A): Document = {
@@ -129,10 +151,10 @@ object Document {
       }
     }
 
-    def withExplicitDefaultsEncoding(
-        explicitDefaultsEncoding: Boolean
+    def withFieldFilter(
+        fieldFilter: FieldFilter
     ): EncoderCompiler = new CachedEncoderCompilerImpl(
-      explicitDefaultsEncoding = explicitDefaultsEncoding
+      fieldFilter
     )
   }
 
@@ -160,7 +182,20 @@ object Document {
           }
       }
     }
+  }
 
+  // scalafmt: { maxColumn = 120 }
+  object syntax {
+    implicit def intConversion(int: Int): Document = Document.fromInt(int)
+    implicit def longConversion(long: Long): Document = Document.fromLong(long)
+    implicit def booleanConversion(boolean: Boolean): Document = Document.fromBoolean(boolean)
+    implicit def doubleConversion(double: Double): Document = Document.fromDouble(double)
+    implicit def fromString(string: String): Document = Document.fromString(string)
+    implicit def iterableConversion(iterable: Iterable[Document]): Document = Document.array(iterable)
+    implicit def fromSchema[A: Schema](a: A): Document = Document.Encoder.fromSchema(implicitly[Schema[A]]).encode(a)
+    def obj(kv: (String, Document)*): Document = Document.obj(kv)
+    def array(kv: Document*): Document = Document.array(kv)
+    def nullDoc: Document = Document.nullDoc
   }
 
 }

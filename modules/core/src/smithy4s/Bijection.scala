@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package smithy4s
+
+import scala.Predef.{identity => identity0, _}
 
 /**
   * A bijection is an association of two opposite functions A => B and B => A.
@@ -47,7 +49,7 @@ trait Bijection[A, B] extends Function[A, B] { outer =>
 }
 
 object Bijection {
-  def identity[A]: Bijection[A, A] = apply(identity[A], identity[A])
+  def identity[A]: Bijection[A, A] = apply(identity0[A], identity0[A])
 
   def apply[A, B](to: A => B, from: B => A): Bijection[A, B] =
     new Impl[A, B](to, from)

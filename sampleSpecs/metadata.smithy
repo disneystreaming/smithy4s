@@ -11,7 +11,7 @@ service DummyService {
   operations: [Dummy, DummyHostPrefix, DummyPath]
 }
 
-@http(method: "GET", uri: "/dummy")
+@http(method: "POST", uri: "/dummy")
 @endpoint(hostPrefix: "foo.{label1}--abc{label2}.{label3}.secure.")
 operation DummyHostPrefix {
     input: HostLabelInput
@@ -72,6 +72,9 @@ structure Queries {
   on: OpenNums
   @httpQuery("openNumsStr")
   ons: OpenNumsStr
+  @httpQuery("dbl")
+  @range(min: 0, max: 100)
+  dbl: Double
   @httpQueryParams
   slm: StringMap
 }

@@ -29,8 +29,8 @@ sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product wit
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
 
-  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None):AdtOne = AdtOne(lng, sht, blb, str)
-  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None):AdtTwo = AdtTwo(lng, sht, int)
+  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None): AdtOne = AdtOne(lng, sht, blb, str)
+  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None): AdtTwo = AdtTwo(lng, sht, int)
 
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 
@@ -40,19 +40,20 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 0
   }
 
-  object AdtOne extends ShapeTag.Companion[AdtOne] {
+  object AdtOne {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
 
     val hints: Hints = Hints.empty
+
+    // constructor using the original order from the spec
+    private def make(lng: Option[Long], sht: Option[Short], blb: Option[Blob], str: Option[String]): AdtOne = AdtOne(lng, sht, blb, str)
 
     val schema: Schema[AdtOne] = struct(
       long.optional[AdtOne]("lng", _.lng),
       short.optional[AdtOne]("sht", _.sht),
       bytes.optional[AdtOne]("blb", _.blb),
       string.optional[AdtOne]("str", _.str),
-    ){
-      AdtOne.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("one")
   }
@@ -60,18 +61,19 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def $ordinal: Int = 1
   }
 
-  object AdtTwo extends ShapeTag.Companion[AdtTwo] {
+  object AdtTwo {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
     val hints: Hints = Hints.empty
+
+    // constructor using the original order from the spec
+    private def make(lng: Option[Long], sht: Option[Short], int: Option[Int]): AdtTwo = AdtTwo(lng, sht, int)
 
     val schema: Schema[AdtTwo] = struct(
       long.optional[AdtTwo]("lng", _.lng),
       short.optional[AdtTwo]("sht", _.sht),
       int.optional[AdtTwo]("int", _.int),
-    ){
-      AdtTwo.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("two")
   }

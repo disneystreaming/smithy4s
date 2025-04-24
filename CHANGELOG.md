@@ -1,3 +1,184 @@
+## Maintainers' notice
+
+This file serves as a template for release notes in GitHub releases.
+When adding entries, please treat them as if they could end up in a release any time. This makes it much easier for us to make frequent releases!
+
+Thank you!
+
+# 0.18.34
+
+* codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
+* codegen: Mixins - fix several bugs and a performance regression in [#1701](https://github.com/disneystreaming/smithy4s/pull/1701).
+
+# 0.18.33
+
+* codegen: Fix an issue in which using UUIDs as trait or default values would prevent code generation in [#1685](https://github.com/disneystreaming/smithy4s/pull/1685)
+* general: Update dependencies across the board in [#1686](https://github.com/disneystreaming/smithy4s/pull/1686)
+* http: Update `HttpUnaryServerRouter#partialFunction` to remove ambiguity between the two methods
+
+# 0.18.32
+
+* codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies
+* codegen: Add a missing space in the type annotations of smart constructors in [#1674](https://github.com/disneystreaming/smithy4s/pull/1674)
+* codegen: More expressive namespace patterns in [#1649](https://github.com/disneystreaming/smithy4s/pull/1649)
+* http4s: Allow users to enable encoding of Smithy errors prior to applying endpoint-specific middleware in [#1669](https://github.com/disneystreaming/smithy4s/pull/1669)
+* codegen: Increase determinism in the order of appearance of generated Hints (representation of Smithy traits) in [#1679](https://github.com/disneystreaming/smithy4s/pull/1679)
+* codegen: Allow transitive mixins to be added to the supertypes of an `@adt` union's corresponding Scala trait in [#1673](https://github.com/disneystreaming/smithy4s/pull/1673)
+
+# 0.18.31
+
+* Fix an issue with `FieldFilter`'s handling of optional fields that aren't represented by an actual `Option` (e.g. bijections) in [#1662](https://github.com/disneystreaming/smithy4s/pull/1662)
+
+# 0.18.30
+
+* Add utilities for Service.Builder in [#1644](https://github.com/disneystreaming/smithy4s/pull/1644)
+* Use correct cross path for protobuf-runtime-scala in [#1648](https://github.com/disneystreaming/smithy4s/pull/1648)
+* Force rendering package object when a validated newtype is present in [#1656](https://github.com/disneystreaming/smithy4s/pull/1656)
+* Improve performance of ADT trait validator on larger Smithy models in [#1573](https://github.com/disneystreaming/smithy4s/pull/1573)
+* Move memoization of default values from Field to Schema in [#1651](https://github.com/disneystreaming/smithy4s/pull/1651)
+* Add support for more flexible encoding of defaults in [#1652](https://github.com/disneystreaming/smithy4s/pull/1652). This brings `FieldFilter` abstraction that replaces `explicitDefaultsEncoding`.
+
+# 0.18.29
+
+* Fix for decoding of required nullable fields and some combinations of refinements with nullable fields (see [#1637](https://github.com/disneystreaming/smithy4s/pull/1637))
+
+# 0.18.28
+
+* Better support for timestamps before Linux Epoch and trimming the Timestamp nanosecond part (see [#1623](https://github.com/disneystreaming/smithy4s/pull/1623))
+* Adds a special for AWS request signing when S3 is being used (see see [#1605](https://github.com/disneystreaming/smithy4s/pull/1605))
+
+# 0.18.27
+
+* Fix for how `NaN` is handled for `Float` and `Double` inside of the `MetadataDecoder` and `Range` constraint `RefinementProvider`
+
+# 0.18.26
+
+* Optimises the conversion of empty smithy4s.Blob to fs2.Stream, to avoid performance degradation in Ember (see [#1609](https://github.com/disneystreaming/smithy4s/pull/1609))
+* Adds utility types for working with endpoint handlers (see [#1612](https://github.com/disneystreaming/smithy4s/pull/1612))
+* Add a more informative error message for repeated namespaces (see [#1608](https://github.com/disneystreaming/smithy4s/pull/1608)).
+* Adds `com.disneystreaming.smithy4s:smithy4s-protocol` dependency to the generation of `smithy-build.json` in the `smithy4sUpdateLSPConfig` tasks of the codegen plugins (see [#1610](https://github.com/disneystreaming/smithy4s/pull/1610)).
+* Fix for the lenient union decoding [bug](https://github.com/disneystreaming/smithy4s/issues/1617) (see[#1620](https://github.com/disneystreaming/smithy4s/pull/1620)).
+
+# 0.18.25
+
+* Add A flag to allow for numerics to be decoded from JSON strings (in smithy4s-json).
+* Fixes issues in which applications of some Smithy traits would be incorrectly rendered in Scala code (see [#1602](https://github.com/disneystreaming/smithy4s/pull/1602)).
+* Fixes an issue in which refinements wouldn't work on custom simple shapes (newtypes) (see [#1595](https://github.com/disneystreaming/smithy4s/pull/1595))
+* Fixes a regression from 0.18.4 which incorrectly rendered default values for certain types (see [#1593](https://github.com/disneystreaming/smithy4s/pull/1593))
+* Fixes an issue in which union members targetting Unit would fail to compile when used as traits (see [#1600](https://github.com/disneystreaming/smithy4s/pull/1600)).
+* Make the `transform` method in generated `*Gen` algebras final. This should make it possible to derive e.g. `FunctorK` instances in cats-tagless automatically (see [#1588](https://github.com/disneystreaming/smithy4s/pull/1588)).
+* Fixes commons.toKebabCase() sometimes drops the first letter (see [#1603](https://github.com/disneystreaming/smithy4s/pull/1603)).
+
+# 0.18.24
+
+* Adds missing nanoseconds in Document encoding of EPOCH_SECOND timestamps
+* Add support for `alloy#jsonUnknown`, allowing structures to capture unknown JSON fields in one of their members.
+* Add `getMessage` implementation in `Smithy4sThrowable` which will be overridden in cases where the error structure contains a message field, but otherwise will be used to prevent a useless `null` result when `getMessage` is called.
+
+# 0.18.23
+
+## Validated newtypes [#1454](https://github.com/disneystreaming/smithy4s/pull/1454)
+
+Add support for rendering constrained newtypes over Smithy primitives as validated newtypes. These types now have an `apply` method which returns either an error or a validated value.
+
+# 0.18.22
+
+* Add support for `@default` for `Timestamp` fields in https://github.com/disneystreaming/smithy4s/pull/1557
+
+# 0.18.21
+
+## Documentation fix
+
+* Addition of a new `@scalaImport` trait to provide a mechanism to add additional imports to the generated code. Read the new [docs](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/scala-imports) for more info (see https://github.com/disneystreaming/smithy4s/pull/1550).
+* Added support for parsing timestamps without seconds in https://github.com/disneystreaming/smithy4s/pull/1553.
+
+# 0.18.20
+
+* Change semantics of `Blob.equals` - Blobs do not take underlying type into consideration, just bytes in https://github.com/disneystreaming/smithy4s/pull/1526
+
+# 0.18.19 - binary-breaking changes in `core`
+
+**WARNING**: This release includes binary-breaking changes in the `core` module. This is indirectly caused by an upstream change in [smithy-lang/smithy](https://github.com/smithy-lang/smithy/).
+
+In the vast majority of applications using Smithy4s, it will not cause runtime issues. However, in the unlikely event that you have custom interpreters that query the `.breakingChanges` field of a `Trait` hint, or have that field populated by a non-stdlib trait/hint, you'll have to ensure that all the libraries pulled by your application are compiled against smithy4s 0.18.19 or above.
+
+In sbt, you can check what versions of smithy4s are used by your dependencies using the `whatDependsOn` task.
+
+We apologize for the inconvenience.
+
+## Changes
+
+* `smithy4sUpdateLSPConfig`: Replace `imports` with `sources` to be more in line with idiomatic smithy-build config in https://github.com/disneystreaming/smithy4s/pull/1518 (see https://github.com/disneystreaming/smithy4s/issues/1459)
+* Update smithy: 1.45.0 to 1.49.0 (binary breaking) in https://github.com/disneystreaming/smithy4s/pull/1485
+* Rendered type aliases are now sorted alphabetically in https://github.com/disneystreaming/smithy4s/pull/1523
+* Add handlers construct to facilitate the decoupling of operation implementations in https://github.com/disneystreaming/smithy4s/pull/1522
+* Improve cache in code generation (sbt) in https://github.com/disneystreaming/smithy4s/pull/1499
+
+# 0.18.18
+
+* Fix an issue in the ADT trait validators that would sometimes fail validation while they shouldn't. https://github.com/disneystreaming/smithy4s/pull/1514
+
+# 0.18.17
+
+* Constraints applied to list or map members are now correctly rendered in the generated code.
+* Makes the json decoding of tagged-unions lenient for AWS
+* Fix an issue with duplicated entries in generated smithy-build.json file (#1491)
+* Add support for passing custom OpenAPI config via a `smithy-build.json` file
+* Fix a bug when using `adt` with mixins, see #1457
+
+# 0.18.16
+
+* Fixes bug leading to refined case-class fields being rendered with default values of the wrong type
+* Adds a `smithy4s-protobuf` module, containing derivation logic for protobuf codecs. See https://github.com/disneystreaming/smithy4s/pull/1455
+* Add support for converting smithy4s services and schemas to smithy models
+* Add `smithy4s.meta#only` annotation allowing to filter operations in
+services, intended to reduce the amount of code generated from AWS specs
+
+# 0.18.15
+
+* Add support for injecting endpoint-specific middlewares in AWS clients
+* Fixes a bug in the parsing of AWS credentials files
+
+# 0.18.14
+
+* Add support for decoding Document representations of untagged unions
+* Update aws-http4s clients using json to have a maxArity of Int.MaxValue
+
+# 0.18.13
+
+* Enable generation of protobuf specifications from smithy specifications.
+* modify logic to guarantee that rendered and dynamic enum values respect the ordering from the specification.
+
+# 0.18.12
+
+* fix issue where schemas for fields of generated big structs (over 22 fields in size) would not be ordered correctly
+
+# 0.18.11
+
+* smithy4s Structure schemas are now retaining the original order of fields, as per the specification.
+* Added a utility method, `Schema.transformTransitivelyK`, to help in recursively transforming schemas.
+In addition, the semantics of `transformHintsTransitively` have been changed: the transformation no longer modifies the hints on the result of the `total` function.
+* smithy4s-core now contains the generated code for the alloy.proto namespace
+
+# 0.18.10
+
+* Bumps alloy to 0.3.1. This is required as otherwise the `alloy#nullable` hints get filtered out when using SimpleRestJsonBuilder.
+
+# 0.18.9
+
+* Fix bug that would lead to special characters being escaped in XML attributes, which are already quoted
+* Generalise implementation of `@httpResponseCode` to later allow for its use in error responses.
+* Fix in Bijection#identity which caused and infinite recursion, fixed in [1401](https://github.com/disneystreaming/smithy4s/pull/1401)
+* Adds a `Field#addHints(hints: Hints)` method
+* Adds a `Hints.dynamic(bindings: (String, Document)*)` hints creation method
+* Adds a `smithy4s.Document.syntax` object, the contents of which can be imported to facilitate the instantiation of documents.
+
+* Added support for `@nullable` on fields, to allow absent values to be handled differently from explicit null
+
+# 0.18.8
+
+* Fix collision avoidance algorithm to cover Scala 3 keywords
+
 # 0.18.7
 
 * Added support for `@httpResponseCode` on newtypes (integer shapes that aren't exactly `smithy.api#Integer`), as well as refinements (e.g. ints with a `@range` constraint).

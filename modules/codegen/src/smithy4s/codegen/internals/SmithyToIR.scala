@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,37 +16,51 @@
 
 package smithy4s.codegen.internals
 
+import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
+import smithy4s.meta.ScalaImportsTrait
+import smithy4s.meta.TypeclassTrait
+import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
-import smithy4s.meta.AdtTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
-import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
+import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
-import smithy4s.meta.TypeclassTrait
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.util.Locale
+import java.time.temporal.ChronoField
+import java.time.format.DateTimeFormatterBuilder
+import scala.util.Try
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 private[codegen] object SmithyToIR {
 
-  def apply(model: Model, namespace: String): CompilationUnit = {
+  def apply(
+      model: Model,
+      namespace: String
+  ): CompilationUnit = {
     val smithyToIR = new SmithyToIR(model, namespace)
     PostProcessor(
       CompilationUnit(namespace, smithyToIR.allDecls, smithyToIR.rendererConfig)
@@ -64,9 +78,15 @@ private[codegen] object SmithyToIR {
 
 }
 
-private[codegen] class SmithyToIR(model: Model, namespace: String) {
+private[codegen] class SmithyToIR(
+    model: Model,
+    namespace: String
+) {
 
-  val finder = PathFinder.create(model)
+  private val finder = PathFinder.create(model)
+
+  // Contains mixins of the given shape that have matching fields.
+  private val mixinsOfCache = new ConcurrentHashMap[ShapeId, Set[ShapeId]]()
 
   val allShapes =
     model
@@ -102,6 +122,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
+    val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
     val defaultNode =
       member.getTrait(classOf[DefaultTrait]).asScala.map(_.toNode)
     val defaultTypedNode = defaultRenderMode match {
@@ -109,15 +130,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case DefaultRenderMode.OptionOnly => None
       case DefaultRenderMode.NoDefaults => None
     }
-
-    (hasRequired, defaultNode) match {
-      case (false, None) => Field.Modifier.NoModifier
-      case (true, None)  => Field.Modifier.RequiredMod
-      case (false, Some(node)) =>
-        Field.Modifier.DefaultMod(node, defaultTypedNode)
-      case (true, Some(node)) =>
-        Field.Modifier.RequiredDefaultMod(node, defaultTypedNode)
-    }
+    Field.Modifier(
+      hasRequired,
+      hasNullable,
+      defaultNode.map(Field.Default(_, defaultTypedNode))
+    )
   }
 
   def allDecls = allShapes
@@ -158,6 +175,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               recursive,
               hints
             ).some
+          case Type.ValidatedAlias(_, name, tpe) =>
+            ValidatedTypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              recursive,
+              hints
+            ).some
           case Type.PrimitiveType(_) => None
           case other =>
             TypeAlias(
@@ -192,7 +217,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           fields
             .find(_.name == memberName)
             .forall { field =>
-              field.modifier == fieldModifier(member)
+              field.modifier.typeMod == fieldModifier(member).typeMod
             }
         }
       }
@@ -206,10 +231,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId()) || isTrait
 
         val fields = shape.fields
-        val filteredMixins = shape
-          .getMixins()
-          .asScala
-          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val filteredMixins = getMixinsMatchingFields(shape)
         val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
           .flatMap(_.tpe)
           .toList
@@ -240,14 +262,30 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .asScala
           .toList
           .map(mem => model.expectShape(mem.getTarget))
-        val mixins = memberTargets
-          .map(_.getMixins.asScala.toSet)
 
-        val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
+        val mixins: List[Set[ShapeId]] = memberTargets
+          .map(getMixinsMatchingFields)
 
-        val result = mixins.foldLeft(union)(_ intersect _)
+        val result =
+          if (mixins.isEmpty) Set.empty else mixins.reduce(_ intersect _)
 
         result.toList
+      }
+
+      private def getMixinsMatchingFields(shape: Shape): Set[ShapeId] = {
+        def allMixinsOf(s: Shape): Set[ShapeId] =
+          s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
+            allMixinsOf(model.expectShape(m)) + m
+          }
+
+        mixinsOfCache
+          .computeIfAbsent(
+            shape.getId,
+            _ =>
+              allMixinsOf(shape)
+                // This filter is the more intensive part worth caching
+                .filter(doFieldsMatch(_, shape.fields))
+          )
       }
 
       // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)
@@ -345,13 +383,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         })
 
       override def enumShape(shape: EnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
           .zipWithIndex
-          .map { case ((name, value), index) =>
-            val member = shape.getMember(name).get()
-
+          .map { case (member, index) =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = value,
               intValue = index,
@@ -375,12 +414,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
+        val enumValues = shape.getEnumValues()
         val values = shape
-          .getEnumValues()
+          .members()
           .asScala
-          .map { case (name, value) =>
-            val member = shape.getMember(name).get()
-
+          .map { member =>
+            val name = member.getMemberName()
+            val value = enumValues.get(name)
             EnumValue(
               value = name,
               intValue = value,
@@ -603,14 +643,26 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shape.getId() != ShapeId.from(primitiveId) &&
           !isUnboxedPrimitive(shape.getId())
         ) {
-          Type
-            .Alias(
-              shape.getId().getNamespace(),
-              shape.getId().getName(),
-              externalOrBase,
-              isUnwrappedShape(shape)
-            )
-            .some
+          val shouldValidate =
+            shape.hasTrait(classOf[ValidateNewtypeTrait])
+          if (shouldValidate) {
+            Type
+              .ValidatedAlias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase
+              )
+              .some
+          } else {
+            Type
+              .Alias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                externalOrBase,
+                isUnwrappedShape(shape)
+              )
+              .some
+          }
         } else externalOrBase.some
       }
 
@@ -795,9 +847,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
-  private def imputeZeroValuesOnDefaultTraits(
-      shape: Shape
-  ): List[Trait] = shape.getAllTraits().asScala.values.toList.map {
+  private def imputeZeroValuesOnDefaultTraits(shape: Shape)(
+      tr: Trait
+  ): Trait = tr match {
     case default: DefaultTrait if default.toNode == Node.nullNode =>
       val tpe = shape.asMemberShape().asScala match {
         case Some(memShape) => model.getShape(memShape.getTarget).get.getType
@@ -863,7 +915,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
       val node = tr.toNode()
-      val targetTpe = shape.getTarget.tpe.get
+      val targetTpe = shape.tpe.get
       // Constructing the initial value for the refold
       val nodeAndType = targetTpe match {
         case Alias(_, _, tpe, true) => NodeAndType(node, tpe)
@@ -927,6 +979,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.GenerateServiceProduct
     case _: GenerateOpticsTrait =>
       Hint.GenerateOptics
+    case s: ScalaImportsTrait =>
+      Hint.ScalaImports(s.getImports().asScala.toList)
+    case _: ValidateNewtypeTrait =>
+      Hint.ValidateNewtype
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
@@ -976,7 +1032,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def hints(shape: Shape): List[Hint] = {
-    val traits = imputeZeroValuesOnDefaultTraits(shape)
+    val allTraits = shape.getAllTraits().asScala.values.toList
+    val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
+    val traits =
+      if (isNullable) allTraits
+      else allTraits.map(imputeZeroValuesOnDefaultTraits(shape))
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -985,6 +1045,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
+        // remove box trait
+        .filterNot(_.toShapeId() == BoxTrait.ID): @nowarn(
+        "msg=class BoxTrait in package traits is deprecated"
+      )
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
@@ -992,12 +1056,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
-        .filterNot(_.toShapeId == RequiredTrait.ID)
+        .filter(tr =>
+          tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
+        )
         .map(unfoldTrait) ++
       maybeTypeclassesHint(shape)
   }
 
-  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean) {
+    def isUnit: Boolean = tpe == Type.unit
+  }
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
@@ -1028,34 +1096,23 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hintsExtractor(member) ++ default ++ noDefault
           )
         }
+        .zipWithIndex
         .collect {
-          case (name, Some(tpe: Type.ExternalType), modifier, hints) =>
+          case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            Field(name, tpe, modifier, newHints)
-          case (name, Some(tpe), modifier, hints) =>
-            Field(name, tpe, modifier, hints)
+            Field(name, tpe, modifier, index, newHints)
+          case ((name, Some(tpe), modifier, hints), index) =>
+            Field(name, tpe, modifier, index, hints)
         }
         .toList
 
       defaultRenderMode match {
         case DefaultRenderMode.Full =>
-          result.sortBy {
-            _.modifier match {
-              case Field.Modifier.RequiredMod              => 0
-              case Field.Modifier.RequiredDefaultMod(_, _) => 1
-              case Field.Modifier.DefaultMod(_, _)         => 1
-              case Field.Modifier.NoModifier               => 2
-            }
-          }
+          implicit val modifierOrder = Field.Modifier.fullOrder
+          result.sortBy(_.modifier)
         case DefaultRenderMode.OptionOnly =>
-          result.sortBy {
-            _.modifier match {
-              case Field.Modifier.RequiredMod              => 0
-              case Field.Modifier.RequiredDefaultMod(_, _) => 0
-              case Field.Modifier.DefaultMod(_, _)         => 0
-              case Field.Modifier.NoModifier               => 1
-            }
-          }
+          implicit val modifierOrder = Field.Modifier.optionOnlyOrder
+          result.sortBy(_.modifier)
         case DefaultRenderMode.NoDefaults => result
       }
     }
@@ -1111,20 +1168,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       shape
         .members()
         .asScala
-        .map { member =>
-          val memberTarget =
-            model.expectShape(member.getTarget)
-          if (isPartOfAdt(memberTarget)) {
-            (member.getMemberName(), member.tpe.map(Left(_)))
-          } else {
-            (member.getMemberName(), member.tpe.map(Right(_)))
+        .flatMap { member =>
+          member.tpe.map { tpe =>
+            val memberTarget = model.expectShape(member.getTarget)
+
+            AltInfo(
+              member.getMemberName(),
+              tpe,
+              isAdtMember = isPartOfAdt(memberTarget)
+            )
           }
-        }
-        .collect {
-          case (name, Some(Left(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = true)
-          case (name, Some(Right(tpe))) =>
-            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
     }
@@ -1199,7 +1252,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + parent.getName
+                cId.getNamespace + "." + parent.getName.capitalize
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )
@@ -1227,7 +1280,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
-    Hint.Native(unfoldNode(tr.toNode(), tr.toShapeId()))
+    Hint.Native(tr.toShapeId, unfoldNode(tr.toNode(), tr.toShapeId()))
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
@@ -1239,17 +1292,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.getFieldsPlain
         val fieldNames = struct.getFieldsPlain.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, Field.Modifier.NoModifier, _) =>
+          case Field(_, realName, tpe, mod, _, _)
+              if mod.typeMod == Field.TypeModification.None =>
+            val node = map.get(realName).getOrElse {
+              mod.default.get.node
+            } // value or default must be present if type is not wrapped
+            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
+          case Field(_, realName, tpe, _, _, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))
               case None => TypedNode.FieldTN.OptionalNoneTN
             }
-          case Field(_, realName, tpe, mod, _) =>
-            val node = map.get(realName).getOrElse {
-              mod.default.get
-            } // value or default must be present on required field
-            TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
         }
         TypedNode.StructureTN(ref, fieldNames.zip(fields))
       // Union
@@ -1261,6 +1315,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val a = if (alt.isAdtMember) {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.ProductAltTN(t)
+        } else if (alt.isUnit) {
+          TypedNode.AltValueTN.UnitAltTN
         } else {
           val t = NodeAndType(node, alt.tpe)
           TypedNode.AltValueTN.TypeAltTN(t)
@@ -1269,6 +1325,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
+      case (node, Type.ValidatedAlias(ns, name, tpe)) =>
+        TypedNode.ValidatedNewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration (Enum Trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =
@@ -1372,60 +1430,94 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private def unfoldNodeAndTypeP(
       node: Node,
       p: Primitive
-  ): TypedNode[NodeAndType] = (node, p) match {
-    // String
-    case (N.StringNode(str), Primitive.String) =>
-      TypedNode.PrimitiveTN(Primitive.String, str)
-    // Numeric
-    case (N.NumberNode(num), Primitive.Int) =>
-      TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
-    case (N.NumberNode(num), Primitive.Long) =>
-      TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
-    case (N.NumberNode(num), Primitive.Double) =>
-      TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
-    case (N.NumberNode(num), Primitive.Float) =>
-      TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
-    case (N.NumberNode(num), Primitive.Short) =>
-      TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
-    case (N.NumberNode(num), Primitive.BigDecimal) =>
-      TypedNode.PrimitiveTN(Primitive.BigDecimal, BigDecimal(num.doubleValue()))
-    case (N.NumberNode(num), Primitive.BigInteger) =>
-      TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
-    // Boolean
-    case (N.BooleanNode(bool), Primitive.Bool) =>
-      TypedNode.PrimitiveTN(Primitive.Bool, bool)
-    case (node, Primitive.Document) =>
-      TypedNode.PrimitiveTN(Primitive.Document, node)
-    case (node, Primitive.String) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.String, "")
-    case (node, Primitive.Int) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Int, 0)
-    case (node, Primitive.Long) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Long, 0L)
-    case (node, Primitive.Double) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Double, 0.0)
-    case (node, Primitive.Float) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
-    case (node, Primitive.Short) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
-    case (node, Primitive.Byte) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
-    case (node, Primitive.Blob) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
-    case (node, Primitive.Bool) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.Bool, false)
-    case (node, Primitive.Timestamp) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(
-        Primitive.Timestamp,
-        java.time.Instant.ofEpochSecond(0)
+  ): TypedNode[NodeAndType] = {
+    def notSupported(nodeAndPrimitive: (Node, Primitive)) =
+      throw new NotImplementedError(
+        s"Unsupported case: $nodeAndPrimitive"
       )
-    case (_, Primitive.Unit) =>
-      TypedNode.PrimitiveTN(
-        Primitive.Unit,
-        ()
-      )
-    case other =>
-      throw new NotImplementedError(s"Unsupported case: $other")
+    (node, p) match {
+      // String
+      case (N.StringNode(str), Primitive.String) =>
+        TypedNode.PrimitiveTN(Primitive.String, str)
+      // Numeric
+      case (N.NumberNode(num), Primitive.Int) =>
+        TypedNode.PrimitiveTN(Primitive.Int, num.intValue())
+      case (N.NumberNode(num), Primitive.Long) =>
+        TypedNode.PrimitiveTN(Primitive.Long, num.longValue())
+      case (N.NumberNode(num), Primitive.Double) =>
+        TypedNode.PrimitiveTN(Primitive.Double, num.doubleValue())
+      case (N.NumberNode(num), Primitive.Float) =>
+        TypedNode.PrimitiveTN(Primitive.Float, num.floatValue())
+      case (N.NumberNode(num), Primitive.Short) =>
+        TypedNode.PrimitiveTN(Primitive.Short, num.shortValue())
+      case (N.NumberNode(num), Primitive.BigDecimal) =>
+        TypedNode.PrimitiveTN(
+          Primitive.BigDecimal,
+          BigDecimal(num.doubleValue())
+        )
+      case (N.NumberNode(num), Primitive.BigInteger) =>
+        TypedNode.PrimitiveTN(Primitive.BigInteger, BigInt(num.intValue()))
+      // Boolean
+      case (N.BooleanNode(bool), Primitive.Bool) =>
+        TypedNode.PrimitiveTN(Primitive.Bool, bool)
+      case (node, Primitive.Document) =>
+        TypedNode.PrimitiveTN(Primitive.Document, node)
+      case (node, Primitive.String) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.String, "")
+      case (node, Primitive.Int) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Int, 0)
+      case (node, Primitive.Long) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Long, 0L)
+      case (node, Primitive.Double) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+      case (node, Primitive.Float) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+      case (node, Primitive.Short) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+      case (node, Primitive.Byte) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+      case (node, Primitive.Blob) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
+      case (node, Primitive.Bool) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Bool, false)
+      case timestamp @ (node, Primitive.Timestamp) =>
+        val value = node match {
+          case N.StringNode(str) =>
+            Try(Instant.parse(str))
+              .orElse(
+                Try(ZonedDateTime.parse(str, httpDateFormatter).toInstant())
+              )
+              .toOption
+              .getOrElse(notSupported(timestamp))
+          case N.NumberNode(num) =>
+            Instant.ofEpochSecond(num.longValue)
+          case _ if node == Node.nullNode => java.time.Instant.ofEpochSecond(0)
+          case _                          => notSupported(timestamp)
+        }
+        TypedNode.PrimitiveTN(Primitive.Timestamp, value)
+      case (_, Primitive.Unit) =>
+        TypedNode.PrimitiveTN(
+          Primitive.Unit,
+          ()
+        )
+      case (node @ N.StringNode(s), Primitive.Uuid) =>
+        Try(UUID.fromString(s))
+          .map(TypedNode.PrimitiveTN(Primitive.Uuid, _))
+          .adaptErr { case e =>
+            new Exception(
+              s"UUID failed validation at codegen time. Defined at: ${node.getSourceLocation()}",
+              e
+            )
+          }
+          .get
+      case other =>
+        notSupported(other)
+    }
   }
+
+  private val httpDateFormatter = new DateTimeFormatterBuilder()
+    .appendPattern("EEE, dd MMM yyyy HH:mm:ss z")
+    .parseDefaulting(ChronoField.OFFSET_SECONDS, 0)
+    .toFormatter(Locale.ENGLISH);
 
 }

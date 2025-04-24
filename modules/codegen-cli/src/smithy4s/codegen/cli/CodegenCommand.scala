@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -93,6 +93,14 @@ object CodegenCommand {
       .map(_.toSet)
       .orNone
 
+  val smithyBuildOpt: Opts[Option[os.Path]] =
+    Opts
+      .option[os.Path](
+        "smithy-build",
+        "Path of smithy-build.json file containing smithy build arguments"
+      )
+      .orNone
+
   val options =
     (
       outputOpt,
@@ -105,11 +113,12 @@ object CodegenCommand {
       dependenciesOpt,
       transformersOpt,
       localJarsOpt,
-      specsArgs
+      specsArgs,
+      smithyBuildOpt
     )
       .mapN {
         // format: off
-        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
+        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs, smithyBuild) =>
         // format: on
           val dependenciesWithDefaults = {
             import Defaults._
@@ -126,7 +135,8 @@ object CodegenCommand {
             repositories.getOrElse(List.empty),
             dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
-            localJars.getOrElse(List.empty)
+            localJars.getOrElse(List.empty),
+            smithyBuild
           )
       }
 

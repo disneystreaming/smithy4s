@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,18 +66,20 @@ sealed trait Schema[A]{
     case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
-  final def transformHintsTransitively(f: Hints => Hints): Schema[A] = this match {
-    case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
-    case s: CollectionSchema[c, a] => CollectionSchema[c, a](s.shapeId, f(s.hints), s.tag, s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-    case EnumerationSchema(shapeId, hints, tag, values, total) => EnumerationSchema(shapeId, f(hints), tag, values.map(_.transformHints(f)), total andThen (_.transformHints(f)))
-    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsTransitively(f)), make)
-    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsTransitively(f)), dispatch)
-    case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
-    case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsTransitively(f), refinement)
-    case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
-  }
+  final def transformHintsTransitively(f: Hints => Hints): Schema[A] = transformTransitivelyK(new (Schema ~> Schema) {
+    def apply[B](fa: Schema[B]): Schema[B] = {
+      val base = fa.transformHintsLocally(f)
+
+      base match {
+        case EnumerationSchema(shapeId, hints, tag, values, total) =>
+          EnumerationSchema(shapeId, hints, tag, values.map(_.transformHints(f)), total)
+
+        case other => other
+      }
+    }
+  })
+
+  def transformTransitivelyK(f: Schema ~> Schema): Schema[A] = compile(new TransitiveCompiler(f))
 
   final def validated[C](c: C)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
     val hint = Hints.Binding.fromValue(c)(constraint.tag)
@@ -90,15 +92,19 @@ sealed trait Schema[A]{
   final def biject[B](to: A => B)(from: B => A) : Schema[B] = Schema.bijection(this, to, from)
   final def option: Schema[Option[A]] = Schema.option(this)
 
+  final def nullable: Schema[Nullable[A]] = Nullable.schema(this)
+
   final def isOption: Boolean = this match {
     case _: OptionSchema[_] => true
+    case BijectionSchema(underlying, _) => underlying.isOption
+    case RefinementSchema(underlying, _) => underlying.isOption
     case _ => false
   }
 
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
-  final def getDefaultValue: Option[A] = {
+  private final lazy val defaultValue: Option[A] = {
     val maybeDefault = getDefault.flatMap[A] {
       case Document.DNull => this.compile(DefaultValueSchemaVisitor)
       case document => Document.Decoder.fromSchema(this).decode(document).toOption
@@ -106,6 +112,7 @@ sealed trait Schema[A]{
     maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
 
+  final def getDefaultValue: Option[A] = defaultValue
 
   /**
     * When applied on a structure schema, creates a schema that, when compiled into
@@ -185,6 +192,53 @@ object Schema {
   def transformHintsTransitivelyK(f: Hints => Hints): Schema ~> Schema = new (Schema ~> Schema){
     def apply[A](fa: Schema[A]): Schema[A] = fa.transformHintsTransitively(f)
   }
+
+  /**
+   * Transforms this schema, and all the schemas inside it, using the provided function.
+   */
+  def transformTransitivelyK(f: Schema ~> Schema): Schema ~> Schema = new (Schema ~> Schema) {
+    def apply[A](fa: Schema[A]): Schema[A] = fa.transformTransitivelyK(f)
+  }
+
+  // format: on
+  private final class TransitiveCompiler(
+      underlying: Schema ~> Schema
+  ) extends (Schema ~> Schema) {
+
+    def apply[A](
+        fa: Schema[A]
+    ): Schema[A] = fa match {
+      case e @ EnumerationSchema(_, _, _, _, _) => underlying(e)
+      case p @ PrimitiveSchema(_, _, _)         => underlying(p)
+      case u @ UnionSchema(_, _, _, _) =>
+        underlying(u.copy(alternatives = u.alternatives.map(handleAlt(_))))
+      case BijectionSchema(s, bijection) =>
+        underlying(BijectionSchema(this(s), bijection))
+      case LazySchema(suspend) =>
+        underlying(LazySchema(suspend.map(this.apply)))
+      case RefinementSchema(s, refinement) =>
+        underlying(RefinementSchema(this(s), refinement))
+      case c: CollectionSchema[c, a] =>
+        underlying(c.copy(member = this(c.member)))
+      case m @ MapSchema(_, _, _, _) =>
+        underlying(m.copy(key = this(m.key), value = this(m.value)))
+      case s @ StructSchema(_, _, _, _) =>
+        underlying(s.copy(fields = s.fields.map(handleField(_))))
+      case n @ OptionSchema(_) =>
+        underlying(n.copy(underlying = this(n.underlying)))
+    }
+
+    private def handleField[S, A](
+        field: Field[S, A]
+    ): Field[S, A] = field.copy(schema = this(field.schema))
+
+    private def handleAlt[S, A](
+        alt: Alt[S, A]
+    ): Alt[S, A] = alt.copy(schema = this(alt.schema))
+  }
+
+  // format: off
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // SCHEMA BUILDER
@@ -289,16 +343,21 @@ object Schema {
 
   private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {
     def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]): Schema[B] = {
-      val hint = Hints.Binding.fromValue(c)(refinementProvider.tag)
-      RefinementSchema(schema.addHints(hint), refinementProvider.make(c))
+      apply(refinementProvider.make(c))
+    }
+
+    def apply(refinement: Refinement[A, B]): Schema[B] = {
+      val hint = Hints.Binding.fromValue(refinement.constraint)(refinement.tag)
+      RefinementSchema(schema.addHints(hint), refinement)
     }
   }
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
-    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] =
-      this.apply(schema).map(bijection.to)
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
+      if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
+    }
   }
 
   def operation(id: ShapeId): OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] =

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,15 +31,18 @@ package object kinds {
   type Kind1[F[_]] = {
     type toKind2[E, O] = F[O]
     type toKind5[I, E, O, SI, SO] = F[O]
+    type optional5[I, E, O, SI, SO] = Option[F[O]]
     type handler[I, E, O, SI, SO] = I => F[O]
   }
 
   type Kind2[F[_, _]] = {
     type toKind5[I, E, O, SI, SO] = F[E, O]
+    type optional5[I, E, O, SI, SO] = Option[F[E, O]]
     type handler[I, E, O, SI, SO] = I => F[E, O]
   }
 
   type Kind5[F[_, _, _, _, _]] = {
+    type optional[I, E, O, SI, SO] = Option[F[I, E, O, SI, SO]]
     type handler[I, E, O, SI, SO] = I => F[I, E, O, SI, SO]
   }
 

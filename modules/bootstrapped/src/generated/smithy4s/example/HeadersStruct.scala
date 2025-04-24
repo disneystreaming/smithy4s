@@ -18,20 +18,21 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(str: Option[String], int: Option[Int], ts1: Option[Timestamp], ts2: Option[Timestamp], ts3: Option[Timestamp], ts4: Option[Timestamp], b: Option[Boolean], sl: Option[List[String]], ie: Option[Numbers], on: Option[OpenNums], ons: Option[OpenNumsStr], slm: Option[Map[String, String]]): HeadersStruct = HeadersStruct(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm)
+
   implicit val schema: Schema[HeadersStruct] = struct(
     string.optional[HeadersStruct]("str", _.str).addHints(smithy.api.HttpHeader("str")),
     int.optional[HeadersStruct]("int", _.int).addHints(smithy.api.HttpHeader("int")),
     timestamp.optional[HeadersStruct]("ts1", _.ts1).addHints(smithy.api.HttpHeader("ts1")),
-    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpHeader("ts2")),
-    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpHeader("ts3")),
-    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpHeader("ts4")),
+    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(smithy.api.HttpHeader("ts2"), smithy.api.TimestampFormat.DATE_TIME.widen),
+    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(smithy.api.HttpHeader("ts3"), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(smithy.api.HttpHeader("ts4"), smithy.api.TimestampFormat.HTTP_DATE.widen),
     boolean.optional[HeadersStruct]("b", _.b).addHints(smithy.api.HttpHeader("b")),
     StringList.underlyingSchema.optional[HeadersStruct]("sl", _.sl).addHints(smithy.api.HttpHeader("sl")),
     Numbers.schema.optional[HeadersStruct]("ie", _.ie).addHints(smithy.api.HttpHeader("nums")),
     OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader("openNums")),
     OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader("openNumsStr")),
     StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(smithy.api.HttpPrefixHeaders("foo-")),
-  ){
-    HeadersStruct.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -2,12 +2,15 @@ import React from 'react';
 import clsx from 'clsx';
 import styles from './HomepageFeatures.module.css';
 import CodeBlock from '@theme/CodeBlock';
+import HelloWorldSmithy from 'raw-loader!./sample_data/HelloWorld.smithy';
+import HelloWorldRoutes from 'raw-loader!./sample_data/HelloWorldRoutes.scala';
+import HelloWorldImpl from 'raw-loader!./sample_data/HelloWorldImpl.scala';
 
 const FeatureList = [
   {
     title: '1. Define API Contract',
     lang: "smithy",
-    content: "service AdminService {\n  operations: [GetUser]\n}\n\n@http(method: \"GET\", uri: \"/user/{id}\")\noperation GetUser {\n  input := {\n    @required\n    @httpLabel\n    id: String\n  }\n  output: User\n}\n\nstructure User {\n  @required firstName: String\n  @required lastName: String\n}",
+    content: HelloWorldSmithy,
     description: (
       <>
         Start by defining your API in <b>Smithy</b>, a concise, readable, language-agnostic
@@ -33,7 +36,7 @@ const FeatureList = [
   {
     title: '2. Implement Generated Interface',
     lang: "scala",
-    content: "object AdminServiceImpl extends AdminService[IO] {\n  def getUser(id: String): IO[User] = ...\n}",
+    content: HelloWorldImpl,
     description: (
       <>
         <b>Smithy4s</b> uses the Smithy model you define to generate Scala code, including an interface that represents the service. This interface contains one method per service operation.
@@ -43,7 +46,7 @@ const FeatureList = [
   {
     title: '3. Transform Into HttpRoutes',
     lang: "scala",
-    content: "val routes: Resource[IO, HttpRoutes[IO]] =\n  SimpleRestJsonBuilder.routes(AdminServiceImpl).resource",
+    content: HelloWorldRoutes,
     description: (
       <>
         Passing your service implementation to the SimpleRestJsonBuilder gives you an HttpRoutes instance that handles HTTP routing and JSON serialization/deserialization.

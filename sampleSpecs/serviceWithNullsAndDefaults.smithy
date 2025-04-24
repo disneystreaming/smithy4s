@@ -9,12 +9,31 @@ use smithy4s.meta#packedInputs
 @packedInputs
 service ServiceWithNullsAndDefaults {
   version: "1.0.0",
-  operations: [Operation]
+  operations: [DefaultNullsOperation, TimestampOperation]
 }
 
+@http(method: "POST", uri: "/timestamp-operation") 
+operation TimestampOperation {
+  input := {
+    @required
+    @timestampFormat("http-date")
+    @default("Thu, 23 May 2024 10:20:30 GMT")
+    httpDate: Timestamp
+
+    @required
+    @timestampFormat("epoch-seconds")
+    @default(1716459630)
+    epochSeconds: Timestamp
+
+    @required
+    @timestampFormat("date-time")
+    @default("2024-05-23T10:20:30.000Z")
+    dateTime: Timestamp
+  }
+}
 
 @http(method: "POST", uri: "/operation/{requiredLabel}")
-operation Operation {
+operation DefaultNullsOperation {
     input := {
       optional: String
 

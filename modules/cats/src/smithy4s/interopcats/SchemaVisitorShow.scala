@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
   ): Show[A] = {
     schema.compile(new SchemaVisitorShow(cache))
   }
-}
 
+}
 final class SchemaVisitorShow(
     val cache: CompilationCache[Show]
 ) extends SchemaVisitor.Cached[Show] { self =>

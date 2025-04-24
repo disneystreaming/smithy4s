@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,25 +44,34 @@ object RefinementProvider extends LowPriorityImplicits {
 
   type Simple[C, A] = RefinementProvider[C, A, A]
 
+  def lengthConstraint[A](getLength: A => Int): Simple[Length, A] =
+    new LengthConstraint(getLength)
+
+  def rangeConstraint[A, N: Numeric](getValue: A => N): Simple[Range, A] =
+    new RangeConstraint[A, N](getValue)
+
+  def patternConstraint[A](getValue: A => String): Simple[Pattern, A] =
+    new PatternConstraint[A](getValue)
+
   implicit val stringLengthConstraint: Simple[Length, String] =
-    new LengthConstraint[String](_.length)
+    lengthConstraint[String](_.length)
 
   implicit val blobLengthConstraint: Simple[Length, Blob] =
-    new LengthConstraint[Blob](_.size)
+    lengthConstraint[Blob](_.size)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]
   ): Simple[Length, C[A]] =
-    new LengthConstraint[C[A]](ca => ev(ca).size)
+    lengthConstraint[C[A]](ca => ev(ca).size)
 
   implicit def mapLengthConstraint[K, V]: Simple[Length, Map[K, V]] =
-    new LengthConstraint[Map[K, V]](_.size)
+    lengthConstraint[Map[K, V]](_.size)
 
   implicit val stringPatternConstraints: Simple[Pattern, String] =
-    new PatternConstraint[String](identity)
+    patternConstraint[String](identity)
 
   implicit def numericRangeConstraints[N: Numeric]
-      : Simple[smithy.api.Range, N] = new RangeConstraint[N, N](identity[N])
+      : Simple[smithy.api.Range, N] = rangeConstraint[N, N](identity)
 
   // Lazy to avoid some pernicious recursive initialisation issue between
   // the ShapeId static object and the generated code that makes use of it,
@@ -152,27 +161,34 @@ object RefinementProvider extends LowPriorityImplicits {
       val N = implicitly[Numeric[N]]
 
       (a: A) =>
-        val value = BigDecimal(N.toDouble(getValue(a)))
-        (range.min, range.max) match {
-          case (Some(min), Some(max)) =>
-            if (value >= min && value <= max) Right(())
-            else
-              Left(
-                s"Input must be >= $min and <= $max, but was $value"
-              )
-          case (None, Some(max)) =>
-            if (value <= max) Right(())
-            else
-              Left(
-                s"Input must be <= $max, but was $value"
-              )
-          case (Some(min), None) =>
-            if (value >= min) Right(())
-            else
-              Left(
-                s"Input must be >= $min, but was $value"
-              )
-          case (None, None) => Right(())
+        val doubleValue = N.toDouble(getValue(a))
+        if (doubleValue.isNaN || doubleValue.isInfinite) {
+          Left(
+            s"Numeric values must not be NaN or pos/neg infinity. Found $doubleValue"
+          )
+        } else {
+          val value = BigDecimal.apply(d = doubleValue)
+          (range.min, range.max) match {
+            case (Some(min), Some(max)) =>
+              if (value >= min && value <= max) Right(())
+              else
+                Left(
+                  s"Input must be >= $min and <= $max, but was $value"
+                )
+            case (None, Some(max)) =>
+              if (value <= max) Right(())
+              else
+                Left(
+                  s"Input must be <= $max, but was $value"
+                )
+            case (Some(min), None) =>
+              if (value >= min) Right(())
+              else
+                Left(
+                  s"Input must be >= $min, but was $value"
+                )
+            case (None, None) => Right(())
+          }
         }
     }
   }
@@ -193,9 +209,14 @@ private[smithy4s] trait LowPriorityImplicits {
       : RefinementProvider[Pattern, E, E] =
     new RefinementProvider.PatternConstraint[E](e => e.value)
 
-  implicit def isomorphismConstraint[C, A, A0](implicit
+  @deprecated("Use isomorphismConstraint2 instead", "0.18.25")
+  def isomorphismConstraint[C, A, A0](implicit
       constraintOnA: RefinementProvider.Simple[C, A],
       iso: Bijection[A, A0]
-  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
+  ): RefinementProvider[C, A0, A0] = isomorphismConstraint2
 
+  implicit def isomorphismConstraint2[C, A, A0](implicit
+      iso: Bijection[A, A0],
+      constraintOnA: RefinementProvider.Simple[C, A]
+  ): RefinementProvider[C, A0, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 }

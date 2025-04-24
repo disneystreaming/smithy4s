@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,23 @@ package smithy4s
 import smithy.api.JsonName
 import smithy.api.Default
 import smithy4s.example.IntList
+import smithy4s.example.RecursiveListWrapper
 import alloy.Discriminated
+import alloy.JsonUnknown
 import munit._
-import smithy4s.example.OperationOutput
+import smithy4s.example.DefaultNullsOperationOutput
+import alloy.Untagged
+import smithy4s.example.TimestampOperationInput
+import scala.util.Try
+import smithy4s.schema.FieldFilter
+import smithy4s.refined.NonEmptyList
 
 class DocumentSpec() extends FunSuite {
+
+  private case class TestCase(
+      expectedToSkip: Boolean,
+      strategy: FieldFilter
+  )
 
   test("Recursive document codecs should not blow up the stack") {
     val recursive: IntList = IntList(1, Some(IntList(2, Some(IntList(3)))))
@@ -136,6 +148,30 @@ class DocumentSpec() extends FunSuite {
 
     expect.same(document, expectedDocument)
     expect.same(roundTripped, Right(fooOrBar))
+  }
+
+  test("untagged unions encoding") {
+    implicit val eitherSchema: Schema[Either[Long, String]] = {
+      val left = Schema.long
+      val right = Schema.string
+
+      Schema
+        .either(left, right)
+        .addHints(
+          Untagged()
+        )
+    }
+    val longOrString: Either[Long, String] = Right("hello")
+
+    val document = Document.encode(longOrString)
+    import Document._
+    val expectedDocument =
+      Document.fromString("hello")
+
+    val roundTripped = Document.decode[Either[Long, String]](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(longOrString))
   }
 
   test("discriminated unions encoding - empty structure alternative") {
@@ -343,6 +379,27 @@ class DocumentSpec() extends FunSuite {
     expect.same(roundTripped, Right(mapTest))
   }
 
+  test("encoding NaN") {
+    // The Document type cannot hold a `NaN` value since it uses BigDecimal to hold numeric values
+    // this test exists to show this. For the same reason, a test on decoding from `NaN` is not necessary
+    // or possible.
+    implicit val schema: Schema[Double] =
+      double.validated(smithy.api.Range(None, Some(BigDecimal(3))))
+
+    val in = Double.NaN
+    val error = Try(Document.encode(in)).failed.get
+    val expectedMessage =
+      if (weaver.Platform.isJS || weaver.Platform.isNative)
+        "For input string: \"NaN\""
+      else
+        "Character N is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark."
+
+    expect.same(
+      error.getMessage,
+      expectedMessage
+    )
+  }
+
   test(
     "optional fields for structs should decode Document.DNull"
   ) {
@@ -398,8 +455,8 @@ class DocumentSpec() extends FunSuite {
 
   test("document encoder - all default") {
     val result = Document.Encoder
-      .fromSchema(OperationOutput.schema)
-      .encode(OperationOutput())
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
 
     expect.same(
       Document.obj(
@@ -417,11 +474,10 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(true)
-      .fromSchema(
-        OperationOutput.schema
-      )
-      .encode(OperationOutput())
+      .withFieldFilter(FieldFilter.EncodeAll)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
+
     expect.same(
       Document.obj(
         "optional" -> Document.nullDoc,
@@ -443,11 +499,9 @@ class DocumentSpec() extends FunSuite {
     "document encoder - all default values + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
-      .fromSchema(
-        OperationOutput.schema
-      )
-      .encode(OperationOutput())
+      .withFieldFilter(FieldFilter.Default)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
     expect.same(
       Document.obj(
         "requiredWithDefault" -> Document.fromString("required-default"),
@@ -460,13 +514,59 @@ class DocumentSpec() extends FunSuite {
   }
 
   test(
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
+  ) {
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipUnsetOptions)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
+
+    expect.same(
+      Document.obj(
+        "optionalWithDefault" -> Document.fromString("optional-default"),
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "optionalHeaderWithDefault" -> Document.fromString(
+          "optional-header-with-default"
+        ),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+
+  }
+
+  test(
+    "document encoder - FieldFilter.SkipEmptyOptionals and keep defaults"
+  ) {
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipNonRequiredDefaultValues)
+      .fromSchema(DefaultNullsOperationOutput.schema)
+      .encode(DefaultNullsOperationOutput())
+
+    expect.same(
+      Document.obj(
+        "optional" -> Document.nullDoc,
+        "optionalHeader" -> Document.nullDoc,
+        "requiredWithDefault" -> Document.fromString("required-default"),
+        "requiredHeaderWithDefault" -> Document.fromString(
+          "required-header-with-default"
+        )
+      ),
+      result
+    )
+
+  }
+
+  test(
     "document encoder - default values overrides + explicit defaults encoding = true"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(true)
-      .fromSchema(OperationOutput.schema)
+      .withFieldFilter(FieldFilter.EncodeAll)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -503,10 +603,10 @@ class DocumentSpec() extends FunSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
-      .fromSchema(OperationOutput.schema)
+      .withFieldFilter(FieldFilter.Default)
+      .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
-        OperationOutput(
+        DefaultNullsOperationOutput(
           optional = Some("optional-override"),
           optionalWithDefault = "optional-default-override",
           requiredWithDefault = "required-default-override",
@@ -537,7 +637,760 @@ class DocumentSpec() extends FunSuite {
       ),
       result
     )
+  }
 
+  test("Document encoder - timestamp defaults") {
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(TimestampOperationInput.schema)
+      .encode(TimestampOperationInput())
+    expect.same(
+      Document.obj(
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30Z"),
+        "epochSeconds" -> Document.fromLong(1716459630L)
+      ),
+      result
+    )
+  }
+
+  test("Document encoder - timestamp epoch seconds with nanos") {
+    val timestampWithNanos =
+      Timestamp(1716459630L, 500 * 1000 * 1000 /* half a second */ )
+    val result = Document.Encoder
+      .withExplicitDefaultsEncoding(false)
+      .fromSchema(TimestampOperationInput.schema)
+      .encode(
+        TimestampOperationInput(
+          timestampWithNanos,
+          timestampWithNanos,
+          timestampWithNanos
+        )
+      )
+    expect.same(
+      Document.obj(
+        "httpDate" -> Document.fromString("Thu, 23 May 2024 10:20:30.500 GMT"),
+        "dateTime" -> Document.fromString("2024-05-23T10:20:30.500Z"),
+        "epochSeconds" -> Document.fromBigDecimal(
+          BigDecimal("1716459630.500000")
+        )
+      ),
+      result
+    )
+  }
+
+  test(
+    "Document encoder - timestamp epoch seconds uses correct BigDecimal scale"
+  ) {
+    def check(ts: Timestamp, expectedScale: Int) = {
+      val result = Document.Encoder
+        .fromSchema(TimestampOperationInput.schema)
+        .encode(TimestampOperationInput(ts, ts, ts))
+      inside(result) { case Document.DObject(fields) =>
+        inside(fields.get("epochSeconds")) {
+          case Some(Document.DNumber(bigDecimal)) =>
+            expect.same(bigDecimal.scale, expectedScale)
+        }
+      }
+    }
+    check(Timestamp(1L, 0), 0)
+    check(Timestamp(1L, 500 * 1000 * 1000), 1)
+    check(Timestamp(1L, 123 * 1000 * 1000), 3)
+  }
+
+  test("Document decoder - timestamps before linux epoch") {
+    val doc =
+      Document.obj("epochSeconds" -> Document.fromBigDecimal(-0.999999877))
+    val result = Document.Decoder
+      .fromSchema(TimestampOperationInput.schema)
+      .decode(doc)
+    expect.same(
+      result,
+      Right(TimestampOperationInput(epochSeconds = Timestamp(-1, 123)))
+    )
+
+  }
+
+  test("Document decoder - timestamp defaults") {
+    val doc = Document.obj()
+    val result = Document.Decoder
+      .fromSchema(TimestampOperationInput.schema)
+      .decode(doc)
+    val defaultTimestamp = Timestamp(
+      year = 2024,
+      month = 5,
+      day = 23,
+      hour = 10,
+      minute = 20,
+      second = 30
+    )
+    expect.same(
+      Right(
+        TimestampOperationInput(
+          dateTime = defaultTimestamp,
+          httpDate = defaultTimestamp,
+          epochSeconds = defaultTimestamp
+        )
+      ),
+      result
+    )
+  }
+
+  test("Document syntax allows to build documents more concisely") {
+    import Document.syntax._
+
+    val niceSyntaxDocument = obj(
+      "int" -> 1,
+      "boolean" -> true,
+      "long" -> 2L,
+      "string" -> "hello",
+      "nested" -> obj("null" -> nullDoc),
+      "array" -> array("one", "two", "three"),
+      "fromSchema" -> JsonName("name")
+    )
+
+    val expectedDocument = Document.obj(
+      "int" -> Document.DNumber(BigDecimal(1)),
+      "boolean" -> Document.DBoolean(true),
+      "long" -> Document.DNumber(BigDecimal(2)),
+      "string" -> Document.DString("hello"),
+      "nested" -> Document.DObject(Map("null" -> Document.DNull)),
+      "array" -> Document.DArray(
+        IndexedSeq(
+          Document.DString("one"),
+          Document.DString("two"),
+          Document.DString("three")
+        )
+      ),
+      "fromSchema" -> Document.DString("name")
+    )
+
+    assertEquals(niceSyntaxDocument, expectedDocument)
+  }
+
+  case class JsonUnknownExample(
+      s: String,
+      i: Int,
+      others: Map[String, Document]
+  )
+
+  object JsonUnknownExample {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  object JsonUnknownExampleWithDefault {
+    implicit val jsonUnknownExampleSchema: Schema[JsonUnknownExample] = {
+      val s = string.required[JsonUnknownExample]("s", _.s)
+      val i = int.required[JsonUnknownExample]("i", _.i)
+      val others = map(string, document)
+        .required[JsonUnknownExample]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExample.apply)
+    }
+  }
+
+  case class JsonUnknownExampleOptional(
+      s: String,
+      i: Int,
+      others: Option[Map[String, Document]]
+  )
+
+  object JsonUnknownExampleOptional {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(JsonUnknown())
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  object JsonUnknownExampleOptionalWithDefault {
+    implicit val jsonUnknownExampleOptionalSchema
+        : Schema[JsonUnknownExampleOptional] = {
+      val s = string.required[JsonUnknownExampleOptional]("s", _.s)
+      val i = int.required[JsonUnknownExampleOptional]("i", _.i)
+      val others = map(string, document)
+        .optional[JsonUnknownExampleOptional]("others", _.others)
+        .addHints(
+          JsonUnknown(),
+          Default(Document.obj("default" -> Document.fromBoolean(true)))
+        )
+      struct(s, i, others)(JsonUnknownExampleOptional.apply)
+    }
+  }
+
+  test("unknown field decoding: no unknown field in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExample("foo", 67, Map.empty)
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: no unknown field in payload with default") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map("default" -> Document.fromBoolean(true))
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleWithDefault.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExampleOptional("foo", 67, None)
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleOptional.jsonUnknownExampleOptionalSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: no unknown field in payload, optional field with default"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67)
+    )
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(Map("default" -> Document.fromBoolean(true)))
+    )
+
+    val res = Document.Decoder
+      .fromSchema(
+        JsonUnknownExampleOptionalWithDefault.jsonUnknownExampleOptionalSchema
+      )
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: with unknown fields in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75)
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75)
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test(
+    "unknown field decoding: with unknown fields in payload, optional field"
+  ) {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75)
+    )
+    val expected = JsonUnknownExampleOptional(
+      "foo",
+      67,
+      Some(
+        Map(
+          "someField" -> Document.obj("a" -> Document.fromString("b")),
+          "someOtherField" -> Document.fromInt(75)
+        )
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExampleOptional.jsonUnknownExampleOptionalSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field decoding: with unknow field explicitely set in payload") {
+    val doc = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+    val expected = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val res = Document.Decoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .decode(doc)
+
+    assertEquals(res, Right(expected))
+  }
+
+  test("unknown field encoding") {
+    val in = JsonUnknownExample(
+      "foo",
+      67,
+      Map(
+        "someField" -> Document.obj("a" -> Document.fromString("b")),
+        "someOtherField" -> Document.fromInt(75),
+        "others" -> Document.obj()
+      )
+    )
+
+    val expected = Document.obj(
+      "s" -> Document.fromString("foo"),
+      "i" -> Document.fromInt(67),
+      "someField" -> Document.obj("a" -> Document.fromString("b")),
+      "someOtherField" -> Document.fromInt(75),
+      "others" -> Document.obj()
+    )
+
+    val doc = Document.Encoder
+      .fromSchema(JsonUnknownExample.jsonUnknownExampleSchema)
+      .encode(in)
+
+    assertEquals(doc, expected)
+  }
+
+  test("combinations of required, nullable, and null default") {
+    testFieldCombination(true, true, true)
+    testFieldCombination(false, true, true)
+    testFieldCombination(false, false, true)
+    testFieldCombination(false, false, false)
+    testFieldCombination(true, false, false)
+    testFieldCombination(true, true, false)
+    testFieldCombination(true, false, true)
+    testFieldCombination(false, true, false)
+  }
+
+  private def testFieldCombination(
+      required: Boolean,
+      nullable: Boolean,
+      nullDefault: Boolean
+  )(implicit loc: munit.Location): Unit = {
+    val toDecode = Document.DObject(Map.empty)
+    val hints =
+      if (nullDefault) Hints(smithy.api.Default(Document.DNull))
+      else Hints.empty
+    // scalafmt: { maxColumn: 120 }
+    if (!required && nullDefault) nonRequiredWithDefault(nullable, hints, toDecode)
+    else if (required && nullable) requiredNullable(nullDefault, hints, toDecode)
+    else if (!required && nullable && !nullDefault) nonRequiredNullable(hints, toDecode)
+    else if (required) requiredNonNullable(nullDefault, hints, toDecode)
+    else if (!nullDefault) nonRequiredNonNullable(hints, toDecode)
+  }
+
+  def nonRequiredWithDefault(
+      nullable: Boolean,
+      hints: Hints,
+      toDecode: Document
+  )(implicit loc: munit.Location): Unit = {
+    if (nullable) {
+      case class Foo(f: Nullable[String])
+      implicit val schema: Schema[Foo] =
+        Schema.struct(Schema.string.nullable.field[Foo]("f", _.f).addHints(hints))(
+          Foo.apply
+        )
+      val result = Document.decode[Foo](toDecode)
+      // required = false, nullable = true, nullDefault = true
+      expect.same(result.toOption.get, Foo(Nullable.Null))
+    } else {
+      case class Foo(f: String)
+      implicit val schema: Schema[Foo] =
+        Schema.struct(Schema.string.field[Foo]("f", _.f).addHints(hints))(
+          Foo.apply
+        )
+      val result = Document.decode[Foo](toDecode)
+      // required = false, nullable = false, nullDefault = true
+      expect.same(result.toOption.get, Foo(""))
+    }
+  }
+
+  def requiredNullable(
+      nullDefault: Boolean,
+      hints: Hints,
+      toDecode: Document
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Nullable[String])
+    implicit val schema: Schema[Foo] =
+      Schema.struct(
+        Schema.string.nullable.required[Foo]("f", _.f).addHints(hints)
+      )(
+        Foo.apply
+      )
+    val result = Document.decode[Foo](toDecode)
+    if (nullDefault)
+      // required = true, nullable = true, nullDefault = true
+      expect.same(result.toOption.get, Foo(Nullable.Null))
+    else
+      // required = true, nullable = true, nullDefault = false
+      expect(result.isLeft)
+  }
+
+  def nonRequiredNullable(
+      hints: Hints,
+      toDecode: Document
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Option[Nullable[String]])
+    implicit val schema =
+      Schema.struct(
+        Schema.string.nullable.optional[Foo]("f", _.f).addHints(hints)
+      )(
+        Foo.apply
+      )
+    val result = Document.decode[Foo](toDecode)
+    // required = false, nullable = true, nullDefault = false
+    expect.same(result.toOption.get, Foo(None))
+  }
+
+  def requiredNonNullable(
+      nullDefault: Boolean,
+      hints: Hints,
+      toDecode: Document
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: String)
+    implicit val schema: Schema[Foo] =
+      Schema.struct(Schema.string.required[Foo]("f", _.f).addHints(hints))(
+        Foo.apply
+      )
+    val result = Document.decode[Foo](toDecode)
+    // required = true, nullable = false, nullDefault = true
+    if (nullDefault) expect.same(result.toOption.get, Foo(""))
+    // required = true, nullable = false, nullDefault = false
+    else expect(result.isLeft)
+  }
+
+  def nonRequiredNonNullable(
+      hints: Hints,
+      toDecode: Document
+  )(implicit loc: munit.Location): Unit = {
+    case class Foo(f: Option[String])
+    implicit val schema =
+      Schema.struct(Schema.string.optional[Foo]("f", _.f).addHints(hints))(
+        Foo.apply
+      )
+    val result = Document.decode[Foo](toDecode)
+    // required = false, nullable = false, nullDefault = false
+    expect.same(result.toOption.get, Foo(None))
+  }
+
+  test(
+    "Required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Foo)
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: smithy4s.schema.Field[Bar, Foo] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      Document.decode[Bar](
+        Document.DObject(Map("foo" -> Document.fromString("test")))
+      ),
+      Right(Bar(Foo("test")))
+    )
+    expect.same(
+      Document.decode[Bar](Document.DObject(Map.empty)),
+      // Empty string here because null default is implied to be empty string
+      // for a non-nullable string field
+      Right(Bar(Foo("")))
+    )
+  }
+
+  test(
+    "Nullable required refined field with null default"
+  ) {
+    case class Test()
+    object Test extends ShapeTag.Companion[Test] {
+      def id: ShapeId = ShapeId("test", "Test")
+      def schema: Schema[Test] = Schema.constant(Test())
+    }
+    case class Foo(str: String)
+    case class Bar(foo: Nullable[Foo])
+    implicit val provider: RefinementProvider[Test, String, Foo] =
+      Refinement.drivenBy[Test](str => Right(Foo.apply(str)), _.str)
+    val fieldSchema: smithy4s.schema.Field[Bar, Nullable[Foo]] =
+      Schema.string
+        .refined[Foo](
+          Test()
+        )
+        .nullable
+        .required[Bar]("foo", _.foo)
+        .addHints(smithy.api.Default(Document.DNull))
+    implicit val schema: Schema[Bar] =
+      Schema.struct[Bar](fieldSchema)(Bar.apply)
+
+    expect.same(
+      Document.decode[Bar](
+        Document.DObject(Map("foo" -> Document.fromString("test")))
+      ),
+      Right(Bar(Nullable.value(Foo("test"))))
+    )
+    expect.same(
+      Document.decode[Bar](Document.DObject(Map.empty)),
+      Right(Bar(Nullable.Null))
+    )
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.array()
+        )
+
+    test(s"should ${skipNotSkip} rendering of required lists if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: List[String]
+      )
+      val arr = list(string).required[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(List.empty))
+
+      expect.same(expected, result)
+    }
+
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.obj()
+        )
+
+    test(s"should ${skipNotSkip} rendering of required map if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Map[String, Int]
+      )
+      val arr = map(string, int).required[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Map.empty))
+
+      expect.same(
+        result,
+        expected
+      )
+    }
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.obj()
+        )
+
+    test(s"should ${skipNotSkip} rendering of optional map if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Option[Map[String, Int]]
+      )
+      val arr = map(string, int).optional[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Some(Map.empty)))
+
+      expect.same(result, expected)
+    }
+
+  }
+
+  List(
+    TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyCollection),
+    TestCase(expectedToSkip = true, FieldFilter.SkipEmptyOptionalCollection)
+  ).foreach { case TestCase(expectedToSkip, strategy) =>
+    val skipNotSkip = if (expectedToSkip) "skip" else "not skip"
+    val expected =
+      if (expectedToSkip) Document.obj()
+      else
+        Document.obj(
+          "items" -> Document.array()
+        )
+
+    test(s"should ${skipNotSkip} rendering of optional lists if it is empty and ${strategy} is used") {
+      case class MyStruct(
+          items: Option[List[String]]
+      )
+      val arr = list(string).optional[MyStruct]("items", _.items)
+      val structSchema = struct(arr)(MyStruct.apply)
+
+      val result = Document.Encoder
+        .withFieldFilter(strategy)
+        .fromSchema(structSchema)
+        .encode(MyStruct(Some(List.empty)))
+
+      expect.same(result, expected)
+    }
+
+  }
+
+  test("Recursive document structures should not blow up FieldFilter") {
+    val recursive: RecursiveListWrapper =
+      RecursiveListWrapper(List(RecursiveListWrapper(List(RecursiveListWrapper(List.empty)))))
+
+    val document = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyCollection)
+      .fromSchema(RecursiveListWrapper.schema)
+      .encode(recursive)
+    import Document._
+    val expectedDocument =
+      obj("items" -> array(obj("items" -> array(obj()))))
+
+    expect(document == expectedDocument)
+  }
+
+  test("FieldFilter should work with bijection schema") {
+    import Document._
+    sealed trait MyEnum[+A] {}
+    case object MyEnum {
+      case object Empty extends MyEnum[Nothing]
+      case class NonEmpty[A](value: A) extends MyEnum[A]
+    }
+    case class MyStruct(
+        items: Option[MyEnum[List[String]]]
+    )
+    val arr = list(string).option
+      .biject(to = _.map(a => MyEnum.NonEmpty(a): MyEnum[List[String]]))(from = _.map {
+        case MyEnum.NonEmpty(list) => list
+        case MyEnum.Empty          => List.empty
+      })
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(MyEnum.NonEmpty(List("a", "b")))))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
+  }
+
+  test("FieldFilter should work with refined schema") {
+    import Document._
+    case class MyStruct(
+        items: Option[NonEmptyList[String]]
+    )
+    val arr = list(string)
+      .refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat())
+      .option
+      .field[MyStruct]("items", _.items)
+    val structSchema = struct(arr)(MyStruct.apply)
+
+    val nonEmptyList = NonEmptyList(List("a", "b")) match {
+      case Right(nel) => nel
+      case Left(err)  => sys.error(err)
+    }
+
+    val result = Document.Encoder
+      .withFieldFilter(FieldFilter.SkipEmptyOptionalCollection)
+      .fromSchema(structSchema)
+      .encode(MyStruct(Some(nonEmptyList)))
+
+    val expectedDocument = obj("items" -> array(fromString("a"), fromString("b")))
+    expect.same(result, expectedDocument)
+  }
+
+  private def inside[A, B](
+      a: A
+  )(assertPF: PartialFunction[A, Unit])(implicit loc: munit.Location) = {
+    assertPF.lift
+      .apply(a)
+      .getOrElse(Assertions.fail("Value did not match the expected pattern"))
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -123,7 +123,14 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, smithy4s.json.Json.payloadDecoders))
+        .map(
+          decodeDocument(
+            _,
+            smithy4s.json.Json.payloadCodecs
+              .configureJsoniterCodecCompiler(_.withMaxArity(Int.MaxValue))
+              .decoders
+          )
+        )
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

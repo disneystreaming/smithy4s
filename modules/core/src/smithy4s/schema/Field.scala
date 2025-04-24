@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ final case class Field[S, A](
   @deprecated("use .schema instead", since = "0.18.0")
   final def instance: Schema[A] = schema
 
-  lazy val getDefaultValue: Option[A] =
+  def getDefaultValue: Option[A] =
     schema.getDefaultValue
 
   def isDefaultValue(a: A): Boolean = getDefaultValue.contains(a)
@@ -66,6 +66,7 @@ final case class Field[S, A](
    * OR if the field value is different from its default. Otherwise nothing happens.
    */
   def foreachUnlessDefault(s: S)(f: A => Unit): Unit = {
+    // duplicates logic from getUnlessDefault in order to avoid unnecessary Option allocation
     val a = get(s)
     if (isDefaultValue(a) && !isRequired) () else f(a)
   }
@@ -87,6 +88,9 @@ final case class Field[S, A](
 
   def addHints(newHints: Hint*): Field[S, A] =
     copy(schema = schema.addMemberHints(newHints: _*))
+
+  def addHints(newHints: Hints): Field[S, A] =
+    copy(schema = schema.addMemberHints(newHints))
 }
 
 object Field {

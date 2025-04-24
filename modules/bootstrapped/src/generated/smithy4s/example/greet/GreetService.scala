@@ -15,7 +15,7 @@ trait GreetServiceGen[F[_, _, _, _, _]] {
 
   def greet(name: String): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](this)
 }
 
 object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperation] {

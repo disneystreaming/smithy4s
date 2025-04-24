@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ object HttpUnaryClientCodecs {
 
       val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Writer[Blob, *]] {
         def fromSchema[A](schema: Schema[A]): HttpRequest.Writer[Blob, A] = {
-          val maybeRawMediaType = HttpMediaType.fromSchema(schema).map(_.value)
+          val maybeRawMediaType = if (rawStringsAndBlobPayloads) HttpMediaType.fromSchema(schema).map(_.value) else None
           maybeRawMediaType match {
             case Some(mt) =>
               new HttpRequest.Writer[Blob, A] {

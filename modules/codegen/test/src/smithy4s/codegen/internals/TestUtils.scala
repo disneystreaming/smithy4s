@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -101,4 +101,16 @@ object TestUtils {
       .unwrap()
   }
 
+  def loadAndValidateModel(namespaces: String*): Model = {
+    val assembler = Model
+      .assembler()
+      .discoverModels()
+
+    namespaces
+      .foldLeft(assembler) { case (a, model) =>
+        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
+      }
+      .assemble()
+      .unwrap()
+  }
 }

@@ -9,7 +9,7 @@ use smithy4s.meta#generateOptics
 integer OrderNumber
 
 /// Our order types have different ways to identify a product
-/// Except for preview orders, these don't have an ID 
+/// Except for preview orders, these don't have an ID
 union OrderType {
   online: OrderNumber,
   /// For an InStoreOrder a location ID isn't needed
@@ -84,3 +84,46 @@ structure PodcastCommon {
 structure Video with [PodcastCommon] {}
 @generateOptics
 structure Audio with [PodcastCommon] {}
+
+
+@mixin
+structure HasName {
+    name: String
+}
+
+structure OtherPerson with [HasName] {
+    @required
+    $name
+}
+
+@adt
+union PersonUnion {
+    p: OtherPerson
+}
+
+// this can reach AdtMixinOne transitively in one of the cases, and directly in the other case
+// https://github.com/disneystreaming/smithy4s/issues/1312
+@adt
+union AdtUnionWithSomeTransitiveMixins {
+    s1: AdtMemberWithTransitiveMixin1
+    s2: AdtMemberWithDirectMixin
+}
+
+@mixin
+structure TransitiveMixin with [AdtMixinOne] {}
+
+structure AdtMemberWithTransitiveMixin1 with [TransitiveMixin] {}
+
+structure AdtMemberWithDirectMixin with [AdtMixinOne] {}
+
+// this can reach AdtMixinOne transitively in all cases.
+// serves as an example in which both the direct and transitive mixin are added
+// to the generated Scala trait's supertypes.
+@adt
+union AdtUnionWithTransitiveAndDirectMixins {
+    s1: AdtMemberWithTransitiveMixin2
+    s2: AdtMemberWithTransitiveMixin3
+}
+
+structure AdtMemberWithTransitiveMixin2 with [TransitiveMixin] {}
+structure AdtMemberWithTransitiveMixin3 with [TransitiveMixin] {}

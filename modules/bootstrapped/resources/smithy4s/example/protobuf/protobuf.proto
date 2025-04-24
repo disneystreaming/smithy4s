@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package smithy4s.example.protobuf;
+
+import "google/protobuf/wrappers.proto";
+
+import "alloy/protobuf/types.proto";
+
+message Integers {
+  int32 int = 1;
+  sint32 sint = 2;
+  uint32 uint = 3;
+  fixed32 fixedUint = 4;
+  sfixed32 fixedSint = 5;
+}
+
+message Longs {
+  int64 long = 1;
+  sint64 slong = 2;
+  uint64 ulong = 3;
+  fixed64 fixedLong = 4;
+  sfixed64 fixedSlong = 5;
+}
+
+message OtherScalars {
+  bool boolean = 1;
+  int32 byte = 2;
+  float float = 3;
+  double double = 4;
+  int32 short = 5;
+}
+
+message WrappedScalars {
+  google.protobuf.Int32Value int = 1;
+  google.protobuf.BoolValue bool = 2;
+}
+
+message StringWrapper {
+  string string = 1;
+}
+
+message OptionalStringWrapper {
+  string string = 1;
+}
+
+message BigDecimalWrapper {
+  string bigDecimal = 1;
+}
+
+message UUIDWrapper {
+  string uuid = 1;
+  alloy.protobuf.CompactUUID compactUUID = 2;
+}
+
+message MessageWrapper {
+  smithy4s.example.protobuf.Integers message = 1;
+}
+
+message OptionalMessageWrapper {
+  smithy4s.example.protobuf.Integers message = 1;
+}
+
+message IntListWrapper {
+  repeated int32 ints = 1;
+}
+
+message WrappedStringList {
+  repeated string value = 1;
+}
+
+message StringListWrapper {
+  repeated string strings = 1;
+  smithy4s.example.protobuf.WrappedStringList wrappedStrings = 2;
+}
+
+message MyIntList {
+  repeated int32 value = 1;
+}
+
+message MyIntListWrapper {
+  repeated int32 ints = 1;
+}
+
+message Recursive {
+  smithy4s.example.protobuf.Recursive recursive = 1;
+}
+
+message UnionWrapper {
+  smithy4s.example.protobuf.MyUnion myUnion = 1;
+}
+
+message MyUnion {
+  oneof definition {
+    int32 int = 1;
+    bool bool = 2;
+    smithy4s.example.protobuf.MyIntList list = 3;
+    smithy4s.example.protobuf.StringMap map = 4;
+  }
+}
+
+message InlinedUnionWrapper {
+  oneof myInlinedUnion {
+    int32 int = 1;
+    bool bool = 2;
+  }
+}
+
+message StringMapWrapper {
+  map<string, int32> values = 1;
+}
+
+message StringMap {
+  map<string, int32> value = 1;
+}
+
+message Enums {
+  smithy4s.example.protobuf.ClosedString closedString = 1;
+  string openString = 2;
+  smithy4s.example.protobuf.ClosedInt closedInt = 3;
+  int32 openInt = 4;
+}
+
+enum ClosedString {
+  CLOSEDSTRING_FOO = 0;
+  CLOSEDSTRING_BAR = 1;
+}
+
+enum ClosedInt {
+  CLOSEDINT_FOO = 0;
+  CLOSEDINT_BAR = 1;
+}
+
+message RefinedIntWrapped {
+  int32 int = 1;
+}
+
+message StructureWithCustomIndexes {
+  int32 a = 4;
+  int32 b = 3;
+  int32 c = 2;
+  smithy4s.example.protobuf.UnionWithCustomIndexes d = 1;
+}
+
+message UnionWithCustomIndexes {
+  oneof definition {
+    int32 a = 3;
+    int32 b = 2;
+    int32 c = 1;
+  }
+}

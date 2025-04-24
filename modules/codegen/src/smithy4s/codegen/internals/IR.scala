@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package smithy4s.codegen.internals
 
 import cats.Applicative
 import cats.Eval
+import cats.Order
 import cats.Traverse
 import cats.data.NonEmptyList
 import cats.kernel.Eq
@@ -30,6 +31,7 @@ import TypedNode.FieldTN.OptionalSomeTN
 import TypedNode.FieldTN.RequiredTN
 import TypedNode.AltValueTN.ProductAltTN
 import TypedNode.AltValueTN.TypeAltTN
+import TypedNode.AltValueTN.UnitAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
 
@@ -102,6 +104,14 @@ private[internals] case class TypeAlias(
     hints: List[Hint] = Nil
 ) extends Decl
 
+private[internals] case class ValidatedTypeAlias(
+    shapeId: ShapeId,
+    name: String,
+    tpe: Type,
+    recursive: Boolean = false,
+    hints: List[Hint] = Nil
+) extends Decl
+
 private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
@@ -131,6 +141,7 @@ private[internals] case class Field(
     realName: String,
     tpe: Type,
     modifier: Field.Modifier,
+    originalIndex: Int,
     hints: List[Hint]
 )
 
@@ -141,38 +152,61 @@ private[internals] case class StreamingField(
 )
 
 private[internals] object Field {
+  sealed trait TypeModification
 
-  sealed trait Modifier {
-    def default: Option[Node] = this match {
-      case Modifier.RequiredDefaultMod(node, _) => Some(node)
-      case Modifier.DefaultMod(node, _)         => Some(node)
-      case Modifier.RequiredMod                 => None
-      case Modifier.NoModifier                  => None
-    }
+  object TypeModification {
+    case object None extends TypeModification
+    case object Option extends TypeModification
+    case object Nullable extends TypeModification
+    case object OptionNullable extends TypeModification
 
-    def none: Boolean = this match {
-      case Modifier.RequiredDefaultMod(_, _) => false
-      case Modifier.DefaultMod(_, _)         => false
-      case Modifier.RequiredMod              => false
-      case Modifier.NoModifier               => true
+    implicit val order: Order[TypeModification] = Order.by {
+      case None           => 0
+      case Nullable       => 1
+      case Option         => 2
+      case OptionNullable => 3
     }
   }
+
+  case class Default(node: Node, typedNode: Option[Fix[TypedNode]])
+  case class Modifier(
+      required: Boolean,
+      nullable: Boolean,
+      default: Option[Default]
+  ) {
+    def typeMod: TypeModification =
+      if (!required && nullable && default.isEmpty)
+        TypeModification.OptionNullable // nullable without default or required gets rendered as Option[Nullable[T]]
+      else if (nullable)
+        TypeModification.Nullable // other nullables get rendered as just Nullable[T]
+      else if (!required && default.isEmpty)
+        TypeModification.Option // normal line without default or required gets rendered as Option[T]
+      else
+        TypeModification.None // everything else just gets rendered as T
+  }
+
   object Modifier {
-    case object NoModifier extends Modifier
-    case object RequiredMod extends Modifier
-    case class RequiredDefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
-        extends Modifier
-    case class DefaultMod(node: Node, typedNode: Option[Fix[TypedNode]])
-        extends Modifier
+    // field order if all defaults are populated
+    def fullOrder: Order[Modifier] = Order.whenEqual(
+      Order.by {
+        case Modifier(true, _, None) => 0
+        case _                       => 1
+      },
+      Order.by(_.typeMod)
+    )
+
+    // field order if only option defaults are populated
+    def optionOnlyOrder: Order[Modifier] = Order.by(_.typeMod)
   }
 
   def apply(
       name: String,
       tpe: Type,
       modifier: Modifier,
+      originalIndex: Int,
       hints: List[Hint] = Nil
   ): Field =
-    Field(name, name, tpe, modifier, hints)
+    Field(name, name, tpe, modifier, originalIndex, hints)
 
 }
 
@@ -271,7 +305,10 @@ private[internals] object Type {
       valueHints: List[Hint]
   ) extends Type
   case class Ref(namespace: String, name: String) extends Type {
-    def show = namespace + "." + name
+    def show: String = NameRef
+      .splitPath(namespace)
+      .map(CollisionAvoidance.protectKeyword)
+      .mkString(".") + "." + name
   }
   case class Alias(
       namespace: String,
@@ -279,6 +316,8 @@ private[internals] object Type {
       tpe: Type,
       isUnwrapped: Boolean
   ) extends Type
+  case class ValidatedAlias(namespace: String, name: String, tpe: Type)
+      extends Type
   case class PrimitiveType(prim: Primitive) extends Type
   case class ExternalType(
       name: String,
@@ -318,7 +357,7 @@ private[internals] object Hint {
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
   // traits that get rendered generically
-  case class Native(typedNode: Fix[TypedNode]) extends Hint
+  case class Native(shapeId: ShapeId, typedNode: Fix[TypedNode]) extends Hint
   case object IntEnum extends Hint
   case object OpenEnum extends Hint
 
@@ -332,6 +371,8 @@ private[internals] object Hint {
       extends Hint
   case object GenerateServiceProduct extends Hint
   case object GenerateOptics extends Hint
+  case class ScalaImports(imports: List[String]) extends Hint
+  case object ValidateNewtype extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }
@@ -389,6 +430,7 @@ private[internals] object TypedNode {
     def map[B](f: A => B): AltValueTN[B] = this match {
       case ProductAltTN(value) => ProductAltTN(f(value))
       case TypeAltTN(value)    => TypeAltTN(f(value))
+      case UnitAltTN           => UnitAltTN
     }
   }
   object AltValueTN {
@@ -400,6 +442,7 @@ private[internals] object TypedNode {
           fa match {
             case ProductAltTN(value) => f(value).map(ProductAltTN(_))
             case TypeAltTN(value)    => f(value).map(TypeAltTN(_))
+            case UnitAltTN           => Applicative[G].pure(UnitAltTN)
           }
         def foldLeft[A, B](fa: AltValueTN[A], b: B)(f: (B, A) => B): B = ???
         def foldRight[A, B](fa: AltValueTN[A], lb: Eval[B])(
@@ -409,6 +452,7 @@ private[internals] object TypedNode {
 
     case class ProductAltTN[A](value: A) extends AltValueTN[A]
     case class TypeAltTN[A](value: A) extends AltValueTN[A]
+    case object UnitAltTN extends AltValueTN[Nothing]
   }
 
   implicit val typedNodeTraverse: Traverse[TypedNode] =
@@ -422,6 +466,8 @@ private[internals] object TypedNode {
           fields.traverse(_.traverse(_.traverse(f))).map(StructureTN(ref, _))
         case NewTypeTN(ref, target) =>
           f(target).map(NewTypeTN(ref, _))
+        case ValidatedNewTypeTN(ref, target) =>
+          f(target).map(ValidatedNewTypeTN(ref, _))
         case AltTN(ref, altName, alt) =>
           alt.traverse(f).map(AltTN(ref, altName, _))
         case MapTN(values) =>
@@ -452,6 +498,8 @@ private[internals] object TypedNode {
       fields: List[(String, FieldTN[A])]
   ) extends TypedNode[A]
   case class NewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
+  case class ValidatedNewTypeTN[A](ref: Type.Ref, target: A)
+      extends TypedNode[A]
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]

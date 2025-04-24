@@ -49,11 +49,16 @@ operation RoundTrip {
 }
 
 structure RoundTripData {
+    // suppressing because we know - it's part of the test
+    @suppress(["HttpBindingTraitIgnored.Input"])
     @httpLabel
     @required
     label: String
     @httpHeader("HEADER")
     header: String
+
+    // suppressing because we know - it's part of the test
+    @suppress(["HttpBindingTraitIgnored.Input"])
     @httpQuery("query")
     query: String
     body: String
@@ -165,6 +170,20 @@ structure MenuItem {
     food: Food
     @required
     price: Float
+    tags: Tags
+    extraData: ExtraData
+}
+
+list Tags {
+    @length(min: 1, max: 10)
+    member: String
+}
+
+map ExtraData {
+    @length(min: 2)
+    key: String
+    @length(min: 2, max: 10)
+    value: String
 }
 
 union Food {

@@ -15,9 +15,10 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(value: Option[String]): OptionInput = OptionInput(value)
+
   implicit val schema: Schema[OptionInput] = struct(
     String.schema.optional[OptionInput]("value", _.value),
-  ){
-    OptionInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

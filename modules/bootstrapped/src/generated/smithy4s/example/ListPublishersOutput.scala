@@ -15,9 +15,10 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
     smithy.api.Output(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(publishers: List[PublisherId]): ListPublishersOutput = ListPublishersOutput(publishers)
+
   implicit val schema: Schema[ListPublishersOutput] = struct(
     PublishersList.underlyingSchema.required[ListPublishersOutput]("publishers", _.publishers),
-  ){
-    ListPublishersOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

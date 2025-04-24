@@ -33,9 +33,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   @deprecated(message = "N/A", since = "N/A")
   def s(s: String): DeprecatedUnion = SCase(s)
   def s_V2(s_V2: String): DeprecatedUnion = S_V2Case(s_V2)
-  def deprecatedUnionProductCase():DeprecatedUnionProductCase = DeprecatedUnionProductCase()
+  def deprecatedUnionProductCase(): DeprecatedUnionProductCase = DeprecatedUnionProductCase()
   @deprecated(message = "N/A", since = "N/A")
-  def unionProductCaseDeprecatedAtCallSite():UnionProductCaseDeprecatedAtCallSite = UnionProductCaseDeprecatedAtCallSite()
+  def unionProductCaseDeprecatedAtCallSite(): UnionProductCaseDeprecatedAtCallSite = UnionProductCaseDeprecatedAtCallSite()
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
 
@@ -51,14 +51,15 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def $ordinal: Int = 2
   }
 
-  object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
+  object DeprecatedUnionProductCase {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     ).lazily
 
-    implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
+
+    val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
@@ -67,14 +68,15 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def $ordinal: Int = 3
   }
 
-  object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
+  object UnionProductCaseDeprecatedAtCallSite {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     ).lazily
 
-    implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
+
+    val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
 
     val alt = schema.oneOf[DeprecatedUnion]("p2")
   }

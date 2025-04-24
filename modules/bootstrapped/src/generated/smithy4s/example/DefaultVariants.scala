@@ -14,12 +14,13 @@ object DefaultVariants extends ShapeTag.Companion[DefaultVariants] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(req: String, reqDef: String, opt: Option[String], optDef: String): DefaultVariants = DefaultVariants(req, reqDef, optDef, opt)
+
   implicit val schema: Schema[DefaultVariants] = struct(
     string.required[DefaultVariants]("req", _.req),
     string.required[DefaultVariants]("reqDef", _.reqDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
-    string.field[DefaultVariants]("optDef", _.optDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
     string.optional[DefaultVariants]("opt", _.opt),
-  ){
-    DefaultVariants.apply
-  }.withId(id).addHints(hints)
+    string.field[DefaultVariants]("optDef", _.optDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
+  )(make).withId(id).addHints(hints)
 }

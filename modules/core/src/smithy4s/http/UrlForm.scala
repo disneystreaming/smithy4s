@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -195,9 +195,15 @@ object UrlForm {
 
   object Encoder {
 
-    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloyurlformname`. */
     def apply(
         capitalizeStructAndUnionMemberNames: Boolean
+    ): CachedSchemaCompiler[Encoder] =
+      apply(capitalizeStructAndUnionMemberNames, alwaysSkipEmptyLists = false)
+
+    /** Constructs an [[Encoder]] that encodes data as [[UrlForm]]s. Can be configured using `@alloy#urlformname`. */
+    def apply(
+        capitalizeStructAndUnionMemberNames: Boolean,
+        alwaysSkipEmptyLists: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
         protected override type Aux[A] = UrlFormDataEncoder[A]
@@ -213,7 +219,8 @@ object UrlForm {
             }
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
-            capitalizeStructAndUnionMemberNames
+            capitalizeStructAndUnionMemberNames,
+            alwaysSkipEmptyLists
           )
           val urlFormDataEncoder = schemaVisitor(schema)
           maybeStaticUrlFormData match {

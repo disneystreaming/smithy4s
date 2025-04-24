@@ -13,5 +13,6 @@ object Product extends ShapeTag.Companion[Product] {
 
   val hints: Hints = Hints.empty
 
+
   implicit val schema: Schema[Product] = constant(Product()).withId(id).addHints(hints)
 }

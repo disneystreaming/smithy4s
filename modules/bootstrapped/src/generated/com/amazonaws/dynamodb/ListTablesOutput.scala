@@ -28,10 +28,11 @@ object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
     smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(tableNames: Option[List[TableName]], lastEvaluatedTableName: Option[TableName]): ListTablesOutput = ListTablesOutput(tableNames, lastEvaluatedTableName)
+
   implicit val schema: Schema[ListTablesOutput] = struct(
     TableNameList.underlyingSchema.optional[ListTablesOutput]("TableNames", _.tableNames).addHints(smithy.api.Documentation("<p>The names of the tables associated with the current account at the current endpoint. The maximum size of this array is 100.</p>\n         <p>If <code>LastEvaluatedTableName</code> also appears in the output, you can use this value as the\n        <code>ExclusiveStartTableName</code> parameter in a subsequent <code>ListTables</code> request and\n      obtain the next page of results.</p>")),
     TableName.schema.optional[ListTablesOutput]("LastEvaluatedTableName", _.lastEvaluatedTableName).addHints(smithy.api.Documentation("<p>The name of the last table in the current page of results. Use this value as the\n        <code>ExclusiveStartTableName</code> in a new request to obtain the next page of results, until\n      all the table names are returned.</p>\n         <p>If you do not receive a <code>LastEvaluatedTableName</code> value in the response, this means that\n      there are no more table names to be retrieved.</p>")),
-  ){
-    ListTablesOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

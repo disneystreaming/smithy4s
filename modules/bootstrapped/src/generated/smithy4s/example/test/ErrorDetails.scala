@@ -16,10 +16,11 @@ object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(date: Timestamp, location: String): ErrorDetails = ErrorDetails(date, location)
+
   implicit val schema: Schema[ErrorDetails] = struct(
     timestamp.required[ErrorDetails]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
     string.required[ErrorDetails]("location", _.location),
-  ){
-    ErrorDetails.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

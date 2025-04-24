@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
-      Endpoint.Middleware.noop
+      Endpoint.Middleware.noop,
+      encodeErrorsBeforeMiddleware = false
     )
   }
 
@@ -78,7 +79,8 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         PartialFunction.empty,
-        Endpoint.Middleware.noop
+        Endpoint.Middleware.noop,
+        encodeErrorsBeforeMiddleware = false
       )
 
   }
@@ -131,7 +133,8 @@ abstract class SimpleProtocolBuilder[P](
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
-      middleware: ServerEndpointMiddleware[F]
+      middleware: ServerEndpointMiddleware[F],
+      encodeErrorsBeforeMiddleware: Boolean
   )(implicit
       F: Concurrent[F]
   ) {
@@ -156,7 +159,7 @@ abstract class SimpleProtocolBuilder[P](
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe andThen (e => F.pure(e)), middleware)
+      copy(errorTransformation = fe.andThen(F.pure(_)))
 
     /**
       * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
@@ -178,12 +181,27 @@ abstract class SimpleProtocolBuilder[P](
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe, middleware)
+      copy(errorTransformation = fe)
 
     def middleware(
         mid: ServerEndpointMiddleware[F]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder[Alg, F](service, impl, errorTransformation, mid)
+      copy(middleware = mid)
+
+    /**
+      * Configures whether errors that are in the smithy spec should be encoded into the HTTP response
+      * before the middleware is applied.
+      *
+      * - If `true`, errors defined in the smithy spec will be encoded into the
+      *   response before middleware is applied. Non-Smithy errors will remain unencoded
+      *   and will be visible from [[middleware]].
+      * - If `false`, all errors (both smithy and non-smithy) will pass through the
+      *   middleware unencoded.
+      *
+      * @note default is `false`
+      */
+    def encodeErrorsBeforeMiddleware(value: Boolean): RouterBuilder[Alg, F] =
+      copy(encodeErrorsBeforeMiddleware = value)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
       checkProtocol(service, protocolTag)
@@ -194,17 +212,18 @@ abstract class SimpleProtocolBuilder[P](
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
           val finalMiddleware =
             errorHandler.andThen(middleware).andThen(errorHandler)
-          val router = HttpUnaryServerRouter(service)(
-            impl,
-            simpleProtocolCodecs.makeServerCodecs[F],
-            finalMiddleware.biject(_.run)(HttpApp(_)),
-            getMethod =
-              (request: Request[F]) => toSmithy4sHttpMethod(request.method),
-            getUri =
-              (request: Request[F]) => toSmithy4sHttpUri(request.uri, None),
-            addDecodedPathParams = (request: Request[F], pathParams) =>
-              request.withAttribute(pathParamsKey, pathParams)
-          )
+          val router =
+            HttpUnaryServerRouter(service, encodeErrorsBeforeMiddleware)(
+              impl,
+              simpleProtocolCodecs.makeServerCodecs[F],
+              finalMiddleware.biject(_.run)(HttpApp(_)),
+              getMethod =
+                (request: Request[F]) => toSmithy4sHttpMethod(request.method),
+              getUri =
+                (request: Request[F]) => toSmithy4sHttpUri(request.uri, None),
+              addDecodedPathParams = (request: Request[F], pathParams) =>
+                request.withAttribute(pathParamsKey, pathParams)
+            )
           HttpRoutes(
             router.andThen(OptionT.fromOption(_).flatMap(OptionT.liftF(_)))
           )
@@ -213,6 +232,21 @@ abstract class SimpleProtocolBuilder[P](
     def resource: Resource[F, HttpRoutes[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
+    private def copy(
+        service: smithy4s.Service[Alg] = service,
+        impl: FunctorAlgebra[Alg, F] = impl,
+        errorTransformation: PartialFunction[Throwable, F[Throwable]] =
+          errorTransformation,
+        middleware: ServerEndpointMiddleware[F] = middleware,
+        encodeErrorsBeforeMiddleware: Boolean = encodeErrorsBeforeMiddleware
+    ): RouterBuilder[Alg, F] =
+      new RouterBuilder(
+        service,
+        impl,
+        errorTransformation,
+        middleware,
+        encodeErrorsBeforeMiddleware
+      )
   }
 
 }

@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.struct
 
 /** @param orderType
   *   Our order types have different ways to identify a product
-  *   Except for preview orders, these don't have an ID 
+  *   Except for preview orders, these don't have an ID
   */
 final case class TestTrait(orderType: Option[OrderType] = None)
 
@@ -20,9 +20,10 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(orderType: Option[OrderType]): TestTrait = TestTrait(orderType)
+
   implicit val schema: Schema[TestTrait] = recursive(struct(
     OrderType.schema.optional[TestTrait]("orderType", _.orderType),
-  ){
-    TestTrait.apply
-  }.withId(id).addHints(hints))
+  )(make).withId(id).addHints(hints))
 }

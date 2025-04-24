@@ -14,10 +14,11 @@ object SayHelloOutput extends ShapeTag.Companion[SayHelloOutput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(payload: SayHelloPayload, header1: String): SayHelloOutput = SayHelloOutput(payload, header1)
+
   implicit val schema: Schema[SayHelloOutput] = struct(
     SayHelloPayload.schema.required[SayHelloOutput]("payload", _.payload).addHints(smithy.api.HttpPayload()),
     string.required[SayHelloOutput]("header1", _.header1).addHints(smithy.api.HttpHeader("X-H1")),
-  ){
-    SayHelloOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

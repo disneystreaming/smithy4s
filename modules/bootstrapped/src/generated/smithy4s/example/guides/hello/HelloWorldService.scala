@@ -16,7 +16,7 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
 
   def sayWorld(): F[Unit, Nothing, World, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
+  final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
 }
 
 object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWorldServiceOperation] {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 import smithy4s.http.HttpMethod
+import fs2.hashing.Hashing
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {
@@ -65,7 +66,7 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
-    private def compiler[F[_]: Async: Compression](
+    private def compiler[F[_]: Async: Compression: Hashing](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorEndpointCompiler[F] = {
 
@@ -120,7 +121,11 @@ object AwsClient {
         .build()
 
       val middleware =
-        AwsSigning.middleware(awsEnv).andThen(compression).andThen(Md5CheckSum.middleware[F])
+        AwsSigning
+          .middleware(awsEnv)
+          .andThen(compression)
+          .andThen(Md5CheckSum.middleware[F])
+          .andThen(awsEnv.endpointMiddleware)
 
       UnaryClientCompiler(
         service,
@@ -134,8 +139,10 @@ object AwsClient {
 
     def build[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
-    ): service.Impl[F] =
+    ): service.Impl[F] = {
+      implicit val hashingF: Hashing[F] = Hashing.forSync[F]
       service.impl(compiler[F](awsEnv))
+    }
 
     // TODO : uncomment below when we start supporting streaming.
 

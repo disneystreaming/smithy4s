@@ -20,9 +20,10 @@ object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointExcept
     smithy.api.HttpError(421),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(message: Option[String]): InvalidEndpointException = InvalidEndpointException(message)
+
   implicit val schema: Schema[InvalidEndpointException] = struct(
     string.optional[InvalidEndpointException]("Message", _.message),
-  ){
-    InvalidEndpointException.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private (epochSecond: Long, nano: Int)
     extends TimestampPlatform {
+
+  def epochMilli: Long = epochSecond * 1000 + nano / 1000000
+
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano
@@ -35,6 +38,16 @@ case class Timestamp private (epochSecond: Long, nano: Int)
   def conciseDateTime: String = formatToString(3)
 
   def conciseDate: String = formatToString(2)
+
+  /**
+    * @return a copy of this timestamp truncated to a miliseconds precision
+    */
+  def truncateToMillis: Timestamp = copy(nano = (nano / 1000000) * 1000000)
+
+  /**
+    * @return a copy of this timestamp truncated to a seconds resolution
+    */
+  def truncateToSeconds: Timestamp = copy(nano = 0)
 
   override def toString: String = format(TimestampFormat.DATE_TIME)
 
@@ -172,6 +185,12 @@ object Timestamp extends TimestampCompanionPlatform {
 
   val epoch = Timestamp(0, 0)
 
+  def fromEpochMilli(epochMilli: Long): Timestamp = {
+    val secs = java.lang.Math.floorDiv(epochMilli, 1000)
+    val mos = java.lang.Math.floorMod(epochMilli, 1000)
+    Timestamp(secs, (mos * 1000000).toInt)
+  }
+
   private val digits: Array[Short] = Array(
     0x3030, 0x3130, 0x3230, 0x3330, 0x3430, 0x3530, 0x3630, 0x3730, 0x3830,
     0x3930, 0x3031, 0x3131, 0x3231, 0x3331, 0x3431, 0x3531, 0x3631, 0x3731,
@@ -264,7 +283,7 @@ object Timestamp extends TimestampCompanionPlatform {
 
   private[this] def parseDateTime(s: String): Timestamp = {
     val len = s.length
-    if (len < 19) error()
+    if (len < 16) error()
     var pos = 0
     val year = {
       val ch0 = s.charAt(pos)
@@ -316,18 +335,20 @@ object Timestamp extends TimestampCompanionPlatform {
     val minute = {
       val ch0 = s.charAt(pos)
       val ch1 = s.charAt(pos + 1)
-      val ch2 = s.charAt(pos + 2)
-      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9' || ch2 != ':')
+      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9')
         error()
-      pos += 3
+      pos += 2
       ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     }
     val second = {
-      val ch0 = s.charAt(pos)
-      val ch1 = s.charAt(pos + 1)
-      if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
-      pos += 2
-      ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      val separator = s.charAt(pos)
+      if (separator == ':') {
+        val ch0 = s.charAt(pos + 1)
+        val ch1 = s.charAt(pos + 2)
+        if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+        pos += 3
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      } else 0
     }
     var epochSecond = toEpochDay(
       year,

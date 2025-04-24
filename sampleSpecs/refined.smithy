@@ -1,64 +1,59 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use smithy4s.meta#refinement
 use smithy4s.meta#unwrap
+use alloy#uuidFormat
+use alloy#UUID
 
 @trait(selector: ":test(integer, member > integer)")
 @refinement(
-  targetType: "smithy4s.refined.Age",
-  providerImport: "smithy4s.refined.Age.provider._"
+    targetType: "smithy4s.refined.Age",
+    providerImport: "smithy4s.refined.Age.provider._"
 )
 structure ageFormat {}
 
-@trait(selector: "list:test(> member > string)") // lists with string members
-@refinement(
-  targetType: "smithy4s.refined.FancyList"
-)
+@trait(selector: "list:test(> member > string)")
+// lists with string members
+@refinement(targetType: "smithy4s.refined.FancyList")
 structure fancyListFormat {}
 
 @trait(selector: "string")
-@refinement(
-  targetType: "smithy4s.refined.Name"
-)
+@refinement(targetType: "smithy4s.refined.Name")
 structure nameFormat {}
 
 @trait(selector: "list")
-@refinement(
-  targetType: "smithy4s.refined.NonEmptyList",
-  parameterised: true
-)
+@refinement(targetType: "smithy4s.refined.NonEmptyList", parameterised: true)
 structure nonEmptyListFormat {}
 
 @trait(selector: "map")
-@refinement(
-  targetType: "smithy4s.refined.NonEmptyMap",
-  parameterised: true
-)
+@refinement(targetType: "smithy4s.refined.NonEmptyMap", parameterised: true)
 structure nonEmptyMapFormat {}
 
 @nonEmptyListFormat
 list NonEmptyStrings {
-  member: String
+    member: String
 }
 
 @nonEmptyListFormat
 list NonEmptyNames {
-  member: Name
+    member: Name
 }
 
 structure Candy {
-  name: String
+    name: String
 }
 
 @nonEmptyListFormat
 list NonEmptyCandies {
-  member: Candy
+    member: Candy
 }
 
 @nonEmptyMapFormat
 map NonEmptyMapNumbers {
-  key: String
-  value: Integer
+    key: String
+    value: Integer
 }
 
 @ageFormat
@@ -69,13 +64,13 @@ integer PersonAge
 
 @fancyListFormat
 list FancyList {
-  member: String
+    member: String
 }
 
 @fancyListFormat
 @unwrap
 list UnwrappedFancyList {
-  member: String
+    member: String
 }
 
 @nameFormat
@@ -85,23 +80,31 @@ string Name
 @unwrap
 string DogName
 
+@uuidTrait("00000000-0000-0000-0000-000000000000")
 structure StructureWithRefinedTypes {
-  age: Age,
-  personAge: PersonAge,
-  @required
-  requiredAge: Age,
-  fancyList: FancyList,
-  unwrappedFancyList: UnwrappedFancyList,
-  name: Name,
-  dogName: DogName
+    age: Age
+    personAge: PersonAge = 1
+    @required
+    requiredAge: Age
+    fancyList: FancyList
+    unwrappedFancyList: UnwrappedFancyList
+    name: Name
+    dogName: DogName
+    @ageFormat
+    inlineFieldConstraint: Integer = 1
+    uuidField: UUID = "00000000-0000-0000-0000-000000000000"
 }
 
 union UnionWithRefinedTypes {
-  age: Age,
-  dogName: DogName
+    age: Age
+    dogName: DogName
 }
 
 structure StructureWithRefinedMember {
-  @ageFormat
-  otherAge: Integer,
+    @ageFormat
+    otherAge: Integer
 }
+
+@uuidFormat
+@trait
+string uuidTrait

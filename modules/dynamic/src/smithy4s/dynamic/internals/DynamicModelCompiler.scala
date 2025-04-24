@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -125,25 +125,11 @@ private[dynamic] object Compiler {
         shapeId -> ClosureVisitor(shapeId, shape)
     }
 
+    private val recursiveShapesSet = recursiveVertices(closureMap)
+
     private def isRecursive(
-        id: ShapeId,
-        visited: Set[ShapeId] = Set.empty
-    ): Boolean = {
-      def transitiveClosure(
-          _id: ShapeId,
-          visited: Set[ShapeId]
-      ): Set[ShapeId] = {
-        val newVisited = visited + _id
-        val neighbours = closureMap.getOrElse(_id, Set.empty)
-        val nonVisitedNeighbours = neighbours.filterNot(newVisited)
-        val neighbourClosures =
-          nonVisitedNeighbours.flatMap(transitiveClosure(_, newVisited))
-        neighbours ++ neighbourClosures
-      }
-      val closure = transitiveClosure(id, Set.empty)
-      // A type is recursive if it's referenced in its own closure
-      closure.contains(id)
-    }
+        id: ShapeId
+    ): Boolean = recursiveShapesSet.contains(id)
 
     private def schema(idRef: IdRef): Eval[Schema[DynData]] = Eval.defer {
       schemaMap(
@@ -220,7 +206,6 @@ private[dynamic] object Compiler {
         shape.members.toList
           // Introducing arbitrary ordering for reproducible rendering.
           // Needs to happen before zipWithIndex so that intValue is also predictable.
-          .sortBy(_._1)
           .flatMap { case (k, m) =>
             getTrait[smithy.api.EnumValue](m.traits).toList.map {
               _.value match {
@@ -276,7 +261,7 @@ private[dynamic] object Compiler {
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
-      val values: Map[Int, EnumValue[Int]] = shape.members.toList
+      val values: List[EnumValue[Int]] = shape.members.toList
         .flatMap { case (k, m) =>
           getTrait[smithy.api.EnumValue](m.traits).toList.map {
             _.value match {
@@ -291,7 +276,7 @@ private[dynamic] object Compiler {
           }
         }
         .map { case (name, intValue, traits) =>
-          intValue -> EnumValue(
+          EnumValue(
             stringValue = name,
             intValue = intValue,
             value = intValue,
@@ -299,14 +284,12 @@ private[dynamic] object Compiler {
             hints = allHints(traits)
           )
         }
-        .toMap
 
-      val valueList = values.map(_._2).toList.sortBy(_.intValue)
-
+      val valueMap = values.map(v => v.intValue -> v).toMap
       if (shape.traits.contains(IdRef("alloy#openEnum"))) {
         val theEnum = enumeration[Int](
           v =>
-            values.getOrElse(
+            valueMap.getOrElse(
               v,
               EnumValue(
                 stringValue = v.toString,
@@ -317,7 +300,7 @@ private[dynamic] object Compiler {
               )
             ),
           EnumTag.OpenIntEnum(identity),
-          valueList
+          values
         )
 
         update(id, shape.traits, theEnum)
@@ -325,7 +308,7 @@ private[dynamic] object Compiler {
         update(
           id,
           shape.traits,
-          intEnumeration(values, valueList)
+          intEnumeration(valueMap, values)
         )
       }
     }
@@ -514,37 +497,43 @@ private[dynamic] object Compiler {
       serviceMap += id -> service
     }
 
-    override def structureShape(id: ShapeId, shape: StructureShape): Unit =
+    override def structureShape(id: ShapeId, shape: StructureShape): Unit = {
+      def getFieldSchema(
+          labelledShape: (String, MemberShape),
+          index: Int
+      ): Eval[Field[DynStruct, DynData]] = {
+        val (label, mShape) = labelledShape
+        val field = schema(mShape.target)
+          .map { sch =>
+            if (mShape.traits.contains(IdRef("alloy#nullable")))
+              sch.nullable.asInstanceOf[Schema[DynData]]
+            else
+              sch
+          }
+          .map { sch =>
+            if (mShape.traits.contains(IdRef("smithy.api#required")))
+              sch.required[DynStruct](label, Accessor(index))
+            else
+              sch
+                .optional[DynStruct](label, OptionalAccessor(index))
+                .asInstanceOf[Field[DynStruct, DynData]]
+          }
+        val memberHints = allHints(mShape.traits)
+        field.map(_.addHints(memberHints.all.toSeq: _*))
+      }
       update(
         id,
         shape.traits, {
           val lFields = {
-            shape.members.toVector.zipWithIndex.traverse {
-              case ((label, mShape), index) =>
-                val lMemberSchema = schema(mShape.target)
-                val lField =
-                  if (
-                    mShape.traits
-                      .contains(IdRef("smithy.api#required"))
-                  ) {
-                    lMemberSchema.map(
-                      _.required[DynStruct](label, Accessor(index))
-                    )
-                  } else {
-                    lMemberSchema.map(
-                      _.optional[DynStruct](label, OptionalAccessor(index))
-                        .asInstanceOf[Field[DynStruct, DynData]]
-                    )
-                  }
-                val memberHints = allHints(mShape.traits)
-                lField.map(_.addHints(memberHints.all.toSeq: _*))
-            }
+            shape.members.toVector.zipWithIndex
+              .traverse((getFieldSchema _).tupled)
           }
           if (isRecursive(id)) {
             Eval.later(recursive(struct(lFields.value)(Constructor)))
           } else lFields.map(fields => struct(fields)(Constructor))
         }
       )
+    }
 
     override def unionShape(id: ShapeId, shape: UnionShape): Unit = {
       update(

@@ -62,3 +62,12 @@ ThisBuild / bloopAllowedCombos := Seq(
   )
 )
 ```
+
+## Note for .sbtopts
+
+You usually should use `.sbtopts` to add some more memory for `sbt`, as Smithy4s is complex. You copy the `.sbtopts.example` to `.sbtopts` and adjust the values to your needs:
+
+```bash
+cp .sbtopts.example .sbtopts
+```
+

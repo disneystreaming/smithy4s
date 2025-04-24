@@ -14,11 +14,12 @@ object HostLabelInput extends ShapeTag.Companion[HostLabelInput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(label1: String, label2: String, label3: HostLabelEnum): HostLabelInput = HostLabelInput(label1, label2, label3)
+
   implicit val schema: Schema[HostLabelInput] = struct(
     string.required[HostLabelInput]("label1", _.label1).addHints(smithy.api.HostLabel()),
     string.required[HostLabelInput]("label2", _.label2).addHints(smithy.api.HostLabel()),
     HostLabelEnum.schema.required[HostLabelInput]("label3", _.label3).addHints(smithy.api.HostLabel()),
-  ){
-    HostLabelInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

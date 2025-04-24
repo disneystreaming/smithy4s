@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2023 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,4 +39,29 @@ class AdtSmokeSpec() extends FunSuite {
     assertEquals(d3, expected3)
   }
 
+  // NOTE: these `compileErrors` tests can yield false positives if the compilation is cached (this is a "fun" thing about macros).
+  // e.g. you may have to change this code or do `bootstrapped/Test/clean` to check in a fresh state.
+  test("@adt unions are subtypes of their members' common transitive mixins") {
+    assertEquals(
+      compileErrors("(??? : AdtUnionWithSomeTransitiveMixins): AdtMixinOne"),
+      ""
+    )
+  }
+
+  test(
+    "@adt unions are subtypes of their members' common direct&transitive mixins"
+  ) {
+    assertEquals(
+      compileErrors(
+        "(??? : AdtUnionWithTransitiveAndDirectMixins): AdtMixinOne"
+      ),
+      ""
+    )
+    assertEquals(
+      compileErrors(
+        "(??? : AdtUnionWithTransitiveAndDirectMixins): TransitiveMixin"
+      ),
+      ""
+    )
+  }
 }

@@ -13,5 +13,6 @@ object Serializable extends ShapeTag.Companion[Serializable] {
 
   val hints: Hints = Hints.empty
 
+
   implicit val schema: Schema[Serializable] = constant(Serializable()).withId(id).addHints(hints)
 }

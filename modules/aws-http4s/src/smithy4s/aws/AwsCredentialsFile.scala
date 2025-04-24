@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ object AwsCredentialsFile {
 }
 
 private object Profile {
-  private val profileMatch = "([\\w_-]*)"
+  private val profileMatch = "(.*)"
   object Default {
     def unapply(s: String): Option[String] =
       if (s == "[default]") Some("default") else None
@@ -177,7 +177,7 @@ private object Profile {
   object Prefixed {
     private val reg = s"^\\[profile $profileMatch\\]$$".r
     def unapply(s: String): Option[String] = s match {
-      case reg(first) => Some(first)
+      case reg(first) => Some(first.trim())
       case _          => None
     }
   }
@@ -185,7 +185,7 @@ private object Profile {
   object NonPrefixed {
     private val reg = s"^\\[$profileMatch\\]$$".r
     def unapply(s: String): Option[String] = s match {
-      case reg(first) => Some(first)
+      case reg(first) => Some(first.trim())
       case _          => None
     }
   }

@@ -14,9 +14,10 @@ object CustomCodeOutput extends ShapeTag.Companion[CustomCodeOutput] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(code: Option[Int]): CustomCodeOutput = CustomCodeOutput(code)
+
   implicit val schema: Schema[CustomCodeOutput] = struct(
     int.optional[CustomCodeOutput]("code", _.code).addHints(smithy.api.HttpResponseCode()),
-  ){
-    CustomCodeOutput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

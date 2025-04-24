@@ -15,5 +15,6 @@ object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
     smithy.api.Trait(selector = Some("list"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+
   implicit val schema: Schema[NonEmptyListFormat] = constant(NonEmptyListFormat()).withId(id).addHints(hints)
 }

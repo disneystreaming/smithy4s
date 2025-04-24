@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2024 Disney Streaming
+ *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,13 @@
 
 package smithy4s.codegen.internals
 
-final class RendererSpec extends munit.FunSuite {
+import org.scalacheck.Gen
+import org.scalacheck.Prop
+import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.EnumShape
+import software.amazon.smithy.model.shapes.StructureShape
+
+final class RendererSpec extends munit.ScalaCheckSuite {
   import TestUtils._
 
   test("list member hints should be preserved") {
@@ -44,7 +50,7 @@ final class RendererSpec extends munit.FunSuite {
       }
 
     val memberSchemaString =
-      """string.addMemberHints(smithy.api.Documentation("listFoo"), smithy.api.Deprecated(message = None, since = None))"""
+      """string.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("listFoo"))"""
     val requiredString =
       s"""val underlyingSchema: Schema[List[String]] = list($memberSchemaString)"""
     assert(definition.contains(requiredString))
@@ -80,7 +86,7 @@ final class RendererSpec extends munit.FunSuite {
     val keySchemaString =
       """string.addMemberHints(smithy.api.Documentation("mapFoo"))"""
     val valueSchemaString =
-      """int.addMemberHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))"""
+      """int.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("mapBar"))"""
     val requiredString =
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
@@ -152,7 +158,7 @@ final class RendererSpec extends munit.FunSuite {
       "/** this is a HAERT */",
       "@deprecated",
       """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty)""",
-      """override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None)).lazily"""
+      """override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("this is a HAERT")).lazily"""
     )
 
     assert(
@@ -267,7 +273,7 @@ final class RendererSpec extends munit.FunSuite {
       """|  /** this is a HAERT */
          |  @deprecated(message = "typo", since = "0.0.0")
          |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty) {
-         |    override val hints: Hints = Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0"))).lazily
+         |    override val hints: Hints = Hints(smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0")), smithy.api.Documentation("this is a HAERT")).lazily
          |  }""".stripMargin
 
     assert(
@@ -483,5 +489,224 @@ final class RendererSpec extends munit.FunSuite {
         )
       )
     )
+  }
+
+  test(
+    "generated code of a shape that is applied @scalaImports should contain imports"
+  ) {
+
+    val structure =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyStruct @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |structure MyStruct {
+        | str: String
+        |}
+        |""".stripMargin
+
+    val service =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyService @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |
+        |service MyService {
+        |  version: "1.0.0"
+        |}
+        |""".stripMargin
+
+    val union =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyUnion @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |union MyUnion {
+        | int: Integer,
+        | str: String
+        |}
+        |""".stripMargin
+
+    val myEnum =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#scalaImports
+        |
+        |apply smithy4s#MyEnum @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |
+        |enum MyEnum {
+        | Right = "right"
+        | Left = "left"
+        |}
+        |""".stripMargin
+
+    List(structure, service, union, myEnum).foreach { smithy =>
+      val contents = generateScalaCode(smithy).values
+
+      assert(
+        contents.exists(_.contains("import smithy4s.providers._")),
+        "generated code should contain imports"
+      )
+    }
+
+  }
+
+  test("mix refinement and scalaImports work") {
+
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#refinement
+        |use smithy4s.meta#scalaImports
+        |
+        |@trait(selector: "integer")
+        |structure SizeFormat { }
+        |
+        |apply smithy4s#SizeFormat @refinement(
+        |  targetType: "smithy4s.types.Natural"
+        |  providerImport: "smithy4s.providers._"
+        |)
+        |
+        |@SizeFormat
+        |integer Size
+        |
+        |structure Input {
+        |
+        |@range(min: 1, max: 100)
+        |size: Size
+        |
+        |}
+        |
+        |apply smithy4s#Input @scalaImports(
+        |  ["smithy4s.providers._"]
+        |)
+        |""".stripMargin
+
+    val allContents = generateScalaCode(smithy)
+
+    assert(
+      allContents("smithy4s.Size").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
+    assert(
+      allContents("smithy4s.Input").contains("import smithy4s.providers._"),
+      "generated code should contain imports"
+    )
+
+  }
+
+  property("enumeration order is preserved") {
+
+    // custom input to avoid scalacheck shrinking
+    case class Input(identifiers: List[String])
+    Prop.forAll(
+      Gen
+        .nonEmptyListOf(Gen.identifier.map(_.toUpperCase()))
+        .map(_.distinct)
+        .map(Input(_))
+    ) { input =>
+      import input.identifiers
+      val builder = EnumShape.builder().id("input#MyEnum")
+      identifiers.foreach(id => builder.addMember(id, id))
+      val enumShape = builder.build()
+      val unitShape = StructureShape.builder().id("smithy.api#Unit").build()
+
+      val model = Model.builder().addShapes(unitShape, enumShape).build()
+
+      val allContents = generateScalaCode(model)
+      allContents.values.exists { fileContent =>
+        val cleanLines = fileContent.linesIterator
+          .map(_.trim().replace(",", "")) // removing whitespace and commas
+          .toList
+
+        cleanLines.containsSlice(identifiers)
+      }
+    }
+  }
+
+  test("newtype with constraint and validateNewtype annotation") {
+    val smithy = """
+                   |$version: "2"
+                   |
+                   |namespace smithy4s.example
+                   |
+                   |use smithy4s.meta#validateNewtype
+                   |
+                   |@length(min: 1, max: 10)
+                   |@validateNewtype
+                   |string MyValidatedString
+                   |
+                   |structure ValidatedFoo {
+                   |  mvs: MyValidatedString
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains("object MyValidatedString extends ValidatedNewtype[String]")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains(
+          "final case class ValidatedFoo(mvs: Option[MyValidatedString] = None)"
+        )
+      )
+    )
+  }
+
+  // regression test for https://github.com/disneystreaming/smithy4s/issues/1655
+  test("validated newtypes force creation of a package object") {
+    val smithy =
+      """$version: "2"
+        |
+        |namespace smithy4s.example
+        |
+        |use smithy4s.meta#validateNewtype
+        |
+        |@validateNewtype
+        |@length(min: 1)
+        |string SomeValidatedNewtype
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy).keySet
+
+    assert(
+      files.contains("smithy4s.example.package"),
+      files.toString + " should contain smithy4s.example.package"
+    )
+
   }
 }

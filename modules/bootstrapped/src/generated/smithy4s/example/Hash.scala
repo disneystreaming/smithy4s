@@ -15,5 +15,6 @@ object Hash extends ShapeTag.Companion[Hash] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
+
   implicit val schema: Schema[Hash] = constant(Hash()).withId(id).addHints(hints)
 }

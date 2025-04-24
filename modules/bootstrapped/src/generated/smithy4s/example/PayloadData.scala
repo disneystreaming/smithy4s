@@ -13,9 +13,10 @@ object PayloadData extends ShapeTag.Companion[PayloadData] {
 
   val hints: Hints = Hints.empty
 
+  // constructor using the original order from the spec
+  private def make(testBiggerUnion: Option[TestBiggerUnion]): PayloadData = PayloadData(testBiggerUnion)
+
   implicit val schema: Schema[PayloadData] = struct(
     TestBiggerUnion.schema.optional[PayloadData]("testBiggerUnion", _.testBiggerUnion),
-  ){
-    PayloadData.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }

@@ -21,11 +21,12 @@ object TestInput extends ShapeTag.Companion[TestInput] {
     val queryParam: Lens[TestInput, Option[String]] = Lens[TestInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
   }
 
+  // constructor using the original order from the spec
+  private def make(pathParam: String, queryParam: Option[String], body: TestBody): TestInput = TestInput(pathParam, body, queryParam)
+
   implicit val schema: Schema[TestInput] = struct(
     string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.HttpLabel()),
-    TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload()),
     string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
-  ){
-    TestInput.apply
-  }.withId(id).addHints(hints)
+    TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload()),
+  )(make).withId(id).addHints(hints)
 }

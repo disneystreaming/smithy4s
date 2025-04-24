@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
 /** Our order types have different ways to identify a product
-  * Except for preview orders, these don't have an ID 
+  * Except for preview orders, these don't have an ID
   */
 sealed trait OrderType extends scala.Product with scala.Serializable { self =>
   @inline final def widen: OrderType = this
@@ -33,13 +33,13 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
   def online(online: OrderNumber): OrderType = OnlineCase(online)
   /** For an InStoreOrder a location ID isn't needed */
-  def inStoreOrder(id: OrderNumber, locationId: Option[String] = None):InStoreOrder = InStoreOrder(id, locationId)
+  def inStoreOrder(id: OrderNumber, locationId: Option[String] = None): InStoreOrder = InStoreOrder(id, locationId)
   def preview(): OrderType = OrderType.PreviewCase
 
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
+    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
   ).lazily
 
   final case class OnlineCase(online: OrderNumber) extends OrderType { final def $ordinal: Int = 0 }
@@ -48,19 +48,20 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     def $ordinal: Int = 1
   }
 
-  object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
+  object InStoreOrder {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints: Hints = Hints(
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     ).lazily
 
+    // constructor using the original order from the spec
+    private def make(id: OrderNumber, locationId: Option[String]): InStoreOrder = InStoreOrder(id, locationId)
+
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id),
       string.optional[InStoreOrder]("locationId", _.locationId),
-    ){
-      InStoreOrder.apply
-    }.withId(id).addHints(hints)
+    )(make).withId(id).addHints(hints)
 
     val alt = schema.oneOf[OrderType]("inStore")
   }

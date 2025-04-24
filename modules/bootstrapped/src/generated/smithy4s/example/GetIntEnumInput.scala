@@ -15,9 +15,10 @@ object GetIntEnumInput extends ShapeTag.Companion[GetIntEnumInput] {
     smithy.api.Input(),
   ).lazily
 
+  // constructor using the original order from the spec
+  private def make(aa: EnumResult): GetIntEnumInput = GetIntEnumInput(aa)
+
   implicit val schema: Schema[GetIntEnumInput] = struct(
     EnumResult.schema.required[GetIntEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel()),
-  ){
-    GetIntEnumInput.apply
-  }.withId(id).addHints(hints)
+  )(make).withId(id).addHints(hints)
 }
