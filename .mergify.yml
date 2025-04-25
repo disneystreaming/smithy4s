@@ -2,7 +2,7 @@ pull_request_rules:
   - name: Automatically approve/merge Scala Steward PRs on CI success
     conditions:
       - author=scala-steward
-      - status-success="build-success-checkpoint"
+      - check-success="build-success-checkpoint"
       - body~=labels:.*semver-spec-patch
     actions:
       review:
@@ -11,15 +11,15 @@ pull_request_rules:
       merge:
         method: merge
 
-  - name: backport labeled PRs to the 0.19 branch
+  - name: forward-port labeled PRs to the 0.19 branch
     conditions:
-      - label="backport-0.19"
+      - label="forwardport-0.19"
     actions:
       backport:
         branches:
           - "series/0.19"
 
-  - name: automatically merge backport if they pass tests
+  - name: automatically merge forward-port if the pass tests
     conditions:
       - author=mergify[bot]
       - head~=^mergify/bp/
