@@ -68,7 +68,7 @@ The following instances of `Tagged`
 
 ```scala
 Tagged.FirstCase("smithy4s")
-Tagged.SecondCase(IntWrapper(42)))
+Tagged.SecondCase(IntWrapper(42))
 ```
 
 are encoded as such :
@@ -100,7 +100,7 @@ The following instances of `Untagged`
 
 ```scala
 Untagged.FirstCase("smithy4s")
-Untagged.SecondCase(Two(42)))
+Untagged.SecondCase(Two(42))
 ```
 
 are encoded as such :
@@ -139,7 +139,7 @@ The following instances of `Discriminated`
 
 ```scala
 Discriminated.FirstCase(StringWrapper("smithy4s"))
-Discriminated.SecondCase(IntWrapper(42)))
+Discriminated.SecondCase(IntWrapper(42))
 ```
 
 are  encoded as such
