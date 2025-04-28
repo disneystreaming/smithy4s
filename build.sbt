@@ -158,7 +158,9 @@ lazy val docs =
     .jvmPlatform(
       autoScalaLibrary = false,
       scalaVersions = Seq.empty,
-      settings = jvmDimSettings
+      settings = jvmDimSettings ++ Seq(
+        Compile / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "modules" / "website" / "static"
+      )
     )
 
 val munitDeps = Def.setting {

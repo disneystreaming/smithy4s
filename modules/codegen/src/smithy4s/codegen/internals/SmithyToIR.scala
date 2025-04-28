@@ -53,6 +53,7 @@ import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
 import scala.util.Try
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 private[codegen] object SmithyToIR {
 
@@ -82,7 +83,10 @@ private[codegen] class SmithyToIR(
     namespace: String
 ) {
 
-  val finder = PathFinder.create(model)
+  private val finder = PathFinder.create(model)
+
+  // Contains mixins of the given shape that have matching fields.
+  private val mixinsOfCache = new ConcurrentHashMap[ShapeId, Set[ShapeId]]()
 
   val allShapes =
     model
@@ -213,7 +217,7 @@ private[codegen] class SmithyToIR(
           fields
             .find(_.name == memberName)
             .forall { field =>
-              field.modifier == fieldModifier(member)
+              field.modifier.typeMod == fieldModifier(member).typeMod
             }
         }
       }
@@ -227,10 +231,7 @@ private[codegen] class SmithyToIR(
         val rec = isRecursive(shape.getId()) || isTrait
 
         val fields = shape.fields
-        val filteredMixins = shape
-          .getMixins()
-          .asScala
-          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val filteredMixins = getMixinsMatchingFields(shape)
         val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
           .flatMap(_.tpe)
           .toList
@@ -263,20 +264,28 @@ private[codegen] class SmithyToIR(
           .map(mem => model.expectShape(mem.getTarget))
 
         val mixins: List[Set[ShapeId]] = memberTargets
-          .map { targetShape =>
-            def allMixinsOf(s: Shape): Set[ShapeId] =
-              s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
-                allMixinsOf(model.expectShape(m)) + m
-              }
-
-            allMixinsOf(targetShape)
-              .filter(mixinId => doFieldsMatch(mixinId, targetShape.fields))
-          }
+          .map(getMixinsMatchingFields)
 
         val result =
           if (mixins.isEmpty) Set.empty else mixins.reduce(_ intersect _)
 
         result.toList
+      }
+
+      private def getMixinsMatchingFields(shape: Shape): Set[ShapeId] = {
+        def allMixinsOf(s: Shape): Set[ShapeId] =
+          s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
+            allMixinsOf(model.expectShape(m)) + m
+          }
+
+        mixinsOfCache
+          .computeIfAbsent(
+            shape.getId,
+            _ =>
+              allMixinsOf(shape)
+                // This filter is the more intensive part worth caching
+                .filter(doFieldsMatch(_, shape.fields))
+          )
       }
 
       // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)

@@ -172,7 +172,7 @@ jobs:
         run: echo "SMITHY4S_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
 
       - name: Compile Documentation Markdown Files
-        run: sbt "docs/mdoc"
+        run: sbt "docsRendering/mdoc"
 
       - name: Build Microsite
         run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
