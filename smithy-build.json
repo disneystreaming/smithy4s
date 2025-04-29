@@ -4,7 +4,7 @@
   "maven": {
     "dependencies": [
       "software.amazon.smithy:smithy-protocol-test-traits:1.56.0",
-      "com.disneystreaming.alloy:alloy-core:0.3.17"
+      "com.disneystreaming.alloy:alloy-core:0.3.18"
     ]
   }
 }
