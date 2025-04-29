@@ -41,7 +41,7 @@ private[codegen] object ModelLoader {
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(
-      dependencies :+ protocolDependency,
+      dependencies :+ protocolDependency :+ "com.disneystreaming.smithy4s:smithy4s-codegenProtocol_2.13:dev-SNAPSHOT" :+ "com.disneystreaming.alloy:alloy-openapi_2.13:dev-SNAPSHOT",
       localJars,
       repositories
     )
@@ -51,7 +51,7 @@ private[codegen] object ModelLoader {
           name: String,
           resolve: Boolean
       ): Class[?] = {
-        if (name.startsWith("software.amazon.smithy")) {
+        if (name.startsWith("software.amazon.smithy") || name.startsWith("scala")) {
           currentClassLoader.loadClass(name);
         } else {
           super.loadClass(name, resolve);

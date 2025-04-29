@@ -122,7 +122,7 @@ private[codegen] class SmithyToIR(
 
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
-    val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
+    val hasNullable = member.hasTrait(alloy.NullableTrait.ID)
     val defaultNode =
       member.getTrait(classOf[DefaultTrait]).asScala.map(_.toNode)
     val defaultTypedNode = defaultRenderMode match {
@@ -311,7 +311,7 @@ private[codegen] class SmithyToIR(
         val rec = isRecursive(shape.getId())
 
         val mixins =
-          if (shape.hasTrait(classOf[AdtTrait])) getMixins(shape)
+          if (shape.hasTrait(AdtTrait.ID)) getMixins(shape)
           else List.empty
 
         val hints = SmithyToIR.this.hints(shape)
@@ -401,7 +401,7 @@ private[codegen] class SmithyToIR(
           }
           .toList
 
-        val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
+        val isOpen = shape.hasTrait(alloy.OpenEnumTrait.ID)
         val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
 
         Enumeration(
@@ -431,7 +431,7 @@ private[codegen] class SmithyToIR(
           }
           .toList
 
-        val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
+        val isOpen = shape.hasTrait(alloy.OpenEnumTrait.ID)
         val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
 
         Enumeration(
@@ -574,8 +574,13 @@ private[codegen] class SmithyToIR(
             val refinement = model
               .getShape(trt.toShapeId)
               .asScala
-              .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
-              .map(rt => trt -> ExternalTypeInfo.RefinementInfo(rt))
+              .flatMap(a => a.findTrait(RefinementTrait.ID).asScala)
+              .map(rt =>
+                trt -> ExternalTypeInfo.RefinementInfo(
+                  new RefinementTrait.Provider()
+                    .createTrait(RefinementTrait.ID, rt.toNode)
+                )
+              )
             def idRef =
               if (trt.toShapeId == IdRefTrait.ID) {
                 val rt = RefinementTrait
@@ -588,8 +593,11 @@ private[codegen] class SmithyToIR(
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
           .orElse {
-            shape.getTrait(classOf[StructurePatternTrait]).asScala.map { trt =>
-              trt -> ExternalTypeInfo.StructurePatternInfo(trt)
+            shape.findTrait(StructurePatternTrait.ID).asScala.map { trt =>
+              trt -> ExternalTypeInfo.StructurePatternInfo(
+                new StructurePatternTrait.Provider()
+                  .createTrait(StructurePatternTrait.ID, trt.toNode)
+              )
             }
           }
       }
@@ -629,7 +637,7 @@ private[codegen] class SmithyToIR(
       }
 
       private def isUnwrappedShape(shape: Shape): Boolean = {
-        shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
+        shape.hasTrait(smithy4s.meta.UnwrapTrait.ID)
       }
 
       def primitive(
@@ -644,7 +652,7 @@ private[codegen] class SmithyToIR(
           !isUnboxedPrimitive(shape.getId())
         ) {
           val shouldValidate =
-            shape.hasTrait(classOf[ValidateNewtypeTrait])
+            shape.hasTrait(ValidateNewtypeTrait.ID)
           if (shouldValidate) {
             Type
               .ValidatedAlias(
@@ -808,7 +816,7 @@ private[codegen] class SmithyToIR(
         case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
           Type.PrimitiveType(Primitive.Uuid).some
-        case T.uuidFormat(_) =>
+        case _ if x.hasTrait(alloy.UuidFormatTrait.ID) =>
           Type
             .Alias(
               x.namespace,
@@ -937,7 +945,11 @@ private[codegen] class SmithyToIR(
         model
           .getShape(trt.toShapeId)
           .asScala
-          .flatMap(_.getTrait(classOf[TypeclassTrait]).asScala)
+          .flatMap(_.findTrait(TypeclassTrait.ID).asScala)
+          .map(trt =>
+            new TypeclassTrait.Provider()
+              .createTrait(TypeclassTrait.ID, trt.toNode())
+          )
           .map(trt -> _)
       }
       .map { case (typeclassName, typeclassInfo) =>
@@ -961,27 +973,29 @@ private[codegen] class SmithyToIR(
         Type.Ref(shapeId.getNamespace(), shapeId.getName())
       )
       Hint.Protocol(refs.toList)
-    case _: PackedInputsTrait =>
+    case t if t.toShapeId == PackedInputsTrait.ID =>
       Hint.PackedInputs
     case d: DeprecatedTrait =>
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
-    case _: ErrorMessageTrait =>
+    case t if t.toShapeId == ErrorMessageTrait.ID =>
       Hint.ErrorMessage
-    case _: NoStackTraceTrait =>
+    case t if t.toShapeId == NoStackTraceTrait.ID =>
       Hint.NoStackTrace
-    case _: VectorTrait =>
+    case t if t.toShapeId == VectorTrait.ID =>
       Hint.SpecializedList.Vector
-    case _: IndexedSeqTrait =>
+    case t if t.toShapeId == IndexedSeqTrait.ID =>
       Hint.SpecializedList.IndexedSeq
     case _: UniqueItemsTrait =>
       Hint.UniqueItems
-    case _: GenerateServiceProductTrait =>
+    case t if t.toShapeId == GenerateServiceProductTrait.ID =>
       Hint.GenerateServiceProduct
-    case _: GenerateOpticsTrait =>
+    case t if t.toShapeId == GenerateOpticsTrait.ID =>
       Hint.GenerateOptics
-    case s: ScalaImportsTrait =>
+    case t if t.toShapeId == ScalaImportsTrait.ID =>
+      val s = new ScalaImportsTrait.Provider()
+        .createTrait(ScalaImportsTrait.ID, t.toNode)
       Hint.ScalaImports(s.getImports().asScala.toList)
-    case _: ValidateNewtypeTrait =>
+    case t if t.toShapeId == ValidateNewtypeTrait.ID =>
       Hint.ValidateNewtype
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
@@ -1218,7 +1232,7 @@ private[codegen] class SmithyToIR(
   private case class NodeAndType(node: Node, tpe: Type)
 
   private def isPartOfAdt(shape: Shape): Boolean = {
-    shape.hasTrait(classOf[AdtMemberTrait]) ||
+    shape.hasTrait(AdtMemberTrait.ID) ||
     getAdtParent(shape).isDefined
   }
 
@@ -1228,9 +1242,7 @@ private[codegen] class SmithyToIR(
       .asScala
       .toList
       .filter(_.getTarget == shape.toShapeId)
-      .find(mem =>
-        model.expectShape(mem.getContainer).hasTrait(classOf[AdtTrait])
-      )
+      .find(mem => model.expectShape(mem.getContainer).hasTrait(AdtTrait.ID))
 
     result.map(_.getContainer)
   }
@@ -1243,9 +1255,13 @@ private[codegen] class SmithyToIR(
           .asScala
         maybeShape.map { shape =>
           val fromAdtMember = shape
-            .getTrait(classOf[AdtMemberTrait])
+            .findTrait(AdtMemberTrait.ID)
             .asScala
-            .map(_.getValue)
+            .map(t =>
+              new AdtMemberTrait.Provider()
+                .createTrait(AdtMemberTrait.ID, t.toNode)
+                .getValue
+            )
           val adtParent: Option[ShapeId] =
             fromAdtMember orElse getAdtParent(shape)
           adtParent match {

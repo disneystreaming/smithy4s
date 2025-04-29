@@ -16,7 +16,6 @@
 
 package smithy4s.codegen
 
-import alloy.UuidFormatTrait
 import cats.syntax.all._
 import smithy4s.codegen.internals.LineSegment.NameRef
 import smithy4s.codegen.internals.LineSyntax.LineInterpolator
@@ -125,7 +124,6 @@ package object internals {
     @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
     object enumeration extends TraitExtractor[EnumTrait]
     object timestampFormat extends TraitExtractor[TimestampFormatTrait]
-    object uuidFormat extends TraitExtractor[UuidFormatTrait]
   }
 
   private[internals] object N {
