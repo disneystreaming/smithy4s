@@ -56,6 +56,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core,
   codegen,
+  codegenProtocol,
   docs,
   millCodegenPlugin,
   json,
@@ -456,14 +457,40 @@ lazy val codegen = projectMatrix
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
     bloopEnabled := true,
+    (Compile / compile) := (Compile / compile)
+      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .value
+  )
+
+lazy val codegenProtocol = projectMatrix
+  .in(file("modules/codegen-protocol"))
+  .dependsOn(protocol)
+  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Cats.core.value,
+      Dependencies.Smithy.model,
+      Dependencies.Smithy.build,
+      Dependencies.Alloy.core,
+      Dependencies.Alloy.openapi,
+      Dependencies.Smithytranslate.proto,
+      "com.lihaoyi" %% "os-lib" % "0.10.1",
+      Dependencies.Circe.core.value,
+      Dependencies.Circe.parser.value,
+      Dependencies.Circe.generic.value,
+      Dependencies.collectionsCompat.value,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "io.get-coursier" %% "coursier" % "2.1.24"
+    ),
+    libraryDependencies ++= munitDeps.value,
+    scalacOptions := scalacOptions.value
+      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
+    bloopEnabled := true,
     Compile / sourceGenerators += {
       sourceManaged
         .map(AwsBoilerplate.generate(_))
         .taskValue,
-    },
-    (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
-      .value
+    }
   )
 
 /**

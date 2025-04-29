@@ -20,7 +20,6 @@ package internals
 import alloy.openapi._
 import smithy4s.codegen.CodegenEntry.FromDisk
 import smithy4s.codegen.CodegenEntry.FromMemory
-import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
@@ -250,11 +249,11 @@ private[codegen] object CodegenImpl { self =>
       transformers: List[String]
   ): List[String] =
     transformers :+
-      AwsConstraintsRemover.name :+
-      AwsStandardTypesTransformer.name :+
-      OpenEnumTransformer.name :+
-      KeepOnlyMarkedShapes.name :+
-      ValidatedNewtypesTransformer.name
+      "AwsConstraintsRemover" :+
+      "AwsStandardTypesTransformer" :+
+      "OpenEnumTransformer" :+
+      "KeepOnlyMarkedShapes" :+
+      "ValidatedNewtypesTransformer"
 }
 
 case class RepeatedNamespaceException(
