@@ -25,15 +25,9 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
-import software.amazon.smithy.model.loader.ModelDiscovery
-import software.amazon.smithy.model.loader.ModelManifestException
 
 import java.io.File
 import java.net.URLClassLoader
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import scala.jdk.CollectionConverters._
-import scala.util.Using
 
 private[codegen] object ModelLoader {
 
@@ -52,68 +46,25 @@ private[codegen] object ModelLoader {
       repositories
     )
 
-    val modelsInJars = deps.flatMap { file =>
-      Using.resource(
-        // Note: On JDK13+, the second parameter is redundant.
-        FileSystems.newFileSystem(file.toPath(), null: ClassLoader)
-      ) { jarFS =>
-        val p = jarFS.getPath("META-INF", "smithy", "manifest")
-
-        // model discovery would throw if we tried to pass a non-existent path
-        if (!Files.exists(p)) Nil
-        else {
-          try ModelDiscovery.findModels(p.toUri().toURL()).asScala.toList
-          catch {
-            case e: ModelManifestException =>
-              System.err.println(
-                s"Unexpected exception while loading model from $file, skipping: $e"
-              )
-              Nil
-          }
-        }
-      }
-    }
-
-    // Loading the upstream model
-    val upstreamModel = Model
-      .assembler()
-      // disabling cache to support snapshot-driven experimentation
-      .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
-      .addClasspathModels(currentClassLoader, discoverModels)
-      .addImports(modelsInJars)
-      .assemble()
-      .unwrap()
-
-    val sanitisingModelBuilder = upstreamModel.toBuilder()
-
-    // Appending all metadata that is not Smithy4s-specific, as well as relevant
-    // Smithy4s-related metadata, into the resulting model.
-    upstreamModel.getMetadata().asScala.foreach {
-      case (CodegenRecord.METADATA_KEY, _) => ()
-      case (k, _) if k.startsWith("smithy4s") =>
-        sanitisingModelBuilder.removeMetadataProperty(k)
-      case _ => ()
-    }
-
-    val validatorClassLoader = locally {
+    val modelCL = locally {
       val jarUrls = deps.map(_.toURI().toURL()).toArray
       new URLClassLoader(jarUrls, currentClassLoader)
     }
 
-    val preTransformationModel =
-      Model
-        .assembler(validatorClassLoader)
-        .addModel(sanitisingModelBuilder.build())
-        .addImports(specs)
-        .assemble()
-        .unwrap
+    val preTransformationModel = Model
+      .assembler(modelCL)
+      // disabling cache to support snapshot-driven experimentation
+      .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
+      .discoverModels(modelCL)
+      .addImports(specs)
+      .assemble()
+      .unwrap()
 
-    val serviceFactory =
-      ProjectionTransformer.createServiceFactory(validatorClassLoader)
+    val transformerFactory =
+      ProjectionTransformer.createServiceFactory(modelCL)
 
-    val trans = transformers.flatMap { t =>
-      val result = serviceFactory(t)
-      if (result.isPresent()) Some(result.get) else None
+    val trans = transformers.flatMap {
+      transformerFactory(_).asScala
     }
 
     val transformedModel = trans.foldLeft(preTransformationModel)((m, t) =>
@@ -121,12 +72,15 @@ private[codegen] object ModelLoader {
     )
 
     val postTransformationModel = Model
-      .assembler(validatorClassLoader)
+      .assembler(modelCL)
       .addModel(transformedModel)
       .assemble()
       .unwrap
 
-    (validatorClassLoader, postTransformationModel)
+    (
+      modelCL,
+      postTransformationModel
+    )
   }
 
   private def resolveDependencies(
