@@ -1069,7 +1069,7 @@ private[codegen] class SmithyToIR(
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
+    def fields: List[Field] = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
@@ -1088,7 +1088,7 @@ private[codegen] class SmithyToIR(
             member.getMemberName(),
             member.tpe,
             modifier,
-            hintsExtractor(member) ++ default ++ noDefault
+            hints(member) ++ default ++ noDefault
           )
         }
         .zipWithIndex
@@ -1111,20 +1111,6 @@ private[codegen] class SmithyToIR(
         case DefaultRenderMode.NoDefaults => result
       }
     }
-
-    /**
-      * Should be used when calculating schema for a structure.
-      *
-      * See https://github.com/disneystreaming/smithy4s/issues/1296 for details.
-      */
-    def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
-
-    /**
-      * Should be used only on the call site
-      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
-      */
-    def getFieldsPlain: List[Field] =
-      fieldsInternal(hintsExtractor = _ => List.empty)
 
     def alts = {
       shape
@@ -1287,8 +1273,8 @@ private[codegen] class SmithyToIR(
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
-        val structFields = struct.getFieldsPlain
-        val fieldNames = struct.getFieldsPlain.map(_.name)
+        val structFields = struct.fields
+        val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
