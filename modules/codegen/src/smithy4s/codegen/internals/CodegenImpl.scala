@@ -29,6 +29,7 @@ import software.amazon.smithy.model.SourceLocation
 import scala.util.matching.Regex
 
 import scala.jdk.CollectionConverters._
+import smithy4s.codegen.transformers._
 
 private[codegen] object CodegenImpl { self =>
 
@@ -249,11 +250,11 @@ private[codegen] object CodegenImpl { self =>
       transformers: List[String]
   ): List[String] =
     transformers :+
-      "AwsConstraintsRemover" :+
-      "AwsStandardTypesTransformer" :+
-      "OpenEnumTransformer" :+
-      "KeepOnlyMarkedShapes" :+
-      "ValidatedNewtypesTransformer"
+      AwsConstraintsRemover.name :+
+      AwsStandardTypesTransformer.name :+
+      OpenEnumTransformer.name :+
+      KeepOnlyMarkedShapes.name :+
+      ValidatedNewtypesTransformer.name
 }
 
 case class RepeatedNamespaceException(
