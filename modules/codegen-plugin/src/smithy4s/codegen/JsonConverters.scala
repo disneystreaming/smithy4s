@@ -79,7 +79,6 @@ private[smithy4s] object JsonConverters {
         ("output", ca.output) :*:
         ("resourceOutput", ca.resourceOutput) :*:
         ("skip", ca.skip) :*:
-        ("discoverModels", ca.discoverModels) :*:
         ("allowedNS", ca.allowedNS) :*:
         ("excludedNS", ca.excludedNS) :*:
         ("repositories", ca.repositories) :*:
@@ -94,7 +93,6 @@ private[smithy4s] object JsonConverters {
           (_, output) :*:
           (_, resourceOutput) :*:
           (_, skip) :*:
-          (_, discoverModels) :*:
           (_, allowedNS) :*:
           (_, excludedNS) :*:
           (_, repositories) :*:
@@ -107,7 +105,6 @@ private[smithy4s] object JsonConverters {
           output,
           resourceOutput,
           skip,
-          discoverModels,
           allowedNS,
           excludedNS,
           repositories,

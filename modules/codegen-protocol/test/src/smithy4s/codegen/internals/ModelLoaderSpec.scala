@@ -30,7 +30,6 @@ class ModelLoaderSpec extends FunSuite {
         dependencies,
         repositories,
         transformers = Nil,
-        discoverModels = false,
         localJars = Nil
       )
       ._2
