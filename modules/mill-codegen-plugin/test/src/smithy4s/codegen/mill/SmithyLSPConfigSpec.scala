@@ -71,6 +71,7 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
           |       "com.disneystreaming.smithy4s:smithy4s-protocol:${smithy4s.codegen.BuildInfo.version}"
           |    ],
           |    "repositories": [
+          |       { "url": "https://s01.oss.sonatype.org/content/repositories/snapshots" },
           |       { "url": "https://some.corpo.example.com/artifactory" }
           |    ]
           |  }

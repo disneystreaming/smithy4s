@@ -17,6 +17,7 @@
 package smithy4s.codegen.mill
 
 import coursier.maven.MavenRepository
+import coursier.core.Repository
 import mill._
 import mill.api.JarManifest
 import mill.api.PathRef
@@ -144,6 +145,14 @@ trait Smithy4sModule extends ScalaModule {
     resolveDeps(T.task {
       smithy4sAllExternalDependencies()
     })()
+  }
+
+  override def repositoriesTask: Task[Seq[Repository]] = T.task {
+    Seq(
+      MavenRepository(
+        "https://s01.oss.sonatype.org/content/repositories/snapshots"
+      )
+    ) ++ super.repositoriesTask()
   }
 
   def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
