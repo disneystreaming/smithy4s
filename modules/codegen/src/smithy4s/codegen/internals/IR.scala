@@ -338,7 +338,13 @@ private[internals] object CollectionType {
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
-private[internals] sealed trait Hint
+private[internals] sealed trait Hint {
+  def sameNativeTrait(native: Hint.Native): Boolean =
+    this match {
+      case Hint.Native(shapeId, _) => shapeId == native.shapeId
+      case _                       => false
+    }
+}
 
 private[internals] object Hint {
   case object Trait extends Hint
@@ -356,8 +362,13 @@ private[internals] object Hint {
   ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
-  // traits that get rendered generically
-  case class Native(shapeId: ShapeId, typedNode: Fix[TypedNode]) extends Hint
+
+  // Traits that get rendered generically.
+  // The typed node is potentially lazy, to simplify the handling of recursive traits:
+  // https://github.com/disneystreaming/smithy4s/issues/1308
+  // https://github.com/disneystreaming/smithy4s/issues/1296
+  case class Native(shapeId: ShapeId, typedNode: Eval[Fix[TypedNode]])
+      extends Hint
   case object IntEnum extends Hint
   case object OpenEnum extends Hint
 

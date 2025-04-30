@@ -95,6 +95,8 @@ package object example {
   type PublisherId = smithy4s.example.PublisherId.Type
   type PublishersList = smithy4s.example.PublishersList.Type
   type RecursiveList = smithy4s.example.RecursiveList.Type
+  type RecursiveListTrait = smithy4s.example.RecursiveListTrait.Type
+  type RecursiveMapTrait = smithy4s.example.RecursiveMapTrait.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type SomeValue = smithy4s.example.SomeValue.Type
