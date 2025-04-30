@@ -479,7 +479,12 @@ lazy val codegen = projectMatrix
     bloopEnabled := true,
     Compile / compile := (Compile / compile)
       .dependsOn(ensureCodegenDepsPublished)
-      .value
+      .value,
+    Compile / sourceGenerators += {
+      sourceManaged
+        .map(AwsBoilerplate.generate(_))
+        .taskValue,
+    }
   )
 
 lazy val codegenProtocol = projectMatrix
@@ -488,21 +493,13 @@ lazy val codegenProtocol = projectMatrix
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value,
-      Dependencies.Smithy.model,
-      Dependencies.Smithy.build,
-      Dependencies.Alloy.core,
-      Dependencies.Alloy.openapi,
-      Dependencies.collectionsCompat.value,
+      Dependencies.Smithy.model % "provided",
+      Dependencies.Smithy.build % "provided",
+      Dependencies.collectionsCompat.value
     ),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
-    bloopEnabled := true,
-    Compile / sourceGenerators += {
-      sourceManaged
-        .map(AwsBoilerplate.generate(_))
-        .taskValue,
-    }
+    bloopEnabled := true
   )
 
 /**

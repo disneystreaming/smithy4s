@@ -16,7 +16,6 @@
 
 package smithy4s.codegen.transformers
 
-import alloy.OpenEnumTrait
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
@@ -24,6 +23,9 @@ import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits._
 
 import java.util.function.Function
+import java.util.ServiceLoader
+import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.node.Node
 
 @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
 private[codegen] final class OpenEnumTransformer extends ProjectionTransformer {
@@ -32,23 +34,47 @@ private[codegen] final class OpenEnumTransformer extends ProjectionTransformer {
   private val awsNamespacePrefix = "com.amazonaws"
 
   def transform(ctx: TransformContext): Model = {
-    val shapeMapper: Function[Shape, Shape] = { (shp: Shape) =>
-      shp match {
-        case shp if !shp.getId.getNamespace.startsWith(awsNamespacePrefix) =>
-          shp
-        case e: EnumShape =>
-          e.toBuilder.addTrait(new OpenEnumTrait()).build()
-        case e: IntEnumShape =>
-          e.toBuilder.addTrait(new OpenEnumTrait()).build()
-        case t: Shape if t.hasTrait(classOf[EnumTrait]) =>
-          (Shape
-            .shapeToBuilder(t): AbstractShapeBuilder[_, _])
-            .addTrait(new OpenEnumTrait())
-            .build()
-        case other => other
-      }
+
+    val loader =
+      ServiceLoader.load(classOf[TraitService], getClass().getClassLoader())
+
+    @annotation.nowarn("msg=method mapValues in trait MapOps is deprecated")
+    val services = loader
+      .iterator()
+      .asScala
+      .toList
+      .groupBy(_.getShapeId())
+      .mapValues(_.head)
+      .toMap
+
+    val openEnumId = ShapeId.from("alloy#openEnum")
+
+    services.get(openEnumId) match {
+      case Some(openEnumTraitService) =>
+        val shapeMapper: Function[Shape, Shape] = { (shp: Shape) =>
+          val openEnumTrait =
+            openEnumTraitService.createTrait(openEnumId, Node.objectNode())
+          shp match {
+            case shp
+                if !shp.getId.getNamespace.startsWith(awsNamespacePrefix) =>
+              shp
+            case e: EnumShape =>
+              e.toBuilder.addTrait(openEnumTrait).build()
+            case e: IntEnumShape =>
+              e.toBuilder.addTrait(openEnumTrait).build()
+            case t: Shape if t.hasTrait(classOf[EnumTrait]) =>
+              (Shape
+                .shapeToBuilder(t): AbstractShapeBuilder[_, _])
+                .addTrait(openEnumTrait)
+                .build()
+            case other => other
+          }
+        }
+        ctx.getTransformer().mapShapes(ctx.getModel(), shapeMapper)
+
+      case None => ctx.getModel()
     }
-    ctx.getTransformer().mapShapes(ctx.getModel(), shapeMapper)
+
   }
 
 }

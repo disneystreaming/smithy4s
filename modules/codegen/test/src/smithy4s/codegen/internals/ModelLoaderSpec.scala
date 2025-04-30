@@ -54,18 +54,9 @@ class ModelLoaderSpec extends FunSuite {
     assertEquals(
       allNamespaces(model),
       Set(
-        "alloy",
-        "aws.auth",
-        "aws.api",
-        "alloy.proto",
-        "aws.customizations",
-        "alloy.openapi",
-        "smithy.openapi",
-        "alloy.common",
-        "testlibrary",
         "smithy.api",
         "smithy4s.meta",
-        "aws.protocols"
+        "testlibrary"
       )
     )
 
@@ -106,18 +97,9 @@ class ModelLoaderSpec extends FunSuite {
     assertEquals(
       allNamespaces(model),
       Set(
-        "alloy",
-        "aws.auth",
-        "aws.api",
-        "alloy.proto",
-        "aws.customizations",
-        "alloy.openapi",
-        "smithy.openapi",
-        "alloy.common",
-        "testlibrary",
         "smithy.api",
         "smithy4s.meta",
-        "aws.protocols"
+        "testlibrary"
       )
     )
 

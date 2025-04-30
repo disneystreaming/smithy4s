@@ -90,8 +90,7 @@ private[codegen] object CodegenImpl { self =>
         .convertWithConfig(
           model,
           Some(openApiNamespaces).filter(_ != allNamespaces),
-          openApiConfig,
-          classloader
+          openApiConfig
         )
         .map { case OpenApiConversionResult(_, serviceId, outputString) =>
           val name = serviceId.getNamespace() + "." + serviceId.getName()
