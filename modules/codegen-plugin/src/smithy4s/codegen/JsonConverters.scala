@@ -67,7 +67,7 @@ private[smithy4s] object JsonConverters {
     )
 
   // format: off
-  type GenTarget = List[PathRef] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[PathRef] :*: Option[PathRef] :*: LNil
+  type GenTarget = List[PathRef] :*: os.Path :*: os.Path :*: Set[FileType] :*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[PathRef] :*: Option[PathRef] :*: LNil
   // format: on
 
   // `output` and `resourceOutput` are intentionally serialized as paths
