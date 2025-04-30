@@ -493,16 +493,8 @@ lazy val codegenProtocol = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
-      Dependencies.Smithytranslate.proto,
-      "com.lihaoyi" %% "os-lib" % "0.10.1",
-      Dependencies.Circe.core.value,
-      Dependencies.Circe.parser.value,
-      Dependencies.Circe.generic.value,
       Dependencies.collectionsCompat.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.24"
     ),
-    libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
     bloopEnabled := true,

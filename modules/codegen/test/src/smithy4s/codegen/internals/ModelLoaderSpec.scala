@@ -53,7 +53,20 @@ class ModelLoaderSpec extends FunSuite {
 
     assertEquals(
       allNamespaces(model),
-      Set("smithy.api", "smithy4s.meta", "testlibrary")
+      Set(
+        "alloy",
+        "aws.auth",
+        "aws.api",
+        "alloy.proto",
+        "aws.customizations",
+        "alloy.openapi",
+        "smithy.openapi",
+        "alloy.common",
+        "testlibrary",
+        "smithy.api",
+        "smithy4s.meta",
+        "aws.protocols"
+      )
     )
 
     model.expectShape(ShapeId.from("testlibrary#MyString"))
@@ -65,7 +78,8 @@ class ModelLoaderSpec extends FunSuite {
     doLoad(
       dependencies =
         List("com.disneystreaming.smithy4s:smithy4s-protocol:0.18.29"),
-      repositories = Nil
+      repositories =
+        List("https://s01.oss.sonatype.org/content/repositories/snapshots")
     )
     // nothing failed
   }
@@ -75,7 +89,8 @@ class ModelLoaderSpec extends FunSuite {
   ) {
     doLoad(
       dependencies = List("com.disneystreaming.alloy:alloy-core:0.1.18"),
-      repositories = Nil
+      repositories =
+        List("https://s01.oss.sonatype.org/content/repositories/snapshots")
     )
     // nothing failed
   }
@@ -90,7 +105,20 @@ class ModelLoaderSpec extends FunSuite {
 
     assertEquals(
       allNamespaces(model),
-      Set("smithy.api", "smithy4s.meta", "testlibrary")
+      Set(
+        "alloy",
+        "aws.auth",
+        "aws.api",
+        "alloy.proto",
+        "aws.customizations",
+        "alloy.openapi",
+        "smithy.openapi",
+        "alloy.common",
+        "testlibrary",
+        "smithy.api",
+        "smithy4s.meta",
+        "aws.protocols"
+      )
     )
 
     model.expectShape(ShapeId.from("testlibrary#MyString"))
