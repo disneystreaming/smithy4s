@@ -418,6 +418,25 @@ lazy val `aws-http4s` = projectMatrix
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
+lazy val ensureCodegenDepsPublished = Def.taskDyn {
+  val scalaAxis = virtualAxes.value
+    .collectFirst { case VirtualAxis.ScalaVersionAxis(v, _) =>
+      v
+    }
+    .getOrElse(sys.error("No ScalaVersion axis found"))
+
+  val protocolTask = protocol.jvm(autoScalaLibrary = false) / publishLocal
+  val codegenTask = codegenProtocol.jvm(scalaAxis) / publishLocal
+
+  Def.task {
+    streams.value.log.info(
+      s"[codegen] Publishing protocol + codegenProtocol for Scala $scalaAxis"
+    )
+    protocolTask.value
+    codegenTask.value
+  }
+}
+
 /**
  * This module contains the logic used at build time for reading smithy
  * models and rendering Scala (or openapi) code.
@@ -458,8 +477,8 @@ lazy val codegen = projectMatrix
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
     bloopEnabled := true,
-    (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+    Compile / compile := (Compile / compile)
+      .dependsOn(ensureCodegenDepsPublished)
       .value
   )
 
