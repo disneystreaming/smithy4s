@@ -22,4 +22,7 @@ package object codegen {
   val protocolDependency: String =
     s"${BuildInfo.smithy4sOrg}:${BuildInfo.protocolArtifactName}:${BuildInfo.version}"
 
+  val codegenProtocolDependency: String =
+    s"${BuildInfo.smithy4sOrg}::smithy4s-codegenProtocol:${BuildInfo.version}"
+
 }

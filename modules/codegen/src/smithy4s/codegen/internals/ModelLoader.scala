@@ -41,7 +41,7 @@ private[codegen] object ModelLoader {
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(
-      dependencies :+ protocolDependency :+ "com.disneystreaming.smithy4s:smithy4s-codegenProtocol_2.13:dev-SNAPSHOT",
+      dependencies :+ protocolDependency :+ codegenProtocolDependency,
       localJars,
       repositories
     )
