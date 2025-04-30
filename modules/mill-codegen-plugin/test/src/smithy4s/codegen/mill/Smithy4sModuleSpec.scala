@@ -27,6 +27,7 @@ import mill.scalalib.publish.VersionControl
 import coursier.Repository
 import coursier.ivy.IvyRepository
 import mill.define.Task
+import mill.api.Result
 
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
@@ -399,11 +400,16 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       testEvaluator: testKit.TestEvaluator
   )(implicit loc: Location) = {
     val result = testEvaluator(task).map(_._1)
-    assertEquals(
-      result.isRight,
-      true,
-      s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
-    )
+    result match {
+      case Right(_) => ()
+      case Left(error) =>
+        fail(
+          s"Failed with the following error: ${error match {
+            case r: Result.Failure[_] => r.msg
+            case r: Result.Exception  => r.throwable
+          }}"
+        )
+    }
   }
 
   private def checkFileExist(path: os.Path, shouldExist: Boolean)(implicit
