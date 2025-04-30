@@ -36,7 +36,7 @@ private[codegen] object CodegenImpl { self =>
     val smithyBuild = args.smithyBuild
       .map(os.read)
       .map(SmithyBuild.readJson(_))
-    val (classloader, model): (ClassLoader, Model) = internals.ModelLoader.load(
+    val (_, model): (ClassLoader, Model) = internals.ModelLoader.load(
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
