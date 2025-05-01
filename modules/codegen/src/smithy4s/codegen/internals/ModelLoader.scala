@@ -74,9 +74,14 @@ private[codegen] object ModelLoader {
       }
     }
 
+    val validatorClassLoader = locally {
+      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      new URLClassLoader(jarUrls, currentClassLoader)
+    }
+
     // Loading the upstream model
     val upstreamModel = Model
-      .assembler(currentClassLoader)
+      .assembler(validatorClassLoader)
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
       .addClasspathModels(currentClassLoader, discoverModels)
@@ -93,11 +98,6 @@ private[codegen] object ModelLoader {
       case (k, _) if k.startsWith("smithy4s") =>
         sanitisingModelBuilder.removeMetadataProperty(k)
       case _ => ()
-    }
-
-    val validatorClassLoader = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
-      new URLClassLoader(jarUrls, currentClassLoader)
     }
 
     val preTransformationModel =
