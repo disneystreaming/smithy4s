@@ -76,7 +76,7 @@ private[codegen] object ModelLoader {
 
     // Loading the upstream model
     val upstreamModel = Model
-      .assembler()
+      .assembler(currentClassLoader)
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
       .addClasspathModels(currentClassLoader, discoverModels)
