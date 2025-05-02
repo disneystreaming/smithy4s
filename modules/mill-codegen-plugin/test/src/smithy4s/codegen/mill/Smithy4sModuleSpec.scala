@@ -38,6 +38,9 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
+  private val alloyOpenApi =
+    ivy"com.disneystreaming.alloy::alloy-openapi:0.3.17-1-e0ac29-SNAPSHOT"
+
   ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
 
   test("basic codegen runs") {
@@ -150,7 +153,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test("codegen with custom smithy-build.json works") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.16"
-      override def ivyDeps = Agg(coreDep)
+      override def ivyDeps = Agg(coreDep, alloyOpenApi)
       override def millSourcePath = resourcePath / "smithy-build"
       override def smithyBuild =
         Some(PathRef(millSourcePath / "smithy-build.json"))
