@@ -84,12 +84,12 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.13"
-
-    val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
-    val main = "com.lihaoyi" %% "mill-main" % millVersion
-    val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
-    val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
+    def scalalib(v: String) = "com.lihaoyi" %% s"mill-scalalib" % v % Provided
+    def main(v: String) = "com.lihaoyi" %% s"mill-main" % v % Provided
+    def mainApi(v: String) = "com.lihaoyi" %% s"mill-main-api" % v % Provided
+    def mainTestkit(v: String) =
+      "com.lihaoyi" %% "mill-testkit" % v % Test
+    // "com.lihaoyi" %% s"mill-main-testkit" % v % Test
   }
 
   object Pprint {

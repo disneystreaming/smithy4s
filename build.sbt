@@ -536,40 +536,29 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
-  .jvmPlatform(
-    scalaVersions = List(Scala213),
-    simpleJVMLayout
-  )
   .settings(
     name := "mill-codegen-plugin",
-    crossVersion := CrossVersion
-      .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
-    libraryDependencies ++= Seq(
-      Dependencies.Mill.main,
-      Dependencies.Mill.mainApi,
-      Dependencies.Mill.scalalib,
-      Dependencies.Mill.mainTestkit
-    ),
+    simpleJVMLayout,
     libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always,
     publishLocal := {
-      // make sure that core and codegen are published before the
-      // plugin is published
-      // this allows running `scripted` alone
       val _ = List(
-        // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-
-        // for mill
         (protocolJvm / publishLocal).value
       )
       publishLocal.value
     },
     Test / test := (Test / test).dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
+  )
+  .customRows(
+    Scala213,
+    millVersions.map { mv =>
+      MillCustomRow(mv)
+    }: _*
   )
   .dependsOn(codegen)
 

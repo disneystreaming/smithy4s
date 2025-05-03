@@ -25,8 +25,35 @@ case object JSPlatform extends Platform
 case object NativePlatform extends Platform
 case object JVMPlatform extends Platform
 
-case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
-    extends VirtualAxis.WeakAxis
+case class MillAxis(millVersion: String) extends VirtualAxis.WeakAxis {
+  override val idSuffix =
+    Smithy4sBuildPlugin.millPlatform(millVersion).replace('.', '_')
+  override val directorySuffix = s"mill-${millVersion}"
+}
+
+trait CustomRow { self =>
+  def axisValues: List[VirtualAxis]
+  def process: Project => Project
+}
+
+case class MillCustomRow(mv: String) extends CustomRow {
+  def axisValues: List[VirtualAxis] =
+    List(MillAxis(mv), VirtualAxis.jvm)
+
+  def process: Project => Project = { p: Project =>
+    p.settings(
+      crossVersion := CrossVersion
+        .binaryWith(s"mill${Smithy4sBuildPlugin.millPlatform(mv)}_", ""),
+      libraryDependencies ++= Seq(
+        Dependencies.Mill.main(mv),
+        Dependencies.Mill.mainApi(mv),
+        Dependencies.Mill.scalalib(mv),
+        Dependencies.Mill.mainTestkit(mv)
+      )
+    )
+  }
+
+}
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
@@ -80,6 +107,42 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           _.enablePlugins(ScalaNativePlugin).settings(nativeDimSettings)
         )
     }
+
+    def customRow(scalaVersion: String, customRow: CustomRow): ProjectMatrix =
+      pm
+        // inspired by smithy4s: setting the "default" scala version,
+        // so that projects with that value don't get a suffix in their names
+        .defaultAxes(
+          VirtualAxis.jvm,
+          VirtualAxis.scalaPartialVersion(scalaVersion)
+        )
+        .jvmPlatform(
+          scalaVersions = List(scalaVersion),
+          axisValues = customRow.axisValues,
+          configure = customRow.process
+        )
+
+    def customRows(
+        scalaVersion: String,
+        customRows: CustomRow*
+    ): ProjectMatrix =
+      customRows.foldLeft(pm) { (m, r) =>
+        m.customRow(scalaVersion, r)
+      }
+
+    // def springBoot3(
+    //     routingModes: Seq[RoutingMode],
+    //     otherSettings: Project => Project = identity,
+    // ): ProjectMatrix =
+    //   if (routingModes.isEmpty)
+    //     customRow(OnlySpringVersionRow(SpringVersion.Sb3, otherSettings))
+    //   else
+    //     customRows(
+    //       routingModes.map { rm =>
+    //         SpringAndRoutingRow(SpringVersion.Sb3, rm, otherSettings)
+    //       }: _*
+    //     )
+    //
   }
 
   override def requires = plugins.JvmPlugin && HeaderPlugin
@@ -586,7 +649,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
+  val millVersions = List("0.11.13", "0.12.10")
+
   def millPlatform(millVersion: String): String = millVersion match {
+    case mv if mv.startsWith("0.12") => "0.12"
     case mv if mv.startsWith("0.11") => "0.11"
     case _                           => sys.error("Unsupported mill platform.")
   }
