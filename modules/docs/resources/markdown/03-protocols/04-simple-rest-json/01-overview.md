@@ -56,9 +56,9 @@ structure Greeting {
 }
 ```
 
-## Supported traits
+## Supported shapes/traits
 
-This protocol and its interpreters, are aware of the following traits provided out of the box:
+This protocol and its interpreters, are aware of the following shapes/traits provided out of the box:
 
 * [all simple shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-shapes)
 * composite data shapes, including collections, unions, structures.

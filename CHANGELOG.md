@@ -5,6 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.35
+
+* json, documents: Add support for `@jsonUnknown` in unions (Open Unions) in [#1677](https://github.com/disneystreaming/smithy4s/pull/1677)
+* codegen: Prevent `StackOverflowError` in dealing with recursive collection traits in [#1708](https://github.com/disneystreaming/smithy4s/pull/1708)
+
 # 0.18.34
 
 * codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).

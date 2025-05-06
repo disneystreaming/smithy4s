@@ -157,7 +157,7 @@ private[codegen] class SmithyToIR(
 
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
-            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
             TypeAlias(
               shape.getId(),
               name,
@@ -694,8 +694,9 @@ private[codegen] class SmithyToIR(
       def getHints(tpe: Type, shape: Shape): List[Hint] = {
         val h = hints(shape)
         tpe match {
-          case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
-          case _                    => h
+          case e: Type.ExternalType =>
+            h.filterNot(_ sameNativeTrait e.refinementHint)
+          case _ => h
         }
       }
 
@@ -709,13 +710,7 @@ private[codegen] class SmithyToIR(
           }
           .map { tpe =>
             val _hints = hints(x)
-            val memberHints = {
-              val h = hints(x.getMember())
-              tpe match {
-                case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
-                case _                    => h
-              }
-            }
+            val memberHints = getHints(tpe, x.getMember)
             if (_hints.contains(Hint.UniqueItems)) {
               Type.Collection(CollectionType.Set, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.Vector)) {
@@ -1088,7 +1083,7 @@ private[codegen] class SmithyToIR(
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
+    def fields: List[Field] = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
@@ -1107,13 +1102,13 @@ private[codegen] class SmithyToIR(
             member.getMemberName(),
             member.tpe,
             modifier,
-            hintsExtractor(member) ++ default ++ noDefault
+            hints(member) ++ default ++ noDefault
           )
         }
         .zipWithIndex
         .collect {
           case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
-            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
             Field(name, tpe, modifier, index, newHints)
           case ((name, Some(tpe), modifier, hints), index) =>
             Field(name, tpe, modifier, index, hints)
@@ -1130,20 +1125,6 @@ private[codegen] class SmithyToIR(
         case DefaultRenderMode.NoDefaults => result
       }
     }
-
-    /**
-      * Should be used when calculating schema for a structure.
-      *
-      * See https://github.com/disneystreaming/smithy4s/issues/1296 for details.
-      */
-    def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
-
-    /**
-      * Should be used only on the call site
-      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
-      */
-    def getFieldsPlain: List[Field] =
-      fieldsInternal(hintsExtractor = _ => List.empty)
 
     def alts = {
       shape
@@ -1168,7 +1149,7 @@ private[codegen] class SmithyToIR(
             Alt(
               name,
               UnionMember.TypeCase(tpe),
-              h.filterNot(_ == tpe.refinementHint)
+              h.filterNot(_ sameNativeTrait tpe.refinementHint)
             )
           case (name, Some(Right(tpe)), h) =>
             Alt(name, UnionMember.TypeCase(tpe), h)
@@ -1296,7 +1277,10 @@ private[codegen] class SmithyToIR(
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
-    Hint.Native(tr.toShapeId, unfoldNode(tr.toNode(), tr.toShapeId()))
+    Hint.Native(
+      tr.toShapeId,
+      cats.Eval.later(unfoldNode(tr.toNode(), tr.toShapeId()))
+    )
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
@@ -1305,8 +1289,8 @@ private[codegen] class SmithyToIR(
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
-        val structFields = struct.getFieldsPlain
-        val fieldNames = struct.getFieldsPlain.map(_.name)
+        val structFields = struct.fields
+        val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>

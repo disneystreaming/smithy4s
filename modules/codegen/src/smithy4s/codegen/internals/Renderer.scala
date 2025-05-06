@@ -1500,7 +1500,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint.Native): Line =
     recursion
-      .cata(renderTypedNode)(hint.typedNode)
+      .cata(renderTypedNode)(hint.typedNode.value)
       .run(true)
       ._2
 

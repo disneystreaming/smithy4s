@@ -20,17 +20,32 @@ import smithy.api.JsonName
 import smithy.api.Default
 import smithy4s.example.IntList
 import smithy4s.example.RecursiveListWrapper
+import smithy4s.example.OnlyUnknownOpenUnion
+import smithy4s.example.SampleOpenUnion
+import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
+import smithy4s.example.StructForDiscrimination
+import smithy4s.example.SampleOpenDiscriminatedUnion
 import alloy.Discriminated
 import alloy.JsonUnknown
-import munit._
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
 import scala.util.Try
 import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList
+import munit._
+import org.scalacheck.Arbitrary
+import org.scalacheck.Prop.forAll
 
-class DocumentSpec() extends FunSuite {
+class DocumentSpec() extends ScalaCheckSuite {
+
+  private val genDocument =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(Schema.document)
+
+  private val genDocumentMap =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(
+      Schema.map(Schema.string, Schema.document)
+    )
 
   private case class TestCase(
       expectedToSkip: Boolean,
@@ -1194,6 +1209,89 @@ class DocumentSpec() extends FunSuite {
       Document.decode[Bar](Document.DObject(Map.empty)),
       Right(Bar(Nullable.Null))
     )
+  }
+
+  test("open tagged union - decoding still fails if no tag is present") {
+    assert(Document.decode[SampleOpenUnion](Document.obj()).isLeft)
+  }
+
+  test("open tagged union - known tags decode normally") {
+    roundtripTest(Document.obj("u" -> Document.obj()), SampleOpenUnion.u())
+    roundtripTest(Document.obj("str" -> Document.fromString("hello")), SampleOpenUnion.str("hello"))
+  }
+
+  test("open tagged union - unknown tags can be roundtripped") {
+    val stringCase = Document.obj("brand-new-member" -> Document.fromString("oh wow i'm a string"))
+    roundtripTest(stringCase, SampleOpenUnion.unknown(stringCase))
+
+    val objectCase = Document.obj("brand-new-obj-member" -> Document.obj("inner-key" -> Document.fromInt(42)))
+    roundtripTest(objectCase, SampleOpenUnion.unknown(objectCase))
+  }
+
+  test("open tagged union - if the key used by the unknown member appears, it still roundtrips") {
+    val input = Document.obj("unknown" -> Document.obj())
+    roundtripTest(input, SampleOpenUnion.unknown(input))
+  }
+
+  test("open tagged union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocument, Arbitrary.arbitrary[String]) { (document, tag) =>
+      val input = document.nest(tag)
+
+      roundtripTest(input, OnlyUnknownOpenUnion.unknown(input))
+    }
+  }
+
+  test("open discriminated union - decoding still fails if the discriminator key is missing") {
+    assert(
+      Document.decode[SampleOpenDiscriminatedUnion](Document.obj("ignoredKey" -> Document.fromString("foo"))).isLeft
+    )
+  }
+
+  test("open discriminated union - known tags decode normally") {
+    roundtripTest(Document.obj("type" -> Document.fromString("u")), SampleOpenDiscriminatedUnion.u())
+    roundtripTest(
+      Document.obj("type" -> Document.fromString("s"), "str" -> Document.fromString("hello")),
+      SampleOpenDiscriminatedUnion.s(StructForDiscrimination("hello"))
+    )
+  }
+
+  test("open discriminated union - unknown tags can be roundtripped") {
+    val stringCase = Document.obj(
+      "type" -> Document.fromString("brand-new-member"),
+      "extra" -> Document.fromString("oh wow i'm a string")
+    )
+
+    roundtripTest(stringCase, SampleOpenDiscriminatedUnion.unknown(stringCase))
+
+    val objectCase =
+      Document.obj(
+        "type" -> Document.fromString("brand-new-obj-member"),
+        "inner-key" -> Document.fromInt(42)
+      )
+
+    roundtripTest(objectCase, SampleOpenDiscriminatedUnion.unknown(objectCase))
+  }
+
+  test("open discriminated union - if the key used by the unknown member appears, it still roundtrips") {
+    val input = Document.obj("type" -> Document.fromString("unknown"), "extra" -> Document.obj())
+    roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
+  }
+
+  test("open discriminated union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocumentMap, Arbitrary.arbitrary[String]) { (documentKeys, tag) =>
+      val input = Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
+
+      roundtripTest(input, OnlyUnknownDiscriminatedOpenUnion.unknown(input))
+    }
+  }
+
+  private def roundtripTest[T: Document.Encoder: Document.Decoder](input: Document, expectedOutput: T)(implicit
+      loc: Location
+  ) = {
+    val decoded = Document.decode[T](input)
+    assertEquals(decoded, Right(expectedOutput), clue = "decoded value is not the same")
+    val encoded = Document.encode(expectedOutput)
+    assertEquals(encoded, input, clue = "roundtripped encoding is not the same")
   }
 
   List(
