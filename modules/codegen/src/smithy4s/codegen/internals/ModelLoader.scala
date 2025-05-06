@@ -17,51 +17,28 @@
 package smithy4s.codegen
 package internals
 
-import coursier._
-import coursier.cache.FileCache
-import coursier.parse.DependencyParser
-import coursier.parse.RepositoryParser
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
 
 import java.io.File
-import java.net.URLClassLoader
 
 private[codegen] object ModelLoader {
 
   def load(
       specs: Set[File],
-      dependencies: List[String],
-      repositories: List[String],
-      transformers: List[String],
-      discoverModels: Boolean,
-      localJars: List[os.Path]
-  ): (ClassLoader, Model) = {
-    val currentClassLoader = this.getClass().getClassLoader()
-    val deps = resolveDependencies(
-      dependencies :+ protocolDependency,
-      localJars,
-      repositories
-    )
-
-    val modelCL = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
-      new URLClassLoader(jarUrls, currentClassLoader)
-    }
-
+      transformers: List[String]
+  ): Model = {
     val preTransformationModel = Model
-      .assembler(modelCL)
-      // disabling cache to support snapshot-driven experimentation
-      .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
-      .discoverModels(modelCL)
+      .assembler(this.getClass.getClassLoader)
+      .discoverModels(this.getClass.getClassLoader)
       .addImports(specs)
       .assemble()
       .unwrap()
 
     val transformerFactory =
-      ProjectionTransformer.createServiceFactory(modelCL)
+      ProjectionTransformer.createServiceFactory(this.getClass.getClassLoader)
 
     val trans = transformers.flatMap {
       transformerFactory(_).asScala
@@ -72,53 +49,12 @@ private[codegen] object ModelLoader {
     )
 
     val postTransformationModel = Model
-      .assembler(modelCL)
+      .assembler(this.getClass.getClassLoader)
       .addModel(transformedModel)
       .assemble()
       .unwrap
 
-    (
-      modelCL,
-      postTransformationModel
-    )
-  }
-
-  private def resolveDependencies(
-      dependencies: List[String],
-      localJars: List[os.Path],
-      repositories: List[String]
-  ): Seq[File] = {
-    val maybeRepos = RepositoryParser.repositories(repositories).either
-    val maybeDeps = DependencyParser
-      .dependencies(
-        dependencies,
-        defaultScalaVersion = smithy4s.codegen.BuildInfo.scalaBinaryVersion
-      )
-      .either
-    val repos = maybeRepos match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse repositories with error: $errorMessages"
-        )
-      case Right(r) => r
-    }
-    val deps = maybeDeps match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse dependencies with errors: $errorMessages"
-        )
-      case Right(d) => d
-    }
-    val resolvedDeps: Seq[java.io.File] =
-      if (deps.nonEmpty) {
-        val fetch = Fetch(FileCache())
-          .addRepositories(repos: _*)
-          .addDependencies(deps: _*)
-        fetch.run()
-      } else {
-        Seq.empty
-      }
-    resolvedDeps ++ localJars.map(_.toIO)
+    postTransformationModel
   }
 
   implicit class ModelAssemblerOps(assembler: ModelAssembler) {
@@ -132,14 +68,6 @@ private[codegen] object ModelLoader {
       assembler
     }
 
-    def addClasspathModels(
-        classLoader: ClassLoader,
-        discoverModels: Boolean
-    ): ModelAssembler = {
-      if (discoverModels) {
-        assembler.discoverModels(classLoader)
-      } else assembler
-    }
   }
 
 }

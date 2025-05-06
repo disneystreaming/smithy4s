@@ -445,14 +445,14 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
-      discoverModels = false,
       allowedNS = allowedNamespaces,
       excludedNS = excludedNamespaces,
       repositories = res,
       dependencies = List.empty,
       transformers = transforms,
       localJars = localJars,
-      smithyBuild = smithyBuildValue
+      smithyBuild = smithyBuildValue,
+      fork = true
     )
 
     val cacheStoreFactory = s.cacheStoreFactory.sub(scalaVersion.value)

@@ -220,14 +220,14 @@ trait Smithy4sModule extends ScalaModule {
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
-      discoverModels = false,
       allowedNS = smithy4sAllowedNamespaces(),
       excludedNS = smithy4sExcludedNamespaces(),
       repositories = smithy4sRepositories(),
       dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars,
-      smithyBuild = smithyBuildFile
+      smithyBuild = smithyBuildFile,
+      fork = ??? : @annotation.nowarn("msg=dead")
     )
 
     Smithy4s.generateToDisk(args)

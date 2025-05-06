@@ -24,14 +24,15 @@ final case class CodegenArgs(
     output: os.Path,
     resourceOutput: os.Path,
     skip: Set[FileType],
-    discoverModels: Boolean,
     allowedNS: Option[Set[String]],
     excludedNS: Option[Set[String]],
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
     localJars: List[os.Path],
-    smithyBuild: Option[os.Path]
+    smithyBuild: Option[os.Path],
+    // bikeshed incoming, maybe "isolate" is better
+    fork: Boolean
 ) {
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)

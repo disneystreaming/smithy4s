@@ -466,7 +466,7 @@ lazy val codegen = projectMatrix
         .taskValue,
     },
     (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .dependsOn((protocolJvm / publishLocal))
       .value
   )
 
@@ -1257,6 +1257,16 @@ def genSmithyImpl(config: Configuration) = Def.task {
         m.root
     }
 
+  (protocolJvm / publishLocal).value
+
+  (codegen.jvm(
+    Smithy4sBuildPlugin.Scala213
+  ) / publishLocal).value
+
+  (`codegen-cli`.jvm(
+    Smithy4sBuildPlugin.Scala213
+  ) / publishLocal).value
+
   val codegenCp =
     (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
@@ -1342,7 +1352,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 inputs ++
                 skipOpt ++
                 dependenciesOpt ++
-                reposOpt
+                reposOpt ++
+                List("--fork")
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
