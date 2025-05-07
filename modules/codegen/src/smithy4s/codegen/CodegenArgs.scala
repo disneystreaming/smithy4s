@@ -54,12 +54,12 @@ final case class CodegenArgs(
     allowedNS match {
       case None => Nil
       case Some(ns) =>
-        List("--allowedNS", ns.mkString(","))
+        List("--allowed-ns", ns.mkString(","))
     },
     excludedNS match {
       case None => Nil
       case Some(ns) =>
-        List("--excludedNS", ns.mkString(","))
+        List("--excluded-ns", ns.mkString(","))
     },
     repositories match {
       case Nil => Nil
