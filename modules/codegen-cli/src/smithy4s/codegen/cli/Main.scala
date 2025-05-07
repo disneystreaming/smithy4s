@@ -48,6 +48,7 @@ object Main {
           case Smithy4sCommand.Generate(args) =>
             Console.err.println("fork value: " + args.fork)
             if (args.fork) {
+              // todo: less hardcoding
               val cp = resolveDependencies(
                 s"com.disneystreaming.smithy4s:smithy4s-codegen-cli_2.13:${BuildInfo.version}" ::
                   args.dependencies,
@@ -89,6 +90,7 @@ object Main {
               res.foreach(out.println)
             }
           case Smithy4sCommand.DumpModel(args) =>
+            // todo: support fork mode
             out.println(Codegen.dumpModel(args))
 
           case Smithy4sCommand.Version =>

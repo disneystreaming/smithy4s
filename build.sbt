@@ -1265,6 +1265,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
     Smithy4sBuildPlugin.Scala213
   ) / publishLocal).value
 
+  // todo: silence these publishes a bit!
+
   (`codegen-cli`.jvm(
     Smithy4sBuildPlugin.Scala213
   ) / publishLocal).value

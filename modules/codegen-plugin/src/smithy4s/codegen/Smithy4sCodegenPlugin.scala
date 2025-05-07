@@ -233,6 +233,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         (config / smithy4sAwsSpecDependencies).value
       all.distinct
     },
+    // wtf?
     config / smithy4sAllDependenciesAsJars := {
       (config / smithy4sInternalDependenciesAsJars).value ++
         fetch(config / smithy4sAllExternalDependencies).value
@@ -347,6 +348,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     }
   }
 
+  // todo: we'll have to adjust this. This should probably just fetch all the dependencies only to extract their jars
+  // but ultimately ignore the jars in the outcome and return just a list of ModuleIDs.
+  // That way, we can pass those to Coursier again in the cli module's resolution and thus let it resolve any conflicts
+  // including those that smithy4s-codegen-sbt itself could be involved in, e.g. AWS.
   /**
    * Retrieves the smithy4sDependencies that compile-dependencies may have listed
    * in their jar manifests when they were packaged.
