@@ -68,7 +68,7 @@ private[codegen] object ModelLoader {
 
     // Loading the upstream model
     val upstreamModel = Model
-      .assembler()
+      .assembler(validatorClassLoader)
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
       .discoverModels(validatorClassLoader)
