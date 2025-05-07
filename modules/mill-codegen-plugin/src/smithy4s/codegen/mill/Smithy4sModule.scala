@@ -30,7 +30,6 @@ import smithy4s.codegen.CodegenArgs
 import smithy4s.codegen.FileType
 import smithy4s.codegen.JarUtils
 import smithy4s.codegen.SMITHY4S_DEPENDENCIES
-import smithy4s.codegen.{Codegen => Smithy4s}
 
 import scala.util.Success
 import scala.util.Try
@@ -227,10 +226,23 @@ trait Smithy4sModule extends ScalaModule {
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars,
       smithyBuild = smithyBuildFile,
-      fork = ??? : @annotation.nowarn("msg=dead")
+      fork = true
     )
 
-    Smithy4s.generateToDisk(args)
+    val out = System.out
+
+    val baos = new java.io.ByteArrayOutputStream()
+
+    System.setOut(new java.io.PrintStream(baos))
+
+    try {
+      smithy4s.codegen.cli.Main
+        .main(("generate" :: args.toArgs).toArray)
+      // ignore baos really
+    } finally {
+      System.setOut(out)
+    }
+
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
 
