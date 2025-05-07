@@ -469,10 +469,24 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
               s.log.debug(s"[smithy4s] Input changed: $inputChanged")
               s.log.debug(s"[smithy4s] Outputs empty: ${outputs.isEmpty}")
               s.log.debug("[smithy4s] Sources will be regenerated")
-              val resPaths = smithy4s.codegen.Codegen
-                .generateToDisk(args)
-                .toList
-              resPaths.map(path => new File(path.toString))
+              val out = System.out
+
+              val baos = new java.io.ByteArrayOutputStream()
+
+              System.setOut(new java.io.PrintStream(baos))
+
+              try {
+                smithy4s.codegen.cli.Main
+                  .main(("generate" :: args.toArgs).toArray)
+                val output = baos.toString
+                output.lines
+                  .map(_.trim)
+                  .filterNot(_.isEmpty)
+                  .map(path => new File(path.toString))
+                  .toList
+              } finally {
+                System.setOut(out)
+              }
             } else {
               s.log.debug("[smithy4s] Using cached version of outputs")
               outputs.getOrElse(Seq.empty)

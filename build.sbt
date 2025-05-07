@@ -479,7 +479,7 @@ lazy val `codegen-cli` = projectMatrix
   .in(file("modules/codegen-cli"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(codegen)
-  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .jvmPlatform(List(Scala212, Scala213), jvmDimSettings)
   .settings(
     buildInfoPackage := "smithy4s.codegen.cli",
     libraryDependencies ++= Seq(
@@ -493,7 +493,7 @@ lazy val `codegen-cli` = projectMatrix
  */
 lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
   .enablePlugins(SbtPlugin)
-  .dependsOn(codegen)
+  .dependsOn(`codegen-cli`)
   .jvmPlatform(
     scalaVersions = List(Scala212),
     jvmDimSettings
@@ -524,6 +524,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
+        (`codegen-cli`.jvm(Scala212) / publishLocal).value,
         (protocolJvm / publishLocal).value
       )
       publishLocal.value
