@@ -1258,14 +1258,6 @@ def dumpModel(
         }
       }
 
-    val repos =
-      (config / resolvers).?.value.getOrElse(Seq.empty).map {
-        case m: MavenRepository =>
-          m.root
-      }
-    val repoFlags =
-      if (repos.nonEmpty) List("--repositories", repos.mkString(",")) else Nil
-
     val trackedFiles = List(
       "--dependencies",
       (config / complianceTestDependencies).?.value
@@ -1274,7 +1266,7 @@ def dumpModel(
           s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
         }
         .mkString(",")
-    ) ++ repoFlags
+    ) ++ repositoriesOpt
 
     cached(trackedFiles)
   }
@@ -1304,12 +1296,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
       moduleId =>
         s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
     }
-  val repos =
-    (config / resolvers).?.value.getOrElse(Seq.empty).map {
-      case m: MavenRepository =>
-        m.root
-    }
-
   val codegenCp =
     (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
