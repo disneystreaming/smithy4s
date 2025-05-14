@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.36
+
+* codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
+
 # 0.18.35
 
 * json, documents: Add support for `@jsonUnknown` in unions (Open Unions) in [#1677](https://github.com/disneystreaming/smithy4s/pull/1677)
