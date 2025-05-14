@@ -67,7 +67,6 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
-  fs2,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
@@ -710,7 +709,6 @@ lazy val xml = projectMatrix
   .in(file("modules/xml"))
   .dependsOn(
     core,
-    fs2,
     bootstrapped % "test->test",
     scalacheck % "test -> compile"
   )
@@ -759,27 +757,6 @@ lazy val protobuf = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
- * Module that contains common code which relies on fs2.
- */
-lazy val fs2 = projectMatrix
-  .in(file("modules/fs2"))
-  .dependsOn(
-    core
-  )
-  .settings(
-    isMimaEnabled := false,
-    libraryDependencies ++= Seq(
-      Dependencies.Fs2.core.value,
-      Dependencies.Weaver.cats.value % Test
-    ),
-    libraryDependencies ++= munitDeps.value,
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-/**
  * Module that contains an http4s-specific `EntityCompiler` construct
  * that codifies the compilation of smithy4s Schemas to EntityEncoders and
  * EntityDecoders
@@ -805,7 +782,6 @@ lazy val http4s = projectMatrix
   .dependsOn(
     `http4s-kernel`,
     json,
-    fs2,
     bootstrapped % "test->compile",
     complianceTests % "test->compile",
     dynamic % "test->compile",
