@@ -3,4 +3,5 @@
 -J-Xss2m
 -J-Xms512M
 -J-Xmx6G
--J-XX:ReservedCodeCacheSize=256M
+-J-XX:ReservedCodeCacheSize=512M
+-J-XX:NonProfiledCodeHeapSize=256m
