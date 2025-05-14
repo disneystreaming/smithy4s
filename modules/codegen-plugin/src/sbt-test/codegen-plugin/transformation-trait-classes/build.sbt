@@ -11,6 +11,7 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
+    scalaVersion := "3.3.6",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" % "spec-traits" % "2.2.0-M2" % Smithy4s,
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
