@@ -34,14 +34,14 @@ object CommandParsingSpec extends FunSuite {
               output = os.pwd,
               resourceOutput = os.pwd,
               skip = Set.empty,
-              discoverModels = false,
               allowedNS = None,
               excludedNS = None,
               repositories = Nil,
               dependencies = defaultDependencies,
               transformers = Nil,
               localJars = Nil,
-              smithyBuild = None
+              smithyBuild = None,
+              fork = false
             )
           )
         )
@@ -88,7 +88,6 @@ object CommandParsingSpec extends FunSuite {
               output = os.pwd / "target",
               resourceOutput = os.pwd / "target" / "openapi",
               skip = Set(FileType.Openapi, FileType.Scala),
-              discoverModels = false,
               allowedNS = Some(Set("name1", "name2")),
               excludedNS = None,
               repositories = List("repo1", "repo2"),
@@ -98,7 +97,8 @@ object CommandParsingSpec extends FunSuite {
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
               ),
-              smithyBuild = Some(os.pwd / "smithy-build.json")
+              smithyBuild = Some(os.pwd / "smithy-build.json"),
+              fork = false
             )
           )
         )

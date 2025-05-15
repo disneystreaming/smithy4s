@@ -66,15 +66,6 @@ object CodegenCommand {
       .orNone
       .map(_.getOrElse(Set.empty))
 
-  val discoverModelsOpt =
-    Opts
-      .flag(
-        long = "discover-models",
-        help =
-          "Indicates whether the model assembler should try to discover models in the classpath"
-      )
-      .orFalse
-
   val allowedNSOpt: Opts[Option[Set[String]]] =
     Opts
       .option[List[String]](
@@ -101,12 +92,19 @@ object CodegenCommand {
       )
       .orNone
 
+  val forkOpt: Opts[Boolean] =
+    Opts
+      .flag(
+        "fork",
+        help = "Fork the codegen process to avoid classpath issues"
+      )
+      .orFalse
+
   val options =
     (
       outputOpt,
       resourceOutputOpt,
       skipOpts,
-      discoverModelsOpt,
       allowedNSOpt,
       excludedNSOpt,
       repositoriesOpt,
@@ -114,11 +112,12 @@ object CodegenCommand {
       transformersOpt,
       localJarsOpt,
       specsArgs,
-      smithyBuildOpt
+      smithyBuildOpt,
+      forkOpt
     )
       .mapN {
         // format: off
-        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs, smithyBuild) =>
+        case (output, resourceOutput, skip,  allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs, smithyBuild, fork) =>
         // format: on
           val dependenciesWithDefaults = {
             import Defaults._
@@ -127,16 +126,16 @@ object CodegenCommand {
           CodegenArgs(
             specsArgs,
             output.getOrElse(os.pwd),
-            resourseOutput.getOrElse(os.pwd),
+            resourceOutput.getOrElse(os.pwd),
             skip,
-            discoverModels,
             allowedNS,
             excludedNS,
             repositories.getOrElse(List.empty),
             dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
             localJars.getOrElse(List.empty),
-            smithyBuild
+            smithyBuild,
+            fork
           )
       }
 

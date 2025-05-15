@@ -24,20 +24,65 @@ final case class CodegenArgs(
     output: os.Path,
     resourceOutput: os.Path,
     skip: Set[FileType],
-    discoverModels: Boolean,
     allowedNS: Option[Set[String]],
     excludedNS: Option[Set[String]],
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
     localJars: List[os.Path],
-    smithyBuild: Option[os.Path]
+    smithyBuild: Option[os.Path],
+    // bikeshed incoming, maybe "isolate" is better
+    fork: Boolean
 ) {
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)
   def skipResources: Boolean = skip(FileType.Resource)
   def skipProto: Boolean = skip(FileType.Proto)
 
+  def toArgs: List[String] = List.concat(
+    specs.map(_.toString),
+    List(
+      "--output",
+      output.toString,
+      "--resource-output",
+      resourceOutput.toString
+    ),
+    skip.map(_.name).toList match {
+      case Nil => Nil
+      case xs  => List("--skip", xs.mkString(","))
+    },
+    allowedNS match {
+      case None => Nil
+      case Some(ns) =>
+        List("--allowed-ns", ns.mkString(","))
+    },
+    excludedNS match {
+      case None => Nil
+      case Some(ns) =>
+        List("--excluded-ns", ns.mkString(","))
+    },
+    repositories match {
+      case Nil => Nil
+      case xs  => List("--repositories", xs.mkString(","))
+    },
+    dependencies match {
+      case Nil => Nil
+      case xs  => List("--dependencies", xs.mkString(","))
+    },
+    transformers match {
+      case Nil => Nil
+      case xs  => List("--transformers", xs.mkString(","))
+    },
+    localJars match {
+      case Nil => Nil
+      case xs  => List("--local-jars", xs.mkString(","))
+    },
+    smithyBuild match {
+      case None       => Nil
+      case Some(path) => List("--smithy-build", path.toString)
+    },
+    if (fork) List("--fork") else Nil
+  )
 }
 
 sealed abstract class FileType(val name: String)

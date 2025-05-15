@@ -466,7 +466,7 @@ lazy val codegen = projectMatrix
         .taskValue,
     },
     (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .dependsOn((protocolJvm / publishLocal))
       .value
   )
 
@@ -479,7 +479,7 @@ lazy val `codegen-cli` = projectMatrix
   .in(file("modules/codegen-cli"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(codegen)
-  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .jvmPlatform(List(Scala212, Scala213), jvmDimSettings)
   .settings(
     buildInfoPackage := "smithy4s.codegen.cli",
     libraryDependencies ++= Seq(
@@ -493,7 +493,7 @@ lazy val `codegen-cli` = projectMatrix
  */
 lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
   .enablePlugins(SbtPlugin)
-  .dependsOn(codegen)
+  .dependsOn(`codegen-cli`)
   .jvmPlatform(
     scalaVersions = List(Scala212),
     jvmDimSettings
@@ -524,6 +524,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
+        (`codegen-cli`.jvm(Scala212) / publishLocal).value,
         (protocolJvm / publishLocal).value
       )
       publishLocal.value
@@ -563,6 +564,7 @@ lazy val millCodegenPlugin = projectMatrix
         (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
+        (`codegen-cli`.jvm(Scala213) / publishLocal).value,
 
         // for mill
         (protocolJvm / publishLocal).value
@@ -572,7 +574,7 @@ lazy val millCodegenPlugin = projectMatrix
     Test / test := (Test / test).dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
   )
-  .dependsOn(codegen)
+  .dependsOn(`codegen-cli`)
 
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
@@ -1257,6 +1259,18 @@ def genSmithyImpl(config: Configuration) = Def.task {
         m.root
     }
 
+  (protocolJvm / publishLocal).value
+
+  (codegen.jvm(
+    Smithy4sBuildPlugin.Scala213
+  ) / publishLocal).value
+
+  // todo: silence these publishes a bit!
+
+  (`codegen-cli`.jvm(
+    Smithy4sBuildPlugin.Scala213
+  ) / publishLocal).value
+
   val codegenCp =
     (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
@@ -1342,7 +1356,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 inputs ++
                 skipOpt ++
                 dependenciesOpt ++
-                reposOpt
+                reposOpt ++
+                List("--fork")
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
