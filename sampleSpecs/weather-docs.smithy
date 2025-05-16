@@ -21,8 +21,3 @@ operation GetWeather {
         weather: String
     }
 }
-
-structure Dog {
-    @required
-    name: String
-}
