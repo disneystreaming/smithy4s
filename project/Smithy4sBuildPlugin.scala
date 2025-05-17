@@ -28,7 +28,7 @@ case object JVMPlatform extends Platform
 case class MillAxis(millVersion: String) extends VirtualAxis.WeakAxis {
   override val idSuffix =
     Smithy4sBuildPlugin.millPlatform(millVersion).replace('.', '_')
-  override val directorySuffix = s"mill-${millVersion}"
+  override val directorySuffix = s"mill-${idSuffix}"
 }
 
 trait CustomRow { self =>
@@ -41,6 +41,9 @@ case class MillCustomRow(mv: String) extends CustomRow {
     List(MillAxis(mv), VirtualAxis.jvm)
 
   def process: Project => Project = { p: Project =>
+    val millVersion = Smithy4sBuildPlugin.millPlatform(mv)
+    val suffix = millVersion.replace('.', '_')
+
     p.settings(
       crossVersion := CrossVersion
         .binaryWith(s"mill${Smithy4sBuildPlugin.millPlatform(mv)}_", ""),
@@ -49,7 +52,11 @@ case class MillCustomRow(mv: String) extends CustomRow {
         Dependencies.Mill.mainApi(mv),
         Dependencies.Mill.scalalib(mv),
         Dependencies.Mill.mainTestkit(mv)
-      )
+      ),
+      Compile / unmanagedSourceDirectories +=
+        (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}",
+      Test / unmanagedSourceDirectories +=
+        (Test / sourceDirectory).value.getParentFile.getParentFile / "test"/ s"src-mill-${suffix}"
     )
   }
 
@@ -649,7 +656,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
-  val millVersions = List("0.11.13", "0.12.10")
+  val millVersions = List("0.11.13", "0.12.11")
 
   def millPlatform(millVersion: String): String = millVersion match {
     case mv if mv.startsWith("0.12") => "0.12"
