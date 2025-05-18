@@ -1683,7 +1683,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               )})"""
           })
         }.asInstanceOf[T => Line]
-      case Primitive.Nothing => ((v: Nothing) => v).asInstanceOf[T => Line] // this case can't happen
+      case Primitive.Nothing => _ => sys.error("cannot happen") // this case can't happen
     }
 
   private def renderStringLiteral(raw: String): Line = {

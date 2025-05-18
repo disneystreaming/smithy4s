@@ -3,7 +3,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 object Dependencies {
 
-  lazy val coursier_2 = "io.get-coursier" % "coursier" % "2.1.24"
+  lazy val coursier_2 = "io.get-coursier" %% "coursier" % "2.1.24"
   lazy val coursier_3 =
     ("io.get-coursier" % "coursier" % "2.1.24" cross CrossVersion.for3Use2_13)
       .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
