@@ -111,12 +111,9 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
+  @nowarn("cat=deprecation")
   def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]] = T {
-    resolveDeps(
-      T {
-        allIvyDeps().map(bindDependency())
-      }
-    )().flatMap { pathRef =>
+    resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
       val deps = JarUtils
         .extractSmithy4sDependencies(pathRef.path.toIO)
         .map(dep => ivy"$dep")
@@ -138,9 +135,10 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sAwsSpecs().map { artifactName => ivy"$org:$artifactName:$version" }
   }
 
+  @nowarn("cat=deprecation")
   def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
     val bind = bindDependency()
-    allIvyDeps().map(bind) ++
+    transitiveIvyDeps() ++
       smithy4sTransitiveIvyDeps().map(bind) ++
       smithy4sExternallyTrackedIvyDeps().map(bind) ++
       smithy4sAwsSpecDependencies().map(bind)
@@ -200,6 +198,8 @@ trait Smithy4sModule extends ScalaModule {
       .filter(os.exists(_))
       .toList
 
+    println("input dir: " + smithy4sInputDirs())
+
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
 
@@ -235,6 +235,7 @@ trait Smithy4sModule extends ScalaModule {
       localJars = allLocalJars,
       smithyBuild = smithyBuildFile
     )
+    println("kasper " + args)
 
     Smithy4s.generateToDisk(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))

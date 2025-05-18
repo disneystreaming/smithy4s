@@ -28,6 +28,9 @@ import java.nio.file.Paths
 // import coursier.ivy.IvyRepository
 // import mill.define.Task
 
+import scala.annotation.nowarn
+
+@nowarn("cat=deprecation")
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
@@ -78,199 +81,237 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   }
 
-  // test("wildcard settings") {
-  //   class Test(version: String, options: Seq[String])
-  //       extends testKit.BaseModule
-  //       with Smithy4sModule {
-  //     override def scalaVersion = version
-  //     override def scalacOptions = options
-  //   }
-  //
-  //   def getArg(version: String, options: Seq[String]): String = {
-  //     val module = new Test(version, options)
-  //     val ev =
-  //       testKit.staticTestEvaluator(module)(
-  //         FullName(s"wildcard-settings-$version-$options")
-  //       )
-  //     val result = ev(module.smithy4sWildcardArgument).map(_._1)
-  //     assertEquals(
-  //       result.isRight,
-  //       true,
-  //       s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
-  //     )
-  //     result.toOption.get
-  //   }
-  //
-  //   val msg1 = """use "_" if major version is not 3"""
-  //   assertEquals(getArg("2.13.16", Seq()), "_", msg1)
-  //   assertEquals(getArg("2.13.16", Seq("-source", "future")), "_", msg1)
-  //   assertEquals(getArg("2.13.16", Seq("-source:future")), "_", msg1)
-  //
-  //   val msg2 =
-  //     """use "?" if major version >= 3.1 or using -source:future or -source future"""
-  //   assertEquals(getArg("3.1.foobar", Seq()), "?", msg2)
-  //   assertEquals(getArg("3.0.foobar", Seq("-source", "future")), "?", msg2)
-  //   assertEquals(getArg("3.0.foobar", Seq("-source:future")), "?", msg2)
-  //
-  //   val msg3 =
-  //     """use "_" if major version < 3.1 and not using -source:future or -source future"""
-  //   assertEquals(getArg("3.0.foobar", Seq()), "_", msg3)
-  //   assertEquals(getArg("3.foobar.foobar", Seq()), "_", msg3)
-  // }
-  //
-  // test("codegen with wildcards") {
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "3.3.0"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
-  //     override def millSourcePath = resourcePath / "service"
-  //   }
-  //   val ev =
-  //     testKit.staticTestEvaluator(foo)(FullName("codegen-wildcards-compiles"))
-  //
-  //   compileWorks(foo, ev)
-  //
-  //   val metadata =
-  //     ev.outPath / "smithy4sGeneratedSmithyMetadataFile.dest" / "smithy" / "generated-metadata.smithy"
-  //   checkFileExist(metadata, shouldExist = true)
-  //   assert(
-  //     os.read(metadata).contains("metadata smithy4sWildcardArgument = \"?\"")
-  //   )
-  // }
-  //
-  // test("codegen with dependencies") {
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def millSourcePath = resourcePath / "basic"
-  //     override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
-  //     override def smithy4sIvyDeps = Agg(
-  //       ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
-  //     )
-  //   }
-  //   val ev =
-  //     testKit.staticTestEvaluator(foo)(FullName("codegen-with-dependencies"))
-  //
-  //   compileWorks(foo, ev)
-  //   checkFileExist(
-  //     ev.outPath / "smithy4sOutputDir.dest" / "scala" / "aws" / "iam" / "ActionPermissionDescription.scala",
-  //     shouldExist = true
-  //   )
-  // }
-  //
-  // test("codegen with custom smithy-build.json works") {
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def millSourcePath = resourcePath / "smithy-build"
-  //     override def smithyBuild =
-  //       Some(PathRef(millSourcePath / "smithy-build.json"))
-  //   }
-  //   val ev =
-  //     testKit.staticTestEvaluator(foo)(FullName("smithy-build"))
-  //
-  //   compileWorks(foo, ev)
-  //   val openApiFile =
-  //     ev.outPath / "smithy4sResourceOutputDir.dest" / "resources" / "smithy4s.example.ObjectService.json"
-  //   checkFileExist(openApiFile, shouldExist = true)
-  //   val openApiJson = os.read(openApiFile)
-  //   assert(
-  //     openApiJson.contains("X-Bar"),
-  //     "Smithy Build openApi configuration was not applied"
-  //   )
-  // }
-  //
-  // test("multi-module codegen works") {
-  //
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def millSourcePath = resourcePath / "multi-module" / "foo"
-  //   }
-  //
-  //   object bar extends testKit.BaseModule with Smithy4sModule {
-  //     override def moduleDeps = Seq(foo)
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def millSourcePath = resourcePath / "multi-module" / "bar"
-  //   }
-  //
-  //   val fooEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-foo"))
-  //   val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
-  //
-  //   compileWorks(foo, fooEv)
-  //   checkFileExist(
-  //     fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
-  //     shouldExist = true
-  //   )
-  //   checkFileExist(
-  //     fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
-  //     shouldExist = true
-  //   )
-  //
-  //   compileWorks(bar, barEv)
-  //   checkFileExist(
-  //     barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
-  //     shouldExist = false
-  //   )
-  //   checkFileExist(
-  //     barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
-  //     shouldExist = false
-  //   )
-  //   checkFileExist(
-  //     barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "bar" / "Bar.scala",
-  //     shouldExist = true
-  //   )
-  //
-  //   withFile(
-  //     foo.millSourcePath / "src" / "a.scala",
-  //     """package foo
-  //       |object a""".stripMargin
-  //   )(compileWorks(bar, barEv))
-  // }
-  //
-  // test("multi-module codegen works with AWS specs upstream") {
-  //
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(
-  //       ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
-  //     )
-  //     override def smithy4sIvyDeps: T[Agg[Dep]] = Agg(
-  //       ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
-  //     )
-  //     override def millSourcePath = resourcePath / "multi-module-aws" / "foo"
-  //   }
-  //
-  //   object bar extends testKit.BaseModule with Smithy4sModule {
-  //     override def moduleDeps = Seq(foo)
-  //     override def scalaVersion = "2.13.16"
-  //     override def millSourcePath = resourcePath / "multi-module-aws" / "bar"
-  //   }
-  //
-  //   val fooEv =
-  //     testKit.staticTestEvaluator(foo)(FullName("multi-module-aws-foo"))
-  //
-  //   val barEv =
-  //     testKit.staticTestEvaluator(bar)(FullName("multi-module-aws-bar"))
-  //
-  //   compileWorks(foo, fooEv)
-  //   checkFileExist(
-  //     fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Lambda.scala",
-  //     shouldExist = true
-  //   )
-  //   // Checking no aws package is generated
-  //   checkFileExist(
-  //     fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "aws",
-  //     shouldExist = false
-  //   )
-  //
-  //   compileWorks(bar, barEv)
-  //   checkFileExist(
-  //     barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Lambda.scala",
-  //     shouldExist = false
-  //   )
-  // }
+  test("wildcard settings") {
+    class Test(version: String, options: Seq[String])
+        extends TestBaseModule
+        with Smithy4sModule {
+      override def scalaVersion = version
+      override def scalacOptions = options
+    }
+
+    def getArg(version: String, options: Seq[String]): String = {
+      val module = new Test(version, options)
+      val resourceFolder = resourcePath / "wildcard"
+      UnitTester(module, resourceFolder).scoped { eval =>
+        val result = eval(module.smithy4sWildcardArgument)
+        assertEquals(
+          result.isRight,
+          true,
+          s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
+        )
+        result.toOption.get.value.head.toString
+      }
+    }
+
+    val msg1 = """use "_" if major version is not 3"""
+    assertEquals(getArg("2.13.16", Seq()), "_", msg1)
+    assertEquals(getArg("2.13.16", Seq("-source", "future")), "_", msg1)
+    assertEquals(getArg("2.13.16", Seq("-source:future")), "_", msg1)
+
+    val msg2 =
+      """use "?" if major version >= 3.1 or using -source:future or -source future"""
+    assertEquals(getArg("3.1.foobar", Seq()), "?", msg2)
+    assertEquals(getArg("3.0.foobar", Seq("-source", "future")), "?", msg2)
+    assertEquals(getArg("3.0.foobar", Seq("-source:future")), "?", msg2)
+
+    val msg3 =
+      """use "_" if major version < 3.1 and not using -source:future or -source future"""
+    assertEquals(getArg("3.0.foobar", Seq()), "_", msg3)
+    assertEquals(getArg("3.foobar.foobar", Seq()), "_", msg3)
+  }
+
+  test("codegen with wildcards") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "3.3.0"
+      override def ivyDeps = Agg(coreDep)
+      override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
+    }
+
+    val resourceFolder = resourcePath / "service"
+    UnitTester(foo, resourceFolder).scoped { eval =>
+      val compileResult = eval(foo.compile)
+      assertEquals(
+        compileResult.isRight,
+        true,
+        s"Compilation failed: ${compileResult.swap.getOrElse("unknown error")}"
+      )
+
+      val metadataFile =
+        eval(foo.smithy4sGeneratedSmithyMetadataFile).toOption.get.value.path
+
+      checkFileExist(metadataFile, shouldExist = true)
+
+      assert(
+        os.read(metadataFile)
+          .contains("metadata smithy4sWildcardArgument = \"?\""),
+        clue = "Expected metadata to contain wildcard assignment"
+      )
+    }
+  }
+
+  test("codegen with dependencies") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+      override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
+      override def smithy4sIvyDeps = Agg(
+        ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+      )
+    }
+
+    val resourceFolder = resourcePath / "basic"
+    UnitTester(foo, resourceFolder).scoped { eval =>
+      val compileResult = eval(foo.compile)
+      assertEquals(
+        compileResult.isRight,
+        true,
+        s"Compilation failed: ${compileResult.swap.getOrElse("unknown error")}"
+      )
+
+      val outputDir = eval(foo.smithy4sOutputDir).toOption.get.value.path
+      val filePath =
+        outputDir / "aws" / "iam" / "ActionPermissionDescription.scala"
+
+      checkFileExist(filePath, shouldExist = true)
+    }
+  }
+
+  test("codegen with custom smithy-build.json works") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+
+      override def smithyBuild =
+        Some(PathRef(millSourcePath / "smithy-build.json"))
+    }
+
+    val resourceFolder = resourcePath / "smithy-build"
+    UnitTester(foo, resourceFolder).scoped { eval =>
+      val compileResult = eval(foo.compile)
+      assertEquals(
+        compileResult.isRight,
+        true,
+        s"Compilation failed: ${compileResult.swap.getOrElse("unknown error")}"
+      )
+
+      val openApiFile =
+        eval(
+          foo.smithy4sResourceOutputDir
+        ).toOption.get.value.path / "smithy4s.example.ObjectService.json"
+
+      checkFileExist(openApiFile, shouldExist = true)
+
+      val openApiJson = os.read(openApiFile)
+      assert(
+        openApiJson.contains("X-Bar"),
+        "Smithy Build openApi configuration was not applied"
+      )
+    }
+  }
+  test("multi-module codegen works".ignore) {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+    }
+
+    object bar extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+      override def moduleDeps = Seq(foo)
+    }
+
+    val fooResource = resourcePath / "multi-module" / "foo"
+    val barResource = resourcePath / "multi-module" / "bar"
+
+    UnitTester(foo, fooResource).scoped { fooEval =>
+      val fooCompile = fooEval(foo.compile)
+      assertEquals(
+        fooCompile.isRight,
+        true,
+        s"Foo compile failed: ${fooCompile.swap.getOrElse("unknown error")}"
+      )
+
+      val fooOutput = fooEval(foo.smithy4sOutputDir).toOption.get.value.path
+
+      checkFileExist(fooOutput / "foo" / "Foo.scala", shouldExist = true)
+      checkFileExist(fooOutput / "foodir" / "FooDir.scala", shouldExist = true)
+
+    }
+    UnitTester(bar, barResource).scoped { barEval =>
+      val barCompile = barEval(bar.compile)
+      assertEquals(
+        barCompile.isRight,
+        true,
+        s"Bar compile failed: ${barCompile.swap.getOrElse("unknown error")}"
+      )
+
+      // TODO why we need to use this instead of smithy4sOutputDir?
+      // https://github.com/com-lihaoyi/mill/issues/4176
+      val barOutput = barEval(bar.smithy4sCodegen).toOption.get.value._1.path
+      // val barOutput = barEval(bar.smithy4sOutputDir).toOption.get.value.path
+
+      checkFileExist(barOutput / "foo" / "Foo.scala", shouldExist = false)
+      checkFileExist(
+        barOutput / "foodir" / "FooDir.scala",
+        shouldExist = false
+      )
+      checkFileExist(barOutput / "bar" / "Bar.scala", shouldExist = true)
+
+      withFile(
+        foo.millSourcePath / "src" / "a.scala",
+        """package foo
+          |object a""".stripMargin
+      )(barEval(bar.compile))
+    }
+  }
+
+  test("multi-module codegen works with AWS specs upstream") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(
+        ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+      )
+      override def smithy4sIvyDeps: T[Agg[Dep]] = Agg(
+        ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+      )
+    }
+
+    object bar extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def moduleDeps = Seq(foo)
+    }
+
+    val fooResource = resourcePath / "multi-module-aws" / "foo"
+    UnitTester(foo, fooResource).scoped { fooEval =>
+      val fooCompile = fooEval(foo.compile)
+      assertEquals(
+        fooCompile.isRight,
+        true,
+        s"foo compile failed: ${fooCompile.swap.getOrElse("unknown error")}"
+      )
+
+      val fooOutput = fooEval(foo.smithy4sOutputDir).toOption.get.value.path
+      checkFileExist(fooOutput / "foo" / "Lambda.scala", shouldExist = true)
+      checkFileExist(fooOutput / "aws", shouldExist = false)
+    }
+
+    val barResource = resourcePath / "multi-module-aws" / "bar"
+    UnitTester(bar, barResource).scoped { barEval =>
+      // ???!! without this line the compilation of bar module fails..
+      println(barEval(bar.transitiveIvyDeps))
+
+      val barCompile = barEval(bar.compile)
+      assertEquals(
+        barCompile.isRight,
+        true,
+        s"bar compile failed: ${barCompile.swap.getOrElse("unknown error")}"
+      )
+
+      val barOutput = barEval(bar.smithy4sOutputDir).toOption.get.value.path
+      checkFileExist(barOutput / "foo" / "Lambda.scala", shouldExist = false)
+    }
+  }
+
   //
   private def withFile[A](path: os.Path, content: String)(f: => A): A = {
     os.write(path, content, createFolders = true)
@@ -281,31 +322,33 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     os.remove.all(path)
   }
 
-  // test(
-  //   "multi-module codegen doesn't trigger upstream compilation when opted out"
-  // ) {
-  //
-  //   object foo extends testKit.BaseModule with ScalaModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def millSourcePath =
-  //       resourcePath / "multi-module-no-compile" / "foo"
-  //   }
-  //
-  //   object bar extends testKit.BaseModule with Smithy4sModule {
-  //     override def moduleDeps = Seq(foo)
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def millSourcePath =
-  //       resourcePath / "multi-module-no-compile" / "bar"
-  //
-  //     override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
-  //   }
-  //
-  //   val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
-  //
-  //   taskWorks(bar.smithy4sCodegen, barEv)
-  // }
-  //
+  test(
+    "multi-module codegen doesn't trigger upstream compilation when opted out"
+  ) {
+    object foo extends TestBaseModule with ScalaModule {
+      override def scalaVersion = "2.13.16"
+    }
+
+    object bar extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def moduleDeps = Seq(foo)
+      override def ivyDeps = Agg(coreDep)
+
+      override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
+    }
+
+    val barResource = resourcePath / "multi-module-no-compile" / "bar"
+
+    UnitTester(bar, barResource).scoped { eval =>
+      val result = eval(bar.smithy4sCodegen)
+      assertEquals(
+        result.isRight,
+        true,
+        s"smithy4sCodegen failed: ${result.swap.getOrElse("unknown error")}"
+      )
+    }
+  }
+
   // test("multi-module staged codegen works") {
   //
   //   val localIvyRepo = os.temp.dir() / ".ivy2" / "local"
@@ -382,23 +425,28 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   //
   // }
   //
-  // test("codegen with aws specs") {
-  //   object foo extends testKit.BaseModule with Smithy4sModule {
-  //     override def scalaVersion = "2.13.16"
-  //     override def ivyDeps = Agg(coreDep)
-  //     override def smithy4sAwsSpecs: T[Seq[String]] = T(
-  //       Seq(AWS.dynamodb)
-  //     )
-  //   }
-  //   val ev =
-  //     testKit.staticTestEvaluator(foo)(FullName("codegen-with-aws-specs"))
-  //
-  //   taskWorks(foo.smithy4sCodegen, ev)
-  //   checkFileExist(
-  //     ev.outPath / "smithy4sOutputDir.dest" / "scala" / "com" / "amazonaws" / "dynamodb" / "AttributeValue.scala",
-  //     shouldExist = true
-  //   )
-  // }
+  test("codegen with aws specs") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+      override def smithy4sAwsSpecs: T[Seq[String]] = T(Seq(AWS.dynamodb))
+    }
+
+    UnitTester(foo, resourcePath).scoped { eval =>
+      val result = eval(foo.smithy4sCodegen)
+      assertEquals(
+        result.isRight,
+        true,
+        s"Codegen failed: ${result.swap.getOrElse("unknown error")}"
+      )
+
+      val output = eval(foo.smithy4sOutputDir).toOption.get.value.path
+
+      val file =
+        output / "com" / "amazonaws" / "dynamodb" / "AttributeValue.scala"
+      checkFileExist(file, shouldExist = true)
+    }
+  }
 
   // private def compileWorks(
   //     sm: ScalaModule,

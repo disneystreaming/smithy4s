@@ -215,6 +215,8 @@ trait Smithy4sModule extends ScalaModule {
         .iterator
         .to(List)
 
+    println(allLocalJars)
+
     val args = CodegenArgs(
       specs = specFiles,
       output = scalaOutput,
