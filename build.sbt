@@ -427,7 +427,7 @@ lazy val codegen = projectMatrix
   .in(file("modules/codegen"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(protocol)
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](
       version,
@@ -452,9 +452,21 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
       Dependencies.collectionsCompat.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.24"
     ),
+    libraryDependencies += {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) => Dependencies.coursier_2
+        case Some((3, _)) => Dependencies.coursier_3
+        case other        => sys.error(s"unsupported scala version $other")
+      }
+    },
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) =>
+          Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+        case _ => Seq.empty
+      }
+    },
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
