@@ -62,11 +62,14 @@ class ValidatedNewtypesTransformer extends ProjectionTransformer {
     )
   }
 
-  private def processShape(shape: Shape, lookup: String => Boolean) =
+  private def processShape[S <: Shape, B <: AbstractShapeBuilder[B, S]](
+      shape: S,
+      lookup: String => Boolean
+  ) =
     if (lookup(shape.getId().getNamespace()))
       shape match {
         case ValidatedNewtypesTransformer.SupportedShape(s) =>
-          addTrait(Shape.shapeToBuilder(s): AbstractShapeBuilder[_, _])
+          addTrait[S, B](Shape.shapeToBuilder(s): AbstractShapeBuilder[B, S])
         case _ => shape
       }
     else
@@ -87,11 +90,11 @@ object ValidatedNewtypesTransformer {
   private val METADATA_KEY = "smithy4sRenderValidatedNewtypes"
 
   object SupportedShape {
-    def unapply(shape: Shape): Option[Shape] = shape match {
+    def unapply[S <: Shape](shape: S): Option[S] = shape match {
       case _ if shape.hasTrait(classOf[UnwrapTrait])          => None
       case _ if shape.hasTrait(classOf[ValidateNewtypeTrait]) => None
-      case s: StringShape if hasStringConstraints(s)          => Some(s)
-      case n: NumberShape if hasNumberConstraints(n)          => Some(n)
+      case s: StringShape if hasStringConstraints(s)          => Some(shape)
+      case n: NumberShape if hasNumberConstraints(n)          => Some(shape)
       case _                                                  => None
     }
 
