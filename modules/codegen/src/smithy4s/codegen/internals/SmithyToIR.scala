@@ -825,7 +825,7 @@ private[codegen] class SmithyToIR(
         Type.Ref(x.namespace, x.name).some
 
       def memberShape(x: MemberShape): Option[Type] = {
-        def aaa[S <: Shape, B <: AbstractShapeBuilder[B, S]](
+        def processBuilder[S <: Shape, B <: AbstractShapeBuilder[B, S]](
             builder: AbstractShapeBuilder[B, S]
         ) = {
           builder
@@ -839,8 +839,7 @@ private[codegen] class SmithyToIR(
         model.getShape(x.getTarget()).asScala.flatMap { shape =>
           val builder =
             (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
-
-          aaa(builder)
+          processBuilder(builder)
         }
       }
 
