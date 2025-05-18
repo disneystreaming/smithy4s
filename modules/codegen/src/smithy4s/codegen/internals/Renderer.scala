@@ -1634,8 +1634,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with gADTs)
     prim match {
       case Primitive.BigDecimal =>
-        (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
+        ((bd: BigDecimal) => line"scala.math.BigDecimal($bd)").asInstanceOf[T => Line]
+      case Primitive.BigInteger => ((bi: BigInt) => line"scala.math.BigInt($bi)").asInstanceOf[T => Line]
       case Primitive.Unit       => _ => line"()"
       case Primitive.Double     => t => line"${t.toString}d"
       case Primitive.Float      => t => line"${t.toString}f"
@@ -1644,43 +1644,46 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
       case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
-      case Primitive.String     => renderStringLiteral
+      case Primitive.String     => ((str: String) => renderStringLiteral(str)).asInstanceOf[T => Line]
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
-        ba =>
+        { (ba: Array[Byte]) =>
           val blob = NameRef("smithy4s", "Blob")
           if (ba.isEmpty) line"$blob.empty"
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
+        }.asInstanceOf[T => Line]
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
-      case Primitive.Document => { (node: Node) =>
-        node.accept(new NodeVisitor[Line] {
-          def arrayNode(x: ArrayNode): Line = {
-            val innerValues = x.getElements().asScala.map(_.accept(this))
-            line"smithy4s.Document.array(${innerValues.toList.intercalate(Line.comma)})"
-          }
-          def booleanNode(x: BooleanNode): Line =
-            line"smithy4s.Document.fromBoolean(${x.getValue})"
-          def nullNode(x: NullNode): Line =
-            line"smithy4s.Document.nullDoc"
-          def numberNode(x: NumberNode): Line =
-            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
-          def objectNode(x: ObjectNode): Line = {
-            val members = x.getMembers.asScala.map { member =>
-              val key = s""""${member._1.getValue()}""""
-              val value = member._2.accept(this)
-              line"$key -> $value"
+        ((ts: java.time.Instant) => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})")
+          .asInstanceOf[T => Line]
+      case Primitive.Document =>
+        { (node: Node) =>
+          node.accept(new NodeVisitor[Line] {
+            def arrayNode(x: ArrayNode): Line = {
+              val innerValues = x.getElements().asScala.map(_.accept(this))
+              line"smithy4s.Document.array(${innerValues.toList.intercalate(Line.comma)})"
             }
-            line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
-          }
-          def stringNode(x: StringNode): Line =
-            line"""smithy4s.Document.fromString(${renderStringLiteral(
-              x.getValue
-            )})"""
-        })
-      }
-      case Primitive.Nothing => v => (v: Nothing) // this case can't happen
+            def booleanNode(x: BooleanNode): Line =
+              line"smithy4s.Document.fromBoolean(${x.getValue})"
+            def nullNode(x: NullNode): Line =
+              line"smithy4s.Document.nullDoc"
+            def numberNode(x: NumberNode): Line =
+              line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
+            def objectNode(x: ObjectNode): Line = {
+              val members = x.getMembers.asScala.map { member =>
+                val key = s""""${member._1.getValue()}""""
+                val value = member._2.accept(this)
+                line"$key -> $value"
+              }
+              line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
+            }
+            def stringNode(x: StringNode): Line =
+              line"""smithy4s.Document.fromString(${renderStringLiteral(
+                x.getValue
+              )})"""
+          })
+        }.asInstanceOf[T => Line]
+      case Primitive.Nothing => ((v: Nothing) => v).asInstanceOf[T => Line] // this case can't happen
     }
 
   private def renderStringLiteral(raw: String): Line = {

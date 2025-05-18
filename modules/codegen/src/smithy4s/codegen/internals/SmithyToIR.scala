@@ -824,11 +824,10 @@ private[codegen] class SmithyToIR(
       def unionShape(x: UnionShape): Option[Type] =
         Type.Ref(x.namespace, x.name).some
 
-      def memberShape(x: MemberShape): Option[Type] =
-        model.getShape(x.getTarget()).asScala.flatMap { shape =>
-          val builder =
-            (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
-
+      def memberShape(x: MemberShape): Option[Type] = {
+        def aaa[S <: Shape, B <: AbstractShapeBuilder[B, S]](
+            builder: AbstractShapeBuilder[B, S]
+        ) = {
           builder
             .addTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
 
@@ -836,6 +835,14 @@ private[codegen] class SmithyToIR(
             .build()
             .accept(this)
         }
+
+        model.getShape(x.getTarget()).asScala.flatMap { shape =>
+          val builder =
+            (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
+
+          aaa(builder)
+        }
+      }
 
       def timestampShape(x: TimestampShape): Option[Type] =
         primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
@@ -1382,7 +1389,7 @@ private[codegen] class SmithyToIR(
       case (node, IdRefCase()) =>
         val ref = Type.Ref("smithy4s", "ShapeId")
         val namespace :: name :: _ =
-          node.asStringNode.get.getValue.split("#").toList
+          node.asStringNode.get.getValue.split("#").toList: @unchecked
         def toField(value: String) = TypedNode.FieldTN.RequiredTN(
           NodeAndType(
             Node.from(value),

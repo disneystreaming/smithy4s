@@ -451,7 +451,7 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
-      Dependencies.collectionsCompat.value,
+      Dependencies.collectionsCompat.value
     ),
     libraryDependencies += {
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -470,6 +470,13 @@ lazy val codegen = projectMatrix
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, _)) =>
+          Seq("-Wconf:cat=deprecation:silent")
+        case _ => Nil
+      }
+    },
     bloopEnabled := true,
     Compile / sourceGenerators += {
       sourceManaged
