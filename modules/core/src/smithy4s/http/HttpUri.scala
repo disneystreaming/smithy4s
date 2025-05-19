@@ -72,8 +72,8 @@ object HttpUri {
               case v @ Array(k: String, _*) => k -> Seq(v.tail.mkString("="))
             }
           }
-          .groupMap(_._1)(_._2)
-          .map { case (k, vs) => k -> vs.flatten.toSeq }
+          .groupBy(_._1)
+          .map { case (k, vs) => k -> vs.map(_._2).flatten.toSeq }
       }
       .getOrElse(Map.empty)
     HttpUri(scheme, host, port, path, queryParams, None)
