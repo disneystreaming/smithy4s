@@ -15,6 +15,7 @@
  */
 
 package smithy4s.http
+import java.net.URI
 
 final case class HttpUri(
     scheme: HttpUriScheme,
@@ -30,4 +31,51 @@ final case class HttpUri(
       * once the routing logic has come in effect.
       */
     pathParams: Option[Map[String, String]]
-)
+) {
+  def toURI: URI = {
+    val schemeStr = scheme match {
+      case HttpUriScheme.Http  => "http"
+      case HttpUriScheme.Https => "https"
+    }
+    val portStr = port.map(":" + _).getOrElse("")
+    val pathStr = path.mkString("/", "/", "")
+    val queryStr =
+      if (queryParams.isEmpty) ""
+      else
+        "?" + queryParams
+          .map { case (k, v) =>
+            v.map(vv => s"$k=$vv").mkString("&")
+          }
+          .mkString("&")
+    new URI(s"$schemeStr://$host$portStr$pathStr$queryStr")
+  }
+}
+
+object HttpUri {
+  def fromURI(uri: URI): HttpUri = {
+    val scheme = uri.getScheme() match {
+      case "https" => HttpUriScheme.Https
+      case _       => HttpUriScheme.Http
+    }
+    val host = uri.getHost()
+    val port = Option(uri.getPort()).filter(_ >= 0)
+    val path = uri.getPath.split('/').filter(_.nonEmpty).toIndexedSeq
+    val queryParams: Map[String, Seq[String]] = Option(uri.getQuery())
+      .map { query =>
+        query
+          .split("&")
+          .map { pair =>
+            pair.split("=") match {
+              case Array(k: String, v: String) => k -> Seq(v)
+              case Array(k: String)            => k -> Seq.empty[String]
+              // cases where you have q1=v1=v2 => q1 -> "v1=v2"
+              case v @ Array(k: String, _*) => k -> Seq(v.tail.mkString("="))
+            }
+          }
+          .groupMap(_._1)(_._2)
+          .map { case (k, vs) => k -> vs.flatten.toSeq }
+      }
+      .getOrElse(Map.empty)
+    HttpUri(scheme, host, port, path, queryParams, None)
+  }
+}
