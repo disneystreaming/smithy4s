@@ -69,7 +69,7 @@ object HttpUri
       path: IndexedSeq[String],
       queryParams: Map[String, Seq[String]],
       pathParams: Option[Map[String, String]]
-  ): HttpUri = HttpUri(scheme, host, port, path, queryParams, pathParams)
+  ): HttpUri = new HttpUri(scheme, host, port, path, queryParams, pathParams)
 
   def fromURI(uri: URI): HttpUri = {
     val scheme = uri.getScheme() match {
