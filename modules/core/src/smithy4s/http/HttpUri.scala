@@ -18,19 +18,18 @@ package smithy4s.http
 import java.net.URI
 import scala.runtime.AbstractFunction6
 
+/**
+ * Represents an HTTP URI.
+ *
+ * @param path A sequence of URL-decoded URI segments.
+ * @param pathParams Field allowing to store decoded path parameters alongside an http request, once the routing logic has come in effect.
+ */
 final case class HttpUri(
     scheme: HttpUriScheme,
     host: String,
     port: Option[Int],
-    /**
-      * A sequence of URL-decoded URI segment.
-      */
     path: IndexedSeq[String],
     queryParams: Map[String, Seq[String]],
-    /**
-      * Field allowing to store decoded path parameters alongside an http request,
-      * once the routing logic has come in effect.
-      */
     pathParams: Option[Map[String, String]]
 ) {
   def toURI: URI = {

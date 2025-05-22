@@ -615,7 +615,16 @@ lazy val protocol = projectMatrix
       },
     resolvers += Resolver.mavenLocal,
     libraryDependencies += Dependencies.Smithy.model,
-    javacOptions ++= Seq("--release", "8")
+    javacOptions ++= Seq(
+      "--release",
+      "8"
+    ),
+    doc / javacOptions ++= Seq(
+      // skip "no comment" warnings in Javadoc, these Java files are just boilerplate
+      "-Xdoclint:all,-missing",
+      // skip "Loading source file", "Generating" logs from Javadoc
+      "-quiet"
+    )
   )
 
 lazy val protocolJvm = protocol.jvm(autoScalaLibrary = false)
@@ -1325,7 +1334,13 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 .mkString(":")
 
               val res =
-                ("java" :: "-cp" :: cp :: mc :: "generate" :: args).lineStream.toList
+                ("java" ::
+                  // Silence OpenAPI warnings
+                  "-Djava.util.logging.config.file=config/logging.properties" ::
+                  "-cp" :: cp ::
+                  mc ::
+                  "generate" ::
+                  args).lineStream.toList
               res.map(new File(_))
             } else outputs.getOrElse(Seq.empty)
           }
