@@ -111,14 +111,19 @@ private[codegen] object ModelLoader {
     val serviceFactory =
       ProjectionTransformer.createServiceFactory(validatorClassLoader)
 
-    val trans = transformers.flatMap { t =>
+    val resolvedTransformers = transformers.flatMap { t =>
       val result = serviceFactory(t)
-      if (result.isPresent()) Some(result.get) else None
+      if (result.isPresent()) Some(result.get)
+      else {
+        System.err.println(s"[smithy4s] Warning: unresolved transformer: $t")
+        None
+      }
     }
 
-    val transformedModel = trans.foldLeft(preTransformationModel)((m, t) =>
-      t.transform(TransformContext.builder().model(m).build())
-    )
+    val transformedModel =
+      resolvedTransformers.foldLeft(preTransformationModel)((m, t) =>
+        t.transform(TransformContext.builder().model(m).build())
+      )
 
     val postTransformationModel = Model
       .assembler(validatorClassLoader)
