@@ -42,9 +42,9 @@ final class HttpRequestSpec extends FunSuite {
 
     val writer = HttpRequest.Writer.hostPrefix[String, Foo](opSchema)
 
-    val uri = HttpUri(
+    val uri = HttpUri.absolute(
       HttpUriScheme.Https,
-      Some("example.com"),
+      "example.com",
       None,
       IndexedSeq.empty,
       Map.empty,
@@ -54,7 +54,7 @@ final class HttpRequestSpec extends FunSuite {
     val resultUri = writer.write(request, Foo("hello")).uri
     assertEquals(
       resultUri,
-      uri.copy(host = Some("test.hello-other.example.com"))
+      uri.withHost("test.hello-other.example.com")
     )
   }
 

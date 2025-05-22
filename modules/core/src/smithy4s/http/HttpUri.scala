@@ -16,10 +16,17 @@
 
 package smithy4s.http
 
+import scala.runtime.AbstractFunction4
+
+/**
+ * RFC 3986 compliant URI implementation.
+ * @param origin The origin component of the URI.
+ * @param path A sequence of URL-decoded URI path segments
+ * @param queryParams A map of query parameters where keys and values are URL-decoded
+ * @param pathParams Optional map of path parameters extracted during routing
+ */
 final case class HttpUri(
-    scheme: HttpUriScheme,
-    host: Option[String],
-    port: Option[Int],
+    origin: Option[HttpUriOrigin],
     /**
       * A sequence of URL-decoded URI segment.
       */
@@ -30,4 +37,112 @@ final case class HttpUri(
       * once the routing logic has come in effect.
       */
     pathParams: Option[Map[String, String]]
-)
+) {
+
+  def host: Option[String] = origin.map(_.authority.host)
+
+  def port: Option[Int] = origin.flatMap(_.authority.port)
+
+  def scheme: Option[HttpUriScheme] = origin.flatMap(_.scheme)
+
+  def authority: Option[HttpUriAuthority] = origin.map(_.authority)
+
+  /**
+   * Returns true if this is a relative URI (no scheme or authority)
+   */
+  def isRelative: Boolean = origin.isEmpty
+
+  /**
+   * Returns true if this is an absolute URI (has scheme)
+   */
+  def isAbsolute: Boolean = origin.exists(_.scheme.isDefined)
+
+  /**
+   * Returns true if this is a scheme-relative URI (starts with //)
+   */
+  def isSchemeRelative: Boolean = origin.exists(_.scheme.isEmpty)
+
+  def withHost(host: String): HttpUri = {
+    origin match {
+      case Some(o) =>
+        copy(origin = Some(o.copy(authority = o.authority.withHost(host))))
+      case None =>
+        copy(origin = Some(HttpUriOrigin.schemeRelative(host)))
+    }
+
+  }
+
+}
+
+object HttpUri
+    extends AbstractFunction4[
+      Option[HttpUriOrigin],
+      IndexedSeq[String],
+      Map[String, Seq[String]],
+      Option[Map[String, String]],
+      HttpUri
+    ] {
+
+  def apply(
+      origin: Option[HttpUriOrigin],
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]],
+      pathParams: Option[Map[String, String]]
+  ): HttpUri = {
+    new HttpUri(origin, path, queryParams, pathParams)
+  }
+
+  /**
+   * Creates a relative URI with path and query parameters
+   */
+  def relative(
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]],
+      pathParams: Option[Map[String, String]] = None
+  ): HttpUri = {
+    HttpUri(
+      origin = None,
+      path = path,
+      queryParams = queryParams,
+      pathParams = pathParams
+    )
+  }
+
+  /**
+   * Creates a scheme-relative URI (starts with //)
+   */
+  def schemeRelative(
+      host: String,
+      port: Option[Int],
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]] = Map.empty,
+      pathParams: Option[Map[String, String]] = None
+  ): HttpUri = {
+    HttpUri(
+      origin = Some(HttpUriOrigin.schemeRelative(host, port)),
+      path = path,
+      queryParams = queryParams,
+      pathParams = pathParams
+    )
+  }
+
+  /**
+   * Creates an absolute URI
+   */
+  def absolute(
+      scheme: HttpUriScheme,
+      host: String,
+      port: Option[Int],
+      path: IndexedSeq[String],
+      queryParams: Map[String, Seq[String]] = Map.empty,
+      pathParams: Option[Map[String, String]] = None
+  ): HttpUri = {
+
+    HttpUri(
+      origin = Some(HttpUriOrigin.absolute(scheme, host, port)),
+      path = path,
+      queryParams = queryParams,
+      pathParams = pathParams
+    )
+  }
+}

@@ -29,6 +29,8 @@ import smithy4s.http.{HttpMethod => Smithy4sHttpMethod}
 import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
 import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
+import smithy4s.http.HttpUriOrigin
+import smithy4s.http.HttpUriAuthority
 import cats.MonadThrow
 import cats.effect.Concurrent
 import fs2.Stream
@@ -58,15 +60,18 @@ package object kernel {
   }
 
   def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
-    val uriScheme = uri.scheme match {
-      case Some(Uri.Scheme.https) => Smithy4sHttpUriScheme.Https
-      case _                      => Smithy4sHttpUriScheme.Http
+    val uriScheme = uri.scheme.map {
+      case Uri.Scheme.https => Smithy4sHttpUriScheme.Https
+      case _                => Smithy4sHttpUriScheme.Http
     }
-
+    val origin = uri.host.map(_.renderString).map { host =>
+      HttpUriOrigin(
+        uriScheme,
+        HttpUriAuthority(host, uri.port)
+      )
+    }
     Smithy4sHttpUri(
-      uriScheme,
-      uri.host.map(_.renderString),
-      uri.port,
+      origin,
       uri.path.segments.map(_.decoded()),
       getQueryParams(uri),
       pathParams
@@ -98,15 +103,15 @@ package object kernel {
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
     val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
-    val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
+    val authority =
+      uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
     Uri(
       path = path,
       authority = authority,
-      scheme = Some {
-        uri.scheme match {
-          case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
-          case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
-        }
+      scheme = uri.scheme.map {
+        case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
+        case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
+
       }
     ).withMultiValueQueryParams(uri.queryParams)
   }

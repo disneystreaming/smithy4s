@@ -108,8 +108,9 @@ object HttpRequest {
             ): HttpRequest[Body] = {
               val hostPrefix = prefixEncoder.write(List.empty, input).mkString
               val oldUri = request.uri
-              val prefixedHost = oldUri.host.map(host => s"$hostPrefix$host")
-              val newUri = oldUri.copy(host = prefixedHost)
+              val prefixedOrigin =
+                oldUri.origin.map(origin => origin.hostPrefix(hostPrefix))
+              val newUri = oldUri.copy(origin = prefixedOrigin)
               request.copy(uri = newUri)
             }
           }
