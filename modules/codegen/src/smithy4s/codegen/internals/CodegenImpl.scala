@@ -278,7 +278,7 @@ object RepeatedNamespaceException {
 }
 
 /**
-  * This matcher supports following syntax: 
+  * This matcher supports following syntax:
   * - a.b.c - exact match, will match only 'a.b.c'
   * - a.b.* - will match a.b followed with some segments.
   * - a.b* - like above, but will also match a.b

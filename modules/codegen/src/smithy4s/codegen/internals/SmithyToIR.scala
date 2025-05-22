@@ -54,6 +54,7 @@ import java.time.format.DateTimeFormatterBuilder
 import scala.util.Try
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import software.amazon.smithy.model.knowledge.TopDownIndex
 
 private[codegen] object SmithyToIR {
 
@@ -455,17 +456,14 @@ private[codegen] class SmithyToIR(
         // Aggregates both the operations of the current entity and the ones
         // in the sub-entities.
         def recursiveOperations(
-            entity: EntityShape
-        ): List[ShapeId] = {
-          entity
-            .getAllOperations()
+            service: ServiceShape
+        ): List[ShapeId] =
+          TopDownIndex
+            .of(model)
+            .getContainedOperations(service)
             .asScala
-            .toList ++ entity.getResources().asScala.flatMap { shapeId =>
-            recursiveOperations(
-              model.expectShape(shapeId, classOf[EntityShape])
-            )
-          }
-        }
+            .map(_.getId())
+            .toList
 
         val operations = recursiveOperations(shape)
           .map(model.getShape(_).asScala)
@@ -486,14 +484,13 @@ private[codegen] class SmithyToIR(
             val streamedInput = streamedMember(op.getInputShape())
             val streamedOutput = streamedMember(op.getOutputShape())
 
-            val errorTypes = (generalErrors ++ op
-              .getErrors()
-              .asScala
-              .map(_.tpe)
-              .collect { case Some(errorType) =>
-                errorType
-              }
-              .toList).distinct
+            val errorTypes = {
+              generalErrors ++ op
+                .getErrors()
+                .asScala
+                .flatMap(_.tpe)
+                .toList
+            }.distinct
 
             val outputType =
               op.getOutputShape().tpe.getOrElse(Type.unit)
