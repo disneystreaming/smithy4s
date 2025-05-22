@@ -38,6 +38,7 @@ final case class HttpUriAuthority private (
   def withoutPort: HttpUriAuthority = copy(port = None)
 
 }
+
 object HttpUriAuthority {
   @scala.annotation.nowarn(
     "msg=private method unapply in object HttpUriAuthority is never used"

@@ -127,5 +127,4 @@ object HttpUriOrigin {
       Some(scheme),
       HttpUriAuthority(host, Some(port), Some(userInfo))
     )
-
 }

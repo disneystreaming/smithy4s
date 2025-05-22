@@ -23,6 +23,7 @@ package smithy4s.http
  * @param queryParams A map of query parameters where keys and values are URL-decoded
  * @param pathParams Optional map of path parameters extracted during routing
  */
+
 final case class HttpUri private (
     origin: Option[HttpUriOrigin],
     /**
@@ -37,8 +38,6 @@ final case class HttpUri private (
     pathParams: Option[Map[String, String]]
 ) {
 
-  def scheme: Option[HttpUriScheme] = origin.flatMap(_.scheme)
-
   def authority: Option[HttpUriAuthority] = origin.map(_.authority)
 
   def host: Option[String] = origin.map(_.authority.host)
@@ -49,6 +48,11 @@ final case class HttpUri private (
 
   /**
    * Returns true if this is a relative URI (no authority)
+   * */
+  def scheme: Option[HttpUriScheme] = origin.flatMap(_.scheme)
+
+  /**
+   * Returns true if this is a relative URI (no scheme or authority)
    */
   def isRelative: Boolean = origin.isEmpty
 
@@ -135,6 +139,15 @@ final case class HttpUri private (
       case Some(params) => copy(pathParams = Some(f(params)))
       case None         => this
     }
+  }
+  def withHost(host: String): HttpUri = {
+    origin match {
+      case Some(o) =>
+        copy(origin = Some(o.copy(authority = o.authority.withHost(host))))
+      case None =>
+        copy(origin = Some(HttpUriOrigin.schemeRelative(host)))
+    }
+
   }
 }
 
