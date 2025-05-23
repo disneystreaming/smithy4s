@@ -26,7 +26,6 @@ import mill.scalalib.publish.VersionControl
 import coursier.Repository
 import coursier.ivy.IvyRepository
 
-
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
@@ -340,10 +339,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test("multi-module staged codegen works") {
     val localIvyRepo = os.temp.dir() / ".ivy2" / "local"
 
-    trait Common
-        extends SbtModule
-        with Smithy4sModule
-        with PublishModule {
+    trait Common extends SbtModule with Smithy4sModule with PublishModule {
       override def scalaVersion = "2.13.16"
       override def repositoriesTask: Task[Seq[Repository]] = T.task {
         val ivy2Local = IvyRepository.fromPattern(

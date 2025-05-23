@@ -541,7 +541,11 @@ lazy val millCodegenPlugin = projectMatrix
     simpleJVMLayout,
     libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always,
     publishLocal := {
+      // make sure that core and codegen are published before the
+      // plugin is published
+      // this allows running `scripted` alone
       val _ = List(
+        // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala3) / publishLocal).value,
@@ -549,6 +553,7 @@ lazy val millCodegenPlugin = projectMatrix
         (codegen.jvm(Scala213) / publishLocal).value,
         (protocolJvm / publishLocal).value
       )
+      // for mill
       publishLocal.value
     },
     Test / test := (Test / test).dependsOn(publishLocal).value,
