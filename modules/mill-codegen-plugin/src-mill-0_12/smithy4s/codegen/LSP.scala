@@ -16,28 +16,31 @@
 
 package smithy4s.codegen
 
+import _root_.{mill => mmill}
 import coursier.maven.MavenRepository
-import _root_.mill.api.PathRef
-import _root_.mill.define.Command
-import _root_.mill.define.ExternalModule
-import _root_.mill.define.Target
-import _root_.mill.eval.Evaluator
-
-import scala.collection.immutable.ListSet
+import mmill.api.PathRef
+import mmill.define.Command
+import mmill.define.ExternalModule
+import mmill.define.Target
+import mmill.eval.Evaluator
 import smithy4s.codegen.SmithyBuildJson
+import smithy4s.codegen.mill.Smithy4sModule
+import scala.collection.immutable.ListSet
+import mmill.define.Task
 
 object LSP extends ExternalModule {
   lazy val millDiscover = _root_.mill.define.Discover[this.type]
 
   def updateConfig(ev: Evaluator): Command[PathRef] = {
-    val rootPath = ev.rootModule.millModuleBasePath.value
-    val s4sModules = ev.rootModule.moduleInternal.modules
-      .collect { case s: smithy4s.codegen.mill.Smithy4sModule => s }
+    val rootModule = ev.rootModule
+    val rootPath = rootModule.millModuleBasePath.value
+    val s4sModules = rootModule.moduleInternal.modules
+      .collect { case s: Smithy4sModule => s }
 
     val depsTask = Target
       .traverse(s4sModules)(_.smithy4sAllDeps)
       .map(
-        _.flatten.flatMap(smithy4s.codegen.mill.Smithy4sModule.depIdEncode(_))
+        _.flatten.flatMap(Smithy4sModule.depIdEncode(_))
       )
       .map(s => ListSet(s: _*))
 
@@ -61,7 +64,7 @@ object LSP extends ExternalModule {
       )
       .map(s => ListSet(s: _*))
 
-    Target.command {
+    Task.Command {
       val json = SmithyBuildJson.toJson(importsTask(), depsTask(), reposTask())
       val target = rootPath / "smithy-build.json"
       val content = if (os.exists(target)) {

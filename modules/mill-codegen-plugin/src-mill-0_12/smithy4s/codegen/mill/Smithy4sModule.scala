@@ -111,9 +111,10 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
-  @nowarn("cat=deprecation")
   def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]] = T {
-    resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
+    resolveDeps(T {
+      allIvyDeps().map(bindDependency())
+    })().flatMap { pathRef =>
       val deps = JarUtils
         .extractSmithy4sDependencies(pathRef.path.toIO)
         .map(dep => ivy"$dep")
@@ -138,7 +139,7 @@ trait Smithy4sModule extends ScalaModule {
   @nowarn("cat=deprecation")
   def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
     val bind = bindDependency()
-    transitiveIvyDeps() ++
+    allIvyDeps().map(bind) ++
       smithy4sTransitiveIvyDeps().map(bind) ++
       smithy4sExternallyTrackedIvyDeps().map(bind) ++
       smithy4sAwsSpecDependencies().map(bind)
