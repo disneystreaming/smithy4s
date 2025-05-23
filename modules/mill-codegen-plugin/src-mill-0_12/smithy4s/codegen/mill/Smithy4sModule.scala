@@ -199,8 +199,6 @@ trait Smithy4sModule extends ScalaModule {
       .filter(os.exists(_))
       .toList
 
-    println("input dir: " + smithy4sInputDirs())
-
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
 
