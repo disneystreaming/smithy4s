@@ -56,7 +56,7 @@ case class MillCustomRow(mv: String) extends CustomRow {
       Compile / unmanagedSourceDirectories +=
         (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}",
       Test / unmanagedSourceDirectories +=
-        (Test / sourceDirectory).value.getParentFile.getParentFile / "test"/ s"src-mill-${suffix}"
+        (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-${suffix}"
     )
   }
 
@@ -114,42 +114,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           _.enablePlugins(ScalaNativePlugin).settings(nativeDimSettings)
         )
     }
-
-    def customRow(scalaVersion: String, customRow: CustomRow): ProjectMatrix =
-      pm
-        // inspired by smithy4s: setting the "default" scala version,
-        // so that projects with that value don't get a suffix in their names
-        .defaultAxes(
-          VirtualAxis.jvm,
-          VirtualAxis.scalaPartialVersion(scalaVersion)
-        )
-        .jvmPlatform(
-          scalaVersions = List(scalaVersion),
-          axisValues = customRow.axisValues,
-          configure = customRow.process
-        )
-
-    def customRows(
-        scalaVersion: String,
-        customRows: CustomRow*
-    ): ProjectMatrix =
-      customRows.foldLeft(pm) { (m, r) =>
-        m.customRow(scalaVersion, r)
-      }
-
-    // def springBoot3(
-    //     routingModes: Seq[RoutingMode],
-    //     otherSettings: Project => Project = identity,
-    // ): ProjectMatrix =
-    //   if (routingModes.isEmpty)
-    //     customRow(OnlySpringVersionRow(SpringVersion.Sb3, otherSettings))
-    //   else
-    //     customRows(
-    //       routingModes.map { rm =>
-    //         SpringAndRoutingRow(SpringVersion.Sb3, rm, otherSettings)
-    //       }: _*
-    //     )
-    //
   }
 
   override def requires = plugins.JvmPlugin && HeaderPlugin
