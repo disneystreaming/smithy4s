@@ -551,9 +551,10 @@ lazy val millCodegenPlugin = projectMatrix
         (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
+
+        // for mill
         (protocolJvm / publishLocal).value
       )
-      // for mill
       publishLocal.value
     },
     Test / test := (Test / test).dependsOn(publishLocal).value,
