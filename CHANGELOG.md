@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.37 
+
+* mill-plugin: Add support for 0.12
+
 # 0.18.36
 
 * codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
