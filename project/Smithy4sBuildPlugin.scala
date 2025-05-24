@@ -115,20 +115,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         )
     }
 
-    def customRow(scalaVersion: String, customRow: CustomRow): ProjectMatrix =
-      pm
-        // setting the "default" scala version,
-        // so that projects with that value don't get a suffix in their names
-        .defaultAxes(
-          VirtualAxis.jvm,
-          VirtualAxis.scalaPartialVersion(scalaVersion)
-        )
-        .jvmPlatform(
-          scalaVersions = List(scalaVersion),
-          axisValues = customRow.axisValues,
-          configure = customRow.process
-        )
-
     def millPlatforms(
         scalaVersion: String,
         millVersions: Seq[String]
@@ -137,12 +123,17 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         .map { mv =>
           MillCustomRow(mv)
         }
-        .foldLeft(pm) { (m, r) =>
-          m.customRow(scalaVersion, r)
+        .foldLeft(pm) { (m, row) =>
+          m
+            .jvmPlatform(
+              scalaVersions = List(scalaVersion),
+              axisValues = row.axisValues,
+              configure = row.process
+            )
         }
         .defaultAxes(
           VirtualAxis.jvm,
-          VirtualAxis.scalaPartialVersion(Scala213)
+          VirtualAxis.scalaPartialVersion(scalaVersion)
         )
     }
   }
