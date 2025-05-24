@@ -129,13 +129,22 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           configure = customRow.process
         )
 
-    def customRows(
+    def millPlatforms(
         scalaVersion: String,
-        customRows: CustomRow*
-    ): ProjectMatrix =
-      customRows.foldLeft(pm) { (m, r) =>
-        m.customRow(scalaVersion, r)
-      }
+        millVersions: Seq[String]
+    ): ProjectMatrix = {
+      millVersions
+        .map { mv =>
+          MillCustomRow(mv)
+        }
+        .foldLeft(pm) { (m, r) =>
+          m.customRow(scalaVersion, r)
+        }
+        .defaultAxes(
+          VirtualAxis.jvm,
+          VirtualAxis.scalaPartialVersion(Scala213)
+        )
+    }
   }
 
   override def requires = plugins.JvmPlugin && HeaderPlugin

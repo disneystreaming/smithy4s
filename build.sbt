@@ -560,12 +560,7 @@ lazy val millCodegenPlugin = projectMatrix
     Test / test := (Test / test).dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
   )
-  .customRows(
-    Scala213,
-    millVersions.map { mv =>
-      MillCustomRow(mv)
-    }: _*
-  )
+  .millPlatforms(Scala213, millVersions)
   .dependsOn(codegen)
 
 lazy val decline = (projectMatrix in file("modules/decline"))
