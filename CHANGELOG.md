@@ -5,6 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.37
+
+* http: Add mapping between HttpUri and java.net.URI in [#1719](https://github.com/disneystreaming/smithy4s/pull/1719)
+* codegen: Add an STDERR log message when a codegen-time model transformation is requested but not found in [#1726](https://github.com/disneystreaming/smithy4s/pull/1726)
+
 # 0.18.36
 
 * codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
