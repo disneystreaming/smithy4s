@@ -53,9 +53,9 @@ trait Lens[S, A] extends Optional[S, A] { self =>
         self.modify(that.replace(a))
     }
 
-  /** 
-   * Allows abstracting over an optional target by pointing to 
-   * the inside of the optional value (the value inside of the [[Some]]).
+  /**
+   * Allows abstracting over an optional target by pointing to
+   * the inside of the optional value (the value inside of the [[scala.Some]]).
    */
   final override def some[A0](implicit
       ev1: A =:= Option[A0]
@@ -72,7 +72,7 @@ trait Lens[S, A] extends Optional[S, A] { self =>
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
-   * or other type with an implicit [[Bijection]] available.
+   * or other type with an implicit [[smithy4s.Bijection]] available.
    */
   final override def value[A0](implicit
       bijection: Bijection[A0, A]

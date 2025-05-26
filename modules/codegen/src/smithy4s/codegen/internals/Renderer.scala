@@ -1500,7 +1500,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.BigInteger => s"${schemaPkg_}.bigint"
       case Primitive.Uuid       => s"${schemaPkg_}.uuid"
       case Primitive.Document   => s"${schemaPkg_}.document"
-      case Primitive.Nothing    => "???"
+      case Primitive.Nothing    => sys.error("Invalid state: Cannot render Nothing")
     }
 
     def name: Option[String] = tpe match {
@@ -1512,7 +1512,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint.Native): Line =
     recursion
-      .cata(renderTypedNode)(hint.typedNode)
+      .cata(renderTypedNode)(hint.typedNode.value)
       .run(true)
       ._2
 
@@ -1635,6 +1635,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
+    // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with gADTs)
     prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
@@ -1646,7 +1647,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
       case Primitive.String     => renderStringLiteral
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
@@ -1683,7 +1684,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )})"""
         })
       }
-      case _ => _ => line"null"
+      case Primitive.Nothing => v => (v: Nothing) // this case can't happen
     }
 
   private def renderStringLiteral(raw: String): Line = {

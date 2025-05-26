@@ -17,8 +17,8 @@ import smithy4s.schema.Schema.unit
 trait KVStoreGen[F[_, _, _, _, _]] {
   self =>
 
-  def get(key: String): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing]
   def put(key: String, value: String): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]
+  def get(key: String): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing]
   def delete(key: String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
@@ -39,8 +39,8 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   }
 
   val endpoints: Vector[smithy4s.Endpoint[KVStoreOperation, _, _, _, _, _]] = Vector(
-    KVStoreOperation.Get,
     KVStoreOperation.Put,
+    KVStoreOperation.Get,
     KVStoreOperation.Delete,
   )
 
@@ -54,10 +54,10 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[KVStoreOperation, P]): KVStoreGen[P] = new KVStoreOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = KVStoreOperation.toPolyFunction(impl)
 
-  type GetError = KVStoreOperation.GetError
-  val GetError = KVStoreOperation.GetError
   type PutError = KVStoreOperation.PutError
   val PutError = KVStoreOperation.PutError
+  type GetError = KVStoreOperation.GetError
+  val GetError = KVStoreOperation.GetError
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
 }
@@ -72,22 +72,86 @@ sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput]
 object KVStoreOperation {
 
   object reified extends KVStoreGen[KVStoreOperation] {
-    def get(key: String): Get = Get(Key(key))
     def put(key: String, value: String): Put = Put(KeyValue(key, value))
+    def get(key: String): Get = Get(Key(key))
     def delete(key: String): Delete = Delete(Key(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: KVStoreGen[P], f: PolyFunction5[P, P1]) extends KVStoreGen[P1] {
-    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
     def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
+    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
     def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = new PolyFunction5[KVStoreOperation, P] {
     def apply[I, E, O, SI, SO](op: KVStoreOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
+  final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = impl.put(input.key, input.value)
+    def ordinal: Int = 0
+    def endpoint: smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Put
+  }
+  object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
+      .withInput(KeyValue.schema)
+      .withError(PutError.errorSchema)
+      .withOutput(unit)
+    def wrap(input: KeyValue): Put = Put(input)
+  }
+  sealed trait PutError extends scala.Product with scala.Serializable { self =>
+    @inline final def widen: PutError = this
+    def $ordinal: Int
+
+    object project {
+      def unauthorizedError: Option[UnauthorizedError] = PutError.UnauthorizedErrorCase.alt.project.lift(self).map(_.unauthorizedError)
+    }
+
+    def accept[A](visitor: PutError.Visitor[A]): A = this match {
+      case value: PutError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
+    }
+  }
+  object PutError extends ErrorSchema.Companion[PutError] {
+
+    def unauthorizedError(unauthorizedError: UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
+
+    val id: ShapeId = ShapeId("smithy4s.example", "PutError")
+
+    val hints: Hints = Hints.empty
+
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def $ordinal: Int = 0 }
+
+    object UnauthorizedErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[PutError.UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), PutError.UnauthorizedErrorCase(_), _.unauthorizedError)
+      val alt = schema.oneOf[PutError]("UnauthorizedError")
+    }
+
+    trait Visitor[A] {
+      def unauthorizedError(value: UnauthorizedError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unauthorizedError(value: UnauthorizedError): A = default
+      }
+    }
+
+    implicit val schema: Schema[PutError] = union(
+      PutError.UnauthorizedErrorCase.alt,
+    ){
+      _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[PutError] = throwable match {
+      case e: UnauthorizedError => Some(PutError.UnauthorizedErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: PutError): Throwable = e match {
+      case PutError.UnauthorizedErrorCase(e) => e
+    }
+  }
   final case class Get(input: Key) extends KVStoreOperation[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = impl.get(input.key)
-    def ordinal: Int = 0
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = Get
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
@@ -161,70 +225,6 @@ object KVStoreOperation {
     def unliftError(e: GetError): Throwable = e match {
       case GetError.UnauthorizedErrorCase(e) => e
       case GetError.KeyNotFoundErrorCase(e) => e
-    }
-  }
-  final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = impl.put(input.key, input.value)
-    def ordinal: Int = 1
-    def endpoint: smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Put
-  }
-  object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
-    val schema: OperationSchema[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Put"))
-      .withInput(KeyValue.schema)
-      .withError(PutError.errorSchema)
-      .withOutput(unit)
-    def wrap(input: KeyValue): Put = Put(input)
-  }
-  sealed trait PutError extends scala.Product with scala.Serializable { self =>
-    @inline final def widen: PutError = this
-    def $ordinal: Int
-
-    object project {
-      def unauthorizedError: Option[UnauthorizedError] = PutError.UnauthorizedErrorCase.alt.project.lift(self).map(_.unauthorizedError)
-    }
-
-    def accept[A](visitor: PutError.Visitor[A]): A = this match {
-      case value: PutError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
-    }
-  }
-  object PutError extends ErrorSchema.Companion[PutError] {
-
-    def unauthorizedError(unauthorizedError: UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
-
-    val id: ShapeId = ShapeId("smithy4s.example", "PutError")
-
-    val hints: Hints = Hints.empty
-
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def $ordinal: Int = 0 }
-
-    object UnauthorizedErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[PutError.UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), PutError.UnauthorizedErrorCase(_), _.unauthorizedError)
-      val alt = schema.oneOf[PutError]("UnauthorizedError")
-    }
-
-    trait Visitor[A] {
-      def unauthorizedError(value: UnauthorizedError): A
-    }
-
-    object Visitor {
-      trait Default[A] extends Visitor[A] {
-        def default: A
-        def unauthorizedError(value: UnauthorizedError): A = default
-      }
-    }
-
-    implicit val schema: Schema[PutError] = union(
-      PutError.UnauthorizedErrorCase.alt,
-    ){
-      _.$ordinal
-    }
-    def liftError(throwable: Throwable): Option[PutError] = throwable match {
-      case e: UnauthorizedError => Some(PutError.UnauthorizedErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: PutError): Throwable = e match {
-      case PutError.UnauthorizedErrorCase(e) => e
     }
   }
   final case class Delete(input: Key) extends KVStoreOperation[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {

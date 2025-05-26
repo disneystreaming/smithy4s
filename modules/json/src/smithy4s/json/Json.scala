@@ -88,14 +88,14 @@ object Json {
   }
 
   /**
-    * Parses a [[smithy4s.Document]] from a [[Array[Byte]]] containing a Json payload.
+    * Parses a [[smithy4s.Document]] from an [[scala.Array]] of [[scala.Byte]] containing a Json payload.
     */
   def readDocument(bytes: Array[Byte]): Either[PayloadError, Document] = {
     documentDecoder.decode(Blob(bytes))
   }
 
   /**
-    * Writes a [[smithy4s.Document]] into a binary Blob.
+    * Writes a [[smithy4s.Document]] into a binary [[smithy4s.Blob]].
     */
   def writeDocumentAsBlob(document: Document): Blob = {
     documentWriter.encode(document)
@@ -121,9 +121,9 @@ object Json {
     jsoniter.fromSchema(implicitly[Schema[A]], jsoniterCodecGlobalCache)
 
   /**
-    * Default payload codec compiler, which can produce instances of [[smithy4s.codec.PayloadCodec]]
-    * from instances of [[smithy4s.schema.Schema]] (which are generated for all smithy data types). PayloadCodecs
-    * can be used, for instance, in http-interpreters.
+    * Default payload codec compiler, which can produce instances of [[smithy4s.codecs.PayloadDecoder]] / [[smithy4s.codecs.PayloadEncoder]]
+    * from instances of [[smithy4s.schema.Schema]] (which are generated for all smithy data types).
+    * These can be used, for instance, in HTTP interpreters.
     */
   val payloadCodecs: JsonPayloadCodecCompiler =
     internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler

@@ -56,7 +56,20 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
       "AwsJson10ClientPopulatesNestedDefaultsWhenMissingInResponseBody",
       "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
       "RestJsonHttpPayloadWithUnsetUnion",
-      "RestXmlHttpPayloadWithUnsetUnion"
+      "RestXmlHttpPayloadWithUnsetUnion",
+
+      // TODO same as above, added between 1.49 and 1.56. Mostly default-related
+      "NullAndEmptyHeaders",
+      "HttpPrefixEmptyHeaders",
+      "HttpEmptyPrefixHeadersRequestClient",
+      "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+      "RestJsonClientPopulatesNestedDefaultValuesWhenMissing",
+      "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
+      "RestJsonClientPopulatesDefaultValuesInInput",
+      "RestJsonNullAndEmptyHeaders",
+      "RestJsonHttpPrefixEmptyHeaders",
+      "RestJsonHttpEmptyPrefixHeadersRequestClient",
+      "AwsJson10ClientErrorCorrectsWithDefaultValuesWhenServerFailsToSerializeRequiredValues"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No

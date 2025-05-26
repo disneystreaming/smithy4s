@@ -49,11 +49,16 @@ operation RoundTrip {
 }
 
 structure RoundTripData {
+    // suppressing because we know - it's part of the test
+    @suppress(["HttpBindingTraitIgnored.Input"])
     @httpLabel
     @required
     label: String
     @httpHeader("HEADER")
     header: String
+
+    // suppressing because we know - it's part of the test
+    @suppress(["HttpBindingTraitIgnored.Input"])
     @httpQuery("query")
     query: String
     body: String

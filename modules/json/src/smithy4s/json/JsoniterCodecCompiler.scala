@@ -48,7 +48,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     */
   @deprecated(
     message = """Use withFieldFilter instead.
-      
+
   Mapping:
    - explicitNulls = false -> FieldFilter.Default
    - explicitNulls = true -> FieldFilter.EncodeAll
@@ -64,12 +64,12 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     )
 
   /**
-    * Configures the JSON encoder to use a custom {@link FieldFilter}, 
+    * Configures the JSON encoder to use a custom [[smithy4s.schema.FieldFilter]],
     * allowing fine-grained control over which fields should be skipped during encoding.
     *
-    * @param fieldFilter an instance of {@link FieldFilter} responsible for 
+    * @param fieldFilter an instance of [[smithy4s.schema.FieldFilter]] responsible for
     *                          determining whether a given field should be rendered.
-    * @return a new instance of {@link JsoniterCodecCompiler} with the specified field skipping behavior.
+    * @return a new instance of [[JsoniterCodecCompiler]] with the specified field skipping behavior.
     */
   def withFieldFilter(fieldFilter: FieldFilter): JsoniterCodecCompiler
 

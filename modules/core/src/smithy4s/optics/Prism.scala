@@ -27,8 +27,8 @@ import smithy4s.Bijection
 trait Prism[S, A] extends Optional[S, A] { self =>
 
   /**
-   * Returns a [[Some]] of A from S if it is able to obtain an A.
-   * Else returns [[None]].
+   * Returns a [[scala.Some]] of A from S if it is able to obtain an A.
+   * Else returns [[scala.None]].
    */
   def project(s: S): Option[A]
 
@@ -52,9 +52,9 @@ trait Prism[S, A] extends Optional[S, A] { self =>
         self.inject(that.inject(a))
     }
 
-  /** 
-   * Allows abstracting over an optional target by pointing to 
-   * the inside of the optional value (the value inside of the [[Some]]).
+  /**
+   * Allows abstracting over an optional target by pointing to
+   * the inside of the optional value (the value inside of the [[scala.Some]]).
    */
   final override def some[A0](implicit
       ev1: A =:= Option[A0]
@@ -71,7 +71,7 @@ trait Prism[S, A] extends Optional[S, A] { self =>
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
-   * or other type with an implicit [[Bijection]] available.
+   * or other type with an implicit [[smithy4s.Bijection]] available.
    */
   final override def value[A0](implicit
       bijection: Bijection[A0, A]
@@ -95,7 +95,7 @@ object Prism {
     }
 
   /**
-   * Construct a new [[Prism]] with a [[PartialFunction]] to avoid needing
+   * Construct a new [[Prism]] with a [[scala.PartialFunction]] to avoid needing
    * to exhaustively handle all possible `S` in the provided get function.
    */
   def partial[S, A](get: PartialFunction[S, A])(inject: A => S): Prism[S, A] =

@@ -65,12 +65,13 @@ object Main {
         }
         .leftMap { help =>
           System.err.println(help.show)
+          sys.exit(1)
         }
         .merge
     } catch {
       case e: Throwable =>
         e.printStackTrace(System.err)
-        System.exit(1)
+        sys.exit(1)
     } finally {
       System.setErr(out)
     }

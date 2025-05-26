@@ -50,6 +50,26 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
   - Otherwise, it's treated as the absence of a value.
 
+# 0.18.36
+
+* codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
+
+# 0.18.35
+
+* json, documents: Add support for `@jsonUnknown` in unions (Open Unions) in [#1677](https://github.com/disneystreaming/smithy4s/pull/1677)
+* codegen: Prevent `StackOverflowError` in dealing with recursive collection traits in [#1708](https://github.com/disneystreaming/smithy4s/pull/1708)
+
+# 0.18.34
+
+* codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
+* codegen: Mixins - fix several bugs and a performance regression in [#1701](https://github.com/disneystreaming/smithy4s/pull/1701).
+
+# 0.18.33
+
+* codegen: Fix an issue in which using UUIDs as trait or default values would prevent code generation in [#1685](https://github.com/disneystreaming/smithy4s/pull/1685)
+* general: Update dependencies across the board in [#1686](https://github.com/disneystreaming/smithy4s/pull/1686)
+* http: Update `HttpUnaryServerRouter#partialFunction` to remove ambiguity between the two methods
+
 # 0.18.32
 
 * codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies

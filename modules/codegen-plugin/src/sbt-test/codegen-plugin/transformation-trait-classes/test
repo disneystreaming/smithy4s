@@ -1,0 +1,4 @@
+# check if the app runs successfully.
+# if it doesn't compile, it could be because the transformation wasn't applied.
+# if the transformation throws, it's because of a bug like #336.
+> run

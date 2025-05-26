@@ -74,9 +74,14 @@ private[codegen] object ModelLoader {
       }
     }
 
+    val validatorClassLoader = locally {
+      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      new URLClassLoader(jarUrls, currentClassLoader)
+    }
+
     // Loading the upstream model
     val upstreamModel = Model
-      .assembler()
+      .assembler(validatorClassLoader)
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
       .addClasspathModels(currentClassLoader, discoverModels)
@@ -95,11 +100,6 @@ private[codegen] object ModelLoader {
       case _ => ()
     }
 
-    val validatorClassLoader = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
-      new URLClassLoader(jarUrls, currentClassLoader)
-    }
-
     val preTransformationModel =
       Model
         .assembler(validatorClassLoader)
@@ -111,14 +111,19 @@ private[codegen] object ModelLoader {
     val serviceFactory =
       ProjectionTransformer.createServiceFactory(validatorClassLoader)
 
-    val trans = transformers.flatMap { t =>
+    val resolvedTransformers = transformers.flatMap { t =>
       val result = serviceFactory(t)
-      if (result.isPresent()) Some(result.get) else None
+      if (result.isPresent()) Some(result.get)
+      else {
+        System.err.println(s"[smithy4s] Warning: unresolved transformer: $t")
+        None
+      }
     }
 
-    val transformedModel = trans.foldLeft(preTransformationModel)((m, t) =>
-      t.transform(TransformContext.builder().model(m).build())
-    )
+    val transformedModel =
+      resolvedTransformers.foldLeft(preTransformationModel)((m, t) =>
+        t.transform(TransformContext.builder().model(m).build())
+      )
 
     val postTransformationModel = Model
       .assembler(validatorClassLoader)
