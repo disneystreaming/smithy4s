@@ -18,6 +18,7 @@ package smithy4s.http
 
 import munit._
 import java.net.URI
+import smithy4s.Platform
 
 final class HttpUriSpec extends FunSuite {
 
@@ -41,28 +42,43 @@ final class HttpUriSpec extends FunSuite {
   }
 
   test("Roundtrip preserves uri encoding from java.net.URI") {
-    // This URI contains spaces, which should be encoded as %20
-    val uri = URI.create("http://example.com/foo%20bar?baz=qux%20quux")
-    val httpUri = HttpUri.fromURI(uri)
-    assertEquals(uri, httpUri.toURI)
-    assert(httpUri.path == IndexedSeq("foo bar"))
-    assert(httpUri.queryParams == Map("baz" -> List("qux quux")))
+    if (Platform.isNative)
+      assume(
+        false,
+        "This test is not applicable for Scala Native, as our version has bugs in URI parsing and encoding"
+      )
+    else {
+      // This URI contains spaces, which should be encoded as %20
+      val uri = URI.create("http://example.com/foo%20bar?baz=qux%20quux")
+      val httpUri = HttpUri.fromURI(uri)
+      assertEquals(uri, httpUri.toURI)
+      assert(httpUri.path == IndexedSeq("foo bar"))
+      assert(httpUri.queryParams == Map("baz" -> List("qux quux")))
+    }
   }
+
   test("Roundtrip preserves uri encoding from HttpUri") {
-    // This HttpUri contains spaces, which should be encoded as %20, however HttpUri stores data in its decoded form
-    // so we expect the spaces to be present in the path and query parameters.
-    val httpUri = HttpUri(
-      HttpUriScheme.Http,
-      "example.com",
-      None,
-      IndexedSeq("foo bar"),
-      Map("baz" -> List("qux quux")),
-      Option.empty
-    )
-    val uri = httpUri.toURI
-    assertEquals(httpUri, HttpUri.fromURI(uri))
-    assert(uri.getRawPath == "/foo%20bar")
-    assert(uri.getRawQuery == "baz=qux%20quux")
+    if (Platform.isNative)
+      assume(
+        false,
+        "This test is not applicable for Scala Native, as our version has bugs in URI parsing and encoding"
+      )
+    else {
+      // This HttpUri contains spaces, which should be encoded as %20, however HttpUri stores data in its decoded form
+      // so we expect the spaces to be present in the path and query parameters.
+      val httpUri = HttpUri(
+        HttpUriScheme.Http,
+        "example.com",
+        None,
+        IndexedSeq("foo bar"),
+        Map("baz" -> List("qux quux")),
+        Option.empty
+      )
+      val uri = httpUri.toURI
+      assertEquals(httpUri, HttpUri.fromURI(uri))
+      assert(uri.getRawPath == "/foo%20bar")
+      assert(uri.getRawQuery == "baz=qux%20quux")
+    }
   }
 
 }

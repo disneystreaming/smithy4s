@@ -20,6 +20,7 @@ import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation.Severity
 import software.amazon.smithy.model.validation.ValidationEvent
 import weaver._
+
 import ModelUtils._
 
 object AdtTraitValidatorSpec extends FunSuite {
