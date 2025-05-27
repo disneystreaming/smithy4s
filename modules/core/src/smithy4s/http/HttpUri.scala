@@ -46,13 +46,10 @@ final case class HttpUri private (
 
   def userInfo: Option[String] = origin.flatMap(_.authority.userInfo)
 
-  /**
-   * Returns true if this is a relative URI (no authority)
-   * */
   def scheme: Option[HttpUriScheme] = origin.flatMap(_.scheme)
 
   /**
-   * Returns true if this is a relative URI (no scheme or authority)
+   * Returns true if this is a relative URI (no authority)
    */
   def isRelative: Boolean = origin.isEmpty
 
