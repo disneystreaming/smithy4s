@@ -71,7 +71,21 @@ final case class HttpUri(
       case None =>
         copy(origin = Some(HttpUriOrigin.schemeRelative(host)))
     }
+  }
 
+  def withHostPrefix(prefix: String): HttpUri = {
+    origin match {
+      case Some(o) =>
+        copy(origin = Some(o.withHostPrefix(prefix)))
+      case None => this
+    }
+  }
+  def withPort(port: Int): HttpUri = {
+    origin match {
+      case Some(o) =>
+        copy(origin = Some(o.copy(authority = o.authority.withPort(port))))
+      case None => this
+    }
   }
 
 }

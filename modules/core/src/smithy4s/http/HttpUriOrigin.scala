@@ -29,7 +29,7 @@ final case class HttpUriOrigin(
 ) {
 
   /**
-   * Renders the location according to RFC 3986
+   * Renders the origin according to RFC 3986
    */
   def render: String = {
     val schemeStr = scheme
@@ -45,35 +45,35 @@ final case class HttpUriOrigin(
     copy(authority = authority.hostPrefix(prefix))
 
   /**
-   * Creates a new HttpLocation with the given scheme
+   * Creates a new HttpUriOrigin with the given scheme
    */
   def withScheme(scheme: HttpUriScheme): HttpUriOrigin =
     copy(scheme = Some(scheme))
 
   /**
-   * Creates a new HttpLocation with the given port
+   * Creates a new HttpUriOrigin with the given port
    */
   def withPort(port: Int): HttpUriOrigin =
     copy(authority = authority.withPort(port))
 
   /**
-   * Creates a new HttpLocation with the given user info
+   * Creates a new HttpUriOrigin with the given user info
    */
   def withUserInfo(userInfo: String): HttpUriOrigin =
     copy(authority = authority.withUserInfo(userInfo))
 
   /**
-   * Creates a new HttpLocation without scheme
+   * Creates a new HttpUriOrigin without scheme
    */
   def withoutScheme: HttpUriOrigin = copy(scheme = None)
 
   /**
-   * Creates a new HttpLocation without port
+   * Creates a new HttpUriOrigin without port
    */
   def withoutPort: HttpUriOrigin = copy(authority = authority.withoutPort)
 
   /**
-   * Creates a new HttpLocation without user info
+   * Creates a new HttpUriOrigin without user info
    */
   def withoutUserInfo: HttpUriOrigin =
     copy(authority = authority.withoutUserInfo)
@@ -82,13 +82,13 @@ final case class HttpUriOrigin(
 object HttpUriOrigin {
 
   /**
-   * Creates a scheme-relative location (starts with //)
+   * Creates a scheme-relative origin (starts with //)
    */
   def schemeRelative(host: String, port: Option[Int] = None): HttpUriOrigin =
     new HttpUriOrigin(None, HttpUriAuthority(host, port))
 
   /**
-   * Creates an absolute location with scheme
+   * Creates an absolute origin with scheme
    */
   def absolute(
       scheme: HttpUriScheme,
@@ -98,7 +98,7 @@ object HttpUriOrigin {
     new HttpUriOrigin(Some(scheme), HttpUriAuthority(host, port))
 
   /**
-   * Creates an absolute location with scheme, host, and port
+   * Creates an absolute origin with scheme, host, and port
    */
   def absolute(
       scheme: HttpUriScheme,
