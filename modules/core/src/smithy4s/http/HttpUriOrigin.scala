@@ -41,7 +41,7 @@ final case class HttpUriOrigin(
     s"$schemeStr${authority.render}"
   }
 
-  def hostPrefix(prefix: String): HttpUriOrigin =
+  def withHostPrefix(prefix: String): HttpUriOrigin =
     copy(authority = authority.hostPrefix(prefix))
 
   /**

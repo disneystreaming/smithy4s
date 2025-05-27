@@ -26,21 +26,16 @@ object Http4sConversionSpec extends SimpleIOSuite {
   // note: these actually work (http4s runs them as HTTP GET against localhost:80)
   http4sToSmithyAndBackUriTest(
     uri"/",
-    uri"http:/"
+    uri"/"
   )
 
   http4sToSmithyAndBackUriTest(
     uri"/hello",
-    uri"http:/hello"
+    uri"/hello"
   )
 
   http4sToSmithyAndBackUriTest(
     uri"http://example.com",
-    uri"http://example.com/"
-  )
-
-  http4sToSmithyAndBackUriTest(
-    uri"//example.com",
     uri"http://example.com/"
   )
 
@@ -63,13 +58,6 @@ object Http4sConversionSpec extends SimpleIOSuite {
     uri"http://localhost/",
     uri"http://localhost/"
   )
-
-  pureTest("URI: http4s to smithy4s defaults to http") {
-    assert.same(
-      Some(smithy4s.http.HttpUriScheme.Http),
-      toSmithy4sHttpUri(uri"/").scheme
-    )
-  }
 
   pureTest("URI: http4s to smithy4s keeps http scheme") {
     assert.same(

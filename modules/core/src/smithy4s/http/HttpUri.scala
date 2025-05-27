@@ -39,16 +39,18 @@ final case class HttpUri(
     pathParams: Option[Map[String, String]]
 ) {
 
-  def host: Option[String] = origin.map(_.authority.host)
-
-  def port: Option[Int] = origin.flatMap(_.authority.port)
-
   def scheme: Option[HttpUriScheme] = origin.flatMap(_.scheme)
 
   def authority: Option[HttpUriAuthority] = origin.map(_.authority)
 
+  def host: Option[String] = origin.map(_.authority.host)
+
+  def port: Option[Int] = origin.flatMap(_.authority.port)
+
+  def userInfo: Option[String] = origin.flatMap(_.authority.userInfo)
+
   /**
-   * Returns true if this is a relative URI (no scheme or authority)
+   * Returns true if this is a relative URI (no authority)
    */
   def isRelative: Boolean = origin.isEmpty
 
