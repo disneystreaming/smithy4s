@@ -93,13 +93,4 @@ object HttpUri
       .getOrElse(Map.empty)
     HttpUri(scheme, host, port, path, queryParams, None)
   }
-
-  def safeToInt(value: String): Option[Int] = {
-    try {
-      Some(value.toInt)
-    } catch {
-      case _: NumberFormatException => None
-    }
-
-  }
 }
