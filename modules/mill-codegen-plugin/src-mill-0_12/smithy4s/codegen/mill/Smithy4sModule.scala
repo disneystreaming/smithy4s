@@ -234,7 +234,6 @@ trait Smithy4sModule extends ScalaModule {
       localJars = allLocalJars,
       smithyBuild = smithyBuildFile
     )
-    println("kasper " + args)
 
     Smithy4s.generateToDisk(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))
