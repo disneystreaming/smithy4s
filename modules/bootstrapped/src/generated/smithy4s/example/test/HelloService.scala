@@ -58,8 +58,8 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   type SayHelloError = HelloServiceOperation.SayHelloError
   val SayHelloError = HelloServiceOperation.SayHelloError
 
-  implicit class HelloServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloServiceGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
+  final implicit class HelloServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: HelloServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
   }
 }
 

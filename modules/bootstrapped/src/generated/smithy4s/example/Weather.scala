@@ -62,8 +62,8 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   type GetCityError = WeatherOperation.GetCityError
   val GetCityError = WeatherOperation.GetCityError
 
-  implicit class WeatherGenTransformExtensions[F[_, _, _, _, _]](val self: WeatherGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
+  final implicit class WeatherGenTransformExtensions[F[_, _, _, _, _]](private val self: WeatherGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
   }
 }
 

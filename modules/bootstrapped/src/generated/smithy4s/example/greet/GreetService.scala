@@ -46,8 +46,8 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = GreetServiceOperation.toPolyFunction(impl)
 
 
-  implicit class GreetServiceGenTransformExtensions[F[_, _, _, _, _]](val self: GreetServiceGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](self)
+  final implicit class GreetServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: GreetServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](self)
   }
 }
 

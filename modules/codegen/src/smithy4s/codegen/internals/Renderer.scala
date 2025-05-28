@@ -415,14 +415,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
           }
         },
-
         lines(
           line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
         ).when(generateServiceProduct),
         newline,
-        block(line"implicit class ${genName}TransformExtensions[F[_, _, _, _, _]](val self: $genName[F]) extends AnyVal")(
-          line"def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](self)"
+        block(line"final implicit class ${genName}TransformExtensions[F[_, _, _, _, _]](private val self: $genName[F]) extends AnyVal")(
+          line"final def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](self)"
         )
       ),
       newline,

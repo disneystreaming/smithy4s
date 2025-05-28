@@ -57,8 +57,8 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: DummyServiceGen[P]): PolyFunction5[DummyServiceOperation, P] = DummyServiceOperation.toPolyFunction(impl)
 
 
-  implicit class DummyServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DummyServiceGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](self)
+  final implicit class DummyServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: DummyServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](self)
   }
 }
 

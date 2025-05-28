@@ -43,8 +43,8 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: MyThingGen[P]): PolyFunction5[MyThingOperation, P] = MyThingOperation.toPolyFunction(impl)
 
 
-  implicit class MyThingGenTransformExtensions[F[_, _, _, _, _]](val self: MyThingGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](self)
+  final implicit class MyThingGenTransformExtensions[F[_, _, _, _, _]](private val self: MyThingGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](self)
   }
 }
 

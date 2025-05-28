@@ -55,8 +55,8 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
 
 
-  implicit class ReservedNameServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ReservedNameServiceGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](self)
+  final implicit class ReservedNameServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: ReservedNameServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](self)
   }
 }
 

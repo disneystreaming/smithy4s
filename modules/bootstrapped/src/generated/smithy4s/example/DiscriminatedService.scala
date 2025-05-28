@@ -48,8 +48,8 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = DiscriminatedServiceOperation.toPolyFunction(impl)
 
 
-  implicit class DiscriminatedServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DiscriminatedServiceGen[F]) extends AnyVal {
-    def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](self)
+  final implicit class DiscriminatedServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: DiscriminatedServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](self)
   }
 }
 
