@@ -71,3 +71,4 @@ You usually should use `.sbtopts` to add some more memory for `sbt`, as Smithy4s
 cp .sbtopts.example .sbtopts
 ```
 
+do not merge me
