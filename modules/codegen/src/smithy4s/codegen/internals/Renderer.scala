@@ -1672,7 +1672,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
           def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
-              val key = s"""${renderStringLiteral(member._1.getValue())}"""
+              val key = renderStringLiteral(member._1.getValue)
               val value = member._2.accept(this)
               line"$key -> $value"
             }
