@@ -16,7 +16,6 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
 
   def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
 
 object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
@@ -47,6 +46,10 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BrandServiceOperation, P]): BrandServiceGen[P] = new BrandServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
+
+  implicit class BrandServiceGenTransformExtensions[F[_, _, _, _, _]](val self: BrandServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](self)
+  }
 }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

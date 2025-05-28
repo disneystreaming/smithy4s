@@ -18,7 +18,6 @@ trait DeprecatedServiceGen[F[_, _, _, _, _]] {
   @deprecated(message = "N/A", since = "N/A")
   def deprecatedOperation(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](this)
 }
 
 object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {
@@ -51,6 +50,10 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DeprecatedServiceOperation, P]): DeprecatedServiceGen[P] = new DeprecatedServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
 
+
+  implicit class DeprecatedServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DeprecatedServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](self)
+  }
 }
 
 sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

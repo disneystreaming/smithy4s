@@ -24,7 +24,6 @@ trait ObjectCollisionGen[F[_, _, _, _, _]] {
   def _toString(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def _wait(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](this)
 }
 
 object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollisionOperation] {
@@ -63,6 +62,10 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ObjectCollisionOperation, P]): ObjectCollisionGen[P] = new ObjectCollisionOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
+
+  implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](val self: ObjectCollisionGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
+  }
 }
 
 sealed trait ObjectCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

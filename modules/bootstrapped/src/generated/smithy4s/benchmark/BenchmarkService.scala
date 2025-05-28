@@ -17,7 +17,6 @@ trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
   def sendString(key: String, bucketName: String, body: String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
 }
 
 object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkServiceOperation] {
@@ -49,6 +48,10 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BenchmarkServiceOperation, P]): BenchmarkServiceGen[P] = new BenchmarkServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = BenchmarkServiceOperation.toPolyFunction(impl)
 
+
+  implicit class BenchmarkServiceGenTransformExtensions[F[_, _, _, _, _]](val self: BenchmarkServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](self)
+  }
 }
 
 sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

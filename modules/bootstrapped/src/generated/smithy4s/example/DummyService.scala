@@ -22,7 +22,6 @@ trait DummyServiceGen[F[_, _, _, _, _]] {
   def dummyHostPrefix(label1: String, label2: String, label3: HostLabelEnum): F[HostLabelInput, Nothing, Unit, Nothing, Nothing]
   def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): F[PathParams, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](this)
 }
 
 object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperation] {
@@ -57,6 +56,10 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DummyServiceOperation, P]): DummyServiceGen[P] = new DummyServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: DummyServiceGen[P]): PolyFunction5[DummyServiceOperation, P] = DummyServiceOperation.toPolyFunction(impl)
 
+
+  implicit class DummyServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DummyServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](self)
+  }
 }
 
 sealed trait DummyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

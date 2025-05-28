@@ -21,7 +21,6 @@ trait KVStoreGen[F[_, _, _, _, _]] {
   def put(key: String, value: String): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]
   def delete(key: String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
 }
 
 object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
@@ -60,6 +59,10 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   val PutError = KVStoreOperation.PutError
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
+
+  implicit class KVStoreGenTransformExtensions[F[_, _, _, _, _]](val self: KVStoreGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](self)
+  }
 }
 
 sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

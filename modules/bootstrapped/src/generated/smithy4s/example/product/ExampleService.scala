@@ -16,7 +16,6 @@ trait ExampleServiceGen[F[_, _, _, _, _]] {
 
   def exampleOperation(a: String): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](this)
 }
 
 trait ExampleServiceProductGen[F[_, _, _, _, _]] {
@@ -55,6 +54,10 @@ object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleService
 
   type Prod[F[_, _, _, _, _]] = ExampleServiceProductGen[F]
   val serviceProduct: ServiceProduct.Aux[ExampleServiceProductGen, ExampleServiceGen] = ExampleServiceProductGen
+
+  implicit class ExampleServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ExampleServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](self)
+  }
 }
 
 object ExampleServiceProductGen extends ServiceProduct[ExampleServiceProductGen] {

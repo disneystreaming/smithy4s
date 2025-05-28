@@ -20,7 +20,6 @@ trait HelloWorldAuthServiceGen[F[_, _, _, _, _]] {
   def sayWorld(): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing]
   def healthCheck(): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](this)
 }
 
 object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, HelloWorldAuthServiceOperation] {
@@ -59,6 +58,10 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   val SayWorldError = HelloWorldAuthServiceOperation.SayWorldError
   type HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
   val HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
+
+  implicit class HelloWorldAuthServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloWorldAuthServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](self)
+  }
 }
 
 sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

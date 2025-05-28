@@ -32,7 +32,6 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   def headRequest(): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing]
   def noContentRequest(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
 }
 
 object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdminServiceOperation] {
@@ -90,6 +89,10 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
   val GetIntEnumError = PizzaAdminServiceOperation.GetIntEnumError
   type CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
   val CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
+
+  implicit class PizzaAdminServiceGenTransformExtensions[F[_, _, _, _, _]](val self: PizzaAdminServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](self)
+  }
 }
 
 sealed trait PizzaAdminServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

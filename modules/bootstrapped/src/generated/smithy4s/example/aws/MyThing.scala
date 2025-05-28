@@ -12,7 +12,6 @@ trait MyThingGen[F[_, _, _, _, _]] {
   self =>
 
 
-  final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](this)
 }
 
 object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
@@ -43,6 +42,10 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[MyThingOperation, P]): MyThingGen[P] = new MyThingOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: MyThingGen[P]): PolyFunction5[MyThingOperation, P] = MyThingOperation.toPolyFunction(impl)
 
+
+  implicit class MyThingGenTransformExtensions[F[_, _, _, _, _]](val self: MyThingGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](self)
+  }
 }
 
 sealed trait MyThingOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

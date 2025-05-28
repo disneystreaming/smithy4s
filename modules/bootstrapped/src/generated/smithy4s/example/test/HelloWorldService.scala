@@ -15,7 +15,6 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
 
   def hello(name: String): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
 }
 
 object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWorldServiceOperation] {
@@ -48,6 +47,10 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[HelloWorldServiceOperation, P]): HelloWorldServiceGen[P] = new HelloWorldServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = HelloWorldServiceOperation.toPolyFunction(impl)
 
+
+  implicit class HelloWorldServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloWorldServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](self)
+  }
 }
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

@@ -17,7 +17,6 @@ trait ServiceWithNullsAndDefaultsGen[F[_, _, _, _, _]] {
   def defaultNullsOperation(input: DefaultNullsOperationInput): F[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing]
   def timestampOperation(input: TimestampOperationInput): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
 }
 
 object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndDefaultsGen, ServiceWithNullsAndDefaultsOperation] {
@@ -51,6 +50,10 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ServiceWithNullsAndDefaultsOperation, P]): ServiceWithNullsAndDefaultsGen[P] = new ServiceWithNullsAndDefaultsOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = ServiceWithNullsAndDefaultsOperation.toPolyFunction(impl)
 
+
+  implicit class ServiceWithNullsAndDefaultsGenTransformExtensions[F[_, _, _, _, _]](val self: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](self)
+  }
 }
 
 sealed trait ServiceWithNullsAndDefaultsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

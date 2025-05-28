@@ -16,7 +16,6 @@ trait PackedInputsServiceGen[F[_, _, _, _, _]] {
 
   def packedInputOperation(input: PackedInput): F[PackedInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](this)
 }
 
 object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, PackedInputsServiceOperation] {
@@ -47,6 +46,10 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[PackedInputsServiceOperation, P]): PackedInputsServiceGen[P] = new PackedInputsServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = PackedInputsServiceOperation.toPolyFunction(impl)
 
+
+  implicit class PackedInputsServiceGenTransformExtensions[F[_, _, _, _, _]](val self: PackedInputsServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](self)
+  }
 }
 
 sealed trait PackedInputsServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

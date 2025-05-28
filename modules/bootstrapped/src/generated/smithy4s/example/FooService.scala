@@ -23,7 +23,6 @@ trait FooServiceGen[F[_, _, _, _, _]] {
     */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
 }
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
@@ -56,6 +55,10 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
+
+  implicit class FooServiceGenTransformExtensions[F[_, _, _, _, _]](val self: FooServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](self)
+  }
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

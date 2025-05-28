@@ -15,7 +15,6 @@ trait WeatherServiceGen[F[_, _, _, _, _]] {
 
   def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
 }
 
 object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherServiceOperation] {
@@ -48,6 +47,10 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[WeatherServiceOperation, P]): WeatherServiceGen[P] = new WeatherServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = WeatherServiceOperation.toPolyFunction(impl)
 
+
+  implicit class WeatherServiceGenTransformExtensions[F[_, _, _, _, _]](val self: WeatherServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](self)
+  }
 }
 
 sealed trait WeatherServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

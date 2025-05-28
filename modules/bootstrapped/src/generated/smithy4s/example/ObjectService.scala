@@ -27,7 +27,6 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
     */
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
 }
 
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
@@ -65,6 +64,10 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   val PutObjectError = ObjectServiceOperation.PutObjectError
   type GetObjectError = ObjectServiceOperation.GetObjectError
   val GetObjectError = ObjectServiceOperation.GetObjectError
+
+  implicit class ObjectServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ObjectServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](self)
+  }
 }
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

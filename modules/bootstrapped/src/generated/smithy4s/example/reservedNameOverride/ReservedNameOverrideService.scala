@@ -16,7 +16,6 @@ trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
 
   def setOp(set: Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](this)
 }
 
 object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverrideServiceGen, ReservedNameOverrideServiceOperation] {
@@ -49,6 +48,10 @@ object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverride
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameOverrideServiceOperation, P]): ReservedNameOverrideServiceGen[P] = new ReservedNameOverrideServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = ReservedNameOverrideServiceOperation.toPolyFunction(impl)
 
+
+  implicit class ReservedNameOverrideServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ReservedNameOverrideServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](self)
+  }
 }
 
 sealed trait ReservedNameOverrideServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

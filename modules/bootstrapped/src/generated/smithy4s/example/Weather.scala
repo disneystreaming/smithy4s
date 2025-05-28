@@ -23,7 +23,6 @@ trait WeatherGen[F[_, _, _, _, _]] {
   def getForecast(cityId: CityId): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing]
   def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](this)
 }
 
 object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
@@ -62,6 +61,10 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
 
   type GetCityError = WeatherOperation.GetCityError
   val GetCityError = WeatherOperation.GetCityError
+
+  implicit class WeatherGenTransformExtensions[F[_, _, _, _, _]](val self: WeatherGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
+  }
 }
 
 sealed trait WeatherOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

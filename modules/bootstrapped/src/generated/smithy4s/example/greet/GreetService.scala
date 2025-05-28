@@ -15,7 +15,6 @@ trait GreetServiceGen[F[_, _, _, _, _]] {
 
   def greet(name: String): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](this)
 }
 
 object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperation] {
@@ -46,6 +45,10 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[GreetServiceOperation, P]): GreetServiceGen[P] = new GreetServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = GreetServiceOperation.toPolyFunction(impl)
 
+
+  implicit class GreetServiceGenTransformExtensions[F[_, _, _, _, _]](val self: GreetServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](self)
+  }
 }
 
 sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

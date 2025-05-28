@@ -19,7 +19,6 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): F[MapInput, Nothing, Unit, Nothing, Nothing]
   def option(value: scala.Option[smithy4s.example.collision.String] = None): F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](this)
 }
 
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
@@ -55,6 +54,10 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new ReservedNameServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
 
+
+  implicit class ReservedNameServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ReservedNameServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](self)
+  }
 }
 
 sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

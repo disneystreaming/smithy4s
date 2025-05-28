@@ -18,7 +18,6 @@ trait LibraryGen[F[_, _, _, _, _]] {
   def getBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def buyBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](this)
 }
 
 object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
@@ -51,6 +50,10 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[LibraryOperation, P]): LibraryGen[P] = new LibraryOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = LibraryOperation.toPolyFunction(impl)
 
+
+  implicit class LibraryGenTransformExtensions[F[_, _, _, _, _]](val self: LibraryGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](self)
+  }
 }
 
 sealed trait LibraryOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

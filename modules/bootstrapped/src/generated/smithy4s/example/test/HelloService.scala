@@ -21,7 +21,6 @@ trait HelloServiceGen[F[_, _, _, _, _]] {
   def listen(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def testPath(path: String): F[TestPathInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](this)
 }
 
 object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperation] {
@@ -58,6 +57,10 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
 
   type SayHelloError = HelloServiceOperation.SayHelloError
   val SayHelloError = HelloServiceOperation.SayHelloError
+
+  implicit class HelloServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
+  }
 }
 
 sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

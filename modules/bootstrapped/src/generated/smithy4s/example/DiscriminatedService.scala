@@ -15,7 +15,6 @@ trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
 
   def testDiscriminated(key: String): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](this)
 }
 
 object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, DiscriminatedServiceOperation] {
@@ -48,6 +47,10 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DiscriminatedServiceOperation, P]): DiscriminatedServiceGen[P] = new DiscriminatedServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = DiscriminatedServiceOperation.toPolyFunction(impl)
 
+
+  implicit class DiscriminatedServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DiscriminatedServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](self)
+  }
 }
 
 sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

@@ -18,7 +18,6 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
 
   def hello(name: String, town: Option[String] = None): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
 }
 
 object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWorldServiceOperation] {
@@ -54,6 +53,10 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
   type HelloError = HelloWorldServiceOperation.HelloError
   val HelloError = HelloWorldServiceOperation.HelloError
+
+  implicit class HelloWorldServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloWorldServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](self)
+  }
 }
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
