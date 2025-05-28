@@ -61,7 +61,7 @@ final class HttpUriSpec extends FunSuite {
     if (Platform.isNative)
       assume(
         false,
-        "This test is not applicable for Scala Native, as we are on 4.x which has bugs in URI parsing and encoding"
+        "This test is not applicable for Scala Native, as we are on 0.4.x which has bugs in URI parsing and encoding"
       )
     else {
       // This HttpUri contains spaces, which should be encoded as %20, however HttpUri stores data in its decoded form
