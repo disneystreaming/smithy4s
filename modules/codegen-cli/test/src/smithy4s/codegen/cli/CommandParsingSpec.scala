@@ -25,7 +25,7 @@ import Defaults.defaultDependencies
 object CommandParsingSpec extends FunSuite {
 
   test("parsing empty `generate` call") {
-    assert(
+    expect(
       Main.commands.parse(List("generate")) ==
         Right(
           Smithy4sCommand.Generate(
@@ -76,7 +76,7 @@ object CommandParsingSpec extends FunSuite {
       )
     )
 
-    assert(
+    expect(
       result ==
         Right(
           Smithy4sCommand.Generate(
@@ -106,7 +106,7 @@ object CommandParsingSpec extends FunSuite {
   }
 
   test("parsing empty `dump-model` call") {
-    assert(
+    expect(
       Main.commands.parse(List("dump-model")) ==
         Right(
           Smithy4sCommand.DumpModel(
@@ -137,7 +137,7 @@ object CommandParsingSpec extends FunSuite {
         "lib1.jar,lib2.jar"
       )
     )
-    assert(
+    expect(
       result ==
         Right(
           Smithy4sCommand.DumpModel(

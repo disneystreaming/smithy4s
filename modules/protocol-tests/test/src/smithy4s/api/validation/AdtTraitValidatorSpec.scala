@@ -57,7 +57,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test("AdtTrait - return no error when union targets the structure") {
@@ -105,7 +105,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -140,7 +140,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -181,7 +181,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -218,7 +218,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -257,6 +257,6 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 }

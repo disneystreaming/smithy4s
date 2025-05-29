@@ -80,7 +80,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
         )
         .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test("return error when union does not target the structure") {
@@ -113,7 +113,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test("return no error when there are duplicate non-adtMember members") {
@@ -171,7 +171,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test("return error when structure is targeted by the wrong union") {
@@ -221,7 +221,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     )
 
     forEach(expected) { e =>
-      assert(events.contains(e))
+      expect(events.contains(e))
     }
   }
 
@@ -261,7 +261,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
         )
         .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(

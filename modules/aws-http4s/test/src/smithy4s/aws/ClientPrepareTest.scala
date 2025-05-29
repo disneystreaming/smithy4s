@@ -25,7 +25,7 @@ object ClientPrepareTest extends FunSuite {
   ) {
     AwsClient.prepare(MyThing) match {
       case Left(p) =>
-        assert.same(
+        expect.same(
           p,
           AwsClientInitialisationError.UnsupportedProtocol(
             MyThing.id,
