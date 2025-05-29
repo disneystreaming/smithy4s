@@ -51,8 +51,8 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DeprecatedServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< DeprecatedServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](ev(self))
+  final class DeprecatedServiceGenTransformOps[F[_, _, _, _, _]](private val self: DeprecatedServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](self)
   }
 }
 

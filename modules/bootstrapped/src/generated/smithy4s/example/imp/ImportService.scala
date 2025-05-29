@@ -56,8 +56,8 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
 
-  final implicit class ImportServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< ImportServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](ev(self))
+  final class ImportServiceGenTransformOps[F[_, _, _, _, _]](private val self: ImportServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](self)
   }
 }
 

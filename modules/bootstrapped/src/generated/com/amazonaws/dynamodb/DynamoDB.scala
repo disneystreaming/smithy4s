@@ -91,8 +91,8 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   type ListTablesError = DynamoDBOperation.ListTablesError
   val ListTablesError = DynamoDBOperation.ListTablesError
 
-  final implicit class DynamoDBGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< DynamoDBGen[F]) {
-    final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](ev(self))
+  final class DynamoDBGenTransformOps[F[_, _, _, _, _]](private val self: DynamoDBGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](self)
   }
 }
 

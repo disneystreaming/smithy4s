@@ -51,8 +51,8 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = LibraryOperation.toPolyFunction(impl)
 
 
-  final implicit class LibraryGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< LibraryGen[F]) {
-    final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](ev(self))
+  final class LibraryGenTransformOps[F[_, _, _, _, _]](private val self: LibraryGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](self)
   }
 }
 

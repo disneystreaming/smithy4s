@@ -47,8 +47,8 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = PackedInputsServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class PackedInputsServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< PackedInputsServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](ev(self))
+  final class PackedInputsServiceGenTransformOps[F[_, _, _, _, _]](private val self: PackedInputsServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](self)
   }
 }
 
