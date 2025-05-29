@@ -52,6 +52,7 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   final class BenchmarkServiceGenTransformOps[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](self)
   }
+  @inline final implicit def benchmarkServiceGenTransformOps[F[_, _, _, _, _]](alg: BenchmarkServiceGen[F]): BenchmarkServiceGenTransformOps[F] = new BenchmarkServiceGenTransformOps(alg)
 }
 
 sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

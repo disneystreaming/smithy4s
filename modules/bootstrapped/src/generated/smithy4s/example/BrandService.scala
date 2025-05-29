@@ -50,6 +50,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   final class BrandServiceGenTransformOps[F[_, _, _, _, _]](private val self: BrandServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](self)
   }
+  @inline final implicit def brandServiceGenTransformOps[F[_, _, _, _, _]](alg: BrandServiceGen[F]): BrandServiceGenTransformOps[F] = new BrandServiceGenTransformOps(alg)
 }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

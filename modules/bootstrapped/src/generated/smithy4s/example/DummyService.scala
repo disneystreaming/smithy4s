@@ -60,6 +60,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   final class DummyServiceGenTransformOps[F[_, _, _, _, _]](private val self: DummyServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](self)
   }
+  @inline final implicit def dummyServiceGenTransformOps[F[_, _, _, _, _]](alg: DummyServiceGen[F]): DummyServiceGenTransformOps[F] = new DummyServiceGenTransformOps(alg)
 }
 
 sealed trait DummyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

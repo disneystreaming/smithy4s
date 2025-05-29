@@ -49,6 +49,7 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   final class GreetServiceGenTransformOps[F[_, _, _, _, _]](private val self: GreetServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](self)
   }
+  @inline final implicit def greetServiceGenTransformOps[F[_, _, _, _, _]](alg: GreetServiceGen[F]): GreetServiceGenTransformOps[F] = new GreetServiceGenTransformOps(alg)
 }
 
 sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

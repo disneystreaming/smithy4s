@@ -62,6 +62,7 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   final class HelloWorldAuthServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloWorldAuthServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](self)
   }
+  @inline final implicit def helloWorldAuthServiceGenTransformOps[F[_, _, _, _, _]](alg: HelloWorldAuthServiceGen[F]): HelloWorldAuthServiceGenTransformOps[F] = new HelloWorldAuthServiceGenTransformOps(alg)
 }
 
 sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

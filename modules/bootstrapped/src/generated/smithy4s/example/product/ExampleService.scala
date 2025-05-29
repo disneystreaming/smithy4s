@@ -58,6 +58,7 @@ object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleService
   final class ExampleServiceGenTransformOps[F[_, _, _, _, _]](private val self: ExampleServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](self)
   }
+  @inline final implicit def exampleServiceGenTransformOps[F[_, _, _, _, _]](alg: ExampleServiceGen[F]): ExampleServiceGenTransformOps[F] = new ExampleServiceGenTransformOps(alg)
 }
 
 object ExampleServiceProductGen extends ServiceProduct[ExampleServiceProductGen] {

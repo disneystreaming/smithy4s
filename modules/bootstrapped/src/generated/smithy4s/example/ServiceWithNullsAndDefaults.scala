@@ -54,6 +54,7 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   final class ServiceWithNullsAndDefaultsGenTransformOps[F[_, _, _, _, _]](private val self: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](self)
   }
+  @inline final implicit def serviceWithNullsAndDefaultsGenTransformOps[F[_, _, _, _, _]](alg: ServiceWithNullsAndDefaultsGen[F]): ServiceWithNullsAndDefaultsGenTransformOps[F] = new ServiceWithNullsAndDefaultsGenTransformOps(alg)
 }
 
 sealed trait ServiceWithNullsAndDefaultsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

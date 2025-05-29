@@ -46,6 +46,7 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   final class MyThingGenTransformOps[F[_, _, _, _, _]](private val self: MyThingGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](self)
   }
+  @inline final implicit def myThingGenTransformOps[F[_, _, _, _, _]](alg: MyThingGen[F]): MyThingGenTransformOps[F] = new MyThingGenTransformOps(alg)
 }
 
 sealed trait MyThingOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

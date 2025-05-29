@@ -61,6 +61,7 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   final class HelloServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
   }
+  @inline final implicit def helloServiceGenTransformOps[F[_, _, _, _, _]](alg: HelloServiceGen[F]): HelloServiceGenTransformOps[F] = new HelloServiceGenTransformOps(alg)
 }
 
 sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

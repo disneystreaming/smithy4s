@@ -66,6 +66,7 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   final class ObjectCollisionGenTransformOps[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
   }
+  @inline final implicit def objectCollisionGenTransformOps[F[_, _, _, _, _]](alg: ObjectCollisionGen[F]): ObjectCollisionGenTransformOps[F] = new ObjectCollisionGenTransformOps(alg)
 }
 
 sealed trait ObjectCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

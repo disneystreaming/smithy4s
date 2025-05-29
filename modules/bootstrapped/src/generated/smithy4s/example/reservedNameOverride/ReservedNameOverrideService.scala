@@ -52,6 +52,7 @@ object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverride
   final class ReservedNameOverrideServiceGenTransformOps[F[_, _, _, _, _]](private val self: ReservedNameOverrideServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](self)
   }
+  @inline final implicit def reservedNameOverrideServiceGenTransformOps[F[_, _, _, _, _]](alg: ReservedNameOverrideServiceGen[F]): ReservedNameOverrideServiceGenTransformOps[F] = new ReservedNameOverrideServiceGenTransformOps(alg)
 }
 
 sealed trait ReservedNameOverrideServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

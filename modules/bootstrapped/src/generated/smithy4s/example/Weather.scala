@@ -65,6 +65,7 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   final class WeatherGenTransformOps[F[_, _, _, _, _]](private val self: WeatherGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
   }
+  @inline final implicit def weatherGenTransformOps[F[_, _, _, _, _]](alg: WeatherGen[F]): WeatherGenTransformOps[F] = new WeatherGenTransformOps(alg)
 }
 
 sealed trait WeatherOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

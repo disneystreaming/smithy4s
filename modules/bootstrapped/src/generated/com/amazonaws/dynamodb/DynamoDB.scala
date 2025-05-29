@@ -94,6 +94,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   final class DynamoDBGenTransformOps[F[_, _, _, _, _]](private val self: DynamoDBGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](self)
   }
+  @inline final implicit def dynamoDBGenTransformOps[F[_, _, _, _, _]](alg: DynamoDBGen[F]): DynamoDBGenTransformOps[F] = new DynamoDBGenTransformOps(alg)
 }
 
 sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
