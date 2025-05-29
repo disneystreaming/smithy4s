@@ -63,7 +63,7 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
 
-  final implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
+  final implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) {
     final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
   }
 }

@@ -48,7 +48,7 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = WeatherServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class WeatherServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: WeatherServiceGen[F]) extends AnyVal {
+  final implicit class WeatherServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: WeatherServiceGen[F]) {
     final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](self)
   }
 }

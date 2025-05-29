@@ -55,7 +55,7 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
 
 
-  final implicit class StreamedObjectsGenTransformExtensions[F[_, _, _, _, _]](private val self: StreamedObjectsGen[F]) extends AnyVal {
+  final implicit class StreamedObjectsGenTransformExtensions[F[_, _, _, _, _]](private val self: StreamedObjectsGen[F]) {
     final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](self)
   }
 }
