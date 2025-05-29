@@ -119,14 +119,14 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.8.4"
+    val weaverVersion = "0.9.0"
 
     val cats: Def.Initialize[ModuleID] =
-      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
+      Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
 
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting(
-        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion
+        "org.typelevel" %%% "weaver-scalacheck" % weaverVersion
       )
   }
 
