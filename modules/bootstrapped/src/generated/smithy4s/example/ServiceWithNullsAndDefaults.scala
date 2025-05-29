@@ -51,8 +51,8 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = ServiceWithNullsAndDefaultsOperation.toPolyFunction(impl)
 
 
-  final implicit class ServiceWithNullsAndDefaultsGenTransformExtensions[F[_, _, _, _, _]](private val self: ServiceWithNullsAndDefaultsGen[F]) {
-    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](self)
+  final implicit class ServiceWithNullsAndDefaultsGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< ServiceWithNullsAndDefaultsGen[F]) {
+    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](ev(self))
   }
 }
 

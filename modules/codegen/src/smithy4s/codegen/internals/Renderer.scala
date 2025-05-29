@@ -420,8 +420,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
         ).when(generateServiceProduct),
         newline,
-        block(line"final implicit class ${genName}TransformExtensions[F[_, _, _, _, _]](private val self: $genName[F])")(
-          line"final def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](self)"
+        block(
+          line"final implicit class ${genName}TransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< $genNameRef[F])"
+        )(
+          line"final def transform: $Transformation.PartiallyApplied[$genNameRef[F]] = $Transformation.of[$genNameRef[F]](ev(self))"
         )
       ),
       newline,

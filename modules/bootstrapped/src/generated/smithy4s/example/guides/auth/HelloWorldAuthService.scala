@@ -59,8 +59,8 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   type HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
   val HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
 
-  final implicit class HelloWorldAuthServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: HelloWorldAuthServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](self)
+  final implicit class HelloWorldAuthServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< HelloWorldAuthServiceGen[F]) {
+    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](ev(self))
   }
 }
 

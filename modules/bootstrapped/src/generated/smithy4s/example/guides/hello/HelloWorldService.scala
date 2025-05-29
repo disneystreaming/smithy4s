@@ -50,8 +50,8 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = HelloWorldServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class HelloWorldServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](self)
+  final implicit class HelloWorldServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< HelloWorldServiceGen[F]) {
+    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](ev(self))
   }
 }
 

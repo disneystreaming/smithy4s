@@ -47,8 +47,8 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class BrandServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: BrandServiceGen[F]) {
-    final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](self)
+  final implicit class BrandServiceGenTransformExtensions[A, F[_, _, _, _, _]](private val self: A)(implicit ev: A <:< BrandServiceGen[F]) {
+    final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](ev(self))
   }
 }
 
