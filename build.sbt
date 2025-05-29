@@ -892,7 +892,7 @@ lazy val tests = projectMatrix
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Http4s.circe.value
-      ) ++ weaverDeps.value
+      ) ++ weaverDeps.value.map(_.withConfigurations(Some("compile")))
     },
     Compile / allowedNamespaces := Seq("smithy4s.example"),
     Compile / smithySpecs := Seq(

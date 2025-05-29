@@ -66,9 +66,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     def http4sPlatform(
         scalaVersions: Seq[String],
-        settings: Seq[Setting[_]]
+        jvmSettings: Seq[Setting[_]]
     ) = {
-      http4sJvmPlatform(scalaVersions, settings)
+      http4sJvmPlatform(scalaVersions, jvmSettings)
         .customRow(
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
           axisValues = Seq(VirtualAxis.js),
