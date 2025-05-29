@@ -657,7 +657,8 @@ lazy val dynamic = projectMatrix
     libraryDependencies ++= munitDeps.value ++ Seq(
       Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value,
-      Dependencies.Alloy.core % Test
+      Dependencies.Alloy.core % Test,
+      Dependencies.MunitV1.diff.value % Test
     ),
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
