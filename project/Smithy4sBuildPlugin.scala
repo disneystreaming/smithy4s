@@ -53,10 +53,16 @@ case class MillCustomRow(mv: String) extends CustomRow {
         Dependencies.Mill.scalalib(mv),
         Dependencies.Mill.mainTestkit(mv)
       ),
-      Compile / unmanagedSourceDirectories +=
-        (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}",
-      Test / unmanagedSourceDirectories +=
-        (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-${suffix}"
+      Compile / unmanagedSourceDirectories ++=
+        Seq(
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-shared",
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}"
+        ),
+      Test / unmanagedSourceDirectories ++=
+        Seq(
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-shared",
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-${suffix}"
+        )
     )
   }
 
