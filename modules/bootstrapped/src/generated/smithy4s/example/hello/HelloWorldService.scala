@@ -54,10 +54,9 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   type HelloError = HelloWorldServiceOperation.HelloError
   val HelloError = HelloWorldServiceOperation.HelloError
 
-  final class HelloWorldServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
+  final implicit class HelloWorldServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](self)
   }
-  @inline final implicit def helloWorldServiceGenTransformOps[F[_, _, _, _, _]](alg: HelloWorldServiceGen[F]): HelloWorldServiceGenTransformOps[F] = new HelloWorldServiceGenTransformOps(alg)
 }
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

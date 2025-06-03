@@ -41,10 +41,9 @@ object EmptyServiceGen extends Service.Mixin[EmptyServiceGen, EmptyServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: EmptyServiceGen[P]): PolyFunction5[EmptyServiceOperation, P] = EmptyServiceOperation.toPolyFunction(impl)
 
 
-  final class EmptyServiceGenTransformOps[F[_, _, _, _, _]](private val self: EmptyServiceGen[F]) extends AnyVal {
+  final implicit class EmptyServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: EmptyServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[EmptyServiceGen[F]] = Transformation.of[EmptyServiceGen[F]](self)
   }
-  @inline final implicit def emptyServiceGenTransformOps[F[_, _, _, _, _]](alg: EmptyServiceGen[F]): EmptyServiceGenTransformOps[F] = new EmptyServiceGenTransformOps(alg)
 }
 
 sealed trait EmptyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

@@ -49,10 +49,9 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
   def toPolyFunction[P[_, _, _, _, _]](impl: RecursiveInputServiceGen[P]): PolyFunction5[RecursiveInputServiceOperation, P] = RecursiveInputServiceOperation.toPolyFunction(impl)
 
 
-  final class RecursiveInputServiceGenTransformOps[F[_, _, _, _, _]](private val self: RecursiveInputServiceGen[F]) extends AnyVal {
+  final implicit class RecursiveInputServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: RecursiveInputServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](self)
   }
-  @inline final implicit def recursiveInputServiceGenTransformOps[F[_, _, _, _, _]](alg: RecursiveInputServiceGen[F]): RecursiveInputServiceGenTransformOps[F] = new RecursiveInputServiceGenTransformOps(alg)
 }
 
 sealed trait RecursiveInputServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

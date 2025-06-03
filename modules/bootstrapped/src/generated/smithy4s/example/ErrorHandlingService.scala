@@ -51,10 +51,9 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
   type ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
   val ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
 
-  final class ErrorHandlingServiceGenTransformOps[F[_, _, _, _, _]](private val self: ErrorHandlingServiceGen[F]) extends AnyVal {
+  final implicit class ErrorHandlingServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: ErrorHandlingServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[F]] = Transformation.of[ErrorHandlingServiceGen[F]](self)
   }
-  @inline final implicit def errorHandlingServiceGenTransformOps[F[_, _, _, _, _]](alg: ErrorHandlingServiceGen[F]): ErrorHandlingServiceGenTransformOps[F] = new ErrorHandlingServiceGenTransformOps(alg)
 }
 
 sealed trait ErrorHandlingServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

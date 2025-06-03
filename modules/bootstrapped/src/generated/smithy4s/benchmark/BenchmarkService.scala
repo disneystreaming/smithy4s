@@ -49,10 +49,9 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = BenchmarkServiceOperation.toPolyFunction(impl)
 
 
-  final class BenchmarkServiceGenTransformOps[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
+  final implicit class BenchmarkServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](self)
   }
-  @inline final implicit def benchmarkServiceGenTransformOps[F[_, _, _, _, _]](alg: BenchmarkServiceGen[F]): BenchmarkServiceGenTransformOps[F] = new BenchmarkServiceGenTransformOps(alg)
 }
 
 sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

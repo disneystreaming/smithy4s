@@ -56,10 +56,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
 
-  final class FooServiceGenTransformOps[F[_, _, _, _, _]](private val self: FooServiceGen[F]) extends AnyVal {
+  final implicit class FooServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: FooServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](self)
   }
-  @inline final implicit def fooServiceGenTransformOps[F[_, _, _, _, _]](alg: FooServiceGen[F]): FooServiceGenTransformOps[F] = new FooServiceGenTransformOps(alg)
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

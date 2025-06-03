@@ -90,10 +90,9 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
   type CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
   val CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
 
-  final class PizzaAdminServiceGenTransformOps[F[_, _, _, _, _]](private val self: PizzaAdminServiceGen[F]) extends AnyVal {
+  final implicit class PizzaAdminServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: PizzaAdminServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](self)
   }
-  @inline final implicit def pizzaAdminServiceGenTransformOps[F[_, _, _, _, _]](alg: PizzaAdminServiceGen[F]): PizzaAdminServiceGenTransformOps[F] = new PizzaAdminServiceGenTransformOps(alg)
 }
 
 sealed trait PizzaAdminServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

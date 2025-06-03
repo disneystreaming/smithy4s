@@ -53,10 +53,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   type MyOpError = NameCollisionOperation.MyOpError
   val MyOpError = NameCollisionOperation.MyOpError
 
-  final class NameCollisionGenTransformOps[F[_, _, _, _, _]](private val self: NameCollisionGen[F]) extends AnyVal {
+  final implicit class NameCollisionGenTransformExtensions[F[_, _, _, _, _]](private val self: NameCollisionGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](self)
   }
-  @inline final implicit def nameCollisionGenTransformOps[F[_, _, _, _, _]](alg: NameCollisionGen[F]): NameCollisionGenTransformOps[F] = new NameCollisionGenTransformOps(alg)
 }
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

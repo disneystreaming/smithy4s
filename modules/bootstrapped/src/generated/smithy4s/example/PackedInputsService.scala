@@ -47,10 +47,9 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = PackedInputsServiceOperation.toPolyFunction(impl)
 
 
-  final class PackedInputsServiceGenTransformOps[F[_, _, _, _, _]](private val self: PackedInputsServiceGen[F]) extends AnyVal {
+  final implicit class PackedInputsServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: PackedInputsServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](self)
   }
-  @inline final implicit def packedInputsServiceGenTransformOps[F[_, _, _, _, _]](alg: PackedInputsServiceGen[F]): PackedInputsServiceGenTransformOps[F] = new PackedInputsServiceGenTransformOps(alg)
 }
 
 sealed trait PackedInputsServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
