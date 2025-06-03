@@ -28,8 +28,8 @@ import smithy4s.Bijection
 trait Optional[S, A] { self =>
 
   /**
-   * Returns a [[Some]] of A from S if it is able to obtain an A.
-   * Else returns [[None]].
+   * Returns a [[scala.Some]] of A from S if it is able to obtain an A.
+   * Else returns [[scala.None]].
    */
   def project(s: S): Option[A]
 
@@ -49,9 +49,9 @@ trait Optional[S, A] { self =>
         self.modify(that.replace(a))
     }
 
-  /** 
-   * Allows abstracting over an optional target by pointing to 
-   * the inside of the optional value (the value inside of the [[Some]]).
+  /**
+   * Allows abstracting over an optional target by pointing to
+   * the inside of the optional value (the value inside of the [[scala.Some]]).
    */
   def some[A0](implicit
       ev1: A =:= Option[A0]
@@ -68,7 +68,7 @@ trait Optional[S, A] { self =>
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
-   * or other type with an implicit [[Bijection]] available.
+   * or other type with an implicit [[smithy4s.Bijection]] available.
    */
   def value[A0](implicit bijection: Bijection[A0, A]): Optional[S, A0] =
     new Optional[S, A0] {

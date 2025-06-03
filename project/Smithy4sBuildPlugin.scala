@@ -72,7 +72,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.20"
   val Scala213 = "2.13.16"
-  val Scala3 = "3.3.5"
+  val Scala3 = "3.3.6"
 
   object autoImport {
     // format: off
@@ -106,9 +106,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     def http4sPlatform(
         scalaVersions: Seq[String],
-        settings: Seq[Setting[_]]
+        jvmSettings: Seq[Setting[_]]
     ) = {
-      http4sJvmPlatform(scalaVersions, settings)
+      http4sJvmPlatform(scalaVersions, jvmSettings)
         .customRow(
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
           axisValues = Seq(VirtualAxis.js),

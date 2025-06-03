@@ -33,6 +33,6 @@ object AwsInstanceMetadataTest extends weaver.FunSuite {
                            |  "Token":"token",
                            |  "Expiration":"2023-03-03T17:56:46Z"
                            |}""".stripMargin))
-    assert(result.isRight)
+    expect(result.isRight)
   }
 }

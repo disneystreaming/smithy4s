@@ -14,8 +14,8 @@ import smithy4s.schema.Schema.unit
 trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
   def sendString(key: String, bucketName: String, body: String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
+  def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
 }
@@ -35,8 +35,8 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   }
 
   val endpoints: Vector[smithy4s.Endpoint[BenchmarkServiceOperation, _, _, _, _, _]] = Vector(
-    BenchmarkServiceOperation.CreateObject,
     BenchmarkServiceOperation.SendString,
+    BenchmarkServiceOperation.CreateObject,
   )
 
   def input[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -61,32 +61,20 @@ sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, Stream
 object BenchmarkServiceOperation {
 
   object reified extends BenchmarkServiceGen[BenchmarkServiceOperation] {
-    def createObject(key: String, bucketName: String, payload: S3Object): CreateObject = CreateObject(CreateObjectInput(key, bucketName, payload))
     def sendString(key: String, bucketName: String, body: String): SendString = SendString(SendStringInput(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): CreateObject = CreateObject(CreateObjectInput(key, bucketName, payload))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BenchmarkServiceGen[P], f: PolyFunction5[P, P1]) extends BenchmarkServiceGen[P1] {
-    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
     def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = new PolyFunction5[BenchmarkServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = impl.createObject(input.key, input.bucketName, input.payload)
-    def ordinal: Int = 0
-    def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] = CreateObject
-  }
-  object CreateObject extends smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
-    val schema: OperationSchema[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "CreateObject"))
-      .withInput(CreateObjectInput.schema)
-      .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200))
-    def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
-  }
   final case class SendString(input: SendStringInput) extends BenchmarkServiceOperation[SendStringInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[SendStringInput, Nothing, Unit, Nothing, Nothing] = impl.sendString(input.key, input.bucketName, input.body)
-    def ordinal: Int = 1
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] = SendString
   }
   object SendString extends smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] {
@@ -95,6 +83,18 @@ object BenchmarkServiceOperation {
       .withOutput(unit)
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/simple/{bucketName}/{key}"), code = 200))
     def wrap(input: SendStringInput): SendString = SendString(input)
+  }
+  final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = impl.createObject(input.key, input.bucketName, input.payload)
+    def ordinal: Int = 1
+    def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] = CreateObject
+  }
+  object CreateObject extends smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "CreateObject"))
+      .withInput(CreateObjectInput.schema)
+      .withOutput(unit)
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200))
+    def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
   }
 }
 

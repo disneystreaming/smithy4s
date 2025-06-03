@@ -17,10 +17,11 @@
 package smithy4s.api.validation
 
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.validation.ValidationEvent
-import software.amazon.smithy.model.validation.ValidatedResult
-import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.validation.ValidatedResult
+import software.amazon.smithy.model.validation.ValidationEvent
+
+import scala.jdk.CollectionConverters._
 
 private object ModelUtils {
 

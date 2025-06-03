@@ -17,8 +17,8 @@
 package smithy4s.codegen
 
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.node.Node
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
