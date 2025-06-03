@@ -62,8 +62,14 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   type GetCityError = WeatherOperation.GetCityError
   val GetCityError = WeatherOperation.GetCityError
 
-  final implicit class WeatherGenTransformExtensions[F[_, _, _, _, _]](private val self: WeatherGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
+  object Transformations {
+    implicit class WeatherGenTransformExtensions[F[_, _, _, _, _]](val self: WeatherGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: WeatherGen[F] <:< WeatherGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[WeatherGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[WeatherGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[WeatherGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: WeatherGen[F] <:< WeatherGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[WeatherGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[WeatherGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[WeatherGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

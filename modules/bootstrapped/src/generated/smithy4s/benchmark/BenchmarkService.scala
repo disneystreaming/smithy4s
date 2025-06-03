@@ -49,8 +49,14 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = BenchmarkServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class BenchmarkServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](self)
+  object Transformations {
+    implicit class BenchmarkServiceGenTransformExtensions[F[_, _, _, _, _]](val self: BenchmarkServiceGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: BenchmarkServiceGen[F] <:< BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: BenchmarkServiceGen[F] <:< BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[BenchmarkServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

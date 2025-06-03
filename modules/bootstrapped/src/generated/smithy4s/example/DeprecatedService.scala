@@ -51,8 +51,14 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DeprecatedServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: DeprecatedServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](self)
+  object Transformations {
+    implicit class DeprecatedServiceGenTransformExtensions[F[_, _, _, _, _]](val self: DeprecatedServiceGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: DeprecatedServiceGen[F] <:< DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: DeprecatedServiceGen[F] <:< DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[DeprecatedServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

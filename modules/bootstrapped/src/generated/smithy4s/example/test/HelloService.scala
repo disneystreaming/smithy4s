@@ -58,8 +58,14 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   type SayHelloError = HelloServiceOperation.SayHelloError
   val SayHelloError = HelloServiceOperation.SayHelloError
 
-  final implicit class HelloServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: HelloServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
+  object Transformations {
+    implicit class HelloServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloServiceGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: HelloServiceGen[F] <:< HelloServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[HelloServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[HelloServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[HelloServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: HelloServiceGen[F] <:< HelloServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[HelloServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[HelloServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[HelloServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

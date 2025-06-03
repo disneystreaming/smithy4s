@@ -52,8 +52,14 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
   type ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
   val ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
 
-  final implicit class ErrorHandlingServiceExtraErrorsGenTransformExtensions[F[_, _, _, _, _]](private val self: ErrorHandlingServiceExtraErrorsGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](self)
+  object Transformations {
+    implicit class ErrorHandlingServiceExtraErrorsGenTransformExtensions[F[_, _, _, _, _]](val self: ErrorHandlingServiceExtraErrorsGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: ErrorHandlingServiceExtraErrorsGen[F] <:< ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: ErrorHandlingServiceExtraErrorsGen[F] <:< ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

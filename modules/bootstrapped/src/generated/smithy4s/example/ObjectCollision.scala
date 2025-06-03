@@ -63,8 +63,14 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
 
-  final implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
+  object Transformations {
+    implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](val self: ObjectCollisionGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: ObjectCollisionGen[F] <:< ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: ObjectCollisionGen[F] <:< ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

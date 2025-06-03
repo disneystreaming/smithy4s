@@ -49,8 +49,14 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
   def toPolyFunction[P[_, _, _, _, _]](impl: RecursiveInputServiceGen[P]): PolyFunction5[RecursiveInputServiceOperation, P] = RecursiveInputServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class RecursiveInputServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: RecursiveInputServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](self)
+  object Transformations {
+    implicit class RecursiveInputServiceGenTransformExtensions[F[_, _, _, _, _]](val self: RecursiveInputServiceGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: RecursiveInputServiceGen[F] <:< RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: RecursiveInputServiceGen[F] <:< RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[RecursiveInputServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

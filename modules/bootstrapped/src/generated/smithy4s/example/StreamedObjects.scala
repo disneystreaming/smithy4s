@@ -55,8 +55,14 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
 
 
-  final implicit class StreamedObjectsGenTransformExtensions[F[_, _, _, _, _]](private val self: StreamedObjectsGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](self)
+  object Transformations {
+    implicit class StreamedObjectsGenTransformExtensions[F[_, _, _, _, _]](val self: StreamedObjectsGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: StreamedObjectsGen[F] <:< StreamedObjectsGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: StreamedObjectsGen[F] <:< StreamedObjectsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[StreamedObjectsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 

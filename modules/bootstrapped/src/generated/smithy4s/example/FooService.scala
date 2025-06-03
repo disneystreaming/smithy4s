@@ -56,8 +56,14 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class FooServiceGenTransformExtensions[F[_, _, _, _, _]](private val self: FooServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](self)
+  object Transformations {
+    implicit class FooServiceGenTransformExtensions[F[_, _, _, _, _]](val self: FooServiceGen[F]) extends AnyVal {
+      def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](self)
+
+      def transformFunctor[G[_]](implicit ev: FooServiceGen[F] <:< FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
+
+      def transformBifunctor[G[_, _]](implicit ev: FooServiceGen[F] <:< FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
+    }
   }
 }
 
