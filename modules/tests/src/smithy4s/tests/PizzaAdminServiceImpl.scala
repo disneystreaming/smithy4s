@@ -126,9 +126,7 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
   def noContentRequest(): cats.effect.IO[Unit] =
     IO.pure(())
 
-  def checkQueryA(): IO[CheckQueryAOutput] =
-    IO.pure(CheckQueryAOutput("A"))
+  def checkQueryA(): IO[CheckQueryOutput] = IO.pure(CheckQueryOutput("A"))
 
-  def checkQueryB(): IO[CheckQueryBOutput] =
-    IO.pure(CheckQueryBOutput("B"))
+  def checkQueryB(): IO[CheckQueryOutput] = IO.pure(CheckQueryOutput("B"))
 }
