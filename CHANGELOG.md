@@ -7,6 +7,8 @@ Thank you!
 
 # 0.18.37
 
+* json: Allow decoding nulls for optional fields in defaults (fixes [#1581](https://github.com/disneystreaming/smithy4s/issues/1581)) in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
+* codegen: Fix generating empty defaults on blob shapes in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
 * http: Add mapping between HttpUri and java.net.URI in [#1719](https://github.com/disneystreaming/smithy4s/pull/1719)
 * codegen: Add an STDERR log message when a codegen-time model transformation is requested but not found in [#1726](https://github.com/disneystreaming/smithy4s/pull/1726)
 
