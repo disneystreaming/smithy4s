@@ -328,6 +328,40 @@
                 }
             }
         },
+        "/query-check?variant=a": {
+            "get": {
+                "operationId": "CheckQueryA",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryA 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryAOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?variant=b": {
+            "get": {
+                "operationId": "CheckQueryB",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryB 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryBOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/restaurant/{restaurant}/menu": {
             "get": {
                 "operationId": "GetMenu",
@@ -555,6 +589,12 @@
     "components": {
         "schemas": {
             "AddMenuItemOutputPayload": {
+                "type": "string"
+            },
+            "CheckQueryAOutputPayload": {
+                "type": "string"
+            },
+            "CheckQueryBOutputPayload": {
                 "type": "string"
             },
             "EchoBody": {

@@ -463,6 +463,27 @@ abstract class PizzaSpec
       }
   }
 
+  routerTest("Respects Static Query Parameters") { (client, uri, log) =>
+    for {
+      resA <- client.send[Json](
+        GET((uri / "query-check").withQueryParam("variant", "a")),
+        log
+      )
+      resB <- client.send[Json](
+        GET((uri / "query-check").withQueryParam("variant", "b")),
+        log
+      )
+    } yield {
+      val (code, _, body) = resA
+      expect.same(code, 200) &&
+      expect.same(body, Json.fromString("A"))
+
+      val (codeB, _, bodyB) = resB
+      expect.same(codeB, 200) &&
+      expect.same(bodyB, Json.fromString("B"))
+    }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(

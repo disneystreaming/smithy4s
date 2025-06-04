@@ -148,7 +148,7 @@ object HttpUnaryServerRouter {
         httpUnaryEndpoints.iterator
           .flatMap(ep => ep.httpEndpoint.matches(path).map(ep -> _))
           .collectFirst {
-            case (ep, pathParams) if isSubset(query, ep.httpEndpoint.staticQueryParams) =>
+            case (ep, pathParams) if isSubset(larger = query, smaller = ep.httpEndpoint.staticQueryParams) =>
               val amendedRequest = addDecodedPathParams(request, pathParams)
               ep.handler(amendedRequest)
           }
