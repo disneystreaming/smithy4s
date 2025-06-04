@@ -10,6 +10,7 @@ Thank you!
 * http: Add mapping between HttpUri and java.net.URI in [#1719](https://github.com/disneystreaming/smithy4s/pull/1719)
 * codegen: Add an STDERR log message when a codegen-time model transformation is requested but not found in [#1726](https://github.com/disneystreaming/smithy4s/pull/1726)
 * codegen: Don't generate code for mixins that aren't structs in [#1445](https://github.com/disneystreaming/smithy4s/pull/1445)
+* mill-plugin: Add support for 0.12 in [#1728](https://github.com/disneystreaming/smithy4s/pull/1728)
 
 # 0.18.36
 
