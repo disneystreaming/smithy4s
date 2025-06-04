@@ -1411,12 +1411,18 @@ private[smithy4s] class SchemaVisitorJCodec(
     val label = field.label
 
     val decodeFn: (Cursor, JCodec[A], JsonReader) => A =
-      if (field.hints.has(Required) || default == null || field.hints.has(alloy.Nullable))
+      if (
+        field.hints
+          .has(Required) || default == null || field.hints.has(alloy.Nullable)
+      )
         _.decode(_, _)
       else
         (cursor, codec, in) =>
           if (in.isNextToken('n')) {
-            in.readNullOrError(default.asInstanceOf[A], s"Expected null for field $label")
+            in.readNullOrError(
+              default.asInstanceOf[A],
+              s"Expected null for field $label"
+            )
           } else {
             in.rollbackToken()
             cursor.decode(codec, in)
