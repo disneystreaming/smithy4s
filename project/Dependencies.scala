@@ -89,7 +89,7 @@ object Dependencies {
     def mainApi(v: String) = "com.lihaoyi" %% s"mill-main-api" % v % Provided
     def mainTestkit(v: String) =
       if (v.startsWith("0.11")) {
-        "com.lihaoyi" %% s"mill-main-testkit" % v % Test
+        "com.lihaoyi" %% "mill-main-testkit" % v % Test
       } else {
         "com.lihaoyi" %% "mill-testkit" % v % Test
       }
