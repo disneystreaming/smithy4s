@@ -84,9 +84,9 @@ object Dependencies {
   }
 
   object Mill {
-    def scalalib(v: String) = "com.lihaoyi" %% s"mill-scalalib" % v % Provided
-    def main(v: String) = "com.lihaoyi" %% s"mill-main" % v % Provided
-    def mainApi(v: String) = "com.lihaoyi" %% s"mill-main-api" % v % Provided
+    def scalalib(v: String) = "com.lihaoyi" %% "mill-scalalib" % v % Provided
+    def main(v: String) = "com.lihaoyi" %% "mill-main" % v % Provided
+    def mainApi(v: String) = "com.lihaoyi" %% "mill-main-api" % v % Provided
     def mainTestkit(v: String) =
       if (v.startsWith("0.11")) {
         "com.lihaoyi" %% "mill-main-testkit" % v % Test
