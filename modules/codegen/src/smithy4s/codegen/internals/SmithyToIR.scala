@@ -859,7 +859,7 @@ private[codegen] class SmithyToIR(
         case ShapeType.SHORT       => Node.from(0: Short)
         case ShapeType.FLOAT       => Node.from(0.0f)
         case ShapeType.BOOLEAN     => Node.from(false)
-        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BLOB        => Node.from("")
         case ShapeType.BYTE        => Node.from(0)
         case ShapeType.TIMESTAMP =>
           shape
