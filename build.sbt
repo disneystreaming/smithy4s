@@ -541,20 +541,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
-  .jvmPlatform(
-    scalaVersions = List(Scala213),
-    simpleJVMLayout
-  )
   .settings(
     name := "mill-codegen-plugin",
-    crossVersion := CrossVersion
-      .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
-    libraryDependencies ++= Seq(
-      Dependencies.Mill.main,
-      Dependencies.Mill.mainApi,
-      Dependencies.Mill.scalalib,
-      Dependencies.Mill.mainTestkit
-    ),
+    simpleJVMLayout,
     libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always,
     publishLocal := {
       // make sure that core and codegen are published before the
@@ -576,6 +565,7 @@ lazy val millCodegenPlugin = projectMatrix
     Test / test := (Test / test).dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
   )
+  .millPlatforms(Scala213, millVersions)
   .dependsOn(codegen)
 
 lazy val decline = (projectMatrix in file("modules/decline"))

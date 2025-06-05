@@ -384,7 +384,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         newline,
         renderId(shapeId),
-        line"""val version: $string_ = "$version"""",
+        line"""val version: $string_ = ${renderStringLiteral(version)}""",
         newline,
         renderHintsVal(hints),
         newline,
@@ -594,7 +594,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"""val schema: $OperationSchema_[${op.renderAlgParams(
           opObjectName
-        )}] = $Schema_.operation($ShapeId_("$ns", "$opName"))""",
+        )}] = $Schema_.operation($ShapeId_(${renderStringLiteral(ns)}, ${renderStringLiteral(opName)}))""",
         indent(
           line".withInput(${op.input.schemaRef})",
           Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
@@ -616,13 +616,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val mh =
       if (hints.isEmpty) Line.empty
       else line".addHints(${memberHints(hints)})"
-    line"""$StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
+    line"""$StreamingSchema_(${renderStringLiteral(name)}, ${tpe.schemaRef}$mh)"""
   }
 
   private def renderProtocol(name: NameRef, hints: List[Hint]): Lines = {
     hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
       val protocolTraits = protocol.traits
-        .map(t => line"""$ShapeId_("${t.namespace}", "${t.name}")""")
+        .map(t => line"""$ShapeId_(${renderStringLiteral(t.namespace)}, ${renderStringLiteral(t.name)})""")
         .intercalate(Line.comma)
       lines(
         newline,
@@ -744,14 +744,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
 
               if (hints.isEmpty) {
-                line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)"""
+                line"""${tpe.schemaRef}.$fieldBuilder[${product.nameRef}](${renderStringLiteral(
+                  realName
+                )}, _.$fieldName)"""
               } else {
                 val memHints = memberHints(hints)
                 val addMemHints =
                   if (memHints.nonEmpty) line".addHints($memHints)"
                   else Line.empty
                 // format: off
-                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$fieldBuilder[${product.nameRef}](${renderStringLiteral(realName)}, _.$fieldName)$addMemHints"""
                 // format: on
               }
             }
@@ -910,7 +912,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           members.map { case (altName, tpe) =>
             line"""val ${altVal(
               altName
-            )} = $tpe.schema.oneOf[${name}]("$altName")"""
+            )} = $tpe.schema.oneOf[${name}](${renderStringLiteral(altName)})"""
           },
           block(
             line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
@@ -1135,7 +1137,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
-              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
+              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name](${renderStringLiteral(realName)}).addHints(hints)""",
             )
             // format: on
           case (
@@ -1154,7 +1156,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               ) =>
             val additionalLines = lines(
               newline,
-              line"""val alt = schema.oneOf[$name]("$realName")"""
+              line"""val alt = schema.oneOf[$name](${renderStringLiteral(realName)})"""
             )
             // In case of union members that are inline structs (as opposed to structs being referenced and wrapped by a new class),
             // we want to put a deprecation note (if it exists on the alt) on the struct - there's nowhere else to put it.
@@ -1180,7 +1182,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               renderHintsVal(altHints),
               // format: off
               line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-              line"""val alt = schema.oneOf[$name]("$realName")""",
+              line"""val alt = schema.oneOf[$name](${renderStringLiteral(realName)})""",
               // format: on
             )
         },
@@ -1289,7 +1291,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val valueName = NameRef(e.name)
 
           val baseLine =
-            line"""case object $valueName extends $name("$value", "${e.realName}", $intValue, $Hints_.empty)"""
+            line"""case object $valueName extends $name(${renderStringLiteral(value)}, ${renderStringLiteral(
+              e.realName
+            )}, $intValue, $Hints_.empty)"""
 
           lines(
             documentationAnnotation(hints),
@@ -1513,7 +1517,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
-    line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
+    line"""val id: $ShapeId_ = $ShapeId_(${renderStringLiteral(ns)}, ${renderStringLiteral(name)})"""
   }
 
   def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
@@ -1668,7 +1672,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
           def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
-              val key = s""""${member._1.getValue()}""""
+              val key = renderStringLiteral(member._1.getValue)
               val value = member._2.accept(this)
               line"$key -> $value"
             }

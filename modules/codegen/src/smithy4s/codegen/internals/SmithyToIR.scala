@@ -140,6 +140,8 @@ private[codegen] class SmithyToIR(
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
+    // Only structure mixins should be generated
+    .filterNot { s => s.hasTrait(classOf[MixinTrait]) && !s.isStructureShape() }
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
