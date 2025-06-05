@@ -1410,13 +1410,18 @@ private[smithy4s] class SchemaVisitorJCodec(
     val codec = apply(field.schema)
     val label = field.label
 
-    val decodeFn: (Cursor, JCodec[A], JsonReader) => A =
-      if (
-        field.hints
-          .has(Required) || default == null || field.hints.has(alloy.Nullable)
-      )
-        _.decode(_, _)
-      else
+    val decodeFn: (Cursor, JCodec[A], JsonReader) => A = {
+      val allowExplicitNulls =
+        ! {
+          // required fields can't accept explicit nulls
+          field.hints.has(Required) ||
+          // if there was no default, we'd allow explicit nulls by virtue of having an OptionSchema
+          default == null ||
+          // nullables have separate handling in OptionSchema
+          field.hints.has(alloy.Nullable)
+        }
+
+      if (allowExplicitNulls)
         (cursor, codec, in) =>
           if (in.isNextToken('n')) {
             in.readNullOrError(
@@ -1427,6 +1432,9 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             cursor.decode(codec, in)
           }
+      else
+        _.decode(_, _)
+    }
 
     (cursor, in, mmap) =>
       val _ = mmap.put(
