@@ -10,7 +10,7 @@ We recommend using [coursier](https://get-coursier.io/docs/cli-launch) to instal
 ### Installation
 
 ```bash
-cs install --channel https://disneystreaming.github.io/coursier.json smithy4s
+cs install --contrib smithy4s
 ```
 
 ### Usage
@@ -24,7 +24,7 @@ The CLI comes with a number of options to customize output directories, skip ope
 
 ```scala mdoc:passthrough
 println("```bash")
-println("bash> smithy4s --help")
+println("smithy4s --help")
 println(Main.commands.showHelp)
 println("```")
 ```
@@ -33,7 +33,7 @@ println("```")
 
 ```scala mdoc:passthrough
 println("```bash")
-println("bash> smithy4s generate --help")
+println("smithy4s generate --help")
 println(Help.fromCommand(CodegenCommand.command))
 println("```")
 ```
@@ -42,7 +42,7 @@ println("```")
 
 ```scala mdoc:passthrough
 println("```bash")
-println("bash> smithy4s dump-model --help")
+println("smithy4s dump-model --help")
 println(Help.fromCommand(DumpModelCommand.command))
 println("```")
 ```
