@@ -23,7 +23,6 @@ package smithy4s.http
  * @param queryParams A map of query parameters where keys and values are URL-decoded
  * @param pathParams Optional map of path parameters extracted during routing
  */
-
 final case class HttpUri private (
     origin: Option[HttpUriOrigin],
     /**
@@ -137,32 +136,26 @@ final case class HttpUri private (
       case None         => this
     }
   }
-  def withHost(host: String): HttpUri = {
-    origin match {
-      case Some(o) =>
-        copy(origin = Some(o.copy(authority = o.authority.withHost(host))))
-      case None =>
-        copy(origin = Some(HttpUriOrigin.schemeRelative(host)))
-    }
-  }
 
-  def withHostPrefix(prefix: String): HttpUri = {
-    origin match {
-      case Some(o) =>
-        copy(origin = Some(o.withHostPrefix(prefix)))
-      case None => this
-    }
-  }
-  def withPort(port: Int): HttpUri = {
-    origin match {
-      case Some(o) =>
-        copy(origin = Some(o.copy(authority = o.authority.withPort(port))))
-      case None => this
-    }
-  }
 }
 
 object HttpUri {
+
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUri is never used"
+  )
+  private def unapply(
+      uri: HttpUri
+  ): Option[
+    (
+        Option[HttpUriOrigin],
+        IndexedSeq[String],
+        Map[String, Seq[String]],
+        Option[Map[String, String]]
+    )
+  ] = {
+    Some((uri.origin, uri.path, uri.queryParams, uri.pathParams))
+  }
 
   @scala.annotation.nowarn(
     "msg=private method unapply in object HttpUri is never used"
