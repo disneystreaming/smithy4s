@@ -16,10 +16,10 @@
 
 package smithy4s.http
 
-final case class HttpUriAuthority(
+final case class HttpUriAuthority private (
     host: String,
-    port: Option[Int] = None,
-    userInfo: Option[String] = None
+    port: Option[Int],
+    userInfo: Option[String]
 ) {
   def render: String = {
     val userInfoStr = userInfo.map(ui => s"$ui@").getOrElse("")
@@ -37,4 +37,20 @@ final case class HttpUriAuthority(
   def withoutUserInfo: HttpUriAuthority = copy(userInfo = None)
   def withoutPort: HttpUriAuthority = copy(port = None)
 
+}
+object HttpUriAuthority {
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUriAuthority is never used"
+  )
+  private def unapply(
+      authority: HttpUriAuthority
+  ): Option[(String, Option[Int], Option[String])] = {
+    Some((authority.host, authority.port, authority.userInfo))
+
+  }
+  def apply(
+      host: String,
+      port: Option[Int] = None,
+      userInfo: Option[String] = None
+  ): HttpUriAuthority = new HttpUriAuthority(host, port, userInfo)
 }

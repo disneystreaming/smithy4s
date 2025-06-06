@@ -25,7 +25,7 @@ import scala.runtime.AbstractFunction4
  * @param queryParams A map of query parameters where keys and values are URL-decoded
  * @param pathParams Optional map of path parameters extracted during routing
  */
-final case class HttpUri(
+final case class HttpUri private (
     origin: Option[HttpUriOrigin],
     /**
       * A sequence of URL-decoded URI segment.
@@ -64,10 +64,23 @@ final case class HttpUri(
    */
   def isSchemeRelative: Boolean = origin.exists(_.scheme.isEmpty)
 
+  def withOrigin(origin: HttpUriOrigin): HttpUri = {
+    copy(origin = Some(origin))
+  }
+
+  def transformOrigin(
+      f: HttpUriOrigin => HttpUriOrigin
+  ): HttpUri = {
+    origin match {
+      case Some(o) => copy(origin = Some(f(o)))
+      case None    => this
+    }
+  }
+
   def withHost(host: String): HttpUri = {
     origin match {
       case Some(o) =>
-        copy(origin = Some(o.copy(authority = o.authority.withHost(host))))
+        copy(origin = Some(o.withAuthority(o.authority.withHost(host))))
       case None =>
         copy(origin = Some(HttpUriOrigin.schemeRelative(host)))
     }
@@ -83,11 +96,48 @@ final case class HttpUri(
   def withPort(port: Int): HttpUri = {
     origin match {
       case Some(o) =>
-        copy(origin = Some(o.copy(authority = o.authority.withPort(port))))
+        copy(origin = Some(o.withAuthority(o.authority.withPort(port))))
       case None => this
     }
   }
 
+  def transformPath(
+      f: IndexedSeq[String] => IndexedSeq[String]
+  ): HttpUri = {
+    copy(path = f(path))
+  }
+  def withPath(path: IndexedSeq[String]): HttpUri = {
+    copy(path = path)
+  }
+  def withQueryParams(
+      queryParams: Map[String, Seq[String]]
+  ): HttpUri = {
+    copy(queryParams = queryParams)
+  }
+  def withoutQueryParams: HttpUri = {
+    copy(queryParams = Map.empty)
+  }
+  def transformQueryParams(
+      f: Map[String, Seq[String]] => Map[String, Seq[String]]
+  ): HttpUri = {
+    copy(queryParams = f(queryParams))
+  }
+  def withPathParams(
+      pathParams: Map[String, String]
+  ): HttpUri = {
+    copy(pathParams = Some(pathParams))
+  }
+  def withoutPathParams: HttpUri = {
+    copy(pathParams = None)
+  }
+  def transformPathParams(
+      f: Map[String, String] => Map[String, String]
+  ): HttpUri = {
+    pathParams match {
+      case Some(params) => copy(pathParams = Some(f(params)))
+      case None         => this
+    }
+  }
 }
 
 object HttpUri
@@ -98,6 +148,22 @@ object HttpUri
       Option[Map[String, String]],
       HttpUri
     ] {
+
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUri is never used"
+  )
+  private def unapply(
+      uri: HttpUri
+  ): Option[
+    (
+        Option[HttpUriOrigin],
+        IndexedSeq[String],
+        Map[String, Seq[String]],
+        Option[Map[String, String]]
+    )
+  ] = {
+    Some((uri.origin, uri.path, uri.queryParams, uri.pathParams))
+  }
 
   def apply(
       origin: Option[HttpUriOrigin],

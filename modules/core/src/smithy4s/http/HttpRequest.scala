@@ -81,8 +81,11 @@ object HttpRequest {
         val path = httpEndpoint.path(input)
         val staticQueries = httpEndpoint.staticQueryParams
         val oldUri = request.uri
-        val newUri =
-          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+        val newUri = oldUri
+          .withQueryParams(staticQueries)
+          .transformPath(
+            _ ++ path
+          )
         val method = httpEndpoint.method
         request.copy(method = method, uri = newUri)
       }
@@ -92,7 +95,7 @@ object HttpRequest {
       (req: HttpRequest[Body], meta: Metadata) =>
         val oldUri = req.uri
         val newUri =
-          oldUri.copy(queryParams = oldUri.queryParams ++ meta.query)
+          oldUri.transformQueryParams(_ ++ meta.query)
         req.addHeaders(meta.headers).copy(uri = newUri)
     }
 
@@ -108,9 +111,9 @@ object HttpRequest {
             ): HttpRequest[Body] = {
               val hostPrefix = prefixEncoder.write(List.empty, input).mkString
               val oldUri = request.uri
-              val prefixedOrigin =
-                oldUri.origin.map(origin => origin.withHostPrefix(hostPrefix))
-              val newUri = oldUri.copy(origin = prefixedOrigin)
+              val newUri = oldUri.transformOrigin(origin =>
+                origin.withHostPrefix(hostPrefix)
+              )
               request.copy(uri = newUri)
             }
           }

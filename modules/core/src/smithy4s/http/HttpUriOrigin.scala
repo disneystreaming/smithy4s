@@ -23,7 +23,7 @@ package smithy4s.http
  * @param scheme The URI scheme (e.g. http, https). Optional for relative URIs.
  * @param authority The authority component of the URI. Required if scheme is present.
  */
-final case class HttpUriOrigin(
+final case class HttpUriOrigin private (
     scheme: Option[HttpUriScheme],
     authority: HttpUriAuthority
 ) {
@@ -43,6 +43,9 @@ final case class HttpUriOrigin(
 
   def withHostPrefix(prefix: String): HttpUriOrigin =
     copy(authority = authority.hostPrefix(prefix))
+
+  def withAuthority(authority: HttpUriAuthority): HttpUriOrigin =
+    copy(authority = authority)
 
   /**
    * Creates a new HttpUriOrigin with the given scheme
@@ -81,6 +84,20 @@ final case class HttpUriOrigin(
 
 object HttpUriOrigin {
 
+  @scala.annotation.nowarn(
+    "msg=private method unapply in object HttpUriOrigin is never used"
+  )
+  private def unapply(
+      origin: HttpUriOrigin
+  ): Option[(Option[HttpUriScheme], HttpUriAuthority)] = {
+    Some((origin.scheme, origin.authority))
+  }
+
+  def apply(
+      scheme: Option[HttpUriScheme],
+      authority: HttpUriAuthority
+  ): HttpUriOrigin = new HttpUriOrigin(scheme, authority)
+
   /**
    * Creates a scheme-relative origin (starts with //)
    */
@@ -110,4 +127,5 @@ object HttpUriOrigin {
       Some(scheme),
       HttpUriAuthority(host, Some(port), Some(userInfo))
     )
+
 }
