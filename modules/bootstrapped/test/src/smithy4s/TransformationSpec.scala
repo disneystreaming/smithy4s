@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy4s.example._
+import scala.util.control.NonFatal
 import smithy4s.kinds.PolyFunction
 import munit._
 import scala.util.{Failure, Success, Try}
@@ -29,20 +30,29 @@ class TransformationSpec() extends FunSuite {
 
     case object Empty extends Throwable
 
-    val transformed = if (scala.util.Properties.versionNumberString.startsWith("2.12")) {
-      new WeatherGen.WeatherGenTransformFunctor(stub).transform(new PolyFunction[Option, Try] {
+    val isScala212: Boolean = try {
+     scala.util.Properties.versionNumberString.startsWith("2.12")
+    } catch {
+      case NonFatal(_) => false
+    }
+    val transformed =
+      if (isScala212) {
+      new WeatherGen.WeatherGenTransformFunctor(stub).transform(
+        new PolyFunction[Option, Try] {
         def apply[A](fa: Option[A]): Try[A] = fa match {
           case Some(value) => scala.util.Success(value)
           case None        => scala.util.Failure(Empty)
         }
       })
     } else {
-      stub.transform(new PolyFunction[Option, Try] {
-        def apply[A](fa: Option[A]): Try[A] = fa match {
-          case Some(value) => scala.util.Success(value)
-          case None        => scala.util.Failure(Empty)
+      stub.transform(
+        new PolyFunction[Option, Try] {
+          def apply[A](fa: Option[A]): Try[A] = fa match {
+            case Some(value) => scala.util.Success(value)
+            case None        => scala.util.Failure(Empty)
         }
-      })
+      }
+      )
     }
     // Not ascribing the type to verify type inference in the following statement.
 //    val transformed = stub.transform(new PolyFunction[Option, Try] {
@@ -113,7 +123,18 @@ class TransformationSpec() extends FunSuite {
         }
       }
 
-    val kvStoreTry: KVStore[Try] = kvStoreEither.transform(toTry)
+    val isScala212_Bi: Boolean = try {
+      scala.util.Properties.versionNumberString.startsWith("2.12")
+      } catch {
+      case NonFatal(_) => false
+      }
+
+    val kvStoreTry: KVStore[Try] =
+      if (isScala212_Bi) {
+      new KVStoreGen.KVStoreGenTransformBifunctor(kvStoreEither).transform(toTry)
+    } else {
+      kvStoreEither.transform(toTry)
+    }
 
     expect.same(
       kvStoreTry.get("foo"): Try[Value],
