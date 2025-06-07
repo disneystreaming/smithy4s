@@ -46,14 +46,14 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = GreetServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class GreetServiceGenTransformExtensions[F[_, _, _, _, _]](val self: GreetServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: GreetServiceGen[F] <:< GreetServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[GreetServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[GreetServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[GreetServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: GreetServiceGen[F] <:< GreetServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[GreetServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[GreetServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[GreetServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class GreetServiceGenTransformFunctor[F[_]](private val self: GreetServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[GreetServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class GreetServiceGenTransformBifunctor[F[_, _]](private val self: GreetServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[GreetServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class GreetServiceGenTransformFull[F[_, _, _, _, _]](private val self: GreetServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of(self)
   }
 }
 

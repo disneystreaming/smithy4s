@@ -63,14 +63,14 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class ObjectCollisionGenTransformExtensions[F[_, _, _, _, _]](val self: ObjectCollisionGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of[ObjectCollisionGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ObjectCollisionGen[F] <:< ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ObjectCollisionGen[F] <:< ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ObjectCollisionGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ObjectCollisionGenTransformFunctor[F[_]](private val self: ObjectCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ObjectCollisionGenTransformBifunctor[F[_, _]](private val self: ObjectCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ObjectCollisionGenTransformFull[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of(self)
   }
 }
 

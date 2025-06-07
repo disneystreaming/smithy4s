@@ -60,14 +60,14 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
 
-  object Transformations {
-    implicit class KVStoreGenTransformExtensions[F[_, _, _, _, _]](val self: KVStoreGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: KVStoreGen[F] <:< KVStoreGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[KVStoreGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[KVStoreGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: KVStoreGen[F] <:< KVStoreGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[KVStoreGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[KVStoreGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class KVStoreGenTransformFunctor[F[_]](private val self: KVStoreGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class KVStoreGenTransformBifunctor[F[_, _]](private val self: KVStoreGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class KVStoreGenTransformFull[F[_, _, _, _, _]](private val self: KVStoreGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(self)
   }
 }
 

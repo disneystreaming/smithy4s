@@ -47,14 +47,14 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = PackedInputsServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class PackedInputsServiceGenTransformExtensions[F[_, _, _, _, _]](val self: PackedInputsServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: PackedInputsServiceGen[F] <:< PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: PackedInputsServiceGen[F] <:< PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[PackedInputsServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class PackedInputsServiceGenTransformFunctor[F[_]](private val self: PackedInputsServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class PackedInputsServiceGenTransformBifunctor[F[_, _]](private val self: PackedInputsServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class PackedInputsServiceGenTransformFull[F[_, _, _, _, _]](private val self: PackedInputsServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of(self)
   }
 }
 

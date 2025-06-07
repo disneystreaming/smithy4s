@@ -51,14 +51,14 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = ServiceWithNullsAndDefaultsOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class ServiceWithNullsAndDefaultsGenTransformExtensions[F[_, _, _, _, _]](val self: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ServiceWithNullsAndDefaultsGen[F] <:< ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ServiceWithNullsAndDefaultsGen[F] <:< ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ServiceWithNullsAndDefaultsGenTransformFunctor[F[_]](private val self: ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ServiceWithNullsAndDefaultsGenTransformBifunctor[F[_, _]](private val self: ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ServiceWithNullsAndDefaultsGenTransformFull[F[_, _, _, _, _]](private val self: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of(self)
   }
 }
 

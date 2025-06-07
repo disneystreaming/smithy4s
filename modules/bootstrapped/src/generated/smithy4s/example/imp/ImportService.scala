@@ -56,14 +56,14 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
 
-  object Transformations {
-    implicit class ImportServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ImportServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ImportServiceGen[F] <:< ImportServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ImportServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ImportServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ImportServiceGen[F] <:< ImportServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ImportServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ImportServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ImportServiceGenTransformFunctor[F[_]](private val self: ImportServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ImportServiceGenTransformBifunctor[F[_, _]](private val self: ImportServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ImportServiceGenTransformFull[F[_, _, _, _, _]](private val self: ImportServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of(self)
   }
 }
 

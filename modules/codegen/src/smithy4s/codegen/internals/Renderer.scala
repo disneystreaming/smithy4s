@@ -420,14 +420,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
         ).when(generateServiceProduct),
         newline,
-        obj(NameRef("Transformations"))(
-          block(line"implicit class ${genName}TransformExtensions[F[_, _, _, _, _]](val self: $genName[F]) extends AnyVal")(
-            line"def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](self)",
-            newline,
-            line"def transformFunctor[G[_]](implicit ev: $genName[F] <:< $genName[({ type L[A, B, C, D, E] = G[C] })#L]): $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = G[C] })#L]] = $Transformation.of[$genName[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[$genName[({ type L[A, B, C, D, E] = G[C] })#L]])",
-            newline,
-            line"def transformBifunctor[G[_, _]](implicit ev: $genName[F] <:< $genName[({ type L[A, B, C, D, E] = G[B, C] })#L]): $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = G[B, C] })#L]] = $Transformation.of[$genName[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[$genName[({ type L[A, B, C, D, E] = G[B, C] })#L]])"
-          )
+        block(line"final implicit class ${genName}TransformFunctor[F[_]](private val self: $genName[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal")(
+          line"final def transform: $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = F[C] })#L]] = $Transformation.of(self)"),
+        block(line"final implicit class ${genName}TransformBifunctor[F[_, _]](private val self: $genName[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal")(
+        line"final def transform: $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = F[B, C] })#L]] = $Transformation.of(self)"),
+        block(line"final implicit class ${genName}TransformFull[F[_, _, _, _, _]](private val self: $genName[F]) extends AnyVal")(
+        line"final def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of(self)"
         )
       ),
       newline,

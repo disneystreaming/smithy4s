@@ -56,14 +56,14 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class FooServiceGenTransformExtensions[F[_, _, _, _, _]](val self: FooServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: FooServiceGen[F] <:< FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[FooServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: FooServiceGen[F] <:< FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[FooServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class FooServiceGenTransformFunctor[F[_]](private val self: FooServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class FooServiceGenTransformBifunctor[F[_, _]](private val self: FooServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[FooServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class FooServiceGenTransformFull[F[_, _, _, _, _]](private val self: FooServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of(self)
   }
 }
 

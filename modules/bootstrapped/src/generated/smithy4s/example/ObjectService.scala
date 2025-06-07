@@ -65,14 +65,14 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   type GetObjectError = ObjectServiceOperation.GetObjectError
   val GetObjectError = ObjectServiceOperation.GetObjectError
 
-  object Transformations {
-    implicit class ObjectServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ObjectServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ObjectServiceGen[F] <:< ObjectServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ObjectServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ObjectServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ObjectServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ObjectServiceGen[F] <:< ObjectServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ObjectServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ObjectServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ObjectServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ObjectServiceGenTransformFunctor[F[_]](private val self: ObjectServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ObjectServiceGenTransformBifunctor[F[_, _]](private val self: ObjectServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ObjectServiceGenTransformFull[F[_, _, _, _, _]](private val self: ObjectServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of(self)
   }
 }
 

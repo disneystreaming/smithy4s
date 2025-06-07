@@ -48,14 +48,14 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = WeatherServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class WeatherServiceGenTransformExtensions[F[_, _, _, _, _]](val self: WeatherServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: WeatherServiceGen[F] <:< WeatherServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[WeatherServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[WeatherServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: WeatherServiceGen[F] <:< WeatherServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[WeatherServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[WeatherServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class WeatherServiceGenTransformFunctor[F[_]](private val self: WeatherServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class WeatherServiceGenTransformBifunctor[F[_, _]](private val self: WeatherServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class WeatherServiceGenTransformFull[F[_, _, _, _, _]](private val self: WeatherServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of(self)
   }
 }
 

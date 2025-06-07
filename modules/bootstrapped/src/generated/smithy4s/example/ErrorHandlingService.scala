@@ -51,14 +51,14 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
   type ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
   val ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
 
-  object Transformations {
-    implicit class ErrorHandlingServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ErrorHandlingServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[F]] = Transformation.of[ErrorHandlingServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ErrorHandlingServiceGen[F] <:< ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ErrorHandlingServiceGen[F] <:< ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ErrorHandlingServiceGenTransformFunctor[F[_]](private val self: ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ErrorHandlingServiceGenTransformBifunctor[F[_, _]](private val self: ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ErrorHandlingServiceGenTransformFull[F[_, _, _, _, _]](private val self: ErrorHandlingServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[F]] = Transformation.of(self)
   }
 }
 

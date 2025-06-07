@@ -48,14 +48,14 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = HelloWorldServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class HelloWorldServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloWorldServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: HelloWorldServiceGen[F] <:< HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: HelloWorldServiceGen[F] <:< HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[HelloWorldServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class HelloWorldServiceGenTransformFunctor[F[_]](private val self: HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class HelloWorldServiceGenTransformBifunctor[F[_, _]](private val self: HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class HelloWorldServiceGenTransformFull[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of(self)
   }
 }
 

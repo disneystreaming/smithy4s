@@ -91,14 +91,14 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   type ListTablesError = DynamoDBOperation.ListTablesError
   val ListTablesError = DynamoDBOperation.ListTablesError
 
-  object Transformations {
-    implicit class DynamoDBGenTransformExtensions[F[_, _, _, _, _]](val self: DynamoDBGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: DynamoDBGen[F] <:< DynamoDBGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[DynamoDBGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[DynamoDBGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[DynamoDBGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: DynamoDBGen[F] <:< DynamoDBGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[DynamoDBGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[DynamoDBGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[DynamoDBGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class DynamoDBGenTransformFunctor[F[_]](private val self: DynamoDBGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DynamoDBGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class DynamoDBGenTransformBifunctor[F[_, _]](private val self: DynamoDBGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DynamoDBGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class DynamoDBGenTransformFull[F[_, _, _, _, _]](private val self: DynamoDBGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of(self)
   }
 }
 

@@ -59,14 +59,14 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   type HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
   val HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
 
-  object Transformations {
-    implicit class HelloWorldAuthServiceGenTransformExtensions[F[_, _, _, _, _]](val self: HelloWorldAuthServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: HelloWorldAuthServiceGen[F] <:< HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: HelloWorldAuthServiceGen[F] <:< HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class HelloWorldAuthServiceGenTransformFunctor[F[_]](private val self: HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class HelloWorldAuthServiceGenTransformBifunctor[F[_, _]](private val self: HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class HelloWorldAuthServiceGenTransformFull[F[_, _, _, _, _]](private val self: HelloWorldAuthServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of(self)
   }
 }
 

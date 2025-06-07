@@ -55,14 +55,14 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
 
 
-  object Transformations {
-    implicit class ReservedNameServiceGenTransformExtensions[F[_, _, _, _, _]](val self: ReservedNameServiceGen[F]) extends AnyVal {
-      def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](self)
-
-      def transformFunctor[G[_]](implicit ev: ReservedNameServiceGen[F] <:< ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]): Transformation.PartiallyApplied[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]] = Transformation.of[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]](self.asInstanceOf[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[C] })#L]])
-
-      def transformBifunctor[G[_, _]](implicit ev: ReservedNameServiceGen[F] <:< ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]): Transformation.PartiallyApplied[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]] = Transformation.of[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]](self.asInstanceOf[ReservedNameServiceGen[({ type L[A, B, C, D, E] = G[B, C] })#L]])
-    }
+  final implicit class ReservedNameServiceGenTransformFunctor[F[_]](private val self: ReservedNameServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ReservedNameServiceGenTransformBifunctor[F[_, _]](private val self: ReservedNameServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  }
+  final implicit class ReservedNameServiceGenTransformFull[F[_, _, _, _, _]](private val self: ReservedNameServiceGen[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of(self)
   }
 }
 
