@@ -47,13 +47,13 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class BrandServiceGenTransformFunctor[F[_]](private val self: BrandServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[BrandServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class BrandServiceGenTransformFunctorOps[F[_]](private val self: BrandService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[BrandService[F]] = Transformation.of(self)
   }
-  final implicit class BrandServiceGenTransformBifunctor[F[_, _]](private val self: BrandServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[BrandServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class BrandServiceGenTransformBifunctorOps[F[_, _]](private val self: BrandServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[BrandServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class BrandServiceGenTransformFull[F[_, _, _, _, _]](private val self: BrandServiceGen[F]) extends AnyVal {
+  final implicit class BrandServiceGenTransformOps[F[_, _, _, _, _]](private val self: BrandServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of(self)
   }
 }

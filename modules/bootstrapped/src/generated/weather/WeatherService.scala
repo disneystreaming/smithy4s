@@ -48,13 +48,13 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = WeatherServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class WeatherServiceGenTransformFunctor[F[_]](private val self: WeatherServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class WeatherServiceGenTransformFunctorOps[F[_]](private val self: WeatherService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherService[F]] = Transformation.of(self)
   }
-  final implicit class WeatherServiceGenTransformBifunctor[F[_, _]](private val self: WeatherServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[WeatherServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class WeatherServiceGenTransformBifunctorOps[F[_, _]](private val self: WeatherServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[WeatherServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class WeatherServiceGenTransformFull[F[_, _, _, _, _]](private val self: WeatherServiceGen[F]) extends AnyVal {
+  final implicit class WeatherServiceGenTransformOps[F[_, _, _, _, _]](private val self: WeatherServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of(self)
   }
 }

@@ -329,6 +329,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       version: String
   ): Lines = {
 
+    val functorName: NameRef = NameDef(name).toNameRef
+
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
     val genNameProduct: NameDef = NameDef(name + "ProductGen")
@@ -420,12 +422,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
         ).when(generateServiceProduct),
         newline,
-        block(line"final implicit class ${genName}TransformFunctor[F[_]](private val self: $genName[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal")(
-          line"final def transform: $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = F[C] })#L]] = $Transformation.of(self)"),
-        block(line"final implicit class ${genName}TransformBifunctor[F[_, _]](private val self: $genName[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal")(
-        line"final def transform: $Transformation.PartiallyApplied[$genName[({ type L[A, B, C, D, E] = F[B, C] })#L]] = $Transformation.of(self)"),
-        block(line"final implicit class ${genName}TransformFull[F[_, _, _, _, _]](private val self: $genName[F]) extends AnyVal")(
-        line"final def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of(self)"
+        block(
+          line"final implicit class ${genName}TransformFunctorOps[F[_]](private val self: $functorName[F]) extends AnyVal"
+        )(
+          line"final def transform: $Transformation.PartiallyApplied[$functorName[F]] = $Transformation.of(self)"
+        ),
+        block(
+          line"final implicit class ${genName}TransformBifunctorOps[F[_, _]](private val self: $genName.ErrorAware[F]) extends AnyVal"
+        )(
+          line"final def transform: $Transformation.PartiallyApplied[$genName.ErrorAware[F]] = $Transformation.of(self)"
+        ),
+        block(
+          line"final implicit class ${genName}TransformOps[F[_, _, _, _, _]](private val self: $genName[F]) extends AnyVal"
+        )(
+          line"final def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of(self)"
         )
       ),
       newline,

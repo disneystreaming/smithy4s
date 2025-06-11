@@ -57,13 +57,13 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: DummyServiceGen[P]): PolyFunction5[DummyServiceOperation, P] = DummyServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DummyServiceGenTransformFunctor[F[_]](private val self: DummyServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DummyServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class DummyServiceGenTransformFunctorOps[F[_]](private val self: DummyService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DummyService[F]] = Transformation.of(self)
   }
-  final implicit class DummyServiceGenTransformBifunctor[F[_, _]](private val self: DummyServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DummyServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class DummyServiceGenTransformBifunctorOps[F[_, _]](private val self: DummyServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DummyServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class DummyServiceGenTransformFull[F[_, _, _, _, _]](private val self: DummyServiceGen[F]) extends AnyVal {
+  final implicit class DummyServiceGenTransformOps[F[_, _, _, _, _]](private val self: DummyServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of(self)
   }
 }

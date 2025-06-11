@@ -63,13 +63,13 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
 
-  final implicit class ObjectCollisionGenTransformFunctor[F[_]](private val self: ObjectCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class ObjectCollisionGenTransformFunctorOps[F[_]](private val self: ObjectCollision[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectCollision[F]] = Transformation.of(self)
   }
-  final implicit class ObjectCollisionGenTransformBifunctor[F[_, _]](private val self: ObjectCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class ObjectCollisionGenTransformBifunctorOps[F[_, _]](private val self: ObjectCollisionGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class ObjectCollisionGenTransformFull[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
+  final implicit class ObjectCollisionGenTransformOps[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of(self)
   }
 }

@@ -53,13 +53,13 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   type MyOpError = NameCollisionOperation.MyOpError
   val MyOpError = NameCollisionOperation.MyOpError
 
-  final implicit class NameCollisionGenTransformFunctor[F[_]](private val self: NameCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[NameCollisionGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class NameCollisionGenTransformFunctorOps[F[_]](private val self: NameCollision[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[NameCollision[F]] = Transformation.of(self)
   }
-  final implicit class NameCollisionGenTransformBifunctor[F[_, _]](private val self: NameCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[NameCollisionGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class NameCollisionGenTransformBifunctorOps[F[_, _]](private val self: NameCollisionGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[NameCollisionGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class NameCollisionGenTransformFull[F[_, _, _, _, _]](private val self: NameCollisionGen[F]) extends AnyVal {
+  final implicit class NameCollisionGenTransformOps[F[_, _, _, _, _]](private val self: NameCollisionGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of(self)
   }
 }

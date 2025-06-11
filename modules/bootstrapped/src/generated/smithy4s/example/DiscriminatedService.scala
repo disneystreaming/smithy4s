@@ -48,13 +48,13 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = DiscriminatedServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DiscriminatedServiceGenTransformFunctor[F[_]](private val self: DiscriminatedServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class DiscriminatedServiceGenTransformFunctorOps[F[_]](private val self: DiscriminatedService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DiscriminatedService[F]] = Transformation.of(self)
   }
-  final implicit class DiscriminatedServiceGenTransformBifunctor[F[_, _]](private val self: DiscriminatedServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class DiscriminatedServiceGenTransformBifunctorOps[F[_, _]](private val self: DiscriminatedServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class DiscriminatedServiceGenTransformFull[F[_, _, _, _, _]](private val self: DiscriminatedServiceGen[F]) extends AnyVal {
+  final implicit class DiscriminatedServiceGenTransformOps[F[_, _, _, _, _]](private val self: DiscriminatedServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of(self)
   }
 }

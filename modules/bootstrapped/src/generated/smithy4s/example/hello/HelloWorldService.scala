@@ -54,13 +54,13 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   type HelloError = HelloWorldServiceOperation.HelloError
   val HelloError = HelloWorldServiceOperation.HelloError
 
-  final implicit class HelloWorldServiceGenTransformFunctor[F[_]](private val self: HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class HelloWorldServiceGenTransformFunctorOps[F[_]](private val self: HelloWorldService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldService[F]] = Transformation.of(self)
   }
-  final implicit class HelloWorldServiceGenTransformBifunctor[F[_, _]](private val self: HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class HelloWorldServiceGenTransformBifunctorOps[F[_, _]](private val self: HelloWorldServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class HelloWorldServiceGenTransformFull[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
+  final implicit class HelloWorldServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of(self)
   }
 }
