@@ -157,22 +157,6 @@ object HttpUri {
     Some((uri.origin, uri.path, uri.queryParams, uri.pathParams))
   }
 
-  @scala.annotation.nowarn(
-    "msg=private method unapply in object HttpUri is never used"
-  )
-  private def unapply(
-      uri: HttpUri
-  ): Option[
-    (
-        Option[HttpUriOrigin],
-        IndexedSeq[String],
-        Map[String, Seq[String]],
-        Option[Map[String, String]]
-    )
-  ] = {
-    Some((uri.origin, uri.path, uri.queryParams, uri.pathParams))
-  }
-
   def apply(
       origin: Option[HttpUriOrigin],
       path: IndexedSeq[String],
