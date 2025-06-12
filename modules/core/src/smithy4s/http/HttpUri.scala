@@ -16,8 +16,6 @@
 
 package smithy4s.http
 
-import scala.runtime.AbstractFunction4
-
 /**
  * RFC 3986 compliant URI implementation.
  * @param origin The origin component of the URI.
@@ -140,14 +138,7 @@ final case class HttpUri private (
   }
 }
 
-object HttpUri
-    extends AbstractFunction4[
-      Option[HttpUriOrigin],
-      IndexedSeq[String],
-      Map[String, Seq[String]],
-      Option[Map[String, String]],
-      HttpUri
-    ] {
+object HttpUri {
 
   @scala.annotation.nowarn(
     "msg=private method unapply in object HttpUri is never used"
