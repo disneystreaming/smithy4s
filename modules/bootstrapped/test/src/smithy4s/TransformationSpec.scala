@@ -29,29 +29,13 @@ class TransformationSpec() extends FunSuite {
 
     case object Empty extends Throwable
 
-    val transformed =
-//      if (scala.util.Properties.versionNumberString.startsWith("2.12")) {
-      new WeatherGen.WeatherGenTransformFunctor(stub).transform(new PolyFunction[Option, Try] {
-        def apply[A](fa: Option[A]): Try[A] = fa match {
-          case Some(value) => scala.util.Success(value)
-          case None        => scala.util.Failure(Empty)
-        }
-      })
-//    } else {
-//      stub.transform(new PolyFunction[Option, Try] {
-//        def apply[A](fa: Option[A]): Try[A] = fa match {
-//          case Some(value) => scala.util.Success(value)
-//          case None        => scala.util.Failure(Empty)
-//        }
-//      })
-//    }
-    // Not ascribing the type to verify type inference in the following statement.
-//    val transformed = stub.transform(new PolyFunction[Option, Try] {
-//      def apply[A](fa: Option[A]): Try[A] = fa match {
-//        case Some(value) => scala.util.Success(value)
-//        case None        => scala.util.Failure(Empty)
-//      }
-//    })
+//     Not ascribing the type to verify type inference in the following statement.
+    val transformed = stub.transform(new PolyFunction[Option, Try] {
+      def apply[A](fa: Option[A]): Try[A] = fa match {
+        case Some(value) => scala.util.Success(value)
+        case None        => scala.util.Failure(Empty)
+      }
+    })
     expect(transformed.getCurrentTime().isFailure)
   }
 
@@ -114,12 +98,7 @@ class TransformationSpec() extends FunSuite {
         }
       }
 
-    val kvStoreTry: KVStore[Try] =
-//      if (scala.util.Properties.versionNumberString.startsWith("2.12")) {
-      new KVStoreGen.KVStoreGenTransformBifunctor(kvStoreEither).transform(toTry)
-//    } else {
-//      kvStoreEither.transform(toTry)
-//    }
+    val kvStoreTry: KVStore[Try] = kvStoreEither.transform(toTry)
 
     expect.same(
       kvStoreTry.get("foo"): Try[Value],
