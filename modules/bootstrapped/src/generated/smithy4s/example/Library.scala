@@ -51,13 +51,13 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = LibraryOperation.toPolyFunction(impl)
 
 
-  final implicit class LibraryGenTransformFunctor[F[_]](private val self: LibraryGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[LibraryGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class LibraryGenTransformFunctorOps[F[_]](private val self: Library[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[Library[F]] = Transformation.of(self)
   }
-  final implicit class LibraryGenTransformBifunctor[F[_, _]](private val self: LibraryGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[LibraryGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class LibraryGenTransformBifunctorOps[F[_, _]](private val self: LibraryGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[LibraryGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class LibraryGenTransformFull[F[_, _, _, _, _]](private val self: LibraryGen[F]) extends AnyVal {
+  final implicit class LibraryGenTransformOps[F[_, _, _, _, _]](private val self: LibraryGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of(self)
   }
 }

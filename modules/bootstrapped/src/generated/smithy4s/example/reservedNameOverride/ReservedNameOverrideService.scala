@@ -49,13 +49,13 @@ object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverride
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = ReservedNameOverrideServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class ReservedNameOverrideServiceGenTransformFunctor[F[_]](private val self: ReservedNameOverrideServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class ReservedNameOverrideServiceGenTransformFunctorOps[F[_]](private val self: ReservedNameOverrideService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameOverrideService[F]] = Transformation.of(self)
   }
-  final implicit class ReservedNameOverrideServiceGenTransformBifunctor[F[_, _]](private val self: ReservedNameOverrideServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class ReservedNameOverrideServiceGenTransformBifunctorOps[F[_, _]](private val self: ReservedNameOverrideServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class ReservedNameOverrideServiceGenTransformFull[F[_, _, _, _, _]](private val self: ReservedNameOverrideServiceGen[F]) extends AnyVal {
+  final implicit class ReservedNameOverrideServiceGenTransformOps[F[_, _, _, _, _]](private val self: ReservedNameOverrideServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of(self)
   }
 }

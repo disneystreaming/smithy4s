@@ -52,13 +52,13 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
   type ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
   val ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
 
-  final implicit class ErrorHandlingServiceExtraErrorsGenTransformFunctor[F[_]](private val self: ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class ErrorHandlingServiceExtraErrorsGenTransformFunctorOps[F[_]](private val self: ErrorHandlingServiceExtraErrors[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrors[F]] = Transformation.of(self)
   }
-  final implicit class ErrorHandlingServiceExtraErrorsGenTransformBifunctor[F[_, _]](private val self: ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class ErrorHandlingServiceExtraErrorsGenTransformBifunctorOps[F[_, _]](private val self: ErrorHandlingServiceExtraErrorsGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class ErrorHandlingServiceExtraErrorsGenTransformFull[F[_, _, _, _, _]](private val self: ErrorHandlingServiceExtraErrorsGen[F]) extends AnyVal {
+  final implicit class ErrorHandlingServiceExtraErrorsGenTransformOps[F[_, _, _, _, _]](private val self: ErrorHandlingServiceExtraErrorsGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of(self)
   }
 }

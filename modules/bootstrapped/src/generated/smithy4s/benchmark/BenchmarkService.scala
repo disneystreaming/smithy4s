@@ -49,13 +49,13 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = BenchmarkServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class BenchmarkServiceGenTransformFunctor[F[_]](private val self: BenchmarkServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class BenchmarkServiceGenTransformFunctorOps[F[_]](private val self: BenchmarkService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[BenchmarkService[F]] = Transformation.of(self)
   }
-  final implicit class BenchmarkServiceGenTransformBifunctor[F[_, _]](private val self: BenchmarkServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class BenchmarkServiceGenTransformBifunctorOps[F[_, _]](private val self: BenchmarkServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class BenchmarkServiceGenTransformFull[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
+  final implicit class BenchmarkServiceGenTransformOps[F[_, _, _, _, _]](private val self: BenchmarkServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of(self)
   }
 }

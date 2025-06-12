@@ -56,13 +56,13 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
 
-  final implicit class ImportServiceGenTransformFunctor[F[_]](private val self: ImportServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class ImportServiceGenTransformFunctorOps[F[_]](private val self: ImportService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportService[F]] = Transformation.of(self)
   }
-  final implicit class ImportServiceGenTransformBifunctor[F[_, _]](private val self: ImportServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ImportServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class ImportServiceGenTransformBifunctorOps[F[_, _]](private val self: ImportServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[ImportServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class ImportServiceGenTransformFull[F[_, _, _, _, _]](private val self: ImportServiceGen[F]) extends AnyVal {
+  final implicit class ImportServiceGenTransformOps[F[_, _, _, _, _]](private val self: ImportServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of(self)
   }
 }

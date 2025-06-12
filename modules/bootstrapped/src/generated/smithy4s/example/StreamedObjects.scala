@@ -55,13 +55,13 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
 
 
-  final implicit class StreamedObjectsGenTransformFunctor[F[_]](private val self: StreamedObjectsGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class StreamedObjectsGenTransformFunctorOps[F[_]](private val self: StreamedObjects[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[StreamedObjects[F]] = Transformation.of(self)
   }
-  final implicit class StreamedObjectsGenTransformBifunctor[F[_, _]](private val self: StreamedObjectsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class StreamedObjectsGenTransformBifunctorOps[F[_, _]](private val self: StreamedObjectsGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[StreamedObjectsGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class StreamedObjectsGenTransformFull[F[_, _, _, _, _]](private val self: StreamedObjectsGen[F]) extends AnyVal {
+  final implicit class StreamedObjectsGenTransformOps[F[_, _, _, _, _]](private val self: StreamedObjectsGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of(self)
   }
 }

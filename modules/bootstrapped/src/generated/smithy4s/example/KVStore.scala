@@ -60,13 +60,13 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
 
-  final implicit class KVStoreGenTransformFunctor[F[_]](private val self: KVStoreGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class KVStoreGenTransformFunctorOps[F[_]](private val self: KVStore[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[KVStore[F]] = Transformation.of(self)
   }
-  final implicit class KVStoreGenTransformBifunctor[F[_, _]](private val self: KVStoreGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[KVStoreGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class KVStoreGenTransformBifunctorOps[F[_, _]](private val self: KVStoreGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[KVStoreGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class KVStoreGenTransformFull[F[_, _, _, _, _]](private val self: KVStoreGen[F]) extends AnyVal {
+  final implicit class KVStoreGenTransformOps[F[_, _, _, _, _]](private val self: KVStoreGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(self)
   }
 }

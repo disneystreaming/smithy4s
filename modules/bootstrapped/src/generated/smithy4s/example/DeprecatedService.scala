@@ -51,13 +51,13 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DeprecatedServiceGenTransformFunctor[F[_]](private val self: DeprecatedServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class DeprecatedServiceGenTransformFunctorOps[F[_]](private val self: DeprecatedService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DeprecatedService[F]] = Transformation.of(self)
   }
-  final implicit class DeprecatedServiceGenTransformBifunctor[F[_, _]](private val self: DeprecatedServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class DeprecatedServiceGenTransformBifunctorOps[F[_, _]](private val self: DeprecatedServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class DeprecatedServiceGenTransformFull[F[_, _, _, _, _]](private val self: DeprecatedServiceGen[F]) extends AnyVal {
+  final implicit class DeprecatedServiceGenTransformOps[F[_, _, _, _, _]](private val self: DeprecatedServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of(self)
   }
 }

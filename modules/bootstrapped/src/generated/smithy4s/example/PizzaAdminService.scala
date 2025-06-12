@@ -90,13 +90,13 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
   type CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
   val CustomCodeError = PizzaAdminServiceOperation.CustomCodeError
 
-  final implicit class PizzaAdminServiceGenTransformFunctor[F[_]](private val self: PizzaAdminServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class PizzaAdminServiceGenTransformFunctorOps[F[_]](private val self: PizzaAdminService[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PizzaAdminService[F]] = Transformation.of(self)
   }
-  final implicit class PizzaAdminServiceGenTransformBifunctor[F[_, _]](private val self: PizzaAdminServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class PizzaAdminServiceGenTransformBifunctorOps[F[_, _]](private val self: PizzaAdminServiceGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class PizzaAdminServiceGenTransformFull[F[_, _, _, _, _]](private val self: PizzaAdminServiceGen[F]) extends AnyVal {
+  final implicit class PizzaAdminServiceGenTransformOps[F[_, _, _, _, _]](private val self: PizzaAdminServiceGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of(self)
   }
 }

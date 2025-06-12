@@ -43,13 +43,13 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: MyThingGen[P]): PolyFunction5[MyThingOperation, P] = MyThingOperation.toPolyFunction(impl)
 
 
-  final implicit class MyThingGenTransformFunctor[F[_]](private val self: MyThingGen[({ type L[A, B, C, D, E] = F[C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[MyThingGen[({ type L[A, B, C, D, E] = F[C] })#L]] = Transformation.of(self)
+  final implicit class MyThingGenTransformFunctorOps[F[_]](private val self: MyThing[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[MyThing[F]] = Transformation.of(self)
   }
-  final implicit class MyThingGenTransformBifunctor[F[_, _]](private val self: MyThingGen[({ type L[A, B, C, D, E] = F[B, C] })#L]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[MyThingGen[({ type L[A, B, C, D, E] = F[B, C] })#L]] = Transformation.of(self)
+  final implicit class MyThingGenTransformBifunctorOps[F[_, _]](private val self: MyThingGen.ErrorAware[F]) extends AnyVal {
+    final def transform: Transformation.PartiallyApplied[MyThingGen.ErrorAware[F]] = Transformation.of(self)
   }
-  final implicit class MyThingGenTransformFull[F[_, _, _, _, _]](private val self: MyThingGen[F]) extends AnyVal {
+  final implicit class MyThingGenTransformOps[F[_, _, _, _, _]](private val self: MyThingGen[F]) extends AnyVal {
     final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of(self)
   }
 }
