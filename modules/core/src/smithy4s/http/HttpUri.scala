@@ -38,23 +38,26 @@ final case class HttpUri private (
     pathParams: Option[Map[String, String]]
 ) {
   def toURI: URI = {
-    val schemeStr = scheme match {
+    val schemeStr = scheme.map {
       case HttpUriScheme.Http  => "http"
       case HttpUriScheme.Https => "https"
     }
-    val portStr = port.map(":" + _).getOrElse("")
     val pathStr = path.mkString("/", "/", "")
-    val queryStr =
-      if (queryParams.isEmpty) ""
-      else
-        "?" + queryParams
-          .map { case (k, v) =>
-            v.map(vv => s"$k=$vv").mkString("&")
-          }
-          .mkString("&")
-    new URI(s"$schemeStr://$host$portStr$pathStr$queryStr")
+    val queryStr = queryParams
+      .map { case (k, v) =>
+        v.map(vv => s"$k=$vv").mkString("&")
+      }
+      .mkString("&")
+    new URI(
+      schemeStr.getOrElse(null),
+      null,
+      host.getOrElse(null),
+      port.getOrElse(-1),
+      pathStr,
+      queryStr,
+      null
+    )
   }
-}
 
   def authority: Option[HttpUriAuthority] = origin.map(_.authority)
 
@@ -184,32 +187,42 @@ object HttpUri {
   ): HttpUri = {
     new HttpUri(origin, path, queryParams, pathParams)
   }
-    def fromURI(uri: URI): HttpUri = {
-      val scheme = uri.getScheme() match {
-        case "https" => HttpUriScheme.Https
-        case _       => HttpUriScheme.Http
-      }
-      val host = uri.getHost()
-      val port = Option(uri.getPort()).filter(_ >= 0)
-      val path = uri.getPath.split('/').filter(_.nonEmpty).toIndexedSeq
-      val queryParams: Map[String, Seq[String]] = Option(uri.getQuery())
-        .map { query =>
-          query
-            .split("&")
-            .map { pair =>
-              pair.split("=") match {
-                case Array(k: String, v: String) => k -> Seq(v)
-                case Array(k: String)            => k -> Seq.empty[String]
-                // cases where you have q1=v1=v2 => q1 -> "v1=v2"
-                case v @ Array(k: String, _*) => k -> Seq(v.tail.mkString("="))
-              }
-            }
-            .groupBy(_._1)
-            .map { case (k, vs) => k -> vs.map(_._2).flatten.toSeq }
-        }
-        .getOrElse(Map.empty)
-      HttpUri(scheme, host, port, path, queryParams, None)
+  def fromURI(uri: URI): HttpUri = {
+    val scheme = Option(uri.getScheme()).map {
+      case "https" => HttpUriScheme.Https
+      case _       => HttpUriScheme.Http
     }
+    val host = Option(uri.getHost())
+    val port = Option(uri.getPort()).filter(_ >= 0)
+    val path = uri.getPath.split('/').filter(_.nonEmpty).toIndexedSeq
+    val queryParams: Map[String, Seq[String]] = Option(uri.getQuery())
+      .map { query =>
+        query
+          .split("&")
+          .map { pair =>
+            pair.split("=") match {
+              case Array(k: String, v: String) => k -> Seq(v)
+              case Array(k: String)            => k -> Seq.empty[String]
+              // cases where you have q1=v1=v2 => q1 -> "v1=v2"
+              case v @ Array(k: String, _*) => k -> Seq(v.tail.mkString("="))
+            }
+          }
+          .groupBy(_._1)
+          .map { case (k, vs) => k -> vs.map(_._2).flatten.toSeq }
+      }
+      .getOrElse(Map.empty)
+    val origin = host.map(hn => {
+      HttpUriOrigin(
+        scheme = scheme,
+        authority = HttpUriAuthority(hn, port)
+      )
+    })
+    HttpUri(
+      origin = origin,
+      path = path,
+      queryParams = queryParams,
+      pathParams = None
+    )
   }
 
   /**
