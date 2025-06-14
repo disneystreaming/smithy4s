@@ -48,15 +48,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = HelloWorldServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class HelloWorldServiceGenTransformFunctorOps[F[_]](private val self: HelloWorldService[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldService[F]] = Transformation.of(self)
-  }
-  final implicit class HelloWorldServiceGenTransformBifunctorOps[F[_, _]](private val self: HelloWorldServiceGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class HelloWorldServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloWorldServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: HelloWorldServiceGen[F]): Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of(alg)
 }
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

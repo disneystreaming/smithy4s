@@ -63,15 +63,7 @@ object ObjectCollisionGen extends Service.Mixin[ObjectCollisionGen, ObjectCollis
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = ObjectCollisionOperation.toPolyFunction(impl)
 
 
-  final implicit class ObjectCollisionGenTransformFunctorOps[F[_]](private val self: ObjectCollision[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollision[F]] = Transformation.of(self)
-  }
-  final implicit class ObjectCollisionGenTransformBifunctorOps[F[_, _]](private val self: ObjectCollisionGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class ObjectCollisionGenTransformOps[F[_, _, _, _, _]](private val self: ObjectCollisionGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: ObjectCollisionGen[F]): Transformation.PartiallyApplied[ObjectCollisionGen[F]] = Transformation.of(alg)
 }
 
 sealed trait ObjectCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

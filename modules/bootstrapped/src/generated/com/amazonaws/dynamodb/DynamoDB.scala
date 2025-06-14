@@ -91,15 +91,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   type ListTablesError = DynamoDBOperation.ListTablesError
   val ListTablesError = DynamoDBOperation.ListTablesError
 
-  final implicit class DynamoDBGenTransformFunctorOps[F[_]](private val self: DynamoDB[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DynamoDB[F]] = Transformation.of(self)
-  }
-  final implicit class DynamoDBGenTransformBifunctorOps[F[_, _]](private val self: DynamoDBGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DynamoDBGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class DynamoDBGenTransformOps[F[_, _, _, _, _]](private val self: DynamoDBGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: DynamoDBGen[F]): Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of(alg)
 }
 
 sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

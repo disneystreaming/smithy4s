@@ -51,15 +51,7 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
   type ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
   val ErrorHandlingOperationError = ErrorHandlingServiceOperation.ErrorHandlingOperationError
 
-  final implicit class ErrorHandlingServiceGenTransformFunctorOps[F[_]](private val self: ErrorHandlingService[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingService[F]] = Transformation.of(self)
-  }
-  final implicit class ErrorHandlingServiceGenTransformBifunctorOps[F[_, _]](private val self: ErrorHandlingServiceGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class ErrorHandlingServiceGenTransformOps[F[_, _, _, _, _]](private val self: ErrorHandlingServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: ErrorHandlingServiceGen[F]): Transformation.PartiallyApplied[ErrorHandlingServiceGen[F]] = Transformation.of(alg)
 }
 
 sealed trait ErrorHandlingServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

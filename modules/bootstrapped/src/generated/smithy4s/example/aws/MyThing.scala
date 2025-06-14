@@ -43,15 +43,7 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   def toPolyFunction[P[_, _, _, _, _]](impl: MyThingGen[P]): PolyFunction5[MyThingOperation, P] = MyThingOperation.toPolyFunction(impl)
 
 
-  final implicit class MyThingGenTransformFunctorOps[F[_]](private val self: MyThing[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[MyThing[F]] = Transformation.of(self)
-  }
-  final implicit class MyThingGenTransformBifunctorOps[F[_, _]](private val self: MyThingGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[MyThingGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class MyThingGenTransformOps[F[_, _, _, _, _]](private val self: MyThingGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: MyThingGen[F]): Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of(alg)
 }
 
 sealed trait MyThingOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

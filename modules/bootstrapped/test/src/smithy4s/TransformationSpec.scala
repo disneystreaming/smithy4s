@@ -30,7 +30,7 @@ class TransformationSpec() extends FunSuite {
     case object Empty extends Throwable
 
 //     Not ascribing the type to verify type inference in the following statement.
-    val transformed = stub.transform(new PolyFunction[Option, Try] {
+    val transformed = WeatherGen.transform(stub)(new PolyFunction[Option, Try] {
       def apply[A](fa: Option[A]): Try[A] = fa match {
         case Some(value) => scala.util.Success(value)
         case None        => scala.util.Failure(Empty)
@@ -63,7 +63,7 @@ class TransformationSpec() extends FunSuite {
       }
 
     val kvStoreEither: KVStore.ErrorAware[Either] =
-      kvStoreTry.transform(toEither)
+      KVStoreGen.transform(kvStoreTry)(toEither)
 
     expect.same(
       kvStoreEither.get("foo"): Either[KVStore.GetError, Value],
@@ -98,7 +98,7 @@ class TransformationSpec() extends FunSuite {
         }
       }
 
-    val kvStoreTry: KVStore[Try] = kvStoreEither.transform(toTry)
+    val kvStoreTry: KVStore[Try] = KVStoreGen.transform(kvStoreEither)(toTry)
 
     expect.same(
       kvStoreTry.get("foo"): Try[Value],

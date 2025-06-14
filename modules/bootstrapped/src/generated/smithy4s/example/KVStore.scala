@@ -60,15 +60,7 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
 
-  final implicit class KVStoreGenTransformFunctorOps[F[_]](private val self: KVStore[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[KVStore[F]] = Transformation.of(self)
-  }
-  final implicit class KVStoreGenTransformBifunctorOps[F[_, _]](private val self: KVStoreGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[KVStoreGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class KVStoreGenTransformOps[F[_, _, _, _, _]](private val self: KVStoreGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: KVStoreGen[F]): Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(alg)
 }
 
 sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

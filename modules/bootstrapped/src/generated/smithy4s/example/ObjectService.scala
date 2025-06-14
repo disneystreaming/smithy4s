@@ -65,15 +65,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   type GetObjectError = ObjectServiceOperation.GetObjectError
   val GetObjectError = ObjectServiceOperation.GetObjectError
 
-  final implicit class ObjectServiceGenTransformFunctorOps[F[_]](private val self: ObjectService[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectService[F]] = Transformation.of(self)
-  }
-  final implicit class ObjectServiceGenTransformBifunctorOps[F[_, _]](private val self: ObjectServiceGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectServiceGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class ObjectServiceGenTransformOps[F[_, _, _, _, _]](private val self: ObjectServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: ObjectServiceGen[F]): Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of(alg)
 }
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

@@ -51,15 +51,7 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = ServiceWithNullsAndDefaultsOperation.toPolyFunction(impl)
 
 
-  final implicit class ServiceWithNullsAndDefaultsGenTransformFunctorOps[F[_]](private val self: ServiceWithNullsAndDefaults[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaults[F]] = Transformation.of(self)
-  }
-  final implicit class ServiceWithNullsAndDefaultsGenTransformBifunctorOps[F[_, _]](private val self: ServiceWithNullsAndDefaultsGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class ServiceWithNullsAndDefaultsGenTransformOps[F[_, _, _, _, _]](private val self: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: ServiceWithNullsAndDefaultsGen[F]): Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of(alg)
 }
 
 sealed trait ServiceWithNullsAndDefaultsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

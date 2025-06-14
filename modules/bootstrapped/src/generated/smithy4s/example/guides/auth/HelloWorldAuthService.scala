@@ -59,15 +59,7 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   type HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
   val HealthCheckError = HelloWorldAuthServiceOperation.HealthCheckError
 
-  final implicit class HelloWorldAuthServiceGenTransformFunctorOps[F[_]](private val self: HelloWorldAuthService[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldAuthService[F]] = Transformation.of(self)
-  }
-  final implicit class HelloWorldAuthServiceGenTransformBifunctorOps[F[_, _]](private val self: HelloWorldAuthServiceGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class HelloWorldAuthServiceGenTransformOps[F[_, _, _, _, _]](private val self: HelloWorldAuthServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: HelloWorldAuthServiceGen[F]): Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of(alg)
 }
 
 sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

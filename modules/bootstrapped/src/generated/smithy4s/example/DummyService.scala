@@ -57,15 +57,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: DummyServiceGen[P]): PolyFunction5[DummyServiceOperation, P] = DummyServiceOperation.toPolyFunction(impl)
 
 
-  final implicit class DummyServiceGenTransformFunctorOps[F[_]](private val self: DummyService[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DummyService[F]] = Transformation.of(self)
-  }
-  final implicit class DummyServiceGenTransformBifunctorOps[F[_, _]](private val self: DummyServiceGen.ErrorAware[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DummyServiceGen.ErrorAware[F]] = Transformation.of(self)
-  }
-  final implicit class DummyServiceGenTransformOps[F[_, _, _, _, _]](private val self: DummyServiceGen[F]) extends AnyVal {
-    final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of(self)
-  }
+  final def transform[F[_, _, _, _, _]](alg: DummyServiceGen[F]): Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of(alg)
 }
 
 sealed trait DummyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
