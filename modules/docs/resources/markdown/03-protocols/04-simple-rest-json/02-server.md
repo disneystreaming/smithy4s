@@ -63,10 +63,10 @@ myRoutes.mapErrors{
 }.resource
 ```
 
-An addition there is a `flatTapErrors` method available to allow one access to non smithy defined errors, without transforming the error type.
+An addition there is a `onError` method available to allow one to install a routine to run upon all errors that occur along the path ,whether defined in Smithy or not . This will also run on errors that hav e been raised in middleware.
 
 ```scala
-myRoutes.flatTapErrors{
+myRoutes.onError{
   case e:PayloadError => IO.println(s"unhandled error logged ${e.getMessage}")
 }.resource
 ```
