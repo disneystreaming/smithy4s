@@ -60,6 +60,7 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
+      PartialFunction.empty,
       Endpoint.Middleware.noop,
       encodeErrorsBeforeMiddleware = false
     )
@@ -78,6 +79,7 @@ abstract class SimpleProtocolBuilder[P](
       new RouterBuilder[Alg, F](
         service,
         impl,
+        PartialFunction.empty,
         PartialFunction.empty,
         Endpoint.Middleware.noop,
         encodeErrorsBeforeMiddleware = false
@@ -133,6 +135,7 @@ abstract class SimpleProtocolBuilder[P](
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      onError: PartialFunction[Throwable, F[Unit]] = PartialFunction.empty,
       middleware: ServerEndpointMiddleware[F],
       encodeErrorsBeforeMiddleware: Boolean
   )(implicit
@@ -184,18 +187,14 @@ abstract class SimpleProtocolBuilder[P](
       copy(errorTransformation = fe)
 
     /**
-     * provides a way to run an side effect for errors that are not in the smithy spec (has no effect on errors from spec).
-     * i.e log errors or send them to a monitoring service.
+     * Registers a handler for ALL errors including those defined in the Smithy spec.
      * 
-    * */
+    **/
 
-    def flatTapErrors(
+    def onError(
         fe: PartialFunction[Throwable, F[Unit]]
     ): RouterBuilder[Alg, F] = {
-      copy(errorTransformation = {
-        case t if (fe.isDefinedAt(t)) =>
-          fe(t) *> t.pure[F]
-      })
+      copy(onError = fe)
     }
 
     def middleware(
@@ -225,8 +224,14 @@ abstract class SimpleProtocolBuilder[P](
         .map { _ =>
           val errorHandler =
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+          // This middleware needs to only run once and should be the last one to run
+          val onErrorMiddleware = ServerEndpointMiddleware.onError(onError)
           val finalMiddleware =
-            errorHandler.andThen(middleware).andThen(errorHandler)
+            errorHandler
+              .andThen(middleware)
+              .andThen(errorHandler)
+              .andThen(onErrorMiddleware)
+
           val router =
             HttpUnaryServerRouter(service, encodeErrorsBeforeMiddleware)(
               impl,
@@ -252,6 +257,7 @@ abstract class SimpleProtocolBuilder[P](
         impl: FunctorAlgebra[Alg, F] = impl,
         errorTransformation: PartialFunction[Throwable, F[Throwable]] =
           errorTransformation,
+        onError: PartialFunction[Throwable, F[Unit]] = onError,
         middleware: ServerEndpointMiddleware[F] = middleware,
         encodeErrorsBeforeMiddleware: Boolean = encodeErrorsBeforeMiddleware
     ): RouterBuilder[Alg, F] =
@@ -259,6 +265,7 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         errorTransformation,
+        onError,
         middleware,
         encodeErrorsBeforeMiddleware
       )

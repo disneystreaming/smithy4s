@@ -63,6 +63,14 @@ myRoutes.mapErrors{
 }.resource
 ```
 
+An addition there is a `flatTapErrors` method available to allow one access to non smithy defined errors, without transforming the error type.
+
+```scala
+myRoutes.flatTapErrors{
+  case e:PayloadError => IO.println(s"unhandled error logged ${e.getMessage}")
+}.resource
+```
+
 ## Wiring the routes
 
 As a reminder, to wire those routes into a server, you need something like:

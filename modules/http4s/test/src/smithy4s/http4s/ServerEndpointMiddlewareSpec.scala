@@ -40,16 +40,19 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
       extends RuntimeException(
         "Expected to recover via flatmapError or mapError"
       )
-
-  test("server - middleware can throw and mapped / flatmapped") {
-    val middleware = new ServerEndpointMiddleware.Simple[IO]() {
-      def prepareWithHints(
-          serviceHints: Hints,
-          endpointHints: Hints
-      ): HttpApp[IO] => HttpApp[IO] = { inputApp =>
-        HttpApp[IO] { _ => IO.raiseError(new MiddlewareException) }
-      }
+  val middleware = new ServerEndpointMiddleware.Simple[IO]() {
+    def prepareWithHints(
+        serviceHints: Hints,
+        endpointHints: Hints
+    ): HttpApp[IO] => HttpApp[IO] = { inputApp =>
+      HttpApp[IO] { _ => IO.raiseError(new MiddlewareException) }
     }
+  }
+
+  test(
+    "server - middleware can throw and mapped / flatmapped"
+  ) {
+
     def runOnService(service: HttpRoutes[IO]): IO[Expectations] =
       service(Request[IO](Method.POST, Uri.unsafeFromString("/bob")))
         .flatMap(res => OptionT.pure(expect.eql(res.status.code, 599)))
@@ -81,30 +84,33 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
     )
     List(throwCheck, pureCheck).combineAll
   }
-  test("flatTap bypasses errors defined in Smithy  runs side effect ") {
+  test("onError routine is installed for smithy defined errors") {
     for {
       ref <- Ref.of[IO, Option[String]](None)
 
       tap: PartialFunction[Throwable, IO[Unit]] = { case e =>
-        IO.println("failing ... ") *> ref.set(Some(e.getMessage))
+        ref.set(Some(e.getMessage))
       }
 
       routes = SimpleRestJsonBuilder
         .routes(FailingHelloImpl)
-        .flatTapErrors(tap)
+        .onError(tap)
         .make
         .toOption
         .get
 
       req = Request[IO](Method.POST, uri"/boom")
-      _ <- routes.run(req).value.attempt
+      res <- routes.run(req).value.attempt
 
       sideEffect <- ref.get
 
-    } yield expect(sideEffect.isEmpty)
+    } yield expect(
+      res.isRight &&
+        sideEffect.contains("to be encoded before middleware is applied")
+    )
 
   }
-  test("flatTap hanbdles errors not defined in Smithy ") {
+  test("onError routine is installed for NON smithy defined errors") {
     for {
       ref <- Ref.of[IO, Option[String]](None)
 
@@ -114,7 +120,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
       routes = SimpleRestJsonBuilder
         .routes(new FailingHelloImpl(new RuntimeException("to be tapped")))
-        .flatTapErrors(tap)
+        .onError(tap)
         .make
         .toOption
         .get
@@ -129,7 +135,35 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
     )
 
   }
+  test("onError routine has access to middleware created errors too ") {
 
+    for {
+      ref <- Ref.of[IO, Option[String]](None)
+
+      tap: PartialFunction[Throwable, IO[Unit]] = { case e =>
+        ref.set(Some(e.getMessage))
+      }
+      routes = SimpleRestJsonBuilder
+        .routes(HelloImpl)
+        .middleware(middleware)
+        .onError(tap)
+        .flatMapErrors { case _: MiddlewareException =>
+          IO.pure(SpecificServerError(Some("test")))
+
+        }
+        .make
+        .toOption
+        .get
+
+      req = Request[IO](Method.POST, uri"/bob")
+      res <- routes.run(req).value.attempt
+
+      sideEffect <- ref.get
+
+    } yield expect(
+      res.isRight && sideEffect.contains("test")
+    )
+  }
   test("server - middleware can catch spec error") {
     val catchSpecErrorMiddleware = new ServerEndpointMiddleware.Simple[IO]() {
       def prepareWithHints(
