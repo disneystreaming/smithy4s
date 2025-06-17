@@ -67,7 +67,7 @@ An addition there is an `onError` method that installs a routine to run upon all
 
 ```scala
 myRoutes.onError{
-  case e:PayloadError => IO.println(s"unhandled error logged ${e.getMessage}")
+  case e: PayloadError => IO.println(s"unhandled error logged ${e.getMessage}")
 }.resource
 ```
 
