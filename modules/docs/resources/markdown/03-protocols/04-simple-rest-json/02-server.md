@@ -63,7 +63,7 @@ myRoutes.mapErrors{
 }.resource
 ```
 
-An addition there is an `onError` method that installs a routine to run upon all errors that occur along the path, whether defined in Smithy or not. This will also run on errors that have been raised in middleware.
+Additionally, there is an `onError` method that installs a routine to run upon all errors that occur along the path, whether defined in Smithy or not. This will also run on errors that have been raised in smithy4s middleware.
 
 ```scala
 myRoutes.onError{
