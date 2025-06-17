@@ -27,6 +27,8 @@ import org.http4s.HttpApp
 import org.http4s.Uri
 import org.http4s._
 import org.http4s.client.Client
+import cats.effect.Ref
+import org.http4s.syntax.literals._
 import smithy4s.example.hello._
 import weaver._
 
@@ -79,6 +81,54 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
     )
     List(throwCheck, pureCheck).combineAll
   }
+  test("flatTap bypasses errors defined in Smithy  runs side effect ") {
+    for {
+      ref <- Ref.of[IO, Option[String]](None)
+
+      tap: PartialFunction[Throwable, IO[Unit]] = { case e =>
+        IO.println("failing ... ") *> ref.set(Some(e.getMessage))
+      }
+
+      routes = SimpleRestJsonBuilder
+        .routes(FailingHelloImpl)
+        .flatTapErrors(tap)
+        .make
+        .toOption
+        .get
+
+      req = Request[IO](Method.POST, uri"/boom")
+      _ <- routes.run(req).value.attempt
+
+      sideEffect <- ref.get
+
+    } yield expect(sideEffect.isEmpty)
+
+  }
+  test("flatTap hanbdles errors not defined in Smithy ") {
+    for {
+      ref <- Ref.of[IO, Option[String]](None)
+
+      tap: PartialFunction[Throwable, IO[Unit]] = { case e =>
+        ref.set(Some(e.getMessage))
+      }
+
+      routes = SimpleRestJsonBuilder
+        .routes(new FailingHelloImpl(new RuntimeException("to be tapped")))
+        .flatTapErrors(tap)
+        .make
+        .toOption
+        .get
+
+      req = Request[IO](Method.POST, uri"/bob")
+      res <- routes.run(req).value.attempt
+
+      sideEffect <- ref.get
+
+    } yield expect(
+      res.isLeft && sideEffect.contains("to be tapped")
+    )
+
+  }
 
   test("server - middleware can catch spec error") {
     val catchSpecErrorMiddleware = new ServerEndpointMiddleware.Simple[IO]() {
@@ -95,12 +145,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
     }
 
     SimpleRestJsonBuilder
-      .routes(new HelloWorldService[IO] {
-        def hello(name: String, town: Option[String]): IO[Greeting] =
-          IO.raiseError(
-            SpecificServerError(Some("to be caught in middleware"))
-          )
-      })
+      .routes(FailingHelloImpl)
       .middleware(catchSpecErrorMiddleware)
       .make
       .toOption
@@ -130,14 +175,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
     SimpleRestJsonBuilder
       .routes(
-        new HelloWorldService[IO] {
-          def hello(name: String, town: Option[String]): IO[Greeting] =
-            IO.raiseError(
-              SpecificServerError(
-                Some("to be encoded before middleware is applied")
-              )
-            )
-        }
+        FailingHelloImpl
       )
       .encodeErrorsBeforeMiddleware(true)
       .middleware(middleware)
@@ -244,6 +282,18 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
     expect(client)
   }
+
+  private class FailingHelloImpl(throwable: Throwable)
+      extends HelloWorldService[IO] {
+    def hello(name: String, town: Option[String]): IO[Greeting] =
+      throwable.raiseError[IO, Greeting]
+  }
+  private object FailingHelloImpl
+      extends FailingHelloImpl(
+        SpecificServerError(
+          Some("to be encoded before middleware is applied")
+        )
+      )
 
   private object HelloImpl extends HelloWorldService[IO] {
     def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure(

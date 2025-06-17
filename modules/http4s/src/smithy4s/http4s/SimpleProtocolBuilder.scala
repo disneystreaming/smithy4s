@@ -183,6 +183,21 @@ abstract class SimpleProtocolBuilder[P](
     ): RouterBuilder[Alg, F] =
       copy(errorTransformation = fe)
 
+    /**
+     * provides a way to run an side effect for errors that are not in the smithy spec (has no effect on errors from spec).
+     * i.e log errors or send them to a monitoring service.
+     * 
+    * */
+
+    def flatTapErrors(
+        fe: PartialFunction[Throwable, F[Unit]]
+    ): RouterBuilder[Alg, F] = {
+      copy(errorTransformation = {
+        case t if (fe.isDefinedAt(t)) =>
+          fe(t) *> t.pure[F]
+      })
+    }
+
     def middleware(
         mid: ServerEndpointMiddleware[F]
     ): RouterBuilder[Alg, F] =
