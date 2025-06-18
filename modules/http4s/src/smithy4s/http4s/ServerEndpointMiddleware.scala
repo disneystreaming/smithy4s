@@ -52,15 +52,4 @@ object ServerEndpointMiddleware {
         )
       }
     }
-
-  def onError[F[_]: MonadThrow](
-      handler: PartialFunction[Throwable, F[Unit]]
-  ): ServerEndpointMiddleware[F] =
-    new ServerEndpointMiddleware[F] {
-      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-          endpoint: Endpoint[service.Operation, _, _, _, _, _]
-      ): HttpApp[F] => HttpApp[F] = http => {
-        Kleisli(req => http(req).onError(handler))
-      }
-    }
 }

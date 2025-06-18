@@ -225,12 +225,10 @@ abstract class SimpleProtocolBuilder[P](
           val errorHandler =
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
           // This middleware needs to only run once and should be the last one to run
-          val onErrorMiddleware = ServerEndpointMiddleware.onError(onError)
           val finalMiddleware =
             errorHandler
               .andThen(middleware)
               .andThen(errorHandler)
-              .andThen(onErrorMiddleware)
 
           val router =
             HttpUnaryServerRouter(service, encodeErrorsBeforeMiddleware)(
@@ -242,7 +240,8 @@ abstract class SimpleProtocolBuilder[P](
               getUri =
                 (request: Request[F]) => toSmithy4sHttpUri(request.uri, None),
               addDecodedPathParams = (request: Request[F], pathParams) =>
-                request.withAttribute(pathParamsKey, pathParams)
+                request.withAttribute(pathParamsKey, pathParams),
+              onError
             )
           HttpRoutes(
             router.andThen(OptionT.fromOption(_).flatMap(OptionT.liftF(_)))
