@@ -55,8 +55,8 @@ trait Hints {
   final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
     Hints.Impl(
-      memberHintsMap = memberHintsMap.filter((_, h) => predicate(h)),
-      targetHintsMap = targetHintsMap.filter((_, h) => predicate(h))
+      memberHintsMap = memberHintsMap.filter { case (_, h) => predicate(h) },
+      targetHintsMap = targetHintsMap.filter { case (_, h) => predicate(h) }
     )
   final def filterNot(predicate: Hint => Boolean): Hints =
     filter(h => !predicate(h))
