@@ -55,11 +55,15 @@ trait Hints {
   final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
     Hints.Impl(
-      memberHintsMap = memberHintsMap.filter { case (_, h) => predicate(h) },
-      targetHintsMap = targetHintsMap.filter { case (_, h) => predicate(h) }
+      memberHintsMap = memberHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      },
+      targetHintsMap = targetHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      }
     )
   final def filterNot(predicate: Hint => Boolean): Hints =
-    filter(h => !predicate(h))
+    filter(hint => !predicate(hint))
 
   /**
     *  Concatenates two set of hints. The levels are concatenated independently.
@@ -180,8 +184,13 @@ object Hints {
         targetHintsMap = targetHintsMap ++ hints.toMap
       )
 
-    override def toString(): String =
-      s"Hints(${all.mkString(", ")})"
+    override def toString(): String = {
+      val memberStr =
+        memberHintsMap.map { case (k, v) => s"member:$k=$v" }.mkString(", ")
+      val targetStr =
+        targetHintsMap.map { case (k, v) => s"target:$k=$v" }.mkString(", ")
+      s"Hints(member=[$memberStr], target=[$targetStr])"
+    }
 
     override def equals(obj: Any): Boolean = obj match {
       case h: Hints =>
