@@ -291,19 +291,10 @@ lazy val core = projectMatrix
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy4s.http.HttpUnaryServerRouter#PartialFunctionRouter.this"
       ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.http.HttpUnaryServerRouter.partialFunction"
-      ),
       // Breaking bin-compat to walk back ambiguous methods introduced in
       // https://github.com/disneystreaming/smithy4s/pull/1669
       ProblemFilters.exclude[IncompatibleMethTypeProblem](
         "smithy4s.http.HttpUnaryServerRouter.partialFunction"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.http.HttpUnaryServerRouter.apply"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.server.UnaryServerEndpoint.apply"
       )
     )
   )

@@ -62,14 +62,17 @@ myRoutes.mapErrors{
   case e: PayloadError => MyClientError(...)
 }.resource
 ```
-
-Additionally, there is an `onError` method that installs a routine to run upon all errors that occur along the path, whether defined in Smithy or not. This will also run on errors that have been raised in smithy4s middleware.
+ #### Observing errors 
+You can also observe errors that are raised along the route, and log them or perform some other effect. For example, you can log errors like this:
 
 ```scala
 myRoutes.onError{
-  case e: PayloadError => IO.println(s"unhandled error logged ${e.getMessage}")
+  case e: PayloadError => 
+    IO.println(s"payload error logged ${e.getMessage}")
 }.resource
 ```
+onError takes a partial function that matches the errors you want to observe, and returns an `IO[Unit]` that will be executed when the error occurs.
+
 
 ## Wiring the routes
 
