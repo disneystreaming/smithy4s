@@ -34,8 +34,8 @@ trait Hints {
   def isEmpty: Boolean
   def all: Iterable[Hints.Binding]
 
-  def memberHintsMap: Map[ShapeId, Hints.Binding]
-  def targetHintsMap: Map[ShapeId, Hints.Binding]
+  def memberHintsMap: Map[ShapeId, Hints.Binding] = memberHintsMap
+  def targetHintsMap: Map[ShapeId, Hints.Binding] = targetHintsMap
 
   /**
     * Returns a map of hints from both level, the member-level having priority
@@ -178,7 +178,9 @@ object Hints {
       s"Hints(${all.mkString(", ")})"
 
     override def equals(obj: Any): Boolean = obj match {
-      case h: Hints => toMap == h.toMap
+      case h: Hints => 
+        this.memberHintsMap == h.memberHintsMap &&
+        this.targetHintsMap == h.targetHintsMap
       case _        => false
     }
 
