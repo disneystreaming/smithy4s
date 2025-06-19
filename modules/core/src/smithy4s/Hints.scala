@@ -36,7 +36,7 @@ trait Hints {
 
   def memberHintsMap: Map[ShapeId, Hints.Binding]
   def targetHintsMap: Map[ShapeId, Hints.Binding]
-  
+
   def toMemberMap: Map[ShapeId, Hints.Binding] = memberHintsMap
   def toTargetMap: Map[ShapeId, Hints.Binding] = targetHintsMap
 
@@ -54,9 +54,12 @@ trait Hints {
   )
   final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
-    Hints.fromSeq(all.filter(predicate).toSeq)
+    Hints.Impl(
+      memberHintsMap = memberHintsMap.filter((_, h) => predicate(h)),
+      targetHintsMap = targetHintsMap.filter((_, h) => predicate(h))
+    )
   final def filterNot(predicate: Hint => Boolean): Hints =
-    filter(hint => !predicate(hint))
+    filter(h => !predicate(h))
 
   /**
     *  Concatenates two set of hints. The levels are concatenated independently.
@@ -181,10 +184,10 @@ object Hints {
       s"Hints(${all.mkString(", ")})"
 
     override def equals(obj: Any): Boolean = obj match {
-      case h: Hints => 
+      case h: Hints =>
         this.memberHintsMap == h.memberHintsMap &&
-        this.targetHintsMap == h.targetHintsMap
-      case _        => false
+          this.targetHintsMap == h.targetHintsMap
+      case _ => false
     }
 
     override def hashCode(): Int = toMap.hashCode()
