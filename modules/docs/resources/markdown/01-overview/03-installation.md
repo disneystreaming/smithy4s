@@ -66,6 +66,16 @@ object example extends ScalaModule with Smithy4sModule {
 }
 ```
 
+:::warning
+
+For mill 0.12.x it is necessary to force manually correct mill binary version for the plugin[^1].
+
+:::
+
+```scala
+import $ivy`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin_mill0.12:@VERSION@`
+```
+
 By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` tasks.
 
 For example, here we'll read Smithy files from `smithy_input` and write to `smithy_output`.
@@ -89,3 +99,5 @@ object example extends ScalaModule with Smithy4sModule {
   }
 }
 ```
+
+[^1]: https://github.com/com-lihaoyi/mill/issues/4390
