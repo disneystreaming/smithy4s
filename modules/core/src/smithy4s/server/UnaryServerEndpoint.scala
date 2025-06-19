@@ -39,6 +39,24 @@ object UnaryServerEndpoint {
       onError = PartialFunction.empty
     )
   }
+  def apply[F[_], Op[_, _, _, _, _], Request, Response, I, E, O, SI, SO](
+      interpreter: FunctorInterpreter[Op, F],
+      endpoint: Endpoint[Op, I, E, O, SI, SO],
+      codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
+      middleware: (Request => F[Response]) => (Request => F[Response]),
+      encodeErrorsBeforeMiddleware: Boolean
+  )(implicit
+      F: MonadThrowLike[F]
+  ): Request => F[Response] = {
+    apply(
+      interpreter,
+      endpoint,
+      codecs,
+      middleware,
+      encodeErrorsBeforeMiddleware,
+      onError = PartialFunction.empty
+    )
+  }
 
   def apply[F[_], Op[_, _, _, _, _], Request, Response, I, E, O, SI, SO](
       interpreter: FunctorInterpreter[Op, F],
