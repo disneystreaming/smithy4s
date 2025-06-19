@@ -45,7 +45,8 @@ object HttpUnaryServerRouter {
       endpointMiddleware,
       getMethod,
       getUri,
-      addDecodedPathParams
+      addDecodedPathParams,
+      PartialFunction.empty
     )
   }
 
@@ -59,7 +60,7 @@ object HttpUnaryServerRouter {
       getMethod: Request => HttpMethod,
       getUri: Request => HttpUri,
       addDecodedPathParams: (Request, PathParams) => Request,
-      onError: PartialFunction[Throwable, F[Unit]] = PartialFunction.empty
+      onError: PartialFunction[Throwable, F[Unit]]
   )(implicit F: MonadThrowLike[F]): Request => Option[F[Response]] = {
     new KleisliRouter[Alg, service.Operation, F, Request, Response](
       service,

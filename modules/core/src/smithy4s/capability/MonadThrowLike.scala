@@ -24,7 +24,7 @@ trait MonadThrowLike[F[_]] extends Zipper[F] {
   def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A]
   def onError[A](fa: F[A])(f: PartialFunction[Throwable, F[Unit]]): F[A] = {
     handleErrorWith(fa) { throwable =>
-      f.andThen(_ => raiseError[A](throwable))
+      f.andThen(flatMap(_)(_ => raiseError[A](throwable)))
         .applyOrElse(throwable, (_: Throwable) => raiseError(throwable))
     }
   }

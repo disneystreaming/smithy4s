@@ -135,7 +135,9 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
     )
 
   }
-  test("onError routine has access to middleware created errors too ") {
+  test(
+    "onError routine does not have access to errors raised in Middleware"
+  ) {
 
     for {
       ref <- Ref.of[IO, Option[String]](None)
@@ -161,7 +163,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
       sideEffect <- ref.get
 
     } yield expect(
-      res.isRight && sideEffect.contains("test")
+      res.isRight && sideEffect.isEmpty
     )
   }
   test("server - middleware can catch spec error") {

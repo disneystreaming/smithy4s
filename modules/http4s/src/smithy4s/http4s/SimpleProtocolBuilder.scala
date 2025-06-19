@@ -135,7 +135,7 @@ abstract class SimpleProtocolBuilder[P](
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
-      onError: PartialFunction[Throwable, F[Unit]] = PartialFunction.empty,
+      onError: PartialFunction[Throwable, F[Unit]],
       middleware: ServerEndpointMiddleware[F],
       encodeErrorsBeforeMiddleware: Boolean
   )(implicit
