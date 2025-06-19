@@ -37,9 +37,6 @@ trait Hints {
   def memberHintsMap: Map[ShapeId, Hints.Binding]
   def targetHintsMap: Map[ShapeId, Hints.Binding]
 
-  def toMemberMap: Map[ShapeId, Hints.Binding] = memberHintsMap
-  def toTargetMap: Map[ShapeId, Hints.Binding] = targetHintsMap
-
   /**
     * Returns a map of hints from both level, the member-level having priority
     * over the target-level one.
