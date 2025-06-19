@@ -181,7 +181,8 @@ object Hints {
       )
 
     override def toString(): String =
-      s"Hints(${all.mkString(", ")})"
+      s"Hints(memberHints = ${memberHintsMap.values.mkString(", ")}, targetHints = ${targetHintsMap.values
+        .mkString(", ")})"
 
     override def equals(obj: Any): Boolean = obj match {
       case h: Hints =>
