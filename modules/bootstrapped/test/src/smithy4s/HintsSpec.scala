@@ -169,6 +169,30 @@ class HintsSpec() extends FunSuite {
     assertEquals(hints.get(Tags), Some(Tags(List("one", "two", "three"))))
   }
 
+  test("Hints#filter and toString handle static and dynamic bindings correctly") {
+    import Document.syntax._
+    val staticMemberHint = HttpHeader("X-Member")
+    val staticTargetHint = HttpLabel()
+    val dynamicMemberHint = Hints.dynamic("smithy.api#jsonName" -> "foo")
+    val dynamicTargetHint = Hints.dynamic("smithy.api#documentation" -> "doc")
+    val hints = Hints
+      .member(staticMemberHint)
+      .addMemberHints(dynamicMemberHint)
+      .addTargetHints(staticTargetHint)
+      .addTargetHints(dynamicTargetHint)
+
+    val expectedMemberStr = s"${HttpHeader.id} -> $staticMemberHint, ${JsonName.id} -> ${Document.obj(JsonName.id.show -> Document.DString("foo"))}"
+    val expectedTargetStr = s"${HttpLabel.id} -> $staticTargetHint, ${Documentation.id} -> ${Document.obj(Documentation.id.show -> Document.DString("doc"))}"
+    val expectedToString = s"Hints(member=[$expectedMemberStr], target=[$expectedTargetStr])"
+    expect.same(hints.toString, expectedToString)
+
+    val filtered = hints.filter(_ => true)
+    expect.same(filtered, hints)
+
+    expect.same(filtered.memberHints, Hints.member(staticMemberHint).addMemberHints(dynamicMemberHint))
+    expect.same(filtered.targetHints, Hints(staticTargetHint).addTargetHints(dynamicTargetHint))
+  }
+
   private def makeLazyHints(hints: => Hints): (Hints, () => Boolean) = {
     var evaled = false
 
