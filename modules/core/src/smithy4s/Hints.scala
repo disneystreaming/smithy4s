@@ -186,9 +186,9 @@ object Hints {
 
     override def toString(): String = {
       val memberStr =
-        memberHintsMap.map { case (k, v) => s"member:$k=$v" }.mkString(", ")
+        memberHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
       val targetStr =
-        targetHintsMap.map { case (k, v) => s"target:$k=$v" }.mkString(", ")
+        targetHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
       s"Hints(member=[$memberStr], target=[$targetStr])"
     }
 
