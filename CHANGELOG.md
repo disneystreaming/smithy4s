@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.38
+
+* core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
+
 # 0.18.37
 
 * json: Allow decoding nulls for optional fields in defaults (fixes [#1581](https://github.com/disneystreaming/smithy4s/issues/1581)) in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
