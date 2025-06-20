@@ -188,9 +188,7 @@ abstract class SimpleProtocolBuilder[P](
 
     /**
      * Registers a handler for ALL errors including those defined in the Smithy spec.
-     * 
-    **/
-
+     **/
     def onError(
         fe: PartialFunction[Throwable, F[Unit]]
     ): RouterBuilder[Alg, F] = {
