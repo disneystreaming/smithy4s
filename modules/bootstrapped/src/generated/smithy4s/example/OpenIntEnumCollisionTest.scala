@@ -39,6 +39,8 @@ object OpenIntEnumCollisionTest extends Enumeration[OpenIntEnumCollisionTest] wi
 
   val $unknown: Int => OpenIntEnumCollisionTest = $Unknown(_)
 
+  def fromStringOrUnknown(s: String): OpenIntEnumCollisionTest = fromString(s).getOrElse($unknown(s.toInt))
+
   val values: List[OpenIntEnumCollisionTest] = List(
     ONE,
     TWO,
