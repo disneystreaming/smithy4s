@@ -8,6 +8,7 @@ Thank you!
 # 0.18.38
 
 * core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
+* http4s: onError method added to the RouteBuilder in [#1755](https://github.com/disneystreaming/smithy4s/pull/1755)
 
 # 0.18.37
 
