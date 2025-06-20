@@ -170,7 +170,7 @@ class HintsSpec() extends FunSuite {
   }
 
   test(
-    "Hints#filter and toString handle static and dynamic bindings correctly"
+    "Hints#filter and toString handle member and target bindings correctly"
   ) {
     import Document.syntax._
     val staticMemberHint = HttpHeader("X-Member")
