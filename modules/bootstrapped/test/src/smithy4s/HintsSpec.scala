@@ -170,11 +170,11 @@ class HintsSpec() extends FunSuite {
   }
 
   test(
-    "Hints#filter and toString handle member and target bindings correctly"
+    "Hints#toString handles member and target bindings correctly"
   ) {
     import Document.syntax._
-    val hints = Hints
-      .member(HttpHeader("X-Member"))
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
       .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
       .addTargetHints(HttpLabel())
       .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
@@ -187,6 +187,25 @@ class HintsSpec() extends FunSuite {
       s"""Hints(member=[$memberHintsString], target=[$targetHintsString])"""
 
     expect.same(hints.toString, expectedToString)
+  }
+
+  test(
+    "Hints#filter handles member and target bindings correctly"
+  ) {
+    import Document.syntax._
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(JsonName("foo"))
+      .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
+
+    val filteredHints = hints.filter(_.keyId == JsonName.id)
+    val expectedHints = Hints.empty
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(JsonName("foo"))
+
+    expect.same(filteredHints.memberHints, expectedHints.memberHints)
+    expect.same(filteredHints.targetHints, expectedHints.targetHints)
   }
 
   test("Hints#filter preserves member and target hints for no-op filter") {
