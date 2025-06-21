@@ -35,7 +35,7 @@ object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Compan
 
   val $unknown: Int => OpenIntEnumTest = $Unknown(_)
 
-  def fromStringOrUnknown(s: String): OpenIntEnumTest = fromString(s).getOrElse($unknown(s.toInt))
+  def fromIntOrUnknown(i: Int): OpenIntEnumTest = fromOrdinal(i).getOrElse($unknown(i))
 
   val values: List[OpenIntEnumTest] = List(
     ONE,

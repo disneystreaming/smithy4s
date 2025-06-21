@@ -30,7 +30,7 @@ object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] 
 
   val $unknown: Int => OpenNums = $Unknown(_)
 
-  def fromStringOrUnknown(s: String): OpenNums = fromString(s).getOrElse($unknown(s.toInt))
+  def fromIntOrUnknown(i: Int): OpenNums = fromOrdinal(i).getOrElse($unknown(i))
 
   val values: List[OpenNums] = List(
     ONE,

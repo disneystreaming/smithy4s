@@ -1315,8 +1315,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             newline,
             line"val $$unknown: $paramType => $name = $$Unknown(_)",
             newline,
-            line"def fromStringOrUnknown(s: String): ${name.name} = fromString(s).getOrElse($$unknown(${if (isIntEnum) "s.toInt"
-            else "s"}))"
+            if (isIntEnum)
+              line"def fromIntOrUnknown(i: Int): ${name.name} = fromOrdinal(i).getOrElse($$unknown(i))"
+            else
+              line"def fromStringOrUnknown(s: String): ${name.name} = fromString(s).getOrElse($$unknown(s))"
           )
         } else Lines.empty,
         newline,
