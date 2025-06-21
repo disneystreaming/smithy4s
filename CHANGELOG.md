@@ -9,6 +9,7 @@ Thank you!
 
 * core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
 * http4s: onError method added to the RouteBuilder in [#1755](https://github.com/disneystreaming/smithy4s/pull/1755)
+* codegen: Add fromStringOrUnknown and fromIntOrUnknown methods to Open Enums (fixes [#1626](https://github.com/disneystreaming/smithy4s/issues/1626) in [#1759](https://github.com/disneystreaming/smithy4s/pull/1759))
 
 # 0.18.37
 
