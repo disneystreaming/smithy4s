@@ -1316,9 +1316,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"val $$unknown: $paramType => $name = $$Unknown(_)",
             newline,
             if (isIntEnum)
-              line"def fromIntOrUnknown(i: Int): ${name.name} = fromOrdinal(i).getOrElse($$unknown(i))"
+              line"def fromIntOrUnknown(i: Int): $name = fromOrdinal(i).getOrElse($$unknown(i))"
             else
-              line"def fromStringOrUnknown(s: String): ${name.name} = fromString(s).getOrElse($$unknown(s))"
+              line"def fromStringOrUnknown(s: String): $name = fromString(s).getOrElse($$unknown(s))"
           )
         } else Lines.empty,
         newline,
