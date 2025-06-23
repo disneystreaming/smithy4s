@@ -16,8 +16,8 @@ import smithy4s.schema.Schema.unit
 trait NameCollisionGen[F[_, _, _, _, _]] {
   self =>
 
-  def myOp(): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
   def endpoint(): F[Unit, Nothing, Unit, Nothing, Nothing]
+  def myOp(): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
@@ -37,8 +37,8 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   }
 
   val endpoints: Vector[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = Vector(
-    NameCollisionOperation.MyOp,
     NameCollisionOperation.Endpoint,
+    NameCollisionOperation.MyOp,
   )
 
   def input[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]): I = op.input
@@ -65,20 +65,32 @@ sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedO
 object NameCollisionOperation {
 
   object reified extends NameCollisionGen[NameCollisionOperation] {
-    def myOp(): MyOp = MyOp()
     def endpoint(): Endpoint = Endpoint()
+    def myOp(): MyOp = MyOp()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
-    def myOp(): P1[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp())
     def endpoint(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint())
+    def myOp(): P1[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {
     def apply[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
+  final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
+    def ordinal: Int = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
+  }
+  object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
+      .withInput(unit)
+      .withOutput(unit)
+    def wrap(input: Unit): Endpoint = Endpoint()
+  }
   final case class MyOp() extends NameCollisionOperation[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
-    def ordinal: Int = 0
+    def ordinal: Int = 1
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = MyOp
   }
@@ -140,18 +152,6 @@ object NameCollisionOperation {
     def unliftError(e: MyOpError): Throwable = e match {
       case MyOpError.MyOpErrorCase(e) => e
     }
-  }
-  final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
-    def ordinal: Int = 1
-    def input: Unit = ()
-    def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
-  }
-  object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
-    val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Endpoint"))
-      .withInput(unit)
-      .withOutput(unit)
-    def wrap(input: Unit): Endpoint = Endpoint()
   }
 }
 

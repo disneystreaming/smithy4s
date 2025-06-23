@@ -466,6 +466,8 @@ private[codegen] class SmithyToIR(
             .asScala
             .map(_.getId())
             .toList
+            // for stability
+            .sorted
 
         val operations = recursiveOperations(shape)
           .map(model.getShape(_).asScala)
