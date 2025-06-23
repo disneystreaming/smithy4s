@@ -518,7 +518,7 @@ abstract class PizzaSpec
           "staticKinds" -> "x"
         )
       )
-
+    } && {
       val (codeXD, _, bodyXD) = resXD
       expect.same(codeXD, 200) &&
       expect.same(
@@ -530,14 +530,14 @@ abstract class PizzaSpec
           "staticKinds" -> "x"
         )
       )
-
+    } && {
       val (codeZ, _, bodyZ) = resZ
       expect.same(codeZ, 200) &&
       expect.same(
         bodyZ,
         response("variants" -> "c", "kinds" -> "z", "staticKinds" -> "z")
       )
-
+    } && {
       val (codeY, _, bodyY) = resY
       expect.same(codeY, 200) &&
       expect.same(
@@ -549,14 +549,14 @@ abstract class PizzaSpec
           "staticKinds" -> "y"
         )
       )
-
+    } && {
       val (codeY0, _, _) = resY0
       expect.same(codeY0, 404)
-
+    } && {
       val (code, _, body) = resA
       expect.same(code, 200) &&
       expect.same(body, response("variants" -> "a", "staticVariants" -> "a"))
-
+    } && {
       val (codeB, _, bodyB) = resB
       expect.same(codeB, 200) &&
       expect.same(bodyB, response("variants" -> "b", "staticVariants" -> "b"))
