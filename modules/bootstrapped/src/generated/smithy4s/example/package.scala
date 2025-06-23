@@ -12,8 +12,6 @@ package object example {
   val PackedInputsService = PackedInputsServiceGen
   type StreamedObjects[F[_]] = smithy4s.kinds.FunctorAlgebra[StreamedObjectsGen, F]
   val StreamedObjects = StreamedObjectsGen
-  type CheckQueryService[F[_]] = smithy4s.kinds.FunctorAlgebra[CheckQueryServiceGen, F]
-  val CheckQueryService = CheckQueryServiceGen
   type PizzaAdminService[F[_]] = smithy4s.kinds.FunctorAlgebra[PizzaAdminServiceGen, F]
   val PizzaAdminService = PizzaAdminServiceGen
   type FooService[F[_]] = smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
