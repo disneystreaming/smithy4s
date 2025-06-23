@@ -3,50 +3,61 @@ $version: "2"
 namespace smithy4s.example
 
 service KVStore {
-  operations: [Get, Put, Delete],
-  errors: [UnauthorizedError]
+    operations: [
+        Get
+        Put
+        Delete
+    ]
+    errors: [
+        UnauthorizedError
+    ]
 }
 
 operation Put {
-  input: KeyValue
+    input: KeyValue
 }
 
 operation Get {
-  input: Key,
-  output: Value,
-  errors: [KeyNotFoundError]
+    input: Key
+    output: Value
+    errors: [
+        KeyNotFoundError
+    ]
 }
 
 operation Delete {
-  input: Key,
-  errors: [KeyNotFoundError]
+    input: Key
+    errors: [
+        KeyNotFoundError
+    ]
 }
 
 structure Key {
-  @required
-  key: String
+    @required
+    key: String
 }
 
 structure KeyValue {
-  @required
-  key: String,
-  @required
-  value: String
+    @required
+    key: String
+
+    @required
+    value: String
 }
 
 structure Value {
-  @required
-  value: String
+    @required
+    value: String
 }
 
 @error("client")
 structure UnauthorizedError {
-  @required
-  reason: String
+    @required
+    reason: String
 }
 
 @error("client")
 structure KeyNotFoundError {
-  @required
-  message: String
+    @required
+    message: String
 }

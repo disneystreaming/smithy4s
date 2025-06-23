@@ -6,7 +6,7 @@ use alloy#uuidFormat
 use aws.api#data
 
 structure Foo {
-  a: Integer
+    a: Integer
 }
 
 @data("tagging")
