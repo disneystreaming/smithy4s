@@ -34,7 +34,7 @@ object ProtocolBuilderSpec extends FunSuite {
       .client(fakeClient)
       .make
 
-    assert(result.isLeft)
+    expect(result.isLeft)
   }
 
   test(
@@ -44,7 +44,7 @@ object ProtocolBuilderSpec extends FunSuite {
       .client(fakeClient)
       .make
 
-    assert(result.isRight)
+    expect(result.isRight)
   }
 
 }

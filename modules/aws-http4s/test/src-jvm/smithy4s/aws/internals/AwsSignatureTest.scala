@@ -56,7 +56,7 @@ import software.amazon.awssdk.auth.signer.params.AwsS3V4SignerParams
 object AwsSignatureTest extends SimpleIOSuite with Checkers {
 
   override def checkConfig: CheckConfig =
-    super.checkConfig.copy(minimumSuccessful = 1000)
+    super.checkConfig.withMinimumSuccessful(1000)
 
   test("Signature has same behaviour as official AWS") { (_, log) =>
     forall(TestInput.gen) { input =>

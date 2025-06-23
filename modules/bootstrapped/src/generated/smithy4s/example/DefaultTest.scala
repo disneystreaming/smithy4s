@@ -47,7 +47,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
     timestamp.field[DefaultTest]("fourteen", _.fourteen).addHints(smithy.api.Default(smithy4s.Document.fromString("Thu, 01 Jan 1970 00:00:00 GMT")), smithy.api.TimestampFormat.HTTP_DATE.widen),
     timestamp.field[DefaultTest]("fifteen", _.fifteen).addHints(smithy.api.Default(smithy4s.Document.fromString("1970-01-01T00:00:00.00Z")), smithy.api.TimestampFormat.DATE_TIME.widen),
     byte.field[DefaultTest]("sixteen", _.sixteen).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
-    bytes.field[DefaultTest]("seventeen", _.seventeen).addHints(smithy.api.Default(smithy4s.Document.array())),
+    bytes.field[DefaultTest]("seventeen", _.seventeen).addHints(smithy.api.Default(smithy4s.Document.fromString(""))),
     boolean.field[DefaultTest]("eighteen", _.eighteen).addHints(smithy.api.Default(smithy4s.Document.fromBoolean(false))),
   )(make).withId(id).addHints(hints)
 }

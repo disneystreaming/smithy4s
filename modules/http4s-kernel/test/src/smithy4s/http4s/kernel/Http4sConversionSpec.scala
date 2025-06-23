@@ -64,28 +64,28 @@ object Http4sConversionSpec extends SimpleIOSuite {
   )
 
   pureTest("URI: http4s to smithy4s defaults to http") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Http,
       toSmithy4sHttpUri(uri"/").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps http scheme") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Http,
       toSmithy4sHttpUri(uri"http://localhost").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps https scheme") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Https,
       toSmithy4sHttpUri(uri"https://localhost").scheme
     )
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.http),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
@@ -96,7 +96,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.https),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
@@ -108,7 +108,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
 
   private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri) = {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
-      assert.eql(
+      expect.eql(
         output,
         fromSmithy4sHttpUri(toSmithy4sHttpUri(input))
       )

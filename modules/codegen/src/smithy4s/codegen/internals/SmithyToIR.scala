@@ -34,6 +34,7 @@ import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.knowledge.TopDownIndex
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
@@ -42,19 +43,18 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
-import scala.annotation.nowarn
-import scala.jdk.CollectionConverters._
-
-import Type.Alias
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.util.Locale
-import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
-import scala.util.Try
+import java.time.temporal.ChronoField
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import software.amazon.smithy.model.knowledge.TopDownIndex
+import scala.annotation.nowarn
+import scala.jdk.CollectionConverters._
+import scala.util.Try
+
+import Type.Alias
 
 private[codegen] object SmithyToIR {
 
@@ -140,6 +140,8 @@ private[codegen] class SmithyToIR(
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
+    // Only structure mixins should be generated
+    .filterNot { s => s.hasTrait(classOf[MixinTrait]) && !s.isStructureShape() }
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
@@ -859,7 +861,7 @@ private[codegen] class SmithyToIR(
         case ShapeType.SHORT       => Node.from(0: Short)
         case ShapeType.FLOAT       => Node.from(0.0f)
         case ShapeType.BOOLEAN     => Node.from(false)
-        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BLOB        => Node.from("")
         case ShapeType.BYTE        => Node.from(0)
         case ShapeType.TIMESTAMP =>
           shape

@@ -75,3 +75,8 @@ structure StructUsingMixinRequiredMember with [MixinRequiredMemberIntermediate] 
 structure MixinRequiredMemberDefaultAdded with [MixinRequiredMember] {
   $description = "different description"
 }
+
+@mixin
+union NonStructureMixin {
+  s: String
+}

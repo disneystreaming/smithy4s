@@ -1,5 +1,5 @@
 // format: off
-addSbtPlugin("ch.epfl.scala"        % "sbt-scalafix"                  % "0.14.2")
+addSbtPlugin("ch.epfl.scala"        % "sbt-scalafix"                  % "0.14.3")
 addSbtPlugin("org.scala-js"         % "sbt-scalajs"                   % "1.18.2")
 addSbtPlugin("com.github.sbt"       % "sbt-pgp"                       % "2.3.1")
 addSbtPlugin("com.github.sbt"       % "sbt-dynver"                    % "5.1.0")
@@ -14,7 +14,7 @@ addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.10.0"
 addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.17")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.1.0")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.4")
-addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.9")
+addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.10")
 addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.7")
 
 libraryDependencies ++= Seq(

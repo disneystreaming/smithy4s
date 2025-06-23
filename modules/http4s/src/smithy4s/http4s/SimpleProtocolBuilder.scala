@@ -60,6 +60,7 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
+      PartialFunction.empty,
       Endpoint.Middleware.noop,
       encodeErrorsBeforeMiddleware = false
     )
@@ -78,6 +79,7 @@ abstract class SimpleProtocolBuilder[P](
       new RouterBuilder[Alg, F](
         service,
         impl,
+        PartialFunction.empty,
         PartialFunction.empty,
         Endpoint.Middleware.noop,
         encodeErrorsBeforeMiddleware = false
@@ -133,6 +135,7 @@ abstract class SimpleProtocolBuilder[P](
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      onError: PartialFunction[Throwable, F[Unit]],
       middleware: ServerEndpointMiddleware[F],
       encodeErrorsBeforeMiddleware: Boolean
   )(implicit
@@ -183,6 +186,15 @@ abstract class SimpleProtocolBuilder[P](
     ): RouterBuilder[Alg, F] =
       copy(errorTransformation = fe)
 
+    /**
+     * Registers a handler for ALL errors including those defined in the Smithy spec.
+     **/
+    def onError(
+        fe: PartialFunction[Throwable, F[Unit]]
+    ): RouterBuilder[Alg, F] = {
+      copy(onError = fe)
+    }
+
     def middleware(
         mid: ServerEndpointMiddleware[F]
     ): RouterBuilder[Alg, F] =
@@ -212,8 +224,13 @@ abstract class SimpleProtocolBuilder[P](
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
           val finalMiddleware =
             errorHandler.andThen(middleware).andThen(errorHandler)
+
           val router =
-            HttpUnaryServerRouter(service, encodeErrorsBeforeMiddleware)(
+            HttpUnaryServerRouter(
+              service,
+              encodeErrorsBeforeMiddleware,
+              onError
+            )(
               impl,
               simpleProtocolCodecs.makeServerCodecs[F],
               finalMiddleware.biject(_.run)(HttpApp(_)),
@@ -237,6 +254,7 @@ abstract class SimpleProtocolBuilder[P](
         impl: FunctorAlgebra[Alg, F] = impl,
         errorTransformation: PartialFunction[Throwable, F[Throwable]] =
           errorTransformation,
+        onError: PartialFunction[Throwable, F[Unit]] = onError,
         middleware: ServerEndpointMiddleware[F] = middleware,
         encodeErrorsBeforeMiddleware: Boolean = encodeErrorsBeforeMiddleware
     ): RouterBuilder[Alg, F] =
@@ -244,6 +262,7 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         errorTransformation,
+        onError,
         middleware,
         encodeErrorsBeforeMiddleware
       )

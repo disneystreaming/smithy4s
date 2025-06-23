@@ -169,6 +169,85 @@ class HintsSpec() extends FunSuite {
     assertEquals(hints.get(Tags), Some(Tags(List("one", "two", "three"))))
   }
 
+  test(
+    "Hints#toString handles member and target bindings correctly"
+  ) {
+    import Document.syntax._
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(HttpLabel())
+      .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
+
+    val memberHintsString =
+      """smithy.api#httpHeader -> X-Member, smithy.api#jsonName -> {smithy.api#jsonName="foo"}"""
+    val targetHintsString =
+      """smithy.api#httpLabel -> HttpLabel(), smithy.api#documentation -> {smithy.api#documentation="doc"}"""
+    val expectedToString =
+      s"""Hints(member=[$memberHintsString], target=[$targetHintsString])"""
+
+    expect.same(hints.toString, expectedToString)
+  }
+
+  test(
+    "Hints#filter handles member and target bindings correctly"
+  ) {
+    import Document.syntax._
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(JsonName("foo"))
+      .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
+
+    val filteredHints = hints.filter(_.keyId == JsonName.id)
+    val expectedHints = Hints.empty
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(JsonName("foo"))
+
+    expect.same(filteredHints.memberHints, expectedHints.memberHints)
+    expect.same(filteredHints.targetHints, expectedHints.targetHints)
+  }
+
+  test("Hints#filter preserves member and target hints for no-op filter") {
+    import Document.syntax._
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(HttpLabel())
+      .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
+
+    val filtered = hints.filter(_ => true)
+    expect.same(filtered.memberHints, hints.memberHints)
+    expect.same(filtered.targetHints, hints.targetHints)
+    expect.same(filtered, hints)
+  }
+
+  test("Hints#filter returns empty hints when predicate is false") {
+    import Document.syntax._
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addMemberHints(Hints.dynamic("smithy.api#jsonName" -> "foo"))
+      .addTargetHints(HttpLabel())
+      .addTargetHints(Hints.dynamic("smithy.api#documentation" -> "doc"))
+
+    val filtered = hints.filter(_ => false)
+    expect.same(filtered, Hints.empty)
+  }
+
+  test("Hints#filter selects specific hints by keyId") {
+    val hints = Hints.empty
+      .addMemberHints(HttpHeader("X-Member"))
+      .addTargetHints(HttpLabel())
+
+    val filtered = hints.filter(_.keyId == HttpLabel.id)
+    expect.same(filtered, Hints(HttpLabel()))
+  }
+
+  test("Hints#filter on empty hints returns empty hints") {
+    val filtered = Hints.empty.filter(_ => true)
+    expect.same(filtered, Hints.empty)
+  }
+
   private def makeLazyHints(hints: => Hints): (Hints, () => Boolean) = {
     var evaled = false
 

@@ -37,17 +37,14 @@ final case class HttpUri(
       case HttpUriScheme.Http  => "http"
       case HttpUriScheme.Https => "https"
     }
-    val portStr = port.map(":" + _).getOrElse("")
+
     val pathStr = path.mkString("/", "/", "")
-    val queryStr =
-      if (queryParams.isEmpty) ""
-      else
-        "?" + queryParams
-          .map { case (k, v) =>
-            v.map(vv => s"$k=$vv").mkString("&")
-          }
-          .mkString("&")
-    new URI(s"$schemeStr://$host$portStr$pathStr$queryStr")
+    val queryStr = queryParams
+      .map { case (k, v) =>
+        v.map(vv => s"$k=$vv").mkString("&")
+      }
+      .mkString("&")
+    new URI(schemeStr, null, host, port.getOrElse(-1), pathStr, queryStr, null)
   }
 }
 

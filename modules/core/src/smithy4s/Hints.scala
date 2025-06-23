@@ -51,7 +51,14 @@ trait Hints {
   )
   final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
-    Hints.fromSeq(all.filter(predicate).toSeq)
+    Hints.Impl(
+      memberHintsMap = memberHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      },
+      targetHintsMap = targetHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      }
+    )
   final def filterNot(predicate: Hint => Boolean): Hints =
     filter(hint => !predicate(hint))
 
@@ -174,12 +181,19 @@ object Hints {
         targetHintsMap = targetHintsMap ++ hints.toMap
       )
 
-    override def toString(): String =
-      s"Hints(${all.mkString(", ")})"
+    override def toString(): String = {
+      val memberStr =
+        memberHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      val targetStr =
+        targetHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      s"Hints(member=[$memberStr], target=[$targetStr])"
+    }
 
     override def equals(obj: Any): Boolean = obj match {
-      case h: Hints => toMap == h.toMap
-      case _        => false
+      case h: Hints =>
+        this.memberHintsMap == h.memberHintsMap &&
+          this.targetHintsMap == h.targetHintsMap
+      case _ => false
     }
 
     override def hashCode(): Int = toMap.hashCode()

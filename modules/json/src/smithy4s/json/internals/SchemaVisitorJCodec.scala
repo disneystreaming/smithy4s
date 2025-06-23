@@ -40,6 +40,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.ListMap
 import smithy4s.schema.FieldFilter
+import smithy.api.Required
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
@@ -1402,15 +1403,44 @@ private[smithy4s] class SchemaVisitorJCodec(
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
-      field: Field[Z, A]
+      field: Field[Z, A],
+      // nullable A
+      default: Any
   ): Handler = {
     val codec = apply(field.schema)
     val label = field.label
+
+    val decodeFn: (Cursor, JCodec[A], JsonReader) => A = {
+      val allowExplicitNulls =
+        ! {
+          // required fields can't accept explicit nulls
+          field.hints.has(Required) ||
+          // if there was no default, we'd allow explicit nulls by virtue of having an OptionSchema
+          default == null ||
+          // nullables have separate handling in OptionSchema
+          field.hints.has(alloy.Nullable)
+        }
+
+      if (allowExplicitNulls)
+        (cursor, codec, in) =>
+          if (in.isNextToken('n')) {
+            in.readNullOrError(
+              default.asInstanceOf[A],
+              s"Expected null for field $label"
+            )
+          } else {
+            in.rollbackToken()
+            cursor.decode(codec, in)
+          }
+      else
+        _.decode(_, _)
+    }
+
     (cursor, in, mmap) =>
       val _ = mmap.put(
         label, {
           cursor.push(label)
-          val result = cursor.decode(codec, in)
+          val result = decodeFn(cursor, codec, in)
           cursor.pop()
           result
         }
@@ -1486,8 +1516,8 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       private[this] val handlers =
         new util.HashMap[String, Handler](knownFields.length << 1, 0.5f) {
-          knownFields.foreach { case (field, jLabel, _) =>
-            put(jLabel, fieldHandler(field))
+          knownFields.foreach { case (field, jLabel, default) =>
+            put(jLabel, fieldHandler(field, default))
           }
         }
 
@@ -1594,8 +1624,8 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       private[this] val handlers =
         new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
-          fields.foreach { case (field, jLabel, _) =>
-            put(jLabel, fieldHandler(field))
+          fields.foreach { case (field, jLabel, default) =>
+            put(jLabel, fieldHandler(field, default))
           }
         }
 
