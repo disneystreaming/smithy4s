@@ -18,13 +18,12 @@ trait PizzaCheckQueryServiceImpl {
       )
     )
 
-
   def checkQueryKindZ(inp: Map[String, List[String]]): IO[CheckQueryOutput] =
     output(inp, kind = Some("z"))
 
   def checkQueryKindYVariant(
       inp: Map[String, List[String]]
-  ): IO[CheckQueryOutput] = output(inp, kind = Some("y"), variant =Some(""))
+  ): IO[CheckQueryOutput] = output(inp, kind = Some("y"), variant = Some(""))
 
   def checkQueryKindXVariantC(
       inp: Map[String, List[String]]
