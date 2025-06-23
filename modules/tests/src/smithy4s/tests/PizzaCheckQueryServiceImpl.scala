@@ -40,4 +40,8 @@ trait PizzaCheckQueryServiceImpl {
   def checkQueryVariantB(
       inp: Map[String, List[String]]
   ): IO[CheckQueryOutput] = output(inp, variant = Some("b"))
+
+  def checkQueryKindZVariantA(
+      inp: Map[String, List[String]]
+  ): IO[CheckQueryOutput] = output(inp, variant = Some("a"), kind = Some("z"))
 }

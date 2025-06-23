@@ -550,7 +550,7 @@ abstract class PizzaSpec
         )
       )
 
-      val (codeY0, _, bodyY0) = resY0
+      val (codeY0, _, _) = resY0
       expect.same(codeY0, 404)
 
       val (code, _, body) = resA
@@ -561,6 +561,42 @@ abstract class PizzaSpec
       expect.same(codeB, 200) &&
       expect.same(bodyB, response("variants" -> "b", "staticVariants" -> "b"))
     }
+  }
+
+  routerTest("Respects Overlapping Static Query Parameters") {
+    (client, uri, log) =>
+      val quri = uri / "query-check"
+      def response(params: (String, String)*) = Json.fromFields(
+        params
+          .groupBy(_._1)
+          .map { case (k, is) =>
+            k -> Json.fromValues(is.map { case (_, v) => Json.fromString(v) })
+          }
+      )
+      for {
+        _ <- ignore(
+          """Test assumes having proper parameter priority implemented, 
+            | see https://github.com/disneystreaming/smithy4s/issues/1619, 
+            | https://github.com/disneystreaming/smithy4s/issues/1567""".stripMargin
+        ).void
+        resZA <- client.send[Json](
+          GET(quri.withQueryParams(Map("kind" -> "z", "variant" -> "a"))),
+          log
+        )
+
+      } yield {
+        val (codeZA, _, bodyZA) = resZA
+        expect.same(codeZA, 200) &&
+        expect.same(
+          bodyZA,
+          response(
+            "variants" -> "a",
+            "staticVariants" -> "a",
+            "kinds" -> "z",
+            "staticKinds" -> "z"
+          )
+        )
+      }
   }
 
   type Res = (Client[IO], Uri)

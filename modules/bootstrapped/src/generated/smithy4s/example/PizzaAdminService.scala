@@ -26,6 +26,7 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing]
   def version(): F[Unit, Nothing, VersionOutput, Nothing, Nothing]
   def checkQueryVariantA(inp: Map[String, List[String]] = Map()): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing]
+  def checkQueryKindZVariantA(inp: Map[String, List[String]] = Map()): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing]
   def reservation(name: String, town: Option[String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
   def getEnum(aa: TheEnum): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing]
   def checkQueryKindYVariant(inp: Map[String, List[String]] = Map()): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing]
@@ -67,6 +68,7 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     PizzaAdminServiceOperation.RoundTrip,
     PizzaAdminServiceOperation.Version,
     PizzaAdminServiceOperation.CheckQueryVariantA,
+    PizzaAdminServiceOperation.CheckQueryKindZVariantA,
     PizzaAdminServiceOperation.Reservation,
     PizzaAdminServiceOperation.GetEnum,
     PizzaAdminServiceOperation.CheckQueryKindYVariant,
@@ -123,6 +125,7 @@ object PizzaAdminServiceOperation {
     def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): RoundTrip = RoundTrip(RoundTripData(label, header, query, body))
     def version(): Version = Version()
     def checkQueryVariantA(inp: Map[String, List[String]] = Map()): CheckQueryVariantA = CheckQueryVariantA(CheckQueryInput(inp))
+    def checkQueryKindZVariantA(inp: Map[String, List[String]] = Map()): CheckQueryKindZVariantA = CheckQueryKindZVariantA(CheckQueryInput(inp))
     def reservation(name: String, town: Option[String] = None): Reservation = Reservation(ReservationInput(name, town))
     def getEnum(aa: TheEnum): GetEnum = GetEnum(GetEnumInput(aa))
     def checkQueryKindYVariant(inp: Map[String, List[String]] = Map()): CheckQueryKindYVariant = CheckQueryKindYVariant(CheckQueryInput(inp))
@@ -145,6 +148,7 @@ object PizzaAdminServiceOperation {
     def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): P1[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = f[RoundTripData, Nothing, RoundTripData, Nothing, Nothing](alg.roundTrip(label, header, query, body))
     def version(): P1[Unit, Nothing, VersionOutput, Nothing, Nothing] = f[Unit, Nothing, VersionOutput, Nothing, Nothing](alg.version())
     def checkQueryVariantA(inp: Map[String, List[String]] = Map()): P1[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = f[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing](alg.checkQueryVariantA(inp))
+    def checkQueryKindZVariantA(inp: Map[String, List[String]] = Map()): P1[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = f[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing](alg.checkQueryKindZVariantA(inp))
     def reservation(name: String, town: Option[String] = None): P1[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
     def getEnum(aa: TheEnum): P1[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = f[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing](alg.getEnum(aa))
     def checkQueryKindYVariant(inp: Map[String, List[String]] = Map()): P1[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = f[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing](alg.checkQueryKindYVariant(inp))
@@ -377,9 +381,21 @@ object PizzaAdminServiceOperation {
       .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/query-check?variant=a"), code = 200), smithy.api.Readonly())
     def wrap(input: CheckQueryInput): CheckQueryVariantA = CheckQueryVariantA(input)
   }
+  final case class CheckQueryKindZVariantA(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = impl.checkQueryKindZVariantA(input.inp)
+    def ordinal: Int = 9
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = CheckQueryKindZVariantA
+  }
+  object CheckQueryKindZVariantA extends smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
+    val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindZVariantA"))
+      .withInput(CheckQueryInput.schema)
+      .withOutput(CheckQueryOutput.schema)
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/query-check?kind=z&variant=a"), code = 200), smithy.api.Readonly())
+    def wrap(input: CheckQueryInput): CheckQueryKindZVariantA = CheckQueryKindZVariantA(input)
+  }
   final case class Reservation(input: ReservationInput) extends PizzaAdminServiceOperation[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = impl.reservation(input.name, input.town)
-    def ordinal: Int = 9
+    def ordinal: Int = 10
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Reservation
   }
   object Reservation extends smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
@@ -391,7 +407,7 @@ object PizzaAdminServiceOperation {
   }
   final case class GetEnum(input: GetEnumInput) extends PizzaAdminServiceOperation[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = impl.getEnum(input.aa)
-    def ordinal: Int = 10
+    def ordinal: Int = 11
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = GetEnum
   }
   object GetEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
@@ -456,7 +472,7 @@ object PizzaAdminServiceOperation {
   }
   final case class CheckQueryKindYVariant(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = impl.checkQueryKindYVariant(input.inp)
-    def ordinal: Int = 11
+    def ordinal: Int = 12
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = CheckQueryKindYVariant
   }
   object CheckQueryKindYVariant extends smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -468,7 +484,7 @@ object PizzaAdminServiceOperation {
   }
   final case class HeadRequest() extends PizzaAdminServiceOperation[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = impl.headRequest()
-    def ordinal: Int = 12
+    def ordinal: Int = 13
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, HeadRequestOutput, Nothing, Nothing] = HeadRequest
   }
@@ -481,7 +497,7 @@ object PizzaAdminServiceOperation {
   }
   final case class NoContentRequest() extends PizzaAdminServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.noContentRequest()
-    def ordinal: Int = 13
+    def ordinal: Int = 14
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = NoContentRequest
   }
@@ -494,7 +510,7 @@ object PizzaAdminServiceOperation {
   }
   final case class AddMenuItem(input: AddMenuItemRequest) extends PizzaAdminServiceOperation[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = impl.addMenuItem(input.restaurant, input.menuItem)
-    def ordinal: Int = 14
+    def ordinal: Int = 15
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = AddMenuItem
   }
   object AddMenuItem extends smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
@@ -587,7 +603,7 @@ object PizzaAdminServiceOperation {
   }
   final case class CheckQueryKindZ(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = impl.checkQueryKindZ(input.inp)
-    def ordinal: Int = 15
+    def ordinal: Int = 16
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = CheckQueryKindZ
   }
   object CheckQueryKindZ extends smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -599,7 +615,7 @@ object PizzaAdminServiceOperation {
   }
   final case class Health(input: HealthRequest) extends PizzaAdminServiceOperation[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = impl.health(input.query)
-    def ordinal: Int = 16
+    def ordinal: Int = 17
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Health
   }
   object Health extends smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
@@ -664,7 +680,7 @@ object PizzaAdminServiceOperation {
   }
   final case class CheckQueryKindXVariantC(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = impl.checkQueryKindXVariantC(input.inp)
-    def ordinal: Int = 17
+    def ordinal: Int = 18
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = CheckQueryKindXVariantC
   }
   object CheckQueryKindXVariantC extends smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -676,7 +692,7 @@ object PizzaAdminServiceOperation {
   }
   final case class GetMenu(input: GetMenuRequest) extends PizzaAdminServiceOperation[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = impl.getMenu(input.restaurant)
-    def ordinal: Int = 18
+    def ordinal: Int = 19
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = GetMenu
   }
   object GetMenu extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
@@ -783,7 +799,7 @@ object PizzaAdminServiceOperation {
   }
   final case class CheckQueryVariantB(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = impl.checkQueryVariantB(input.inp)
-    def ordinal: Int = 19
+    def ordinal: Int = 20
     def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = CheckQueryVariantB
   }
   object CheckQueryVariantB extends smithy4s.Endpoint[PizzaAdminServiceOperation,CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {

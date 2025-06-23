@@ -517,6 +517,14 @@ operation CheckQueryVariantB {
     output: CheckQueryOutput
 }
 
+
+@http(method: "GET", uri: "/query-check?kind=z&variant=a", code: 200)
+@readonly
+operation CheckQueryKindZVariantA {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
 // currently order is important
 @mixin
 service CheckQueryService {
@@ -527,5 +535,6 @@ service CheckQueryService {
         CheckQueryKindZ
         CheckQueryVariantA
         CheckQueryVariantB
+        CheckQueryKindZVariantA
     ]
 }

@@ -396,6 +396,23 @@
                 }
             }
         },
+        "/query-check?kind=z&variant=a": {
+            "get": {
+                "operationId": "CheckQueryKindZVariantA",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindZVariantA 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindZVariantAResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/query-check?variant=a": {
             "get": {
                 "operationId": "CheckQueryVariantA",
@@ -759,6 +776,39 @@
                 }
             },
             "CheckQueryKindZResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryKindZVariantAResponseContent": {
                 "type": "object",
                 "properties": {
                     "variants": {
