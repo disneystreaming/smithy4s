@@ -41,5 +41,3 @@ trait PizzaCheckQueryServiceImpl {
       inp: Map[String, List[String]]
   ): IO[CheckQueryOutput] = output(inp, variant = Some("b"))
 }
-
-object PizzaCheckQueryServiceImpl extends PizzaCheckQueryServiceImpl with CheckQueryService[IO]
