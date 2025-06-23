@@ -464,23 +464,102 @@ abstract class PizzaSpec
   }
 
   routerTest("Respects Static Query Parameters") { (client, uri, log) =>
+    val quri = uri / "query-check"
+    def response(params: (String, String)*) = Json.fromFields(
+      params
+        .groupBy(_._1)
+        .map { case (k, is) =>
+          k -> Json.fromValues(is.map { case (_, v) => Json.fromString(v) })
+        }
+    )
     for {
+      resXC <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "x", "variant" -> "c"))),
+        log
+      )
+
+      resXD <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "x", "variant" -> "d"))),
+        log
+      )
+
+      resZ <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "z", "variant" -> "c"))),
+        log
+      )
+
+      resY <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "y", "variant" -> ""))),
+        log
+      )
+
+      resY0 <- client.send[Unit](
+        GET(quri.withQueryParam("kind", "y")),
+        log
+      )
+
       resA <- client.send[Json](
-        GET((uri / "query-check").withQueryParam("variant", "a")),
+        GET(quri.withQueryParam("variant", "a")),
         log
       )
       resB <- client.send[Json](
-        GET((uri / "query-check").withQueryParam("variant", "b")),
+        GET(quri.withQueryParam("variant", "b")),
         log
       )
     } yield {
+      val (codeXC, _, bodyXC) = resXC
+      expect.same(codeXC, 200) &&
+      expect.same(
+        bodyXC,
+        response(
+          "variants" -> "c",
+          "staticVariants" -> "c",
+          "kinds" -> "x",
+          "staticKinds" -> "x"
+        )
+      )
+
+      val (codeXD, _, bodyXD) = resXD
+      expect.same(codeXD, 200) &&
+      expect.same(
+        bodyXD,
+        response(
+          "variants" -> "d",
+          "staticVariants" -> "d",
+          "kinds" -> "x",
+          "staticKinds" -> "x"
+        )
+      )
+
+      val (codeZ, _, bodyZ) = resZ
+      expect.same(codeZ, 200) &&
+      expect.same(
+        bodyZ,
+        response("variants" -> "c", "kinds" -> "z", "staticKinds" -> "z")
+      )
+
+      val (codeY, _, bodyY) = resY
+      expect.same(codeY, 200) &&
+      expect.same(
+        bodyY,
+        response(
+          "variants" -> "",
+          "staticVariants" -> "",
+          "kinds" -> "y",
+          "staticKinds" -> "y"
+        )
+      )
+
+      val (codeY0, _, bodyY0) = resY0
+      expect.same(codeY0, 404)
+
       val (code, _, body) = resA
       expect.same(code, 200) &&
-      expect.same(body, Json.fromString("A"))
+      expect.same(body, response("variants" -> "a", "staticVariants" -> "a"))
 
       val (codeB, _, bodyB) = resB
       expect.same(codeB, 200) &&
-      expect.same(bodyB, Json.fromString("B"))
+      expect.same(bodyB, response("variants" -> "b", "staticVariants" -> "b"))
     }
   }
 
