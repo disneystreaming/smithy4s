@@ -235,7 +235,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def documentationAnnotation(
       hints: List[Hint],
-      skipMemberDocs: Boolean = false
+      skipMemberDocs: Boolean = false,
+      httpInfo: Option[(String, String)] = None
   ): Lines = {
     val atLiteral: String => String = _.replace("@", "{@literal @}")
     val dollarLiteral: String => String = _.replace("$", "`$`")
@@ -258,10 +259,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 .map(literalReplacements)
                 .map("  " + _)
             }.toList
+        val httpDocs: List[String] = List.empty
 
         val maybeNewline =
-          if (shapeDocs.nonEmpty && memberDocs.nonEmpty) List("", "") else Nil
-        val allDocs = shapeDocs ++ maybeNewline ++ memberDocs
+          if ((shapeDocs.nonEmpty || httpDocs.nonEmpty) && memberDocs.nonEmpty)
+            List("", "")
+          else Nil
+        val allDocs = httpDocs ++ shapeDocs ++ maybeNewline ++ memberDocs
         if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
         else makeDocLines(shapeDocs ++ memberDocs)
       }
@@ -350,7 +354,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           lines(
             documentationAnnotation(
               op.hints,
-              op.hints.contains(Hint.PackedInputs)
+              op.hints.contains(Hint.PackedInputs),
+              op.hints.collectFirst { case Hint.Http(method, path) =>
+                (method, path)
+              }
             ),
             deprecationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
