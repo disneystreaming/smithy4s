@@ -355,8 +355,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             documentationAnnotation(
               op.hints,
               op.hints.contains(Hint.PackedInputs),
-              op.hints.collectFirst { case Hint.Http(method, path) =>
-                (method, path)
+              op.hints.collectFirst { case Hint.Http(method, pattern) =>
+                (method, pattern)
               }
             ),
             deprecationAnnotation(op.hints),
