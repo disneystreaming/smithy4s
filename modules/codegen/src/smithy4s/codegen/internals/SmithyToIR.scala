@@ -980,6 +980,8 @@ private[codegen] class SmithyToIR(
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case http: HttpTrait =>
+      Hint.Http(http.getMethod.toString, http.getUri.toString)
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {

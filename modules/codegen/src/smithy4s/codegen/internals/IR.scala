@@ -362,6 +362,7 @@ private[internals] object Hint {
   ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
+  case class Http(method: String, path: String) extends Hint
 
   // Traits that get rendered generically.
   // The typed node is potentially lazy, to simplify the handling of recursive traits:
