@@ -981,7 +981,7 @@ private[codegen] class SmithyToIR(
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
     case http: HttpTrait =>
-      Hint.Http(http.getMethod.toString, http.getUri.toString)
+      Hint.Http(http.getMethod, http.getUri.toString)
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {
