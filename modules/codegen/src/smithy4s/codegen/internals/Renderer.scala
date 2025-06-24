@@ -244,46 +244,32 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val literalReplacements: String => String =
       atLiteral.andThen(dollarLiteral).andThen(slashStarLiteral)
 
-    val shapeDocGroups: List[List[String]] =
-      hints
-        .collectFirst { case h: Hint.Documentation => h }
-        .foldMap { doc =>
-          val shapeDocs: List[String] =
-            doc.docLines
-              .map(literalReplacements)
-          val memberDocs: List[String] =
-            if (skipMemberDocs) List.empty
-            else
-              doc.memberDocLines.flatMap { case (memberName, text) =>
-                s"@param $memberName" :: text
-                  .map(literalReplacements)
-                  .map("  " + _)
-              }.toList
-
-          List(shapeDocs, memberDocs)
-        }
-
-    val httpDocs: List[String] = hints
-      .collectFirst { case Hint.Http(method, pattern) =>
-        List(
-          s"HTTP: ${literalReplacements(method)} ${literalReplacements(pattern)}"
-        )
+    hints
+      .collectFirst { case h: Hint.Documentation => h }
+      .foldMap { doc =>
+        val shapeDocs: List[String] =
+          doc.docLines
+            .map(literalReplacements)
+        val memberDocs: List[String] =
+          if (skipMemberDocs) List.empty
+          else
+            doc.memberDocLines.flatMap { case (memberName, text) =>
+              s"@param $memberName" :: text
+                .map(literalReplacements)
+                .map("  " + _)
+            }.toList
+        val protocolDocs: List[String] =
+          doc.protocolSpecificLines.flatten.map(literalReplacements)
+        val maybeNewline =
+          if (
+            (shapeDocs.nonEmpty || protocolDocs.nonEmpty) && memberDocs.nonEmpty
+          )
+            List("", "")
+          else Nil
+        val allDocs = protocolDocs ++ shapeDocs ++ maybeNewline ++ memberDocs
+        if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
+        else makeDocLines(allDocs)
       }
-      .getOrElse(List.empty)
-
-    val allLines: List[String] = List
-      .concat(
-        shapeDocGroups,
-        List(
-          httpDocs
-        )
-      )
-      .filterNot(_.isEmpty)
-      .intercalate(List(""))
-
-    if (allLines.size == 0) Lines.empty
-    else if (allLines.size == 1) lines("/** " + allLines.head + " */")
-    else makeDocLines(allLines)
   }
 
   def renderPackageContents: Option[Lines] = {
