@@ -16,7 +16,9 @@ import smithy4s.schema.Schema.union
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: POST /{name} */
+  /** Method: POST
+    * Pattern: /{name}
+    */
   def hello(name: String, town: Option[String] = None): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)

@@ -14,13 +14,21 @@ import smithy4s.schema.Schema.unit
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: POST /api/set/ */
+  /** Method: POST
+    * Pattern: /api/set/
+    */
   def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): F[SetInput, Nothing, Unit, Nothing, Nothing]
-  /** HTTP: POST /api/option/ */
+  /** Method: POST
+    * Pattern: /api/option/
+    */
   def option(value: scala.Option[smithy4s.example.collision.String] = None): F[OptionInput, Nothing, Unit, Nothing, Nothing]
-  /** HTTP: POST /api/map/ */
+  /** Method: POST
+    * Pattern: /api/map/
+    */
   def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): F[MapInput, Nothing, Unit, Nothing, Nothing]
-  /** HTTP: POST /api/list/ */
+  /** Method: POST
+    * Pattern: /api/list/
+    */
   def list(list: scala.List[smithy4s.example.collision.String]): F[ListInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](this)

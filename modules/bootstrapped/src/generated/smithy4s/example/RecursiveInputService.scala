@@ -14,7 +14,9 @@ import smithy4s.schema.Schema.unit
 trait RecursiveInputServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: PUT /subscriptions */
+  /** Method: PUT
+    * Pattern: /subscriptions
+    */
   def recursiveInputOperation(hello: Option[RecursiveInput] = None): F[RecursiveInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of[RecursiveInputServiceGen[F]](this)

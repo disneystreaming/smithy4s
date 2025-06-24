@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 
 /** We should be able to use comments in documentation /&ast; \*\/
   * 
+  * 
   * @param member
   *   /&ast;
   */

@@ -17,33 +17,61 @@ import smithy4s.schema.Schema.unit
 trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: POST /headers/ */
+  /** Method: POST
+    * Pattern: /headers/
+    */
   def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None): F[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing]
-  /** HTTP: GET /custom-code/{code} */
+  /** Method: GET
+    * Pattern: /custom-code/{code}
+    */
   def customCode(code: Int): F[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing]
-  /** HTTP: GET /optional-output */
+  /** Method: GET
+    * Pattern: /optional-output
+    */
   def optionalOutput(): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing]
-  /** HTTP: POST /echo/{pathParam} */
+  /** Method: POST
+    * Pattern: /echo/{pathParam}
+    */
   def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): F[EchoInput, Nothing, Unit, Nothing, Nothing]
-  /** HTTP: GET /get-int-enum/{aa} */
+  /** Method: GET
+    * Pattern: /get-int-enum/{aa}
+    */
   def getIntEnum(aa: EnumResult): F[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing]
-  /** HTTP: POST /roundTrip/{label} */
+  /** Method: POST
+    * Pattern: /roundTrip/{label}
+    */
   def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing]
-  /** HTTP: GET /version */
+  /** Method: GET
+    * Pattern: /version
+    */
   def version(): F[Unit, Nothing, VersionOutput, Nothing, Nothing]
-  /** HTTP: POST /book/{name} */
+  /** Method: POST
+    * Pattern: /book/{name}
+    */
   def reservation(name: String, town: Option[String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
-  /** HTTP: GET /get-enum/{aa} */
+  /** Method: GET
+    * Pattern: /get-enum/{aa}
+    */
   def getEnum(aa: TheEnum): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing]
-  /** HTTP: HEAD /head-request */
+  /** Method: HEAD
+    * Pattern: /head-request
+    */
   def headRequest(): F[Unit, Nothing, HeadRequestOutput, Nothing, Nothing]
-  /** HTTP: GET /no-content */
+  /** Method: GET
+    * Pattern: /no-content
+    */
   def noContentRequest(): F[Unit, Nothing, Unit, Nothing, Nothing]
-  /** HTTP: POST /restaurant/{restaurant}/menu/item */
+  /** Method: POST
+    * Pattern: /restaurant/{restaurant}/menu/item
+    */
   def addMenuItem(restaurant: String, menuItem: MenuItem): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing]
-  /** HTTP: GET /health */
+  /** Method: GET
+    * Pattern: /health
+    */
   def health(query: Option[String] = None): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing]
-  /** HTTP: GET /restaurant/{restaurant}/menu */
+  /** Method: GET
+    * Pattern: /restaurant/{restaurant}/menu
+    */
   def getMenu(restaurant: String): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)

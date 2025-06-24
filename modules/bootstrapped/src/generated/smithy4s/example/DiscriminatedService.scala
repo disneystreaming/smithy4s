@@ -13,7 +13,9 @@ import smithy4s.schema.OperationSchema
 trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: GET /test/{key} */
+  /** Method: GET
+    * Pattern: /test/{key}
+    */
   def testDiscriminated(key: String): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](this)

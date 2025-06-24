@@ -14,7 +14,9 @@ import smithy4s.schema.Schema.unit
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: POST /brands */
+  /** Method: POST
+    * Pattern: /brands
+    */
   def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)

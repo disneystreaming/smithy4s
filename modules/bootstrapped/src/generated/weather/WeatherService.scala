@@ -13,7 +13,9 @@ import smithy4s.schema.OperationSchema
 trait WeatherServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** HTTP: GET /weather/{city} */
+  /** Method: GET
+    * Pattern: /weather/{city}
+    */
   def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
