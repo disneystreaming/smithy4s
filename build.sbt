@@ -886,7 +886,8 @@ lazy val tests = projectMatrix
     },
     Compile / allowedNamespaces := Seq("smithy4s.example"),
     Compile / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "routing.smithy"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
   )

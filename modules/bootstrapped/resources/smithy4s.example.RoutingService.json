@@ -1,0 +1,113 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "RoutingService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/abc": {
+            "get": {
+                "operationId": "Abc",
+                "responses": {
+                    "200": {
+                        "description": "Abc 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AbcOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abc/def": {
+            "get": {
+                "operationId": "AbcDef",
+                "responses": {
+                    "200": {
+                        "description": "AbcDef 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AbcDefOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abc/{def}": {
+            "get": {
+                "operationId": "AbcLabel",
+                "parameters": [
+                    {
+                        "name": "def",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AbcLabel 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AbcLabelOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{abc+}/def": {
+            "get": {
+                "operationId": "GreedyAbcDef",
+                "parameters": [
+                    {
+                        "name": "abc+",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GreedyAbcDef 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GreedyAbcDefOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AbcDefOutputPayload": {
+                "type": "string"
+            },
+            "AbcLabelOutputPayload": {
+                "type": "string"
+            },
+            "AbcOutputPayload": {
+                "type": "string"
+            },
+            "GreedyAbcDefOutputPayload": {
+                "type": "string"
+            }
+        }
+    }
+}

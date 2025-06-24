@@ -20,6 +20,7 @@ package http
 import smithy4s.schema.OperationSchema
 import smithy.api.Http
 import smithy4s.http.internals.SchemaVisitorPathEncoder
+import scala.annotation.nowarn
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
@@ -39,6 +40,23 @@ trait HttpEndpoint[I] {
 }
 
 object HttpEndpoint {
+
+  private implicit val pathSegmentOrdering: Ordering[PathSegment] = Ordering.by[PathSegment, Int] {
+    case _: PathSegment.StaticSegment => 0
+    case _: PathSegment.LabelSegment => 1
+    case _: PathSegment.GreedySegment => 2
+  }
+
+  @nowarn("cat=deprecation")  
+  private implicit val iterablePathSegmentOrdering: Ordering[Iterable[PathSegment]] = Ordering.Iterable[PathSegment]
+
+  implicit val ordering : Ordering[HttpEndpoint[_]] = Ordering.by { endpoint => 
+    (
+      -endpoint.path.size,                  // longer path first
+      endpoint.path: Iterable[PathSegment], // then path segments prioritized
+      -endpoint.staticQueryParams.size      // then more query params first
+    )
+  }
 
   def unapply[I, E, O, SI, SO](
       operation: OperationSchema[I, E, O, SI, SO]
@@ -79,5 +97,4 @@ object HttpEndpoint {
   }
 
   case class HttpEndpointError(message: String) extends Exception(message)
-
 }
