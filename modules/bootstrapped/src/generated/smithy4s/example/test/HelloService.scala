@@ -17,17 +17,11 @@ import smithy4s.schema.Schema.unit
 trait HelloServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** Method: GET
-    * Pattern: /listen
-    */
+  /** HTTP GET /listen */
   def listen(): F[Unit, Nothing, Unit, Nothing, Nothing]
-  /** Method: GET
-    * Pattern: /test-path/{path}
-    */
+  /** HTTP GET /test-path/{path} */
   def testPath(path: String): F[TestPathInput, Nothing, Unit, Nothing, Nothing]
-  /** Method: POST
-    * Pattern: /
-    */
+  /** HTTP POST / */
   def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): F[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](this)

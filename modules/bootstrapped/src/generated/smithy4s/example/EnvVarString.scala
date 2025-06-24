@@ -9,7 +9,6 @@ import smithy4s.schema.Schema.struct
 
 /** This is meant to be used with `$`{ENV_VAR}
   * 
-  * 
   * @param member
   *   This is meant to be used with `$`ENV_VAR
   */

@@ -17,13 +17,9 @@ import smithy4s.schema.Schema.unit
 trait HelloWorldAuthServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** Method: GET
-    * Pattern: /hello
-    */
+  /** HTTP GET /hello */
   def sayWorld(): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing]
-  /** Method: GET
-    * Pattern: /health
-    */
+  /** HTTP GET /health */
   def healthCheck(): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[HelloWorldAuthServiceGen[F]] = Transformation.of[HelloWorldAuthServiceGen[F]](this)

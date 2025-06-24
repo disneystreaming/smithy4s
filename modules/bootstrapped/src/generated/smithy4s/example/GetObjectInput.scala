@@ -11,7 +11,6 @@ import smithy4s.schema.Schema.struct
   * and are given through HTTP labels
   * See https://smithy.io/2.0/spec/http-bindings.html?highlight=httppayload#http-uri-label
   * 
-  * 
   * @param key
   *   Sent in the URI label named "key".
   *   Key can also be seen as the filename

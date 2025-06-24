@@ -17,8 +17,8 @@ import smithy4s.schema.Schema.unit
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** Method: GET
-    * Pattern: /foo
+  /** HTTP GET /foo
+    * 
     * Returns a useful Foo
     * No input necessary to find our Foo
     * The path for this operation is "/foo"

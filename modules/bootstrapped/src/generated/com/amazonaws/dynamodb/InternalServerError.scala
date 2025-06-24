@@ -9,7 +9,6 @@ import smithy4s.schema.Schema.struct
 
 /** <p>An error occurred on the server side.</p>
   * 
-  * 
   * @param message
   *   <p>The server encountered an internal error trying to fulfill the request.</p>
   */

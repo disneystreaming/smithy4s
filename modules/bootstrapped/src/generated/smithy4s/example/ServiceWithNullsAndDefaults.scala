@@ -14,13 +14,9 @@ import smithy4s.schema.Schema.unit
 trait ServiceWithNullsAndDefaultsGen[F[_, _, _, _, _]] {
   self =>
 
-  /** Method: POST
-    * Pattern: /operation/{requiredLabel}
-    */
+  /** HTTP POST /operation/{requiredLabel} */
   def defaultNullsOperation(input: DefaultNullsOperationInput): F[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing]
-  /** Method: POST
-    * Pattern: /timestamp-operation
-    */
+  /** HTTP POST /timestamp-operation */
   def timestampOperation(input: TimestampOperationInput): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
