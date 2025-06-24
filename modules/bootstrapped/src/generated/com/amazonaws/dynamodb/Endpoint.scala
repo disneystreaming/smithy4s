@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 /** <p>An endpoint information details.</p>
+  * 
   * @param Address
   *   <p>IP address of the endpoint.</p>
   * @param CachePeriodInMinutes

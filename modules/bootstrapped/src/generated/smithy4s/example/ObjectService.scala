@@ -23,8 +23,11 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
     *   It is always required for a GET operation
     * @param bucketName
     *   Sent in the URI label named "bucketName".
+    * 
+    * HTTP: GET /{bucketName}/{key}
     */
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
+  /** HTTP: PUT /{bucketName}/{key} */
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
