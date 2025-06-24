@@ -260,13 +260,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             }.toList
         val protocolDocs: List[String] =
           doc.protocolSpecificLines.flatten.map(literalReplacements)
-        val maybeNewline =
-          if (
-            (shapeDocs.nonEmpty || protocolDocs.nonEmpty) && memberDocs.nonEmpty
-          )
-            List("", "")
-          else Nil
-        val allDocs = protocolDocs ++ shapeDocs ++ maybeNewline ++ memberDocs
+
+        val allDocs = List(protocolDocs, shapeDocs, memberDocs)
+          .filterNot(_.isEmpty)
+          .intercalate(List(""))
+
         if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
         else makeDocLines(allDocs)
       }

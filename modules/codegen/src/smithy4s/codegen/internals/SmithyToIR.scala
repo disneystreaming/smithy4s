@@ -993,7 +993,7 @@ private[codegen] class SmithyToIR(
       .getTrait(classOf[HttpTrait])
       .asScala
       .map { http =>
-        List(s"Method: ${http.getMethod}", s"Pattern: ${http.getUri.toString}")
+        List(s"HTTP ${http.getMethod} ${http.getUri.toString}")
       }
       .getOrElse(List.empty)
     def getMemberDocs(shape: Shape): Map[String, List[String]] =
