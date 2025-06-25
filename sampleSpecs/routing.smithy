@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace smithy4s.example
+namespace smithy4s.routing
 
 use alloy#simpleRestJson
 
@@ -42,7 +42,7 @@ structure AbcLabelInput {
 }
 
 @readonly
-@http(method: "GET", uri: "/{abc+}/def", code: 200)
+@http(method: "GET", uri: "/abc/{def+}", code: 200)
 operation GreedyAbcDef {
   input: GreedyAbcDefInput
   output: MessageOutput
@@ -51,7 +51,7 @@ operation GreedyAbcDef {
 structure GreedyAbcDefInput {
   @httpLabel
   @required
-  abc: String
+  def: String
 }
 
 structure MessageOutput {
