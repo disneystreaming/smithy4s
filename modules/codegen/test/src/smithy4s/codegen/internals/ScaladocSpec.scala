@@ -122,4 +122,36 @@ final class ScaladocSpec extends munit.FunSuite {
 
   }
 
+  test("Generate Scaladoc - operation with HTTP method and pattern") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#packedInputs
+        |
+        |service Service {
+        |  operations: [GetHealth]
+        |}
+        |
+        |/// Health check operation
+        |@http(method: "GET", uri: "/health_check")
+        |operation GetHealth {
+        |  input: Unit
+        |  output: Unit
+        |}
+        |""".stripMargin
+
+    val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
+    assertContainsSection(serviceCode, "/** HTTP GET")(
+      """|/** HTTP GET /health_check
+         |  *
+         |  * Health check operation
+         |  */
+         |def getHealth(): F[Unit, Nothing, Unit, Nothing, Nothing]""".stripMargin
+    )
+
+  }
+
 }
