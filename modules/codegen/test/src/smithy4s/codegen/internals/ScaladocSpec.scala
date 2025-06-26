@@ -57,6 +57,8 @@ final class ScaladocSpec extends munit.FunSuite {
          |  *   int docs
          |  * @param struct
          |  *   struct docs
+         |  * @param string
+         |  *   required before comment
          |  */
          |final case class DocumentedStruct(int: Int, string: String, struct: Option[UndocumentedStruct] = None)""".stripMargin
     )
@@ -150,8 +152,7 @@ final class ScaladocSpec extends munit.FunSuite {
       """|/** HTTP GET /health_check
          |  *
          |  * Health check operation
-         |  */
-         |def getHealth(): F[Unit, Nothing, Unit, Nothing, Nothing]""".stripMargin
+         |  */""".stripMargin
     )
 
   }
