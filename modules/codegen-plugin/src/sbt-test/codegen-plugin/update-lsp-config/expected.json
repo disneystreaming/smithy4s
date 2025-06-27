@@ -6,7 +6,7 @@
     ],
     "maven" : {
         "dependencies" : [
-            "com.disneystreaming.alloy:alloy-core:${ALLOY_VERSION}",
+            "io.github.disneystreaming.alloy:alloy-core:${ALLOY_VERSION}",
             "com.disneystreaming.smithy4s:smithy4s-protocol:${SMITHY4S_VERSION}"
         ],
         "repositories" : [
