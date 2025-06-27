@@ -141,6 +141,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         case Some(code) => code
       }
     val classDoc = """/** this is an enum Suit
+                     |  * 
                      |  * @param DIAMOND
                      |  *   this is a DIAMOND
                      |  * @param HAERT
@@ -258,6 +259,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         case Some(code) => code
       }
     val classDoc = """/** this is an enum Suit
+                     |  * 
                      |  * @param DIAMOND
                      |  *   this is a DIAMOND
                      |  * @param HAERT

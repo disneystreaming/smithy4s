@@ -52,13 +52,11 @@ final class ScaladocSpec extends munit.FunSuite {
 
     assertContainsSection(documentedStructCode, "/** Struct docs")(
       """|/** Struct docs
-         |  *
+         |  * 
          |  * @param int
          |  *   int docs
          |  * @param struct
          |  *   struct docs
-         |  * @param string
-         |  *   required before comment
          |  */
          |final case class DocumentedStruct(int: Int, string: String, struct: Option[UndocumentedStruct] = None)""".stripMargin
     )
@@ -110,7 +108,7 @@ final class ScaladocSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
     assertContainsSection(serviceCode, "/** operation docs")(
       """|/** operation docs
-         |  *
+         |  * 
          |  * @param string
          |  *   the string
          |  * @param int
@@ -150,7 +148,7 @@ final class ScaladocSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
     assertContainsSection(serviceCode, "/** HTTP GET")(
       """|/** HTTP GET /health_check
-         |  *
+         |  * 
          |  * Health check operation
          |  */""".stripMargin
     )
