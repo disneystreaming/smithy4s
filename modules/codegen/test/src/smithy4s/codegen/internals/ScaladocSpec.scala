@@ -140,8 +140,6 @@ final class ScaladocSpec extends munit.FunSuite {
         |/// Health check operation
         |@http(method: "GET", uri: "/health_check")
         |operation GetHealth {
-        |  input: Unit
-        |  output: Unit
         |}
         |""".stripMargin
 

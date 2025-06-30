@@ -261,7 +261,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val protocolDocs: List[String] =
           doc.protocolSpecificLines.flatten.map(literalReplacements)
 
-        val allDocs = List(protocolDocs, shapeDocs, memberDocs)
+        val allDocs = List(shapeDocs, protocolDocs, memberDocs)
           .filterNot(_.isEmpty)
           .intercalate(List(""))
 
