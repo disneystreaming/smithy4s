@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.39
+
+* http4s: Partially fix [#1619](https://github.com/disneystreaming/smithy4s/issues/1619) by checking request query parameters against the static query parameters in [#1743](https://github.com/disneystreaming/smithy4s/pull/1743)
+
 # 0.18.38
 
 * core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
