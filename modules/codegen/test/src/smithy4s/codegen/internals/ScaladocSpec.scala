@@ -139,15 +139,14 @@ final class ScaladocSpec extends munit.FunSuite {
         |
         |/// Health check operation
         |@http(method: "GET", uri: "/health_check")
-        |operation GetHealth {
-        |}
+        |operation GetHealth {}
         |""".stripMargin
 
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
-    assertContainsSection(serviceCode, "/** HTTP GET")(
-      """|/** HTTP GET /health_check
+    assertContainsSection(serviceCode, "/** Health check operation")(
+      """|/** Health check operation
          |  * 
-         |  * Health check operation
+         |  * HTTP GET /health_check
          |  */""".stripMargin
     )
 
