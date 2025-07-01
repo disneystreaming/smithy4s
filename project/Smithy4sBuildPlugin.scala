@@ -509,15 +509,15 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   lazy val simpleNativeLayout = simpleLayout(NativePlatform)
 
   lazy val publishSettings = Seq(
-    organization := "com.disneystreaming.smithy4s",
-    sonatypeProfileName := "com.disneystreaming",
+    organization := "io.github.disneystreaming.smithy4s",
+    sonatypeProfileName := "io.github.disneystreaming",
     version := sys.env
       .get("GITHUB_REF")
       .filter(_.startsWith("refs/tags/v"))
       .map(_.drop("refs/tags/v".length))
       .getOrElse(version.value),
     publishTo := sonatypePublishToBundle.value,
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
+    sonatypeCredentialHost := "central.sonatype.com",
     publishMavenStyle := true,
     publishLocal / publishMavenStyle := false,
     homepage := Some(url("https://github.com/disneystreaming")),
