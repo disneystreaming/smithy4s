@@ -218,7 +218,7 @@ final class SmithyBuildSpec extends munit.FunSuite {
           |    "maven" : {
           |        "dependencies" : [
           |            "dep",
-          |            "com.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
+          |            "io.github.disneystreaming.smithy4s:smithy4s-protocol:${BuildInfo.version}"
           |        ],
           |        "repositories" : [
           |            {
