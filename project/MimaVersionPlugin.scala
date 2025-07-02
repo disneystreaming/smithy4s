@@ -140,9 +140,15 @@ object MimaVersionPlugin extends AutoPlugin {
           }
 
         notCurrent
-          .map(v =>
-            projectID.value.withRevision(v).withExplicitArtifacts(Vector.empty)
-          )
+          .map(v => {
+            val updatedRevision = projectID.value.withRevision(v).withExplicitArtifacts(Vector.empty)
+
+            v match {
+              // Since MIMA compatibility pulls in previous versions for checks, we need to fetch from the old com.disneystreaming.smithy4s repo for versions before 0.18.38
+              case FullTag(_, minor, patch) if minor.toInt <= 18 && patch.toInt <= 38 => updatedRevision.withOrganization("com.disneystreaming.smithy4s")
+              case _ => updatedRevision
+            }
+          })
           .toSet
       }
     }
