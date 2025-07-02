@@ -38,7 +38,7 @@ Global / licenses := Seq(
   "TOST-1.0" -> new URL("https://disneystreaming.github.io/TOST-1.0.txt")
 )
 
-sonatypeCredentialHost := "central.sonatype.com"
+// sonatypeCredentialHost := "central.sonatype.com"
 
 ThisBuild / version := {
   if (!sys.env.contains("CI")) "dev-SNAPSHOT"

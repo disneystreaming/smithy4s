@@ -516,8 +516,12 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .filter(_.startsWith("refs/tags/v"))
       .map(_.drop("refs/tags/v".length))
       .getOrElse(version.value),
-    publishTo := sonatypePublishToBundle.value,
-    sonatypeCredentialHost := "central.sonatype.com",
+    publishTo := {
+      val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+      if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+      else localStaging.value
+    },
+    // sonatypeCredentialHost := "central.sonatype.com",
     publishMavenStyle := true,
     publishLocal / publishMavenStyle := false,
     homepage := Some(url("https://github.com/disneystreaming")),
