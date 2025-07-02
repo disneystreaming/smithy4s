@@ -3,12 +3,12 @@ ThisBuild / scalaVersion := "2.13.16"
 lazy val a = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
-    libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
+    libraryDependencies += "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 lazy val b = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
-    libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
+    libraryDependencies += "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 
 lazy val usage = project

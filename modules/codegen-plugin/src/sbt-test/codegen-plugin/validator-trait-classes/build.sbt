@@ -13,7 +13,7 @@ lazy val root = project
   .settings(
     scalaVersion := "3.3.6",
     libraryDependencies ++= Seq(
-      "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
+      "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     ),
     Compile / smithy4sAllDependenciesAsJars += (externalLibrary / Compile / packageBin).value
   )

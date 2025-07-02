@@ -11,7 +11,7 @@ lazy val foo = (project in file("foo"))
     // this information is stored in the manifest of bar's jar, for downstream consumption
     smithy4sAllowedNamespaces := List("aws.api", "foo"),
     libraryDependencies ++= Seq(
-      "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
+      "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
       "software.amazon.smithy" % "smithy-aws-traits" % smithy4s.codegen.BuildInfo.smithyVersion % Smithy4s
     )
   )

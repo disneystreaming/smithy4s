@@ -3,7 +3,7 @@ lazy val root = (project in file("."))
   .settings(
     scalaVersion := "2.13.16",
     libraryDependencies ++= Seq(
-      "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
+      "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     ),
     Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json"),
     TaskKey[Unit]("checkOpenApi") := {
