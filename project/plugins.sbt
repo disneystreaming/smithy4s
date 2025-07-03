@@ -17,8 +17,10 @@ addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.4")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.10")
 addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.7")
 
+addSbtPlugin("org.polyvariant" % "smithy-trait-codegen-sbt" % "0.2.2")
+
 libraryDependencies ++= Seq(
-  "com.lihaoyi" %% "os-lib" % "0.11.4",
+  "com.lihaoyi" %% "os-lib" % "0.10.7",
   "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.30.2",
   "com.thesamet.scalapb" %% "compilerplugin" % "0.11.15"
 )
