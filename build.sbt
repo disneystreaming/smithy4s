@@ -1015,7 +1015,8 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.protobuf",
       "weather",
       "smithy4s.example.product",
-      "smithy4s.example.reservedNameOverride"
+      "smithy4s.example.reservedNameOverride",
+      "smithy4s.example.bincompat"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"

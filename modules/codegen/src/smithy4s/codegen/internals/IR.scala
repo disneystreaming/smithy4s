@@ -81,10 +81,12 @@ private[internals] case class Product(
     name: String,
     fields: List[Field],
     mixins: List[Type],
-    recursive: Boolean = false,
+    recursive: Boolean,
     hints: List[Hint] = Nil,
-    isMixin: Boolean = false
-) extends Decl
+    isMixin: Boolean
+) extends Decl {
+  def isBincompatFriendly = hints.contains(Hint.BincompatFriendly)
+}
 
 private[internals] case class Union(
     shapeId: ShapeId,
@@ -346,9 +348,19 @@ private[internals] sealed trait Hint {
     }
 }
 
+// todo more precise
+case class VersionNumber(value: String)
+object VersionNumber {
+  implicit val order: Order[VersionNumber] = Order.by(_.value)
+  implicit val ordering: Ordering[VersionNumber] =
+    Order.catsKernelOrderingForOrder
+}
+
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object BincompatFriendly extends Hint
+  case class BincompatAdded(version: VersionNumber) extends Hint
   case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint

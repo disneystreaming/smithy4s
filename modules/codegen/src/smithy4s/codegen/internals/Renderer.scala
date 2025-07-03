@@ -676,22 +676,36 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       classBody: Lines
   ): Lines = {
     import product._
-    val renderedArgs = renderArgs(fields)
+
+    val productFQN = compilationUnit.namespace + "." + product.name
+
     val decl =
-      line"final case class ${product.nameDef}($renderedArgs)"
+      if (isBincompatFriendly)
+        line"final class ${product.nameDef} private(${renderArgs(fields, noDefault = true, fieldModifiers = line"val ")})"
+      else
+        line"final case class ${product.nameDef}(${renderArgs(fields)})"
+
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
-    lines(
-      if (hints.contains(Hint.Error)) {
-        val exception =
-          if (hints.contains(Hint.NoStackTrace))
-            noStackTrace
-          else smithy4sThrowable
-        val mixinExtensions = if (mixins.nonEmpty) {
-          val ext = mixins.map(m => line"$m").intercalate(line" with ")
-          line" with $ext"
-        } else Line.empty
-        block(line"$decl extends $exception$mixinExtensions") {
+    val bincompatClassMembers: Lines = renderBincompatMembers(product, productFQN).when(isBincompatFriendly)
+
+    val bincompatCompanionMembers: Lines = renderBincompatCompanionMembers(product).when(isBincompatFriendly)
+
+    val supertypes = List.concat(
+      adtParent.map(t => line"$t"),
+      Line(
+        if (hints.contains(Hint.NoStackTrace)) noStackTrace
+        else smithy4sThrowable
+      ).some.filter(_ => hints.contains(Hint.Error)),
+      Line(serializable).some.filter(_ => isBincompatFriendly),
+      mixins.map(m => line"$m")
+    )
+
+    val supertypeDecl = if (supertypes.isEmpty) Line.empty else line" extends ${supertypes.intercalate(line" with ")}"
+
+    val errorClassMembers =
+      if (hints.contains(Hint.Error))
+        Lines {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||
@@ -700,20 +714,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             .filter {
               _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
             }
-            .foldMap(renderGetMessage)
+            .map(renderGetMessage)
+            .toList
         }
-      } else {
-        val extendAdt = adtParent.map(t => line"$t").toList
-        val mixinLines = mixins.map(m => line"$m")
-        val extend = (extendAdt ++ mixinLines).intercalate(line" with ")
-        val ext =
-          if (extend.nonEmpty) line" extends $extend"
-          else Line.empty
+      else Lines.empty
 
-        if (classBody.isEmpty) line"$decl$ext"
-        else
-          block(line"$decl$ext") {
-            classBody
+    lines(
+      (bincompatClassMembers ++ errorClassMembers ++ classBody) match {
+        case Lines.empty => line"$decl$supertypeDecl"
+        case body =>
+          block(line"$decl$supertypeDecl") {
+            body
           }
       },
       newline,
@@ -730,9 +741,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val args = fields.map(f => Line(f.name)).intercalate(Line.comma)
           lines(
             line"// constructor using the original order from the spec",
-            line"private def make($params): ${product.nameRef} = ${product.nameRef}($args)"
+            // format: off
+            line"private def make($params): ${product.nameRef} = ${if (isBincompatFriendly) "new " else ""}${product.nameRef}($args)"
+            // format: on
           ).when(fields.nonEmpty)
         },
+        bincompatCompanionMembers,
         newline,
         if (fields.nonEmpty) {
           val renderedFields =
@@ -789,6 +803,124 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
       )
+    )
+  }
+
+  private def renderBincompatMembers(product: Product, productFQN: String): Lines = {
+    import product._
+
+    val copyMethod: Line =
+        // format: off
+        line"private def copy(${renderArgs(fields, defaultValue = f => Some(Line("this." + f.name)))}): ${product.nameRef} = new ${product.nameRef}(${fields.map(f => Line(f.name)).intercalate(Line.comma)})"
+        // format: on
+        .when(fields.nonEmpty)
+
+    val equalsMethod: Lines = {
+      val signature = line"override def equals(another: $any_): Boolean"
+
+      val fieldEqualities =
+        fields.map { f => line"this.${f.name} == another.${f.name}" }.intercalate(line" && ")
+
+      if (fields.isEmpty) lines(line"$signature = another.isInstanceOf[${product.nameRef}]")
+      else
+        block(line"$signature = another match")(
+          line"case another: ${product.nameRef} => (this eq another) || $fieldEqualities",
+          line"case _ => false"
+        )
+    }
+
+    val hashCodeMethod: Line = {
+      val magicMultiplier = 37
+      val magicAddend = 17
+
+      val base = line"""$magicMultiplier * ($magicAddend + ${renderStringLiteral(
+        productFQN
+      )}.##)"""
+
+      val impl = fields.foldLeft(base) { (acc, f) =>
+        line"$magicMultiplier * ($acc + this.${f.name}.##)"
+      }
+
+      line"override def hashCode(): Int = $impl"
+    }
+
+    val toStringMethod: Line = {
+
+      val fieldValues = fields
+        .map { f =>
+          line"this.${f.name}"
+        }
+        .intercalate(line" + ${renderStringLiteral(", ")} + ")
+
+      val impl =
+        if (fields.isEmpty) line"${renderStringLiteral(product.name + "()")}"
+        else
+          line"${renderStringLiteral(product.name + "(")} + $fieldValues + ${renderStringLiteral(")")}"
+
+      line"override def toString(): String = $impl"
+    }
+
+    lines(
+      fields.map { f =>
+        line"def with${f.name.capitalize}(${f.name}: ${Line.fieldType(f)}): ${product.nameRef} = copy(${f.name} = ${f.name})"
+      },
+      newline,
+      copyMethod,
+      equalsMethod,
+      hashCodeMethod,
+      toStringMethod
+    )
+  }
+
+  private def renderBincompatCompanionMembers(product: Product): Lines = {
+    import product._
+
+    val fieldsOriginallyOrdered = fields.sortBy(_.originalIndex)
+
+    val bincompatMemberGroups =
+      fieldsOriginallyOrdered
+        .groupByNel(_.hints.collectFirst { case Hint.BincompatAdded(version) => version })
+        .toList
+        .sortBy(_._1)
+        .toNel
+        .map(Bincompat.accumulateFieldsByVersion(_))
+        // no fields turns into "version None with no fields" so that we have an empty constructor
+        .getOrElse(NonEmptyList.of(None -> Nil))
+
+    lines(
+      newline,
+      bincompatMemberGroups.map { case (v, fieldsInVersion) =>
+        val versionComment = v match {
+          case None    => line"// Members available since the beginning"
+          case Some(v) => line"// Members available up to version ${v.value} (inclusive)"
+        }
+
+        val remainingArgsToConstructor: List[Line] =
+          bincompatMemberGroups.last._2
+            .drop(fieldsInVersion.size)
+            .map { f =>
+              val d = renderFieldDefault(f)
+                .getOrElse(sys.error(s"missing default for ${f.name}, this is likely a codegen bug"))
+
+              line"${f.name} = $d"
+            }
+
+        // note: used named params here to make it easier to write
+        // but if positionals are preferred, we can change.
+        // I'd say, with all the complexity around which fields are added and which aren't, named may be better for clarity.
+        val argsToConstructor = fieldsInVersion.map(f => line"${f.name} = ${f.name}") ++ remainingArgsToConstructor
+
+        val applyMethod =
+            // format: off
+          line"def apply(${renderArgs(fieldsInVersion, noDefault = true)}): ${product.nameRef} = new ${product.nameRef}(${argsToConstructor.intercalate(Line.comma)})"
+            // format: on
+
+        lines(
+          versionComment,
+          applyMethod
+        )
+
+      }
     )
   }
 
@@ -1036,6 +1168,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
+    val isBincompatFriendly = hints.contains(Hint.BincompatFriendly)
+
     def smartConstructor(alt: Alt): Lines = {
       val cn = caseName(name, alt).name
       val ident = NameDef(uncapitalise(alt.name))
@@ -1081,7 +1215,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
     )
     val visitor: Lines = lines(
-      block(line"trait Visitor[A]")(
+      block({
+        // In bincompat-friendly mode, we can't allow using the raw visitor - only the Default variant is safe to use.
+        // Making the visitor sealed is a neat trick that allows us to keep everything else unchanged.
+        val sealedOrNot = if (isBincompatFriendly) line"sealed " else Line.empty
+        line"${sealedOrNot}trait Visitor[A]"
+      })(
         alts.map { alt =>
           val ident = NameDef(uncapitalise(alt.name))
           line"def $ident(value: ${caseNameType(name, alt)}): A"
@@ -1109,6 +1248,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"case value: ${caseNameForMatch(name, alt)} => visitor.$ident(value$innerValue)"
         }
       )
+
+    val altPrivatePrefix = if (isBincompatFriendly) line"private[${name}] " else Line.empty
+
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
@@ -1139,7 +1281,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
+              line"${altPrivatePrefix}case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
               line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name](${renderStringLiteral(realName)}).addHints(hints)""",
             )
             // format: on
@@ -1151,7 +1293,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
+              line"${altPrivatePrefix}final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
             )
           case (
                 Alt(_, realName, UnionMember.ProductCase(struct), altHints),
@@ -1181,7 +1323,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 altHints
               ) =>
             val cn = caseName(name, a)
-            block(line"object ${cn.nameDef}")(
+            block(line"${altPrivatePrefix}object ${cn.nameDef}")(
               renderHintsVal(altHints),
               // format: off
               line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
@@ -1219,41 +1361,52 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
+  private def renderFieldDefault(field: Field): Option[Line] = field.modifier match {
+    // non-required fields with no default get a default of None
+    case Field.Modifier(false, _, None) => Some(NameRef("scala.None").toLine)
+    // nullable with a default of null
+    // (the Some(_) check on the second parameter is necessary in order to correctly render in mode OPTION_ONLY)
+    case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode =>
+      Some(NameRef("smithy4s.Nullable.Null").toLine)
+    // nullable with a default of a value
+    case Field.Modifier(_, true, Some(Field.Default(_, Some(default)))) =>
+      Some {
+        NameRef("smithy4s.Nullable.Value").toLine + Literal("(") + renderDefault(default) + Literal(")")
+      }
+    case Field.Modifier(_, _, Some(Field.Default(_, Some(default)))) => Some(renderDefault(default))
+    case _                                                           => None
+  }
+
   private def fieldToRenderLine(
       field: Field,
-      noDefault: Boolean = false
+      noDefault: Boolean,
+      modifiers: Line = Line.empty,
+      defaultValue: Option[Line] = None
   ): Line = {
     val tpeLine = Line.fieldType(field)
-    import field._
-
-    val defaultLine: Option[Line] = field.modifier match {
-      // non-required fields with no default get a default of None
-      case Field.Modifier(false, _, None) => Some(NameRef("scala.None").toLine)
-      // nullable with a default of null
-      // (the Some(_) check on the second parameter is necessary in order to correctly render in mode OPTION_ONLY)
-      case Field.Modifier(_, true, Some(Field.Default(node, Some(_)))) if node == Node.nullNode =>
-        Some(NameRef("smithy4s.Nullable.Null").toLine)
-      // nullable with a default of a value
-      case Field.Modifier(_, true, Some(Field.Default(_, Some(default)))) =>
-        Some {
-          NameRef("smithy4s.Nullable.Value").toLine + Literal("(") + renderDefault(default) + Literal(")")
-        }
-      case Field.Modifier(_, _, Some(Field.Default(_, Some(default)))) => Some(renderDefault(default))
-      case _                                                           => None
-    }
 
     val shouldRenderDefault = !noDefault && !field.hints.contains(Hint.NoDefault)
 
-    defaultLine match {
-      case Some(default) if shouldRenderDefault => line"$name: " + tpeLine + Literal(" = ") + default
-      case _                                    => line"$name: " + tpeLine
-    }
+    val defaultPart =
+      defaultValue
+        .orElse(renderFieldDefault(field))
+        .collectFirst {
+          case default if shouldRenderDefault => line" = " + default
+        }
+        .getOrElse(Line.empty)
+
+    modifiers + line"${field.name}: $tpeLine" + defaultPart
   }
 
-  private def renderArgs(fields: List[Field]): Line = fields
+  private def renderArgs(
+      fields: List[Field],
+      fieldModifiers: Line = Line.empty,
+      noDefault: Boolean = false,
+      defaultValue: Field => Option[Line] = _ => None
+  ): Line = fields
     .map { f =>
       deprecationAnnotation(f.hints).appendIf(_.nonEmpty)(Line.space) +
-        fieldToRenderLine(f)
+        fieldToRenderLine(f, noDefault = noDefault, modifiers = fieldModifiers, defaultValue = defaultValue(f))
     }
     .intercalate(Line.comma)
 
