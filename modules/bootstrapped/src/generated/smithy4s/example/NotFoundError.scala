@@ -8,8 +8,7 @@ import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class NotFoundError(name: String) extends Smithy4sThrowable {
-}
+final case class NotFoundError(name: String) extends Smithy4sThrowable
 
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example", "NotFoundError")
