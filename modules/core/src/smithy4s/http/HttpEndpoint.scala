@@ -90,7 +90,10 @@ object HttpEndpoint {
    * B[x] is a label then A is more specific than B, If A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B If n > m then A is
    * more specific than B If p > q then A is more specific than B
    */
-  def lt(left: HttpEndpoint[_], right: HttpEndpoint[_]): Boolean = {
+  private[smithy4s] def lt(
+      left: HttpEndpoint[_],
+      right: HttpEndpoint[_]
+  ): Boolean = {
     // If A[x] is a literal and B[x] is a label then A is more specific than B
     // If A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B
     val weight: PathSegment => Int = {
