@@ -81,7 +81,7 @@ object HttpEndpoint {
   case class HttpEndpointError(message: String) extends Exception(message)
 
   /**
-   * Returns true if "left" is more specific or equally specific to "right", according to https://smithy.io/2.0/spec/http-bindings.html#specificity-routing
+   * Returns true if "left" is more or equally specific to "right", according to https://smithy.io/2.0/spec/http-bindings.html#specificity-routing
 
    * The following algorithm is used to compare two paths
    *
