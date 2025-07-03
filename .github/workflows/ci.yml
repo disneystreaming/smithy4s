@@ -136,9 +136,7 @@ jobs:
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
       - name: Publish ${{ github.ref }}
-        run: |
-          echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
-          sbt 'pullRemoteCache; publishSigned; sonaRelease'
+        run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}

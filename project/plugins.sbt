@@ -16,6 +16,7 @@ addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.1.0")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.4")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.10")
 addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.7")
+addSbtPlugin("com.github.sbt"       % "sbt-ci-release"                % "1.11.1")
 
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.11.4",
