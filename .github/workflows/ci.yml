@@ -140,7 +140,6 @@ jobs:
           echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
           sbt 'pullRemoteCache; release'
         env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.CENTRAL_SONATYPE_USERNAME }}
