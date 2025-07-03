@@ -522,6 +522,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       else localStaging.value
     },
     // sonatypeCredentialHost := "central.sonatype.com",
+    pomIncludeRepository := { _ => false },
     publishMavenStyle := true,
     publishLocal / publishMavenStyle := false,
     homepage := Some(url("https://github.com/disneystreaming")),
