@@ -232,7 +232,7 @@ object HttpUnaryServerRouter {
     private val perMethodEndpoint: Map[HttpMethod, List[HttpEndpointHandler]] = {
       httpEndpointHandlers.groupBy(_.httpEndpoint.method).map { case (method, handlers) =>
         method -> handlers.sortWith { case (x, y) =>
-          HttpEndpoint.lt(x.httpEndpoint, y.httpEndpoint)
+          HttpEndpoint.moreSpecific(x.httpEndpoint, y.httpEndpoint)
         }
       }
     }

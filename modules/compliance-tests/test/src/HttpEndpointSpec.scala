@@ -24,11 +24,11 @@ import scala.util.Random
 
 /**
  * The following algorithm is used to compare two paths
- * 
+ *
   * Given two ambiguous URI patterns A and B with segments [A0, …, An] and [B0, …, Bm] with query string literals [AQ0, …, AQp] and [BQ0, …, BQq]
-  * (with both p and q possibly zero, i.e., without query string literals), the following steps are taken to compare them, 
+  * (with both p and q possibly zero, i.e., without query string literals), the following steps are taken to compare them,
   * for each index x from 0 to min(n, m)
-  * 
+  *
   * If A[x] and B[x] are both literals then continue (the literal values have to be equal otherwise the patterns are not ambiguous)
   * If A[x] is a literal and B[x] is a label then A is more specific than B,
   * If A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B
@@ -86,14 +86,14 @@ object HttpEndpointSpec extends SimpleIOSuite {
     val expectedOrder = List[HttpEndpoint[_]](a, b, c, d)
     val shuffleOrder = Random.shuffle(expectedOrder)
 
-    expect(shuffleOrder.sortWith(HttpEndpoint.lt) == expectedOrder)
+    expect(shuffleOrder.sortWith(HttpEndpoint.moreSpecific) == expectedOrder)
   }
 
   pureTest("A[x] and B[x] are both literals then continue") {
     val a = HttpEndpointDummy(path = List(PathSegment.static("abc")))
     val b = HttpEndpointDummy(path = List(PathSegment.static("bcd")))
 
-    expect(HttpEndpoint.lt(a, b))
+    expect(HttpEndpoint.moreSpecific(a, b))
   }
 
   pureTest(
@@ -106,7 +106,7 @@ object HttpEndpointSpec extends SimpleIOSuite {
       List(PathSegment.static("bcd"), PathSegment.label("xyz"))
     )
 
-    expect(HttpEndpoint.lt(a, b))
+    expect(HttpEndpoint.moreSpecific(a, b))
   }
 
   pureTest(
@@ -119,7 +119,7 @@ object HttpEndpointSpec extends SimpleIOSuite {
       List(PathSegment.static("bcd"), PathSegment.greedy("xyz"))
     )
 
-    expect(HttpEndpoint.lt(a, b))
+    expect(HttpEndpoint.moreSpecific(a, b))
   }
 
   pureTest("n > m then A is more specific than B") {
@@ -128,7 +128,7 @@ object HttpEndpointSpec extends SimpleIOSuite {
     )
     val b = HttpEndpointDummy(path = List(PathSegment.static("efg")))
 
-    expect(HttpEndpoint.lt(a, b))
+    expect(HttpEndpoint.moreSpecific(a, b))
   }
 
   pureTest("p > q then A is more specific than B") {
@@ -141,6 +141,6 @@ object HttpEndpointSpec extends SimpleIOSuite {
       staticQueryParams = Map("a" -> Seq.empty)
     )
 
-    expect(HttpEndpoint.lt(a, b))
+    expect(HttpEndpoint.moreSpecific(a, b))
   }
 }

@@ -81,6 +81,8 @@ object HttpEndpoint {
   case class HttpEndpointError(message: String) extends Exception(message)
 
   /**
+   * Returns true if "left" is more specific or equally specific to "right", according to https://smithy.io/2.0/spec/http-bindings.html#specificity-routing
+
    * The following algorithm is used to compare two paths
    *
    * Given two ambiguous URI patterns A and B with segments [A0, …, An] and [B0, …, Bm] with query string literals [AQ0, …, AQp] and [BQ0, …, BQq] (with both p
@@ -88,9 +90,9 @@ object HttpEndpoint {
    *
    * If A[x] and B[x] are both literals then continue (the literal values have to be equal otherwise the patterns are not ambiguous) If A[x] is a literal and
    * B[x] is a label then A is more specific than B, If A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B If n > m then A is
-   * more specific than B If p > q then A is more specific than B
+   * more specific than B If p > q then A is more specific than B.
    */
-  def lt(left: HttpEndpoint[_], right: HttpEndpoint[_]): Boolean = {
+  def moreSpecific(left: HttpEndpoint[_], right: HttpEndpoint[_]): Boolean = {
     // If A[x] is a literal and B[x] is a label then A is more specific than B
     // If A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B
     val weight: PathSegment => Int = {
