@@ -521,7 +521,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
       else localStaging.value
     },
-    // sonatypeCredentialHost := "central.sonatype.com",
     pomIncludeRepository := { _ => false },
     publishMavenStyle := true,
     publishLocal / publishMavenStyle := false,
