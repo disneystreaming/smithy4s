@@ -201,3 +201,32 @@ list scalaImports {
     conflicts: [unwrap]
 )
 structure validateNewtype {}
+
+/// Marks the given shape to be generated in a way that allows binary-compatible evolution.
+/// For example, classes generated from such structures will not have a public copy method, but will have .withXXX methods instead.
+/// Unions will not be generated as sealed traits, but will have visitor and projection methods.
+@trait(
+    selector: ":test(structure, union)"
+    conflicts: [adt, adtMember]
+)
+@traitValidators({
+    "bincompatFriendly.NoErrors": { selector: "[trait|error]", message: "A @bincompatFriendly structure must not have the error trait." }
+    "bincompatFriendly.NoInputOutput": { selector: ":in(:root(operation :is(-[input]->, -[output]->)))", message: "A @bincompatFriendly structure must not be used as an operation input/output." }
+    "bincompatFriendly.NoAdtMemberTargets": { selector: "union > member:test(> [trait|smithy4s.meta#adtMember])", message: "Members of an @bincompatFriendly union must not target shapes that have the adtMember trait." }
+    "bincompatFriendly.NoAdtTargets": { selector: "< :in(:root(union[trait|smithy4s.meta#adt] > member))", message: "Shapes with the @bincompatFriendly trait must not be used as members of an adt union." }
+})
+structure bincompatFriendly {
+    // todo: optional parameter for rendering the auxiliary `apply` methods?
+    // like, if you enable it, you only get an `apply` with what's effectively required.
+    // that way, new optional fields and those with defaults can be added without bincompatAdded.
+    // This an be added later, if it's opt-in.
+}
+
+@trait(selector: "structure[trait|smithy4s.meta#bincompatFriendly] > member")
+@traitValidators({
+    "bincompatAdded.MustHaveDefault": { selector: "[trait|required]:not([trait|default])", message: "A @bincompatAdded required member must have a default value." }
+})
+structure bincompatAdded {
+    @required
+    version: String
+}
