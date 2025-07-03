@@ -6,7 +6,7 @@ lazy val foo = (project in file("foo"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
     libraryDependencies ++= Seq(
-      "io.github.disneystreaming.smithy4s" %% "smithy4s-aws-kernel" % smithy4sVersion.value
+      "com.disneystreaming.smithy4s" %% "smithy4s-aws-kernel" % smithy4sVersion.value
     )
   )
 

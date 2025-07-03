@@ -60,13 +60,12 @@ class ModelLoaderSpec extends FunSuite {
     model.expectShape(ShapeId.from("testlibrary#MyString"))
   }
 
-  // TODO: re-enable this test once smithy4s is moved over to new maven central repo
   test(
-    "ModelLoader can load a version of the smithy4s protocol conflicting against the current".ignore
+    "ModelLoader can load a version of the smithy4s protocol conflicting against the current"
   ) {
     doLoad(
       dependencies =
-        List("io.github.disneystreaming.smithy4s:smithy4s-protocol:0.18.29"),
+        List("com.disneystreaming.smithy4s:smithy4s-protocol:0.18.29"),
       repositories = Nil
     )
     // nothing failed

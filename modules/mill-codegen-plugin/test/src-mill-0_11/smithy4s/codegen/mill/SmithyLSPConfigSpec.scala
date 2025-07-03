@@ -68,7 +68,7 @@ class SmithyLSPConfigSpec extends munit.FunSuite {
           |    "dependencies": [
           |       "io.github.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",
           |       "software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}",
-          |       "io.github.disneystreaming.smithy4s:smithy4s-protocol:${smithy4s.codegen.BuildInfo.version}"
+          |       "com.disneystreaming.smithy4s:smithy4s-protocol:${smithy4s.codegen.BuildInfo.version}"
           |    ],
           |    "repositories": [
           |       { "url": "https://some.corpo.example.com/artifactory" }

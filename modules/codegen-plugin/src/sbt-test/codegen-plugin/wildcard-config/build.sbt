@@ -35,7 +35,7 @@ val root = project
       }
     },
     libraryDependencies ++= Seq(
-      "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
+      "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     )
   )
 

@@ -9,7 +9,7 @@ lazy val root = project
         "src/main/smithy",
         "software.amazon.smithy:smithy-waiters:1.38.0",
         s"io.github.disneystreaming.alloy:alloy-core:${smithy4s.codegen.BuildInfo.alloyVersion}",
-        "io.github.disneystreaming.smithy4s:smithy4s-protocol:",
+        "com.disneystreaming.smithy4s:smithy4s-protocol:",
         "custom",
         "attribute"
       )
@@ -37,8 +37,8 @@ lazy val foo = (project in file("foo"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
     libraryDependencies ++= Seq(
-      "io.github.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
-      "io.github.disneystreaming.smithy4s" % "smithy4s-protocol" % smithy4sVersion.value % Smithy4s
+      "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
+      "com.disneystreaming.smithy4s" % "smithy4s-protocol" % smithy4sVersion.value % Smithy4s
     )
   )
 

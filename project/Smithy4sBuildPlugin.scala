@@ -509,8 +509,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   lazy val simpleNativeLayout = simpleLayout(NativePlatform)
 
   lazy val publishSettings = Seq(
-    organization := "io.github.disneystreaming.smithy4s",
-    sonatypeProfileName := "io.github.disneystreaming",
+    organization := "com.disneystreaming.smithy4s",
+    sonatypeProfileName := "com.disneystreaming",
     version := sys.env
       .get("GITHUB_REF")
       .filter(_.startsWith("refs/tags/v"))

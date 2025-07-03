@@ -31,9 +31,9 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
 
   private val coreDep =
-    ivy"io.github.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
+    ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
-  ivy"io.github.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+  ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
 
   test("basic codegen runs") {
     object foo extends TestBaseModule with Smithy4sModule {
@@ -260,7 +260,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       object foo extends Smithy4sModule {
         override def scalaVersion = "2.13.16"
         override def ivyDeps = Agg(
-          ivy"io.github.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+          ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
         )
         override def smithy4sIvyDeps: T[Agg[Dep]] = Agg(
           ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
