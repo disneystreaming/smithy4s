@@ -460,7 +460,8 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.generic.value,
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.24"
+      "io.get-coursier" %% "coursier" % "2.1.24",
+      Dependencies.Mima.core % Test
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
