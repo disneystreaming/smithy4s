@@ -19,7 +19,7 @@ ThisBuild / mimaBaseVersion := "0.18.0"
 
 // for Alloy snapshots
 // as well as any other dependency snapshots.
-ThisBuild / resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+ThisBuild / resolvers ++= Resolver.sonatypeCentralSnapshots
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
