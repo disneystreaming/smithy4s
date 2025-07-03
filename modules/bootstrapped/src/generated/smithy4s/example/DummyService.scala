@@ -18,8 +18,11 @@ import smithy4s.schema.Schema.unit
 trait DummyServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP GET /dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar */
   def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): F[PathParams, Nothing, Unit, Nothing, Nothing]
+  /** HTTP GET /dummy */
   def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, on: Option[OpenNums] = None, ons: Option[OpenNumsStr] = None, dbl: Option[Double] = None, slm: Option[Map[String, String]] = None): F[Queries, Nothing, Unit, Nothing, Nothing]
+  /** HTTP POST /dummy */
   def dummyHostPrefix(label1: String, label2: String, label3: HostLabelEnum): F[HostLabelInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](this)

@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 /** <p>Represents the output of a <code>ListTables</code> operation.</p>
+  * 
   * @param TableNames
   *   <p>The names of the tables associated with the current account at the current endpoint. The maximum size of this array is 100.</p>
   *            <p>If <code>LastEvaluatedTableName</code> also appears in the output, you can use this value as the

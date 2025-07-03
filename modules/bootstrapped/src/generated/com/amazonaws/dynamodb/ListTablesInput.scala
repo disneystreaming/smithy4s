@@ -7,6 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
 /** <p>Represents the input of a <code>ListTables</code> operation.</p>
+  * 
   * @param ExclusiveStartTableName
   *   <p>The first table name that this operation will evaluate. Use the value that was returned for
   *           <code>LastEvaluatedTableName</code> in a previous operation, so that you can obtain the next page

@@ -68,7 +68,7 @@ class SimpleRestJsonBuilder private (
 
   @deprecated(
     message = """Use withFieldFilter instead.
-      
+
   Mapping:
    - explicitDefaultsEncoding = false -> FieldFilter.Default
    - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
@@ -97,6 +97,9 @@ class SimpleRestJsonBuilder private (
 
   /**
     * Transforms the underlying JSON codec compiler to change its behaviour.
+    *
+    * Note that the `.maxArity` transformation is only taken into consideration
+    * for servers.
     */
   def transformJsonCodecs(
       f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler

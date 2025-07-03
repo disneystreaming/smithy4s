@@ -29,6 +29,8 @@ object OpenOldEnumTest extends Enumeration[OpenOldEnumTest] with ShapeTag.Compan
 
   val $unknown: String => OpenOldEnumTest = $Unknown(_)
 
+  def fromStringOrUnknown(s: String): OpenOldEnumTest = fromString(s).getOrElse($unknown(s))
+
   val values: List[OpenOldEnumTest] = List(
     ONE,
   )

@@ -17,7 +17,9 @@ import smithy4s.schema.Schema.unit
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  /** @param key
+  /** HTTP GET /{bucketName}/{key}
+    * 
+    * @param key
     *   Sent in the URI label named "key".
     *   Key can also be seen as the filename
     *   It is always required for a GET operation
@@ -25,6 +27,7 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
     *   Sent in the URI label named "bucketName".
     */
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
+  /** HTTP PUT /{bucketName}/{key} */
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)

@@ -14,7 +14,9 @@ import smithy4s.schema.Schema.unit
 trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP POST /simple/{bucketName}/{key} */
   def sendString(key: String, bucketName: String, body: String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
+  /** HTTP POST /complex/{bucketName}/{key} */
   def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
