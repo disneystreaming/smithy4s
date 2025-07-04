@@ -513,6 +513,15 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     sonatypeProfileName := "com.disneystreaming",
     pomIncludeRepository := { _ => false },
     homepage := Some(url("https://github.com/disneystreaming")),
+    version := {
+      val currentVersion = version.value
+      println(s"currentVersion: $currentVersion")
+      if (isSnapshot.value && !currentVersion.endsWith("-SNAPSHOT")) {
+        currentVersion + "-SNAPSHOT"
+      } else {
+        currentVersion
+      }
+    },
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/disneystreaming/smithy4s"),
