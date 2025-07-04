@@ -38,11 +38,6 @@ Global / licenses := Seq(
   "TOST-1.0" -> new URL("https://disneystreaming.github.io/TOST-1.0.txt")
 )
 
-ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
-  else (ThisBuild / version).value
-}
-
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
