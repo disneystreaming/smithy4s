@@ -166,6 +166,10 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         runCount: Int
     )
 
+    /**
+     * Tests all legal combinations (backward compatibility, i.e. you can run against things on a more recent version that you compiled against)
+     * of generated trait code, and generated trait usage code.
+     */
     def traitUsageTest(
         traitModels: List[SmithyFile],
         traitUsageModels: List[SmithyFile],
@@ -173,7 +177,10 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         scalaVersion: String,
         traitUsageNamespace: String
     ): TraitUsageTestStats = {
-      case class TraitJar(file: os.Path, version: String)
+      case class TraitJar(
+          file: os.Path,
+          version: String
+      )
       case class TraitUsageJar(
           file: os.Path,
           version: String,
@@ -239,7 +246,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         val outFile = os.temp.dir() / "out.jar"
 
         successOrElse(
-          "failed to compile Scala code"
+          s"failed to build main jar. Trait jar: $traitJar, traitUsageJar: $traitUsageJar"
         ) {
           val scalaFile = os.temp.dir() / "input.scala"
           os.write(scalaFile, scalaCode)
@@ -274,7 +281,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         if traitUsageJar.version >= mainJar.usageJar.version
       } yield cats.Eval.later {
         successOrElse(
-          "failed to run Scala code"
+          s"failed to run Scala code. Main jar: $mainJar, traitUsageJar: $traitUsageJar, traitJar: $traitJar"
         ) {
           scalaCli
             .run(
