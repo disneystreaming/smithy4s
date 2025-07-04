@@ -6,7 +6,8 @@ import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import cats.syntax.all._
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
-  private val scalaVersions = List("2.12", "2.13", "3")
+  private val scala213 = "2.13"
+  private val scalaVersions = List("2.12", scala213, "3")
 
   private val modelPrefix =
     """$version: "2"
@@ -68,11 +69,110 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .assertBincompatSafe(scalaVersion)
     }
 
-    // todo: remove the .only
-    test(s"Bincompat-friendly struct trait (Scala $scalaVersion)" match {
-      case n if scalaVersion == "2.13" => n.only
-      case n                           => munit.TestOptions(n)
-    }) {
+    // This test takes tens of seconds on each Scala version
+    // and it's unlikely a particular version matters here
+    // so to save time in development we just use one version
+    if (scalaVersion == scala213)
+      test(s"Bincompat-friendly struct trait (Scala $scalaVersion)") {
+        val traitModels = List(
+          "V1_baseline" ->
+            s"""$modelPrefix
+               |@bincompatFriendly
+               |@trait
+               |structure HelloTrait {
+               |  @required s1: String
+               |  s9: String
+               |}
+               |""".stripMargin,
+          "V2_withAdditions" ->
+            s"""$modelPrefix
+               |@bincompatFriendly
+               |@trait
+               |structure HelloTrait {
+               |  @required s1: String = "s1"
+               |  @bincompatAdded(version: "1.0.0") s2: String
+               |  @bincompatAdded(version: "2.0.0") @required s3: String = "s3Default"
+               |  s9: String
+               |}
+               |""".stripMargin,
+          "V3_moreAdditions" ->
+            s"""$modelPrefix
+               |@bincompatFriendly
+               |@trait
+               |structure HelloTrait {
+               |  @required s1: String = "s1"
+               |  @bincompatAdded(version: "1.0.0") s2: String
+               |  @bincompatAdded(version: "2.0.0") @required s3: String = "s3Default"
+               |  s9: String
+               |  @bincompatAdded(version: "3.0.0") s4: String
+               |}
+               |""".stripMargin
+        ).map((SmithyFile.apply _).tupled)
+
+        val traitUsageNamespace = "trait_usage"
+        val traitUsageModels = List(
+          "V1_baseline" ->
+            s"""$$version: "2"
+               |namespace $traitUsageNamespace
+               |
+               |@demo#HelloTrait(s1: "hello s1", s9: "hello s9")
+               |structure MyStruct {}
+               |""".stripMargin,
+          "V2_withAdditions" ->
+            s"""$$version: "2"
+               |namespace $traitUsageNamespace
+               |
+               |@demo#HelloTrait(s1: "hello s1", s2: "hello s2", s3: "hello s3", s9: "hello s9")
+               |structure MyStruct {}
+               |""".stripMargin,
+          "V3_moreAdditions" ->
+            s"""$$version: "2"
+               |namespace $traitUsageNamespace
+               |
+               |@demo#HelloTrait(s1: "hello s1", s2: "hello s2", s3: "hello s3", s9: "hello s9")
+               |structure MyStruct {}
+               |""".stripMargin
+        ).map((SmithyFile.apply _).tupled)
+
+        val scalaCode = s"""|object Main extends App {
+                            |  val h = trait_usage.MyStruct()
+                            |  println(h)
+                            |  trait_usage.MyStruct.hints.all.foreach(println)
+                            |}
+                            |""".stripMargin
+
+        val stats = traitUsageTest(
+          traitModels = traitModels,
+          traitUsageModels = traitUsageModels,
+          scalaCode = scalaCode,
+          scalaVersion = scalaVersion,
+          traitUsageNamespace = traitUsageNamespace
+        )
+
+        assertEquals(
+          stats,
+          TraitUsageTestStats(
+            usageJarCount = 6,
+            mainJarCount = 10,
+            // With 2 files it's 11 runs, with 4 files it's 203
+            runCount = 57
+          )
+        )
+      }
+
+    case class TraitUsageTestStats(
+        usageJarCount: Int,
+        mainJarCount: Int,
+        runCount: Int
+    )
+
+    def traitUsageTest(
+        traitModels: List[SmithyFile],
+        traitUsageModels: List[SmithyFile],
+        scalaCode: String,
+        scalaVersion: String,
+        traitUsageNamespace: String
+    ): TraitUsageTestStats = {
       case class TraitJar(file: os.Path, version: String)
       case class TraitUsageJar(
           file: os.Path,
@@ -85,41 +185,6 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
           traitJarVersion: String
       )
 
-      val traitModels = List(
-        "V1_baseline" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |@trait
-             |structure HelloTrait {
-             |  @required s1: String
-             |  s9: String
-             |}
-             |""".stripMargin,
-        "V2_withAdditions" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |@trait
-             |structure HelloTrait {
-             |  @required s1: String = "s1"
-             |  @bincompatAdded(version: "1.0.0") s2: String
-             |  @bincompatAdded(version: "2.0.0") @required s3: String = "s3Default"
-             |  s9: String
-             |}
-             |""".stripMargin,
-        "V3_moreAdditions" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |@trait
-             |structure HelloTrait {
-             |  @required s1: String = "s1"
-             |  @bincompatAdded(version: "1.0.0") s2: String
-             |  @bincompatAdded(version: "2.0.0") @required s3: String = "s3Default"
-             |  s9: String
-             |  @bincompatAdded(version: "3.0.0") s4: String
-             |}
-             |""".stripMargin
-      ).map((SmithyFile.apply _).tupled)
-
       val traitJars: List[TraitJar] = buildJars(
         traitModels,
         scalaVersion = scalaVersion
@@ -130,29 +195,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       )
 
       val traitUsageJars =
-        List(
-          "V1_baseline" ->
-            s"""$$version: "2"
-               |namespace trait_usage
-               |
-               |@demo#HelloTrait(s1: "hello s1", s9: "hello s9")
-               |structure MyStruct {}
-               |""".stripMargin,
-          "V2_withAdditions" ->
-            s"""$$version: "2"
-               |namespace trait_usage
-               |
-               |@demo#HelloTrait(s1: "hello s1", s2: "hello s2", s3: "hello s3", s9: "hello s9")
-               |structure MyStruct {}
-               |""".stripMargin,
-          "V3_moreAdditions" ->
-            s"""$$version: "2"
-               |namespace trait_usage
-               |
-               |@demo#HelloTrait(s1: "hello s1", s2: "hello s2", s3: "hello s3", s9: "hello s9")
-               |structure MyStruct {}
-               |""".stripMargin
-        ).map((SmithyFile.apply _).tupled)
+        traitUsageModels
           .flatMap { traitUsageSmithyFile =>
             // We need an exact match for the trait model
             val correspondingTraitModel =
@@ -168,12 +211,12 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
             val compatibleTraitJars = traitJars
               .filter(_.version >= traitUsageSmithyFile.modelName)
 
-            compatibleTraitJars.map { case (traitJar) =>
+            compatibleTraitJars.map { traitJar =>
               val (_, traitUsageJar) = buildJar(
                 modelName = "trait-usage-" + traitUsageSmithyFile.modelName,
                 smithyFiles =
                   List(traitUsageSmithyFile, correspondingTraitModel),
-                allowedNS = Some(Set("trait_usage")),
+                allowedNS = Some(Set(traitUsageNamespace)),
                 scalaVersion = scalaVersion,
                 extraJars = List(traitJar.file)
               )
@@ -185,16 +228,6 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
               )
             }
           }
-
-      // Sanity check
-      assertEquals(traitUsageJars.size, 6)
-
-      val scalaCode = s"""|object Main extends App {
-                          |  val h = trait_usage.MyStruct()
-                          |  println(h)
-                          |  trait_usage.MyStruct.hints.all.foreach(println)
-                          |}
-                          |""".stripMargin
 
       val mainJars = for {
         traitJar <- traitJars
@@ -229,8 +262,6 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         }
       }
 
-      assertEquals(mainJars.size, 10)
-
       val runs = for {
         traitJar <- traitJars
 
@@ -241,7 +272,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         if traitJar.version >= mainJar.traitJarVersion
         if traitJar.version >= mainJar.usageJar.traitJarVersion
         if traitUsageJar.version >= mainJar.usageJar.version
-      } yield {
+      } yield cats.Eval.later {
         successOrElse(
           "failed to run Scala code"
         ) {
@@ -255,8 +286,15 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         }
       }
 
-      // sanity check. With 2 files it's 11 runs, with 4 files it's 203
-      assertEquals(runs.size, 57)
+      println(s"Performing ${runs.size} runs for Scala $scalaVersion...")
+      runs.foreach(_.value)
+      println("Finished runs for Scala " + scalaVersion)
+
+      TraitUsageTestStats(
+        usageJarCount = traitUsageJars.size,
+        mainJarCount = mainJars.size,
+        runCount = runs.size
+      )
     }
 
     test(s"Bincompat-friendly unions (Scala $scalaVersion)") {
