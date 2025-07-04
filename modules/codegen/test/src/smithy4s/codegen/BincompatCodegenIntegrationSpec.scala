@@ -69,6 +69,81 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .assertBincompatSafe(scalaVersion)
     }
 
+    test(s"Bincompat-friendly unions (Scala $scalaVersion)") {
+      modelChanges(
+        "baseline" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |union Hello {
+             |  s1: String
+             |}
+             |""".stripMargin,
+        "memberAdded" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |union Hello {
+             |  s1: String
+             |  s2: String
+             |}
+             |""".stripMargin
+      )
+        .withRunScalaCode(
+          s"""|object Main extends App {
+              |  val h = demo.Hello.s1("hello s1")
+              |  println(h)
+              |  assert(h.project.s1.get == "hello s1")
+              |  h.accept(new demo.Hello.Visitor.Default[Unit] {
+              |    def default: Unit = ()
+              |
+              |    override def s1(value: String): Unit = println(value)
+              |  })
+              |}
+              |""".stripMargin
+        )
+        .assertBincompatSafe(scalaVersion)
+    }
+
+    // TODO
+    test(s"Bincompat-friendly enums (Scala $scalaVersion)".ignore) {
+      modelChanges(
+        "baseline" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |enum Hello {
+             |  S1
+             |}
+             |""".stripMargin,
+        "memberAdded" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |enum Hello {
+             |  S1
+             |  S2
+             |}
+             |""".stripMargin
+      ).assertBincompatSafe(scalaVersion)
+    }
+
+    test(s"Bincompat-friendly intEnums (Scala $scalaVersion)".ignore) {
+      modelChanges(
+        "baseline" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |intEnum Hello {
+             |  S1 = 1
+             |}
+             |""".stripMargin,
+        "memberAdded" ->
+          s"""$modelPrefix
+             |@bincompatFriendly
+             |intEnum Hello {
+             |  S1 = 1
+             |  S2 = 2
+             |}
+             |""".stripMargin
+      ).assertBincompatSafe(scalaVersion)
+    }
+
     // This test takes tens of seconds on each Scala version
     // and it's unlikely a particular version matters here
     // so to save time in development we just use one version
@@ -159,225 +234,149 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
           )
         )
       }
+  }
 
-    case class TraitUsageTestStats(
-        usageJarCount: Int,
-        mainJarCount: Int,
-        runCount: Int
-    )
+  private case class TraitUsageTestStats(
+      usageJarCount: Int,
+      mainJarCount: Int,
+      runCount: Int
+  )
 
-    /**
+  /**
      * Tests all legal combinations (backward compatibility, i.e. you can run against things on a more recent version that you compiled against)
      * of generated trait code, and generated trait usage code.
      */
-    def traitUsageTest(
-        traitModels: List[SmithyFile],
-        traitUsageModels: List[SmithyFile],
-        scalaCode: String,
-        scalaVersion: String,
-        traitUsageNamespace: String
-    ): TraitUsageTestStats = {
-      case class TraitJar(
-          file: os.Path,
-          version: String
-      )
-      case class TraitUsageJar(
-          file: os.Path,
-          version: String,
-          traitJarVersion: String
-      )
-      case class MainJar(
-          file: os.Path,
-          usageJar: TraitUsageJar,
-          traitJarVersion: String
-      )
+  private def traitUsageTest(
+      traitModels: List[SmithyFile],
+      traitUsageModels: List[SmithyFile],
+      scalaCode: String,
+      scalaVersion: String,
+      traitUsageNamespace: String
+  ): TraitUsageTestStats = {
+    case class TraitJar(
+        file: os.Path,
+        version: String
+    )
+    case class TraitUsageJar(
+        file: os.Path,
+        version: String,
+        traitJarVersion: String
+    )
+    case class MainJar(
+        file: os.Path,
+        usageJar: TraitUsageJar,
+        traitJarVersion: String
+    )
 
-      val traitJars: List[TraitJar] = buildJars(
-        traitModels,
-        scalaVersion = scalaVersion
-      ).map(
-        { case (modelName, jar) =>
-          TraitJar(jar, modelName)
-        }
-      )
+    val traitJars: List[TraitJar] = buildJars(
+      traitModels,
+      scalaVersion = scalaVersion
+    ).map(
+      { case (modelName, jar) =>
+        TraitJar(jar, modelName)
+      }
+    )
 
-      val traitUsageJars =
-        traitUsageModels
-          .flatMap { traitUsageSmithyFile =>
-            // We need an exact match for the trait model
-            val correspondingTraitModel =
-              traitModels
-                .find(_.modelName == traitUsageSmithyFile.modelName)
-                .getOrElse(
-                  fail(
-                    s"Could not find corresponding trait model for ${traitUsageSmithyFile.modelName}"
-                  )
+    val traitUsageJars =
+      traitUsageModels
+        .flatMap { traitUsageSmithyFile =>
+          // We need an exact match for the trait model
+          val correspondingTraitModel =
+            traitModels
+              .find(_.modelName == traitUsageSmithyFile.modelName)
+              .getOrElse(
+                fail(
+                  s"Could not find corresponding trait model for ${traitUsageSmithyFile.modelName}"
                 )
-
-            // But the compile-time jars have to be AT LEAST as new as the trait model
-            val compatibleTraitJars = traitJars
-              .filter(_.version >= traitUsageSmithyFile.modelName)
-
-            compatibleTraitJars.map { traitJar =>
-              val (_, traitUsageJar) = buildJar(
-                modelName = "trait-usage-" + traitUsageSmithyFile.modelName,
-                smithyFiles =
-                  List(traitUsageSmithyFile, correspondingTraitModel),
-                allowedNS = Some(Set(traitUsageNamespace)),
-                scalaVersion = scalaVersion,
-                extraJars = List(traitJar.file)
               )
 
-              TraitUsageJar(
-                file = traitUsageJar,
-                version = traitUsageSmithyFile.modelName,
-                traitJarVersion = traitJar.version
-              )
-            }
+          // But the compile-time jars have to be AT LEAST as new as the trait model
+          val compatibleTraitJars = traitJars
+            .filter(_.version >= traitUsageSmithyFile.modelName)
+
+          compatibleTraitJars.map { traitJar =>
+            val (_, traitUsageJar) = buildJar(
+              modelName = "trait-usage-" + traitUsageSmithyFile.modelName,
+              smithyFiles = List(traitUsageSmithyFile, correspondingTraitModel),
+              allowedNS = Some(Set(traitUsageNamespace)),
+              scalaVersion = scalaVersion,
+              extraJars = List(traitJar.file)
+            )
+
+            TraitUsageJar(
+              file = traitUsageJar,
+              version = traitUsageSmithyFile.modelName,
+              traitJarVersion = traitJar.version
+            )
           }
+        }
 
-      val mainJars = for {
-        traitJar <- traitJars
+    val mainJars = for {
+      traitJar <- traitJars
 
-        traitUsageJar <- traitUsageJars
-        if traitJar.version >= traitUsageJar.traitJarVersion
-      } yield {
+      traitUsageJar <- traitUsageJars
+      if traitJar.version >= traitUsageJar.traitJarVersion
+    } yield {
 
-        val outFile = os.temp.dir() / "out.jar"
+      val outFile = os.temp.dir() / "out.jar"
 
-        successOrElse(
-          s"failed to build main jar. Trait jar: $traitJar, traitUsageJar: $traitUsageJar"
-        ) {
-          val scalaFile = os.temp.dir() / "input.scala"
-          os.write(scalaFile, scalaCode)
+      successOrElse(
+        s"failed to build main jar. Trait jar: $traitJar, traitUsageJar: $traitUsageJar"
+      ) {
+        val scalaFile = os.temp.dir() / "input.scala"
+        os.write(scalaFile, scalaCode)
 
-          scalaCli
-            .packageJar(
-              scalaVersion = scalaVersion,
-              outputJarPath = outFile,
-              sourceDirectories = List(scalaFile),
-              extraJars = List(traitJar.file, traitUsageJar.file),
-              extraDeps = List(smithy4sCoreDependency)
-            )
-            .call(cwd = os.temp.dir())
-
-          MainJar(
-            file = outFile,
-            usageJar = traitUsageJar,
-            traitJarVersion = traitJar.version
+        scalaCli
+          .packageJar(
+            scalaVersion = scalaVersion,
+            outputJarPath = outFile,
+            sourceDirectories = List(scalaFile),
+            extraJars = List(traitJar.file, traitUsageJar.file),
+            extraDeps = List(smithy4sCoreDependency)
           )
-        }
-      }
+          .call(cwd = os.temp.dir())
 
-      val runs = for {
-        traitJar <- traitJars
-
-        traitUsageJar <- traitUsageJars
-        if traitJar.version >= traitUsageJar.traitJarVersion
-
-        mainJar <- mainJars
-        if traitJar.version >= mainJar.traitJarVersion
-        if traitJar.version >= mainJar.usageJar.traitJarVersion
-        if traitUsageJar.version >= mainJar.usageJar.version
-      } yield cats.Eval.later {
-        successOrElse(
-          s"failed to run Scala code. Main jar: $mainJar, traitUsageJar: $traitUsageJar, traitJar: $traitJar"
-        ) {
-          scalaCli
-            .run(
-              scalaVersion = scalaVersion,
-              extraJars = List(traitJar.file, traitUsageJar.file, mainJar.file),
-              extraDeps = List(smithy4sCoreDependency)
-            )
-            .call(cwd = os.temp.dir())
-        }
-      }
-
-      println(s"Performing ${runs.size} runs for Scala $scalaVersion...")
-      runs.foreach(_.value)
-      println("Finished runs for Scala " + scalaVersion)
-
-      TraitUsageTestStats(
-        usageJarCount = traitUsageJars.size,
-        mainJarCount = mainJars.size,
-        runCount = runs.size
-      )
-    }
-
-    test(s"Bincompat-friendly unions (Scala $scalaVersion)") {
-      modelChanges(
-        "baseline" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |union Hello {
-             |  s1: String
-             |}
-             |""".stripMargin,
-        "memberAdded" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |union Hello {
-             |  s1: String
-             |  s2: String
-             |}
-             |""".stripMargin
-      )
-        .withRunScalaCode(
-          s"""|object Main extends App {
-              |  val h = demo.Hello.s1("hello s1")
-              |  println(h)
-              |  assert(h.project.s1.get == "hello s1")
-              |  h.accept(new demo.Hello.Visitor.Default[Unit] {
-              |    def default: Unit = ()
-              |
-              |    override def s1(value: String): Unit = println(value)
-              |  })
-              |}
-              |""".stripMargin
+        MainJar(
+          file = outFile,
+          usageJar = traitUsageJar,
+          traitJarVersion = traitJar.version
         )
-        .assertBincompatSafe(scalaVersion)
+      }
     }
 
-    // TODO
-    test(s"Bincompat-friendly enums (Scala $scalaVersion)".ignore) {
-      modelChanges(
-        "baseline" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |enum Hello {
-             |  S1
-             |}
-             |""".stripMargin,
-        "memberAdded" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |enum Hello {
-             |  S1
-             |  S2
-             |}
-             |""".stripMargin
-      ).assertBincompatSafe(scalaVersion)
+    val runs = for {
+      traitJar <- traitJars
+
+      traitUsageJar <- traitUsageJars
+      if traitJar.version >= traitUsageJar.traitJarVersion
+
+      mainJar <- mainJars
+      if traitJar.version >= mainJar.traitJarVersion
+      if traitJar.version >= mainJar.usageJar.traitJarVersion
+      if traitUsageJar.version >= mainJar.usageJar.version
+    } yield cats.Eval.later {
+      successOrElse(
+        s"failed to run Scala code. Main jar: $mainJar, traitUsageJar: $traitUsageJar, traitJar: $traitJar"
+      ) {
+        scalaCli
+          .run(
+            scalaVersion = scalaVersion,
+            extraJars = List(traitJar.file, traitUsageJar.file, mainJar.file),
+            extraDeps = List(smithy4sCoreDependency)
+          )
+          .call(cwd = os.temp.dir())
+      }
     }
 
-    test(s"Bincompat-friendly intEnums (Scala $scalaVersion)".ignore) {
-      modelChanges(
-        "baseline" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |intEnum Hello {
-             |  S1 = 1
-             |}
-             |""".stripMargin,
-        "memberAdded" ->
-          s"""$modelPrefix
-             |@bincompatFriendly
-             |intEnum Hello {
-             |  S1 = 1
-             |  S2 = 2
-             |}
-             |""".stripMargin
-      ).assertBincompatSafe(scalaVersion)
-    }
+    println(s"Performing ${runs.size} runs for Scala $scalaVersion...")
+    runs.foreach(_.value)
+    println("Finished runs for Scala " + scalaVersion)
+
+    TraitUsageTestStats(
+      usageJarCount = traitUsageJars.size,
+      mainJarCount = mainJars.size,
+      runCount = runs.size
+    )
   }
 
   private def modelChanges(models: (String, String)*) =
