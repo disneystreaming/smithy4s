@@ -62,3 +62,25 @@ union BincompatUnion {
     s1: BincompatEmptyStruct
     s2: BincompatEmptyStruct
 }
+
+@bincompatFriendly
+@trait
+structure BincompatFriendlyTraitStruct {
+    @required
+    base1: String
+
+    @required
+    base2: String
+
+    base3: String
+
+    @bincompatAdded(version: "2.0")
+    added2_1: String = "woop2_1"
+
+    @bincompatAdded(version: "3.0")
+    @required
+    added3_1: String = "woop3_1"
+}
+
+@BincompatFriendlyTraitStruct(base1: "b1", base2: "b2", added3_1: "b4")
+structure HasBincompatTrait {}

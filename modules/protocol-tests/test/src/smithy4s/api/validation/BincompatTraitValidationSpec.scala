@@ -272,7 +272,21 @@ object BincompatTraitValidationSpec extends FunSuite {
     expect(events.contains(expected)) || failure(events.toString())
   }
 
-  // todo: bincompatFriendly is allowed on traits (note that this will need additional codegen support!)
+  test("bincompatFriendly is allowed on traits") {
+    assembleModel(s"""$$version: "2"
+                     |namespace test
+                     |use smithy4s.meta#bincompatFriendly
+                     |use smithy4s.meta#bincompatAdded
+                     |
+                     |@bincompatFriendly
+                     |@trait
+                     |structure SampleStruct {
+                     |  @bincompatAdded(version: "1.0.0")
+                     |  addedField: String
+                     |}
+                     |""".stripMargin).unwrap()
+    success
+  }
 
   test("bincompatAdded is allowed inside bincompatFriendly structs") {
     assembleModel(s"""$$version: "2"
