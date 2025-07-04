@@ -63,6 +63,8 @@ union BincompatUnion {
     s2: BincompatEmptyStruct
 }
 
+// N.B. there's no good way to prove bincompat-ness of traits with just codegen
+// but this is here regardless, to showcase that the use-site compiles _at least on the updated version_.
 @bincompatFriendly
 @trait
 structure BincompatFriendlyTraitStruct {
