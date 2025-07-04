@@ -200,7 +200,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       modelName: String,
       smithyFiles: List[SmithyFile],
       scalaVersion: String,
-      allowedNS: Option[Set[String]] = None
+      allowedNS: Option[Set[String]] = None,
+      extraJars: List[os.Path] = Nil
   ) = {
     val sources = generateCode(smithyFiles, allowedNS)
 
@@ -210,7 +211,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         sourceDirectories = List(sources),
         outputJarPath = out,
         scalaVersion = scalaVersion,
-        extraDeps = List(smithy4sCoreDependency)
+        extraDeps = List(smithy4sCoreDependency),
+        extraJars = extraJars
       )
       .call(cwd = os.temp.dir())
 
