@@ -63,15 +63,15 @@ jobs:
           jvm: temurin:1.17
           apps: sbt
 
-      # - name: Run tests
-      #   run: |
-      #     sbt test_$BUILD_KEY \
-      #         pushRemoteCache_$BUILD_KEY
+      - name: Run tests
+        run: |
+          sbt test_$BUILD_KEY \
+              pushRemoteCache_$BUILD_KEY
 
-      # - name: Run plugin tests
-      #   if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
-      #   run: |
-      #     sbt scripted
+      - name: Run plugin tests
+        if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
+        run: |
+          sbt scripted
 
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm'
