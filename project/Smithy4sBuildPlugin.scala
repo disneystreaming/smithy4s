@@ -513,8 +513,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     sonatypeProfileName := "com.disneystreaming",
     pomIncludeRepository := { _ => false },
     homepage := Some(url("https://github.com/disneystreaming")),
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
-    sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/disneystreaming/smithy4s"),
