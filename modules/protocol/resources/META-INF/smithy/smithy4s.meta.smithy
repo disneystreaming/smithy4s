@@ -204,7 +204,7 @@ structure validateNewtype {}
 
 /// Marks the given shape to be generated in a way that allows binary-compatible evolution.
 /// For example, classes generated from such structures will not have a public copy method, but will have .withXXX methods instead.
-/// Unions will not be generated as sealed traits, but will have visitor and projection methods.
+/// Unions will be generated without direct access to member classes, and their visitor will require a default value.
 @trait(
     selector: ":test(structure, union)"
     conflicts: [adt, adtMember]
