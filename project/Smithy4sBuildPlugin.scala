@@ -515,7 +515,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .get("GITHUB_REF")
       .filter(_.startsWith("refs/tags/v"))
       .map(_.drop("refs/tags/v".length))
-      .getOrElse(version.value),
+      .getOrElse(version.value + "-SNAPSHOT"),
     publishTo := {
       val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
       if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
