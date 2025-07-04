@@ -5,7 +5,7 @@ namespace smithy4s.example
 use alloy#simpleRestJson
 
 @simpleRestJson
-service PizzaAdminService {
+service PizzaAdminService with [CheckQueryService] {
     version: "1.0.0"
     operations: [
         AddMenuItem
@@ -20,7 +20,7 @@ service PizzaAdminService {
         Reservation
         Echo
         OptionalOutput
-        HeadRequest,
+        HeadRequest
         NoContentRequest
     ]
 }
@@ -54,6 +54,7 @@ structure RoundTripData {
     @httpLabel
     @required
     label: String
+
     @httpHeader("HEADER")
     header: String
 
@@ -61,16 +62,20 @@ structure RoundTripData {
     @suppress(["HttpBindingTraitIgnored.Input"])
     @httpQuery("query")
     query: String
+
     body: String
 }
 
 structure HeaderEndpointData {
     @httpHeader("X-UPPERCASE-HEADER")
     uppercaseHeader: String
+
     @httpHeader("X-Capitalized-Header")
     capitalizedHeader: String
+
     @httpHeader("x-lowercase-header")
     lowercaseHeader: String
+
     @httpHeader("x-MiXeD-hEaDEr")
     mixedHeader: String
 }
@@ -79,6 +84,7 @@ structure AddMenuItemResult {
     @httpPayload
     @required
     itemId: String
+
     @timestampFormat("epoch-seconds")
     @httpHeader("X-ADDED-AT")
     @required
@@ -101,6 +107,7 @@ structure VersionOutput {
 structure PriceError {
     @required
     message: String
+
     @required
     @httpHeader("X-CODE")
     code: Integer
@@ -160,6 +167,7 @@ structure AddMenuItemRequest {
     @httpLabel
     @required
     restaurant: String
+
     @httpPayload
     @required
     menuItem: MenuItem
@@ -168,9 +176,12 @@ structure AddMenuItemRequest {
 structure MenuItem {
     @required
     food: Food
+
     @required
     price: Float
+
     tags: Tags
+
     extraData: ExtraData
 }
 
@@ -182,6 +193,7 @@ list Tags {
 map ExtraData {
     @length(min: 2)
     key: String
+
     @length(min: 2, max: 10)
     value: String
 }
@@ -194,6 +206,7 @@ union Food {
 structure Salad {
     @required
     name: String
+
     @required
     ingredients: Ingredients
 }
@@ -201,8 +214,10 @@ structure Salad {
 structure Pizza {
     @required
     name: String
+
     @required
     base: PizzaBase
+
     @required
     toppings: Ingredients
 }
@@ -242,7 +257,9 @@ structure GenericClientError {
 operation Health {
     input: HealthRequest
     output: HealthResponse
-    errors: [UnknownServerError]
+    errors: [
+        UnknownServerError
+    ]
 }
 
 structure HealthRequest {
@@ -264,7 +281,9 @@ structure HealthResponse {
 structure UnknownServerError {
     @required
     errorCode: UnknownServerErrorCode
+
     description: String
+
     stateHash: String
 }
 
@@ -281,7 +300,9 @@ document freeForm
 operation GetEnum {
     input: GetEnumInput
     output: GetEnumOutput
-    errors: [UnknownServerError]
+    errors: [
+        UnknownServerError
+    ]
 }
 
 structure GetEnumInput {
@@ -307,11 +328,15 @@ operation GetIntEnum {
         @httpLabel
         aa: EnumResult
     }
+
     output := {
         @required
         result: EnumResult
     }
-    errors: [UnknownServerError]
+
+    errors: [
+        UnknownServerError
+    ]
 }
 
 intEnum EnumResult {
@@ -324,7 +349,9 @@ intEnum EnumResult {
 operation CustomCode {
     input: CustomCodeInput
     output: CustomCodeOutput
-    errors: [UnknownServerError]
+    errors: [
+        UnknownServerError
+    ]
 }
 
 structure CustomCodeInput {
@@ -344,9 +371,11 @@ operation Reservation {
         @httpLabel
         @required
         name: String
+
         @httpQuery("town")
         town: String
     }
+
     output := {
         @required
         message: String
@@ -355,8 +384,12 @@ operation Reservation {
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {
-    input: EchoInput// this operation must NOT have any errors
-    errors: []
+    input: EchoInput
+
+    // this operation must NOT have any errors
+    errors: [
+
+    ]
 }
 
 structure EchoInput {
@@ -364,9 +397,11 @@ structure EchoInput {
     @httpLabel
     @length(min: 10)
     pathParam: String
+
     @httpQuery("queryParam")
     @length(min: 10)
     queryParam: String
+
     @httpPayload
     @required
     body: EchoBody
@@ -401,3 +436,105 @@ structure HeadRequestOutput {
 @http(method: "GET", uri: "/no-content", code: 204)
 @readonly
 operation NoContentRequest {}
+
+list QueryVariants {
+    member: String
+}
+
+list QueryKinds {
+    member: String
+}
+
+structure CheckQueryOutput {
+    @default
+    variants: QueryVariants
+
+    @default
+    staticVariants: QueryVariants
+
+    @default
+    kinds: QueryKinds
+
+    @default
+    staticKinds: QueryKinds
+}
+
+list QValues {
+    member: String
+}
+
+map QParams {
+    key: String
+    value: QValues
+}
+
+structure CheckQueryInput {
+    @httpQueryParams
+    @default
+    inp: QParams
+}
+
+@http(method: "GET", uri: "/query-check?kind=x&variant=c", code: 200)
+@readonly
+operation CheckQueryKindXVariantC {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+@http(method: "GET", uri: "/query-check?kind=y&variant", code: 200)
+@readonly
+operation CheckQueryKindYVariant {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+
+@http(method: "GET", uri: "/query-check?kind=x&variant=d", code: 200)
+@readonly
+operation CheckQueryKindXVariantD {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+@http(method: "GET", uri: "/query-check?kind=z", code: 200)
+@readonly
+operation CheckQueryKindZ {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+@http(method: "GET", uri: "/query-check?variant=a", code: 200)
+@readonly
+operation CheckQueryVariantA {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+@http(method: "GET", uri: "/query-check?variant=b", code: 200)
+@readonly
+operation CheckQueryVariantB {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+
+@http(method: "GET", uri: "/query-check?kind=z&variant=a", code: 200)
+@readonly
+operation CheckQueryKindZVariantA {
+    input: CheckQueryInput
+    output: CheckQueryOutput
+}
+
+// currently order is important
+@mixin
+service CheckQueryService {
+    operations: [
+        CheckQueryKindXVariantC
+        CheckQueryKindYVariant
+        CheckQueryKindXVariantD
+        CheckQueryKindZ
+        CheckQueryVariantA
+        CheckQueryVariantB
+        CheckQueryKindZVariantA
+    ]
+}

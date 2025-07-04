@@ -358,7 +358,8 @@ private[internals] object Hint {
   case class Default(typedNode: Fix[TypedNode]) extends Hint
   case class Documentation(
       docLines: List[String],
-      memberDocLines: Map[String, List[String]]
+      memberDocLines: Map[String, List[String]],
+      protocolSpecificLines: List[List[String]]
   ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint

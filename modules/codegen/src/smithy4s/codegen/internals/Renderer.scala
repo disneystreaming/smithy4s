@@ -258,12 +258,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 .map(literalReplacements)
                 .map("  " + _)
             }.toList
+        val protocolDocs: List[String] =
+          doc.protocolSpecificLines.flatten.map(literalReplacements)
 
-        val maybeNewline =
-          if (shapeDocs.nonEmpty && memberDocs.nonEmpty) List("", "") else Nil
-        val allDocs = shapeDocs ++ maybeNewline ++ memberDocs
+        val allDocs = List(shapeDocs, protocolDocs, memberDocs)
+          .filterNot(_.isEmpty)
+          .intercalate(List(""))
+
         if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
-        else makeDocLines(shapeDocs ++ memberDocs)
+        else makeDocLines(allDocs)
       }
   }
 

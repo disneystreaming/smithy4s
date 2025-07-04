@@ -48,7 +48,7 @@ private[http4s] class SimpleRestJsonCodecs(
 
   @deprecated(
     message = """Use withFieldFilter instead.
-      
+
   Mapping:
    - newExplicitDefaultsEncoding = false -> FieldFilter.Default
    - newExplicitDefaultsEncoding = true -> FieldFilter.EncodeAll
@@ -81,6 +81,11 @@ private[http4s] class SimpleRestJsonCodecs(
   private val payloadDecoders =
     jsonCodecs.configureJsoniterCodecCompiler(_.withHintMask(hintMask)).decoders
 
+  // ALWAYS using maximum possible arity for client side, as this mechanism is a DDOS protection
+  // that does not make sense for clients.
+  private val clientPayloadDecoders =
+    jsonCodecs.configureJsoniterCodecCompiler(_.withHintMask(hintMask).withMaxArity(Int.MaxValue)).decoders
+
   // Adding X-Amzn-Errortype as well to facilitate interop with Amazon-issued code-generators.
   private val errorHeaders = List(
     smithy4s.http.errorTypeHeader,
@@ -110,7 +115,7 @@ private[http4s] class SimpleRestJsonCodecs(
     val baseRequest = HttpRequest(HttpMethod.POST, toSmithy4sHttpUri(uri, None), Map.empty, Blob.empty)
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(payloadEncoders)
-      .withSuccessBodyDecoders(payloadDecoders)
+      .withSuccessBodyDecoders(clientPayloadDecoders)
       .withErrorBodyDecoders(payloadDecoders)
       .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
       .withMetadataDecoders(Metadata.Decoder)
