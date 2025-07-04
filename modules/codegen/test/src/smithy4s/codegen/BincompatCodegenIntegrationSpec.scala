@@ -4,7 +4,6 @@ import munit.FunSuite
 import com.typesafe.tools.mima.lib.MiMaLib
 import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import cats.syntax.all._
-import os.Path
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
   private val scalaVersions = List("2.12", "2.13", "3")
@@ -201,17 +200,21 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       modelName: String,
       smithyFiles: List[SmithyFile],
       scalaVersion: String,
-      allowedNS: Option[Set[String]] = None,
-      extraCliOptions: List[String] = Nil
+      allowedNS: Option[Set[String]] = None
   ) = {
     val sources = generateCode(smithyFiles, allowedNS)
 
-    modelName -> packageJar(
-      sourceDir = sources,
-      output = os.temp.dir() / s"model-$modelName-$scalaVersion.jar",
-      scalaVersion = scalaVersion,
-      extraCliOptions = extraCliOptions
-    )
+    val out = os.temp.dir() / s"model-$modelName-$scalaVersion.jar"
+    scalaCli
+      .packageJar(
+        sourceDirectories = List(sources),
+        outputJarPath = out,
+        scalaVersion = scalaVersion,
+        extraDeps = List(smithy4sCoreDependency)
+      )
+      .call(cwd = os.temp.dir())
+
+    modelName -> out
   }
 
   // for each version, we want to compare all future versions against it, in the original order
@@ -257,24 +260,23 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       .foreach { case (baseline, futures) =>
         val baselineJar = baseline._2
 
-        val runDir = os.temp.dir()
+        val scalaCodePath = os.temp.dir() / "input.scala"
+        os.write(scalaCodePath, scalaCode)
+
+        val scalaJarPath = os.temp.dir() / "scala-output.jar"
 
         successOrElse(
           s"Failed to compile ${baseline._1} with Scala $scalaVersion and code:\n$scalaCode"
         ) {
-          os.proc(
-            "scala-cli",
-            "--power",
-            "compile",
-            s"--scala=$scalaVersion",
-            s"--compilation-output=${runDir / "out"}",
-            s"--jar=$baselineJar",
-            smithy4sCoreDependency,
-            "_"
-          ).call(
-            cwd = runDir,
-            stdin = scalaCode
-          )
+          scalaCli
+            .packageJar(
+              scalaVersion = scalaVersion,
+              outputJarPath = scalaJarPath,
+              sourceDirectories = List(scalaCodePath),
+              extraJars = List(baselineJar),
+              extraDeps = List(smithy4sCoreDependency)
+            )
+            .call(cwd = os.temp.dir())
         }
 
         // We run with the version we compiled against, and all future versions afterwards
@@ -282,15 +284,13 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
           successOrElse(
             s"Failed to run `$jarName` with Scala $scalaVersion against code compiled with `${baseline._1}`"
           ) {
-            os.proc(
-              "scala-cli",
-              "--power",
-              "run",
-              s"--scala=$scalaVersion",
-              smithy4sCoreDependency,
-              s"--jar=$jar",
-              s"--classpath=${runDir / "out"}"
-            ).call(cwd = runDir)
+            scalaCli
+              .run(
+                scalaVersion = scalaVersion,
+                extraJars = List(jar, scalaJarPath),
+                extraDeps = List(smithy4sCoreDependency)
+              )
+              .call(cwd = os.temp.dir())
           }
         }
       }
@@ -336,32 +336,45 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
     scalaOutputDir
   }
 
-  private def packageJar(
-      sourceDir: os.Path,
-      output: os.Path,
-      scalaVersion: String,
-      extraCliOptions: List[String]
-  ): Path = {
-    os.proc(
-      "scala-cli",
-      "--power",
-      "package",
-      "--library",
-      s"--scala=$scalaVersion",
-      smithy4sCoreDependency,
-      ".",
-      s"--output=$output",
-      extraCliOptions
-    ).call(cwd = sourceDir)
+  private object scalaCli {
+    def packageJar(
+        scalaVersion: String,
+        outputJarPath: os.Path,
+        sourceDirectories: List[os.Path],
+        extraJars: List[os.Path] = Nil,
+        extraDeps: List[String] = Nil
+    ): os.proc = {
+      os.proc(
+        "scala-cli",
+        "--power",
+        "package",
+        "--library",
+        s"--scala=$scalaVersion",
+        s"--output=$outputJarPath",
+        extraJars.map { j => s"--jar=$j" },
+        extraDeps.map { d => s"--dependency=$d" },
+        sourceDirectories
+      )
+    }
 
-    output
+    def run(
+        scalaVersion: String,
+        extraJars: List[os.Path] = Nil,
+        extraDeps: List[String] = Nil
+    ): os.proc =
+      os.proc(
+        "scala-cli",
+        "--power",
+        "run",
+        s"--scala=$scalaVersion",
+        extraJars.map { j => s"--jar=$j" },
+        extraDeps.map { d => s"--dependency=$d" }
+      )
   }
 
-  private val smithy4sCoreDependency = Seq(
-    "--suppress-outdated-dependency-warning",
+  private val smithy4sCoreDependency =
     // We're using a mutable version instead of BuildInfo
     // because we don't want a circular dependency - these tests support the codegen module, which core itself is generated with.
-    s"--dependency=${BuildInfo.smithy4sOrg}::smithy4s-core:latest.stable"
-  )
+    s"${BuildInfo.smithy4sOrg}::smithy4s-core:latest.stable"
 
 }
