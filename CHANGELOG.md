@@ -8,6 +8,7 @@ Thank you!
 # 0.18.39
 
 * http4s: Partially fix [#1619](https://github.com/disneystreaming/smithy4s/issues/1619) by checking request query parameters against the static query parameters in [#1743](https://github.com/disneystreaming/smithy4s/pull/1743)
+* http4s : always set JSON maxArity to Int.MaxValue on the client side, as this mechanism was intended to protect server-side and is very detrimental to clients.
 * codegen: Add HTTP method and pattern to Scaladoc (fixes [#728](https://github.com/disneystreaming/smithy4s/issues/728)) in [#1764](https://github.com/disneystreaming/smithy4s/pull/1764)
 
 # 0.18.38
