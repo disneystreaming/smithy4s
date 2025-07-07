@@ -206,7 +206,7 @@ structure validateNewtype {}
 /// For example, classes generated from such structures will not have a public copy method, but will have .withXXX methods instead.
 /// Unions will be generated without direct access to member classes, and their visitor will require a default value.
 @trait(
-    selector: ":test(structure, union)"
+    selector: ":test(structure, union, enum, intEnum)"
     conflicts: [adt, adtMember]
 )
 @traitValidators({

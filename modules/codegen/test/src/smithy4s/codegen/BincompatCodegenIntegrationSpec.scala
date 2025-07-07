@@ -7,7 +7,8 @@ import cats.syntax.all._
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
   private val scala213 = "2.13"
-  private val scalaVersions = List("2.12", scala213, "3")
+  private val scala3 = "3"
+  private val scalaVersions = List("2.12", scala213, scala3)
 
   private val modelPrefix =
     """$version: "2"
@@ -103,8 +104,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .assertBincompatSafe(scalaVersion)
     }
 
-    // TODO
-    test(s"Bincompat-friendly enums (Scala $scalaVersion)".ignore) {
+    test(s"Bincompat-friendly enums (Scala $scalaVersion)") {
       modelChanges(
         "baseline" ->
           s"""$modelPrefix
@@ -121,10 +121,24 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
              |  S2
              |}
              |""".stripMargin
-      ).assertBincompatSafe(scalaVersion)
+      )
+        .withRunScalaCode(
+          s"""|//> using option -Xfatal-warnings
+              |object Main extends App {
+              |  val h = demo.Hello.S1
+              |  println(h)
+              |  assert(h.value == "S1")
+              |  demo.Hello.values.foreach {
+              |    case demo.Hello.S1 => println("S1 value")
+              |    case _ => println("Unknown value")
+              |  }
+              |}
+              |""".stripMargin
+        )
+        .assertBincompatSafe(scalaVersion)
     }
 
-    test(s"Bincompat-friendly intEnums (Scala $scalaVersion)".ignore) {
+    test(s"Bincompat-friendly intEnums (Scala $scalaVersion)") {
       modelChanges(
         "baseline" ->
           s"""$modelPrefix
@@ -449,7 +463,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         extraDeps = List(smithy4sCoreDependency),
         extraJars = extraJars
       )
-      .call(cwd = os.temp.dir())
+      .call(cwd = os.temp.dir(), stderr = os.Pipe)
 
     modelName -> out
   }
@@ -505,7 +519,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         successOrElse(
           s"Failed to compile ${baseline._1} with Scala $scalaVersion and code:\n$scalaCode"
         ) {
-          scalaCli
+          val pkgd = scalaCli
             .packageJar(
               scalaVersion = scalaVersion,
               outputJarPath = scalaJarPath,
@@ -513,7 +527,17 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
               extraJars = List(baselineJar),
               extraDeps = List(smithy4sCoreDependency)
             )
-            .call(cwd = os.temp.dir())
+            .spawn(cwd = os.temp.dir(), stderr = os.Pipe)
+
+          // Workaround for https://github.com/VirtusLab/scala-cli/issues/3735 - the exit code isn't non-zero when fatal warnings are present
+          val stderrText = pkgd.stderr.text()
+
+          pkgd.waitFor()
+
+          assert(
+            !stderrText.contains("Error compiling project"),
+            s"Found compilation errors: $stderrText"
+          )
         }
 
         // We run with the version we compiled against, and all future versions afterwards

@@ -86,3 +86,25 @@ structure BincompatFriendlyTraitStruct {
 
 @BincompatFriendlyTraitStruct(base1: "b1", base2: "b2", added3_1: "b4")
 structure HasBincompatTrait {}
+
+@bincompatFriendly
+enum BincompatEnum {
+    A
+    B
+    C
+}
+
+@bincompatFriendly
+intEnum BincompatIntEnum {
+    A = 1
+    B = 2
+    C = 3
+}
+
+@bincompatFriendly
+@alloy#openEnum
+enum BincompatOpenEnum {
+    A
+    B
+    C
+}

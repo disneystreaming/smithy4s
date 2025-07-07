@@ -1418,10 +1418,45 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = {
     val isOpen = hints.contains(Hint.OpenEnum)
+    val isBincompatFriendly = hints.contains(Hint.BincompatFriendly)
     val isIntEnum = tag match {
       case EnumTag.IntEnum | EnumTag.OpenIntEnum => true
       case _                                     => false
     }
+
+    val enumValues = values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
+      val valueName = NameRef(e.name)
+
+      val baseLine =
+        line"""case object $valueName extends $name(${renderStringLiteral(value)}, ${renderStringLiteral(
+          e.realName
+        )}, $intValue, $Hints_.empty)"""
+
+      lines(
+        documentationAnnotation(hints),
+        deprecationAnnotation(hints),
+        if (e.hints.isEmpty) baseLine
+        else
+          block(baseLine)(
+            line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
+          )
+      )
+    }
+
+    val enumValuesLines: LinesWithValue =
+      if (isBincompatFriendly)
+        lines(
+          block(line"private object impl")(enumValues),
+          newline,
+          values.map { v =>
+            line"val ${v.name}: $name = impl.${v.name}"
+          }
+        )
+      else
+        lines(
+          enumValues
+        )
+
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
@@ -1443,24 +1478,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         renderPrismsEnum(name, values, hints, isOpen),
-        values.map { case e @ EnumValue(value, intValue, _, _, hints) =>
-          val valueName = NameRef(e.name)
-
-          val baseLine =
-            line"""case object $valueName extends $name(${renderStringLiteral(value)}, ${renderStringLiteral(
-              e.realName
-            )}, $intValue, $Hints_.empty)"""
-
-          lines(
-            documentationAnnotation(hints),
-            deprecationAnnotation(hints),
-            if (e.hints.isEmpty) baseLine
-            else
-              block(baseLine)(
-                line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
-              )
-          )
-        },
+        enumValuesLines,
         if (isOpen) {
           val (paramName, paramType) =
             if (isIntEnum) ("int", "Int") else ("str", "String")

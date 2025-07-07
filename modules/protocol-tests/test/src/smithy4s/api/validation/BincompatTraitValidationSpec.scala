@@ -406,6 +406,38 @@ object BincompatTraitValidationSpec extends FunSuite {
     expect(events.contains(expected)) || failure(events.toString())
   }
 
+  test("bincompatFriendly is allowed on enums") {
+    assembleModel(s"""$$version: "2"
+                     |namespace test
+                     |use smithy4s.meta#bincompatFriendly
+                     |
+                     |@bincompatFriendly
+                     |enum SampleUnion {
+                     |  A
+                     |  B
+                     |  C
+                     |}
+                     |""".stripMargin).unwrap()
+
+    success
+  }
+
+  test("bincompatFriendly is allowed on intEnums") {
+    assembleModel(s"""$$version: "2"
+                     |namespace test
+                     |use smithy4s.meta#bincompatFriendly
+                     |
+                     |@bincompatFriendly
+                     |intEnum SampleUnion {
+                     |  A = 1
+                     |  B = 2
+                     |  C = 3
+                     |}
+                     |""".stripMargin).unwrap()
+
+    success
+  }
+
   // todo: bincompatAdded format must match digits.digits.digits (be flexible in the # of groups)
   // todo: bincompatAdded: @alloy#nullable has no effect... or does it?
 }
