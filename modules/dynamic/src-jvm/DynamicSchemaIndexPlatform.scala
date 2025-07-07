@@ -24,6 +24,7 @@ import software.amazon.smithy.model.shapes.OperationShape
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.shapes.ServiceShape
 import software.amazon.smithy.model.Model
+import smithy4s.dynamic.syntax._
 
 private[dynamic] trait DynamicSchemaIndexPlatform {
   self: DynamicSchemaIndex =>

@@ -23,6 +23,7 @@ import smithy4s.schema.{Schema => _, _}
 import smithy4s.schema.Primitive._
 import software.amazon.smithy.model.shapes._
 import java.util.function.Consumer
+import smithy4s.dynamic.syntax._
 
 /**
   * When encountering a Schema, a recorder is meant to add the shape

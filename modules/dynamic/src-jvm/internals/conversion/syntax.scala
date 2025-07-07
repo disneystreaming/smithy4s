@@ -19,7 +19,6 @@ package smithy4s.dynamic.internals.conversion
 import smithy4s.{ShapeId, Hints}
 import software.amazon.smithy.model.shapes.{AbstractShapeBuilder, Shape}
 import software.amazon.smithy.utils.ToSmithyBuilder
-import software.amazon.smithy.model.traits.Trait
 import smithy4s.dynamic.syntax._
 
 private[dynamic] object syntax {
