@@ -4,22 +4,26 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service ObjectService {
-    version: "1.0.0",
-    operations: [PutObject, GetObject]
+    version: "1.0.0"
+    operations: [
+        PutObject
+        GetObject
+    ]
 }
-
 
 @idempotent
 @http(method: "PUT", uri: "/{bucketName}/{key}", code: 200)
 operation PutObject {
-    input: PutObjectInput,
-    errors: [NoMoreSpace]
+    input: PutObjectInput
+    errors: [
+        NoMoreSpace
+    ]
 }
 
 @readonly
 @http(method: "GET", uri: "/{bucketName}/{key}", code: 200)
 operation GetObject {
-    input: GetObjectInput,
+    input: GetObjectInput
     output: GetObjectOutput
 }
 
@@ -27,20 +31,20 @@ structure PutObjectInput {
     // Sent in the URI label named "key".
     @required
     @httpLabel
-    key: String,
+    key: String
 
     // Sent in the URI label named "bucketName".
     @required
     @httpLabel
-    bucketName: String,
+    bucketName: String
 
     // Sent in the X-Foo header
     @httpHeader("X-Foo")
-    foo: String,
+    foo: String
 
     // Sent in the query string as paramName
     @httpQuery("paramName")
-    someValue: String,
+    someValue: String
 
     // Sent in the body
     @httpPayload
@@ -52,24 +56,25 @@ structure GetObjectInput {
     // Sent in the URI label named "key".
     @required
     @httpLabel
-    key: String,
+    key: String
 
     // Sent in the URI label named "bucketName".
     @required
     @httpLabel
-    bucketName: String,
+    bucketName: String
 }
 
 structure GetObjectOutput {
     @httpHeader("X-Size")
     @required
-    size: Integer,
+    size: Integer
+
     @httpPayload
     data: String
 }
 
 union Foo {
-    int: Integer,
+    int: Integer
     str: String
 }
 
@@ -77,7 +82,7 @@ union Foo {
 @httpError(507)
 structure NoMoreSpace {
     @required
-    message: String,
+    message: String
+
     foo: Foo
 }
-

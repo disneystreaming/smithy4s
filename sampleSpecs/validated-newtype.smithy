@@ -16,4 +16,3 @@ string NonValidatedString
 structure ValidatedFoo {
     name: ValidatedString = "abc"
 }
-

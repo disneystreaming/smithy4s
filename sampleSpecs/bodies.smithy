@@ -8,7 +8,6 @@ string CSV
 @mediaType("image/png")
 blob PNG
 
-
 enum StringEnum {
     STRING = "string"
     INTERESTING = "interesting"
@@ -16,6 +15,6 @@ enum StringEnum {
 
 @mediaType("audio/mpeg3")
 enum AudioEnum {
-   GUITAR = "guitar"
-   BASS = "bass"
+    GUITAR = "guitar"
+    BASS = "bass"
 }

@@ -3,37 +3,42 @@ $version: "2"
 namespace smithy4s.example
 
 service Library {
-  resources: [Publisher]
+    resources: [
+        Publisher
+    ]
 }
 
 resource Publisher {
-  resources: [Book]
-  read: ListPublishers
+    resources: [
+        Book
+    ]
+    read: ListPublishers
 }
 
 resource Book {
-  read: GetBook
-  operations: [BuyBook]
+    read: GetBook
+    operations: [
+        BuyBook
+    ]
 }
 
 @readonly
 operation ListPublishers {
-  input: Unit
-  output := {
-    @required
-    publishers: PublishersList
-  }
+    input: Unit
+
+    output := {
+        @required
+        publishers: PublishersList
+    }
 }
 
 @readonly
-operation GetBook {
-}
+operation GetBook {}
 
-operation BuyBook {
-}
+operation BuyBook {}
 
 list PublishersList {
-  member: PublisherId
+    member: PublisherId
 }
 
 string PublisherId

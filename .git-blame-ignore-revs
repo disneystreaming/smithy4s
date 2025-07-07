@@ -1,2 +1,4 @@
 # Scala Steward: Reorganize imports with OrganizeImports 0.6.0
 1f527e81b3b594ece4bc46ca2f8e8c845fdf1fff
+# Format Smithy files with Smithy 1.60.3
+d0a913633285dee02fdb109a5ebceb688192ca1e

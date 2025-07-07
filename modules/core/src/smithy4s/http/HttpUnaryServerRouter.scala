@@ -229,9 +229,13 @@ object HttpUnaryServerRouter {
         .map { makeHttpEndpointHandler(_) }
         .collect { case Right(endpointWrapper) => endpointWrapper }
 
-    private val perMethodEndpoint: Map[HttpMethod, List[HttpEndpointHandler]] =
-      httpEndpointHandlers.groupBy(_.httpEndpoint.method)
-
+    private val perMethodEndpoint: Map[HttpMethod, List[HttpEndpointHandler]] = {
+      httpEndpointHandlers.groupBy(_.httpEndpoint.method).map { case (method, handlers) =>
+        method -> handlers.sortWith { case (x, y) =>
+          HttpEndpoint.moreSpecific(x.httpEndpoint, y.httpEndpoint)
+        }
+      }
+    }
   }
 
   // scalafmt: {maxColumn = 120}
