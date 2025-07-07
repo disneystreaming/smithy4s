@@ -136,7 +136,7 @@ jobs:
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
       - name: Publish ${{ github.ref }}
-        run: sbt 'show isSnapshot; show version; show dynver; ci-release'
+        run: sbt 'show version; ci-release'
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
