@@ -488,7 +488,6 @@ operation CheckQueryKindYVariant {
     output: CheckQueryOutput
 }
 
-
 @http(method: "GET", uri: "/query-check?kind=x&variant=d", code: 200)
 @readonly
 operation CheckQueryKindXVariantD {
@@ -516,7 +515,6 @@ operation CheckQueryVariantB {
     input: CheckQueryInput
     output: CheckQueryOutput
 }
-
 
 @http(method: "GET", uri: "/query-check?kind=z&variant=a", code: 200)
 @readonly

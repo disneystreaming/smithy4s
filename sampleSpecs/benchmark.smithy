@@ -3,46 +3,49 @@ $version: "2"
 namespace smithy4s.benchmark
 
 service BenchmarkService {
-  version: "1.0.0",
-  operations: [CreateObject, SendString]
+    version: "1.0.0"
+    operations: [
+        CreateObject
+        SendString
+    ]
 }
 
 @http(method: "POST", uri: "/complex/{bucketName}/{key}", code: 200)
 operation CreateObject {
-  input: CreateObjectInput
+    input: CreateObjectInput
 }
 
 @http(method: "POST", uri: "/simple/{bucketName}/{key}", code: 200)
 operation SendString {
-  input: SendStringInput
+    input: SendStringInput
 }
 
 structure SendStringInput {
-  // Sent in the URI label named "key".
-  @required
-  @httpLabel
-  key: String,
+    // Sent in the URI label named "key".
+    @required
+    @httpLabel
+    key: String
 
-  // Sent in the URI label named "bucketName".
-  @required
-  @httpLabel
-  bucketName: String,
+    // Sent in the URI label named "bucketName".
+    @required
+    @httpLabel
+    bucketName: String
 
-  @required
-  @httpPayload
-  body: String
+    @required
+    @httpPayload
+    body: String
 }
 
 structure CreateObjectInput {
     // Sent in the URI label named "key".
     @required
     @httpLabel
-    key: String,
+    key: String
 
     // Sent in the URI label named "bucketName".
     @required
     @httpLabel
-    bucketName: String,
+    bucketName: String
 
     // Sent in the body
     @httpPayload
@@ -51,88 +54,101 @@ structure CreateObjectInput {
 }
 
 structure S3Object {
-  @required
-  id: String,
+    @required
+    id: String
 
-  @required
-  owner: String,
+    @required
+    owner: String
 
-  @required
-  attributes: Attributes,
+    @required
+    attributes: Attributes
 
-  @required
-  data: Blob
+    @required
+    data: Blob
 }
 
 structure Attributes {
-  @required
-  user: String,
+    @required
+    user: String
 
-  @required
-  public: Boolean,
+    @required
+    public: Boolean
 
-  @required
-  size: Long,
+    @required
+    size: Long
 
-  @required
-  @timestampFormat("epoch-seconds")
-  creationDate: Timestamp,
+    @required
+    @timestampFormat("epoch-seconds")
+    creationDate: Timestamp
 
-  @required
-  region: String,
+    @required
+    region: String
 
-  queryable: Boolean,
-  @timestampFormat("epoch-seconds")
-  queryableLastChange: Timestamp,
-  blockPublicAccess: Boolean,
-  permissions: ListPermissions,
-  tags: ListTags,
-  backedUp: Boolean,
-  metadata: ListMetadata,
-  encryption: Encryption
+    queryable: Boolean
+
+    @timestampFormat("epoch-seconds")
+    queryableLastChange: Timestamp
+
+    blockPublicAccess: Boolean
+
+    permissions: ListPermissions
+
+    tags: ListTags
+
+    backedUp: Boolean
+
+    metadata: ListMetadata
+
+    encryption: Encryption
 }
 
 list ListTags {
-  member: String
+    member: String
 }
 
 list ListPermissions {
-  member: Permission
+    member: Permission
 }
 
 list ListMetadata {
-  member: Metadata
+    member: Metadata
 }
 
 structure Permission {
-  read: Boolean,
-  write: Boolean,
-  directory: Boolean
+    read: Boolean
+    write: Boolean
+    directory: Boolean
 }
 
 structure Metadata {
-  contentType: String,
-  @timestampFormat("epoch-seconds")
-  lastModified: Timestamp,
-  checkSum: String,
-  pendingDeletion: Boolean,
-  etag: String
+    contentType: String
+
+    @timestampFormat("epoch-seconds")
+    lastModified: Timestamp
+
+    checkSum: String
+
+    pendingDeletion: Boolean
+
+    etag: String
 }
 
 structure Encryption {
-  user: String,
-  @timestampFormat("epoch-seconds")
-  date: Timestamp,
-  metadata: EncryptionMetadata
+    user: String
+
+    @timestampFormat("epoch-seconds")
+    date: Timestamp
+
+    metadata: EncryptionMetadata
 }
 
 structure EncryptionMetadata {
-  system: String,
-  credentials: Creds,
-  partial: Boolean
+    system: String
+    credentials: Creds
+    partial: Boolean
 }
 
 structure Creds {
-  user: String,
-  key: String
+    user: String
+    key: String
 }

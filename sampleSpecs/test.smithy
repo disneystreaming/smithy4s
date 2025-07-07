@@ -2,34 +2,30 @@ $version: "2"
 
 namespace smithy4s.example.test
 
+use alloy#simpleRestJson
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
-use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
-    operations: [SayHello, Listen, TestPath]
+    operations: [
+        SayHello
+        Listen
+        TestPath
+    ]
 }
 
 @http(method: "POST", uri: "/")
 @httpRequestTests([
     {
-        id: "say_hello",
-        protocol: simpleRestJson,
-        params: {
-            "greeting": "Hi",
-            "name": "Teddy",
-            "query": "Hello there"
-        },
-        method: "POST",
-        uri: "/",
-        queryParams: [
-            "Hi=Hello%20there"
-        ],
-        headers: {
-            "X-Greeting": "Hi",
-        },
-        body: "{\"name\":\"Teddy\"}",
+        id: "say_hello"
+        protocol: simpleRestJson
+        params: { greeting: "Hi", name: "Teddy", query: "Hello there" }
+        method: "POST"
+        uri: "/"
+        queryParams: ["Hi=Hello%20there"]
+        headers: { "X-Greeting": "Hi" }
+        body: "{\"name\":\"Teddy\"}"
         bodyMediaType: "application/json"
     }
 ])
@@ -37,25 +33,31 @@ service HelloService {
     {
         id: "say_hello"
         protocol: simpleRestJson
-        params: { payload: { result: "Hello!" }, header1: "V1" }
+        params: {
+            payload: { result: "Hello!" }
+            header1: "V1"
+        }
         body: "{\"result\":\"Hello!\"}"
-        headers: { "X-H1": "V1"}
+        headers: { "X-H1": "V1" }
         code: 200
     }
 ])
 operation SayHello {
-    input: SayHelloInput,
+    input: SayHelloInput
     output: SayHelloOutput
-    errors: [SimpleError, ComplexError]
+    errors: [
+        SimpleError
+        ComplexError
+    ]
 }
 
 @input
 structure SayHelloInput {
     @httpHeader("X-Greeting")
-    greeting: String,
+    greeting: String
 
     @httpQuery("Hi")
-    query: String,
+    query: String
 
     name: String
 }
@@ -69,31 +71,31 @@ structure SayHelloOutput {
     @httpHeader("X-H1")
     header1: String
 }
+
 structure SayHelloPayload {
     @required
     result: String
 }
 
-
 @http(method: "GET", uri: "/listen")
 @readonly
 @httpRequestTests([
     {
-        id: "listen",
-        protocol: simpleRestJson,
-        method: "GET",
+        id: "listen"
+        protocol: simpleRestJson
+        method: "GET"
         uri: "/listen"
     }
 ])
-operation Listen { }
+operation Listen {}
 
 @http(method: "GET", uri: "/test-path/{path}")
 @readonly
 @httpRequestTests([
     {
-        id: "TestPath",
-        protocol: simpleRestJson,
-        method: "GET",
+        id: "TestPath"
+        protocol: simpleRestJson
+        method: "GET"
         uri: "/test-path/sameValue"
         params: { path: "sameValue" }
     }
@@ -109,9 +111,12 @@ operation TestPath {
 // The following shapes are used by the documentation
 @simpleRestJson
 service HelloWorldService {
-  version: "1.0.0",
-  operations: [Hello]
+    version: "1.0.0"
+    operations: [
+        Hello
+    ]
 }
+
 @httpRequestTests([
     {
         id: "helloSuccess"
@@ -119,7 +124,7 @@ service HelloWorldService {
         method: "POST"
         uri: "/World"
         params: { name: "World" }
-    },
+    }
     {
         id: "helloFails"
         protocol: simpleRestJson
@@ -130,15 +135,16 @@ service HelloWorldService {
 ])
 @http(method: "POST", uri: "/{name}", code: 200)
 operation Hello {
-  input := {
-    @httpLabel
-    @required
-    name: String
-  },
-  output := {
-    @required
-    message: String
-  }
+    input := {
+        @httpLabel
+        @required
+        name: String
+    }
+
+    output := {
+        @required
+        message: String
+    }
 }
 
 @httpResponseTests([
@@ -157,16 +163,21 @@ structure SimpleError {
     @required
     expected: Integer
 }
+
 @httpResponseTests([
     {
         id: "complex_error"
         protocol: simpleRestJson
-        params: { value: -1, message: "some error message", details: { date: 123, location: "NYC"} }
+        params: {
+            value: -1
+            message: "some error message"
+            details: { date: 123, location: "NYC" }
+        }
         code: 504
         body: "{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123,\"location\":\"NYC\"}}"
         bodyMediaType: "application/json"
         requireHeaders: ["X-Error-Type"]
-    },
+    }
     {
         id: "complex_error_no_details"
         protocol: simpleRestJson
@@ -182,8 +193,10 @@ structure SimpleError {
 structure ComplexError {
     @required
     value: Integer
+
     @required
     message: String
+
     details: ErrorDetails
 }
 
@@ -191,6 +204,7 @@ structure ErrorDetails {
     @required
     @timestampFormat("epoch-seconds")
     date: Timestamp
+
     @required
     location: String
 }

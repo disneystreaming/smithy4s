@@ -5,44 +5,48 @@ use aws.iam#actionPermissionDescription
 
 @simpleRestJson
 service ObjectService {
-  version: "1.0.0",
-  operations: [PutObject, GetObject]
+    version: "1.0.0"
+    operations: [
+        PutObject
+        GetObject
+    ]
 }
-
 
 @idempotent
 @http(method: "PUT", uri: "/{bucketName}/{key}", code: 200)
 @actionPermissionDescription("lorem ipsum")
 operation PutObject {
-  input: PutObjectInput,
-  errors: [NoMoreSpace]
+    input: PutObjectInput
+    errors: [
+        NoMoreSpace
+    ]
 }
 
 @readonly
 @http(method: "GET", uri: "/{bucketName}/{key}", code: 200)
 operation GetObject {
-  input: GetObjectInput,
-  output: GetObjectOutput
+    input: GetObjectInput
+    output: GetObjectOutput
 }
 
 structure PutObjectInput {
     // Sent in the URI label named "key".
     @required
     @httpLabel
-    key: String,
+    key: String
 
     // Sent in the URI label named "bucketName".
     @required
     @httpLabel
-    bucketName: String,
+    bucketName: String
 
     // Sent in the X-Foo header
     @httpHeader("X-Foo")
-    foo: String,
+    foo: String
 
     // Sent in the query string as paramName
     @httpQuery("paramName")
-    someValue: String,
+    someValue: String
 
     // Sent in the body
     @httpPayload
@@ -54,32 +58,33 @@ structure GetObjectInput {
     // Sent in the URI label named "key".
     @required
     @httpLabel
-    key: String,
+    key: String
 
     // Sent in the URI label named "bucketName".
     @required
     @httpLabel
-    bucketName: String,
+    bucketName: String
 }
 
 structure GetObjectOutput {
-  @httpHeader("X-Size")
-  @required
-  size: Integer,
-  @httpPayload
-  data: String
+    @httpHeader("X-Size")
+    @required
+    size: Integer
+
+    @httpPayload
+    data: String
 }
 
 union Foo {
-  int: Integer,
-  str: String
+    int: Integer
+    str: String
 }
 
 @error("server")
 @httpError(507)
 structure NoMoreSpace {
-  @required
-  message: String,
-  foo: Foo
-}
+    @required
+    message: String
 
+    foo: Foo
+}
