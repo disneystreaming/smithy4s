@@ -241,6 +241,7 @@ lazy val core = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
     ),
+    libraryDependencies ++= weaverDeps.value,
     libraryDependencies += Dependencies.collectionsCompat.value,
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value

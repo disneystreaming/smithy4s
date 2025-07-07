@@ -14,12 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s.http
 
 import weaver._
-import smithy4s.http.HttpEndpoint
-import smithy4s.http.PathSegment
-import smithy4s.http.HttpMethod
 import scala.util.Random
 
 /**
