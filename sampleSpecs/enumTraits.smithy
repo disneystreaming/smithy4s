@@ -12,13 +12,16 @@ enum leftRight {
     RIGHT = "right"
 }
 
-@enum([{
-    name: "LEFT"
-    value: "left"
-}, {
-    name: "RIGHT"
-    value: "right"
-}])
+@enum([
+    {
+        name: "LEFT"
+        value: "left"
+    }
+    {
+        name: "RIGHT"
+        value: "right"
+    }
+])
 string oldStyleLeftRight
 
 @oneTwo(1)

@@ -10,6 +10,7 @@ list ListWithMemberHints {
 map MapWithMemberHints {
     @documentation("mapFoo")
     key: String
+
     @documentation("mapBar")
     @deprecated
     value: Integer

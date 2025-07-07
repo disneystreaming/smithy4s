@@ -2,22 +2,25 @@ $version: "2"
 
 namespace smithy4s.example
 
-use alloy#simpleRestJson
 use alloy#discriminated
+use alloy#simpleRestJson
 
 @simpleRestJson
 service DiscriminatedService {
-  version: "1.0.0",
-  operations: [TestDiscriminated]
+    version: "1.0.0"
+    operations: [
+        TestDiscriminated
+    ]
 }
-
 
 @readonly
 @http(method: "GET", uri: "/test/{key}", code: 200)
 operation TestDiscriminated {
-  input: TestDiscriminatedInput,
-  output: TestDiscriminatedOutput,
-  errors: []
+    input: TestDiscriminatedInput
+    output: TestDiscriminatedOutput
+    errors: [
+
+    ]
 }
 
 structure TestDiscriminatedInput {
@@ -27,24 +30,24 @@ structure TestDiscriminatedInput {
 }
 
 structure TestDiscriminatedOutput {
-  @httpPayload
-  data: PayloadData
+    @httpPayload
+    data: PayloadData
 }
 
 structure PayloadData {
-  testBiggerUnion: TestBiggerUnion
+    testBiggerUnion: TestBiggerUnion
 }
 
 @discriminated("tpe")
 union TestBiggerUnion {
-  one: One,
-  two: Two
+    one: One
+    two: Two
 }
 
 structure One {
-  value: String
+    value: String
 }
 
 structure Two {
-  value: Integer
+    value: Integer
 }

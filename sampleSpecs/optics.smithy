@@ -6,17 +6,18 @@ use smithy4s.meta#generateOptics
 
 @generateOptics
 union OpticsUnion {
-  one: OpticsStructure
+    one: OpticsStructure
 }
 
 @generateOptics
 structure OpticsStructure {
-  two: OpticsEnum
+    two: OpticsEnum
 }
 
 @generateOptics
 enum OpticsEnum {
-  A, B
+    A
+    B
 }
 
 @generateOptics
@@ -25,9 +26,11 @@ structure TestInput {
     @httpLabel
     @length(min: 10)
     pathParam: String
+
     @httpQuery("queryParam")
     @length(min: 10)
     queryParam: String
+
     @httpPayload
     @required
     body: TestBody

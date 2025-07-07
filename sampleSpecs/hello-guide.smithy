@@ -5,10 +5,16 @@ namespace smithy4s.example.guides.hello
 use alloy#simpleRestJson
 
 @simpleRestJson
-@cors(origin: "http://mysite.com", additionalAllowedHeaders: ["Authorization"], additionalExposedHeaders: ["X-Smithy4s"])
+@cors(
+    origin: "http://mysite.com"
+    additionalAllowedHeaders: ["Authorization"]
+    additionalExposedHeaders: ["X-Smithy4s"]
+)
 service HelloWorldService {
     version: "1.0.0"
-    operations: [SayWorld]
+    operations: [
+        SayWorld
+    ]
 }
 
 @readonly
