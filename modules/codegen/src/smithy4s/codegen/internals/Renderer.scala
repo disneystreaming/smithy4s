@@ -812,9 +812,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // Note: we don't render default values in `copy` when there's just one parameter, to avoid the "unused default value" warning.
     val copyMethod: Line =
       // format: off
-      line"private def copy(${renderArgs(fields, defaultValue = f => Some(Line("this." + f.name)), noDefault = fields.sizeIs == 1)}): ${product.nameRef} = new ${product.nameRef}(${fields.map(f => Line(f.name)).intercalate(Line.comma)})"
+      line"private def copy(${renderArgs(fields, defaultValue = f => Some(Line("this." + f.name)), noDefault = fields.size == 1)}): ${product.nameRef} = new ${product.nameRef}(${fields.map(f => Line(f.name)).intercalate(Line.comma)})"
       // format: on
-      .when(fields.nonEmpty)
+        .when(fields.nonEmpty)
 
     val equalsMethod: Lines = {
       val signature = line"override def equals(another: $any_): Boolean"
