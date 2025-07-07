@@ -8,8 +8,9 @@ use alloy#structurePattern
 string TestStructurePattern
 
 structure TestStructurePatternTarget {
-  @required
-  one: String
-  @required
-  two: Integer
+    @required
+    one: String
+
+    @required
+    two: Integer
 }

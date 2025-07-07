@@ -4,12 +4,14 @@ use smithy4s.meta#packedInputs
 
 @packedInputs
 service PackedInputsService {
-  version: "1.0.0",
-  operations: [PackedInputOperation]
+    version: "1.0.0"
+    operations: [
+        PackedInputOperation
+    ]
 }
 
 operation PackedInputOperation {
-  input: PackedInput,
+    input: PackedInput
 }
 
 structure PackedInput {

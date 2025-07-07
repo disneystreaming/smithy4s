@@ -39,8 +39,8 @@ object Dependencies {
   }
 
   val Smithytranslate = new {
-    val org = "io.github.disneystreaming.smithy"
-    val smithyTranslateVersion = "0.5.8"
+    val org = "com.disneystreaming.smithy"
+    val smithyTranslateVersion = "0.5.9"
     val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 

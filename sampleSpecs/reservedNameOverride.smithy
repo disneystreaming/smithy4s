@@ -6,23 +6,24 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service ReservedNameOverrideService {
-    version: "1.0.0",
-    operations: [SetOp]
+    version: "1.0.0"
+    operations: [
+        SetOp
+    ]
 }
 
 @http(method: "POST", uri: "/api/set/", code: 204)
 operation SetOp {
     input := {
-       @required
-       set: Set
+        @required
+        set: Set
     }
 }
 
 structure Set {
     @required
-    someField: String,
+    someField: String
+
     @required
     otherField: Integer
 }
-
-

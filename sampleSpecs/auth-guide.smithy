@@ -8,8 +8,13 @@ use alloy#simpleRestJson
 @httpBearerAuth
 service HelloWorldAuthService {
     version: "1.0.0"
-    operations: [SayWorld, HealthCheck]
-    errors: [NotAuthorizedError]
+    operations: [
+        SayWorld
+        HealthCheck
+    ]
+    errors: [
+        NotAuthorizedError
+    ]
 }
 
 @readonly

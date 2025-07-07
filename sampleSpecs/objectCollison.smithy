@@ -17,38 +17,20 @@ service ObjectCollision {
     ]
 }
 
-operation Clone {
+operation Clone {}
 
-}
+operation Equals {}
 
-operation Equals {
+operation Finalize {}
 
-}
+operation GetClass {}
 
-operation Finalize {
+operation HashCode {}
 
-}
+operation Notify {}
 
-operation GetClass {
+operation NotifyAll {}
 
-}
+operation ToString {}
 
-operation HashCode {
-
-}
-
-operation Notify {
-
-}
-
-operation NotifyAll {
-
-}
-
-operation ToString {
-
-}
-
-operation Wait {
-
-}
+operation Wait {}
