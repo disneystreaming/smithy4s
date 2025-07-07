@@ -40,7 +40,7 @@ private[dynamic] object syntax {
       case s: ToSmithyBuilder[_] =>
         s.toBuilder match {
           case s: AbstractShapeBuilder[_, _] =>
-            s.addTraits(hints.toSmithyTraits)
+            s.addTraits(toSmithyTraits(hints))
             s.build().asInstanceOf[A]
           case _ => shape
         }

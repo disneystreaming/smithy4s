@@ -127,7 +127,7 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
   private def addHintsConsumer(hints: Hints): Consumer[MemberShape.Builder] =
     new Consumer[MemberShape.Builder]() {
       override def accept(builder: MemberShape.Builder) = {
-        val _ = builder.addTraits(hints.toSmithyTraits)
+        val _ = builder.addTraits(toSmithyTraits(hints))
       }
     }
 
