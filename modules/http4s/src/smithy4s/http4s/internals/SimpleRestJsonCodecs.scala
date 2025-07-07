@@ -116,7 +116,7 @@ private[http4s] class SimpleRestJsonCodecs(
     HttpUnaryClientCodecs.builder
       .withBodyEncoders(payloadEncoders)
       .withSuccessBodyDecoders(clientPayloadDecoders)
-      .withErrorBodyDecoders(payloadDecoders)
+      .withErrorBodyDecoders(clientPayloadDecoders)
       .withErrorDiscriminator(HttpDiscriminator.fromResponse(errorHeaders, _).pure[F])
       .withMetadataDecoders(Metadata.Decoder)
       .withMetadataEncoders(
