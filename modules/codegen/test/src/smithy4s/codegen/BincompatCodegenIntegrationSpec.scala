@@ -104,6 +104,9 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .assertBincompatSafe(scalaVersion)
     }
 
+    // TODO: negative tests for inexhaustive matches without `case _` on enums.
+    // todo2: in the case of unions, maybe we should render helpers for chaining, e.g. making `project` have some unapplies.
+    // Maybe this is just a matter of changing the existing member case classes into classes / giving them an explicit unapply?
     test(s"Bincompat-friendly enums (Scala $scalaVersion)") {
       modelChanges(
         "baseline" ->
@@ -122,6 +125,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
              |}
              |""".stripMargin
       )
+        // with this code, we check for the "Unreachable case" warning
+        // which should NOT appear if the enum is properly bincompat-friendly
         .withRunScalaCode(
           s"""|//> using option -Xfatal-warnings
               |object Main extends App {
