@@ -809,11 +809,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderBincompatMembers(product: Product, productFQN: String): Lines = {
     import product._
 
+    // Note: we don't render default values in `copy` when there's just one parameter, to avoid the "unused default value" warning.
     val copyMethod: Line =
-        // format: off
-        line"private def copy(${renderArgs(fields, defaultValue = f => Some(Line("this." + f.name)))}): ${product.nameRef} = new ${product.nameRef}(${fields.map(f => Line(f.name)).intercalate(Line.comma)})"
-        // format: on
-        .when(fields.nonEmpty)
+      // format: off
+      line"private def copy(${renderArgs(fields, defaultValue = f => Some(Line("this." + f.name)), noDefault = fields.sizeIs == 1)}): ${product.nameRef} = new ${product.nameRef}(${fields.map(f => Line(f.name)).intercalate(Line.comma)})"
+      // format: on
+      .when(fields.nonEmpty)
 
     val equalsMethod: Lines = {
       val signature = line"override def equals(another: $any_): Boolean"

@@ -53,6 +53,11 @@ structure BincompatStruct {
 structure BincompatEmptyStruct {}
 
 @bincompatFriendly
+structure BincompatOneFieldStruct {
+    s: String
+}
+
+@bincompatFriendly
 union BincompatTinyUnion {
     s1: BincompatEmptyStruct
 }
