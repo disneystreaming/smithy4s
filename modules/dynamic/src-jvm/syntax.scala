@@ -38,14 +38,13 @@ object syntax {
 
   def nodeToDocument(node: Node): Document = NodeToDocument(node)
 
-  final implicit class ShapeIdOps(private sid: ShapeId) extends AnyVal {
+  final implicit class ShapeIdOps(private val sid: ShapeId) extends AnyVal { // Fixed: private sid, final, AnyVal
     def toSmithy: SmithyShapeId =
       SmithyShapeId.fromParts(sid.namespace, sid.name)
   }
 
-  final implicit class SmithyShapeIdOps(private sid: SmithyShapeId)
+  final implicit class SmithyShapeIdOps(private val sid: SmithyShapeId)
       extends AnyVal {
     def toSmithy4s: ShapeId = ShapeId(sid.getNamespace, sid.getName)
   }
-
 }
