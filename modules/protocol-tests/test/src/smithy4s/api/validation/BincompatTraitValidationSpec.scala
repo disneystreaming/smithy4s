@@ -474,4 +474,67 @@ object BincompatTraitValidationSpec extends FunSuite {
     success
   }
 
+  validVersionFormatTest("1")
+  validVersionFormatTest("1.0")
+  validVersionFormatTest("0.1")
+  validVersionFormatTest("1.2.3")
+  validVersionFormatTest("1.2.3.4")
+
+  invalidVersionFormatTest("")
+  invalidVersionFormatTest("1.")
+  invalidVersionFormatTest("1.a")
+  invalidVersionFormatTest(".1")
+
+  private def validVersionFormatTest(version: String) =
+    test(
+      s"bincompatAdded: accept valid version formats ($version)"
+    ) {
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#bincompatAdded
+           |
+           |@bincompatFriendly
+           |structure SampleStruct {
+           |  @bincompatAdded(version: "$version")
+           |  addedField: String
+           |}
+           |""".stripMargin
+      ).unwrap()
+
+      success
+    }
+
+  private def invalidVersionFormatTest(version: String) =
+    test(
+      s"bincompatAdded: reject invalid version formats ($version)"
+    ) {
+      val events = eventsWithoutLocations(
+        assembleModel(s"""$$version: "2"
+                         |namespace test
+                         |use smithy4s.meta#bincompatFriendly
+                         |use smithy4s.meta#bincompatAdded
+                         |
+                         |@bincompatFriendly
+                         |structure SampleStruct {
+                         |  @bincompatAdded(version: "$version")
+                         |  addedField: String
+                         |}
+                         |""".stripMargin)
+      )
+
+      val expected = ValidationEvent
+        .builder()
+        .id("TraitValue")
+        .severity(Severity.ERROR)
+        .message(
+          raw"""Error validating trait `smithy4s.meta#bincompatAdded`.version: String value provided for `smithy4s.meta#bincompatAdded$$version` must match regular expression: ^(\d+\.)*\d+$$"""
+        )
+        .shapeId(ShapeId.from("test#SampleStruct$addedField"))
+        .build()
+
+      expect(events.contains(expected)) || failure(events.toString())
+    }
+
 }

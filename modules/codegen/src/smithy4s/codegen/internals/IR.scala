@@ -348,12 +348,35 @@ private[internals] sealed trait Hint {
     }
 }
 
-// todo more precise
-case class VersionNumber(value: String)
+case class VersionNumber private (private val components: List[Int]) {
+  def render: String = components.mkString(".")
+}
+
 object VersionNumber {
-  implicit val order: Order[VersionNumber] = Order.by(_.value)
+
+  // 1.0 < 1.0.1
+  // 1.0.1 < 1.1
+  // 1.1.2 < 1.1.3
+  implicit val order: Order[VersionNumber] = Order.from { (a, b) =>
+    val comparison = a.components
+      .zip(b.components)
+      .map { case (x, y) => x.compareTo(y) }
+      .find(_ != 0)
+
+    comparison match {
+      case Some(c) => c
+      case None    =>
+        // If all compared components are equal, the longer version is greater.
+        a.components.length.compareTo(b.components.length)
+    }
+  }
+
   implicit val ordering: Ordering[VersionNumber] =
     Order.catsKernelOrderingForOrder
+
+  def parse(s: String): VersionNumber = VersionNumber(
+    s.split("\\.").toList.map(_.toInt)
+  )
 }
 
 private[internals] object Hint {

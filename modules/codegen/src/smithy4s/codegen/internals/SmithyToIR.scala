@@ -985,7 +985,7 @@ private[codegen] class SmithyToIR(
     case _: BincompatFriendlyTrait =>
       Hint.BincompatFriendly
     case b: BincompatAddedTrait =>
-      Hint.BincompatAdded(VersionNumber(b.getVersion()))
+      Hint.BincompatAdded(VersionNumber.parse(b.getVersion()))
 
   }
 

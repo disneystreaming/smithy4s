@@ -893,7 +893,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       bincompatMemberGroups.map { case (v, fieldsInVersion) =>
         val versionComment = v match {
           case None    => line"// Members available since the beginning"
-          case Some(v) => line"// Members available up to version ${v.value} (inclusive)"
+          case Some(v) => line"// Members available up to version ${v.render} (inclusive)"
         }
 
         val remainingArgsToConstructor: List[Line] =

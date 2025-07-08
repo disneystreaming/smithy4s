@@ -227,6 +227,8 @@ structure bincompatFriendly {
     "bincompatAdded.MustHaveDefault": { selector: "[trait|required]:not([trait|default])", message: "A @bincompatAdded required member must have a default value." }
 })
 structure bincompatAdded {
+    /// Must consist of a sequence of dot-separated numbers, e.g. "1.0", "1.2.3", "2.0.0", "1.2.3.4"
     @required
+    @pattern("^(\\d+\\.)*\\d+$")
     version: String
 }
