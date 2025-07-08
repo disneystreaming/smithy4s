@@ -17,8 +17,10 @@
 package smithy4s.dynamic.internals.conversion
 
 import smithy4s.{ShapeId, Hints}
+import smithy4s.Document._
 import software.amazon.smithy.model.shapes.{AbstractShapeBuilder, Shape}
 import software.amazon.smithy.utils.ToSmithyBuilder
+import software.amazon.smithy.model.traits.Trait
 import smithy4s.dynamic.syntax._
 
 private[dynamic] object syntax {
@@ -46,5 +48,37 @@ private[dynamic] object syntax {
         }
       case _ => shape
     }
+  }
+
+  def toSmithyTraits(hints: Hints): java.util.Collection[Trait] = {
+    hints.all.toList
+      .map {
+        case Hints.Binding.DynamicBinding(keyId, value) =>
+          new Trait {
+            def toShapeId() =
+              SmithyShapeId.fromParts(keyId.namespace, keyId.name)
+            def toNode() = documentToNode(value)
+          }
+        case Hints.Binding.StaticBinding(key, value) =>
+          val doc = Document.Encoder.fromSchema(key.schema).encode(value)
+          new Trait {
+            def toShapeId() =
+              SmithyShapeId.fromParts(key.id.namespace, key.id.name)
+            def toNode() = documentToNode(doc)
+          }
+      }
+      .filterNot(
+        _.toShapeId == SmithyShapeId.fromParts("smithy4s", "InputOutput")
+      )
+      .asJava
+  }
+
+  def toSmithy4sHints(traits: java.util.Collection[Trait]): Hints = {
+    Hints(traits.asScala.map { t =>
+      Hints.Binding.DynamicBinding(
+        ShapeId(t.toShapeId.getNamespace, t.toShapeId.getName),
+        nodeToDocument(t.toNode)
+      )
+    }.toSeq: _*)
   }
 }

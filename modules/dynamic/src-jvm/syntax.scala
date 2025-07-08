@@ -38,44 +38,14 @@ object syntax {
 
   def nodeToDocument(node: Node): Document = NodeToDocument(node)
 
-  implicit class ShapeIdOps(sid: ShapeId) {
+  final implicit class ShapeIdOps(private sid: ShapeId) extends AnyVal {
     def toSmithy: SmithyShapeId =
       SmithyShapeId.fromParts(sid.namespace, sid.name)
   }
 
-  implicit class SmithyShapeIdOps(sid: SmithyShapeId) {
+  final implicit class SmithyShapeIdOps(private sid: SmithyShapeId)
+      extends AnyVal {
     def toSmithy4s: ShapeId = ShapeId(sid.getNamespace, sid.getName)
   }
 
-  def toSmithyTraits(hints: Hints): java.util.Collection[Trait] = {
-    hints.all.toList
-      .map {
-        case Hints.Binding.DynamicBinding(keyId, value) =>
-          new Trait {
-            def toShapeId() =
-              SmithyShapeId.fromParts(keyId.namespace, keyId.name)
-            def toNode() = documentToNode(value)
-          }
-        case Hints.Binding.StaticBinding(key, value) =>
-          val doc = Document.Encoder.fromSchema(key.schema).encode(value)
-          new Trait {
-            def toShapeId() =
-              SmithyShapeId.fromParts(key.id.namespace, key.id.name)
-            def toNode() = documentToNode(doc)
-          }
-      }
-      .filterNot(
-        _.toShapeId == SmithyShapeId.fromParts("smithy4s", "InputOutput")
-      )
-      .asJava
-  }
-
-  def toSmithy4sHints(traits: java.util.Collection[Trait]): Hints = {
-    Hints(traits.asScala.map { t =>
-      Hints.Binding.DynamicBinding(
-        ShapeId(t.toShapeId.getNamespace, t.toShapeId.getName),
-        nodeToDocument(t.toNode)
-      )
-    }.toSeq: _*)
-  }
 }
