@@ -25,26 +25,30 @@ import software.amazon.smithy.model.shapes.ShapeId
 object BincompatTraitValidationSpec extends FunSuite {
 
   test("bincompatFriendly is allowed on structs") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |@bincompatFriendly
-                     |structure SampleStruct {}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |@bincompatFriendly
+         |structure SampleStruct {}
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
 
   test("bincompatFriendly is OK on mixins") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |@bincompatFriendly
-                     |@mixin
-                     |structure SampleStruct {}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |@bincompatFriendly
+         |@mixin
+         |structure SampleStruct {}
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
@@ -53,14 +57,16 @@ object BincompatTraitValidationSpec extends FunSuite {
     // limitation: the `show` method of smithy4s throwables currently uses Product methods, and we don't implement Product
 
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |
-                       |@bincompatFriendly
-                       |@error("client")
-                       |structure SampleError {}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |
+           |@bincompatFriendly
+           |@error("client")
+           |structure SampleError {}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -80,18 +86,20 @@ object BincompatTraitValidationSpec extends FunSuite {
     "bincompatFriendly is not allowed on shapes used as operation inputs/outputs"
   ) {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |
-                       |@bincompatFriendly
-                       |structure SampleInput {}
-                       |
-                       |operation SampleOperation {
-                       |  input: SampleInput
-                       |  output := @bincompatFriendly {}
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |
+           |@bincompatFriendly
+           |structure SampleInput {}
+           |
+           |operation SampleOperation {
+           |  input: SampleInput
+           |  output := @bincompatFriendly {}
+           |}
+           |""".stripMargin
+      )
     )
 
     def errorEvent(forShape: ShapeId) =
@@ -120,49 +128,55 @@ object BincompatTraitValidationSpec extends FunSuite {
   test(
     "sanity check: normal operations are valid, even if bincompatFriendly is used in the model"
   ) {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |operation SampleOperation {
-                     |  input := {}
-                     |}
-                     |
-                     |@bincompatFriendly
-                     |structure SampleStruct { }
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |operation SampleOperation {
+         |  input := {}
+         |}
+         |
+         |@bincompatFriendly
+         |structure SampleStruct { }
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
 
   test("bincompatFriendly is allowed on unions") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |@bincompatFriendly
-                     |union SampleUnion {
-                     |  exampleTarget: Unit
-                     |}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |@bincompatFriendly
+         |union SampleUnion {
+         |  exampleTarget: Unit
+         |}
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
 
   test("bincompatFriendly is not allowed on adt unions") {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#adt
-                       |
-                       |@bincompatFriendly
-                       |@adt
-                       |union SampleAdtUnion {
-                       |  exampleTarget: Unit
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#adt
+           |
+           |@bincompatFriendly
+           |@adt
+           |union SampleAdtUnion {
+           |  exampleTarget: Unit
+           |}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -180,19 +194,21 @@ object BincompatTraitValidationSpec extends FunSuite {
 
   test("bincompatFriendly is not allowed on adtMember structs") {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#adtMember
-                       |
-                       |@bincompatFriendly
-                       |@adtMember("test#MyUnion")
-                       |structure SampleAdtMemberStruct { }
-                       |
-                       |union MyUnion {
-                       |  unionMember: SampleAdtMemberStruct
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#adtMember
+           |
+           |@bincompatFriendly
+           |@adtMember("test#MyUnion")
+           |structure SampleAdtMemberStruct { }
+           |
+           |union MyUnion {
+           |  unionMember: SampleAdtMemberStruct
+           |}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -212,19 +228,21 @@ object BincompatTraitValidationSpec extends FunSuite {
     "bincompatFriendly is not allowed on unions, if there's a member of such a union that has an adtMember trait"
   ) {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#adtMember
-                       |
-                       |@bincompatFriendly
-                       |union SampleUnion {
-                       |  s: MyStruct
-                       |}
-                       |
-                       |@adtMember(SampleUnion)
-                       |structure MyStruct {}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#adtMember
+           |
+           |@bincompatFriendly
+           |union SampleUnion {
+           |  s: MyStruct
+           |}
+           |
+           |@adtMember(SampleUnion)
+           |structure MyStruct {}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -244,19 +262,21 @@ object BincompatTraitValidationSpec extends FunSuite {
     "bincompatFriendly is not allowed on shapes targeted by adt unions"
   ) {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#adt
-                       |
-                       |@adt
-                       |union SampleUnion {
-                       |  unionMember: SampleStruct
-                       |}
-                       |
-                       |@bincompatFriendly
-                       |structure SampleStruct {}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#adt
+           |
+           |@adt
+           |union SampleUnion {
+           |  unionMember: SampleStruct
+           |}
+           |
+           |@bincompatFriendly
+           |structure SampleStruct {}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -273,47 +293,53 @@ object BincompatTraitValidationSpec extends FunSuite {
   }
 
   test("bincompatFriendly is allowed on traits") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |use smithy4s.meta#bincompatAdded
-                     |
-                     |@bincompatFriendly
-                     |@trait
-                     |structure SampleStruct {
-                     |  @bincompatAdded(version: "1.0.0")
-                     |  addedField: String
-                     |}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |use smithy4s.meta#bincompatAdded
+         |
+         |@bincompatFriendly
+         |@trait
+         |structure SampleStruct {
+         |  @bincompatAdded(version: "1.0.0")
+         |  addedField: String
+         |}
+         |""".stripMargin
+    ).unwrap()
     success
   }
 
   test("bincompatAdded is allowed inside bincompatFriendly structs") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |use smithy4s.meta#bincompatAdded
-                     |
-                     |@bincompatFriendly
-                     |structure SampleStruct {
-                     |  @bincompatAdded(version: "1.0.0")
-                     |  addedField: String
-                     |}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |use smithy4s.meta#bincompatAdded
+         |
+         |@bincompatFriendly
+         |structure SampleStruct {
+         |  @bincompatAdded(version: "1.0.0")
+         |  addedField: String
+         |}
+         |""".stripMargin
+    ).unwrap()
     success
   }
 
   test("bincompatAdded is not allowed outside bincompatFriendly") {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatAdded
-                       |
-                       |structure SampleStruct {
-                       |  @bincompatAdded(version: "1.0.0")
-                       |  addedField: String
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatAdded
+           |
+           |structure SampleStruct {
+           |  @bincompatAdded(version: "1.0.0")
+           |  addedField: String
+           |}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -331,18 +357,20 @@ object BincompatTraitValidationSpec extends FunSuite {
 
   test("bincompatAdded is not allowed in bincompatFriendly unions") {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#bincompatAdded
-                       |
-                       |@bincompatFriendly
-                       |union SampleUnion {
-                       |  s: String
-                       |  @bincompatAdded(version: "1.0.0")
-                       |  addedMember: String
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#bincompatAdded
+           |
+           |@bincompatFriendly
+           |union SampleUnion {
+           |  s: String
+           |  @bincompatAdded(version: "1.0.0")
+           |  addedMember: String
+           |}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -360,18 +388,20 @@ object BincompatTraitValidationSpec extends FunSuite {
 
   test("bincompatAdded is allowed on a required field with a default") {
     (
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#bincompatAdded
-                       |
-                       |@bincompatFriendly
-                       |structure SampleStruct {
-                       |  @bincompatAdded(version: "1.0.0")
-                       |  @required
-                       |  addedMember: String = "default member value"
-                       |}
-                       |""".stripMargin).unwrap()
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#bincompatAdded
+           |
+           |@bincompatFriendly
+           |structure SampleStruct {
+           |  @bincompatAdded(version: "1.0.0")
+           |  @required
+           |  addedMember: String = "default member value"
+           |}
+           |""".stripMargin
+      ).unwrap()
     )
 
     success
@@ -379,18 +409,20 @@ object BincompatTraitValidationSpec extends FunSuite {
 
   test("bincompatAdded is not allowed on a required field without a default") {
     val events = eventsWithoutLocations(
-      assembleModel(s"""$$version: "2"
-                       |namespace test
-                       |use smithy4s.meta#bincompatFriendly
-                       |use smithy4s.meta#bincompatAdded
-                       |
-                       |@bincompatFriendly
-                       |structure SampleStruct {
-                       |  @bincompatAdded(version: "1.0.0")
-                       |  @required
-                       |  addedMember: String
-                       |}
-                       |""".stripMargin)
+      assembleModel(
+        s"""$$version: "2"
+           |namespace test
+           |use smithy4s.meta#bincompatFriendly
+           |use smithy4s.meta#bincompatAdded
+           |
+           |@bincompatFriendly
+           |structure SampleStruct {
+           |  @bincompatAdded(version: "1.0.0")
+           |  @required
+           |  addedMember: String
+           |}
+           |""".stripMargin
+      )
     )
 
     val expected = ValidationEvent
@@ -407,37 +439,39 @@ object BincompatTraitValidationSpec extends FunSuite {
   }
 
   test("bincompatFriendly is allowed on enums") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |@bincompatFriendly
-                     |enum SampleUnion {
-                     |  A
-                     |  B
-                     |  C
-                     |}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |@bincompatFriendly
+         |enum SampleUnion {
+         |  A
+         |  B
+         |  C
+         |}
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
 
   test("bincompatFriendly is allowed on intEnums") {
-    assembleModel(s"""$$version: "2"
-                     |namespace test
-                     |use smithy4s.meta#bincompatFriendly
-                     |
-                     |@bincompatFriendly
-                     |intEnum SampleUnion {
-                     |  A = 1
-                     |  B = 2
-                     |  C = 3
-                     |}
-                     |""".stripMargin).unwrap()
+    assembleModel(
+      s"""$$version: "2"
+         |namespace test
+         |use smithy4s.meta#bincompatFriendly
+         |
+         |@bincompatFriendly
+         |intEnum SampleUnion {
+         |  A = 1
+         |  B = 2
+         |  C = 3
+         |}
+         |""".stripMargin
+    ).unwrap()
 
     success
   }
 
-  // todo: bincompatAdded format must match digits.digits.digits (be flexible in the # of groups)
-  // todo: bincompatAdded: @alloy#nullable has no effect... or does it?
 }
