@@ -1216,12 +1216,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
     )
     val visitor: Lines = lines(
-      block({
+      block {
         // In bincompat-friendly mode, we can't allow using the raw visitor - only the Default variant is safe to use.
         // Making the visitor sealed is a neat trick that allows us to keep everything else unchanged.
         val sealedOrNot = if (isBincompatFriendly) line"sealed " else Line.empty
         line"${sealedOrNot}trait Visitor[A]"
-      })(
+      }(
         alts.map { alt =>
           val ident = NameDef(uncapitalise(alt.name))
           line"def $ident(value: ${caseNameType(name, alt)}): A"
