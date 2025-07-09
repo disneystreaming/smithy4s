@@ -222,12 +222,17 @@ structure bincompatFriendly {
     // This an be added later, if it's opt-in.
 }
 
+/// Marks the given member shape as one that was added to the structure _after_ it was initially created and its generated code was published.
+/// Adding such members is a change that keeps binary compatibility.
 @trait(selector: "structure[trait|smithy4s.meta#bincompatFriendly] > member")
 @traitValidators({
     "bincompatAdded.MustHaveDefault": { selector: "[trait|required]:not([trait|default])", message: "A @bincompatAdded required member must have a default value." }
 })
 structure bincompatAdded {
-    /// Must consist of a sequence of dot-separated numbers, e.g. "1.0", "1.2.3", "2.0.0", "1.2.3.4"
+    /// Used to determine which members of the structure were added, and in what order.
+    /// Members marked with the same version will be grouped together, and appended to the previous version's members in any generated constructors.
+    /// You must not add new members with a version number that's already been published.
+    /// The version must consist of a sequence of dot-separated numbers, e.g. "1.0", "1.2.3", "2.0.0", "1.2.3.4".
     @required
     @pattern("^(\\d+\\.)*\\d+$")
     version: String
