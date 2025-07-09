@@ -2,6 +2,7 @@ $version: "2.0"
 
 namespace smithy4s.example.bincompat
 
+use alloy#nullable
 use smithy4s.meta#bincompatAdded
 use smithy4s.meta#bincompatFriendly
 
@@ -38,11 +39,12 @@ structure BincompatStruct {
     @bincompatAdded(version: "3.0")
     added3_2: String
 
-    // todo: do we allow adding defaults to already-present optional fields?
-    // this can probably be added ad-hoc via a new trait, I'm sure we can find semantics that allow keeping compat
-    // Like @addedDefault, but needs to have a version parameter.
     @bincompatAdded(version: "4.0")
     added4_1: String = "woop4_1"
+
+    @bincompatAdded(version: "4.0")
+    @nullable
+    added4_2: String
 
     // intentionally put last
     @required

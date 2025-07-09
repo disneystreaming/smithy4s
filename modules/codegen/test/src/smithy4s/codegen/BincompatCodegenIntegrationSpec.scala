@@ -54,6 +54,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
              |  @required s1: String = "s1"
              |  @bincompatAdded(version: "1.0.0") s2: String
              |  @bincompatAdded(version: "2.0.0") @required s3: String = "s3Default"
+             |  @alloy#nullable @bincompatAdded(version: "2.0.0") s4: String
              |  s9: String
              |}
              |""".stripMargin
@@ -593,7 +594,9 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         allowedNS = allowedNS,
         excludedNS = None,
         repositories = Nil,
-        dependencies = Nil,
+        dependencies = List(
+          s"${BuildInfo.alloyOrg}:alloy-core:${BuildInfo.alloyVersion}"
+        ),
         transformers = Nil,
         localJars = Nil,
         smithyBuild = None
