@@ -138,6 +138,9 @@ jobs:
       - name: Publish ${{ github.ref }}
         run: sbt 'show version; ci-release'
         env:
+          # cleaning will removed generated code from bootstrapped module which will
+          # cause the repo to be dirty and change the version to a -SNAPSHOT version
+          CI_CLEAN: ""
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_PASSWORD }}
