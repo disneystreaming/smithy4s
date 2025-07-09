@@ -215,12 +215,7 @@ structure validateNewtype {}
     "bincompatFriendly.NoAdtMemberTargets": { selector: "union > member:test(> [trait|smithy4s.meta#adtMember])", message: "Members of an @bincompatFriendly union must not target shapes that have the adtMember trait." }
     "bincompatFriendly.NoAdtTargets": { selector: "< :in(:root(union[trait|smithy4s.meta#adt] > member))", message: "Shapes with the @bincompatFriendly trait must not be used as members of an adt union." }
 })
-structure bincompatFriendly {
-    // todo: optional parameter for rendering the auxiliary `apply` methods?
-    // like, if you enable it, you only get an `apply` with what's effectively required.
-    // that way, new optional fields and those with defaults can be added without bincompatAdded.
-    // This an be added later, if it's opt-in.
-}
+structure bincompatFriendly {}
 
 /// Marks the given member shape as one that was added to the structure _after_ it was initially created and its generated code was published.
 /// Adding such members is a change that keeps binary compatibility.

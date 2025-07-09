@@ -106,9 +106,6 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .assertBincompatSafe(scalaVersion)
     }
 
-    // TODO: negative tests for inexhaustive matches without `case _` on enums.
-    // todo2: in the case of unions, maybe we should render helpers for chaining, e.g. making `project` have some unapplies.
-    // Maybe this is just a matter of changing the existing member case classes into classes / giving them an explicit unapply?
     test(s"Bincompat-friendly enums (Scala $scalaVersion)") {
       modelChanges(
         "baseline" ->
@@ -141,6 +138,19 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
               |  }
               |}
               |""".stripMargin
+        )
+        .withExpectedCompilationError(
+          s"""|//> using option -Xfatal-warnings
+              |object Main extends App {
+              |  val h = demo.Hello.S1
+              |  println(h)
+              |  assert(h.value == "S1")
+              |  demo.Hello.values.foreach {
+              |    case demo.Hello.S1 => println("S1 value")
+              |  }
+              |}
+              |""".stripMargin,
+          "match may not be exhaustive"
         )
         .assertBincompatSafe(scalaVersion)
     }
@@ -403,16 +413,29 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
   private def modelChanges(models: (String, String)*) =
     new ModelChangesBuilder(
       models = models,
-      runScalaCode = None
+      runScalaCode = None,
+      notCompilingScalaCode = None
     )
+
+  case class NotCompilingScalaCode(code: String, expectedError: String)
 
   case class ModelChangesBuilder(
       models: Seq[(String, String)],
-      runScalaCode: Option[String]
+      runScalaCode: Option[String],
+      notCompilingScalaCode: Option[NotCompilingScalaCode]
   ) {
 
     def withRunScalaCode(code: String): ModelChangesBuilder =
       copy(runScalaCode = Some(code))
+
+    def withExpectedCompilationError(
+        code: String,
+        expectedError: String
+    ): ModelChangesBuilder = {
+      copy(
+        notCompilingScalaCode = Some(NotCompilingScalaCode(code, expectedError))
+      )
+    }
 
     def assertBincompatSafe(scalaVersion: String): Unit = {
       // These jars contain just the compiled generated code
@@ -433,8 +456,48 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
           scalaVersion = scalaVersion
         )
       }
+
+      notCompilingScalaCode.foreach { code =>
+        jars.foreach { case (modelName, jar) =>
+          val sourceFile = os.temp.dir() / s"$modelName.scala"
+          os.write(sourceFile, code.code)
+          val pkgd = scalaCli
+            .packageJar(
+              scalaVersion = scalaVersion,
+              outputJarPath = os.temp.dir() / "output.jar",
+              sourceDirectories = List(sourceFile),
+              extraJars = List(jar),
+              extraDeps = List(smithy4sCoreDependency)
+            )
+            .spawn(cwd = os.temp.dir(), stderr = os.Pipe)
+
+          val stderrText = sanitizeConsole(pkgd.stderr.text())
+
+          pkgd.waitFor()
+
+          assert(
+            stderrText.contains("Error compiling project"),
+            s"""Expected compilation to fail, but it didn't (model $modelName).
+               |Stderr:
+               |$stderrText""".stripMargin
+          )
+
+          assert(
+            stderrText.contains(code.expectedError),
+            s"""Expected to find the following error in the compilation output (model $modelName):
+               |${code.expectedError}
+               |But got:
+               |$stderrText""".stripMargin
+          )
+        }
+      }
     }
 
+  }
+
+  // sanitizes text by removing ANSI escape codes
+  private def sanitizeConsole(s: String): String = {
+    "\u001B\\[[;\\d]*[a-zA-Z]".r.replaceAllIn(s, "")
   }
 
   case class SmithyFile(modelName: String, text: String)
