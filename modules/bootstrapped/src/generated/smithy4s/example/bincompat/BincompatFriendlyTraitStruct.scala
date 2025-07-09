@@ -35,7 +35,7 @@ object BincompatFriendlyTraitStruct extends ShapeTag.Companion[BincompatFriendly
   private def make(base1: String, base2: String, base3: Option[String], added2_1: String, added3_1: String): BincompatFriendlyTraitStruct = new BincompatFriendlyTraitStruct(base1, base2, added2_1, added3_1, base3)
 
   // Members available since the beginning
-  def apply(base1: String, base2: String, base3: Option[String]): BincompatFriendlyTraitStruct = new BincompatFriendlyTraitStruct(base1 = base1, base2 = base2, base3 = base3, added2_1 = "woop2_1", added3_1 = "woop3_1")
+  def apply(base1: String, base2: String, base3: Option[String] = None): BincompatFriendlyTraitStruct = new BincompatFriendlyTraitStruct(base1 = base1, base2 = base2, base3 = base3, added2_1 = "woop2_1", added3_1 = "woop3_1")
   // Members available up to version 2.0 (inclusive)
   def apply(base1: String, base2: String, base3: Option[String], added2_1: String): BincompatFriendlyTraitStruct = new BincompatFriendlyTraitStruct(base1 = base1, base2 = base2, base3 = base3, added2_1 = added2_1, added3_1 = "woop3_1")
   // Members available up to version 3.0 (inclusive)

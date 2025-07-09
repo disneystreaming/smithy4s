@@ -60,6 +60,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       )
         .withRunScalaCode(
           s"""|object Main extends App {
+              |  println(demo.Hello("hello s1"))
               |  val h = demo.Hello("hello s1", Some("hello s9"))
               |  println(h)
               |  assert(h.s1.length == 8)

@@ -28,7 +28,7 @@ object BincompatOneFieldStruct extends ShapeTag.Companion[BincompatOneFieldStruc
   private def make(s: Option[String]): BincompatOneFieldStruct = new BincompatOneFieldStruct(s)
 
   // Members available since the beginning
-  def apply(s: Option[String]): BincompatOneFieldStruct = new BincompatOneFieldStruct(s = s)
+  def apply(s: Option[String] = None): BincompatOneFieldStruct = new BincompatOneFieldStruct(s = s)
 
   implicit val schema: Schema[BincompatOneFieldStruct] = struct(
     string.optional[BincompatOneFieldStruct]("s", _.s),

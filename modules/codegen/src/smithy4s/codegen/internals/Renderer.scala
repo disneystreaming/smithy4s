@@ -913,7 +913,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         val applyMethod =
             // format: off
-          line"def apply(${renderArgs(fieldsInVersion, noDefault = true)}): ${product.nameRef} = new ${product.nameRef}(${argsToConstructor.intercalate(Line.comma)})"
+          line"def apply(${renderArgs(fieldsInVersion, noDefault = v.isDefined /* only the baseline apply can have defaults */)}): ${product.nameRef} = new ${product.nameRef}(${argsToConstructor.intercalate(Line.comma)})"
             // format: on
 
         lines(

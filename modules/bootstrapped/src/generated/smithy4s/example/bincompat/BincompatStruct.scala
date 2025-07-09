@@ -36,7 +36,7 @@ object BincompatStruct extends ShapeTag.Companion[BincompatStruct] {
   private def make(base1: String, base2: String, base3: Option[String], added2_1: String, added2_2: Option[String], added3_1: String, added3_2: Option[String], added4_1: String, base4: String): BincompatStruct = new BincompatStruct(base1, base2, base4, added2_1, added3_1, added4_1, base3, added2_2, added3_2)
 
   // Members available since the beginning
-  def apply(base1: String, base2: String, base3: Option[String], base4: String): BincompatStruct = new BincompatStruct(base1 = base1, base2 = base2, base3 = base3, base4 = base4, added2_1 = "woop2_1", added2_2 = None, added3_1 = "woop3_1", added3_2 = None, added4_1 = "woop4_1")
+  def apply(base1: String, base2: String, base3: Option[String] = None, base4: String): BincompatStruct = new BincompatStruct(base1 = base1, base2 = base2, base3 = base3, base4 = base4, added2_1 = "woop2_1", added2_2 = None, added3_1 = "woop3_1", added3_2 = None, added4_1 = "woop4_1")
   // Members available up to version 2.0 (inclusive)
   def apply(base1: String, base2: String, base3: Option[String], base4: String, added2_1: String, added2_2: Option[String]): BincompatStruct = new BincompatStruct(base1 = base1, base2 = base2, base3 = base3, base4 = base4, added2_1 = added2_1, added2_2 = added2_2, added3_1 = "woop3_1", added3_2 = None, added4_1 = "woop4_1")
   // Members available up to version 3.0 (inclusive)
