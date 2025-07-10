@@ -5,6 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.40
+
+<!-- todo: add link to docs -->
+* codegen: Add support for bincompat-friendly code generation mode in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/).
+
 # 0.18.39
 
 * http4s: Partially fix [#1619](https://github.com/disneystreaming/smithy4s/issues/1619) by checking request query parameters against the static query parameters in [#1743](https://github.com/disneystreaming/smithy4s/pull/1743)
