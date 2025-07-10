@@ -30,18 +30,20 @@ object BincompatUnion extends ShapeTag.Companion[BincompatUnion] {
 
   val hints: Hints = Hints.empty
 
-  private[BincompatUnion] final case class S1Case(s1: BincompatEmptyStruct) extends BincompatUnion { final def $ordinal: Int = 0 }
-  private[BincompatUnion] final case class S2Case(s2: BincompatEmptyStruct) extends BincompatUnion { final def $ordinal: Int = 1 }
+  final case class S1Case(s1: BincompatEmptyStruct) extends BincompatUnion { final def $ordinal: Int = 0 }
+  final case class S2Case(s2: BincompatEmptyStruct) extends BincompatUnion { final def $ordinal: Int = 1 }
 
-  private[BincompatUnion] object S1Case {
+  object S1Case {
     val hints: Hints = Hints.empty
     val schema: Schema[BincompatUnion.S1Case] = bijection(BincompatEmptyStruct.schema.addHints(hints), BincompatUnion.S1Case(_), _.s1)
     val alt = schema.oneOf[BincompatUnion]("s1")
+    def unapply(self: BincompatUnion): Option[BincompatUnion.S1Case] = self match { case BincompatUnion.S1Case(value) => Some(value); case _ => None }
   }
-  private[BincompatUnion] object S2Case {
+  object S2Case {
     val hints: Hints = Hints.empty
     val schema: Schema[BincompatUnion.S2Case] = bijection(BincompatEmptyStruct.schema.addHints(hints), BincompatUnion.S2Case(_), _.s2)
     val alt = schema.oneOf[BincompatUnion]("s2")
+    def unapply(self: BincompatUnion): Option[BincompatUnion.S2Case] = self match { case BincompatUnion.S2Case(value) => Some(value); case _ => None }
   }
 
   sealed trait Visitor[A] {

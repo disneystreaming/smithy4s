@@ -1250,8 +1250,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
       )
 
-    val altPrivatePrefix = if (isBincompatFriendly) line"private[${name}] " else Line.empty
-
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
@@ -1282,7 +1280,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"${altPrivatePrefix}case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
+              line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
               line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name](${renderStringLiteral(realName)}).addHints(hints)""",
             )
             // format: on
@@ -1294,7 +1292,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"${altPrivatePrefix}final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
+              line"final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
             )
           case (
                 Alt(_, realName, UnionMember.ProductCase(struct), altHints),
@@ -1324,11 +1322,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 altHints
               ) =>
             val cn = caseName(name, a)
-            block(line"${altPrivatePrefix}object ${cn.nameDef}")(
+            block(line"object ${cn.nameDef}")(
               renderHintsVal(altHints),
               // format: off
               line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
               line"""val alt = schema.oneOf[$name](${renderStringLiteral(realName)})""",
+              line"def unapply(self: $name): Option[$cn] = self match { case $cn(value) => Some(value); case _ => None }".when(isBincompatFriendly),
               // format: on
             )
         },

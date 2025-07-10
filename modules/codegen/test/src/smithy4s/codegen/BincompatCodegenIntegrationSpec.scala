@@ -6,9 +6,10 @@ import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import cats.syntax.all._
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
+  private val scala212 = "2.12"
   private val scala213 = "2.13"
   private val scala3 = "3"
-  private val scalaVersions = List("2.12", scala213, scala3)
+  private val scalaVersions = List(scala212, scala213, scala3)
 
   private val modelPrefix =
     """$version: "2"
@@ -103,6 +104,25 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
               |}
               |""".stripMargin
         )
+        .pipe {
+          // 2.12 has exhaustivity checking problems, so we don't check for this at all
+          if (scalaVersion != scala212)
+            _.withExpectedCompilationError(
+              s"""|//> using option -Xfatal-warnings
+                  |object Main extends App {
+                  |  val h: demo.Hello = demo.Hello.S1Case("hello s1")
+                  |  println(h)
+                  |  assert(h.project.s1.get == "hello s1")
+                  |  h match {
+                  |    case demo.Hello.S1Case(value) => println(value)
+                  |  }
+                  |}
+                  |""".stripMargin,
+              "match may not be exhaustive"
+            )
+          else identity
+
+        }
         .assertBincompatSafe(scalaVersion)
     }
 
@@ -142,9 +162,6 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         .withExpectedCompilationError(
           s"""|//> using option -Xfatal-warnings
               |object Main extends App {
-              |  val h = demo.Hello.S1
-              |  println(h)
-              |  assert(h.value == "S1")
               |  demo.Hello.values.foreach {
               |    case demo.Hello.S1 => println("S1 value")
               |  }
@@ -710,4 +727,9 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
     // because we don't want a circular dependency - these tests support the codegen module, which core itself is generated with.
     s"${BuildInfo.smithy4sOrg}::smithy4s-core:latest.stable"
 
+// polyfill for Scala 2.12
+  private implicit class PipeOps[A](private val self: A) {
+    def pipe[B](f: A => B): B =
+      f(self)
+  }
 }

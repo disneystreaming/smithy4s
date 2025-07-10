@@ -27,12 +27,13 @@ object BincompatTinyUnion extends ShapeTag.Companion[BincompatTinyUnion] {
 
   val hints: Hints = Hints.empty
 
-  private[BincompatTinyUnion] final case class S1Case(s1: BincompatEmptyStruct) extends BincompatTinyUnion { final def $ordinal: Int = 0 }
+  final case class S1Case(s1: BincompatEmptyStruct) extends BincompatTinyUnion { final def $ordinal: Int = 0 }
 
-  private[BincompatTinyUnion] object S1Case {
+  object S1Case {
     val hints: Hints = Hints.empty
     val schema: Schema[BincompatTinyUnion.S1Case] = bijection(BincompatEmptyStruct.schema.addHints(hints), BincompatTinyUnion.S1Case(_), _.s1)
     val alt = schema.oneOf[BincompatTinyUnion]("s1")
+    def unapply(self: BincompatTinyUnion): Option[BincompatTinyUnion.S1Case] = self match { case BincompatTinyUnion.S1Case(value) => Some(value); case _ => None }
   }
 
   sealed trait Visitor[A] {
