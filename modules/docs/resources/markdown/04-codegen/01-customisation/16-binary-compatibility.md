@@ -1,5 +1,5 @@
 ---
-title: Bincompat-friendly mode
+title: Binary compatibility
 ---
 
 By default, Smithy4s generates code that follows idiomatic Scala practices, such as:
@@ -9,7 +9,7 @@ By default, Smithy4s generates code that follows idiomatic Scala practices, such
 
 This approach allows users to treat generated code like they would their own case classes, including having a `copy` method, pattern matching via `unapply`, and so on.
 
-However, it does not play well with [binary compatibility rules][bincompat-jdk], nor does it follow [binary compatibility best practices for library authors][bincompat-for-libs].
+However, it does not play well with [binary compatibility rules][bincompat-jdk], nor does it follow the [binary compatibility for library authors][bincompat-for-libs] principles.
 
 ## The problem with case classes
 
@@ -167,7 +167,25 @@ There are several changes we make to the codegen process in bincompat-friendly m
 
 ### Structures
 
-TODO - the encoding may change in a moment
+Although [Binary Compatibility for library authors][bincompat-for-libs] currently encourages continued use of case classes with a private constructor (and a few more tweaks),
+Smithy4s has to support all active Scala versions, and each of them has its caveats.
+
+In order to be bincompat-friendly, starting from case classes we'd need to:
+
+- Make the primary constructor private
+- Remove `_1`, `_2`, ... methods (on Scala 3)
+- Make the `copy` method private
+- Remove the primary `apply` method
+- Remove the `unapply` method.
+
+Removing these isn't always an option (e.g. you can't really remove the primary `apply` on Scala 2, even with `-Xsource:3` flags).
+
+Instead, we draw inspiration from [Contraband][sbt-contraband] and use a non-case class enhanced with:
+
+- `withXXX` methods (immutable setters), which use an internal private `copy` method
+- a "baseline" `apply` method - see [Adding members to bincompatFriendly shapes](#adding-members-to-bincompatfriendly-shapes)
+- `equals`, `hashCode`, `toString`.
+
 
 ### Unions
 
@@ -193,3 +211,4 @@ For enums, just like for unions, we need to remove the possibility of exhaustive
 [default-values]: https://smithy.io/2.0/spec/aggregate-types.html#default-values
 [bincompat-for-libs]: https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html
 [bincompat-jdk]: https://docs.oracle.com/javase/specs/jls/se24/html/jls-13.html
+[sbt-contraband]: https://www.scala-sbt.org/contraband/
