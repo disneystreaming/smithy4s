@@ -1070,12 +1070,13 @@ private[codegen] class SmithyToIR(
       val stdlibNamespaceRoots = Set("smithy", "alloy")
       val stdlibNamespacePrefixes = stdlibNamespaceRoots.map(_ + ".")
 
-      Option.when(
+      if (
         stdlibNamespaceRoots.contains_(shape.namespace) ||
-          stdlibNamespacePrefixes.exists(shape.namespace.startsWith)
-      ) {
+        stdlibNamespacePrefixes.exists(shape.namespace.startsWith)
+      ) Some {
         Hint.BincompatFriendly
       }
+      else None
     }
 
     traits.collect(traitToHint(shape)) ++
