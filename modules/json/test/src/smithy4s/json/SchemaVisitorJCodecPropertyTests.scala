@@ -89,28 +89,28 @@ class SchemaVisitorJsonCodecPropertyTests()
       result match {
         case Right(_) =>
           hint.value match {
-            case Length(min, max) =>
+            case l: Length =>
               val size: Int = data match {
                 case m: Map[_, _] => m.size
                 case l: List[_]   => l.size
                 case s: String    => s.size
                 case b: Blob      => b.size
               }
-              expect(min.forall(_ <= size))
-              expect(max.forall(_ >= size))
-            case Range(min, max) =>
+              expect(l.min.forall(_ <= size))
+              expect(l.max.forall(_ >= size))
+            case r: Range =>
               val value = BigDecimal(data.toString)
-              expect(min.forall(_ <= value))
-              expect(max.forall(_ >= value))
+              expect(r.min.forall(_ <= value))
+              expect(r.max.forall(_ >= value))
           }
         case Left(PayloadError(_, _, message)) =>
           hint.value match {
-            case Length(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString))
-              expect(max.isEmpty || message.contains(max.get.toString))
-            case Range(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString))
-              expect(max.isEmpty || message.contains(max.get.toString))
+            case l: Length =>
+              expect(l.min.isEmpty || message.contains(l.min.get.toString))
+              expect(l.max.isEmpty || message.contains(l.max.get.toString))
+            case r: Range =>
+              expect(r.min.isEmpty || message.contains(r.min.get.toString))
+              expect(r.max.isEmpty || message.contains(r.max.get.toString))
           }
         case _ => fail("result should have matched one of the above cases")
       }

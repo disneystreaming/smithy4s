@@ -29,6 +29,7 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
     diff > 0 || diff == 0 && nano > other.nano
   }
 
+  @annotation.nowarn
   def format(format: TimestampFormat): String = format match {
     case TimestampFormat.DATE_TIME     => formatToString(0)
     case TimestampFormat.EPOCH_SECONDS => formatEpochSeconds
@@ -280,6 +281,7 @@ object Timestamp {
 
   def nowUTC(): Timestamp = fromDate(new Date())
 
+  @annotation.nowarn
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     new Some(format match {
       case TimestampFormat.DATE_TIME     => parseDateTime(string)

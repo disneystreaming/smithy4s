@@ -51,6 +51,7 @@ private[protobuf] object ScalarCodec {
     def read(is: CodedInputStream): Boolean = is.readBool()
   }
 
+  @annotation.nowarn
   def intCodec(maybeNumType: Option[ProtoNumType]): ScalarCodec[Int] = maybeNumType match {
     case None               => IntCodec
     case Some(FIXED)        => FixedIntCodec
@@ -112,6 +113,7 @@ private[protobuf] object ScalarCodec {
   val ByteCodec = IntCodec.imap[Byte](_.toByte, _.toInt)
   val ShortCodec = IntCodec.imap[Short](_.toShort, _.toInt)
 
+  @annotation.nowarn
   def longCodec(maybeNumType: Option[ProtoNumType]): ScalarCodec[Long] = maybeNumType match {
     case None               => LongCodec
     case Some(FIXED)        => FixedLongCodec
