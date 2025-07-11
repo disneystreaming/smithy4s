@@ -57,6 +57,7 @@ private[http] class ErrorCodeSchemaVisitor(
     b => httpCode(refinement.from(b))
   }
 
+  @annotation.nowarn
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,

@@ -1064,7 +1064,22 @@ private[codegen] class SmithyToIR(
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
+
+    // todo: another mechanism to just enable this once in `core`?
+    val stdlibBincompatFriendlyTrait = {
+      val stdlibNamespaceRoots = Set("smithy", "alloy")
+      val stdlibNamespacePrefixes = stdlibNamespaceRoots.map(_ + ".")
+
+      Option.when(
+        stdlibNamespaceRoots.contains_(shape.namespace) ||
+          stdlibNamespacePrefixes.exists(shape.namespace.startsWith)
+      ) {
+        Hint.BincompatFriendly
+      }
+    }
+
     traits.collect(traitToHint(shape)) ++
+      stdlibBincompatFriendlyTrait ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filter(tr =>
@@ -1079,9 +1094,6 @@ private[codegen] class SmithyToIR(
   }
 
   implicit class ShapeExt(shape: Shape) {
-    def name = shape.getId().getName()
-
-    def namespace = shape.getId().getNamespace()
 
     def tpe: Option[Type] = shape.accept(toType)
 
@@ -1201,15 +1213,15 @@ private[codegen] class SmithyToIR(
     } else None
   }
 
-  implicit class ShapeIdExt(shapeId: ShapeId) {
-    def name = shapeId.getName()
+  implicit class ShapeIdExt(shapeId: ToShapeId) {
+    def name = shapeId.toShapeId.getName()
 
-    def namespace = shapeId.getNamespace()
+    def namespace = shapeId.toShapeId.getNamespace()
 
-    def shape: Option[Shape] = model.getShape(shapeId).asScala
+    def shape: Option[Shape] = model.getShape(shapeId.toShapeId()).asScala
 
     def tpe: Option[Type] =
-      model.getShape(shapeId).asScala.flatMap(_.accept(toType))
+      shape.flatMap(_.accept(toType))
   }
 
   private case class NodeAndType(node: Node, tpe: Type)

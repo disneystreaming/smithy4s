@@ -99,6 +99,7 @@ class DocumentEncoderSchemaVisitor(
   protected val explicitDefaultsEncoding: Boolean =
     fieldFilter == FieldFilter.EncodeAll
 
+  @annotation.nowarn
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,

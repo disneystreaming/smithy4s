@@ -166,6 +166,7 @@ class DocumentDecoderSchemaVisitor(
       }
   }
 
+  @annotation.nowarn
   def forTimestampFormat(format: TimestampFormat) = {
     val formatRepr = Timestamp.showFormat(format)
     format match {

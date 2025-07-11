@@ -576,6 +576,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
+  @annotation.nowarn
   def timestampJCodec(
       hints: Hints,
       defaultTimestamp: TimestampFormat = TimestampFormat.EPOCH_SECONDS

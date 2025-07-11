@@ -129,7 +129,7 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       field: String,
       fieldHints: Hints
   ): Option[HttpBinding] = {
-    fieldHints.get(HttpLabel).map { case HttpLabel() =>
+    fieldHints.get(HttpLabel).map { _ =>
       PathBinding(field)
     } orElse fieldHints.get(HttpQuery).map { case HttpQuery(name) =>
       QueryBinding(name)

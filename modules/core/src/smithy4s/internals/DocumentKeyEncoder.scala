@@ -54,6 +54,7 @@ object DocumentKeyEncoder {
       }
       def default[A]: OptDocumentKeyEncoder[A] = None
 
+      @annotation.nowarn
       override def primitive[P](
           shapeId: ShapeId,
           hints: Hints,

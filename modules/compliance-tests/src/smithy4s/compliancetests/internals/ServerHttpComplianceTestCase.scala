@@ -250,7 +250,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       )
       val code =
         endpoint.hints.get[smithy.api.Http].map(_.code).getOrElse(newHttp.code)
-      Hints(newHttp.copy(code = code))
+      Hints(newHttp.withCode( code))
     }
     val amendedOperation =
       Schema

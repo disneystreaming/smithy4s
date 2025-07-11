@@ -290,6 +290,7 @@ object Timestamp {
     case NonFatal(_) => None
   }
 
+  @annotation.nowarn
   def showFormat(format: TimestampFormat): String = format match {
     case TimestampFormat.DATE_TIME =>
       "date-time timestamp (YYYY-MM-ddThh:mm:ss.sssZ)"

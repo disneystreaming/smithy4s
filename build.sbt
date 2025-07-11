@@ -233,7 +233,8 @@ lazy val core = projectMatrix
         .taskValue
     },
     scalacOptions ++= Seq(
-      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
+      "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent",
+      "-Wconf:msg=value noInlineDocumentSupport is deprecated:silent"
     ),
     libraryDependencies ++= weaverDeps.value,
     libraryDependencies += Dependencies.collectionsCompat.value,
