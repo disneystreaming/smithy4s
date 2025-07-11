@@ -7,8 +7,7 @@ Thank you!
 
 # 0.18.40
 
-<!-- todo: add link to docs -->
-* codegen: Add support for bincompat-friendly code generation mode in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/).
+* codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/).
 
 # 0.18.39
 
