@@ -19,7 +19,6 @@ package smithy4s.dynamic
 import smithy4s.{Document, ShapeId}
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.{ShapeId => SmithyShapeId}
-import scala.jdk.CollectionConverters._
 
 object syntax {
   def documentToNode(doc: Document): Node = doc match {
@@ -34,7 +33,9 @@ object syntax {
     case DNull          => Node.nullNode()
   }
 
-  def nodeToDocument(node: Node): Document = NodeToDocument(node)
+  final implicit class NodeOps(private val node: Node) extends AnyVal {
+    def toSmithy4sDocument: Document = NodeToDocument(node)
+  }
 
   final implicit class ShapeIdOps(private val sid: ShapeId) extends AnyVal { // Fixed: private sid, final, AnyVal
     def toSmithy: SmithyShapeId =
