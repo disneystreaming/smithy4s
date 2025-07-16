@@ -511,15 +511,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   lazy val publishSettings = Seq(
     organization := "com.disneystreaming.smithy4s",
     sonatypeProfileName := "com.disneystreaming",
-    version := sys.env
-      .get("GITHUB_REF")
-      .filter(_.startsWith("refs/tags/v"))
-      .map(_.drop("refs/tags/v".length))
-      .getOrElse(version.value),
-    publishTo := sonatypePublishToBundle.value,
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
-    publishMavenStyle := true,
-    publishLocal / publishMavenStyle := false,
+    pomIncludeRepository := { _ => false },
     homepage := Some(url("https://github.com/disneystreaming")),
     scmInfo := Some(
       ScmInfo(
@@ -552,20 +544,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         email = "kubukoz@gmail.com",
         url = url("https://github.com/kubukoz")
       )
-    ),
-    credentials ++=
-      sys.env
-        .get("SONATYPE_USERNAME")
-        .zip(sys.env.get("SONATYPE_PASSWORD"))
-        .map { case (username, password) =>
-          Credentials(
-            "Sonatype Nexus Repository Manager",
-            "oss.sonatype.org",
-            username,
-            password
-          )
-        }
-        .toSeq
+    )
   )
 
   def createBuildCommands(projects: Seq[ProjectReference]) = {
