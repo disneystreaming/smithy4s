@@ -106,22 +106,20 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
       tag: Primitive[P]
   ): ShapeRecorder[ShapeId] = {
     def shp = tag match {
-      case PUUID => StringShape.builder().setId(shapeId.toSmithy).build()
-      case PBigDecimal =>
-        BigDecimalShape.builder().setId(shapeId.toSmithy).build()
-      case PBigInt => BigIntegerShape.builder().setId(shapeId.toSmithy).build()
-      case PString => StringShape.builder().setId(shapeId.toSmithy).build()
-      case PDouble => DoubleShape.builder().setId(shapeId.toSmithy).build()
-      case PInt    => IntegerShape.builder().setId(shapeId.toSmithy).build()
-      case PBlob   => BlobShape.builder().setId(shapeId.toSmithy).build()
-      case PTimestamp =>
-        TimestampShape.builder().setId(shapeId.toSmithy).build()
-      case PFloat => FloatShape.builder().setId(shapeId.toSmithy).build()
-      case PLong  => BigDecimalShape.builder().setId(shapeId.toSmithy).build()
-      case PByte  => ByteShape.builder().setId(shapeId.toSmithy).build()
-      case PDocument => DocumentShape.builder().setId(shapeId.toSmithy).build()
-      case PBoolean  => BooleanShape.builder().setId(shapeId.toSmithy).build()
-      case PShort    => ShortShape.builder().setId(shapeId.toSmithy).build()
+      case PUUID       => StringShape.builder().setId(shapeId).build()
+      case PBigDecimal => BigDecimalShape.builder().setId(shapeId).build()
+      case PBigInt     => BigIntegerShape.builder().setId(shapeId).build()
+      case PString     => StringShape.builder().setId(shapeId).build()
+      case PDouble     => DoubleShape.builder().setId(shapeId).build()
+      case PInt        => IntegerShape.builder().setId(shapeId).build()
+      case PBlob       => BlobShape.builder().setId(shapeId).build()
+      case PTimestamp  => TimestampShape.builder().setId(shapeId).build()
+      case PFloat      => FloatShape.builder().setId(shapeId).build()
+      case PLong       => BigDecimalShape.builder().setId(shapeId).build()
+      case PByte       => ByteShape.builder().setId(shapeId).build()
+      case PDocument   => DocumentShape.builder().setId(shapeId).build()
+      case PBoolean    => BooleanShape.builder().setId(shapeId).build()
+      case PShort      => ShortShape.builder().setId(shapeId).build()
     }
     record(shp.captureHints(hints.targetHints))
   }
@@ -160,7 +158,7 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
     self(key).zip(self(value)).record { case (keyId, valueId) =>
       MapShape
         .builder()
-        .setId(shapeId.toSmithy)
+        .setId(shapeId)
         .key(keyId, addHintsConsumer(key.hints.memberHints))
         .value(valueId, addHintsConsumer(value.hints.memberHints))
         .build()
@@ -207,7 +205,7 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
   ): ShapeRecorder[ShapeId] =
     ShapeRecorder.sequence(fields.map(f => self(f.schema))).record {
       targetIds =>
-        val builder = StructureShape.builder().setId(shapeId.toSmithy)
+        val builder = StructureShape.builder().setId(shapeId)
         fields.zip(targetIds).foreach { case (field, targetId) =>
           val member = MemberShape
             .builder()
@@ -229,8 +227,7 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
   ): ShapeRecorder[ShapeId] =
     ShapeRecorder.sequence(alternatives.map(a => self(a.schema))).record {
       targetId =>
-        val builder: UnionShape.Builder =
-          UnionShape.builder().setId(shapeId.toSmithy)
+        val builder: UnionShape.Builder = UnionShape.builder().setId(shapeId)
         alternatives.zip(targetId).foreach { case (alt, targetId) =>
           val member = MemberShape
             .builder()
