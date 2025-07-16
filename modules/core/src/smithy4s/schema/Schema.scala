@@ -262,6 +262,10 @@ object Schema {
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
+  val localdate: Schema[java.time.LocalDate] = Primitive.PLocalDate.schema("alloy", "LocalDate")
+  val localtime: Schema[java.time.LocalTime] = Primitive.PLocalTime.schema("alloy", "LocalTime")
+  val duration: Schema[java.time.Duration] = Primitive.PDuration.schema("alloy", "Duration")
+  val offsetdatetime: Schema[java.time.OffsetDateTime] = Primitive.POffsetDateTime.schema("alloy", "OffsetDateTime")
 
   val unit: Schema[Unit] = Schema.StructSchema(ShapeId("smithy.api", "Unit"), Hints.empty, Vector.empty, _ => ())
 

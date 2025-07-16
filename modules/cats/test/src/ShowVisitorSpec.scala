@@ -24,6 +24,8 @@ import weaver.FunSuite
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.interopcats.testcases.IntOrString._
+import java.util.UUID
+import java.time._
 
 object ShowVisitorSpec extends FunSuite with CompatProvider {
 
@@ -115,6 +117,42 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
     val foo = getTimestamp
     val showOutput = schemaVisitorShow(schema).show(foo)
     expect.eql(showOutput, foo.toString)
+  }
+
+  test("uuid") {
+    val schema: Schema[UUID] = uuid
+    val foo = UUID.fromString("edfad239-da90-497f-a2bd-85ebc1c3b09d")
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "edfad239-da90-497f-a2bd-85ebc1c3b09d")
+  }
+
+  test("localDate") {
+    val schema: Schema[LocalDate] = localdate
+    val foo = LocalDate.of(2025, 7, 16)
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "2025-07-16")
+  }
+
+  test("localTime") {
+    val schema: Schema[LocalTime] = localtime
+    val foo = LocalTime.of(12, 24, 48, 0)
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "12:24:48")
+  }
+
+  // TODO: For duration should show, show it as seconds.nanos format or the default `toString` for duration?
+  test("duration ") {
+    val schema: Schema[Duration] = duration
+    val foo = Duration.ofDays(1)
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "PT24H")
+  }
+
+  test("offsetdatetime") {
+    val schema: Schema[OffsetDateTime] = offsetdatetime
+    val foo = OffsetDateTime.parse("2025-07-16T12:24:48-07:00")
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "2025-07-16T12:24:48-07:00")
   }
 
   test("struct") {
