@@ -28,7 +28,7 @@ object syntax {
     case DBoolean(value) => Node.from(value)
     case DObject(values) =>
       Node.objectNode(values.map { case (k, v) =>
-        Node.from(k) -> documentToNode(v)
+        Node.from(k) -> v.toSmithyNode
       }.asJava)
     case DArray(values) => Node.fromNodes(values.map(documentToNode): _*)
     case DNull          => Node.nullNode()
@@ -38,7 +38,7 @@ object syntax {
     def toSmithy4sDocument: Document = NodeToDocument(node)
   }
 
-  final implicit class ShapeIdOps(private val sid: ShapeId) extends AnyVal { // Fixed: private sid, final, AnyVal
+  final implicit class ShapeIdOps(private val sid: ShapeId) extends AnyVal {
     def toSmithy: SmithyShapeId =
       SmithyShapeId.fromParts(sid.namespace, sid.name)
   }
