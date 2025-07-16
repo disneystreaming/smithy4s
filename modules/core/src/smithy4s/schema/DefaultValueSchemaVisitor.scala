@@ -1,0 +1,104 @@
+/*
+ *  Copyright 2021-2025 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package smithy4s
+package schema
+
+import smithy4s.schema.Primitive._
+import java.time._
+
+private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
+
+  def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): Option[P] =
+    tag match {
+      case PShort      => Some(0: Short)
+      case PString     => Some("")
+      case PFloat      => Some(0f)
+      case PDouble     => Some(0d)
+      case PInt        => Some(0)
+      case PLong       => Some(0L)
+      case PBoolean    => Some(false)
+      case PTimestamp  => Some(Timestamp.epoch)
+      case PBlob       => Some(Blob.empty)
+      case PBigInt     => Some(BigInt(0))
+      case PBigDecimal => Some(BigDecimal(0))
+      case PDocument   => Some(Document.DNull)
+      case PUUID       => None
+      case PByte       => None
+      case PLocalDate  => Some(LocalDate.ofEpochDay(0))
+      case PLocalTime  => Some(LocalTime.MIDNIGHT)
+      case PDuration   => Some(Duration.ZERO)
+      case POffsetDateTime   => Some(OffsetDateTime.of(0, 0, 0, 0, 0, 0, 0, ZoneOffset.UTC))
+    }
+
+  def collection[C[_], A](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ): Option[C[A]] = Some(tag.empty)
+
+  def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): Option[Map[K, V]] = Some(Map.empty)
+
+  def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: EnumTag[E],
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): Option[E] = None
+
+  def struct[S](
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[Field[S, _]],
+      make: IndexedSeq[Any] => S
+  ): Option[S] = None
+
+  def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
+  ): Option[U] = None
+
+  def biject[A, B](
+      schema: Schema[A],
+      bijection: Bijection[A, B]
+  ): Option[B] = {
+    schema.compile(this).map(bijection.to)
+  }
+
+  def refine[A, B](
+      schema: Schema[A],
+      refinement: Refinement[A, B]
+  ): Option[B] =
+    schema.compile(this).flatMap(refinement.apply(_).toOption)
+
+  def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
+    suspend.map(_.compile(this)).value
+
+  def option[A](schema: Schema[A]): Option[Option[A]] = Some(None)
+}

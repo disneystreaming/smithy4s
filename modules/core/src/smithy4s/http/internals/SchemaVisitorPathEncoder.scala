@@ -61,6 +61,10 @@ object SchemaVisitorPathEncoder
         val fmt =
           hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
         Some(PathEncode.raw(_.format(fmt)))
+      case Primitive.PLocalDate => PathEncode.fromToString
+      case Primitive.PLocalTime => PathEncode.fromToString
+      case Primitive.PDuration => PathEncode.fromToString
+      case Primitive.POffsetDateTime => PathEncode.fromToString
     }
   }
 

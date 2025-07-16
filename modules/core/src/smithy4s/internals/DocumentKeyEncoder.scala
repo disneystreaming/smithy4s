@@ -85,6 +85,10 @@ object DocumentKeyEncoder {
                 forBigDecimal { ts => BigDecimal(ts.epochSecond) }
             }
           case PDocument => None
+          case PLocalDate => asString
+          case PLocalTime => asString
+          case PDuration => asString
+          case POffsetDateTime => asString
         }
       }
       override def enumeration[E](

@@ -140,6 +140,10 @@ class DocumentEncoderSchemaVisitor(
     case PDouble   => from(double => DNumber(BigDecimal(double)))
     case PLong     => from(long => DNumber(BigDecimal(long)))
     case PString   => from(DString(_))
+    case PLocalDate => from(localDate => DString(localDate.toString()))
+    case PLocalTime => from(localTime => DString(localTime.toString()))
+    case PDuration => from(duration => DString(duration.toString()))
+    case POffsetDateTime => from (offsetDateTime => DString(offsetDateTime.toString()))
   }
 
   override def collection[C[_], A](
