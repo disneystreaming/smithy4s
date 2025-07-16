@@ -19,7 +19,7 @@ ThisBuild / mimaBaseVersion := "0.18.0"
 
 // for Alloy snapshots
 // as well as any other dependency snapshots.
-ThisBuild / resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -37,13 +37,6 @@ Global / startYear := Some(2021)
 Global / licenses := Seq(
   "TOST-1.0" -> new URL("https://disneystreaming.github.io/TOST-1.0.txt")
 )
-
-sonatypeCredentialHost := "s01.oss.sonatype.org"
-
-ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
-  else (ThisBuild / version).value
-}
 
 lazy val root = project
   .in(file("."))
