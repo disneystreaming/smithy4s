@@ -30,20 +30,7 @@ import smithy4s.schema._
 import scala.collection.mutable.Builder
 
 import Document._
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PUUID
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PString
+import smithy4s.schema.Primitive._
 import alloy.Untagged
 import smithy4s.schema.FieldFilter
 
@@ -139,6 +126,10 @@ class DocumentEncoderSchemaVisitor(
     case PDouble   => from(double => DNumber(BigDecimal(double)))
     case PLong     => from(long => DNumber(BigDecimal(long)))
     case PString   => from(DString(_))
+    case PLocalDate => from(localDate => DString(localDate.toString()))
+    case PLocalTime => from(localTime => DString(localTime.toString()))
+    case PDuration => from(duration => DString(duration.toString()))
+    case POffsetDateTime => from (offsetDateTime => DString(offsetDateTime.toString()))
   }
 
   override def collection[C[_], A](

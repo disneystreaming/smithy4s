@@ -18,6 +18,7 @@ package smithy4s.internals
 
 import java.util.Base64
 import java.util.UUID
+import java.time._
 
 import smithy4s._
 import smithy4s.Document._
@@ -125,6 +126,19 @@ object DocumentKeyDecoder {
             }
 
           case PDocument => None
+
+          case PLocalDate => from(shortDesc) { case DString(string) =>
+            LocalDate.parse(string)
+          }
+          case PLocalTime => from(shortDesc) { case DString(string) =>
+            LocalTime.parse(string)
+          }
+          case PDuration => from(shortDesc) { case DString(string) =>
+            Duration.parse(string)
+          }
+          case POffsetDateTime => from(shortDesc) { case DString(string) =>
+            OffsetDateTime.parse(string)
+          }
         }
       }
       override def enumeration[E](

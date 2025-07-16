@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
+import java.time._
 
 private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
@@ -41,6 +42,10 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PDocument   => Some(Document.DNull)
       case PUUID       => None
       case PByte       => None
+      case PLocalDate  => Some(LocalDate.ofEpochDay(0))
+      case PLocalTime  => Some(LocalTime.MIDNIGHT)
+      case PDuration   => Some(Duration.ZERO)
+      case POffsetDateTime   => Some(OffsetDateTime.of(0, 0, 0, 0, 0, 0, 0, ZoneOffset.UTC))
     }
 
   def collection[C[_], A](
