@@ -20,6 +20,7 @@ import cats.Show
 import smithy4s.schema.Primitive
 import smithy4s.{Blob, Document, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction
+import java.time._
 
 private[interopcats] trait ShowInstances {
 
@@ -27,6 +28,10 @@ private[interopcats] trait ShowInstances {
   implicit val blob: Show[Blob] = (b: Blob) => b.toBase64String
   implicit val document: Show[Document] = Show.fromToString
   implicit val ts: Show[Timestamp] = Show.fromToString
+  implicit val localDateShow: Show[LocalDate] = Show.fromToString
+  implicit val localTimeShow: Show[LocalTime] = Show.fromToString
+  implicit val durationShow: Show[Duration] = Show.fromToString
+  implicit val offsetDateTimeShow: Show[OffsetDateTime] = Show.fromToString
   val primShowPf: PolyFunction[Primitive, Show] =
     Primitive.deriving[Show]
 }

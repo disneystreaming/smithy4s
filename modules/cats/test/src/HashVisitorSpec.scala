@@ -27,6 +27,8 @@ import smithy4s.interopcats.testcases.IntOrInt
 import weaver.FunSuite
 import scala.util.hashing.MurmurHash3.productSeed
 import HashTestUtils._
+import java.util.UUID
+import java.time._
 
 object HashVisitorSpec extends FunSuite with CompatProvider {
 
@@ -117,6 +119,41 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
     val foo = getTimestamp
     val hashOutput = visitor(schema).hash(foo)
     expect.eql(foo.hashCode(), hashOutput)
+  }
+
+  test("uuid") {
+    val schema: Schema[UUID] = uuid
+    val foo = UUID.randomUUID()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("localDate") {
+    val schema: Schema[LocalDate] = localdate
+    val foo = LocalDate.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("localTime") {
+    val schema: Schema[LocalTime] = localtime
+    val foo = LocalTime.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("duration ") {
+    val schema: Schema[Duration] = duration
+    val foo = Duration.ofDays(1)
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("offsetdatetime") {
+    val schema: Schema[OffsetDateTime] = offsetdatetime
+    val foo = OffsetDateTime.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
   }
 
   test("list") {
