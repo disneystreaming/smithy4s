@@ -294,7 +294,11 @@ lazy val core = projectMatrix
       // https://github.com/disneystreaming/smithy4s/pull/1669
       ProblemFilters.exclude[IncompatibleMethTypeProblem](
         "smithy4s.http.HttpUnaryServerRouter.partialFunction"
-      )
+      ),
+      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
+      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
+      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
+      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
