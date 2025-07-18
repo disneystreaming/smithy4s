@@ -27,20 +27,8 @@ import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PString
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PUUID
+import smithy4s.schema.Primitive._
+import java.time._
 
 object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
@@ -49,20 +37,24 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
       hints: Hints,
       tag: Primitive[P]
   ): Id[P] = tag match {
-    case PFloat      => 0: Float
-    case PBigDecimal => 0: BigDecimal
-    case PBigInt     => 0: BigInt
-    case PBlob       => Blob.empty
-    case PDocument   => Document.DNull
-    case PByte       => 0: Byte
-    case PInt        => 0
-    case PShort      => 0: Short
-    case PString     => ""
-    case PLong       => 0: Long
-    case PDouble     => 0: Double
-    case PBoolean    => true
-    case PTimestamp  => Timestamp(0L, 0)
-    case PUUID       => new UUID(0, 0)
+    case PFloat          => 0: Float
+    case PBigDecimal     => 0: BigDecimal
+    case PBigInt         => 0: BigInt
+    case PBlob           => Blob.empty
+    case PDocument       => Document.DNull
+    case PByte           => 0: Byte
+    case PInt            => 0
+    case PShort          => 0: Short
+    case PString         => ""
+    case PLong           => 0: Long
+    case PDouble         => 0: Double
+    case PBoolean        => true
+    case PTimestamp      => Timestamp(0L, 0)
+    case PUUID           => new UUID(0, 0)
+    case PLocalDate      => LocalDate.ofEpochDay(0)
+    case PLocalTime      => LocalTime.MIDNIGHT
+    case PDuration       => Duration.ZERO
+    case POffsetDateTime => OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)
   }
 
   override def collection[C[_], A](
