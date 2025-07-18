@@ -20,6 +20,7 @@ package internals
 
 import java.util.UUID
 import java.util
+import java.time._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
@@ -440,6 +441,85 @@ private[smithy4s] class SchemaVisitorJCodec(
           out.encodeError("Cannot use Unit as keys")
       }
 
+    val localDate: JCodec[LocalDate] = new JCodec[LocalDate] {
+      def expecting: String = "localDate"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): LocalDate =
+        LocalDate.parse(in.readString(null))
+
+      def encodeValue(x: LocalDate, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiVal(x.toString())
+
+      def decodeKey(in: JsonReader): LocalDate =
+        LocalDate.parse(in.readKeyAsString())
+
+      def encodeKey(x: LocalDate, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiKey(x.toString)
+    }
+
+    val localTime: JCodec[LocalTime] = new JCodec[LocalTime] {
+      def expecting: String = "localTime"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): LocalTime =
+        LocalTime.parse(in.readString(null))
+
+      def encodeValue(x: LocalTime, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiVal(x.toString())
+
+      def decodeKey(in: JsonReader): LocalTime =
+        LocalTime.parse(in.readKeyAsString())
+
+      def encodeKey(x: LocalTime, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiKey(x.toString)
+    }
+
+    val duration: JCodec[Duration] = new JCodec[Duration] {
+      def expecting: String = "duration"
+
+      private def fromBigDecimal(x: BigDecimal): Duration = {
+        val seconds = x.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
+        val nanos = ((x - seconds) * 1000000000).toLong
+        Duration.ofSeconds(seconds, nanos)
+      }
+
+      private def toBigDecimal(x: Duration): BigDecimal = {
+        val seconds = java.math.BigDecimal.valueOf(x.getSeconds)
+        val nanos = x.getNano().toLong
+
+        if (nanos == 0) seconds else seconds.add(java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros)
+      }
+
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Duration = {
+        fromBigDecimal(in.readBigDecimal(null))
+      }
+
+      def encodeValue(x: Duration, out: JsonWriter): Unit =
+        out.writeVal(toBigDecimal(x))
+
+      def decodeKey(in: JsonReader): Duration =
+        fromBigDecimal(in.readKeyAsBigDecimal())
+
+      def encodeKey(x: Duration, out: JsonWriter): Unit =
+        out.writeKey(toBigDecimal(x))
+    }
+
+    val offsetDateTime: JCodec[OffsetDateTime] = new JCodec[OffsetDateTime] {
+      def expecting: String = "offsetDateTime"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): OffsetDateTime =
+        OffsetDateTime.parse(in.readString(null))
+
+      def encodeValue(x: OffsetDateTime, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiVal(x.toString())
+
+      def decodeKey(in: JsonReader): OffsetDateTime =
+        OffsetDateTime.parse(in.readKeyAsString())
+
+      def encodeKey(x: OffsetDateTime, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiKey(x.toString)
+    }
+
     def document(maxArity: Int): JCodec[Document] = new JCodec[Document] {
       import Document._
       override def canBeKey: Boolean = false
@@ -573,6 +653,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PTimestamp  => timestampJCodec(hints)
 
       case PUUID => PrimitiveJCodecs.uuid
+      case PLocalDate => PrimitiveJCodecs.localDate
+      case PLocalTime => PrimitiveJCodecs.localTime
+      case PDuration => PrimitiveJCodecs.duration
+      case POffsetDateTime => PrimitiveJCodecs.offsetDateTime
     }
   }
 

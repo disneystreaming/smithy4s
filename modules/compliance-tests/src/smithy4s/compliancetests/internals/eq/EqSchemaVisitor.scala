@@ -23,6 +23,7 @@ import smithy4s._
 import smithy4s.schema.{Schema, _}
 
 import java.util.UUID
+import java.time._
 import smithy4s.capability.EncoderK
 import cats.kernel.Monoid
 
@@ -158,20 +159,24 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
-      case Primitive.PShort      => Eq[Short]
-      case Primitive.PInt        => Eq[Int]
-      case Primitive.PFloat      => floatEq
-      case Primitive.PLong       => Eq[Long]
-      case Primitive.PDouble     => doubleEq
-      case Primitive.PBigInt     => Eq[BigInt]
-      case Primitive.PBigDecimal => Eq[BigDecimal]
-      case Primitive.PBoolean    => Eq[Boolean]
-      case Primitive.PString     => Eq[String]
-      case Primitive.PUUID       => Eq[UUID]
-      case Primitive.PByte       => Eq[Byte]
-      case Primitive.PBlob       => Eq[Blob]
-      case Primitive.PDocument   => Eq[Document]
-      case Primitive.PTimestamp  => Eq[Timestamp]
+      case Primitive.PShort           => Eq[Short]
+      case Primitive.PInt             => Eq[Int]
+      case Primitive.PFloat           => floatEq
+      case Primitive.PLong            => Eq[Long]
+      case Primitive.PDouble          => doubleEq
+      case Primitive.PBigInt          => Eq[BigInt]
+      case Primitive.PBigDecimal      => Eq[BigDecimal]
+      case Primitive.PBoolean         => Eq[Boolean]
+      case Primitive.PString          => Eq[String]
+      case Primitive.PUUID            => Eq[UUID]
+      case Primitive.PByte            => Eq[Byte]
+      case Primitive.PBlob            => Eq[Blob]
+      case Primitive.PDocument        => Eq[Document]
+      case Primitive.PTimestamp       => Eq[Timestamp]
+      case Primitive.PLocalDate       => Eq[LocalDate]
+      case Primitive.PLocalTime       => Eq[LocalTime]
+      case Primitive.PDuration        => Eq[Duration]
+      case Primitive.POffsetDateTime  => Eq[OffsetDateTime]
     }
   }
 

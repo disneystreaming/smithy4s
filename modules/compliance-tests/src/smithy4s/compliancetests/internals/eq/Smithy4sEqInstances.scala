@@ -20,6 +20,7 @@ import cats.implicits.{catsSyntaxEq, toContravariantOps}
 import cats.kernel.Eq
 import smithy4s.{Blob, Document, Timestamp}
 import cats.kernel.instances.StaticMethods
+import java.time._
 
 trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>
@@ -37,6 +38,12 @@ trait Smithy4sEqInstances {
     x == y || (x.isNaN && y.isNaN)
   implicit val doubleEq: Eq[Double] = (x: Double, y: Double) =>
     x == y || (x.isNaN && y.isNaN)
+  implicit val localDateEq: Eq[LocalDate] = Eq[Long].contramap(_.toEpochDay)
+  implicit val localTimeEq: Eq[LocalTime] = Eq[Long].contramap(_.toNanoOfDay)
+  implicit val durationEq:  Eq[Duration] = (x: Duration, y: Duration) => 
+    x.compareTo(y) == 0
+    implicit val offsetDateTimeEq: Eq[OffsetDateTime] = (x: OffsetDateTime, y: OffsetDateTime) =>
+    x.compareTo(y) == 0
 
 }
 object Smithy4sEqInstances extends Smithy4sEqInstances

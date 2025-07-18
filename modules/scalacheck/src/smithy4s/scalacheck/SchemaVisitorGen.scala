@@ -56,6 +56,10 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
           .flatMap(l => Gen.stringOfN(l, Gen.asciiPrintableChar))
           .map(_.getBytes)
           .map(Blob.apply)
+      case PLocalDate => Smithy4sGen.genLocalDate
+      case PLocalTime => Smithy4sGen.genLocalTime
+      case PDuration => Gen.duration.map(dur => java.time.Duration.ofNanos(dur.toNanos))
+      case POffsetDateTime => Smithy4sGen.genOffsetDateTime
     }
   }
 

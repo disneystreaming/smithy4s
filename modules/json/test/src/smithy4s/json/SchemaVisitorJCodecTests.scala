@@ -41,6 +41,7 @@ import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
+import java.time.Duration
 import smithy4s.json.internals.JsoniterCodecCompilerImpl
 import smithy4s.schema.Schema
 import smithy4s.schema.Field
@@ -1185,6 +1186,27 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val doc = readFromString[Document](jsonStr)
 
     assertEquals(doc, expected)
+  }
+
+
+  case class MyDuration(a: Duration)
+
+  object MyDuration {
+    implicit val schema: Schema[MyDuration] = {
+      val a = duration.required[MyDuration]("a", _.a)
+      struct(a)(MyDuration.apply)
+    }
+  }
+
+  test("Duration are correctly encoded/decoded from a BigDecimal") {
+    val jsonString = """{"a":86400.000000001}"""
+    val input = MyDuration(Duration.ofDays(1).plusNanos(1))
+
+    val encoded = writeToString[MyDuration](input)
+    val decoded = readFromString[MyDuration](jsonString)
+
+    assertEquals(jsonString, encoded)
+    assertEquals(input, decoded)
   }
 
 }

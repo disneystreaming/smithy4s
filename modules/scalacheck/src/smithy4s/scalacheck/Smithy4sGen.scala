@@ -2,6 +2,7 @@ package smithy4s
 package scalacheck
 
 import org.scalacheck.Gen
+import java.time._
 
 private[scalacheck] object Smithy4sGen {
 
@@ -29,6 +30,21 @@ private[scalacheck] object Smithy4sGen {
     mm <- minute
     ss <- second
   } yield Timestamp(YYYY, MM, DD, hh, mm, ss, 0)
+
+  val genLocalDate: Gen[LocalDate] = for {
+    YYYY <- year
+    MM <- month
+    DD <- day(YYYY, MM)
+  } yield LocalDate.of(YYYY, MM, DD)
+
+  val genLocalTime: Gen[LocalTime] = for {
+    hh <- hour
+    mm <- minute
+    ss <- second
+  } yield LocalTime.of(hh, mm, ss)
+
+  val genOffsetDateTime: Gen[OffsetDateTime] = 
+    genTimestamp.map(timestamp => OffsetDateTime.parse(timestamp.format(smithy.api.TimestampFormat.DATE_TIME)))
 
   def genDocument(maxDepth: Int): Gen[Document] = if (maxDepth <= 0) {
     Gen.oneOf(
