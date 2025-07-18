@@ -701,8 +701,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         "--library",
         s"--scala=$scalaVersion",
         s"--output=$outputJarPath",
-        extraJars.map { j => s"--jar=$j" },
-        extraDeps.map { d => s"--dependency=$d" },
+        extraJars.map { j => s"--compile-only-jar=$j" },
+        extraDeps.map { d => s"--compile-only-dependency=$d" },
         sourceDirectories
       )
     }
