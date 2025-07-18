@@ -31,6 +31,7 @@ import smithy4s.Newtype
 import smithy.api.Pattern
 import smithy4s.Service
 import scala.io.Source
+import java.time.{LocalDate, LocalTime, Duration, OffsetDateTime}
 
 object ToSmithyVisitorSpec extends FunSuite {
 
@@ -64,6 +65,14 @@ object ToSmithyVisitorSpec extends FunSuite {
                     |  l: Blob
                     |  @required
                     |  m: Timestamp
+                    |  @required
+                    |  n: alloy#LocalDate
+                    |  @required
+                    |  o: alloy#LocalTime
+                    |  @required
+                    |  p: alloy#Duration
+                    |  @required
+                    |  q: alloy#OffsetDateTime
                     |}
                     |""".stripMargin
 
@@ -80,7 +89,12 @@ object ToSmithyVisitorSpec extends FunSuite {
         j: Byte,
         k: UUID,
         l: Blob,
-        m: Timestamp
+        m: Timestamp,
+        n: LocalDate,
+        o: LocalTime,
+        p: Duration,
+        q: OffsetDateTime
+
     )
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -97,7 +111,11 @@ object ToSmithyVisitorSpec extends FunSuite {
         val k = uuid.required[Foo]("k", _.k)
         val l = blob.required[Foo]("l", _.l)
         val m = timestamp.required[Foo]("m", _.m)
-        struct(a, b, c, d, e, f, g, h, i, j, k, l, m)(Foo.apply)
+        val n = localdate.required[Foo]("n", _.n)
+        val o = localtime.required[Foo]("o", _.o)
+        val p = duration.required[Foo]("p", _.p)
+        val q = offsetdatetime.required[Foo]("q", _.q)
+        struct(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)(Foo.apply)
       }.withId(ShapeId("foo", "Test"))
     }
     runTest(smithy, Foo.schema)
