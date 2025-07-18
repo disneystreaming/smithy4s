@@ -22,6 +22,7 @@ import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
 import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp}
 import weaver.{Expectations, FunSuite}
+import java.time.{LocalDate, LocalTime, OffsetDateTime, Duration}
 
 object EqVisitorSpec extends FunSuite {
 
@@ -122,6 +123,38 @@ object EqVisitorSpec extends FunSuite {
     val foo = Timestamp.fromEpochSecond(now.getEpochSecond)
     val foo1 = Timestamp.fromEpochSecond(now.getEpochSecond)
     val neq = Timestamp.fromEpochSecond(now.getEpochSecond + 1)
+    schemaEq(foo, foo1)(neq)
+  }
+
+  test("localDate") {
+    implicit val schema: Schema[LocalDate] = localdate
+    val foo = LocalDate.parse("2025-07-18")
+    val foo1 = LocalDate.parse("2025-07-18")
+    val neq = LocalDate.parse("2024-06-17")
+    schemaEq(foo, foo1)(neq)
+  }
+
+  test("localTime") {
+    implicit val schema: Schema[LocalTime] = localtime
+    val foo = LocalTime.parse("13:26:50.1")
+    val foo1 = LocalTime.parse("13:26:50.1000000")
+    val neq = LocalTime.parse("03:06:25.1")
+    schemaEq(foo, foo1)(neq)
+  }
+
+  test("OffsetDateTime") {
+    implicit val schema: Schema[OffsetDateTime] = offsetdatetime
+    val foo = OffsetDateTime.parse("2025-07-18T13:26:50.1-07:00")
+    val foo1 = OffsetDateTime.parse("2025-07-18T13:26:50.10000-07:00")
+    val neq = OffsetDateTime.parse("2024-06-17T03:06:25.1-07:00")
+    schemaEq(foo, foo1)(neq)
+  }
+
+  test("Duration") {
+    implicit val schema: Schema[Duration] = duration
+    val foo = Duration.ofSeconds(123456)
+    val foo1 = Duration.ofSeconds(123456)
+    val neq = Duration.ofSeconds(654321)
     schemaEq(foo, foo1)(neq)
   }
 
