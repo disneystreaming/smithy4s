@@ -20,6 +20,7 @@ package internals
 import cats.Id
 
 import java.util.UUID
+import java.time._
 import smithy4s.schema._
 import smithy4s.Timestamp
 import smithy4s.Blob
@@ -49,6 +50,10 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PBoolean    => true
     case PTimestamp  => Timestamp(0L, 0)
     case PUUID       => new UUID(0, 0)
+    case PLocalDate  => LocalDate.ofEpochDay(0)
+    case PLocalTime  => LocalTime.MIDNIGHT
+    case PDuration   => Duration.ZERO
+    case POffsetDateTime => OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)
   }
 
   override def collection[C[_], A](
