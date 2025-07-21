@@ -42,7 +42,7 @@ trait Smithy4sEqInstances {
   implicit val localTimeEq: Eq[LocalTime] = Eq[Long].contramap(_.toNanoOfDay)
   implicit val durationEq:  Eq[Duration] = (x: Duration, y: Duration) => 
     x.compareTo(y) == 0
-    implicit val offsetDateTimeEq: Eq[OffsetDateTime] = (x: OffsetDateTime, y: OffsetDateTime) =>
+  implicit val offsetDateTimeEq: Eq[OffsetDateTime] = (x: OffsetDateTime, y: OffsetDateTime) =>
     x.compareTo(y) == 0
 
 }
