@@ -618,7 +618,6 @@ class DocumentSpec() extends ScalaCheckSuite {
     "document encoder - default values overrides + explicit defaults encoding = false"
   ) {
     val result = Document.Encoder
-      .withFieldFilter(FieldFilter.Default)
       .fromSchema(DefaultNullsOperationOutput.schema)
       .encode(
         DefaultNullsOperationOutput(
@@ -656,7 +655,7 @@ class DocumentSpec() extends ScalaCheckSuite {
 
   test("Document encoder - timestamp defaults") {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
+      .withFieldFilter(FieldFilter.Default)
       .fromSchema(TimestampOperationInput.schema)
       .encode(TimestampOperationInput())
     expect.same(
@@ -673,7 +672,6 @@ class DocumentSpec() extends ScalaCheckSuite {
     val timestampWithNanos =
       Timestamp(1716459630L, 500 * 1000 * 1000 /* half a second */ )
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
       .fromSchema(TimestampOperationInput.schema)
       .encode(
         TimestampOperationInput(

@@ -49,7 +49,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
         fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): ToShapeIds[S] = {
-      fields.flatMap(field => apply(field.instance)).toList ++ List(
+      fields.flatMap(field => apply(field.schema)).toList ++ List(
         shapeId
       )
     }
@@ -67,7 +67,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
         alternatives: Vector[Alt[U, _]],
         dispatch: Alt.Dispatcher[U]
     ): ToShapeIds[U] = {
-      alternatives.flatMap(field => apply(field.instance)).toList ++ List(
+      alternatives.flatMap(field => apply(field.schema)).toList ++ List(
         shapeId
       )
     }

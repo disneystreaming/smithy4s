@@ -81,7 +81,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         make: IndexedSeq[Any] => S
     ): Unit = discard {
       fields.foreach { field =>
-        self(field.instance)
+        self(field.schema)
       }
       counter.incrementAndGet()
     }
