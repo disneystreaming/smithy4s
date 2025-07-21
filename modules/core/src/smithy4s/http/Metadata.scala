@@ -226,22 +226,6 @@ object Metadata {
   type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
 
   trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
-    @deprecated(
-      message = """Use withFieldFilter instead.
-      
-  Mapping:
-   - explicitDefaults = false -> FieldFilter.SkipNonRequired
-   - explicitDefaults = true -> FieldFilter.EncodeAll
- """,
-      since = "0.18.30"
-    )
-    def withExplicitDefaultsEncoding(
-        explicitDefaults: Boolean
-    ): EncoderCompiler = withFieldFilter(
-      if (explicitDefaults) FieldFilter.EncodeAll
-      else FieldFilter.Default
-    )
-
     def withFieldFilter(
         fieldFilter: FieldFilter
     ): EncoderCompiler
@@ -266,16 +250,6 @@ object Metadata {
       fieldFilter: FieldFilter
   ) extends CachedSchemaCompiler.DerivingImpl[Encoder]
       with EncoderCompiler {
-
-    @deprecated
-    protected def this(
-        awsHeaderEncoding: Boolean,
-        explicitDefaultsEncoding: Boolean
-    ) = this(
-      awsHeaderEncoding,
-      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.Default
-    )
 
     type Aux[A] = internals.MetaEncode[A]
 
