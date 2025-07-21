@@ -1094,6 +1094,21 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
     }
 
+  private def debug(in: JsonReader, label: String): Unit = {
+    var count = 0
+    val sb = new StringBuffer
+    while(in.hasRemaining()) {
+      sb.append(in.nextByte().toChar)
+      count = count + 1
+    }
+    while (count > 0) {
+      in.rollbackToken()
+      count = count -1
+    }
+    println(s"REMAINING of $label")
+    println(sb.toString())
+  }
+
   // todo: open unions here too
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
@@ -1101,6 +1116,9 @@ private[smithy4s] class SchemaVisitorJCodec(
     new TaggedUnionJCodec[U](alternatives)(dispatch) {
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
         var result: U = null.asInstanceOf[U]
+        debug(in, "ENTRY")
+        var unknownFound = false
+        in.setMark()
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
@@ -1108,20 +1126,34 @@ private[smithy4s] class SchemaVisitorJCodec(
               val key = in.readKeyAsString()
               cursor.push(key)
               val handler = handlerMap.get(key)
-              if (handler eq null) in.skip()
-              else if (in.isNextToken('n')) {
+              if (handler eq null) {
+                if (unknownTagHandler ne null) {
+                  in.rollbackToMark()
+                  unknownFound=true
+                  debug(in, "Unk before")
+                  result = unknownTagHandler(cursor, in)
+                  debug(in, "Unk after")
+                } else in.skip()
+              } else if (in.isNextToken('n')) {
                 in.readNullOrError((), "expected null")
               } else {
                 in.rollbackToken()
                 if (result != null) {
                   in.decodeError("Expected a single non-null value")
                 } else {
+                  debug(in, "known before")
                   result = handler(cursor, in)
+                  debug(in, "known after")
                 }
               }
-              in.isNextToken(',')
+              println(result)
+              println(unknownFound)
+              println(s"!foo: ${!unknownFound} result==null: ${result==null}")
+              !unknownFound && in.isNextToken(',') 
             }) ()
-            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
+            if (!in.isCurrentToken('}')) {
+              in.objectEndOrCommaError()
+            }
           }
           if (result != null) {
             result

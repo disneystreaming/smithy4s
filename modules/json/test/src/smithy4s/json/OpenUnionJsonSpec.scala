@@ -21,6 +21,7 @@ import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.example.SampleOpenUnion
 import smithy4s.Blob
+import smithy4s.codecs.PayloadError
 import smithy4s.example.SampleOpenDiscriminatedUnion
 import smithy4s.example.StructForDiscrimination
 import org.scalacheck.Arbitrary
@@ -31,7 +32,7 @@ import smithy4s.example.RecursiveOpenUnion
 import smithy4s.example.RecursiveDiscriminatedOpenUnion
 import smithy4s.example.HasRecursiveDiscriminatedOpenUnion
 
-class OpenUnionJsonSpec() extends ScalaCheckSuite {
+abstract class OpenUnionJsonSpec extends ScalaCheckSuite {
 
   private val genDocument =
     smithy4s.scalacheck.SchemaVisitorGen.apply(Schema.document)
@@ -41,8 +42,11 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       Schema.map(Schema.string, Schema.document)
     )
 
+  def read[A: Schema](blob: Blob): Either[PayloadError, A]
+  def write[A: Schema](a: A): Blob
+
   test("open tagged union - decoding still fails if no tag is present") {
-    assert(Json.read[SampleOpenUnion](Blob("{}")).isLeft)
+    assert(read[SampleOpenUnion](Blob("{}")).isLeft)
   }
 
   test("open tagged union - known tags decode normally") {
@@ -58,7 +62,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       "brand-new-member" -> Document.fromString("oh wow i'm a string")
     )
     roundtripTest(
-      Json.writeDocumentAsBlob(stringCase),
+      writeDocumentAsBlob(stringCase),
       SampleOpenUnion.unknown(stringCase)
     )
 
@@ -68,7 +72,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       )
     )
     roundtripTest(
-      Json.writeDocumentAsBlob(objectCase),
+      writeDocumentAsBlob(objectCase),
       SampleOpenUnion.unknown(objectCase)
     )
   }
@@ -78,7 +82,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
   ) {
     val input = Document.obj("unknown" -> Document.obj())
     roundtripTest(
-      Json.writeDocumentAsBlob(input),
+      writeDocumentAsBlob(input),
       SampleOpenUnion.unknown(input)
     )
   }
@@ -90,7 +94,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       val input = document.nest(tag)
 
       roundtripTest(
-        Json.writeDocumentAsBlob(input),
+        writeDocumentAsBlob(input),
         OnlyUnknownOpenUnion.unknown(input)
       )
     }
@@ -101,7 +105,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
     val input = Document.obj("rec" -> inner)
 
     roundtripTest(
-      Json.writeDocumentAsBlob(input),
+      writeDocumentAsBlob(input),
       RecursiveOpenUnion.rec(RecursiveOpenUnion.unknown(inner))
     )
   }
@@ -110,11 +114,9 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
     "open discriminated union - decoding still fails if the discriminator key is missing"
   ) {
     assert(
-      Json
-        .read[SampleOpenDiscriminatedUnion](
-          Blob("""{"ignoredKey": "foo"}""")
-        )
-        .isLeft
+      read[SampleOpenDiscriminatedUnion](
+        Blob("""{"ignoredKey": "foo"}""")
+      ).isLeft
     )
   }
 
@@ -136,7 +138,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
     )
 
     roundtripTest(
-      Json.writeDocumentAsBlob(stringCase),
+      writeDocumentAsBlob(stringCase),
       SampleOpenDiscriminatedUnion.unknown(stringCase)
     )
 
@@ -147,7 +149,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       )
 
     roundtripTest(
-      Json.writeDocumentAsBlob(objectCase),
+      writeDocumentAsBlob(objectCase),
       SampleOpenDiscriminatedUnion.unknown(objectCase)
     )
   }
@@ -160,7 +162,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       "extra" -> Document.obj()
     )
     roundtripTest(
-      Json.writeDocumentAsBlob(input),
+      writeDocumentAsBlob(input),
       SampleOpenDiscriminatedUnion.unknown(input)
     )
   }
@@ -173,7 +175,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
         Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
 
       roundtripTest(
-        Json.writeDocumentAsBlob(input),
+        writeDocumentAsBlob(input),
         OnlyUnknownDiscriminatedOpenUnion.unknown(input)
       )
     }
@@ -192,7 +194,7 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
       )
 
     roundtripTest(
-      Json.writeDocumentAsBlob(input),
+      writeDocumentAsBlob(input),
       RecursiveDiscriminatedOpenUnion.rec(
         HasRecursiveDiscriminatedOpenUnion(
           RecursiveDiscriminatedOpenUnion.unknown(inner)
@@ -201,19 +203,22 @@ class OpenUnionJsonSpec() extends ScalaCheckSuite {
     )
   }
 
+  protected def writeDocumentAsBlob(doc: Document): Blob = 
+    write(doc)(Schema.document)
+
   private def roundtripTest[T: Schema](
       input: Blob,
       expectedOutput: T
   )(implicit
       loc: Location
   ) = {
-    val decoded = Json.read[T](input)
+    val decoded = read[T](input)
     assertEquals(
       decoded,
       Right(expectedOutput),
       clue = "decoded value is not the same"
     )
-    val encoded = Json.writeBlob(expectedOutput)
+    val encoded = write(expectedOutput)
     assertEquals(encoded, input, clue = "roundtripped encoding is not the same")
   }
 
