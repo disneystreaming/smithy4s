@@ -983,8 +983,56 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private type Writer[A] = A => JsonWriter => Unit
 
+  private abstract class UnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+      dispatch: Alt.Dispatcher[U]
+  ) extends JCodec[U] {
+
+    private def jsonLabel[A](alt: Alt[U, A]): String =
+      alt.hints.get(JsonName) match {
+        case None    => alt.label
+        case Some(x) => x.value
+      }
+
+    protected val handlerMap =
+      new util.HashMap[String, UnionJCodec.AltHandler[U, _]] {
+        alternatives
+          .filterNot(_.hints.has(JsonUnknown))
+          .foreach(alt => put(jsonLabel(alt), new UnionJCodec.AltHandler(alt)))
+      }
+
+    protected val unknownHandler: UnionJCodec.AltHandler[U, _] =
+      alternatives
+        .find(_.hints.has(JsonUnknown))
+        .map(new UnionJCodec.AltHandler(_))
+        .orNull
+
+  }
+
   private object UnionJCodec {
+
     private type DocumentTransformer[A] = (A, Document => Document) => A
+
+    protected final class AltHandler[U, A](alt: Alt[U, A]) {
+      private val codec = self.apply(alt.schema)
+      private lazy val documentTransformer =
+        alt.schema.compile(TransformDocumentCompiler)
+
+      def apply(cursor: Cursor, reader: JsonReader): U = {
+        alt.inject(handleInner(cursor, reader))
+      }
+
+      def handleTransformDocument(cursor: Cursor, reader: JsonReader)(
+          transform: Document => Document
+      ): U = {
+        val u = handleInner(cursor, reader)
+        alt.inject(documentTransformer(u, transform))
+      }
+      def handleWrapInObj(key: String)(cursor: Cursor, reader: JsonReader): U =
+        handleTransformDocument(cursor, reader)(doc => Document.obj(key -> doc))
+
+      private def handleInner(cursor: Cursor, reader: JsonReader): A =
+        cursor.decode(codec, reader)
+    }
 
     private object TransformDocumentCompiler
         extends SchemaVisitor.Default[DocumentTransformer] {
@@ -1007,51 +1055,6 @@ private[smithy4s] class SchemaVisitorJCodec(
         (b, f) => bijection.to(compiled(bijection.from(b), f))
       }
     }
-  }
-
-  private abstract class UnionJCodec[U](alternatives: Vector[Alt[U, _]])(
-      dispatch: Alt.Dispatcher[U]
-  ) extends JCodec[U] {
-
-    private def jsonLabel[A](alt: Alt[U, A]): String =
-      alt.hints.get(JsonName) match {
-        case None    => alt.label
-        case Some(x) => x.value
-      }
-
-    private def handler[A](alt: Alt[U, A]) = {
-      val codec = apply(alt.schema)
-      (cursor: Cursor, reader: JsonReader) =>
-        alt.inject(cursor.decode(codec, reader))
-    }
-
-    protected val unknownHandlerObjWrap: (String) => (Cursor, JsonReader) => U = 
-      //todo: this should be nullable
-      key => unknownTagHandler(doc => Document.obj(key -> doc))
-
-    protected val unknownTagHandler: (Document => Document) => (Cursor, JsonReader) => U = {
-      val alt = alternatives.find(_.hints.has(JsonUnknown))
-
-      def processAlt[A](alt: Alt[U, A]): (Document => Document) => (Cursor, JsonReader) => U = {
-        val f = alt.schema.compile(UnionJCodec.TransformDocumentCompiler)
-        transform => (cursor, reader) => {
-          val u = handler(alt)(cursor, reader)
-          alt.project.lift(u).map(a => alt.inject(f(a, transform))).getOrElse(u)
-        }
-      }
-      alt
-        .map(processAlt(_))
-        .orNull
-
-    }
-
-    protected val handlerMap =
-      new util.HashMap[String, (Cursor, JsonReader) => U] {
-        alternatives
-          .filterNot(_.hints.has(JsonUnknown))
-          .foreach(alt => put(jsonLabel(alt), handler(alt)))
-      }
-
   }
 
   private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
@@ -1120,8 +1123,8 @@ private[smithy4s] class SchemaVisitorJCodec(
               }
             }
             // @jsonUnknown path
-            else if (unknownHandlerObjWrap ne null) {
-              unknownHandlerObjWrap(key)(cursor, in)
+            else if (unknownHandler ne null) {
+              unknownHandler.handleWrapInObj(key)(cursor, in)
             }
             // neither a known tag nor jsonUnknown
             else {
@@ -1153,7 +1156,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                 if (handler ne null) {
                   result = handler(cursor, in)
                 } else {
-                  result = unknownHandlerObjWrap(key)(cursor, in)
+                  result = unknownHandler.handleWrapInObj(key)(cursor, in)
                 }
               } else {
                 in.decodeError("Expected a single non-null value")
@@ -1253,7 +1256,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             cursor.push(key)
             var handler = handlerMap.get(key)
             // todo check for null
-            if (handler eq null) handler = unknownTagHandler(identity)
+            if (handler eq null) handler = unknownHandler
             if (handler eq null) in.discriminatorValueError(key)
             val result = handler(cursor, in)
             cursor.pop()
