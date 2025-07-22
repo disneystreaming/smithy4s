@@ -19,7 +19,6 @@ package smithy4s.json
 import munit._
 import smithy4s.Document
 import smithy4s.Schema
-import smithy4s.expect
 import smithy4s.example.SampleOpenUnion
 import smithy4s.Blob
 import smithy4s.codecs.PayloadError
