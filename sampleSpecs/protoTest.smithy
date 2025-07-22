@@ -13,8 +13,15 @@ use alloy.proto#protoCompactUUID
 use alloy.proto#protoEnabled
 use alloy.proto#protoIndex
 use alloy.proto#protoInlinedOneOf
+use alloy.proto#protoCompactLocalDate
+use alloy.proto#protoCompactLocalTime
+use alloy.proto#protoOffsetDateTimeFormat
 use alloy.proto#protoNumType
 use alloy.proto#protoWrapped
+use alloy#LocalDate
+use alloy#LocalTime
+use alloy#Duration
+use alloy#OffsetDateTime
 
 @protoEnabled
 structure Integers {
@@ -255,4 +262,31 @@ union UnionWithCustomIndexes {
     b: Integer
     @protoIndex(1)
     c: Integer
+}
+
+@protoEnabled
+structure LocalDateWrapper {
+    localDate: LocalDate
+    @protoCompactLocalDate
+    compactLocalDate: LocalDate
+}
+
+@protoEnabled
+structure LocalTimeWrapper {
+    localTime: LocalTime
+    @protoCompactLocalTime
+    compactLocalTime: LocalTime
+}
+
+@protoEnabled
+structure DurationWrapper {
+    duration: Duration
+}
+
+@protoEnabled
+structure OffsetDateTimeWrapper {
+    @protoOffsetDateTimeFormat("RFC3339_STRING")
+    string: OffsetDateTime
+    @protoOffsetDateTimeFormat("PROTOBUF")
+    compact: OffsetDateTime
 }
