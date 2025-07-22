@@ -4,7 +4,6 @@ import smithy4s.Blob
 import smithy4s.codecs.PayloadError
 import smithy4s.example.Foo
 import smithy4s.expect
-import smithy4s.Document
 import smithy4s.Schema
 
 class DefaultOpenUnionJsonSpec extends OpenUnionJsonSpec {
