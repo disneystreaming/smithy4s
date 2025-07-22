@@ -983,6 +983,32 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private type Writer[A] = A => JsonWriter => Unit
 
+  private object UnionJCodec {
+    private type DocumentTransformer[A] = (A, Document => Document) => A
+
+    private object TransformDocumentCompiler
+        extends SchemaVisitor.Default[DocumentTransformer] {
+      override def default[A]: DocumentTransformer[A] = (a, _) => a
+
+      override def primitive[P](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: Primitive[P]
+      ): DocumentTransformer[P] = tag match {
+        case PDocument => (a, f) => f(a)
+        case other     => default
+      }
+
+      override def biject[A, B](
+          schema: Schema[A],
+          bijection: Bijection[A, B]
+      ): DocumentTransformer[B] = {
+        val compiled = schema.compile(this)
+        (b, f) => bijection.to(compiled(bijection.from(b), f))
+      }
+    }
+  }
+
   private abstract class UnionJCodec[U](alternatives: Vector[Alt[U, _]])(
       dispatch: Alt.Dispatcher[U]
   ) extends JCodec[U] {
@@ -999,53 +1025,18 @@ private[smithy4s] class SchemaVisitorJCodec(
         alt.inject(cursor.decode(codec, reader))
     }
 
-    protected val unknownTagHandler: (Cursor, JsonReader) => U = {
-      alternatives
-        .find(_.hints.has(JsonUnknown))
-        .map(handler(_))
-        .orNull
-    }
+    protected val unknownHandlerObjWrap: (String) => (Cursor, JsonReader) => U = 
+      //todo: this should be nullable
+      key => unknownTagHandler(doc => Document.obj(key -> doc))
 
-    type Endo[A] = A => A
-    private final case class TransformDocumentCompiler(f: Document => Document)
-        extends SchemaVisitor.Default[Endo] {
-      override def default[A]: Endo[A] = a => {
-        println(s"default $a")
-        a
-      }
-
-      override def primitive[P](
-          shapeId: ShapeId,
-          hints: Hints,
-          tag: Primitive[P]
-      ): Endo[P] = tag match {
-        case PDocument => doc => f(doc)
-        case other     => identity
-      }
-
-      override def biject[A, B](
-          schema: Schema[A],
-          bijection: Bijection[A, B]
-      ): Endo[B] = {
-        val f = schema.compile(this)
-        b => bijection.to(f(bijection.from(b)))
-      }
-    }
-
-    protected def unknownTagHandlerKey(key: String): (Cursor, JsonReader) => U = {
-      unknownTagHandler2(doc => Document.obj(key -> doc))
-    }
-
-    protected def unknownTagHandler2(
-        transform: Document => Document
-    ): (Cursor, JsonReader) => U = {
+    protected val unknownTagHandler: (Document => Document) => (Cursor, JsonReader) => U = {
       val alt = alternatives.find(_.hints.has(JsonUnknown))
 
-      def processAlt[A](alt: Alt[U, A]): (Cursor, JsonReader) => U = {
-        val f = alt.schema.compile(TransformDocumentCompiler(transform))
-        (cursor, reader) => {
+      def processAlt[A](alt: Alt[U, A]): (Document => Document) => (Cursor, JsonReader) => U = {
+        val f = alt.schema.compile(UnionJCodec.TransformDocumentCompiler)
+        transform => (cursor, reader) => {
           val u = handler(alt)(cursor, reader)
-          alt.project.lift(u).map(a => alt.inject(f(a))).getOrElse(u)
+          alt.project.lift(u).map(a => alt.inject(f(a, transform))).getOrElse(u)
         }
       }
       alt
@@ -1109,7 +1100,6 @@ private[smithy4s] class SchemaVisitorJCodec(
     new TaggedUnionJCodec[U](alternatives)(dispatch) {
 
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        in.setMark()
         if (in.isNextToken('{')) {
           if (in.isNextToken('}'))
             in.decodeError("Expected a single key/value pair")
@@ -1130,9 +1120,8 @@ private[smithy4s] class SchemaVisitorJCodec(
               }
             }
             // @jsonUnknown path
-            else if (unknownTagHandler ne null) {
-              in.rollbackToMark()
-              unknownTagHandler(cursor, in)
+            else if (unknownHandlerObjWrap ne null) {
+              unknownHandlerObjWrap(key)(cursor, in)
             }
             // neither a known tag nor jsonUnknown
             else {
@@ -1143,29 +1132,12 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
     }
 
-  private def debug(in: JsonReader, label: String): Unit = {
-    var count = 0
-    val sb = new StringBuffer
-    while (in.hasRemaining()) {
-      sb.append(in.nextByte().toChar)
-      count = count + 1
-    }
-    while (count > 0) {
-      in.rollbackToken()
-      count = count - 1
-    }
-    println(s"REMAINING of $label")
-    println(sb.toString())
-  }
-
-  // todo: open unions here too
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
     new TaggedUnionJCodec[U](alternatives)(dispatch) {
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
         var result: U = null.asInstanceOf[U]
-        debug(in, "ENTRY")
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
@@ -1181,7 +1153,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                 if (handler ne null) {
                   result = handler(cursor, in)
                 } else {
-                  result = unknownTagHandlerKey(key)(cursor, in)
+                  result = unknownHandlerObjWrap(key)(cursor, in)
                 }
               } else {
                 in.decodeError("Expected a single non-null value")
@@ -1280,7 +1252,8 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             cursor.push(key)
             var handler = handlerMap.get(key)
-            if (handler eq null) handler = unknownTagHandler2(identity)
+            // todo check for null
+            if (handler eq null) handler = unknownTagHandler(identity)
             if (handler eq null) in.discriminatorValueError(key)
             val result = handler(cursor, in)
             cursor.pop()

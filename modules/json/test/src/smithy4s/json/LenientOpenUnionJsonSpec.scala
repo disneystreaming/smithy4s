@@ -61,10 +61,26 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
       "other-2" -> Document.obj("unknown" -> Document.fromString("case"))
     )
 
-    expect.same(
-      read[SampleOpenUnion](writeDocumentAsBlob(a)),
-      Left(PayloadError(PayloadPath.root, "", ""))
-    )
+    val result = read[SampleOpenUnion](writeDocumentAsBlob(a))
+
+    matches(result) { case Left(error) =>
+      // TODO: invalid path
+      expect.same(
+        error.path,
+        PayloadPath.root
+          .append("str")
+          .append("u")
+          .append("other-1")
+          .append("other-2")
+      )
+      expect(error.message.contains("Expected a single non-null value"))
+    }
+
+  }
+
+  private def matches[A](value: A)(f: PartialFunction[A, Unit]): Unit = {
+    if (f.isDefinedAt(value)) f(value)
+    else fail(s"Value did not match: $value")
   }
 
 }
