@@ -999,11 +999,60 @@ private[smithy4s] class SchemaVisitorJCodec(
         alt.inject(cursor.decode(codec, reader))
     }
 
-    protected val unknownTagHandler =
+    protected val unknownTagHandler: (Cursor, JsonReader) => U = {
       alternatives
         .find(_.hints.has(JsonUnknown))
         .map(handler(_))
         .orNull
+    }
+
+    type Endo[A] = A => A
+    private final case class TransformDocumentCompiler(f: Document => Document)
+        extends SchemaVisitor.Default[Endo] {
+      override def default[A]: Endo[A] = a => {
+        println(s"default $a")
+        a
+      }
+
+      override def primitive[P](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: Primitive[P]
+      ): Endo[P] = tag match {
+        case PDocument => doc => f(doc)
+        case other     => identity
+      }
+
+      override def biject[A, B](
+          schema: Schema[A],
+          bijection: Bijection[A, B]
+      ): Endo[B] = {
+        val f = schema.compile(this)
+        b => bijection.to(f(bijection.from(b)))
+      }
+    }
+
+    protected def unknownTagHandlerKey(key: String): (Cursor, JsonReader) => U = {
+      unknownTagHandler2(doc => Document.obj(key -> doc))
+    }
+
+    protected def unknownTagHandler2(
+        transform: Document => Document
+    ): (Cursor, JsonReader) => U = {
+      val alt = alternatives.find(_.hints.has(JsonUnknown))
+
+      def processAlt[A](alt: Alt[U, A]): (Cursor, JsonReader) => U = {
+        val f = alt.schema.compile(TransformDocumentCompiler(transform))
+        (cursor, reader) => {
+          val u = handler(alt)(cursor, reader)
+          alt.project.lift(u).map(a => alt.inject(f(a))).getOrElse(u)
+        }
+      }
+      alt
+        .map(processAlt(_))
+        .orNull
+
+    }
 
     protected val handlerMap =
       new util.HashMap[String, (Cursor, JsonReader) => U] {
@@ -1097,13 +1146,13 @@ private[smithy4s] class SchemaVisitorJCodec(
   private def debug(in: JsonReader, label: String): Unit = {
     var count = 0
     val sb = new StringBuffer
-    while(in.hasRemaining()) {
+    while (in.hasRemaining()) {
       sb.append(in.nextByte().toChar)
       count = count + 1
     }
     while (count > 0) {
       in.rollbackToken()
-      count = count -1
+      count = count - 1
     }
     println(s"REMAINING of $label")
     println(sb.toString())
@@ -1117,8 +1166,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       def decodeValue(cursor: Cursor, in: JsonReader): U = {
         var result: U = null.asInstanceOf[U]
         debug(in, "ENTRY")
-        var unknownFound = false
-        in.setMark()
         if (in.isNextToken('{')) {
           if (!in.isNextToken('}')) {
             in.rollbackToken()
@@ -1126,30 +1173,22 @@ private[smithy4s] class SchemaVisitorJCodec(
               val key = in.readKeyAsString()
               cursor.push(key)
               val handler = handlerMap.get(key)
-              if (handler eq null) {
-                if (unknownTagHandler ne null) {
-                  in.rollbackToMark()
-                  unknownFound=true
-                  debug(in, "Unk before")
-                  result = unknownTagHandler(cursor, in)
-                  debug(in, "Unk after")
-                } else in.skip()
-              } else if (in.isNextToken('n')) {
+
+              if (in.isNextToken('n')) {
                 in.readNullOrError((), "expected null")
-              } else {
+              } else if (result == null) {
                 in.rollbackToken()
-                if (result != null) {
-                  in.decodeError("Expected a single non-null value")
-                } else {
-                  debug(in, "known before")
+                if (handler ne null) {
                   result = handler(cursor, in)
-                  debug(in, "known after")
+                } else {
+                  result = unknownTagHandlerKey(key)(cursor, in)
                 }
+              } else {
+                in.decodeError("Expected a single non-null value")
               }
-              println(result)
-              println(unknownFound)
-              println(s"!foo: ${!unknownFound} result==null: ${result==null}")
-              !unknownFound && in.isNextToken(',') 
+
+              in.isNextToken(',')
+
             }) ()
             if (!in.isCurrentToken('}')) {
               in.objectEndOrCommaError()
@@ -1241,7 +1280,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             cursor.push(key)
             var handler = handlerMap.get(key)
-            if (handler eq null) handler = unknownTagHandler
+            if (handler eq null) handler = unknownTagHandler2(identity)
             if (handler eq null) in.discriminatorValueError(key)
             val result = handler(cursor, in)
             cursor.pop()

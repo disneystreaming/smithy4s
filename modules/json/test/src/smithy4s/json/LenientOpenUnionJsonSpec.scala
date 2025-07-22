@@ -4,16 +4,67 @@ import smithy4s.Blob
 import smithy4s.codecs.PayloadError
 import smithy4s.Document
 import smithy4s.Schema
+import smithy4s.example.SampleOpenUnion
+import smithy4s.expect
+import smithy4s.codecs.PayloadPath
 
 class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
 
-  val payloadCompiler = smithy4s.json.internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler.configureJsoniterCodecCompiler(
-    _.withLenientTaggedUnionDecoding
-  )
+  val payloadCompiler =
+    smithy4s.json.internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler
+      .configureJsoniterCodecCompiler(
+        _.withLenientTaggedUnionDecoding
+      )
 
   override def read[A: Schema](blob: Blob): Either[PayloadError, A] =
     payloadCompiler.decoders.fromSchema(Schema[A]).decode(blob)
-  override def write[A: Schema](a: A): Blob = 
+  override def write[A: Schema](a: A): Blob =
     payloadCompiler.encoders.fromSchema(Schema[A]).encode(a)
+
+  test("lenient open union - known case") {
+    val a = Document.obj(
+      "str" -> Document.fromString("value"),
+      "u" -> Document.nullDoc,
+      "other" -> Document.nullDoc
+    )
+
+    expect.same(
+      read[SampleOpenUnion](writeDocumentAsBlob(a)),
+      Right(SampleOpenUnion.str("value"))
+    )
+  }
+
+  test("lenient open union - single unknown case") {
+    val a = Document.obj(
+      "str" -> Document.nullDoc,
+      "u" -> Document.nullDoc,
+      "other" -> Document.obj("unknown" -> Document.fromString("case"))
+    )
+
+    expect.same(
+      read[SampleOpenUnion](writeDocumentAsBlob(a)),
+      Right(
+        SampleOpenUnion.unknown(
+          Document.obj(
+            "other" -> Document.obj("unknown" -> Document.fromString("case"))
+          )
+        )
+      )
+    )
+  }
+
+  test("lenient open union - multiple unknown case") {
+    val a = Document.obj(
+      "str" -> Document.nullDoc,
+      "u" -> Document.nullDoc,
+      "other-1" -> Document.obj("unknown" -> Document.fromString("case")),
+      "other-2" -> Document.obj("unknown" -> Document.fromString("case"))
+    )
+
+    expect.same(
+      read[SampleOpenUnion](writeDocumentAsBlob(a)),
+      Left(PayloadError(PayloadPath.root, "", ""))
+    )
+  }
 
 }

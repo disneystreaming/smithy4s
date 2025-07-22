@@ -203,10 +203,10 @@ abstract class OpenUnionJsonSpec extends ScalaCheckSuite {
     )
   }
 
-  protected def writeDocumentAsBlob(doc: Document): Blob = 
+  protected def writeDocumentAsBlob(doc: Document): Blob =
     write(doc)(Schema.document)
 
-  private def roundtripTest[T: Schema](
+  protected def roundtripTest[T: Schema](
       input: Blob,
       expectedOutput: T
   )(implicit

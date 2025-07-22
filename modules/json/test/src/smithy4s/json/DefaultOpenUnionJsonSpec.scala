@@ -9,7 +9,7 @@ class DefaultOpenUnionJsonSpec extends OpenUnionJsonSpec {
 
   override def read[A: Schema](blob: Blob): Either[PayloadError, A] =
     Json.read(blob)
-  override def write[A: Schema](a: A): Blob = 
+  override def write[A: Schema](a: A): Blob =
     Json.writeBlob(a)
 
 }
