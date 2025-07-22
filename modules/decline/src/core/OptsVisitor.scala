@@ -31,6 +31,7 @@ import smithy4s.schema.Schema._
 import smithy4s.schema._
 
 import java.util.UUID
+import java.time._
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.CollectionTag.ListTag
 
@@ -174,6 +175,18 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         implicit val blobArgument = commons.blobArgument
         field[Blob](hints)
       }
+      case PLocalDate => 
+        implicit val arg = commons.localDateArgument
+        field[LocalDate](hints)
+      case PLocalTime => 
+        implicit val arg = commons.localTimeArgument
+        field[LocalTime](hints)
+      case PDuration => 
+        implicit val arg = commons.durationArgument
+        field[Duration](hints)
+      case POffsetDateTime => 
+        implicit val arg = commons.offsetDateTimeArgument
+        field[OffsetDateTime](hints)
     }
 
   private def primitives[P](
@@ -203,6 +216,19 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         fieldPlural[Blob](member.hints)
 
       case PBoolean | PDocument => jsonFieldPlural(member)
+      case PLocalDate => 
+        implicit val arg = commons.localDateArgument
+        fieldPlural[LocalDate](member.hints)
+      case PLocalTime => 
+        implicit val arg = commons.localTimeArgument
+        fieldPlural[LocalTime](member.hints)
+      case PDuration => 
+        implicit val arg = commons.durationArgument
+        fieldPlural[Duration](member.hints)
+      case POffsetDateTime => 
+        implicit val arg = commons.offsetDateTimeArgument
+        fieldPlural[OffsetDateTime](member.hints)
+
     }
 
   def collection[C[_], A](
