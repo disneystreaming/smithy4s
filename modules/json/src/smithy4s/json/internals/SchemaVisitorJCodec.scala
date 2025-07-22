@@ -1155,9 +1155,9 @@ private[smithy4s] class SchemaVisitorJCodec(
                 in.rollbackToken()
                 if (handler ne null) {
                   result = handler(cursor, in)
-                } else {
+                } else if (unknownHandler ne null) {
                   result = unknownHandler.handleWrapInObj(key)(cursor, in)
-                }
+                } else in.skip()
               } else {
                 in.decodeError("Expected a single non-null value")
               }

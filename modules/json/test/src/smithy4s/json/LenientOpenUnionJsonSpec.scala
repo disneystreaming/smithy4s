@@ -5,6 +5,7 @@ import smithy4s.codecs.PayloadError
 import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.example.SampleOpenUnion
+import smithy4s.example.Foo
 import smithy4s.expect
 import smithy4s.codecs.PayloadPath
 
@@ -32,6 +33,13 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
       read[SampleOpenUnion](writeDocumentAsBlob(a)),
       Right(SampleOpenUnion.str("value"))
     )
+  }
+
+  test("open tagged union - decoding still fails if invalid tag is present") {
+    matches(read[Foo](Blob("""{"foo": "bar"}"""))) { case Left(ex) =>
+      // TODO: invalid message
+      expect(ex.getMessage.contains("Expected a single non-null value"))
+    }
   }
 
   test("lenient open union - single unknown case") {
@@ -71,11 +79,6 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
       expect(error.message.contains("Expected a single non-null value"))
     }
 
-  }
-
-  private def matches[A](value: A)(f: PartialFunction[A, Unit]): Unit = {
-    if (f.isDefinedAt(value)) f(value)
-    else fail(s"Value did not match: $value")
   }
 
 }

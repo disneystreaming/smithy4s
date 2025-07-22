@@ -19,6 +19,7 @@ package smithy4s.json
 import munit._
 import smithy4s.Document
 import smithy4s.Schema
+import smithy4s.expect
 import smithy4s.example.SampleOpenUnion
 import smithy4s.Blob
 import smithy4s.codecs.PayloadError
@@ -220,6 +221,11 @@ abstract class OpenUnionJsonSpec extends ScalaCheckSuite {
     )
     val encoded = write(expectedOutput)
     assertEquals(encoded, input, clue = "roundtripped encoding is not the same")
+  }
+
+  protected def matches[A](value: A)(f: PartialFunction[A, Unit]): Unit = {
+    if (f.isDefinedAt(value)) f(value)
+    else fail(s"Value did not match: $value")
   }
 
 }

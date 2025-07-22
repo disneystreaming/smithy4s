@@ -2,6 +2,8 @@ package smithy4s.json
 
 import smithy4s.Blob
 import smithy4s.codecs.PayloadError
+import smithy4s.example.Foo
+import smithy4s.expect
 import smithy4s.Document
 import smithy4s.Schema
 
@@ -11,5 +13,13 @@ class DefaultOpenUnionJsonSpec extends OpenUnionJsonSpec {
     Json.read(blob)
   override def write[A: Schema](a: A): Blob =
     Json.writeBlob(a)
+
+  test("open tagged union - decoding still fails if invalid tag is present") {
+    matches(read[Foo](Blob("""{"foo": "bar"}"""))) { case Left(ex) =>
+      expect(
+        ex.getMessage.contains("""illegal value of discriminator field "foo"""")
+      )
+    }
+  }
 
 }
