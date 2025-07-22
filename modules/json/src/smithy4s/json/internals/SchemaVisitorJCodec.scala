@@ -1161,9 +1161,8 @@ private[smithy4s] class SchemaVisitorJCodec(
               } else {
                 in.decodeError("Expected a single non-null value")
               }
-
+              cursor.pop()
               in.isNextToken(',')
-
             }) ()
             if (!in.isCurrentToken('}')) {
               in.objectEndOrCommaError()
@@ -1255,7 +1254,6 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToken()
             cursor.push(key)
             var handler = handlerMap.get(key)
-            // todo check for null
             if (handler eq null) handler = unknownHandler
             if (handler eq null) in.discriminatorValueError(key)
             val result = handler(cursor, in)

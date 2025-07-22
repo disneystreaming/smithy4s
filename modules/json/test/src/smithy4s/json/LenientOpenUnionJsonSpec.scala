@@ -53,7 +53,7 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
     )
   }
 
-  test("lenient open union - multiple unknown case") {
+  test("lenient open union - multiple unknown cases") {
     val a = Document.obj(
       "str" -> Document.nullDoc,
       "u" -> Document.nullDoc,
@@ -64,14 +64,9 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
     val result = read[SampleOpenUnion](writeDocumentAsBlob(a))
 
     matches(result) { case Left(error) =>
-      // TODO: invalid path
       expect.same(
         error.path,
-        PayloadPath.root
-          .append("str")
-          .append("u")
-          .append("other-1")
-          .append("other-2")
+        PayloadPath.root.append("other-2")
       )
       expect(error.message.contains("Expected a single non-null value"))
     }
