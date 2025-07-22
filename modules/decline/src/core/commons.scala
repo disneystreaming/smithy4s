@@ -69,7 +69,7 @@ object commons {
 
   val durationArgument: Argument[Duration] =
     Argument.from("duration") { s =>
-      s.toLongOption match {
+      Try(s.toLong).toOption match {
         case Some(seconds) => Valid(Duration.ofSeconds(seconds))
         case None => Try(Duration.parse(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
       }
