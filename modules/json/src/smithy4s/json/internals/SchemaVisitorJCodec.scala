@@ -1044,7 +1044,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           tag: Primitive[P]
       ): DocumentTransformer[P] = tag match {
         case PDocument => (a, f) => f(a)
-        case other     => default
+        case _         => default
       }
 
       override def biject[A, B](
