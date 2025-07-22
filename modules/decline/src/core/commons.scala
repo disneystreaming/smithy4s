@@ -25,6 +25,9 @@ import cats.implicits._
 import cats.MonadError
 
 import java.util.Base64
+import java.time._
+import java.time.format.DateTimeFormatter
+import scala.util.Try
 
 object commons {
   def toKebabCase(s: String): String =
@@ -54,6 +57,28 @@ object commons {
     val decoder = Base64.getDecoder
     Argument.from("base64")(s => Valid(Blob(decoder.decode(s))))
   }
+  val localDateArgument: Argument[LocalDate] =
+    Argument.from("localDate") { s =>
+      Try(LocalDate.parse(s)).toOption.toValidNel(s"""Invalid localDate "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_DATE}""")
+    }
+
+  val localTimeArgument: Argument[LocalTime] =
+    Argument.from("localTime") { s =>
+      Try(LocalTime.parse(s)).toOption.toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_TIME}""")
+    }
+
+  val durationArgument: Argument[Duration] =
+    Argument.from("duration") { s =>
+      s.toLongOption match {
+        case Some(seconds) => Valid(Duration.ofSeconds(seconds))
+        case None => Try(Duration.parse(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
+      }
+    }
+
+  val offsetDateTimeArgument: Argument[OffsetDateTime] =
+    Argument.from("offsetDateTime") { s =>
+      Try(OffsetDateTime.parse(s)).toOption.toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_OFFSET_DATE_TIME}""")
+    }
 }
 
 final case class RefinementFailed(message: String)
