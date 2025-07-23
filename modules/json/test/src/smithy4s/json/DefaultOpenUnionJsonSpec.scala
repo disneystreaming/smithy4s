@@ -14,7 +14,7 @@ class DefaultOpenUnionJsonSpec extends OpenUnionJsonSpec {
   override def write[A: Schema](a: A): Blob =
     Json.writeBlob(a)
 
-  test("fail to decode multiple unknown keys") {
+  test("open tagged union - fail to decode multiple unknown keys") {
     matches(read[SampleOpenUnion](Blob("""{"foo": "bar", "baz": "qux"}"""))) {
       case Left(ex) =>
         expect(
@@ -23,8 +23,7 @@ class DefaultOpenUnionJsonSpec extends OpenUnionJsonSpec {
     }
   }
 
-  // TODO: this test is not really related to open unions
-  test("open tagged union - decoding still fails if invalid tag is present") {
+  test("tagged union - decoding still fails if invalid tag is present") {
     matches(read[Foo](Blob("""{"foo": "bar"}"""))) { case Left(ex) =>
       expect(
         ex.getMessage.contains("""illegal value of discriminator field "foo"""")
