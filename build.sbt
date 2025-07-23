@@ -11,6 +11,9 @@ import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 import java.io.File
 import sys.process._
+import sjsonnew._
+import BasicJsonProtocol._
+import Json.pathFormat
 
 ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
@@ -585,9 +588,6 @@ lazy val decline = (projectMatrix in file("modules/decline"))
 val cachedPublishLocal =
   taskKey[Unit]("Runs publishLocal only if classpath changes")
 
-import java.security.MessageDigest
-import sbt.util.CacheImplicits._
-
 /**
  * This module contains the smithy specification of a bunch of types
  * that are not provided by the smithy standard library, but are useful
@@ -610,39 +610,22 @@ lazy val protocol = projectMatrix
             streams.value.cacheDirectory / "cachedPublishLocal" / "classpath.hash"
           )
 
-        val classpathHash = {
-          val classpathFiles = (Compile / fullClasspath).value
-            .map(_.data)
-            .map(os.Path(_))
-            .flatMap {
-              case d if os.isDir(d) =>
-                os.walk(d).filter(os.isFile(_)).toSeq
-              case f => List(f)
-            }
-            .filter(os.exists(_))
-            .distinct
+        val fn = Tracked
+          .inputChanged[Seq[File], Def.Initialize[Task[Unit]]](
+            cacheFile.toIO
+          ) {
+            case (changed, input) if changed =>
+              log.info("Classpath has changed. Running publishLocal...")
+              Def.task { publishLocal.value }
 
-          val digest = MessageDigest.getInstance("SHA-1")
-          classpathFiles.sorted.foreach { path =>
-            digest.update(path.toString().getBytes())
-            digest.update(os.read.bytes(path))
+            case (_, _) =>
+              log.info("Classpath unchanged. Skipping publishLocal.")
+              Def.task {}
           }
-          digest.update(version.value.getBytes())
-          digest.digest().map("%02x".format(_)).mkString
-        }
 
-        val lastHash =
-          if (os.exists(cacheFile)) os.read(cacheFile)
-          else ""
-
-        if (lastHash != classpathHash) {
-          log.info("Classpath has changed. Running publishLocal...")
-          os.write.over(cacheFile, classpathHash)
-          Def.task { publishLocal.value }
-        } else {
-          log.info("Classpath unchanged. Skipping publishLocal.")
-          Def.task {}
-        }
+        fn(
+          (Compile / fullClasspath).value.map(_.data).distinct
+        )
       }.value
     )
   )
@@ -1186,34 +1169,6 @@ def dumpModel(
       throw new Exception("No main class found")
     )
 
-    import sjsonnew._
-    import BasicJsonProtocol._
-    import sbt.FileInfo
-    import sbt.HashFileInfo
-    import sbt.io.Hash
-    import scala.jdk.CollectionConverters._
-    implicit val pathFormat: JsonFormat[File] =
-      BasicJsonProtocol.projectFormat[File, HashFileInfo](
-        p => {
-          if (p.isFile()) FileInfo.hash(p)
-          else
-            // If the path is a directory, we get the hashes of all files
-            // then hash the concatenation of the hash's bytes.
-            FileInfo.hash(
-              p,
-              Hash(
-                Files
-                  .walk(p.toPath(), 2)
-                  .collect(Collectors.toList())
-                  .asScala
-                  .map(_.toFile())
-                  .map(Hash(_))
-                  .foldLeft(Array.emptyByteArray)(_ ++ _)
-              )
-            )
-        },
-        hash => hash.file
-      )
     val s = (config / streams).value
 
     val args =
@@ -1298,40 +1253,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
 
   val mc = "smithy4s.codegen.cli.Main"
   val s = (config / streams).value
-
-  import sjsonnew._
-  import BasicJsonProtocol._
-  import sbt.FileInfo
-  import sbt.HashFileInfo
-  import sbt.io.Hash
-  import scala.jdk.CollectionConverters._
-
-  // Json codecs used by SBT's caching constructs
-  // This serialises a path by providing a hash of the content it points to.
-  // Because the hash is part of the Json, this allows SBT to detect when a file
-  // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
-  implicit val pathFormat: JsonFormat[File] =
-    BasicJsonProtocol.projectFormat[File, HashFileInfo](
-      p => {
-        if (p.isFile()) FileInfo.hash(p)
-        else
-          // If the path is a directory, we get the hashes of all files
-          // then hash the concatenation of the hash's bytes.
-          FileInfo.hash(
-            p,
-            Hash(
-              Files
-                .walk(p.toPath(), 2)
-                .collect(Collectors.toList())
-                .asScala
-                .map(_.toFile())
-                .map(Hash(_))
-                .foldLeft(Array.emptyByteArray)(_ ++ _)
-            )
-          )
-      },
-      hash => hash.file
-    )
 
   case class CodegenInput(files: Seq[File])
   object CodegenInput {
