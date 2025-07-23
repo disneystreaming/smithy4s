@@ -1077,8 +1077,9 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
-  private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
-      dispatch: Alt.Dispatcher[U]
+  private final class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+      dispatch: Alt.Dispatcher[U],
+      isLenient: Boolean
   ) extends UnionJCodec[U](alternatives)(dispatch) {
 
     val expecting = "tagged-union"
@@ -1115,78 +1116,74 @@ private[smithy4s] class SchemaVisitorJCodec(
     def encodeKey(u: U, out: JsonWriter): Unit =
       out.encodeError("Cannot use coproducts as keys")
 
+    def decodeValue(cursor: Cursor, in: JsonReader): U = {
+      var result: U = null.asInstanceOf[U]
+      var lastKey: String = null.asInstanceOf[String]
+
+      def readKey(): Unit = {
+        lastKey = in.readKeyAsString()
+        cursor.push(lastKey)
+        if (isLenient && in.isNextToken('n')) {
+          in.readNullOrError((), "expected null")
+        } else if (result == null) {
+          if (isLenient) in.rollbackToken()
+          getHandler(lastKey) match {
+            case Some(handler) => result = handler.handle(cursor, in)
+            case None          => onUnknownDiscriminator(in, lastKey)
+          }
+        } else {
+          in.decodeError(emptyObjectErrorMessage)
+        }
+
+        cursor.pop()
+      }
+
+      if (in.isNextToken('{')) {
+        if (in.isNextToken('}'))
+          in.decodeError(emptyObjectErrorMessage)
+        else {
+          in.rollbackToken()
+
+          readKey()
+
+          if (isLenient) {
+            while (in.isNextToken(',')) {
+              readKey()
+            }
+            in.rollbackToken()
+          }
+
+          if (in.isNextToken('}')) {
+            if (result == null)
+              in.decodeError("Expected a single non-null value")
+            else
+              result
+          } else {
+            if (isLenient) in.objectEndOrCommaError()
+            else in.decodeError(s"Expected no other field after '$lastKey'")
+          }
+
+        }
+      } else in.decodeError("Expected JSON object")
+    }
+
+    private def emptyObjectErrorMessage: String =
+      if (isLenient) "Expected a single non-null value"
+      else "Expected a single key/value pair"
+
+    private def onUnknownDiscriminator(in: JsonReader, key: String): Unit =
+      if (isLenient) in.skip() else in.discriminatorValueError(key)
   }
 
   private def taggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new TaggedUnionJCodec[U](alternatives)(dispatch) {
-
-      def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        if (in.isNextToken('{')) {
-          if (in.isNextToken('}'))
-            in.decodeError("Expected a single key/value pair")
-          else {
-            in.rollbackToken()
-            val key = in.readKeyAsString()
-
-            getHandler(key) match {
-              case Some(handler) =>
-                cursor.push(key)
-                val result = handler.handle(cursor, in)
-                cursor.pop()
-                if (in.isNextToken('}')) result
-                else {
-                  in.rollbackToken()
-                  in.decodeError(s"Expected no other field after $key")
-                }
-              case None => in.discriminatorValueError(key)
-            }
-          }
-        } else in.decodeError("Expected JSON object")
-      }
-    }
+    new TaggedUnionJCodec[U](alternatives)(dispatch, isLenient = false)
 
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new TaggedUnionJCodec[U](alternatives)(dispatch) {
-      def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        var result: U = null.asInstanceOf[U]
-        if (in.isNextToken('{')) {
-          if (!in.isNextToken('}')) {
-            in.rollbackToken()
-            while ({
-              val key = in.readKeyAsString()
-              cursor.push(key)
-
-              if (in.isNextToken('n')) {
-                in.readNullOrError((), "expected null")
-              } else if (result == null) {
-                in.rollbackToken()
-                getHandler(key) match {
-                  case Some(handler) => result = handler.handle(cursor, in)
-                  case None          => in.skip()
-                }
-              } else {
-                in.decodeError("Expected a single non-null value")
-              }
-              cursor.pop()
-              in.isNextToken(',')
-            }) ()
-            if (!in.isCurrentToken('}')) {
-              in.objectEndOrCommaError()
-            }
-          }
-          if (result != null) {
-            result
-          } else {
-            in.decodeError("Expected a single non-null value")
-          }
-        } else in.decodeError("Expected JSON object")
-      }
-
-    }
+    new TaggedUnionJCodec[U](alternatives)(dispatch, isLenient = true)
 
   private def untaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
