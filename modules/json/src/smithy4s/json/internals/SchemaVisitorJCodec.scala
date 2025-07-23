@@ -1041,8 +1041,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           )
       }
 
-      private final class Impl[U, A](_alt: Alt[U, A])
-          extends AltHandler[U, A] {
+      private final class Impl[U, A](_alt: Alt[U, A]) extends AltHandler[U, A] {
 
         private val codec = self.apply(alt.schema)
 
