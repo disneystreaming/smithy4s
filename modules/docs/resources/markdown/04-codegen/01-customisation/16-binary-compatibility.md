@@ -199,6 +199,12 @@ In addition, we need to make sure all implementations of the union's `Visitor` t
 
 This neat trick makes it only possible to subclass `Visitor.Default`, which enforces having a default case.
 
+:::info
+
+For MiMa users - MiMa doesn't take `sealed` into account, so it will report `ReversedMissingMethodProblem` issues (forward-incompatible changes) when a new union member is added.
+
+In bincompat-friendly mode, these can be considered **false positives**, and it's safe to exclude them from your binary compatibility checks. See the [instructions for filtering incompatibilities][mima-filtering] or follow the suggestion MiMa gives you.
+
 ### Enums
 
 For enums, just like for unions, we need to remove the possibility of exhaustively matching against the known set of members. This is achieved by:
@@ -212,3 +218,4 @@ For enums, just like for unions, we need to remove the possibility of exhaustive
 [bincompat-for-libs]: https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html
 [bincompat-jdk]: https://docs.oracle.com/javase/specs/jls/se24/html/jls-13.html
 [sbt-contraband]: https://www.scala-sbt.org/contraband/
+[mima-filtering]: https://github.com/lightbend-labs/mima/?tab=readme-ov-file#filtering-binary-incompatibilities

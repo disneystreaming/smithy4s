@@ -7,7 +7,7 @@ Thank you!
 
 # 0.18.40
 
-* codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/).
+* codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
 * core: fix [#1663](https://github.com/disneystreaming/smithy4s/issues/1663) by reworking how path segments are encoded to conform with the Smithy spec in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
 * aws-http4s: fix AWS request signing for URIs with encoded path segments in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
 
