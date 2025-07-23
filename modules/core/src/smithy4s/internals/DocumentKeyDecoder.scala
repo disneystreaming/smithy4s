@@ -55,6 +55,7 @@ object DocumentKeyDecoder {
           if (f.isDefinedAt(doc)) f(doc)
           else throw DecodeError(expectedType)
         }
+
       def fromUnsafe[A](
           expectedType: String
       )(f: PartialFunction[Document, A]): OptDocumentKeyDecoder[A] =
@@ -126,9 +127,10 @@ object DocumentKeyDecoder {
 
           case PDocument => None
 
-          case PLocalDate => from(shortDesc) { case DString(string) =>
-            LocalDate.parse(string)
+          case PLocalDate => fromUnsafe(shortDesc) { case DString(string) =>
+            LocalDate.parseUnsafe(string)
           }
+
           case PLocalTime => from(shortDesc) { case DString(string) =>
             LocalTime.parse(string)
           }

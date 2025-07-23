@@ -69,15 +69,15 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
       epochDay + 719468 // 719468 == 719528 - 60 == days 0000 to 1970 - days 1st Jan to 1st Mar
     var adjustYear = 0
     if (marchZeroDay < 0) { // adjust negative years to positive for calculation
-      val adjust400YearCycles = to400YearCycle(marchZeroDay + 1) - 1
+      val adjust400YearCycles = TimeUtil.to400YearCycle(marchZeroDay + 1) - 1
       adjustYear = adjust400YearCycles * 400
       marchZeroDay -= adjust400YearCycles * 146097L
     }
-    var year = to400YearCycle(marchZeroDay * 400 + 591)
-    var marchDayOfYear = toMarchDayOfYear(marchZeroDay, year)
+    var year = TimeUtil.to400YearCycle(marchZeroDay * 400 + 591)
+    var marchDayOfYear = TimeUtil.toMarchDayOfYear(marchZeroDay, year)
     if (marchDayOfYear < 0) { // fix year estimate
       year -= 1
-      marchDayOfYear = toMarchDayOfYear(marchZeroDay, year)
+      marchDayOfYear = TimeUtil.toMarchDayOfYear(marchZeroDay, year)
     }
     val marchMonth =
       (marchDayOfYear * 17135 + 6854) >> 19 // (marchDayOfYear * 5 + 2) / 153
@@ -89,29 +89,29 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
       marchDayOfYear - ((marchMonth * 1002762 - 16383) >> 15) // marchDayOfYear - (marchMonth * 306 + 5) / 10 + 1
     internalFormat match {
       case 1 =>
-        s.append(Timestamp.daysOfWeek(((epochDay + 700000003) % 7).toInt))
+        s.append(TimeUtil.daysOfWeek(((epochDay + 700000003) % 7).toInt))
           .append(',')
-        append2Digits(day, s.append(' '))
-        s.append(' ').append(Timestamp.months(month - 1))
-        append4Digits(year, s.append(' '))
+        TimeUtil.append2Digits(day, s.append(' '))
+        s.append(' ').append(TimeUtil.months(month - 1))
+        TimeUtil.append4Digits(year, s.append(' '))
         appendTime(secsOfDay, s.append(' '), addSeparator = true)
         appendNano(nano, s)
         s.append(" GMT").toString
       case 2 =>
-        append4Digits(year, s)
-        append2Digits(month, s)
-        append2Digits(day, s)
+        TimeUtil.append4Digits(year, s)
+        TimeUtil.append2Digits(month, s)
+        TimeUtil.append2Digits(day, s)
         s.toString
       case 3 =>
-        append4Digits(year, s)
-        append2Digits(month, s)
-        append2Digits(day, s)
+        TimeUtil.append4Digits(year, s)
+        TimeUtil.append2Digits(month, s)
+        TimeUtil.append2Digits(day, s)
         appendTime(secsOfDay, s.append('T'), addSeparator = false)
         s.append('Z').toString
       case _ =>
-        append4Digits(year, s)
-        append2Digits(month, s.append('-'))
-        append2Digits(day, s.append('-'))
+        TimeUtil.append4Digits(year, s)
+        TimeUtil.append2Digits(month, s.append('-'))
+        TimeUtil.append2Digits(day, s.append('-'))
         appendTime(secsOfDay, s.append('T'), addSeparator = true)
         appendNano(nano, s)
         s.append('Z').toString
@@ -136,13 +136,13 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
     val second = secsOfDay - minutesOfDay * 60
 
     if (addSeparator) {
-      append2Digits(hour, s)
-      append2Digits(minute, s.append(':'))
-      append2Digits(second, s.append(':'))
+      TimeUtil.append2Digits(hour, s)
+      TimeUtil.append2Digits(minute, s.append(':'))
+      TimeUtil.append2Digits(second, s.append(':'))
     } else {
-      append2Digits(hour, s)
-      append2Digits(minute, s)
-      append2Digits(second, s)
+      TimeUtil.append2Digits(hour, s)
+      TimeUtil.append2Digits(minute, s)
+      TimeUtil.append2Digits(second, s)
     }
   }
 
@@ -151,83 +151,27 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
       s.append('.')
       val q1 = nano / 10000000
       val r1 = nano - q1 * 10000000
-      append2Digits(q1, s)
+      TimeUtil.append2Digits(q1, s)
       val q2 = r1 / 100000
       val r2 = r1 - q2 * 100000
-      val d = Timestamp.digits(q2)
+      val d = TimeUtil.digits(q2)
       s.append(d.toByte.toChar)
       if (r2 != 0 || d > 0x3039) { // check if nano is divisible by 1000000
         s.append((d >> 8).toByte.toChar)
         val q3 = r2 / 1000
         val r3 = r2 - q3 * 1000
-        append2Digits(q3, s)
+        TimeUtil.append2Digits(q3, s)
         if (r3 != 0) { // check if nano is divisible by 1000
-          append3Digits(r3, s)
+          TimeUtil.append3Digits(r3, s)
         }
       }
     }
 
-  private[this] def append4Digits(x: Int, s: java.lang.StringBuilder): Unit = {
-    val q = x * 5243 >> 19 // divide a 4-digit positive int by 100
-    append2Digits(q, s)
-    append2Digits(x - q * 100, s)
-  }
-
-  private[this] def append3Digits(x: Int, s: java.lang.StringBuilder): Unit = {
-    val q = x * 5243 >> 19 // divide a 4-digit positive int by 100
-    s.append((q + '0').toChar)
-    append2Digits(x - q * 100, s)
-  }
-
-  private[this] def append2Digits(x: Int, s: java.lang.StringBuilder): Unit = {
-    val d = Timestamp.digits(x)
-    val _ = s.append((d & 0xff).toChar).append((d >> 8).toChar)
-  }
-
-  private[this] def to400YearCycle(day: Long): Int =
-    (day / 146097).toInt // 146097 == number of days in a 400 year cycle
-
-  private[this] def toMarchDayOfYear(marchZeroDay: Long, year: Int): Int = {
-    val century = year / 100
-    (marchZeroDay - year * 365L).toInt - (year >> 2) + century - (century >> 2)
-  }
 }
 
 object Timestamp {
 
   val epoch = Timestamp(0, 0)
-
-  private val digits: Array[Short] = Array(
-    0x3030, 0x3130, 0x3230, 0x3330, 0x3430, 0x3530, 0x3630, 0x3730, 0x3830,
-    0x3930, 0x3031, 0x3131, 0x3231, 0x3331, 0x3431, 0x3531, 0x3631, 0x3731,
-    0x3831, 0x3931, 0x3032, 0x3132, 0x3232, 0x3332, 0x3432, 0x3532, 0x3632,
-    0x3732, 0x3832, 0x3932, 0x3033, 0x3133, 0x3233, 0x3333, 0x3433, 0x3533,
-    0x3633, 0x3733, 0x3833, 0x3933, 0x3034, 0x3134, 0x3234, 0x3334, 0x3434,
-    0x3534, 0x3634, 0x3734, 0x3834, 0x3934, 0x3035, 0x3135, 0x3235, 0x3335,
-    0x3435, 0x3535, 0x3635, 0x3735, 0x3835, 0x3935, 0x3036, 0x3136, 0x3236,
-    0x3336, 0x3436, 0x3536, 0x3636, 0x3736, 0x3836, 0x3936, 0x3037, 0x3137,
-    0x3237, 0x3337, 0x3437, 0x3537, 0x3637, 0x3737, 0x3837, 0x3937, 0x3038,
-    0x3138, 0x3238, 0x3338, 0x3438, 0x3538, 0x3638, 0x3738, 0x3838, 0x3938,
-    0x3039, 0x3139, 0x3239, 0x3339, 0x3439, 0x3539, 0x3639, 0x3739, 0x3839,
-    0x3939
-  )
-  private val daysOfWeek: Array[String] =
-    Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-  private val months: Array[String] =
-    Array(
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec"
-    )
 
   def apply(epochSecond: Long, nano: Int): Timestamp = {
     require(
@@ -250,7 +194,7 @@ object Timestamp {
     require(year >= 0 && year <= 9999, "illegal year")
     require(month >= 1 && month <= 12, "illegal month")
     require(
-      day >= 1 && (day <= 28 || day <= maxDayForYearMonth(year, month)),
+      day >= 1 && (day <= 28 || day <= TimeUtil.maxDayForYearMonth(year, month)),
       "illegal year, month, day combination"
     )
     require(hour >= 0 && hour <= 23, "illegal hour")
@@ -258,7 +202,7 @@ object Timestamp {
     require(second >= 0 && second <= 59, "illegal second")
     require(nano >= 0 && nano <= 999999999, "illegal nano")
     new Timestamp(
-      toEpochDay(
+      TimeUtil.toEpochDay(
         year,
         month,
         day
@@ -333,7 +277,7 @@ object Timestamp {
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
         ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day == 0 ||
-        (day > 28 && day > maxDayForYearMonth(year, month)) || ch2 != 'T'
+        (day > 28 && day > TimeUtil.maxDayForYearMonth(year, month)) || ch2 != 'T'
       ) error()
       pos += 3
       day
@@ -367,7 +311,7 @@ object Timestamp {
         ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       } else 0
     }
-    var epochSecond = toEpochDay(
+    var epochSecond = TimeUtil.toEpochDay(
       year,
       month,
       day
@@ -501,7 +445,7 @@ object Timestamp {
       var i = 0
       while (
         i < 7 && {
-          val d = daysOfWeek(i)
+          val d = TimeUtil.daysOfWeek(i)
           d.charAt(0) != ch0 || d.charAt(1) != ch1 || d.charAt(2) != ch2
         }
       ) i += 1
@@ -529,7 +473,7 @@ object Timestamp {
       var i = 0
       while (
         i < 12 && {
-          val m = months(i)
+          val m = TimeUtil.months(i)
           m.charAt(0) != ch0 || m.charAt(1) != ch1 || m.charAt(2) != ch2
         }
       ) i += 1
@@ -551,8 +495,8 @@ object Timestamp {
       pos += 5
       ch0 * 1000 + ch1 * 100 + ch2 * 10 + ch3 - 53328 // 53328 == '0' * 1111
     }
-    if (day > 28 && day > maxDayForYearMonth(year, month)) error()
-    val epochDay = toEpochDay(year, month, day)
+    if (day > 28 && day > TimeUtil.maxDayForYearMonth(year, month)) error()
+    val epochDay = TimeUtil.toEpochDay(year, month, day)
     if (dayOfWeek != (epochDay + 700000003) % 7 + 1) error()
     val hour = {
       val ch0 = s.charAt(pos)
@@ -612,23 +556,6 @@ object Timestamp {
     ) error()
     new Timestamp(epochDay * 86400 + (hour * 3600 + minute * 60 + second), nano)
   }
-
-  private[this] def toEpochDay(year: Int, month: Int, day: Int): Long =
-    year * 365L + (((year + 3) >> 2) - {
-      if (year < 0) year / 100 - year / 400
-      else (year + 99) / 100 - (year + 399) / 400
-    } + ((month * 1002277 - 988622) >> 15) - // (month * 367 - 362) / 12
-      (if (month <= 2) 0
-       else if (isLeap(year)) 1
-       else 2) + day - 719529) // 719528 == days 0000 to 1970
-
-  private[this] def maxDayForYearMonth(year: Int, month: Int): Int =
-    if (month != 2) ((month >> 3) ^ (month & 0x1)) + 30
-    else if (isLeap(year)) 29
-    else 28
-
-  private[this] def isLeap(year: Int): Boolean =
-    (year & 0x3) == 0 && (year % 100 != 0 || year % 400 == 0)
 
   private[this] def error(): Throwable = throw new RuntimeException
     with NoStackTrace

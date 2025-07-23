@@ -20,10 +20,12 @@ import munit._
 import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Timestamp
+import smithy4s.LocalDate
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
 
 import java.util.UUID
+// import java.time.{LocalTime, Duration, OffsetDateTime}
 
 // A few tests utilising java code-generated classes that ScalaPB doesn't have a pure scala version of.
 class JVMCodecTests() extends FunSuite {
@@ -137,6 +139,37 @@ class JVMCodecTests() extends FunSuite {
 
     assertEquals(parsedDocument, document)
     assertEquals(parsedProtoJson, protoJson)
+  }
+
+  test("LocalDate".only) {
+    val localDate1 = LocalDate(2025, 7, 21)
+    val localDate2 = LocalDate(2024, 7, 21)
+
+    val localDates = protobuf.LocalDateWrapper(
+      Some(localDate1),
+      Some(localDate2),
+    )
+
+    val protoLocalDates = protobuf.protobuf.LocalDateWrapper( 
+      localDate1.toString(),
+      Some(
+        alloy.protobuf.types.CompactLocalDate(
+          localDate2.epochDay
+        )
+      )
+    )
+
+
+    val bytes = protoLocalDates.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.LocalDateWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(localDates)
+    val parsedRoundTrip = protobuf.protobuf.LocalDateWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, localDates)
+    assertEquals(parsedRoundTrip, protoLocalDates)
   }
 
 }

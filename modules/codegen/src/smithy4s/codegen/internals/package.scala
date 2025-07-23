@@ -36,6 +36,10 @@ import scala.jdk.CollectionConverters._
 package object internals {
 
   val uuidShapeId = ShapeId.from("alloy#UUID")
+  val localDateShapeId = ShapeId.from("alloy#LocalDate")
+  val localTimeShapeId = ShapeId.from("alloy#LocalTime")
+  val durationShapeId = ShapeId.from("alloy#Duration")
+  val offsetDateTimeShapeId = ShapeId.from("alloy#OffsetDateTime")
 
   private[internals] type LinesWithValue = WithValue.ToLinesWithValue[_]
   private[internals] type LineWithValue = WithValue.ToLineWithValue[_]

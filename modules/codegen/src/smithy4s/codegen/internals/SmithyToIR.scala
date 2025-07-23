@@ -801,6 +801,8 @@ private[codegen] class SmithyToIR(
         case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
           Type.PrimitiveType(Primitive.Uuid).some
+        case shape if shape.getId() == localDateShapeId =>
+          Type.PrimitiveType(Primitive.LocalDate).some
         case T.uuidFormat(_) =>
           Type
             .Alias(

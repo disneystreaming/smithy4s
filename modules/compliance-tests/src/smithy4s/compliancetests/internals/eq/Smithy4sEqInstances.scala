@@ -18,9 +18,9 @@ package smithy4s.compliancetests.internals.eq
 
 import cats.implicits.{catsSyntaxEq, toContravariantOps}
 import cats.kernel.Eq
-import smithy4s.{Blob, Document, Timestamp}
+import smithy4s.{Blob, Document, Timestamp, LocalDate}
 import cats.kernel.instances.StaticMethods
-import java.time._
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>
@@ -38,7 +38,7 @@ trait Smithy4sEqInstances {
     x == y || (x.isNaN && y.isNaN)
   implicit val doubleEq: Eq[Double] = (x: Double, y: Double) =>
     x == y || (x.isNaN && y.isNaN)
-  implicit val localDateEq: Eq[LocalDate] = Eq[Long].contramap(_.toEpochDay)
+  implicit val localDateEq: Eq[LocalDate] = Eq[Long].contramap(_.epochDay)
   implicit val localTimeEq: Eq[LocalTime] = Eq[Long].contramap(_.toNanoOfDay)
   implicit val durationEq:  Eq[Duration] = (x: Duration, y: Duration) => 
     x.compareTo(y) == 0

@@ -100,6 +100,10 @@ private[internals] object ToLine {
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
+      case Primitive.LocalDate    => NameRef("smithy4s", "LocalDate")
+      case Primitive.LocalTime    => NameRef("java.time", "LocalTime")
+      case Primitive.Duration    => NameRef("java.time", "Duration")
+      case Primitive.OffsetDateTime    => NameRef("java.time", "OffsetDateTime")
     }
   }
 }

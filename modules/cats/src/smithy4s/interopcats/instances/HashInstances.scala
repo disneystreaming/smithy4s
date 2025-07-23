@@ -17,10 +17,10 @@
 package smithy4s.interopcats.instances
 
 import cats.{Eq, Hash}
-import smithy4s.{Blob, ShapeId, Timestamp}
+import smithy4s.{Blob, ShapeId, Timestamp, LocalDate}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Primitive
-import java.time._
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 private[interopcats] trait HashInstances {
 

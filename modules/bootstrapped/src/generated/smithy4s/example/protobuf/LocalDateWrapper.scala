@@ -1,10 +1,11 @@
 package smithy4s.example.protobuf
 
-import alloy.LocalDate
 import smithy4s.Hints
+import smithy4s.LocalDate
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.localdate
 import smithy4s.schema.Schema.struct
 
 final case class LocalDateWrapper(localDate: Option[LocalDate] = None, compactLocalDate: Option[LocalDate] = None)
@@ -20,7 +21,7 @@ object LocalDateWrapper extends ShapeTag.Companion[LocalDateWrapper] {
   private def make(localDate: Option[LocalDate], compactLocalDate: Option[LocalDate]): LocalDateWrapper = LocalDateWrapper(localDate, compactLocalDate)
 
   implicit val schema: Schema[LocalDateWrapper] = struct(
-    LocalDate.schema.optional[LocalDateWrapper]("localDate", _.localDate),
-    LocalDate.schema.optional[LocalDateWrapper]("compactLocalDate", _.compactLocalDate).addHints(alloy.proto.ProtoCompactLocalDate()),
+    localdate.optional[LocalDateWrapper]("localDate", _.localDate),
+    localdate.optional[LocalDateWrapper]("compactLocalDate", _.compactLocalDate).addHints(alloy.proto.ProtoCompactLocalDate()),
   )(make).withId(id).addHints(hints)
 }
