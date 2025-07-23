@@ -22,7 +22,6 @@ import smithy4s.Schema
 import smithy4s.example.SampleOpenUnion
 import smithy4s.example.StructWithOpenUnion
 import smithy4s.Blob
-import smithy4s.expect
 import smithy4s.codecs.PayloadError
 import smithy4s.example.SampleOpenDiscriminatedUnion
 import smithy4s.example.StructForDiscrimination
