@@ -1023,7 +1023,6 @@ private[smithy4s] class SchemaVisitorJCodec(
         alt: Alt[U, A],
         key: String
     ): AltHandler[U, A] = {
-      val handler = AltHandler.create(alt)
       val documentTransformer = alt.schema.compile(TransformDocumentCompiler)
       AltHandler.mapped(alt)(a =>
         documentTransformer(a, doc => Document.obj(key -> doc))
