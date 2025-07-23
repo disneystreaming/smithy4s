@@ -1016,7 +1016,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   }
 
-  protected object UnionJCodec {
+  private object UnionJCodec {
 
     private type DocumentTransformer[A] = (A, Document => Document) => A
 
@@ -1026,9 +1026,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       def handleVariant(cursor: Cursor, reader: JsonReader): A
     }
 
-    protected object AltHandler {
-      def create[U, A](alt: Alt[U, A]): AltHandler[U, A] =
-        Impl(alt)
+    private object AltHandler {
+      def create[U, A](alt: Alt[U, A]): AltHandler[U, A] = new Impl(alt)
 
       def openUnionUnknown[U, A](
           alt: Alt[U, A]
@@ -1042,10 +1041,12 @@ private[smithy4s] class SchemaVisitorJCodec(
           )
       }
 
-      private final case class Impl[U, A](alt: Alt[U, A])
+      private final class Impl[U, A](_alt: Alt[U, A])
           extends AltHandler[U, A] {
 
         private val codec = self.apply(alt.schema)
+
+        def alt: Alt[U, A] = _alt
 
         def handle(cursor: Cursor, reader: JsonReader): U =
           alt.inject(handleVariant(cursor, reader))
