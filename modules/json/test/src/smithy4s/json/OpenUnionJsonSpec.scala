@@ -20,7 +20,9 @@ import munit._
 import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.example.SampleOpenUnion
+import smithy4s.example.StructWithOpenUnion
 import smithy4s.Blob
+import smithy4s.expect
 import smithy4s.codecs.PayloadError
 import smithy4s.example.SampleOpenDiscriminatedUnion
 import smithy4s.example.StructForDiscrimination
@@ -199,6 +201,26 @@ abstract class OpenUnionJsonSpec extends ScalaCheckSuite {
         HasRecursiveDiscriminatedOpenUnion(
           RecursiveDiscriminatedOpenUnion.unknown(inner)
         )
+      )
+    )
+  }
+
+  test("open union is followed by other content") {
+    val input = Document.obj(
+      "union" -> Document.obj(
+        "brand-new-member" -> Document.fromString("oh wow i'm a string")
+      ),
+      "str" -> Document.fromString("Hi there!")
+    )
+    roundtripTest(
+      writeDocumentAsBlob(input),
+      StructWithOpenUnion(
+        SampleOpenUnion.unknown(
+          Document.obj(
+            "brand-new-member" -> Document.fromString("oh wow i'm a string")
+          )
+        ),
+        "Hi there!"
       )
     )
   }

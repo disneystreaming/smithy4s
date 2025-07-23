@@ -35,6 +35,16 @@ class LenientOpenUnionJsonSpec extends OpenUnionJsonSpec {
     )
   }
 
+  test("fail to decode multiple unknown keys") {
+    matches(read[SampleOpenUnion](Blob("""{"foo": "bar", "baz": "qux"}"""))) {
+      case Left(ex) =>
+        expect(
+          ex.getMessage.contains("""Expected a single non-null value""")
+        )
+    }
+  }
+
+  // TODO: this test does not really belong to open unions spec
   test("open tagged union - decoding still fails if invalid tag is present") {
     matches(read[Foo](Blob("""{"foo": "bar"}"""))) { case Left(ex) =>
       // TODO: invalid message
