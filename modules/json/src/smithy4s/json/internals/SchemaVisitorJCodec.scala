@@ -1002,16 +1002,17 @@ private[smithy4s] class SchemaVisitorJCodec(
           jsonLabel(alt) -> UnionJCodec.AltHandler.create(alt)
       }.toMap
 
-    private val unknownAlt = alternatives.find(_.hints.has(JsonUnknown))
+    private val unknownAlt =
+      alternatives.find(_.hints.has(JsonUnknown)).map { alt =>
+        if (isDiscriminated) {
+          val handler = UnionJCodec.AltHandler.create(alt)
+          (_: String) => handler
+        } else UnionJCodec.AltHandler.openUnionUnknown(alt)
+      }
 
     protected def getHandler(key: String) = handlerMap
       .get(key)
-      .orElse(
-        unknownAlt.map(alt =>
-          if (isDiscriminated) UnionJCodec.AltHandler.create(alt)
-          else UnionJCodec.unknownAltHandler(alt, key)
-        )
-      )
+      .orElse(unknownAlt.map(_(key)))
 
   }
 
@@ -1019,36 +1020,49 @@ private[smithy4s] class SchemaVisitorJCodec(
 
     private type DocumentTransformer[A] = (A, Document => Document) => A
 
-    protected def unknownAltHandler[U, A](
-        alt: Alt[U, A],
-        key: String
-    ): AltHandler[U, A] = {
-      val documentTransformer = alt.schema.compile(TransformDocumentCompiler)
-      AltHandler.mapped(alt)(a =>
-        documentTransformer(a, doc => Document.obj(key -> doc))
-      )
-    }
-
-    protected abstract class AltHandler[U, A](alt: Alt[U, A]) {
-      protected val codec = self.apply(alt.schema)
-
+    protected abstract class AltHandler[U, A] {
+      def alt: Alt[U, A]
       def handle(cursor: Cursor, reader: JsonReader): U
-      def handleVariant(cursor: Cursor, reader: JsonReader): A =
-        cursor.decode(codec, reader)
+      def handleVariant(cursor: Cursor, reader: JsonReader): A
     }
 
     protected object AltHandler {
       def create[U, A](alt: Alt[U, A]): AltHandler[U, A] =
-        new Impl(alt, identity)
-      def mapped[U, A](alt: Alt[U, A])(map: A => A): AltHandler[U, A] =
-        new Impl(alt, map)
+        Impl(alt)
 
-      private final class Impl[U, A](alt: Alt[U, A], map: A => A)
-          extends AltHandler(alt) {
+      def openUnionUnknown[U, A](
+          alt: Alt[U, A]
+      ): String => AltHandler[U, A] = {
+        val underlying = AltHandler.create(alt)
+        val documentTransformer = alt.schema.compile(TransformDocumentCompiler)
+        key =>
+          new AltHandler.Mapped(
+            underlying,
+            a => documentTransformer(a, doc => Document.obj(key -> doc))
+          )
+      }
 
-        def handle(cursor: Cursor, reader: JsonReader): U = {
-          alt.inject(map(handleVariant(cursor, reader)))
-        }
+      private final case class Impl[U, A](alt: Alt[U, A])
+          extends AltHandler[U, A] {
+
+        private val codec = self.apply(alt.schema)
+
+        def handle(cursor: Cursor, reader: JsonReader): U =
+          alt.inject(handleVariant(cursor, reader))
+
+        def handleVariant(cursor: Cursor, reader: JsonReader): A =
+          cursor.decode(codec, reader)
+      }
+
+      private final class Mapped[U, A](
+          underlying: AltHandler[U, A],
+          map: A => A
+      ) extends AltHandler[U, A] {
+        def alt: Alt[U, A] = underlying.alt
+        def handle(cursor: Cursor, reader: JsonReader): U =
+          alt.inject(map(underlying.handleVariant(cursor, reader)))
+        def handleVariant(cursor: Cursor, reader: JsonReader): A =
+          underlying.handleVariant(cursor, reader)
       }
 
     }
