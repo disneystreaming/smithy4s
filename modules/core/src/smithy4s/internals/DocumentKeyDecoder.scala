@@ -18,7 +18,7 @@ package smithy4s.internals
 
 import java.util.Base64
 import java.util.UUID
-import java.time._
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 import smithy4s._
 import smithy4s.Document._
@@ -56,6 +56,7 @@ object DocumentKeyDecoder {
           if (f.isDefinedAt(doc)) f(doc)
           else throw DecodeError(expectedType)
         }
+
       def fromUnsafe[A](
           expectedType: String
       )(f: PartialFunction[Document, A]): OptDocumentKeyDecoder[A] =
@@ -127,9 +128,10 @@ object DocumentKeyDecoder {
 
           case PDocument => None
 
-          case PLocalDate => from(shortDesc) { case DString(string) =>
-            LocalDate.parse(string)
+          case PLocalDate => fromUnsafe(shortDesc) { case DString(string) =>
+            LocalDate.parseUnsafe(string)
           }
+
           case PLocalTime => from(shortDesc) { case DString(string) =>
             LocalTime.parse(string)
           }

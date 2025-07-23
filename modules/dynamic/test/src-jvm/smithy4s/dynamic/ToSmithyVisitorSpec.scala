@@ -31,7 +31,8 @@ import smithy4s.Newtype
 import smithy.api.Pattern
 import smithy4s.Service
 import scala.io.Source
-import java.time.{LocalDate, LocalTime, Duration, OffsetDateTime}
+import smithy4s.LocalDate
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 object ToSmithyVisitorSpec extends FunSuite {
 

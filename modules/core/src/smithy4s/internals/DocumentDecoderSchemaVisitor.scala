@@ -37,7 +37,7 @@ import scala.collection.immutable.ListMap
 import alloy.Untagged
 import alloy.JsonUnknown
 import scala.collection.mutable.ListBuffer
-import java.time._
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -166,8 +166,8 @@ class DocumentDecoderSchemaVisitor(
         case FlexibleNumber(bd) if bd.isValidByte => bd.toByte
       }
     case PLocalDate =>
-      from("LocalDate") { case DString(string) =>
-        LocalDate.parse(string)
+      fromUnsafe("LocalDate") { case DString(string) =>
+        LocalDate.parseUnsafe(string)
       }
     case PLocalTime =>
       from("LocalTime") { case DString(string) =>

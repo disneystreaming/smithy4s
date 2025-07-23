@@ -22,12 +22,15 @@ import alloy.proto.ProtoInlinedOneOf
 import alloy.proto.ProtoNumType
 import alloy.proto.ProtoTimestampFormat
 import alloy.proto.ProtoWrapped
+import alloy.proto.ProtoOffsetDateTimeFormat
+import alloy.proto.ProtoCompactLocalDate
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
 import smithy4s.Document.DNull
 import smithy4s.Document.DNumber
 import smithy4s.Document.DObject
 import smithy4s.Document.DString
+import smithy4s.LocalDate
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.ClosedIntEnum
@@ -39,6 +42,7 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import java.util.UUID
+import java.time.{LocalTime, Duration, OffsetDateTime, Instant, ZoneOffset}
 import smithy.api.Required
 import smithy4s.protobuf.ProtobufReadError
 
@@ -82,6 +86,22 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
           protoTimestampSchema.compile(this)
         }
       case PDocument => protoJsonSchema.compile(this)
+      case PLocalDate => 
+        if (hints.has(ProtoCompactLocalDate)) {
+          compactLocalDate.compile(this)
+        } else {
+          wrapLen(StringCodec).imap(LocalDate.parseUnsafe(_), _.toString())
+        }
+      case PLocalTime => 
+        wrapLen(StringCodec).imap(LocalTime.parse(_), _.toString())
+      case PDuration => 
+        durationSchema.compile(this)
+      case POffsetDateTime => 
+        if (hints.get(ProtoOffsetDateTimeFormat).contains(ProtoOffsetDateTimeFormat.PROTOBUF)) {
+          compactOffsetDateTimeSchema.compile(this)
+        } else {
+          wrapLen(StringCodec).imap(OffsetDateTime.parse(_), _.toString())
+        }
     }
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
   }
@@ -107,11 +127,40 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       (uuid.getMostSignificantBits(), uuid.getLeastSignificantBits())
     )
 
+  private val compactLocalDate = Schema
+    .struct(
+      Schema.long.required[LocalDate]("epochDay", _.epochDay).addHints(ProtoIndex(1))
+    )(LocalDate.apply)
+
+  private val compactOffsetDateTimeSchema = Schema
+    .tuple(
+      Schema.long.addHints(ProtoIndex(1)),
+      Schema.int.addHints(ProtoIndex(2)),
+      Schema.string.addHints(ProtoIndex(3))
+    )
+    .biject { (offsetTriple: (Long, Int, String)) =>
+        val (seconds, nanos, zoneStr) = offsetTriple
+        val instant = Instant.ofEpochSecond(seconds, nanos.toLong)
+        val zone = ZoneOffset.of(zoneStr)
+        OffsetDateTime.ofInstant(instant, zone)
+    }{ date =>
+      val instant = date.toInstant()
+      (instant.getEpochSecond(), instant.getNano(), date.getOffset().toString)
+    }
+
   private val protoTimestampSchema = Schema
     .struct(
       Schema.long.required[Timestamp]("seconds", _.epochSecond).addHints(ProtoIndex(1)),
       Schema.int.required[Timestamp]("nanos", _.nano).addHints(ProtoIndex(2))
     )(Timestamp(_, _))
+
+  private val durationSchema = Schema
+    .tuple(
+      Schema.long.addHints(ProtoIndex(1)),
+      Schema.int.addHints(ProtoIndex(2))
+    ).biject { (durationTuple: (Long, Int))  => Duration.ofSeconds(durationTuple._1, durationTuple._2.toLong) }( duration =>
+      (duration.getSeconds(), duration.getNano())
+    )
 
   private val protoTimestampMillisecondsSchema = Schema
     .struct(

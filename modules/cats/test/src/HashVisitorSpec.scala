@@ -19,7 +19,7 @@ package smithy4s.interopcats
 import cats.Hash
 import smithy4s.schema.Schema._
 import smithy4s.schema.Schema
-import smithy4s.{Blob, Hints, ShapeId, Timestamp}
+import smithy4s.{Blob, Hints, ShapeId, Timestamp, LocalDate}
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
 import smithy4s.interopcats.testcases.IntOrString._
@@ -28,7 +28,7 @@ import weaver.FunSuite
 import scala.util.hashing.MurmurHash3.productSeed
 import HashTestUtils._
 import java.util.UUID
-import java.time._
+import java.time.{LocalTime, Duration, OffsetDateTime}
 
 object HashVisitorSpec extends FunSuite with CompatProvider {
 

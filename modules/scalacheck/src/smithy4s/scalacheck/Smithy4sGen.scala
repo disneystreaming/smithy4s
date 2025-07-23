@@ -2,7 +2,8 @@ package smithy4s
 package scalacheck
 
 import org.scalacheck.Gen
-import java.time._
+
+import java.time.{LocalTime, OffsetDateTime}
 
 private[scalacheck] object Smithy4sGen {
 
@@ -35,7 +36,7 @@ private[scalacheck] object Smithy4sGen {
     YYYY <- year
     MM <- month
     DD <- day(YYYY, MM)
-  } yield LocalDate.of(YYYY, MM, DD)
+  } yield LocalDate(YYYY, MM, DD)
 
   val genLocalTime: Gen[LocalTime] = for {
     hh <- hour
