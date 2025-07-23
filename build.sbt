@@ -467,7 +467,7 @@ lazy val codegen = projectMatrix
         .taskValue,
     },
     (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .dependsOn((protocol.jvm(autoScalaLibrary = false) / cachedPublishLocal))
       .value
   )
 
@@ -582,6 +582,12 @@ lazy val decline = (projectMatrix in file("modules/decline"))
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
+val cachedPublishLocal =
+  taskKey[Unit]("Runs publishLocal only if classpath changes")
+
+import java.security.MessageDigest
+import sbt.util.CacheImplicits._
+
 /**
  * This module contains the smithy specification of a bunch of types
  * that are not provided by the smithy standard library, but are useful
@@ -596,7 +602,48 @@ lazy val protocol = projectMatrix
   .jvmPlatform(
     autoScalaLibrary = false,
     scalaVersions = Seq.empty,
-    settings = jvmDimSettings
+    settings = jvmDimSettings ++ Seq(
+      cachedPublishLocal := Def.taskDyn {
+        val log = streams.value.log
+        val cacheFile =
+          os.Path(
+            streams.value.cacheDirectory / "cachedPublishLocal" / "classpath.hash"
+          )
+
+        val classpathHash = {
+          val classpathFiles = (Compile / fullClasspath).value
+            .map(_.data)
+            .map(os.Path(_))
+            .flatMap {
+              case d if os.isDir(d) =>
+                os.walk(d).filter(os.isFile(_)).toSeq
+              case f => List(f)
+            }
+            .distinct
+
+          val digest = MessageDigest.getInstance("SHA-1")
+          classpathFiles.sorted.foreach { path =>
+            digest.update(path.toString().getBytes())
+            digest.update(os.read.bytes(path))
+          }
+          digest.update(version.value.getBytes())
+          digest.digest().map("%02x".format(_)).mkString
+        }
+
+        val lastHash =
+          if (os.exists(cacheFile)) os.read(cacheFile)
+          else ""
+
+        if (lastHash != classpathHash) {
+          log.info("Classpath has changed. Running publishLocal...")
+          os.write.over(cacheFile, classpathHash)
+          Def.task { publishLocal.value }
+        } else {
+          log.info("Classpath unchanged. Skipping publishLocal.")
+          Def.task {}
+        }
+      }.value
+    )
   )
   .settings(
     isMimaEnabled := true,
