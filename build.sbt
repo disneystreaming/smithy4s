@@ -611,10 +611,10 @@ lazy val protocol = projectMatrix
           )
 
         val fn = Tracked
-          .inputChanged[Seq[File], Def.Initialize[Task[Unit]]](
+          .inputChanged[(Seq[File], String), Def.Initialize[Task[Unit]]](
             cacheFile.toIO
           ) {
-            case (changed, input) if changed =>
+            case (changed, _) if changed =>
               log.info("Classpath has changed. Running publishLocal...")
               Def.task { publishLocal.value }
 
@@ -624,7 +624,7 @@ lazy val protocol = projectMatrix
           }
 
         fn(
-          (Compile / fullClasspath).value.map(_.data).distinct
+          ((Compile / fullClasspath).value.map(_.data).distinct, version.value)
         )
       }.value
     )
