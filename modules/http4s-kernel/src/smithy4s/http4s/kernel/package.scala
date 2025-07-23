@@ -91,8 +91,9 @@ package object kernel {
   def toSmithy4sHttpResponse[F[_]: Concurrent](res: Response[F]): F[Smithy4sHttpResponse[Blob]] =
     collectBytes(res.body).map { blob =>
       val headers = res.headers.headers
-        .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
-        .toMap
+        .groupBy(h => CaseInsensitive(h.name.toString))
+        .map { case (key, values) => key -> values.map(_.value) }
+      // using `groupBy` + `map` because Scala 2.12 does not support `groupMap`
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 

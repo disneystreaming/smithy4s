@@ -17,9 +17,12 @@
 package smithy4s.http4s.kernel
 
 import weaver._
+import org.typelevel.ci.CIString
+import org.http4s._
 import org.http4s.implicits._
 import org.http4s.Uri
 import smithy4s.http.HttpUriScheme
+import smithy4s.http.CaseInsensitive
 
 object Http4sConversionSpec extends SimpleIOSuite {
 
@@ -104,6 +107,22 @@ object Http4sConversionSpec extends SimpleIOSuite {
         )
       ).scheme
     )
+  }
+
+  test("Response: keeps multi-headers") {
+    val response = Response[cats.effect.IO](
+      Status.Ok,
+      headers = Headers(
+        List(
+          Header.Raw(CIString("Key"), "Value1"),
+          Header.Raw(CIString("Key"), "Value2")
+        )
+      )
+    )
+    val expectedHeaders = Map(CaseInsensitive("Key") -> Seq("Value1", "Value2"))
+    toSmithy4sHttpResponse(response).map { result =>
+      expect.eql(result.headers, expectedHeaders)
+    }
   }
 
   private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri) = {
