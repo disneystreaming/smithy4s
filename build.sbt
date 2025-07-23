@@ -619,6 +619,7 @@ lazy val protocol = projectMatrix
                 os.walk(d).filter(os.isFile(_)).toSeq
               case f => List(f)
             }
+            .filter(os.exists(_))
             .distinct
 
           val digest = MessageDigest.getInstance("SHA-1")
