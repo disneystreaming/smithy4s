@@ -1007,7 +1007,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         if (isDiscriminated) {
           val handler = UnionJCodec.AltHandler.create(alt)
           (_: String) => handler
-        } else UnionJCodec.AltHandler.openUnionUnknown(alt)
+        } else UnionJCodec.AltHandler.openUnionTaggedUnknown(alt)
       }
 
     protected def getHandler(key: String) = handlerMap
@@ -1021,15 +1021,17 @@ private[smithy4s] class SchemaVisitorJCodec(
     private type DocumentTransformer[A] = (A, Document => Document) => A
 
     protected abstract class AltHandler[U, A] {
-      def alt: Alt[U, A]
-      def handle(cursor: Cursor, reader: JsonReader): U
-      def handleVariant(cursor: Cursor, reader: JsonReader): A
+      def handle(cursor: Cursor, reader: JsonReader): U =
+        inject(handleVariant(cursor, reader))
+
+      protected def inject(a: A): U
+      protected def handleVariant(cursor: Cursor, reader: JsonReader): A
     }
 
     private object AltHandler {
-      def create[U, A](alt: Alt[U, A]): AltHandler[U, A] = new Impl(alt)
+      def create[U, A](alt: Alt[U, A]): AltHandler[U, A] = new FromAlt(alt)
 
-      def openUnionUnknown[U, A](
+      def openUnionTaggedUnknown[U, A](
           alt: Alt[U, A]
       ): String => AltHandler[U, A] = {
         val underlying = AltHandler.create(alt)
@@ -1041,16 +1043,13 @@ private[smithy4s] class SchemaVisitorJCodec(
           )
       }
 
-      private final class Impl[U, A](_alt: Alt[U, A]) extends AltHandler[U, A] {
+      private final class FromAlt[U, A](alt: Alt[U, A])
+          extends AltHandler[U, A] {
 
         private val codec = self.apply(alt.schema)
 
-        def alt: Alt[U, A] = _alt
-
-        def handle(cursor: Cursor, reader: JsonReader): U =
-          alt.inject(handleVariant(cursor, reader))
-
-        def handleVariant(cursor: Cursor, reader: JsonReader): A =
+        protected def inject(a: A): U = alt.inject(a)
+        protected def handleVariant(cursor: Cursor, reader: JsonReader): A =
           cursor.decode(codec, reader)
       }
 
@@ -1058,11 +1057,10 @@ private[smithy4s] class SchemaVisitorJCodec(
           underlying: AltHandler[U, A],
           map: A => A
       ) extends AltHandler[U, A] {
-        def alt: Alt[U, A] = underlying.alt
-        def handle(cursor: Cursor, reader: JsonReader): U =
-          alt.inject(map(underlying.handleVariant(cursor, reader)))
-        def handleVariant(cursor: Cursor, reader: JsonReader): A =
-          underlying.handleVariant(cursor, reader)
+        protected def inject(a: A): U = underlying.inject(a)
+        protected def handleVariant(cursor: Cursor, reader: JsonReader): A =
+          map(underlying.handleVariant(cursor, reader))
+
       }
 
     }
