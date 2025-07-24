@@ -60,10 +60,12 @@ object StructurePatternRefinementProvider {
     val encoder =
       new SchemaVisitorPatternEncoder(segments)(sch)
         .getOrElse(
-          PathEncode.raw[A](_ =>
-            throw StructurePatternError(
-              s"Unable to create encoder for ${sch.shapeId}"
-            )
+          PathEncode.raw[A](
+            _ =>
+              throw StructurePatternError(
+                s"Unable to create encoder for ${sch.shapeId}"
+              ),
+            urlEncode = false
           )
         )
     (input: A) => {

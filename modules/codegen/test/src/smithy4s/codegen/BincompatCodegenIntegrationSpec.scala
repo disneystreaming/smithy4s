@@ -2,8 +2,8 @@ package smithy4s.codegen
 
 import munit.FunSuite
 import com.typesafe.tools.mima.lib.MiMaLib
-import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import cats.syntax.all._
+import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
   private val scala212 = "2.12"
@@ -577,9 +577,13 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
             excludeAnnots = Nil
           )
           .filter {
-            // We only care about backwards compatibility problems
-            case _: ReversedMissingMethodProblem => false
-            case _                               => true
+            // Unions' visitor traits are immune to reversed missing method problems
+            // because the interface is sealed. If there's a new union member (new method in the visitor),
+            // the default visitor is guaranteed to have that method.
+            case prob: ReversedMissingMethodProblem
+                if prob.meth.owner.fullName.endsWith("$Visitor") =>
+              false
+            case _ => true
           }
 
         assert(
@@ -701,8 +705,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         "--library",
         s"--scala=$scalaVersion",
         s"--output=$outputJarPath",
-        extraJars.map { j => s"--jar=$j" },
-        extraDeps.map { d => s"--dependency=$d" },
+        extraJars.map { j => s"--compile-only-jar=$j" },
+        extraDeps.map { d => s"--compile-only-dependency=$d" },
         sourceDirectories
       )
     }

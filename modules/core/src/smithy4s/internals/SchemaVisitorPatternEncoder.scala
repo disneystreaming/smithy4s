@@ -36,7 +36,7 @@ private[internals] final class SchemaVisitorPatternEncoder(
       tag: Primitive[P]
   ): MaybePathEncode[P] = {
     Primitive.stringWriter(tag, hints) match {
-      case Some(writer) => PathEncode.from(e => writer(e))
+      case Some(writer) => PathEncode.from(e => writer(e), urlEncode = false)
       case None         => None
     }
   }
@@ -50,9 +50,9 @@ private[internals] final class SchemaVisitorPatternEncoder(
   ): MaybePathEncode[E] =
     tag match {
       case EnumTag.IntEnum() =>
-        PathEncode.from(e => total(e).intValue.toString)
+        PathEncode.from(e => total(e).intValue.toString, urlEncode = false)
       case _ =>
-        PathEncode.from(e => total(e).stringValue)
+        PathEncode.from(e => total(e).stringValue, urlEncode = false)
     }
 
   override def struct[S](
@@ -80,11 +80,13 @@ private[internals] final class SchemaVisitorPatternEncoder(
 
     def compilePath(path: Vector[PatternSegment]): Option[Vector[Writer]] =
       path.traverse(compile1(_))
+
     for {
       writers <- compilePath(segments.toVector)
     } yield new PathEncode[S] {
-      def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
-      def encodeGreedy(s: S): List[String] = Nil
+      override def encode(s: S): List[String] =
+        writers.flatMap(_.apply(s)).toList
+      override def encodeGreedy(s: S): List[String] = Nil
     }
   }
 
