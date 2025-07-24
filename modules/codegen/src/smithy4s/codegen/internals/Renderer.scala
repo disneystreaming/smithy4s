@@ -1672,6 +1672,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
       case Primitive.LocalDate =>
         date => line"${NameRef("smithy4s", "LocalDate")}(${date.toEpochDay()})"
+      case Primitive.LocalTime =>
+        time => line"${NameRef("smithy4s", "LocalTime")}(${time.toSecondOfDay()}, ${time.getNano()})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {

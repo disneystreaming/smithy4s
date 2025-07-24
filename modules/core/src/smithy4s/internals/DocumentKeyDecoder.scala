@@ -18,7 +18,7 @@ package smithy4s.internals
 
 import java.util.Base64
 import java.util.UUID
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 
 import smithy4s._
 import smithy4s.Document._
@@ -133,7 +133,7 @@ object DocumentKeyDecoder {
           }
 
           case PLocalTime => from(shortDesc) { case DString(string) =>
-            LocalTime.parse(string)
+            LocalTime.parseUnsafe(string)
           }
           case PDuration => from(shortDesc) { case DString(string) =>
             Duration.parse(string)

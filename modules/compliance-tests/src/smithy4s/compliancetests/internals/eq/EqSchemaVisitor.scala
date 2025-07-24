@@ -23,7 +23,7 @@ import smithy4s._
 import smithy4s.schema.{Schema, _}
 
 import java.util.UUID
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 import smithy4s.capability.EncoderK
 import cats.kernel.Monoid
 

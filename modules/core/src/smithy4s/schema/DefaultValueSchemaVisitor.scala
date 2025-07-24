@@ -18,7 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
-import java.time.{LocalTime, Duration, OffsetDateTime, ZoneOffset}
+import java.time.{Duration, OffsetDateTime, ZoneOffset}
 
 private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
@@ -43,7 +43,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PUUID       => None
       case PByte       => None
       case PLocalDate  => Some(LocalDate.epoch)
-      case PLocalTime  => Some(LocalTime.MIDNIGHT)
+      case PLocalTime  => Some(LocalTime.midnight)
       case PDuration   => Some(Duration.ZERO)
       case POffsetDateTime   => Some(OffsetDateTime.of(0, 0, 0, 0, 0, 0, 0, ZoneOffset.UTC))
     }

@@ -20,7 +20,7 @@ package schema
 import smithy4s.kinds.PolyFunction
 import smithy4s.http.HttpBinding
 import smithy.api.TimestampFormat
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 
 sealed trait Primitive[T] {
   final def schema(shapeId: ShapeId): Schema[T] =
@@ -138,7 +138,7 @@ object Primitive extends smithy4s.ScalaCompat {
       case Primitive.PTimestamp => Some(timestampParser(hints))
       case Primitive.PDocument  => None
       case Primitive.PLocalDate => Some(LocalDate.parse(_))
-      case Primitive.PLocalTime => Some(unsafeStringParser(LocalTime.parse(_)))
+      case Primitive.PLocalTime => Some(LocalTime.parse(_))
       case Primitive.PDuration => Some(unsafeStringParser(Duration.parse(_)))
       case Primitive.POffsetDateTime => Some(unsafeStringParser(OffsetDateTime.parse(_)))
     }

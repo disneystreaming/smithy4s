@@ -26,12 +26,13 @@ import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Timestamp
 import smithy4s.LocalDate
+import smithy4s.LocalTime
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
 import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
-import java.time.{LocalTime, Duration, OffsetDateTime, ZoneOffset}
+import java.time.{Duration, OffsetDateTime, ZoneOffset}
 
 object OptsSchematicSpec extends SimpleIOSuite {
   def sampleStruct[A](name: String, schema: Schema[A]): Schema[A] =
@@ -435,7 +436,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("localTime") {
     expect.parsed(
       parseOpts(sampleStruct("localtime", localtime))("13:14:28.123456"),
-      LocalTime.of(13, 14, 28, 123456000)
+      LocalTime(13, 14, 28, 123456000)
     )
   }
 

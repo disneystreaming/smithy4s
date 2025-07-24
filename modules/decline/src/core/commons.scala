@@ -20,12 +20,12 @@ import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{Blob, ConstraintError, Document, Schema, LocalDate}
+import smithy4s.{Blob, ConstraintError, Document, Schema, LocalDate, LocalTime}
 import cats.implicits._
 import cats.MonadError
 
 import java.util.Base64
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 import java.time.format.DateTimeFormatter
 import scala.util.Try
 
@@ -64,7 +64,7 @@ object commons {
 
   val localTimeArgument: Argument[LocalTime] =
     Argument.from("localTime") { s =>
-      Try(LocalTime.parse(s)).toOption.toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_TIME}""")
+      LocalTime.parse(s).toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_TIME}""")
     }
 
   val durationArgument: Argument[Duration] =

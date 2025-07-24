@@ -390,7 +390,7 @@ private[internals] object CollisionAvoidance {
     val document_ = NameRef("smithy4s", "Document")
     val uuid_ = NameRef("smithy4s", "UUID")
     val localdate_ = NameRef("smithy4s", "LocalDate")
-    val localtime_ = NameRef("java.time", "LocalTime")
+    val localtime_ = NameRef("smithy4s", "LocalTime")
     val duration_ = NameRef("java.time", "Duration")
     val offsetdatetime_ = NameRef("java.time", "OffsetDateTime")
     val list = NameRef("scala", "List")

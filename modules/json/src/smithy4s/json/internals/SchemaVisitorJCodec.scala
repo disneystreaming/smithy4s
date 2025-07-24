@@ -20,7 +20,7 @@ package internals
 
 import java.util.UUID
 import java.util
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
@@ -461,13 +461,13 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "localTime"
 
       def decodeValue(cursor: Cursor, in: JsonReader): LocalTime =
-        LocalTime.parse(in.readString(null))
+        LocalTime.parseUnsafe(in.readString(null))
 
       def encodeValue(x: LocalTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
 
       def decodeKey(in: JsonReader): LocalTime =
-        LocalTime.parse(in.readKeyAsString())
+        LocalTime.parseUnsafe(in.readKeyAsString())
 
       def encodeKey(x: LocalTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiKey(x.toString)
