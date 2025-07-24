@@ -132,7 +132,7 @@ object DocumentKeyDecoder {
           }
 
           case PLocalTime => from(shortDesc) { case DString(string) =>
-            LocalTime.parse(string)
+            LocalTime.parseUnsafe(string)
           }
           case PDuration => from(shortDesc) { case DString(string) =>
             Duration.parse(string)

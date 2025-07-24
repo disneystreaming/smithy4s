@@ -20,9 +20,9 @@ import cats.kernel.Eq
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
-import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp, LocalDate}
+import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp, LocalDate, LocalTime}
 import weaver.{Expectations, FunSuite}
-import java.time.{LocalTime, OffsetDateTime, Duration}
+import java.time.{OffsetDateTime, Duration}
 
 object EqVisitorSpec extends FunSuite {
 
@@ -136,9 +136,11 @@ object EqVisitorSpec extends FunSuite {
 
   test("localTime") {
     implicit val schema: Schema[LocalTime] = localtime
-    val foo = LocalTime.parse("13:26:50.1")
-    val foo1 = LocalTime.parse("13:26:50.1000000")
-    val neq = LocalTime.parse("03:06:25.1")
+
+    val foo = LocalTime.parseUnsafe("13:26:50.1")
+    val foo1 = LocalTime.parseUnsafe("13:26:50.1000000")
+    val neq = LocalTime.parseUnsafe("03:06:25.1")
+
     schemaEq(foo, foo1)(neq)
   }
 

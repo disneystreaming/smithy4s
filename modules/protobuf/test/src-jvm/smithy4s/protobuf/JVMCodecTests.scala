@@ -21,6 +21,7 @@ import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Timestamp
 import smithy4s.LocalDate
+import smithy4s.LocalTime
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
 
@@ -141,7 +142,7 @@ class JVMCodecTests() extends FunSuite {
     assertEquals(parsedProtoJson, protoJson)
   }
 
-  test("LocalDate".only) {
+  test("LocalDate") {
     val localDate1 = LocalDate(2025, 7, 21)
     val localDate2 = LocalDate(2024, 7, 21)
 
@@ -170,6 +171,38 @@ class JVMCodecTests() extends FunSuite {
 
     assertEquals(parsed, localDates)
     assertEquals(parsedRoundTrip, protoLocalDates)
+  }
+
+  test("LocalTime") {
+    val localTime1 = LocalTime(13, 26, 50)
+    val localTime2 = LocalTime(18, 48, 21)
+
+    val localTimes = protobuf.LocalTimeWrapper(
+      Some(localTime1),
+      Some(localTime2),
+    )
+
+    val protoLocalTimes = protobuf.protobuf.LocalTimeWrapper( 
+      localTime1.toString(),
+      Some(
+        alloy.protobuf.types.CompactLocalTime(
+          localTime2.seconds,
+          localTime2.nano
+        )
+      )
+    )
+
+
+    val bytes = protoLocalTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.LocalTimeWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(localTimes)
+    val parsedRoundTrip = protobuf.protobuf.LocalTimeWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, localTimes)
+    assertEquals(parsedRoundTrip, protoLocalTimes)
   }
 
 }

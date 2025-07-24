@@ -28,7 +28,7 @@ import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
-import java.time.{LocalTime, Duration, OffsetDateTime, ZoneOffset, Instant}
+import java.time.{Duration, OffsetDateTime, ZoneOffset, Instant}
 
 object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
@@ -52,7 +52,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
     case PTimestamp      => Timestamp(0L, 0)
     case PUUID           => new UUID(0, 0)
     case PLocalDate      => LocalDate.epoch
-    case PLocalTime      => LocalTime.MIDNIGHT
+    case PLocalTime      => LocalTime.midnight
     case PDuration       => Duration.ZERO
     case POffsetDateTime => OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)
   }

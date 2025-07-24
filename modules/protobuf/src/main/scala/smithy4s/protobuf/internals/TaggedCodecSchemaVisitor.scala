@@ -24,6 +24,7 @@ import alloy.proto.ProtoTimestampFormat
 import alloy.proto.ProtoWrapped
 import alloy.proto.ProtoOffsetDateTimeFormat
 import alloy.proto.ProtoCompactLocalDate
+import alloy.proto.ProtoCompactLocalTime
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
 import smithy4s.Document.DNull
@@ -31,6 +32,7 @@ import smithy4s.Document.DNumber
 import smithy4s.Document.DObject
 import smithy4s.Document.DString
 import smithy4s.LocalDate
+import smithy4s.LocalTime
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.IntEnum
@@ -40,7 +42,7 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import java.util.UUID
-import java.time.{LocalTime, Duration, OffsetDateTime, Instant, ZoneOffset}
+import java.time.{Duration, OffsetDateTime, Instant, ZoneOffset}
 import smithy.api.Required
 import smithy4s.protobuf.ProtobufReadError
 
@@ -91,7 +93,12 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
           wrapLen(StringCodec).imap(LocalDate.parseUnsafe(_), _.toString())
         }
       case PLocalTime => 
-        wrapLen(StringCodec).imap(LocalTime.parse(_), _.toString())
+
+        if (hints.has(ProtoCompactLocalTime)) {
+          compactLocalTime.compile(this)
+        } else {
+          wrapLen(StringCodec).imap(LocalTime.parseUnsafe(_), _.toString())
+        }
       case PDuration => 
         durationSchema.compile(this)
       case POffsetDateTime => 
@@ -129,6 +136,12 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
     .struct(
       Schema.long.required[LocalDate]("epochDay", _.epochDay).addHints(ProtoIndex(1))
     )(LocalDate.apply)
+
+  private val compactLocalTime = Schema
+    .struct(
+      Schema.int.required[LocalTime]("seconds", _.seconds).addHints(ProtoIndex(1)),
+      Schema.int.required[LocalTime]("nano", _.nano).addHints(ProtoIndex(2))
+    )(LocalTime.apply)
 
   private val compactOffsetDateTimeSchema = Schema
     .tuple(

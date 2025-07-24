@@ -3,7 +3,7 @@ package scalacheck
 
 import org.scalacheck.Gen
 
-import java.time.{LocalTime, OffsetDateTime}
+import java.time.OffsetDateTime
 
 private[scalacheck] object Smithy4sGen {
 
@@ -42,7 +42,7 @@ private[scalacheck] object Smithy4sGen {
     hh <- hour
     mm <- minute
     ss <- second
-  } yield LocalTime.of(hh, mm, ss)
+  } yield LocalTime(hh, mm, ss, 0)
 
   val genOffsetDateTime: Gen[OffsetDateTime] = 
     genTimestamp.map(timestamp => OffsetDateTime.parse(timestamp.format(smithy.api.TimestampFormat.DATE_TIME)))

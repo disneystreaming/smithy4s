@@ -18,9 +18,9 @@ package smithy4s.compliancetests.internals.eq
 
 import cats.implicits.{catsSyntaxEq, toContravariantOps}
 import cats.kernel.Eq
-import smithy4s.{Blob, Document, Timestamp, LocalDate}
+import smithy4s.{Blob, Document, Timestamp, LocalDate, LocalTime}
 import cats.kernel.instances.StaticMethods
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 
 trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>

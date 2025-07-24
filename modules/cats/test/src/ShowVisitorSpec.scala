@@ -17,7 +17,7 @@
 package smithy4s.interopcats
 
 import cats.Show
-import smithy4s.{Blob, ShapeId, Timestamp, LocalDate}
+import smithy4s.{Blob, ShapeId, Timestamp, LocalDate, LocalTime}
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite
@@ -25,7 +25,7 @@ import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.interopcats.testcases.IntOrString._
 import java.util.UUID
-import java.time.{LocalTime, Duration, OffsetDateTime}
+import java.time.{Duration, OffsetDateTime}
 
 object ShowVisitorSpec extends FunSuite with CompatProvider {
 
@@ -135,7 +135,7 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
 
   test("localTime") {
     val schema: Schema[LocalTime] = localtime
-    val foo = LocalTime.of(12, 24, 48, 0)
+    val foo = LocalTime(12, 24, 48, 0)
     val showOutput = schemaVisitorShow(schema).show(foo)
     expect.eql(showOutput, "12:24:48")
   }
