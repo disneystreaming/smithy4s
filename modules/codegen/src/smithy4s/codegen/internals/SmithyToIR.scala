@@ -782,8 +782,12 @@ private[codegen] class SmithyToIR(
       def bigIntegerShape(x: BigIntegerShape): Option[Type] =
         primitive(x, "smithy.api#BigInteger", Primitive.BigInteger)
 
-      def bigDecimalShape(x: BigDecimalShape): Option[Type] =
-        primitive(x, "smithy.api#BigDecimal", Primitive.BigDecimal)
+      def bigDecimalShape(x: BigDecimalShape): Option[Type] = x match {
+        case shape if shape.getId() == durationShapeId =>
+          Type.PrimitiveType(Primitive.Duration).some
+        case _ =>
+          primitive(x, "smithy.api#BigDecimal", Primitive.BigDecimal)
+      }
 
       def operationShape(x: OperationShape): Option[Type] = None
 
@@ -839,8 +843,11 @@ private[codegen] class SmithyToIR(
             .accept(this)
         }
 
-      def timestampShape(x: TimestampShape): Option[Type] =
-        primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
+      def timestampShape(x: TimestampShape): Option[Type] = x match {
+        case shape if shape.getId() == offsetDateTimeShapeId =>
+          Type.PrimitiveType(Primitive.OffsetDateTime).some
+        case _ => primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
+      }
 
     }
 

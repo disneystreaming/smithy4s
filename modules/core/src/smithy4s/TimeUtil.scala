@@ -100,4 +100,58 @@ private[smithy4s] object TimeUtil {
       val cc = year >> 31
       ((cp ^ cc) & 0x1fc0000000L) != 0 || (((cp >> 37) - cc) & 0x3) == 0
     }
+
+  // def parseOffset(s: String): Int = {
+  //   val len = s.length
+  //   var pos = 0
+  //   var ch = s.charAt(pos)
+  //
+  //   val isNeg = ch == '-' || (ch != '+' && {
+  //     error()
+  //     true
+  //   })
+  //
+  //   if (pos + 2 > len) error()
+  //
+  //   var offsetTotal = {
+  //     val ch0 = s.charAt(pos)
+  //     val ch1 = s.charAt(pos + 1)
+  //     if (ch0 < '0' || ch0 > '1' || ch1 < '0' || ch1 > '9') error()
+  //     pos += 2
+  //     ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+  //   } * 3600
+  //   if (
+  //     pos + 3 <= len && {
+  //       ch = s.charAt(pos)
+  //       pos += 1
+  //       ch == ':'
+  //     } && {
+  //       offsetTotal += {
+  //         val ch0 = s.charAt(pos)
+  //         val ch1 = s.charAt(pos + 1)
+  //         if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+  //         pos += 2
+  //         ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+  //       } * 60
+  //       pos + 3 <= len
+  //     } && {
+  //       ch = s.charAt(pos)
+  //       pos += 1
+  //       ch == ':'
+  //     }
+  //   ) offsetTotal += {
+  //     val ch0 = s.charAt(pos)
+  //     val ch1 = s.charAt(pos + 1)
+  //     if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+  //     pos += 2
+  //     ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+  //   }
+  //   if (offsetTotal > 64800) error() // 64800 == 18 * 60 * 60
+  //   if (isNeg) offsetTotal = -offsetTotal
+  //
+  //   offsetTotal
+  // }
+  //
+  // private[this] def error(): Throwable = throw new RuntimeException
+  //   with NoStackTrace
 }

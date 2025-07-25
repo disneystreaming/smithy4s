@@ -17,7 +17,7 @@
 package smithy4s.interopcats
 
 import cats.Show
-import smithy4s.{Blob, ShapeId, Timestamp, LocalDate, LocalTime}
+import smithy4s.{Blob, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite
@@ -25,7 +25,7 @@ import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.interopcats.testcases.IntOrString._
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration.{Duration, DurationInt}
 
 object ShowVisitorSpec extends FunSuite with CompatProvider {
 
@@ -143,14 +143,14 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
   // TODO: For duration should show, show it as seconds.nanos format or the default `toString` for duration?
   test("duration ") {
     val schema: Schema[Duration] = duration
-    val foo = Duration.ofDays(1)
+    val foo = 1.day
     val showOutput = schemaVisitorShow(schema).show(foo)
-    expect.eql(showOutput, "PT24H")
+    expect.eql(showOutput, "1 day")
   }
 
   test("offsetdatetime") {
     val schema: Schema[OffsetDateTime] = offsetdatetime
-    val foo = OffsetDateTime.parse("2025-07-16T12:24:48-07:00")
+    val foo = OffsetDateTime.parseUnsafe("2025-07-16T12:24:48-07:00")
     val showOutput = schemaVisitorShow(schema).show(foo)
     expect.eql(showOutput, "2025-07-16T12:24:48-07:00")
   }

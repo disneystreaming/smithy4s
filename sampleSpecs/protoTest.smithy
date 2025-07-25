@@ -14,6 +14,7 @@ use alloy.proto#protoEnabled
 use alloy.proto#protoIndex
 use alloy.proto#protoInlinedOneOf
 use alloy.proto#protoCompactLocalDate
+use alloy.proto#protoCompactDuration
 use alloy.proto#protoCompactLocalTime
 use alloy.proto#protoOffsetDateTimeFormat
 use alloy.proto#protoNumType

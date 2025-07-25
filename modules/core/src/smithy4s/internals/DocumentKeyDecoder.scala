@@ -16,6 +16,8 @@
 
 package smithy4s.internals
 
+
+import smithy4s._
 import smithy4s.Document._
 import smithy4s._
 import smithy4s.schema.EnumTag
@@ -26,6 +28,7 @@ import smithy4s.schema.SchemaVisitor
 
 import java.util.Base64
 import java.util.UUID
+import scala.concurrent.duration.Duration
 
 trait DocumentKeyDecoder[A] { self =>
   def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =
@@ -135,10 +138,10 @@ object DocumentKeyDecoder {
             LocalTime.parseUnsafe(string)
           }
           case PDuration => from(shortDesc) { case DString(string) =>
-            Duration.parse(string)
+            Duration(string)
           }
           case POffsetDateTime => from(shortDesc) { case DString(string) =>
-            OffsetDateTime.parse(string)
+            OffsetDateTime.parseUnsafe(string)
           }
         }
       }

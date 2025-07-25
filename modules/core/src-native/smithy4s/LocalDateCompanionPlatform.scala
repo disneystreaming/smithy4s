@@ -16,4 +16,17 @@
 
 package smithy4s
 
-private[smithy4s] trait LocalDateCompanionPlatform
+private[smithy4s] trait LocalDateCompanionPlatform {
+
+  def now(): LocalDate = {
+    val currentMillis = System.currentTimeMillis
+    val epochSecond = currentMillis / 1000
+
+    val epochDay =
+      (if (epochSecond >= 0) epochSecond
+       else epochSecond - 86399) / 86400 
+
+    LocalDate(epochDay)
+  }
+
+}

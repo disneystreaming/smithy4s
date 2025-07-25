@@ -280,7 +280,7 @@ private[internals] object Primitive {
   case object Uuid extends Primitive { type T = java.util.UUID }
   case object LocalDate extends Primitive { type T = java.time.LocalDate }
   case object LocalTime extends Primitive { type T = java.time.LocalTime }
-  case object Duration extends Primitive { type T = java.time.Duration }
+  case object Duration extends Primitive { type T = scala.concurrent.duration.Duration }
   case object OffsetDateTime extends Primitive { type T = java.time.OffsetDateTime }
   case object Byte extends Primitive { type T = Byte }
   case object Int extends Primitive { type T = Int }

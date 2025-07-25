@@ -21,9 +21,9 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import smithy4s._
 import smithy4s.schema.{Schema, _}
+import scala.concurrent.duration.Duration
 
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime}
 import smithy4s.capability.EncoderK
 import cats.kernel.Monoid
 

@@ -20,9 +20,9 @@ import cats.kernel.Eq
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
-import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp, LocalDate, LocalTime}
+import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
 import weaver.{Expectations, FunSuite}
-import java.time.{OffsetDateTime, Duration}
+import scala.concurrent.duration.Duration
 
 object EqVisitorSpec extends FunSuite {
 
@@ -146,17 +146,17 @@ object EqVisitorSpec extends FunSuite {
 
   test("OffsetDateTime") {
     implicit val schema: Schema[OffsetDateTime] = offsetdatetime
-    val foo = OffsetDateTime.parse("2025-07-18T13:26:50.1-07:00")
-    val foo1 = OffsetDateTime.parse("2025-07-18T13:26:50.10000-07:00")
-    val neq = OffsetDateTime.parse("2024-06-17T03:06:25.1-07:00")
+    val foo = OffsetDateTime.parseUnsafe("2025-07-18T13:26:50.1-07:00")
+    val foo1 = OffsetDateTime.parseUnsafe("2025-07-18T13:26:50.10000-07:00")
+    val neq = OffsetDateTime.parseUnsafe("2024-06-17T03:06:25.1-07:00")
     schemaEq(foo, foo1)(neq)
   }
 
   test("Duration") {
     implicit val schema: Schema[Duration] = duration
-    val foo = Duration.ofSeconds(123456)
-    val foo1 = Duration.ofSeconds(123456)
-    val neq = Duration.ofSeconds(654321)
+    val foo: Duration = Duration(123456, "seconds")
+    val foo1: Duration = Duration(123456, "seconds")
+    val neq: Duration = Duration(654321, "seconds")
     schemaEq(foo, foo1)(neq)
   }
 

@@ -17,8 +17,8 @@
 package smithy4s
 
 import java.time.Instant
-import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.{OffsetDateTime => JOffsetDateTime}
 
 private[smithy4s] trait TimestampPlatform { self: Timestamp =>
 
@@ -26,8 +26,8 @@ private[smithy4s] trait TimestampPlatform { self: Timestamp =>
   def toInstant: Instant = Instant.ofEpochSecond(epochSecond, nano.toLong)
 
   /** JVM platform only method */
-  def toOffsetDateTime: OffsetDateTime =
-    OffsetDateTime.ofInstant(
+  def toOffsetDateTime: JOffsetDateTime =
+    JOffsetDateTime.ofInstant(
       Instant.ofEpochSecond(epochSecond, nano.toLong),
       ZoneOffset.UTC
     )

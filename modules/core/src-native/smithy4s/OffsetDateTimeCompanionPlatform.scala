@@ -16,19 +16,17 @@
 
 package smithy4s
 
-import java.time.Instant
-import java.time.{OffsetDateTime => JOffsetDateTime}
+import scala.concurrent.duration.Duration
 
-private[smithy4s] trait TimestampCompanionPlatform {
+private[smithy4s] trait OffsetDateTimeCompanionPlatform  {
 
-  /** JVM platform only method */
-  def fromInstant(x: Instant): Timestamp =
-    Timestamp(x.getEpochSecond, x.getNano)
+  def now(): OffsetDateTime = {
+    val currentMillis = System.currentTimeMillis
 
-  /** JVM platform only method */
-  def fromOffsetDateTime(x: JOffsetDateTime): Timestamp =
-    Timestamp(x.toInstant.getEpochSecond, x.getNano)
-
-  def nowUTC(): Timestamp = fromInstant(Instant.now())
-
+    OffsetDateTime(
+      (currentMillis / 1000).toLong,
+      (currentMillis % 1000).toInt * 100000,
+      Duration.Zero
+    )
+  }
 }

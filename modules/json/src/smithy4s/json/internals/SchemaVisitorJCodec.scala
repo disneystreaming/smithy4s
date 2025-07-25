@@ -20,7 +20,7 @@ package internals
 
 import java.util.UUID
 import java.util
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
@@ -33,7 +33,6 @@ import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
-import smithy4s.Timestamp
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.VectorBuilder
@@ -479,20 +478,18 @@ private[smithy4s] class SchemaVisitorJCodec(
       private def fromBigDecimal(x: BigDecimal): Duration = {
         val seconds = x.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
         val nanos = ((x - seconds) * 1000000000).toLong
-        Duration.ofSeconds(seconds, nanos)
+        seconds.seconds + nanos.nanos
       }
 
       private def toBigDecimal(x: Duration): BigDecimal = {
-        val seconds = java.math.BigDecimal.valueOf(x.getSeconds)
-        val nanos = x.getNano().toLong
+        val seconds = java.math.BigDecimal.valueOf(x.toSeconds)
+        val nanos = x.toNanos - (x.toSeconds * 1000000000)
 
         if (nanos == 0) seconds else seconds.add(java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros)
       }
 
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Duration = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Duration =
         fromBigDecimal(in.readBigDecimal(null))
-      }
 
       def encodeValue(x: Duration, out: JsonWriter): Unit =
         out.writeVal(toBigDecimal(x))
@@ -508,13 +505,13 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "offsetDateTime"
 
       def decodeValue(cursor: Cursor, in: JsonReader): OffsetDateTime =
-        OffsetDateTime.parse(in.readString(null))
+        OffsetDateTime.parseUnsafe(in.readString(null))
 
       def encodeValue(x: OffsetDateTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
 
       def decodeKey(in: JsonReader): OffsetDateTime =
-        OffsetDateTime.parse(in.readKeyAsString())
+        OffsetDateTime.parseUnsafe(in.readKeyAsString())
 
       def encodeKey(x: OffsetDateTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiKey(x.toString)

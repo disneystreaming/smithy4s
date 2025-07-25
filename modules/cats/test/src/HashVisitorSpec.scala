@@ -19,7 +19,7 @@ package smithy4s.interopcats
 import cats.Hash
 import smithy4s.schema.Schema._
 import smithy4s.schema.Schema
-import smithy4s.{Blob, Hints, ShapeId, Timestamp, LocalDate, LocalTime}
+import smithy4s.{Blob, Hints, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
 import smithy4s.interopcats.testcases.IntOrString._
@@ -28,7 +28,7 @@ import weaver.FunSuite
 import scala.util.hashing.MurmurHash3.productSeed
 import HashTestUtils._
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration.{Duration , DurationInt}
 
 object HashVisitorSpec extends FunSuite with CompatProvider {
 
@@ -144,7 +144,7 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
 
   test("duration ") {
     val schema: Schema[Duration] = duration
-    val foo = Duration.ofDays(1)
+    val foo = 1.day
     val hashOutput = visitor(schema).hash(foo)
     expect.eql(foo.hashCode, hashOutput)
   }
