@@ -161,6 +161,8 @@ Here's a non-exhaustive list of changes that are considered safe or unsafe in bi
 
 Please verify the bincompat safety of your changes before you publish them. We recommend that you use the [MiMa](https://github.com/lightbend/mima) plugin for your build tool of choice.
 
+:::
+
 ## What does the generated code look like?
 
 There are several changes we make to the codegen process in bincompat-friendly mode, so that the generated datatypes can evolve safely.
@@ -204,6 +206,8 @@ This neat trick makes it only possible to subclass `Visitor.Default`, which enfo
 For MiMa users - MiMa doesn't take `sealed` into account, so it will report `ReversedMissingMethodProblem` issues (forward-incompatible changes) when a new union member is added.
 
 In bincompat-friendly mode, these can be considered **false positives**, and it's safe to exclude them from your binary compatibility checks. See the [instructions for filtering incompatibilities][mima-filtering] or follow the suggestion MiMa gives you.
+
+:::
 
 ### Enums
 
