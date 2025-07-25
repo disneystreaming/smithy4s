@@ -18,7 +18,7 @@ package smithy4s.internals
 
 import java.util.Base64
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration.Duration
 
 import smithy4s._
 import smithy4s.Document._
@@ -136,10 +136,10 @@ object DocumentKeyDecoder {
             LocalTime.parseUnsafe(string)
           }
           case PDuration => from(shortDesc) { case DString(string) =>
-            Duration.parse(string)
+            Duration(string)
           }
           case POffsetDateTime => from(shortDesc) { case DString(string) =>
-            OffsetDateTime.parse(string)
+            OffsetDateTime.parseUnsafe(string)
           }
         }
       }

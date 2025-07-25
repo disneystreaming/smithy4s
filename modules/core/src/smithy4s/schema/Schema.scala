@@ -262,8 +262,8 @@ object Schema {
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
   val localdate: Schema[LocalDate] = Primitive.PLocalDate.schema("alloy", "LocalDate")
   val localtime: Schema[LocalTime] = Primitive.PLocalTime.schema("alloy", "LocalTime")
-  val duration: Schema[java.time.Duration] = Primitive.PDuration.schema("alloy", "Duration")
-  val offsetdatetime: Schema[java.time.OffsetDateTime] = Primitive.POffsetDateTime.schema("alloy", "OffsetDateTime")
+  val duration: Schema[scala.concurrent.duration.Duration] = Primitive.PDuration.schema("alloy", "Duration")
+  val offsetdatetime: Schema[OffsetDateTime] = Primitive.POffsetDateTime.schema("alloy", "OffsetDateTime")
 
   val unit: Schema[Unit] = Schema.StructSchema(ShapeId("smithy.api", "Unit"), Hints.empty, Vector.empty, _ => ())
 

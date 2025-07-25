@@ -18,7 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
-import java.time.{Duration, OffsetDateTime, ZoneOffset}
+import scala.concurrent.duration.Duration
 
 private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
@@ -44,8 +44,8 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PByte       => None
       case PLocalDate  => Some(LocalDate.epoch)
       case PLocalTime  => Some(LocalTime.midnight)
-      case PDuration   => Some(Duration.ZERO)
-      case POffsetDateTime   => Some(OffsetDateTime.of(0, 0, 0, 0, 0, 0, 0, ZoneOffset.UTC))
+      case PDuration   => Some(Duration.Zero)
+      case POffsetDateTime   => Some(OffsetDateTime.epoch)
     }
 
   def collection[C[_], A](

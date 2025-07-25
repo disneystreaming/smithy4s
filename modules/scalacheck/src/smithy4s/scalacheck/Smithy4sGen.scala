@@ -3,15 +3,15 @@ package scalacheck
 
 import org.scalacheck.Gen
 
-import java.time.OffsetDateTime
+import scala.concurrent.duration.DurationInt
 
 private[scalacheck] object Smithy4sGen {
 
   private val year = Gen.chooseNum(1900, 2100)
   private val month = Gen.chooseNum(1, 12)
   private val hour = Gen.chooseNum(0, 23)
-  // private val nanos = Gen.chooseNum(0, math.pow(10, 8).toInt)
   val minute, second = Gen.chooseNum(0, 59)
+  val offset = Gen.chooseNum(-18, 18).map(_.hours)
 
   private def isLeap(year: Int) =
     (year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0)
@@ -45,7 +45,15 @@ private[scalacheck] object Smithy4sGen {
   } yield LocalTime(hh, mm, ss, 0)
 
   val genOffsetDateTime: Gen[OffsetDateTime] = 
-    genTimestamp.map(timestamp => OffsetDateTime.parse(timestamp.format(smithy.api.TimestampFormat.DATE_TIME)))
+    for {
+      YYYY <- year
+      MM <- month
+      DD <- day(YYYY, MM)
+      hh <- hour
+      mm <- minute
+      ss <- second
+      off <- offset
+    } yield OffsetDateTime(YYYY, MM, DD, hh, mm, ss, 0, off)
 
   def genDocument(maxDepth: Int): Gen[Document] = if (maxDepth <= 0) {
     Gen.oneOf(

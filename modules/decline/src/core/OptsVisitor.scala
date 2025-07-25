@@ -21,7 +21,7 @@ import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob, LocalDate, LocalTime}
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob, LocalDate, LocalTime, OffsetDateTime}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -31,7 +31,7 @@ import smithy4s.schema.Schema._
 import smithy4s.schema._
 
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration.Duration
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.CollectionTag.ListTag
 

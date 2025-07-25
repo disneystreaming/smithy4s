@@ -20,13 +20,13 @@ import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{Blob, ConstraintError, Document, Schema, LocalDate, LocalTime}
+import smithy4s.{Blob, ConstraintError, Document, Schema, LocalDate, LocalTime, OffsetDateTime}
 import cats.implicits._
 import cats.MonadError
 
 import java.util.Base64
-import java.time.{Duration, OffsetDateTime}
 import java.time.format.DateTimeFormatter
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 object commons {
@@ -70,14 +70,14 @@ object commons {
   val durationArgument: Argument[Duration] =
     Argument.from("duration") { s =>
       Try(s.toLong).toOption match {
-        case Some(seconds) => Valid(Duration.ofSeconds(seconds))
-        case None => Try(Duration.parse(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
+        case Some(seconds) => Valid(Duration(seconds, "seconds"))
+        case None => Try(Duration(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
       }
     }
 
   val offsetDateTimeArgument: Argument[OffsetDateTime] =
     Argument.from("offsetDateTime") { s =>
-      Try(OffsetDateTime.parse(s)).toOption.toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_OFFSET_DATE_TIME}""")
+      OffsetDateTime.parse(s).toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_OFFSET_DATE_TIME}""")
     }
 }
 

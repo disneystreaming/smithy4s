@@ -22,8 +22,10 @@ import smithy4s.Document
 import smithy4s.Timestamp
 import smithy4s.LocalDate
 import smithy4s.LocalTime
+import smithy4s.OffsetDateTime
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
+import scala.concurrent.duration.Duration
 
 import java.util.UUID
 // import java.time.{LocalTime, Duration, OffsetDateTime}
@@ -192,7 +194,6 @@ class JVMCodecTests() extends FunSuite {
       )
     )
 
-
     val bytes = protoLocalTimes.toByteArray
     val codec = ProtobufCodec.fromSchema(protobuf.LocalTimeWrapper.schema)
 
@@ -202,6 +203,64 @@ class JVMCodecTests() extends FunSuite {
     val parsedRoundTrip = protobuf.protobuf.LocalTimeWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, localTimes)
+    assertEquals(parsedRoundTrip, protoLocalTimes)
+  }
+
+  // TODO: update smithy-translate to convert offsetdate time with RFC39999 hint to a string instead of timestamp
+  test("OffsetDateTime") {
+    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, Duration.Zero)
+    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, Duration.Zero)
+
+    val offsetDateTimes = protobuf.OffsetDateTimeWrapper(
+      Some(offsetDateTime1),
+      Some(offsetDateTime2),
+    )
+
+    val protoTimestamp = com.google.protobuf.timestamp.Timestamp.of(
+      offsetDateTime1.timestamp.epochSecond,
+      offsetDateTime1.timestamp.nano
+    )
+
+    val protoOffsetDateTimes = protobuf.protobuf.OffsetDateTimeWrapper( 
+      Some(protoTimestamp),
+      Some(
+        alloy.protobuf.types.CompactOffsetDateTime(
+          offsetDateTime2.timestamp.epochSecond,
+          offsetDateTime2.timestamp.nano,
+          "00:00"
+        )
+      )
+    )
+
+    val bytes = protoOffsetDateTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.OffsetDateTimeWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(offsetDateTimes)
+
+    val parsedRoundTrip = protobuf.protobuf.OffsetDateTimeWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, offsetDateTimes)
+    assertEquals(parsedRoundTrip, protoOffsetDateTimes)
+  }
+
+  test("Duration") {
+    val duration = Duration(13, "hours")
+
+    val durations = protobuf.DurationWrapper(Some(duration))
+
+    val protoLocalTimes = protobuf.protobuf.DurationWrapper(Some(alloy.protobuf.types.Duration(duration.toSeconds, 0)))
+
+    val bytes = protoLocalTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.DurationWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(durations)
+    val parsedRoundTrip = protobuf.protobuf.DurationWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, durations)
     assertEquals(parsedRoundTrip, protoLocalTimes)
   }
 

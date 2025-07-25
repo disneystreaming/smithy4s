@@ -27,12 +27,13 @@ import smithy4s.Hints
 import smithy4s.Timestamp
 import smithy4s.LocalDate
 import smithy4s.LocalTime
+import smithy4s.OffsetDateTime
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
 import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
-import java.time.{Duration, OffsetDateTime, ZoneOffset}
+import scala.concurrent.duration.{Duration, DurationInt}
 
 object OptsSchematicSpec extends SimpleIOSuite {
   def sampleStruct[A](name: String, schema: Schema[A]): Schema[A] =
@@ -442,22 +443,22 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("duration string representation") {
     expect.parsed(
-      parseOpts(sampleStruct("duration", duration))("P1DT16H32S"),
-      Duration.ofDays(1).plusHours(16).plusSeconds(32)
+      parseOpts(sampleStruct("duration", duration))("16 hours"),
+      16.hours
     )
   }
 
   pureTest("duration seconds representation") {
     expect.parsed(
       parseOpts(sampleStruct("duration", duration))("144032"),
-      Duration.ofDays(1).plusHours(16).plusSeconds(32)
+      1.day + 16.hours + 32.seconds
     )
   }
 
   pureTest("offsetDatetime") {
     expect.parsed(
       parseOpts(sampleStruct("offsetdatetime", offsetdatetime))("2025-07-22T13:14:28.123456-07:00"),
-      OffsetDateTime.of(2025, 7, 22, 13, 14, 28, 123456000, ZoneOffset.ofHours(-7))
+      OffsetDateTime(2025, 7, 22, 13, 14, 28, 123456000, -7.hours)
     )
   }
 

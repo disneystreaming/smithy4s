@@ -20,14 +20,15 @@ package internals
 import cats.Id
 
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime, Instant, ZoneOffset}
 import smithy4s.schema._
 import smithy4s.Timestamp
 import smithy4s.Blob
 import smithy4s.LocalDate
 import smithy4s.LocalTime
+import smithy4s.OffsetDateTime
 import smithy4s.schema.Primitive._
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
+import scala.concurrent.duration.Duration
 import smithy4s.Document.DNull
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
@@ -54,8 +55,8 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PUUID       => new UUID(0, 0)
     case PLocalDate  => LocalDate.epoch
     case PLocalTime  => LocalTime.midnight
-    case PDuration   => Duration.ZERO
-    case POffsetDateTime => OffsetDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)
+    case PDuration   => Duration.Zero
+    case POffsetDateTime => OffsetDateTime.epoch
   }
 
   override def collection[C[_], A](

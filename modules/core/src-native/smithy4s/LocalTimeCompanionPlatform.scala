@@ -16,4 +16,20 @@
 
 package smithy4s
 
-private[smithy4s] trait LocalTimeCompanionPlatform
+private[smithy4s] trait LocalTimeCompanionPlatform {
+
+  def now(): LocalTime = {
+    val currentMillis = System.currentTimeMillis
+    val epochSecond = currentMillis / 1000
+    val nanos = (currentMillis % 1000).toInt * 100000
+
+    val epochDay =
+      (if (epochSecond >= 0) epochSecond
+       else epochSecond - 86399) / 86400 
+
+    val secsOfDay = (epochSecond - epochDay * 86400).toInt
+
+    LocalTime(secsOfDay, nanos)
+  }
+
+}

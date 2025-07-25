@@ -1674,6 +1674,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         date => line"${NameRef("smithy4s", "LocalDate")}(${date.toEpochDay()})"
       case Primitive.LocalTime =>
         time => line"${NameRef("smithy4s", "LocalTime")}(${time.toSecondOfDay()}, ${time.getNano()})"
+      case Primitive.OffsetDateTime =>
+        time => line"""${NameRef("smithy4s", "OffsetDateTime")}(${time.toEpochSecond()}, ${time.getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
+      case Primitive.Duration =>
+        duration => line"${NameRef("scala.concurrent.duration", "Duration")}(${renderStringLiteral(duration.toString)})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {

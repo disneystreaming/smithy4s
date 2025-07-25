@@ -33,7 +33,9 @@ import smithy4s.Service
 import scala.io.Source
 import smithy4s.LocalDate
 import smithy4s.LocalTime
-import java.time.{Duration, OffsetDateTime}
+import smithy4s.OffsetDateTime
+
+import scala.concurrent.duration.Duration
 
 object ToSmithyVisitorSpec extends FunSuite {
 

@@ -18,9 +18,9 @@ package smithy4s.interopcats.instances
 
 import cats.Show
 import smithy4s.schema.Primitive
-import smithy4s.{Blob, Document, ShapeId, Timestamp, LocalDate, LocalTime}
+import smithy4s.{Blob, Document, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
 import smithy4s.kinds.PolyFunction
-import java.time.{Duration, OffsetDateTime}
+import scala.concurrent.duration.Duration
 
 private[interopcats] trait ShowInstances {
 

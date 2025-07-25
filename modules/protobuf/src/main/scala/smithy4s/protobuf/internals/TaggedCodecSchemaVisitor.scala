@@ -33,6 +33,7 @@ import smithy4s.Document.DObject
 import smithy4s.Document.DString
 import smithy4s.LocalDate
 import smithy4s.LocalTime
+import smithy4s.OffsetDateTime
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.ClosedIntEnum
@@ -44,8 +45,8 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import java.util.UUID
-import java.time.{Duration, OffsetDateTime, Instant, ZoneOffset}
 import smithy.api.Required
+import scala.concurrent.duration._
 import smithy4s.protobuf.ProtobufReadError
 
 // scalafmt: {maxColumn = 120}
@@ -107,7 +108,7 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
         if (hints.get(ProtoOffsetDateTimeFormat).contains(ProtoOffsetDateTimeFormat.PROTOBUF)) {
           compactOffsetDateTimeSchema.compile(this)
         } else {
-          wrapLen(StringCodec).imap(OffsetDateTime.parse(_), _.toString())
+          wrapLen(StringCodec).imap(OffsetDateTime.parseUnsafe(_), _.toString())
         }
     }
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
@@ -152,13 +153,13 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       Schema.string.addHints(ProtoIndex(3))
     )
     .biject { (offsetTriple: (Long, Int, String)) =>
-        val (seconds, nanos, zoneStr) = offsetTriple
-        val instant = Instant.ofEpochSecond(seconds, nanos.toLong)
-        val zone = ZoneOffset.of(zoneStr)
-        OffsetDateTime.ofInstant(instant, zone)
-    }{ date =>
-      val instant = date.toInstant()
-      (instant.getEpochSecond(), instant.getNano(), date.getOffset().toString)
+        val (seconds, nanos, _) = offsetTriple
+        // TODO: parse zoneStr into an offset
+        OffsetDateTime(seconds, nanos, Duration.Zero)
+    }{ offsetDateTime =>
+      // TODO: parse offset into a string
+      val timestamp = offsetDateTime.timestamp
+      (timestamp.epochSecond, timestamp.nano, "")
     }
 
   private val protoTimestampSchema = Schema
@@ -167,13 +168,17 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       Schema.int.required[Timestamp]("nanos", _.nano).addHints(ProtoIndex(2))
     )(Timestamp(_, _))
 
-  private val durationSchema = Schema
+  private val durationSchema: Schema[Duration] = Schema
     .tuple(
       Schema.long.addHints(ProtoIndex(1)),
       Schema.int.addHints(ProtoIndex(2))
-    ).biject { (durationTuple: (Long, Int))  => Duration.ofSeconds(durationTuple._1, durationTuple._2.toLong) }( duration =>
-      (duration.getSeconds(), duration.getNano())
-    )
+    ).biject { (durationTuple: (Long, Int)) => {
+      (durationTuple._1.seconds + durationTuple._2.nanos): Duration
+    }}( duration => {
+      val seconds = duration.toSeconds
+      val nano = (duration.toNanos - seconds * 1000000000).toInt
+      (seconds, nano)
+    })
 
   private val protoTimestampMillisecondsSchema = Schema
     .struct(
