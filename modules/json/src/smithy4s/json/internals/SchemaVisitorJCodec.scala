@@ -983,7 +983,10 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private type Writer[A] = A => JsonWriter => Unit
 
-  private abstract class UnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+  private abstract class UnionJCodec[U](
+      alternatives: Vector[Alt[U, _]],
+      isDiscriminated: Boolean = false
+  )(
       dispatch: Alt.Dispatcher[U]
   ) extends JCodec[U] {
 
@@ -993,29 +996,101 @@ private[smithy4s] class SchemaVisitorJCodec(
         case Some(x) => x.value
       }
 
-    private def handler[A](alt: Alt[U, A]) = {
-      val codec = apply(alt.schema)
-      (cursor: Cursor, reader: JsonReader) =>
-        alt.inject(cursor.decode(codec, reader))
-    }
+    private val handlerMap: Map[String, UnionJCodec.AltHandler[U, _]] =
+      alternatives.collect {
+        case alt if !alt.hints.has(JsonUnknown) =>
+          jsonLabel(alt) -> UnionJCodec.AltHandler.create(alt)
+      }.toMap
 
-    protected val unknownTagHandler =
-      alternatives
-        .find(_.hints.has(JsonUnknown))
-        .map(handler(_))
-        .orNull
-
-    protected val handlerMap =
-      new util.HashMap[String, (Cursor, JsonReader) => U] {
-        alternatives
-          .filterNot(_.hints.has(JsonUnknown))
-          .foreach(alt => put(jsonLabel(alt), handler(alt)))
+    private val unknownAlt =
+      alternatives.find(_.hints.has(JsonUnknown)).map { alt =>
+        if (isDiscriminated) {
+          val handler = UnionJCodec.AltHandler.create(alt)
+          (_: String) => handler
+        } else UnionJCodec.AltHandler.openUnionTaggedUnknown(alt)
       }
+
+    protected def getHandler(key: String) = handlerMap
+      .get(key)
+      .orElse(unknownAlt.map(_(key)))
 
   }
 
-  private abstract class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
-      dispatch: Alt.Dispatcher[U]
+  private object UnionJCodec {
+
+    private type DocumentTransformer[A] = (A, Document => Document) => A
+
+    protected abstract class AltHandler[U, A] {
+      def handle(cursor: Cursor, reader: JsonReader): U =
+        inject(handleVariant(cursor, reader))
+
+      protected def inject(a: A): U
+      protected def handleVariant(cursor: Cursor, reader: JsonReader): A
+    }
+
+    private object AltHandler {
+      def create[U, A](alt: Alt[U, A]): AltHandler[U, A] = new FromAlt(alt)
+
+      def openUnionTaggedUnknown[U, A](
+          alt: Alt[U, A]
+      ): String => AltHandler[U, A] = {
+        val underlying = AltHandler.create(alt)
+        val documentTransformer = alt.schema.compile(TransformDocumentCompiler)
+        key =>
+          new AltHandler.Mapped(
+            underlying,
+            a => documentTransformer(a, doc => Document.obj(key -> doc))
+          )
+      }
+
+      private final class FromAlt[U, A](alt: Alt[U, A])
+          extends AltHandler[U, A] {
+
+        private val codec = self.apply(alt.schema)
+
+        protected def inject(a: A): U = alt.inject(a)
+        protected def handleVariant(cursor: Cursor, reader: JsonReader): A =
+          cursor.decode(codec, reader)
+      }
+
+      private final class Mapped[U, A](
+          underlying: AltHandler[U, A],
+          map: A => A
+      ) extends AltHandler[U, A] {
+        protected def inject(a: A): U = underlying.inject(a)
+        protected def handleVariant(cursor: Cursor, reader: JsonReader): A =
+          map(underlying.handleVariant(cursor, reader))
+
+      }
+
+    }
+
+    private object TransformDocumentCompiler
+        extends SchemaVisitor.Default[DocumentTransformer] {
+      override def default[A]: DocumentTransformer[A] = (a, _) => a
+
+      override def primitive[P](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: Primitive[P]
+      ): DocumentTransformer[P] = tag match {
+        case PDocument => (a, f) => f(a)
+        case _         => default
+      }
+
+      override def biject[A, B](
+          schema: Schema[A],
+          bijection: Bijection[A, B]
+      ): DocumentTransformer[B] = {
+        val compiled = schema.compile(this)
+        (b, f) => bijection.to(compiled(bijection.from(b), f))
+      }
+    }
+  }
+
+  private final class TaggedUnionJCodec[U](alternatives: Vector[Alt[U, _]])(
+      dispatch: Alt.Dispatcher[U],
+      isLenient: Boolean
   ) extends UnionJCodec[U](alternatives)(dispatch) {
 
     val expecting = "tagged-union"
@@ -1052,86 +1127,74 @@ private[smithy4s] class SchemaVisitorJCodec(
     def encodeKey(u: U, out: JsonWriter): Unit =
       out.encodeError("Cannot use coproducts as keys")
 
+    def decodeValue(cursor: Cursor, in: JsonReader): U = {
+      var result: U = null.asInstanceOf[U]
+      var lastKey: String = null.asInstanceOf[String]
+
+      def readKey(): Unit = {
+        lastKey = in.readKeyAsString()
+        cursor.push(lastKey)
+        if (isLenient && in.isNextToken('n')) {
+          in.readNullOrError((), "expected null")
+        } else if (result == null) {
+          if (isLenient) in.rollbackToken()
+          getHandler(lastKey) match {
+            case Some(handler) => result = handler.handle(cursor, in)
+            case None          => onUnknownDiscriminator(in, lastKey)
+          }
+        } else {
+          in.decodeError(emptyObjectErrorMessage)
+        }
+
+        cursor.pop()
+      }
+
+      if (in.isNextToken('{')) {
+        if (in.isNextToken('}'))
+          in.decodeError(emptyObjectErrorMessage)
+        else {
+          in.rollbackToken()
+
+          readKey()
+
+          if (isLenient) {
+            while (in.isNextToken(',')) {
+              readKey()
+            }
+            in.rollbackToken()
+          }
+
+          if (in.isNextToken('}')) {
+            if (result == null)
+              in.decodeError("Expected a single non-null value")
+            else
+              result
+          } else {
+            if (isLenient) in.objectEndOrCommaError()
+            else in.decodeError(s"Expected no other field after '$lastKey'")
+          }
+
+        }
+      } else in.decodeError("Expected JSON object")
+    }
+
+    private def emptyObjectErrorMessage: String =
+      if (isLenient) "Expected a single non-null value"
+      else "Expected a single key/value pair"
+
+    private def onUnknownDiscriminator(in: JsonReader, key: String): Unit =
+      if (isLenient) in.skip() else in.discriminatorValueError(key)
   }
 
   private def taggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new TaggedUnionJCodec[U](alternatives)(dispatch) {
+    new TaggedUnionJCodec[U](alternatives)(dispatch, isLenient = false)
 
-      def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        in.setMark()
-        if (in.isNextToken('{')) {
-          if (in.isNextToken('}'))
-            in.decodeError("Expected a single key/value pair")
-          else {
-            in.rollbackToken()
-            val key = in.readKeyAsString()
-            val handler = handlerMap.get(key)
-
-            // happy path
-            if (handler ne null) {
-              cursor.push(key)
-              val result = handler(cursor, in)
-              cursor.pop()
-              if (in.isNextToken('}')) result
-              else {
-                in.rollbackToken()
-                in.decodeError(s"Expected no other field after $key")
-              }
-            }
-            // @jsonUnknown path
-            else if (unknownTagHandler ne null) {
-              in.rollbackToMark()
-              unknownTagHandler(cursor, in)
-            }
-            // neither a known tag nor jsonUnknown
-            else {
-              in.discriminatorValueError(key)
-            }
-          }
-        } else in.decodeError("Expected JSON object")
-      }
-    }
-
-  // todo: open unions here too
   private def lenientTaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new TaggedUnionJCodec[U](alternatives)(dispatch) {
-      def decodeValue(cursor: Cursor, in: JsonReader): U = {
-        var result: U = null.asInstanceOf[U]
-        if (in.isNextToken('{')) {
-          if (!in.isNextToken('}')) {
-            in.rollbackToken()
-            while ({
-              val key = in.readKeyAsString()
-              cursor.push(key)
-              val handler = handlerMap.get(key)
-              if (handler eq null) in.skip()
-              else if (in.isNextToken('n')) {
-                in.readNullOrError((), "expected null")
-              } else {
-                in.rollbackToken()
-                if (result != null) {
-                  in.decodeError("Expected a single non-null value")
-                } else {
-                  result = handler(cursor, in)
-                }
-              }
-              in.isNextToken(',')
-            }) ()
-            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
-          }
-          if (result != null) {
-            result
-          } else {
-            in.decodeError("Expected a single non-null value")
-          }
-        } else in.decodeError("Expected JSON object")
-      }
-
-    }
+    new TaggedUnionJCodec[U](alternatives)(dispatch, isLenient = true)
 
   private def untaggedUnion[U](
       alternatives: Vector[Alt[U, _]]
@@ -1195,7 +1258,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       alternatives: Vector[Alt[U, _]],
       discriminated: Discriminated
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
-    new UnionJCodec[U](alternatives)(dispatch) {
+    new UnionJCodec[U](alternatives, isDiscriminated = true)(dispatch) {
       def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
@@ -1208,12 +1271,13 @@ private[smithy4s] class SchemaVisitorJCodec(
             in.rollbackToMark()
             in.rollbackToken()
             cursor.push(key)
-            var handler = handlerMap.get(key)
-            if (handler eq null) handler = unknownTagHandler
-            if (handler eq null) in.discriminatorValueError(key)
-            val result = handler(cursor, in)
-            cursor.pop()
-            result
+            getHandler(key) match {
+              case Some(handler) =>
+                val result = handler.handle(cursor, in)
+                cursor.pop()
+                result
+              case None => in.discriminatorValueError(key)
+            }
           } else
             in.decodeError(
               s"Unable to find discriminator ${discriminated.value}"

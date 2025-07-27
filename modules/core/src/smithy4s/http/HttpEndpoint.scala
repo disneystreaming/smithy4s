@@ -24,7 +24,13 @@ import scala.annotation.tailrec
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
+  @deprecated(
+    "Path segments should be encoded in a specific way per the Smithy spec, so use encodedPath instead",
+    "0.18.40"
+  )
   def path(input: I): List[String]
+
+  def encodedPath(input: I): List[String]
 
   // Returns a path template as a list of segments, which can be constant strings or placeholders.
   def path: List[PathSegment]
@@ -61,7 +67,16 @@ object HttpEndpoint {
           )
         )
 
-      encoder <- SchemaVisitorPathEncoder(
+      labelEncodingEncoder <- new SchemaVisitorPathEncoder(
+        urlEncodeHttpLabelValues = true
+      )(
+        operation.input.addHints(http)
+      ).toRight(
+        HttpEndpointError("Unable to encode operation input in HTTP path")
+      )
+      nonLabelEncodingEncoder <- new SchemaVisitorPathEncoder(
+        urlEncodeHttpLabelValues = false
+      )(
         operation.input.addHints(http)
       ).toRight(
         HttpEndpointError("Unable to encode operation input in HTTP path")
@@ -69,7 +84,10 @@ object HttpEndpoint {
 
     } yield {
       new HttpEndpoint[I] {
-        def path(input: I): List[String] = encoder.encode(input)
+        def path(input: I): List[String] = nonLabelEncodingEncoder.encode(input)
+
+        def encodedPath(input: I): List[String] =
+          labelEncodingEncoder.encode(input)
         val staticQueryParams: Map[String, Seq[String]] = queryParams
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod

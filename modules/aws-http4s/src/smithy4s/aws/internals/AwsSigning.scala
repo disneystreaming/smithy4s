@@ -19,6 +19,7 @@ package internals
 
 import cats.effect.Concurrent
 import cats.effect.Resource
+import cats._
 import cats.syntax.all._
 import fs2.Chunk
 import org.http4s._
@@ -27,7 +28,7 @@ import org.typelevel.ci.CIString
 import smithy4s._
 import smithy4s.aws.kernel.AwsCrypto._
 
-import java.net.URLEncoder
+import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets
 
 /**
@@ -39,6 +40,10 @@ private[aws] object AwsSigning {
 
   // see https://raw.githubusercontent.com/awslabs/aws-sdk-kotlin/main/codegen/sdk/aws-models/s3.json
   val S3 = "AmazonS3"
+  // see https://raw.githubusercontent.com/awslabs/aws-sdk-kotlin/main/codegen/sdk/aws-models/s3-control.json
+  val S3Control = "AWSS3ControlServiceV20180820"
+
+  private val disableDoubleEncoding: Set[String] = Set(S3, S3Control)
 
   def middleware[F[_]: Concurrent](
       awsEnvironment: AwsEnvironment[F]
@@ -94,7 +99,8 @@ private[aws] object AwsSigning {
 
     // S3 has special rules, in that it expects the X-Amz-Content-SHA256 to be set.
     val preSign: PreSigner[F] =
-      if (serviceName == S3) new PreSigner.S3InMemorySigned[F]
+      if (disableDoubleEncoding.contains(serviceName))
+        new PreSigner.S3InMemorySigned[F]
       else new PreSigner.Standard[F]
 
     val contentType = org.http4s.headers.`Content-Type`.headerInstance
@@ -116,77 +122,104 @@ private[aws] object AwsSigning {
 
     // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
     (request: Request[F]) =>
-      preSign(request).flatMap { case (payloadHash, preparedRequest) =>
-        val awsHeadersF = (timestamp, credentials, region).mapN { case (timestamp, credentials, region) =>
-          val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
-          val queryParams: Vector[(String, String)] =
-            request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
-          val canonicalQueryString =
-            if (queryParams.isEmpty) ""
-            else
-              queryParams
-                .map { case (k, v) =>
-                  URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
-                }
-                .mkString("&")
+      preSign(request)
+        .mproduct[String] { case (_, preparedRequest) =>
+          if (disableDoubleEncoding.contains(serviceName))
+            // S3 and S3Control both disable double URL encoding and normalization.
+            preparedRequest.uri.path.toAbsolute.renderString.pure[F]
+          else {
+            // Other services double encode and normalize
 
-          // // !\ Important: these must remain in the same order
-          val baseHeadersList = List(
-            `Content-Type` -> preparedRequest.contentType.map(contentType.value(_)).orNull,
-            `Host` -> preparedRequest.uri.host.map(_.renderString).orNull,
-            `X-Amz-Content-SHA256` -> preparedRequest.headers.get(`X-Amz-Content-SHA256`).map(_.head.value).orNull,
-            `X-Amz-Date` -> timestamp.conciseDateTime,
-            `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
-            `X-Amz-Target` -> (serviceName + "." + operationName)
-          ).filterNot(_._2 == null)
+            MonadThrow[F].catchNonFatal {
+              val uri = new URI(
+                preparedRequest.uri.scheme.map(_.value).orNull,
+                preparedRequest.uri.host.map(_.renderString).orNull,
+                preparedRequest.uri.path.toAbsolute.renderString,
+                preparedRequest.uri.fragment.orNull
+              )
+              val almostNormalized = uri.normalize().getRawPath
 
-          val canonicalHeadersString = baseHeadersList
-            .map { case (key, value) =>
-              key.toString.toLowerCase + ":" + value.trim
+              val removeExtraneousTrailingSlash = almostNormalized.endsWith("/") &&
+                !preparedRequest.uri.path.endsWithSlash &&
+                almostNormalized.length > 1
+              if (removeExtraneousTrailingSlash)
+                // normalization can add a final slash when we didn't have one
+                // originally, so remove it if that's the case
+                almostNormalized.substring(0, almostNormalized.length - 1)
+              else almostNormalized
             }
-            .mkString(newline)
-          lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
-
-          val pathString = preparedRequest.uri.path.toAbsolute.renderString
-          val canonicalRequest = new StringBuilder()
-            .append(request.method.name.toUpperCase())
-            .append(newline)
-            .append(pathString)
-            .append(newline)
-            .append(canonicalQueryString)
-            .append(newline)
-            .append(canonicalHeadersString)
-            .append(newline)
-            .append(newline)
-            .append(signedHeadersString)
-            .append(newline)
-            .append(payloadHash)
-            .result()
-
-          val canonicalRequestHash = sha256HexDigest(canonicalRequest)
-          val signatureKey = getSignatureKey(
-            credentials.secretAccessKey,
-            timestamp.conciseDate,
-            region.value,
-            endpointPrefix
-          )
-          val stringToSign = List[String](
-            algorithm,
-            timestamp.conciseDateTime,
-            credentialsScope,
-            canonicalRequestHash
-          ).mkString(newline)
-          val signature = toHexString(hmacSha256(stringToSign, signatureKey))
-          val authHeaderValue = s"${algorithm} Credential=${credentials.accessKeyId}/$credentialsScope, SignedHeaders=$signedHeadersString, Signature=$signature"
-          val authHeader = Headers("Authorization" -> authHeaderValue)
-          val baseHeaders = Headers(baseHeadersList.map { case (k, v) => Header.Raw(k, v) })
-          authHeader ++ baseHeaders
+          }
         }
+        .flatMap { case ((payloadHash, preparedRequest), pathString) =>
+          val awsHeadersF = (timestamp, credentials, region).mapN { case (timestamp, credentials, region) =>
+            val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
+            val queryParams: Vector[(String, String)] =
+              request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
+            val canonicalQueryString =
+              if (queryParams.isEmpty) ""
+              else
+                queryParams
+                  .map { case (k, v) =>
+                    URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
+                  }
+                  .mkString("&")
 
-        awsHeadersF.map { headers =>
-          preparedRequest.transformHeaders(_ ++ headers)
+            // // !\ Important: these must remain in the same order
+            val baseHeadersList = List(
+              `Content-Type` -> preparedRequest.contentType.map(contentType.value(_)).orNull,
+              `Host` -> preparedRequest.uri.host.map(_.renderString).orNull,
+              `X-Amz-Content-SHA256` -> preparedRequest.headers.get(`X-Amz-Content-SHA256`).map(_.head.value).orNull,
+              `X-Amz-Date` -> timestamp.conciseDateTime,
+              `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
+              `X-Amz-Target` -> (serviceName + "." + operationName)
+            ).filterNot(_._2 == null)
+
+            val canonicalHeadersString = baseHeadersList
+              .map { case (key, value) =>
+                key.toString.toLowerCase + ":" + value.trim
+              }
+              .mkString(newline)
+            lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
+
+            val canonicalRequest = new StringBuilder()
+              .append(request.method.name.toUpperCase())
+              .append(newline)
+              .append(pathString)
+              .append(newline)
+              .append(canonicalQueryString)
+              .append(newline)
+              .append(canonicalHeadersString)
+              .append(newline)
+              .append(newline)
+              .append(signedHeadersString)
+              .append(newline)
+              .append(payloadHash)
+              .result()
+
+            val canonicalRequestHash = sha256HexDigest(canonicalRequest)
+            val signatureKey = getSignatureKey(
+              credentials.secretAccessKey,
+              timestamp.conciseDate,
+              region.value,
+              endpointPrefix
+            )
+            val stringToSign = List[String](
+              algorithm,
+              timestamp.conciseDateTime,
+              credentialsScope,
+              canonicalRequestHash
+            ).mkString(newline)
+            val signature = toHexString(hmacSha256(stringToSign, signatureKey))
+            val authHeaderValue = s"${algorithm} Credential=${credentials.accessKeyId}/$credentialsScope, SignedHeaders=$signedHeadersString, Signature=$signature"
+            val authHeader = Headers("Authorization" -> authHeaderValue)
+            val baseHeaders = Headers(baseHeadersList.map { case (k, v) => Header.Raw(k, v) })
+            authHeader ++ baseHeaders
+          }
+
+          awsHeadersF.map { headers =>
+            preparedRequest.transformHeaders(_ ++ headers)
+          }
         }
-      }
   }
 
   private val newline = System.lineSeparator()

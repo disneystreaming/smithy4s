@@ -75,10 +75,14 @@ object HttpRequest {
     }
 
     def fromHttpEndpoint[Body, I](
-        httpEndpoint: HttpEndpoint[I]
+        httpEndpoint: HttpEndpoint[I],
+        rawHttpLabelValues: Boolean
     ): Writer[Body, I] = new Writer[Body, I] {
+      @annotation.nowarn("cat=deprecation")
       def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
-        val path = httpEndpoint.path(input)
+        val path =
+          if (rawHttpLabelValues) httpEndpoint.path(input)
+          else httpEndpoint.encodedPath(input)
         val staticQueries = httpEndpoint.staticQueryParams
         val oldUri = request.uri
         val newUri =

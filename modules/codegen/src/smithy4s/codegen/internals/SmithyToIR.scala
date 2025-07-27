@@ -55,6 +55,8 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 import Type.Alias
+import smithy4s.meta.BincompatFriendlyTrait
+import smithy4s.meta.BincompatAddedTrait
 
 private[codegen] object SmithyToIR {
 
@@ -980,6 +982,11 @@ private[codegen] class SmithyToIR(
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case _: BincompatFriendlyTrait =>
+      Hint.BincompatFriendly
+    case b: BincompatAddedTrait =>
+      Hint.BincompatAdded(VersionNumber.parse(b.getVersion()))
+
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {

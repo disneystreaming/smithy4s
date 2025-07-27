@@ -61,7 +61,7 @@ jobs:
         uses: coursier/setup-action@v1
         with:
           jvm: temurin:1.17
-          apps: sbt
+          apps: sbt scala-cli
 
       - name: Run tests
         run: |

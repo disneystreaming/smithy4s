@@ -9,8 +9,7 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class ClientError(code: Int, details: String) extends Smithy4sThrowable {
-}
+final case class ClientError(code: Int, details: String) extends Smithy4sThrowable
 
 object ClientError extends ShapeTag.Companion[ClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "ClientError")

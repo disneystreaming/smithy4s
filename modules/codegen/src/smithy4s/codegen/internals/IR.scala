@@ -81,10 +81,12 @@ private[internals] case class Product(
     name: String,
     fields: List[Field],
     mixins: List[Type],
-    recursive: Boolean = false,
+    recursive: Boolean,
     hints: List[Hint] = Nil,
-    isMixin: Boolean = false
-) extends Decl
+    isMixin: Boolean
+) extends Decl {
+  def isBincompatFriendly = hints.contains(Hint.BincompatFriendly)
+}
 
 private[internals] case class Union(
     shapeId: ShapeId,
@@ -346,9 +348,42 @@ private[internals] sealed trait Hint {
     }
 }
 
+case class VersionNumber private (private val components: List[Int]) {
+  def render: String = components.mkString(".")
+}
+
+object VersionNumber {
+
+  // 1.0 < 1.0.1
+  // 1.0.1 < 1.1
+  // 1.1.2 < 1.1.3
+  implicit val order: Order[VersionNumber] = Order.from { (a, b) =>
+    val comparison = a.components
+      .zip(b.components)
+      .map { case (x, y) => x.compareTo(y) }
+      .find(_ != 0)
+
+    comparison match {
+      case Some(c) => c
+      case None    =>
+        // If all compared components are equal, the longer version is greater.
+        a.components.length.compareTo(b.components.length)
+    }
+  }
+
+  implicit val ordering: Ordering[VersionNumber] =
+    Order.catsKernelOrderingForOrder
+
+  def parse(s: String): VersionNumber = VersionNumber(
+    s.split("\\.").toList.map(_.toInt)
+  )
+}
+
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object BincompatFriendly extends Hint
+  case class BincompatAdded(version: VersionNumber) extends Hint
   case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint

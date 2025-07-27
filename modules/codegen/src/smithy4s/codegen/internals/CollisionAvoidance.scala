@@ -373,7 +373,8 @@ private[internals] object CollisionAvoidance {
     val smithy4sThrowable = NameRef("smithy4s", "Smithy4sThrowable")
 
     // We reserve these keywords as they collide with types that the
-    // users are bound to manipulate when using Smithy4s .
+    // users are bound to manipulate when using Smithy4s.
+    val any_ = NameRef("scala", "Any")
     val short_ = NameRef("scala", "Short")
     val int_ = NameRef("scala", "Int")
     val javaInt_ = NameRef("java.lang", "Integer")
@@ -398,7 +399,7 @@ private[internals] object CollisionAvoidance {
     val none = NameRef("scala", "None")
     val some = NameRef("scala", "Some")
     val noStackTrace = NameRef("scala.util.control", "NoStackTrace")
-    val throwable = NameRef("java.lang", "Throwable")
+    val serializable = NameRef("scala", "Serializable")
 
   }
 

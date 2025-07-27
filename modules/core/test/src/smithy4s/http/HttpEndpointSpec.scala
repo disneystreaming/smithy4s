@@ -16,8 +16,16 @@
 
 package smithy4s.http
 
+import cats.effect._
+import cats.syntax.all._
+import org.scalacheck.Gen
+import smithy.api.{Http, NonEmptyString}
+import smithy4s._
+import smithy4s.http.HttpEndpoint._
 import weaver._
-import scala.util.Random
+import weaver.scalacheck._
+
+import scala.util._
 
 /**
  * The following algorithm is used to compare two paths
@@ -32,47 +40,68 @@ import scala.util.Random
   * If n > m then A is more specific than B
   * If p > q then A is more specific than B
   */
-object HttpEndpointSpec extends SimpleIOSuite {
+object HttpEndpointSpec extends SimpleIOSuite with Checkers {
 
-  final case class HttpEndpointDummy(
+  def httpEndpointDummy(
       path: List[PathSegment],
       staticQueryParams: Map[String, Seq[String]] = Map.empty
-  ) extends HttpEndpoint[Unit] {
-    override def path(input: Unit): List[String] =
-      throw new NotImplementedError(
-        "HttpEndpointOrderingSpec.HttpEndpointDummy.path"
-      )
-    override def method: HttpMethod = throw new NotImplementedError(
-      "HttpEndpointOrderingSpec.HttpEndpointDummy.method"
-    )
-    override def code: Int = throw new NotImplementedError(
-      "HttpEndpointOrderingSpec.HttpEndpointDummy.code"
-    )
-  }
+  ): Either[HttpEndpointError, HttpEndpoint[_]] =
+    HttpEndpoint.cast(
+      Schema
+        .operation(ShapeId("smithy4s.dummy", "a"))
+        .withHints(
+          Http(
+            NonEmptyString("GET"), {
+              val base = path
+                .map {
+                  case PathSegment.StaticSegment(value) => value
+                  case PathSegment.LabelSegment(value)  => s"{$value}"
+                  case PathSegment.GreedySegment(value) => value
+                }
+                .mkString("/")
 
-  pureTest("static > label > greedy") {
-    val a = HttpEndpointDummy(path =
+              val uri =
+                if (staticQueryParams.isEmpty) base
+                else {
+                  val qp = staticQueryParams
+                    .map { case (k, v) =>
+                      s"$k=${v.mkString(",")}"
+                    }
+                    .mkString("&")
+
+                  s"$base?$qp"
+                }
+
+              NonEmptyString(uri)
+            }
+          )
+        )
+        .withInput(Schema.string)
+    )
+
+  test("static > label > greedy") {
+    val a = httpEndpointDummy(
       List(
         PathSegment.static("abc"),
         PathSegment.static("bcd"),
         PathSegment.label("xyz")
       )
     )
-    val b = HttpEndpointDummy(path =
+    val b = httpEndpointDummy(path =
       List(
         PathSegment.static("abc"),
         PathSegment.label("xyz"),
         PathSegment.static("cde")
       )
     )
-    val c = HttpEndpointDummy(path =
+    val c = httpEndpointDummy(path =
       List(
         PathSegment.greedy("xyz"),
         PathSegment.static("bcd"),
         PathSegment.static("cde")
       )
     )
-    val d = HttpEndpointDummy(path =
+    val d = httpEndpointDummy(path =
       List(
         PathSegment.greedy("xyz"),
         PathSegment.label("bcd"),
@@ -80,64 +109,82 @@ object HttpEndpointSpec extends SimpleIOSuite {
       )
     )
 
-    val expectedOrder = List[HttpEndpoint[_]](a, b, c, d)
-    val shuffleOrder = Random.shuffle(expectedOrder)
+    List(a, b, c, d).sequence
+      .map { (expectedOrder: List[HttpEndpoint[_]]) =>
+        forall(Gen.long) { seed =>
+          val shuffleOrder = new Random(seed).shuffle(expectedOrder)
 
-    expect(shuffleOrder.sortWith(HttpEndpoint.moreSpecific) == expectedOrder)
+          expect(
+            shuffleOrder.sortWith(HttpEndpoint.moreSpecific) == expectedOrder
+          )
+        }
+      }
+      .getOrElse(IO(failure("could not initialize dummy segments")))
+
   }
 
   pureTest("A[x] and B[x] are both literals then continue") {
-    val a = HttpEndpointDummy(path = List(PathSegment.static("abc")))
-    val b = HttpEndpointDummy(path = List(PathSegment.static("bcd")))
+    val a = httpEndpointDummy(path = List(PathSegment.static("abc")))
+    val b = httpEndpointDummy(path = List(PathSegment.static("bcd")))
 
-    expect(HttpEndpoint.moreSpecific(a, b))
+    expectFirstIsMoreSpecificThanSecond(a, b)
   }
 
   pureTest(
     "A[x] is a literal and B[x] is a label then A is more specific than B"
   ) {
-    val a = HttpEndpointDummy(path =
+    val a = httpEndpointDummy(path =
       List(PathSegment.static("abc"), PathSegment.static("abc"))
     )
-    val b = HttpEndpointDummy(path =
+    val b = httpEndpointDummy(path =
       List(PathSegment.static("bcd"), PathSegment.label("xyz"))
     )
 
-    expect(HttpEndpoint.moreSpecific(a, b))
+    expectFirstIsMoreSpecificThanSecond(a, b)
   }
 
   pureTest(
     "A[x] is a non-greedy label and B[x] is a greedy label then A is more specific than B"
   ) {
-    val a = HttpEndpointDummy(path =
+    val a = httpEndpointDummy(path =
       List(PathSegment.static("abc"), PathSegment.label("abc"))
     )
-    val b = HttpEndpointDummy(path =
+    val b = httpEndpointDummy(path =
       List(PathSegment.static("bcd"), PathSegment.greedy("xyz"))
     )
 
-    expect(HttpEndpoint.moreSpecific(a, b))
+    expectFirstIsMoreSpecificThanSecond(a, b)
   }
 
   pureTest("n > m then A is more specific than B") {
-    val a = HttpEndpointDummy(path =
+    val a = httpEndpointDummy(path =
       List(PathSegment.static("abc"), PathSegment.static("bcd"))
     )
-    val b = HttpEndpointDummy(path = List(PathSegment.static("efg")))
+    val b = httpEndpointDummy(path = List(PathSegment.static("efg")))
 
-    expect(HttpEndpoint.moreSpecific(a, b))
+    expectFirstIsMoreSpecificThanSecond(a, b)
   }
 
   pureTest("p > q then A is more specific than B") {
-    val a = HttpEndpointDummy(
+    val a = httpEndpointDummy(
       path = List(PathSegment.static("abc")),
       staticQueryParams = Map("a" -> Seq.empty, "b" -> Seq.empty)
     )
-    val b = HttpEndpointDummy(
+    val b = httpEndpointDummy(
       path = List(PathSegment.static("abc")),
       staticQueryParams = Map("a" -> Seq.empty)
     )
 
-    expect(HttpEndpoint.moreSpecific(a, b))
+    expectFirstIsMoreSpecificThanSecond(a, b)
   }
+
+  private def expectFirstIsMoreSpecificThanSecond(
+      a: Either[HttpEndpointError, HttpEndpoint[_]],
+      b: Either[HttpEndpointError, HttpEndpoint[_]]
+  ): Expectations =
+    (a, b)
+      .mapN(HttpEndpoint.moreSpecific)
+      .map(expect(_))
+      .getOrElse(failure("could not initialize dummy segments"))
+
 }

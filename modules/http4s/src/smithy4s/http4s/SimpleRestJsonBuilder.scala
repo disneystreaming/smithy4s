@@ -26,7 +26,8 @@ object SimpleRestJsonBuilder
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
         fieldFilter = FieldFilter.Default,
-        hostPrefixInjection = true
+        hostPrefixInjection = true,
+        rawHttpLabelValues = false
       )
     )
 
@@ -54,7 +55,8 @@ class SimpleRestJsonBuilder private (
               .withFieldFilter(fieldFilter)
           ),
         fieldFilter,
-        hostPrefixInjection
+        hostPrefixInjection,
+        rawHttpLabelValues = false
       )
     }
   }
@@ -88,6 +90,13 @@ class SimpleRestJsonBuilder private (
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.withFieldFilter(fieldFilter)
+    )
+
+  def withRawHttpLabelValues(
+      enabled: Boolean
+  ): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(
+      simpleRestJsonCodecs.withRawHttpLabelValues(enabled)
     )
 
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =
