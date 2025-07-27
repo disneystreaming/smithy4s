@@ -62,14 +62,14 @@ private[dynamic] object syntax {
           new Trait {
             def toShapeId() =
               SmithyShapeId.fromParts(keyId.namespace, keyId.name)
-            def toNode() = documentToNode(value)
+            def toNode() = value.toSmithyNode
           }
         case Hints.Binding.StaticBinding(key, value) =>
           val doc = Document.Encoder.fromSchema(key.schema).encode(value)
           new Trait {
             def toShapeId() =
               SmithyShapeId.fromParts(key.id.namespace, key.id.name)
-            def toNode() = documentToNode(doc)
+            def toNode() = value.toSmithyNode
           }
       }
       .filterNot(
