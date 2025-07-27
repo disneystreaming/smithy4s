@@ -22,16 +22,15 @@ import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.{ShapeId => SmithyShapeId}
 
 object syntax {
-  def documentToNode(doc: Document): Node = doc match {
-    case DString(value)  => Node.from(value)
-    case DNumber(value)  => Node.from(value)
-    case DBoolean(value) => Node.from(value)
-    case DObject(values) =>
-      Node.objectNode(values.map { case (k, v) =>
-        Node.from(k) -> v.toSmithyNode
-      }.asJava)
-    case DArray(values) => Node.fromNodes(values.map(documentToNode): _*)
-    case DNull          => Node.nullNode()
+final implicit class DocumentOps(private val doc: Document) extends AnyVal {
+    def toSmithyNode: Node = doc match {
+      case Document.DString(value)  => Node.from(value)
+      case Document.DNumber(value)  => Node.from(value)
+      case Document.DBoolean(value) => Node.from(value)
+      case Document.DObject(values) => Node.objectNode(values.map { case (k, v) => Node.from(k) -> v.toSmithyNode }.asJava)
+      case Document.DArray(values)  => Node.fromNodes(values.map(_.toSmithyNode): _*)
+      case Document.DNull          => Node.nullNode()
+    }
   }
 
   final implicit class NodeOps(private val node: Node) extends AnyVal {
