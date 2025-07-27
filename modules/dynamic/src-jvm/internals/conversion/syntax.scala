@@ -69,7 +69,7 @@ private[dynamic] object syntax {
           new Trait {
             def toShapeId() =
               SmithyShapeId.fromParts(key.id.namespace, key.id.name)
-            def toNode() = value.toSmithyNode
+            def toNode() = doc.toSmithyNode
           }
       }
       .filterNot(
