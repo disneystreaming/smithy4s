@@ -345,7 +345,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("query param failing refinement results in a BadRequest") {
@@ -359,7 +359,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("body failing refinement results in a BadRequest") {
@@ -372,7 +372,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("Optional payload set to empty") { (client, uri, log) =>

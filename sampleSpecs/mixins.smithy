@@ -54,3 +54,29 @@ structure MixinOptionalMemberOverride with [MixinOptionalMember] {
 structure MixinOptionalMemberDefaultAdded with [MixinOptionalMember] {
   a: String = "test"
 }
+
+@mixin
+structure MixinRequiredMember {
+  @required description: String
+}
+
+@mixin
+structure MixinRequiredMemberIntermediate with [MixinRequiredMember] {
+  extraField: String
+}
+
+// regression test for https://github.com/disneystreaming/smithy4s/issues/1702
+structure StructUsingMixinRequiredMember with [MixinRequiredMemberIntermediate] {
+    @required
+    $extraField
+}
+
+// regression test for https://github.com/disneystreaming/smithy4s/issues/1699
+structure MixinRequiredMemberDefaultAdded with [MixinRequiredMember] {
+  $description = "different description"
+}
+
+@mixin
+union NonStructureMixin {
+  s: String
+}

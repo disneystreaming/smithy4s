@@ -95,7 +95,7 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
       .resource
       .use { routes =>
         routes.orNotFound.run(Request[IO](uri = uri"/yeap")).map { response =>
-          assert(response.status.code == 200)
+          expect(response.status.code == 200)
         }
       }
   }
@@ -135,7 +135,7 @@ object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
       .use { routes =>
         routes.orNotFound.run(Request[IO](uri = uri"/health")).attempt.map {
           response =>
-            assert(
+            expect(
               response == Left(
                 UnknownServerError(UnknownServerErrorCode.ERROR_CODE)
               )

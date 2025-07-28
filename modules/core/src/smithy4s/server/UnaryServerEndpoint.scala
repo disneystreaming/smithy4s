@@ -29,7 +29,32 @@ object UnaryServerEndpoint {
       codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
       middleware: (Request => F[Response]) => (Request => F[Response])
   )(implicit F: MonadThrowLike[F]): Request => F[Response] = {
-    apply(interpreter, endpoint, codecs, middleware, encodeErrorsBeforeMiddleware = false)
+    apply(
+      interpreter,
+      endpoint,
+      codecs,
+      middleware,
+      encodeErrorsBeforeMiddleware = false,
+      onError = PartialFunction.empty
+    )
+  }
+  def apply[F[_], Op[_, _, _, _, _], Request, Response, I, E, O, SI, SO](
+      interpreter: FunctorInterpreter[Op, F],
+      endpoint: Endpoint[Op, I, E, O, SI, SO],
+      codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
+      middleware: (Request => F[Response]) => (Request => F[Response]),
+      encodeErrorsBeforeMiddleware: Boolean
+  )(implicit
+      F: MonadThrowLike[F]
+  ): Request => F[Response] = {
+    apply(
+      interpreter,
+      endpoint,
+      codecs,
+      middleware,
+      encodeErrorsBeforeMiddleware,
+      onError = PartialFunction.empty
+    )
   }
 
   def apply[F[_], Op[_, _, _, _, _], Request, Response, I, E, O, SI, SO](
@@ -37,8 +62,10 @@ object UnaryServerEndpoint {
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       codecs: UnaryServerCodecs[F, Request, Response, I, E, O],
       middleware: (Request => F[Response]) => (Request => F[Response]),
-      encodeErrorsBeforeMiddleware: Boolean
+      encodeErrorsBeforeMiddleware: Boolean,
+      onError: PartialFunction[Throwable, F[Unit]]
   )(implicit F: MonadThrowLike[F]): Request => F[Response] = {
+
     def errorResponse(throwable: Throwable): F[Response] = throwable match {
       case endpoint.Error((_, e)) =>
         codecs.errorEncoder(e)
@@ -54,11 +81,15 @@ object UnaryServerEndpoint {
       }
     }
 
+    val withErrorObserver = base.andThen { resp =>
+      F.onError(resp)(onError)
+    }
+
     val withErrorsEncoded =
       if (encodeErrorsBeforeMiddleware)
-        base.andThen { F.handleErrorWith(_)(errorResponse) }
+        withErrorObserver.andThen { F.handleErrorWith(_)(errorResponse) }
       else
-        base
+        withErrorObserver
 
     val withMiddleware = middleware(withErrorsEncoded)
     withMiddleware.andThen { F.handleErrorWith(_)(errorResponse) }

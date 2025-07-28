@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.27.6"
+    val jsoniterScalaVersion = "2.30.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.49.0"
+    val smithyVersion = "1.57.1"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -31,7 +31,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.3.13"
+    val alloyVersion = "0.3.20"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val protobuf = org % "alloy-protobuf" % alloyVersion
@@ -40,22 +40,22 @@ object Dependencies {
 
   val Smithytranslate = new {
     val org = "com.disneystreaming.smithy"
-    val smithyTranslateVersion = "0.5.3"
+    val smithyTranslateVersion = "0.5.7"
     val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.10.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
   }
 
   val Monocle = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("dev.optics" %% "monocle-core" % "3.2.0")
+      Def.setting("dev.optics" %% "monocle-core" % "3.3.0")
   }
 
   object Circe {
-    val circeVersion = "0.14.6"
+    val circeVersion = "0.14.8"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -69,7 +69,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.10.2"
+    val fs2Version = "3.12.0"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -80,16 +80,19 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.2")
   }
 
   object Mill {
-    val millVersion = "0.11.7"
-
-    val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
-    val main = "com.lihaoyi" %% "mill-main" % millVersion
-    val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
-    val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
+    def scalalib(v: String) = "com.lihaoyi" %% "mill-scalalib" % v % Provided
+    def main(v: String) = "com.lihaoyi" %% "mill-main" % v % Provided
+    def mainApi(v: String) = "com.lihaoyi" %% "mill-main-api" % v % Provided
+    def mainTestkit(v: String) =
+      if (v.startsWith("0.11")) {
+        "com.lihaoyi" %% "mill-main-testkit" % v % Test
+      } else {
+        "com.lihaoyi" %% "mill-testkit" % v % Test
+      }
   }
 
   object Pprint {
@@ -97,20 +100,11 @@ object Dependencies {
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
 
-  /*
-   * we override the version to use the fix included in
-   * https://github.com/typelevel/cats-effect/pull/2945
-   * it allows us to use UUIDGen instead of calling
-   * UUID.randomUUID manually
-   *
-   * we also provide a 2.12 shim under:
-   * modules/tests/src-ce2/UUIDGen.scala
-   */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.4")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.6.0")
 
   object Http4s {
-    val http4sVersion = "0.23.26"
+    val http4sVersion = "0.23.30"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -128,14 +122,14 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.8.4"
+    val weaverVersion = "0.9.0"
 
     val cats: Def.Initialize[ModuleID] =
-      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
+      Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
 
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting(
-        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion
+        "org.typelevel" %%% "weaver-scalacheck" % weaverVersion
       )
   }
 
@@ -153,15 +147,15 @@ object Dependencies {
   }
 
   val Scalacheck = new {
-    val scalacheckVersion = "1.16.0"
+    val scalacheckVersion = "1.17.1"
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
-  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.11"
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.17"
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.11.8"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "5.20.3"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.52"
   }
@@ -169,7 +163,7 @@ object Dependencies {
   object AwsSpecSummary {
     val org = "com.disneystreaming.smithy"
     val name = "aws-spec-summary"
-    val awsSpecSummaryVersion = "2023.09.22"
+    val awsSpecSummaryVersion = "2025.04.08"
     val value = org % name % awsSpecSummaryVersion
   }
 

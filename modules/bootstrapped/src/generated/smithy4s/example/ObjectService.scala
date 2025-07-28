@@ -17,7 +17,6 @@ import smithy4s.schema.Schema.unit
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
   /** @param key
     *   Sent in the URI label named "key".
     *   Key can also be seen as the filename
@@ -26,6 +25,7 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
     *   Sent in the URI label named "bucketName".
     */
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
+  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
 }
@@ -47,8 +47,8 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
 
   val endpoints: Vector[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = Vector(
-    ObjectServiceOperation.PutObject,
     ObjectServiceOperation.GetObject,
+    ObjectServiceOperation.PutObject,
   )
 
   def input[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -61,10 +61,10 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ObjectServiceOperation, P]): ObjectServiceGen[P] = new ObjectServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = ObjectServiceOperation.toPolyFunction(impl)
 
-  type PutObjectError = ObjectServiceOperation.PutObjectError
-  val PutObjectError = ObjectServiceOperation.PutObjectError
   type GetObjectError = ObjectServiceOperation.GetObjectError
   val GetObjectError = ObjectServiceOperation.GetObjectError
+  type PutObjectError = ObjectServiceOperation.PutObjectError
+  val PutObjectError = ObjectServiceOperation.PutObjectError
 }
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -77,20 +77,99 @@ sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedO
 object ObjectServiceOperation {
 
   object reified extends ObjectServiceGen[ObjectServiceOperation] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): PutObject = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName): GetObject = GetObject(GetObjectInput(key, bucketName))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): PutObject = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectServiceGen[P], f: PolyFunction5[P, P1]) extends ObjectServiceGen[P1] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): P1[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName): P1[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = f[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing](alg.getObject(key, bucketName))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): P1[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = new PolyFunction5[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
+  final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
+    def ordinal: Int = 0
+    def endpoint: smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = GetObject
+  }
+  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
+    val schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
+      .withInput(GetObjectInput.schema)
+      .withError(GetObjectError.errorSchema)
+      .withOutput(GetObjectOutput.schema)
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
+    def wrap(input: GetObjectInput): GetObject = GetObject(input)
+  }
+  sealed trait GetObjectError extends scala.Product with scala.Serializable { self =>
+    @inline final def widen: GetObjectError = this
+    def $ordinal: Int
+
+    object project {
+      def serverError: Option[ServerError] = GetObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
+      def clientError: Option[ClientError] = GetObjectError.ClientErrorCase.alt.project.lift(self).map(_.clientError)
+    }
+
+    def accept[A](visitor: GetObjectError.Visitor[A]): A = this match {
+      case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
+      case value: GetObjectError.ClientErrorCase => visitor.clientError(value.clientError)
+    }
+  }
+  object GetObjectError extends ErrorSchema.Companion[GetObjectError] {
+
+    def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
+    def clientError(clientError: ClientError): GetObjectError = ClientErrorCase(clientError)
+
+    val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
+
+    val hints: Hints = Hints.empty
+
+    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def $ordinal: Int = 0 }
+    final case class ClientErrorCase(clientError: ClientError) extends GetObjectError { final def $ordinal: Int = 1 }
+
+    object ServerErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[GetObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), GetObjectError.ServerErrorCase(_), _.serverError)
+      val alt = schema.oneOf[GetObjectError]("ServerError")
+    }
+    object ClientErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[GetObjectError.ClientErrorCase] = bijection(ClientError.schema.addHints(hints), GetObjectError.ClientErrorCase(_), _.clientError)
+      val alt = schema.oneOf[GetObjectError]("ClientError")
+    }
+
+    trait Visitor[A] {
+      def serverError(value: ServerError): A
+      def clientError(value: ClientError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def serverError(value: ServerError): A = default
+        def clientError(value: ClientError): A = default
+      }
+    }
+
+    implicit val schema: Schema[GetObjectError] = union(
+      GetObjectError.ServerErrorCase.alt,
+      GetObjectError.ClientErrorCase.alt,
+    ){
+      _.$ordinal
+    }
+    def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
+      case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
+      case e: ClientError => Some(GetObjectError.ClientErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: GetObjectError): Throwable = e match {
+      case GetObjectError.ServerErrorCase(e) => e
+      case GetObjectError.ClientErrorCase(e) => e
+    }
+  }
   final case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
-    def ordinal: Int = 0
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = PutObject
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
@@ -179,85 +258,6 @@ object ObjectServiceOperation {
       case PutObjectError.ServerErrorCase(e) => e
       case PutObjectError.ClientErrorCase(e) => e
       case PutObjectError.NoMoreSpaceCase(e) => e
-    }
-  }
-  final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
-    def ordinal: Int = 1
-    def endpoint: smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = GetObject
-  }
-  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
-    val schema: OperationSchema[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetObject"))
-      .withInput(GetObjectInput.schema)
-      .withError(GetObjectError.errorSchema)
-      .withOutput(GetObjectOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200), smithy.api.Readonly())
-    def wrap(input: GetObjectInput): GetObject = GetObject(input)
-  }
-  sealed trait GetObjectError extends scala.Product with scala.Serializable { self =>
-    @inline final def widen: GetObjectError = this
-    def $ordinal: Int
-
-    object project {
-      def serverError: Option[ServerError] = GetObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
-      def clientError: Option[ClientError] = GetObjectError.ClientErrorCase.alt.project.lift(self).map(_.clientError)
-    }
-
-    def accept[A](visitor: GetObjectError.Visitor[A]): A = this match {
-      case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
-      case value: GetObjectError.ClientErrorCase => visitor.clientError(value.clientError)
-    }
-  }
-  object GetObjectError extends ErrorSchema.Companion[GetObjectError] {
-
-    def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
-    def clientError(clientError: ClientError): GetObjectError = ClientErrorCase(clientError)
-
-    val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
-
-    val hints: Hints = Hints.empty
-
-    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def $ordinal: Int = 0 }
-    final case class ClientErrorCase(clientError: ClientError) extends GetObjectError { final def $ordinal: Int = 1 }
-
-    object ServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[GetObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), GetObjectError.ServerErrorCase(_), _.serverError)
-      val alt = schema.oneOf[GetObjectError]("ServerError")
-    }
-    object ClientErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[GetObjectError.ClientErrorCase] = bijection(ClientError.schema.addHints(hints), GetObjectError.ClientErrorCase(_), _.clientError)
-      val alt = schema.oneOf[GetObjectError]("ClientError")
-    }
-
-    trait Visitor[A] {
-      def serverError(value: ServerError): A
-      def clientError(value: ClientError): A
-    }
-
-    object Visitor {
-      trait Default[A] extends Visitor[A] {
-        def default: A
-        def serverError(value: ServerError): A = default
-        def clientError(value: ClientError): A = default
-      }
-    }
-
-    implicit val schema: Schema[GetObjectError] = union(
-      GetObjectError.ServerErrorCase.alt,
-      GetObjectError.ClientErrorCase.alt,
-    ){
-      _.$ordinal
-    }
-    def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
-      case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
-      case e: ClientError => Some(GetObjectError.ClientErrorCase(e))
-      case _ => None
-    }
-    def unliftError(e: GetObjectError): Throwable = e match {
-      case GetObjectError.ServerErrorCase(e) => e
-      case GetObjectError.ClientErrorCase(e) => e
     }
   }
 }

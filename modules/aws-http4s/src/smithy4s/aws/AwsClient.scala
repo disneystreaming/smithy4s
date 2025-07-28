@@ -31,6 +31,7 @@ import smithy4s.schema.OperationSchema
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
 import smithy4s.http.HttpMethod
+import fs2.hashing.Hashing
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {
@@ -65,16 +66,16 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
-    private def compiler[F[_]: Async: Compression](
+    private def compiler[F[_]: Async: Compression: Hashing](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorEndpointCompiler[F] = {
 
       def baseRequest(endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
         awsEnv.region.map { region =>
           val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
-          val baseUri = HttpUri(
+          val baseUri = HttpUri.absolute(
             scheme = HttpUriScheme.Https,
-            host = Some(s"$endpointPrefix.$region.amazonaws.com"),
+            host = s"$endpointPrefix.$region.amazonaws.com",
             port = None,
             path = IndexedSeq.empty,
             queryParams = Map.empty,
@@ -138,8 +139,10 @@ object AwsClient {
 
     def build[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
-    ): service.Impl[F] =
+    ): service.Impl[F] = {
+      implicit val hashingF: Hashing[F] = Hashing.forSync[F]
       service.impl(compiler[F](awsEnv))
+    }
 
     // TODO : uncomment below when we start supporting streaming.
 

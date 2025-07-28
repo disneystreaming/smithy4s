@@ -50,6 +50,41 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
   - Otherwise, it's treated as the absence of a value.
 
+# 0.18.38
+
+* core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
+* http4s: onError method added to the RouteBuilder in [#1755](https://github.com/disneystreaming/smithy4s/pull/1755)
+* codegen: Add fromStringOrUnknown and fromIntOrUnknown methods to Open Enums (fixes [#1626](https://github.com/disneystreaming/smithy4s/issues/1626) in [#1759](https://github.com/disneystreaming/smithy4s/pull/1759))
+
+# 0.18.37
+
+* json: Allow decoding nulls for optional fields in defaults (fixes [#1581](https://github.com/disneystreaming/smithy4s/issues/1581)) in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
+* codegen: Fix generating empty defaults on blob shapes in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
+* http: Add mapping between HttpUri and java.net.URI in [#1719](https://github.com/disneystreaming/smithy4s/pull/1719)
+* codegen: Add an STDERR log message when a codegen-time model transformation is requested but not found in [#1726](https://github.com/disneystreaming/smithy4s/pull/1726)
+* codegen: Don't generate code for mixins that aren't structs in [#1445](https://github.com/disneystreaming/smithy4s/pull/1445)
+* mill-plugin: Add support for 0.12 in [#1728](https://github.com/disneystreaming/smithy4s/pull/1728)
+
+# 0.18.36
+
+* codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
+
+# 0.18.35
+
+* json, documents: Add support for `@jsonUnknown` in unions (Open Unions) in [#1677](https://github.com/disneystreaming/smithy4s/pull/1677)
+* codegen: Prevent `StackOverflowError` in dealing with recursive collection traits in [#1708](https://github.com/disneystreaming/smithy4s/pull/1708)
+
+# 0.18.34
+
+* codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
+* codegen: Mixins - fix several bugs and a performance regression in [#1701](https://github.com/disneystreaming/smithy4s/pull/1701).
+
+# 0.18.33
+
+* codegen: Fix an issue in which using UUIDs as trait or default values would prevent code generation in [#1685](https://github.com/disneystreaming/smithy4s/pull/1685)
+* general: Update dependencies across the board in [#1686](https://github.com/disneystreaming/smithy4s/pull/1686)
+* http: Update `HttpUnaryServerRouter#partialFunction` to remove ambiguity between the two methods
+
 # 0.18.32
 
 * codegen: Fix an issue in which smithy4s-protocol would conflict with its previous versions if they're in the dependencies

@@ -22,14 +22,14 @@ import smithy4s.codegen.CodegenEntry.FromDisk
 import smithy4s.codegen.CodegenEntry.FromMemory
 import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.SourceLocation
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model.transform.ModelTransformer
 import software.amazon.smithy.openapi.OpenApiConfig
-import software.amazon.smithy.model.SourceLocation
-import scala.util.matching.Regex
 
 import scala.jdk.CollectionConverters._
+import scala.util.matching.Regex
 
 private[codegen] object CodegenImpl { self =>
 
@@ -278,7 +278,7 @@ object RepeatedNamespaceException {
 }
 
 /**
-  * This matcher supports following syntax: 
+  * This matcher supports following syntax:
   * - a.b.c - exact match, will match only 'a.b.c'
   * - a.b.* - will match a.b followed with some segments.
   * - a.b* - like above, but will also match a.b

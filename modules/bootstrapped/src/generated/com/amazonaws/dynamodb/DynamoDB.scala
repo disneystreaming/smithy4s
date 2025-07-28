@@ -35,8 +35,6 @@ import smithy4s.schema.Schema.union
 trait DynamoDBGen[F[_, _, _, _, _]] {
   self =>
 
-  /** <p>Returns the regional endpoint information.</p> */
-  def describeEndpoints(): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing]
   /** <p>Returns an array of table names associated with the current account and endpoint. The output
     *       from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table
     *       names.</p>
@@ -48,6 +46,8 @@ trait DynamoDBGen[F[_, _, _, _, _]] {
     *   <p>A maximum number of table names to return. If this parameter is not specified, the limit is 100.</p>
     */
   def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing]
+  /** <p>Returns the regional endpoint information.</p> */
+  def describeEndpoints(): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](this)
 }
@@ -75,8 +75,8 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   }
 
   val endpoints: Vector[smithy4s.Endpoint[DynamoDBOperation, _, _, _, _, _]] = Vector(
-    DynamoDBOperation.DescribeEndpoints,
     DynamoDBOperation.ListTables,
+    DynamoDBOperation.DescribeEndpoints,
   )
 
   def input[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): I = op.input
@@ -103,32 +103,20 @@ sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput
 object DynamoDBOperation {
 
   object reified extends DynamoDBGen[DynamoDBOperation] {
-    def describeEndpoints(): DescribeEndpoints = DescribeEndpoints(DescribeEndpointsRequest())
     def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): ListTables = ListTables(ListTablesInput(exclusiveStartTableName, limit))
+    def describeEndpoints(): DescribeEndpoints = DescribeEndpoints(DescribeEndpointsRequest())
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DynamoDBGen[P], f: PolyFunction5[P, P1]) extends DynamoDBGen[P1] {
-    def describeEndpoints(): P1[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](alg.describeEndpoints())
     def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): P1[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = f[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing](alg.listTables(exclusiveStartTableName, limit))
+    def describeEndpoints(): P1[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](alg.describeEndpoints())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DynamoDBGen[P]): PolyFunction5[DynamoDBOperation, P] = new PolyFunction5[DynamoDBOperation, P] {
     def apply[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  final case class DescribeEndpoints(input: DescribeEndpointsRequest) extends DynamoDBOperation[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = impl.describeEndpoints()
-    def ordinal: Int = 0
-    def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
-  }
-  object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
-    val schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
-      .withInput(DescribeEndpointsRequest.schema)
-      .withOutput(DescribeEndpointsResponse.schema)
-      .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
-    def wrap(input: DescribeEndpointsRequest): DescribeEndpoints = DescribeEndpoints(input)
-  }
   final case class ListTables(input: ListTablesInput) extends DynamoDBOperation[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = impl.listTables(input.exclusiveStartTableName, input.limit)
-    def ordinal: Int = 1
+    def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = ListTables
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
@@ -204,6 +192,18 @@ object DynamoDBOperation {
       case ListTablesError.InternalServerErrorCase(e) => e
       case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
+  }
+  final case class DescribeEndpoints(input: DescribeEndpointsRequest) extends DynamoDBOperation[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = impl.describeEndpoints()
+    def ordinal: Int = 1
+    def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
+  }
+  object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
+    val schema: OperationSchema[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = Schema.operation(ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints"))
+      .withInput(DescribeEndpointsRequest.schema)
+      .withOutput(DescribeEndpointsResponse.schema)
+      .withHints(smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"))
+    def wrap(input: DescribeEndpointsRequest): DescribeEndpoints = DescribeEndpoints(input)
   }
 }
 

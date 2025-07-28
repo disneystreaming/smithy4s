@@ -152,7 +152,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   implicit val tsEq: Eq[Timestamp] = Eq.fromUniversalEquals
 
-  def timestampTest(schema: Schema[Timestamp], input: String) = assert.parsed(
+  def timestampTest(schema: Schema[Timestamp], input: String) = expect.parsed(
     parseOpts(sampleStruct("ts", schema))(
       input
     ),
@@ -176,41 +176,41 @@ object OptsSchematicSpec extends SimpleIOSuite {
     )(implicit
         loc: SourceLocation
     ): Expectations = actual.fold(
-      result => assert(result.toString().contains(expected)),
+      result => expect(result.toString().contains(expected)),
       fail("Expected failure, but got success 😩")
     )
   }
 
   pureTest("compile unit") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(unit)(),
       ()
     )
   }
 
   pureTest("compile unit with bijection (const)") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(bijection[Unit, Int](unit, (_: Unit) => 42, (_: Int) => ()))(),
       42
     )
   }
 
   pureTest("compile string field") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("elem", string))("example"),
       "example"
     )
   }
 
   pureTest("compile int field") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("elem", int))("35"),
       35
     )
   }
 
   pureTest("compile int field with bijection") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         bijection[Int, String](
           sampleStruct("elem", int),
@@ -223,21 +223,21 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile double field") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("elem", double))("35.1"),
       35.1d
     )
   }
 
   pureTest("compile flag") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("condition", boolean))("--condition"),
       true
     )
   }
 
   pureTest("compile boolean list") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         sampleStruct("condition", list(boolean))
       )("true", "false", "true"),
@@ -246,7 +246,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile missing flag") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("condition", boolean))(),
       false
     )
@@ -254,77 +254,77 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("compile union - first match") {
 
-    assert.parsed[Either[Int, String]](
+    expect.parsed[Either[Int, String]](
       parseOpts(sampleUnion)("--int", "35"),
       35.asLeft
     )
   }
 
   pureTest("compile union - second match") {
-    assert.parsed[Either[Int, String]](
+    expect.parsed[Either[Int, String]](
       parseOpts(sampleUnion)("--str", "a42"),
       "a42".asRight
     )
   }
 
   pureTest("compile enum - matching") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(Superpower.schema)("Fire"),
       Fire
     )
   }
 
   pureTest("compile open string enum - known value") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("test", OpenEnumTest.schema))("ONE"),
       OpenEnumTest.ONE
     )
   }
 
   pureTest("compile open string enum - unknown value") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("test", OpenEnumTest.schema))("SOMETHING"),
       OpenEnumTest.$Unknown("SOMETHING")
     )
   }
 
   pureTest("compile open int enum - known value") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("test", OpenIntEnumTest.schema))("1"),
       OpenIntEnumTest.ONE
     )
   }
 
   pureTest("compile open int enum - unknown value") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("test", OpenIntEnumTest.schema))("123"),
       OpenIntEnumTest.$Unknown(123)
     )
   }
 
   pureTest("compile enum - not matching") {
-    assert.failureSubstring(
+    expect.failureSubstring(
       parseOpts(Superpower.schema)("Wind"),
       """Unknown value "Wind" for input superpower. Allowed values: Fire, Ice, Water"""
     )
   }
 
   pureTest("struct with required fields") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(Person.schema)("Mary", "35"),
       Person("Mary", 35)
     )
   }
 
   pureTest("struct with optional field") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(PersonOptional.schema)("Mary"),
       PersonOptional("Mary", None)
     )
   }
 
   pureTest("nested struct with required fields") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", Person.schema))(
         "--name",
         "Mary",
@@ -336,7 +336,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("deeply nested struct") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         sampleStruct(
           "input3",
@@ -354,21 +354,21 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("nested struct with optional field") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", PersonOptional.schema))("--name", "Mary"),
       PersonOptional("Mary", None)
     )
   }
 
   pureTest("nested struct with all optional fields - no arguments") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", FullyOptional.schema))(),
       FullyOptional(None, None)
     )
   }
 
   pureTest("nested struct with all optional fields - all arguments") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", FullyOptional.schema))(
         "--value1",
         "1.1",
@@ -380,14 +380,14 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("nested struct with all optional fields - first argument only") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", FullyOptional.schema))("--value1", "1.1"),
       FullyOptional(Some(1.1d), None)
     )
   }
 
   pureTest("nested struct with all optional fields - second argument only") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("input", FullyOptional.schema))("--value2", "a"),
       FullyOptional(None, Some("a"))
     )
@@ -424,7 +424,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("compile document") {
     implicit val docEq: Eq[Document] = Eq.fromUniversalEquals
 
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("document", document))(
         """{ "foo": "bar", "baz": ["a", "b"] }"""
       ),
@@ -439,14 +439,14 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile list of strings") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("list", list(string)))("a", "b", "a"),
       List("a", "b", "a")
     )
   }
 
   pureTest("compile nested list of strings") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("root", sampleStruct("items", list(string))))(
         "--items",
         "a",
@@ -460,7 +460,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile set of strings") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("set", set(string)))("a", "b", "a"),
       Set("a", "b")
     )
@@ -468,7 +468,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("compile recursive type") {
 
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("recursive", Recursive.schema))(
         """{"name": "foo", "parent": {"name": "bar"}}"""
       ),
@@ -478,7 +478,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("compile list of recursive type") {
 
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("recursive", list(Recursive.schema)))(
         """{"name": "foo", "parent": {"name": "bar"}}""",
         """{"name":"baz"}"""
@@ -491,7 +491,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("compile nested list of recursive type") {
 
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         sampleStruct("recursive", sampleStruct("items", list(Recursive.schema)))
       )(
@@ -507,7 +507,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile surjection - success") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         sampleStruct(
           "surjection",
@@ -519,7 +519,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile surjection - failure") {
-    assert.failureSubstring(
+    expect.failureSubstring(
       parseOpts(
         sampleStruct(
           "surjection",
@@ -531,7 +531,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile surjection in list - success") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(
         sampleStruct(
           "surjection",
@@ -543,7 +543,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile surjection in list - failure in one of the items") {
-    assert.failureSubstring(
+    expect.failureSubstring(
       parseOpts(
         sampleStruct(
           "surjection",
@@ -555,7 +555,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("compile map") {
-    assert.parsed(
+    expect.parsed(
       parseOpts(sampleStruct("map", map(string, int)))("""{"k": 42}"""),
       Map("k" -> 42)
     )

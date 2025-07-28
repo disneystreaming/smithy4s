@@ -28,6 +28,8 @@ object OpenOldEnumCollisionTest extends Enumeration[OpenOldEnumCollisionTest] wi
 
   val $unknown: String => OpenOldEnumCollisionTest = $Unknown(_)
 
+  def fromStringOrUnknown(s: String): OpenOldEnumCollisionTest = fromString(s).getOrElse($unknown(s))
+
   val values: List[OpenOldEnumCollisionTest] = List(
     Unknown,
   )

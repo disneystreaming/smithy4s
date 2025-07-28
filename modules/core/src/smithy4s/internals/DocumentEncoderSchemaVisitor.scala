@@ -285,6 +285,10 @@ class DocumentEncoderSchemaVisitor(
         val jsonLabel =
           schema.hints.get(JsonName).map(_.value).getOrElse(label)
         hints match {
+          // NB. just like in untagged unions
+          case _ if schema.hints.has(JsonUnknown) =>
+            self.apply(schema)
+
           case Discriminated.hint(discriminated) =>
             val unionMemberHint = DiscriminatedUnionMember(
               discriminated.value,
@@ -293,7 +297,7 @@ class DocumentEncoderSchemaVisitor(
             self.apply(schema.addHints(unionMemberHint))
           case Untagged.hint(_) => self.apply(schema)
           case _ =>
-            self.apply(schema).mapDocument(d => Document.obj(jsonLabel -> d))
+            self.apply(schema).mapDocument(_.nest(jsonLabel))
         }
       }
     }

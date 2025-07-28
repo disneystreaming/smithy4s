@@ -1,0 +1,3 @@
+# check if the app compiles.
+# if the validator throws, it's because of a bug like #336.
+> compile

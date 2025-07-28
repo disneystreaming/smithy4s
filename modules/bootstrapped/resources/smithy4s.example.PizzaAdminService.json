@@ -353,11 +353,18 @@
                         }
                     },
                     "400": {
-                        "description": "FallbackError 400 response",
+                        "description": "400 Response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/FallbackErrorResponseContent"
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/FallbackErrorResponseContent"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/FallbackError2ResponseContent"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -574,6 +581,17 @@
                     "maxLength": 10,
                     "minLength": 2
                 }
+            },
+            "FallbackError2ResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error"
+                ]
             },
             "FallbackErrorResponseContent": {
                 "type": "object",

@@ -19,7 +19,6 @@ package smithy4s.tests
 import cats.data.Chain
 import cats.effect._
 import cats.effect.std.UUIDGen
-import cats.Show
 import cats.syntax.all._
 import io.circe.Json
 import org.http4s._
@@ -209,8 +208,7 @@ abstract class PizzaClientSpec extends IOSuite {
       expected: E
   )(implicit
       loc: SourceLocation,
-      ct: scala.reflect.ClassTag[E],
-      show: Show[E] = Show.fromToString[E]
+      ct: scala.reflect.ClassTag[E]
   ) = {
     clientTest(name) { (client, backend, log) =>
       for {

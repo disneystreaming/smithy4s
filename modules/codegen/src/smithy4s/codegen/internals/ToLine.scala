@@ -18,12 +18,12 @@ package smithy4s.codegen.internals
 
 import cats.data.Chain
 import cats.implicits.toFoldableOps
+import cats.kernel.Eq
 import cats.kernel.Monoid
 
 import java.util.UUID
 
 import LineSegment._
-import cats.kernel.Eq
 
 private[internals] trait ToLine[A] {
   def render(a: A): Line

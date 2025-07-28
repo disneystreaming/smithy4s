@@ -64,6 +64,11 @@ sealed trait Document extends Product with Serializable {
       value.map { case (k, v) => k + "=" + v.show }.mkString("{", ", ", "}")
   }
 
+  /**
+    * Nests this document under the given key.
+    * The result is a single-entry Document object.
+    */
+  def nest(k: String): Document = obj(k -> this)
 }
 
 object Document {

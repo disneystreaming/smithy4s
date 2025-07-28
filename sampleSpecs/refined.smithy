@@ -4,6 +4,8 @@ namespace smithy4s.example
 
 use smithy4s.meta#refinement
 use smithy4s.meta#unwrap
+use alloy#uuidFormat
+use alloy#UUID
 
 @trait(selector: ":test(integer, member > integer)")
 @refinement(
@@ -78,6 +80,7 @@ string Name
 @unwrap
 string DogName
 
+@uuidTrait("00000000-0000-0000-0000-000000000000")
 structure StructureWithRefinedTypes {
     age: Age
     personAge: PersonAge = 1
@@ -89,6 +92,8 @@ structure StructureWithRefinedTypes {
     dogName: DogName
     @ageFormat
     inlineFieldConstraint: Integer = 1
+    uuidField: UUID = "00000000-0000-0000-0000-000000000000"
+    uuidField2: UUID = null
 }
 
 union UnionWithRefinedTypes {
@@ -100,3 +105,7 @@ structure StructureWithRefinedMember {
     @ageFormat
     otherAge: Integer
 }
+
+@uuidFormat
+@trait
+string uuidTrait

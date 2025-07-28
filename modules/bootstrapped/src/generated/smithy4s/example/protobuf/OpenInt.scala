@@ -29,6 +29,8 @@ object OpenInt extends Enumeration[OpenInt] with ShapeTag.Companion[OpenInt] {
 
   val $unknown: Int => OpenInt = $Unknown(_)
 
+  def fromIntOrUnknown(i: Int): OpenInt = fromOrdinal(i).getOrElse($unknown(i))
+
   val values: List[OpenInt] = List(
     FOO,
     BAR,

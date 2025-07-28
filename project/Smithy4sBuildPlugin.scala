@@ -25,14 +25,54 @@ case object JSPlatform extends Platform
 case object NativePlatform extends Platform
 case object JVMPlatform extends Platform
 
-case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
-    extends VirtualAxis.WeakAxis
+case class MillAxis(millVersion: String) extends VirtualAxis.WeakAxis {
+  override val idSuffix =
+    Smithy4sBuildPlugin.millPlatform(millVersion).replace('.', '_')
+  override val directorySuffix = s"mill-${idSuffix}"
+}
+
+trait CustomRow { self =>
+  def axisValues: List[VirtualAxis]
+  def process: Project => Project
+}
+
+case class MillCustomRow(mv: String) extends CustomRow {
+  def axisValues: List[VirtualAxis] =
+    List(MillAxis(mv), VirtualAxis.jvm)
+
+  def process: Project => Project = { p: Project =>
+    val millVersion = Smithy4sBuildPlugin.millPlatform(mv)
+    val suffix = millVersion.replace('.', '_')
+
+    p.settings(
+      crossVersion := CrossVersion
+        .binaryWith(s"mill${Smithy4sBuildPlugin.millPlatform(mv)}_", ""),
+      libraryDependencies ++= Seq(
+        Dependencies.Mill.main(mv),
+        Dependencies.Mill.mainApi(mv),
+        Dependencies.Mill.scalalib(mv),
+        Dependencies.Mill.mainTestkit(mv)
+      ),
+      Compile / unmanagedSourceDirectories ++=
+        Seq(
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-shared",
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}"
+        ),
+      Test / unmanagedSourceDirectories ++=
+        Seq(
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-shared",
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-${suffix}"
+        )
+    )
+  }
+
+}
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.20"
   val Scala213 = "2.13.16"
-  val Scala3 = "3.3.5"
+  val Scala3 = "3.3.6"
 
   object autoImport {
     // format: off
@@ -66,9 +106,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     def http4sPlatform(
         scalaVersions: Seq[String],
-        settings: Seq[Setting[_]]
+        jvmSettings: Seq[Setting[_]]
     ) = {
-      http4sJvmPlatform(scalaVersions, settings)
+      http4sJvmPlatform(scalaVersions, jvmSettings)
         .customRow(
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
           axisValues = Seq(VirtualAxis.js),
@@ -78,6 +118,28 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           scalaVersions = scalaVersions.filter(_.startsWith("3")),
           axisValues = Seq(VirtualAxis.native),
           _.enablePlugins(ScalaNativePlugin).settings(nativeDimSettings)
+        )
+    }
+
+    def millPlatforms(
+        scalaVersion: String,
+        millVersions: Seq[String]
+    ): ProjectMatrix = {
+      millVersions
+        .map { mv =>
+          MillCustomRow(mv)
+        }
+        .foldLeft(pm) { (m, row) =>
+          m
+            .jvmPlatform(
+              scalaVersions = List(scalaVersion),
+              axisValues = row.axisValues,
+              configure = row.process
+            )
+        }
+        .defaultAxes(
+          VirtualAxis.jvm,
+          VirtualAxis.scalaPartialVersion(scalaVersion)
         )
     }
   }
@@ -586,7 +648,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
+  val millVersions = List("0.11.13", "0.12.11")
+
   def millPlatform(millVersion: String): String = millVersion match {
+    case mv if mv.startsWith("0.12") => "0.12"
     case mv if mv.startsWith("0.11") => "0.11"
     case _                           => sys.error("Unsupported mill platform.")
   }
