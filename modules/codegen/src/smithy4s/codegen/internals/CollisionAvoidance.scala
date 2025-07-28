@@ -345,6 +345,7 @@ private[internals] object CollisionAvoidance {
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
     val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
+    val OpaqueNewtype_ = NameRef("smithy4s", "OpaqueNewtype")
     val ValidatedNewtype_ = NameRef("smithy4s", "ValidatedNewtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")

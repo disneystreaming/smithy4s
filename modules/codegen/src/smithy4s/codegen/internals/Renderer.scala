@@ -1352,11 +1352,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val trailingCalls =
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
+    val newtypeParent = if (compilationUnit.rendererConfig.opaqueNewtypes) OpaqueNewtype_ else Newtype_
+
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       renderScalaImports(hints),
-      obj(name, line"$Newtype_[$tpe]")(
+      obj(name, line"$newtypeParent[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
         line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
