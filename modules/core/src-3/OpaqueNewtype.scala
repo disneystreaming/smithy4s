@@ -16,13 +16,18 @@
 
 package smithy4s
 
-abstract class Newtype[A] extends OpaqueNewtype[A] { self =>
-  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
-    def to(a: A): Type = self.apply(a)
-    def from(t: Type): A = value(t)
-  }
-}
+abstract class OpaqueNewtype[A] extends AbstractNewtype[A] {
+  opaque type T = A
 
-object Newtype {
-  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
+  type Type = T
+
+  extension (orig: Type) def value: A = orig
+
+  def apply(a: A): OpaqueNewtype.this.Type = a
+
+  def unapply(orig: Type): Some[A] = Some(orig.value)
+
+  object hint {
+    def unapply(h: Hints): Option[Type] = h.get(tag)
+  }
 }
