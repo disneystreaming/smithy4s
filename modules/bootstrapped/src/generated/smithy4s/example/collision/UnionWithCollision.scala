@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
 sealed trait UnionWithCollision extends scala.Product with scala.Serializable { self =>
@@ -39,7 +38,7 @@ object UnionWithCollision extends ShapeTag.Companion[UnionWithCollision] {
     // constructor using the original order from the spec
     private def make(name: Option[String]): Struct = Struct(name)
 
-    val schema: Schema[Struct] = struct(
+    val schema: Schema[Struct] = smithy4s.schema.Schema.struct(
       String.schema.optional[Struct]("name", _.name),
     )(make).withId(id).addHints(hints)
 

@@ -1173,13 +1173,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def smartConstructor(alt: Alt): Lines = {
       val cn = caseName(name, alt).name
-      val ident = NameDef(uncapitalise(alt.name))
+      val ident = NameDef(uncapitalise(alt.member match {
+        case UnionMember.ProductCase(product) => product.nameDef.name
+        case _                                => alt.name
+      }))
+
       val prefix = line"def $ident"
       val constructor = alt.member match {
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args): ${product.nameRef} = ${product.nameRef}($values)"
+          line"$prefix($args): ${product.nameRef} = ${product.nameRef}($values)"
         case UnionMember.UnitCase =>
           line"$prefix(): $name = ${caseName(name, alt)}"
         case UnionMember.TypeCase(tpe) =>
