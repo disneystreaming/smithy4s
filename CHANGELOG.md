@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.41
+
+* codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
+
 # 0.18.40
 
 * codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
