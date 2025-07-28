@@ -41,26 +41,28 @@ private[internals] object Renderer {
   case class Config(
       errorsAsScala3Unions: Boolean,
       wildcardArgument: String,
-      renderOptics: Boolean
+      renderOptics: Boolean,
+      opaqueNewtypes: Boolean
   )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
-      val errorsAsScala3Unions = metadata
-        .get("smithy4sErrorsAsScala3Unions")
+      def getFlag(name: String): Boolean = metadata
+        .get(name)
         .flatMap(_.asBooleanNode().asScala)
         .map(_.getValue())
         .getOrElse(false)
+
+      val errorsAsScala3Unions = getFlag("smithy4sErrorsAsScala3Unions")
+
+      val renderOptics = getFlag("smithy4sRenderOptics")
+
+      val opaqueNewtypes = getFlag("smithy4sOpaqueNewtypes")
+
       val wildcardArgument = metadata
         .get("smithy4sWildcardArgument")
         .flatMap(_.asStringNode().asScala)
         .map(_.getValue())
         .getOrElse("_")
-
-      val renderOptics = metadata
-        .get("smithy4sRenderOptics")
-        .flatMap(_.asBooleanNode().asScala)
-        .map(_.getValue())
-        .getOrElse(false)
 
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
@@ -71,9 +73,11 @@ private[internals] object Renderer {
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
         wildcardArgument = wildcardArgument,
-        renderOptics = renderOptics
+        renderOptics = renderOptics,
+        opaqueNewtypes = opaqueNewtypes
       )
     }
+
   }
 
   def apply(unit: CompilationUnit): List[Result] = {
