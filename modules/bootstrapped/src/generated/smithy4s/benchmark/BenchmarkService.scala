@@ -27,7 +27,9 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   val id: ShapeId = ShapeId("smithy4s.benchmark", "BenchmarkService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

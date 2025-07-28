@@ -1,0 +1,250 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "BenchmarkService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/complex/{bucketName}/{key}": {
+            "post": {
+                "operationId": "CreateObject",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/S3Object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CreateObject 200 response"
+                    }
+                }
+            }
+        },
+        "/simple/{bucketName}/{key}": {
+            "post": {
+                "operationId": "SendString",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendStringInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SendString 200 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Attributes": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "string"
+                    },
+                    "public": {
+                        "type": "boolean"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "creationDate": {
+                        "type": "number"
+                    },
+                    "region": {
+                        "type": "string"
+                    },
+                    "queryable": {
+                        "type": "boolean"
+                    },
+                    "queryableLastChange": {
+                        "type": "number"
+                    },
+                    "blockPublicAccess": {
+                        "type": "boolean"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Permission"
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "backedUp": {
+                        "type": "boolean"
+                    },
+                    "metadata": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Metadata"
+                        }
+                    },
+                    "encryption": {
+                        "$ref": "#/components/schemas/Encryption"
+                    }
+                },
+                "required": [
+                    "creationDate",
+                    "public",
+                    "region",
+                    "size",
+                    "user"
+                ]
+            },
+            "Creds": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Encryption": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "number"
+                    },
+                    "metadata": {
+                        "$ref": "#/components/schemas/EncryptionMetadata"
+                    }
+                }
+            },
+            "EncryptionMetadata": {
+                "type": "object",
+                "properties": {
+                    "system": {
+                        "type": "string"
+                    },
+                    "credentials": {
+                        "$ref": "#/components/schemas/Creds"
+                    },
+                    "partial": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Metadata": {
+                "type": "object",
+                "properties": {
+                    "contentType": {
+                        "type": "string"
+                    },
+                    "lastModified": {
+                        "type": "number"
+                    },
+                    "checkSum": {
+                        "type": "string"
+                    },
+                    "pendingDeletion": {
+                        "type": "boolean"
+                    },
+                    "etag": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Permission": {
+                "type": "object",
+                "properties": {
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "write": {
+                        "type": "boolean"
+                    },
+                    "directory": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "S3Object": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "owner": {
+                        "type": "string"
+                    },
+                    "attributes": {
+                        "$ref": "#/components/schemas/Attributes"
+                    },
+                    "data": {
+                        "type": "string",
+                        "format": "byte"
+                    }
+                },
+                "required": [
+                    "attributes",
+                    "data",
+                    "id",
+                    "owner"
+                ]
+            },
+            "SendStringInputPayload": {
+                "type": "string"
+            }
+        }
+    }
+}
