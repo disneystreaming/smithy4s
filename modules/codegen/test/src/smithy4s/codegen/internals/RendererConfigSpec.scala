@@ -212,6 +212,61 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
   }
 
+  test("Renderer.Config.opaqueNewtypes = default") {
+    val smithy =
+      """
+        |$version: "2.0"
+        | 
+        |namespace smithy4s
+        |
+        |string Stringy
+        |""".stripMargin
+
+    val typeCode = generateScalaCode(smithy)("smithy4s.Stringy")
+
+    assertContainsSection(typeCode, "object Stringy")(
+      "object Stringy extends Newtype[String] {"
+    )
+  }
+
+  test("Renderer.Config.opaqueNewtypes = true") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sOpaqueNewtypes = true
+        |
+        |namespace smithy4s
+        |
+        |string Stringy
+        |""".stripMargin
+
+    val typeCode = generateScalaCode(smithy)("smithy4s.Stringy")
+
+    assertContainsSection(typeCode, "object Stringy")(
+      "object Stringy extends OpaqueNewtype[String] {"
+    )
+  }
+
+  test("Renderer.Config.opaqueNewtypes = false") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sOpaqueNewtypes = false
+        |
+        |namespace smithy4s
+        |
+        |string Stringy
+        |""".stripMargin
+
+    val typeCode = generateScalaCode(smithy)("smithy4s.Stringy")
+
+    assertContainsSection(typeCode, "object Stringy")(
+      "object Stringy extends Newtype[String] {"
+    )
+  }
+
   private def testErrorsAsUnionsDisabled(smithy: String) = {
     val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
@@ -291,4 +346,5 @@ final class RendererConfigSpec extends munit.FunSuite {
          |}""".stripMargin
     )
   }
+
 }
