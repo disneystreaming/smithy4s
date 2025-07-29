@@ -47,6 +47,11 @@ package object kernel {
     }
   }
 
+  @deprecated("use the overload with explicit rawLabels", "0.18.41")
+  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
+    fromSmithy4sHttpRequest(req, rawLabels = true)
+  }
+
   def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob], rawLabels: Boolean): Request[F] = {
     val method = unsafeFromSmithy4sHttpMethod(req.method)
     val headers = toHeaders(req.headers)
@@ -100,6 +105,11 @@ package object kernel {
         .toMap
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
+
+  @deprecated("use the overload with explicit rawLabels", "0.18.41")
+  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
+    fromSmithy4sHttpUri(uri, rawLabels = true)
+  }
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, rawLabels: Boolean): Uri = {
     val mkSegment: String => Uri.Path.Segment =
