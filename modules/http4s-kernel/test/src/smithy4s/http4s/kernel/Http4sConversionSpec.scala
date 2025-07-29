@@ -16,11 +16,11 @@
 
 package smithy4s.http4s.kernel
 
-import weaver._
-import org.http4s.syntax.all._
-import org.http4s._
 import org.http4s.Uri._
+import org.http4s._
+import org.http4s.syntax.all._
 import smithy4s.http.HttpUriScheme
+import weaver._
 
 object Http4sConversionSpec extends SimpleIOSuite {
 
@@ -91,7 +91,8 @@ object Http4sConversionSpec extends SimpleIOSuite {
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Http
-        )
+        ),
+        rawLabels = true
       ).scheme
     )
   }
@@ -102,7 +103,8 @@ object Http4sConversionSpec extends SimpleIOSuite {
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Https
-        )
+        ),
+        rawLabels = true
       ).scheme
     )
   }
@@ -114,7 +116,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
       expect.eql(
         output,
-        fromSmithy4sHttpUri(toSmithy4sHttpUri(input))
+        fromSmithy4sHttpUri(toSmithy4sHttpUri(input), rawLabels = true)
       )
     }
   }

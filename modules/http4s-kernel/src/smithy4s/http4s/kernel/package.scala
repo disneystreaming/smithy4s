@@ -16,23 +16,23 @@
 
 package smithy4s.http4s
 
+import cats.MonadThrow
+import cats.effect.Concurrent
 import cats.effect.SyncIO
 import cats.syntax.all._
+import fs2.Chunk
+import fs2.Stream
 import org.http4s._
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.Blob
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.PathParams
-import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 import smithy4s.http.{HttpMethod => Smithy4sHttpMethod}
 import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
 import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
-import cats.MonadThrow
-import cats.effect.Concurrent
-import fs2.Stream
-import fs2.Chunk
+import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 
 // scalafmt: { maxColumn = 120}
 package object kernel {
@@ -47,7 +47,7 @@ package object kernel {
     }
   }
 
-  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
+  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob], rawLabels: Boolean): Request[F] = {
     val method = unsafeFromSmithy4sHttpMethod(req.method)
     val headers = toHeaders(req.headers)
     val updatedHeaders = req.body.size match {
@@ -56,7 +56,7 @@ package object kernel {
     }
     Request(
       method,
-      fromSmithy4sHttpUri(req.uri),
+      fromSmithy4sHttpUri(req.uri, rawLabels = rawLabels),
       headers = updatedHeaders,
       body = toStream(req.body)
     )
@@ -101,8 +101,12 @@ package object kernel {
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 
-  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
-    val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment.encoded))
+  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, rawLabels: Boolean): Uri = {
+    val path = if (rawLabels) {
+      Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment.encoded))
+    } else {
+      Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)))
+    }
 
     Uri(
       path = path,

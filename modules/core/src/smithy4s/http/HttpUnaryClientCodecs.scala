@@ -17,16 +17,16 @@
 package smithy4s
 package http
 
+import smithy4s.capability.MonadThrowLike
 import smithy4s.client.UnaryClientCodecs
-import smithy4s.codecs.{BlobEncoder, BlobDecoder}
-import smithy4s.codecs.{Decoder}
-import smithy4s.codecs.Writer
+import smithy4s.codecs.BlobDecoder
+import smithy4s.codecs.BlobEncoder
+import smithy4s.codecs.Decoder
 import smithy4s.codecs.PayloadError
+import smithy4s.codecs.Writer
+import smithy4s.kinds.PolyFunction5
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
-import smithy4s.capability.MonadThrowLike
-import smithy4s.kinds.PolyFunction5
-
 // scalafmt: { maxColumn = 120 }
 object HttpUnaryClientCodecs {
 
@@ -46,7 +46,7 @@ object HttpUnaryClientCodecs {
       requestTransformation = F.pure(_),
       responseTransformation = F.pure(_),
       hostPrefixInjection = true,
-      rawHttpLabelValues = false
+      rawHttpLabelValues = true
     )
 
   trait Builder[F[_], Request, Response] {
@@ -65,6 +65,7 @@ object HttpUnaryClientCodecs {
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response]
     def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response]
+    def isRawHttpLabelValues: Boolean
     def build(): UnaryClientCodecs.Make[F, Request, Response]
   }
 
@@ -117,6 +118,8 @@ object HttpUnaryClientCodecs {
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response] = copy(hostPrefixInjection = enabled)
     override def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response] =
       copy(rawHttpLabelValues = enabled)
+
+    def isRawHttpLabelValues: Boolean = rawHttpLabelValues
 
     def build(): UnaryClientCodecs.Make[F, Request, Response] = {
       val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
