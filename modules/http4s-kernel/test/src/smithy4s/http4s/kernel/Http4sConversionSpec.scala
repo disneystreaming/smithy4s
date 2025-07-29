@@ -16,11 +16,11 @@
 
 package smithy4s.http4s.kernel
 
-import org.http4s.Uri._
-import org.http4s._
-import org.http4s.syntax.all._
-import smithy4s.http.HttpUriScheme
 import weaver._
+import org.http4s.syntax.all._
+import org.http4s._
+import org.http4s.Uri._
+import smithy4s.http.HttpUriScheme
 
 object Http4sConversionSpec extends SimpleIOSuite {
 
