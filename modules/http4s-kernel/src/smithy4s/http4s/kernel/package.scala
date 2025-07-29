@@ -102,11 +102,11 @@ package object kernel {
     }
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, rawLabels: Boolean): Uri = {
-    val path = if (rawLabels) {
-      Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment.encoded))
-    } else {
-      Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)))
-    }
+    val mkSegment: String => Uri.Path.Segment =
+      if (rawLabels) Uri.Path.Segment.apply
+      else Uri.Path.Segment.encoded
+
+    val path = Uri.Path.Root.addSegments(uri.path.map(mkSegment))
 
     Uri(
       path = path,
