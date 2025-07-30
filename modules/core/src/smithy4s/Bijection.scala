@@ -16,7 +16,7 @@
 
 package smithy4s
 
-import scala.Predef.{identity => identity0, _}
+import scala.Predef.{identity => identity0}
 
 /**
   * A bijection is an association of two opposite functions A => B and B => A.
@@ -25,13 +25,15 @@ import scala.Predef.{identity => identity0, _}
   *
   * bijection.from(bijection(input)) == input
   */
-trait Bijection[A, B] extends Function[A, B] { outer =>
+trait Bijection[A, B] { outer =>
   def to(a: A): B
   def from(b: B): A
 
   final def apply(a: A): B = to(a)
 
   def swap: Bijection[B, A] = Bijection(from, to)
+
+  def toFunction: A => B = apply
 
   final def imapFull[A0, B0](
       sourceBijection: Bijection[A, A0],
@@ -54,8 +56,10 @@ object Bijection {
   def apply[A, B](to: A => B, from: B => A): Bijection[A, B] =
     new Impl[A, B](to, from)
 
-  private case class Impl[A, B](toFunction: A => B, fromFunction: B => A)
-      extends Bijection[A, B] {
+  private case class Impl[A, B](
+      override val toFunction: A => B,
+      fromFunction: B => A
+  ) extends Bijection[A, B] {
     def to(a: A): B = toFunction(a)
     def from(b: B): A = fromFunction(b)
   }

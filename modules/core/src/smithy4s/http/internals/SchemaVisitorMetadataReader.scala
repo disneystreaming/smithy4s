@@ -250,7 +250,7 @@ private[http] class SchemaVisitorMetadataReader(
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): MetaDecode[B] = self(schema).map(bijection)
+  ): MetaDecode[B] = self(schema).map(bijection.toFunction)
 
   override def refine[A, B](
       schema: Schema[A],

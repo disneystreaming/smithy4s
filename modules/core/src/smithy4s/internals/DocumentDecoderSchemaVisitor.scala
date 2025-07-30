@@ -581,7 +581,7 @@ class DocumentDecoderSchemaVisitor(
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): DocumentDecoder[B] = apply(schema).map(bijection)
+  ): DocumentDecoder[B] = apply(schema).map(bijection.toFunction)
 
   override def refine[A, B](
       schema: Schema[A],
