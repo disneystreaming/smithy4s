@@ -56,7 +56,7 @@ class SimpleRestJsonBuilder private (
           ),
         fieldFilter,
         hostPrefixInjection,
-        rawHttpLabelValues = false
+        rawHttpLabelValues = true
       )
     }
   }
