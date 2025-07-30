@@ -27,7 +27,7 @@ object SimpleRestJsonBuilder
         jsonCodecs = Json.payloadCodecs,
         fieldFilter = FieldFilter.Default,
         hostPrefixInjection = true,
-        rawHttpLabelValues = false
+        rawHttpLabelValues = true
       )
     )
 
