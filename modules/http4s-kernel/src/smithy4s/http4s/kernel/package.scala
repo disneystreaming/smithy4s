@@ -47,12 +47,24 @@ package object kernel {
     }
   }
 
-  @deprecated("use the overload with explicit rawLabels", "0.18.41")
+  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
   def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
-    fromSmithy4sHttpRequest(req, rawLabels = true)
+    fromSmithy4sHttpRequest(req, encodePathSegments = true)
   }
 
-  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob], rawLabels: Boolean): Request[F] = {
+  /**
+    * Converts a Smithy4sHttpRequest to an http4s Request.
+    * This method allows you to specify whether path segments should be encoded.
+    * If `encodePathSegments` is true, path segments will be encoded as per the
+    * URI encoding rules of Http4s. If false, they will be treated as already encoded.
+    * @param req
+    * @param encodePathSegments
+    * @return
+    */
+  def fromSmithy4sHttpRequest[F[_]: MonadThrow](
+      req: Smithy4sHttpRequest[Blob],
+      encodePathSegments: Boolean
+  ): Request[F] = {
     val method = unsafeFromSmithy4sHttpMethod(req.method)
     val headers = toHeaders(req.headers)
     val updatedHeaders = req.body.size match {
@@ -61,7 +73,7 @@ package object kernel {
     }
     Request(
       method,
-      fromSmithy4sHttpUri(req.uri, rawLabels = rawLabels),
+      fromSmithy4sHttpUri(req.uri, encodePathSegments = encodePathSegments),
       headers = updatedHeaders,
       body = toStream(req.body)
     )
@@ -106,14 +118,14 @@ package object kernel {
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 
-  @deprecated("use the overload with explicit rawLabels", "0.18.41")
+  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
-    fromSmithy4sHttpUri(uri, rawLabels = true)
+    fromSmithy4sHttpUri(uri, encodePathSegments = true)
   }
 
-  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, rawLabels: Boolean): Uri = {
+  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, encodePathSegments: Boolean): Uri = {
     val mkSegment: String => Uri.Path.Segment =
-      if (rawLabels) Uri.Path.Segment.apply
+      if (encodePathSegments) Uri.Path.Segment.apply
       else Uri.Path.Segment.encoded
 
     val path = Uri.Path.Root.addSegments(uri.path.map(mkSegment))
