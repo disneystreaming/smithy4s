@@ -125,6 +125,8 @@ package object kernel {
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, encodePathSegments: Boolean): Uri = {
     val mkSegment: String => Uri.Path.Segment =
+      // Segment.apply will call pathEncode on the segment,
+      // which is what we want if encodePathSegments is true.
       if (encodePathSegments) Uri.Path.Segment.apply
       else Uri.Path.Segment.encoded
 
