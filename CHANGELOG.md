@@ -8,8 +8,11 @@ Thank you!
 # 0.18.41
 
 * codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
+* http4s: Revert the default behavior of URL path encoding in [#1793](https://github.com/disneystreaming/smithy4s/pull/1793)
 
-# 0.18.40
+# 0.18.40 (broken)
+
+
 
 * codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
 * core: fix [#1663](https://github.com/disneystreaming/smithy4s/issues/1663) by reworking how path segments are encoded to conform with the Smithy spec in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
