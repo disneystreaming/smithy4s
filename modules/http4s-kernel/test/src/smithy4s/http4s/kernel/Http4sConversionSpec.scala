@@ -92,7 +92,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
         aSmithy4sUri(
           scheme = HttpUriScheme.Http
         ),
-        rawLabels = true
+        encodePathSegments = true
       ).scheme
     )
   }
