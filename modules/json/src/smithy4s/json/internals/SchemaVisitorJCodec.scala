@@ -957,7 +957,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       schema: Schema[A],
       bijection: Bijection[A, B]
   ): JCodec[B] =
-    apply(schema).biject(bijection, bijection.from)
+    apply(schema).biject(bijection.toFunction, bijection.from)
 
   override def refine[A, B](
       schema: Schema[A],

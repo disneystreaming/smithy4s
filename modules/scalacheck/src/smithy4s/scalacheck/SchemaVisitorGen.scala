@@ -113,7 +113,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   }
 
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Gen[B] =
-    schema.compile(this).map(bijection)
+    schema.compile(this).map(bijection.toFunction)
 
   def refine[A, B](
       schema: Schema[A],
