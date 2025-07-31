@@ -108,7 +108,7 @@ private[aws] object AwsQueryCodecs {
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
-      .withRawHttpLabelValues(true)
+      .withSmithyPathEncoding(false)
 
   }
 

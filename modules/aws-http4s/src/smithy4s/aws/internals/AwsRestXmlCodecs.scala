@@ -43,7 +43,7 @@ private[aws] object AwsRestXmlCodecs {
       .withMetadataDecoders(Metadata.AwsDecoder)
       .withMetadataEncoders(Metadata.AwsEncoder)
       .withRawStringsAndBlobsPayloads
-      .withRawHttpLabelValues(false)
+      .withSmithyPathEncoding(true)
       .withRequestMediaType("application/xml")
   }
 

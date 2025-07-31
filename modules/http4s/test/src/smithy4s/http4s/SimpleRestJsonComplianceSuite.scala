@@ -96,7 +96,8 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
       val suppliedHost =
         testHost.map(host => Uri.unsafeFromString(s"http://$host"))
       SimpleRestJsonBuilder
-        .withRawHttpLabelValues(false)(service)
+        .withSmithyPathEncoding(true)
+        .apply(service)
         .client(Client.fromHttpApp(app))
         .uri(suppliedHost.getOrElse(baseUri))
         .resource
