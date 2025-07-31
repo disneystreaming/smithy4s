@@ -50,6 +50,9 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
   - Otherwise, it's treated as the absence of a value.
 
+## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
+Prevents using it as an implicit conversion in Scala 2
+
 # 0.18.38
 
 * core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
