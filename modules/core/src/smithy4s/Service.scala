@@ -187,7 +187,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   final def errorAware[F[_, _]](compiler: BiFunctorEndpointCompiler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](compiler)
 
   /**
-    * Allows to turn a list of endpoint handlers into an instance of [[Alg]].
+    * Allows to turn a list of endpoint handlers into an instance of `Alg``.
     */
   final def fromHandlers[F[_, _, _, _, _]](handlers: EndpointHandler[Operation, F]*): FromHandlers[F] =
     EndpointHandler.combineAll(handlers:_*).asService(this)

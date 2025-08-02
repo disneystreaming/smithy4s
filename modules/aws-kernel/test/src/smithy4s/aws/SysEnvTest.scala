@@ -23,7 +23,7 @@ object SysEnvTest extends SimpleIOSuite {
   pureTest("sysenv smoke test") {
     // This var is set in the build definition
     val envVar = SysEnv.readEnvVar("TEST_VAR")
-    assert(envVar.contains("hello"))
+    expect(envVar.contains("hello"))
   }
 
 }

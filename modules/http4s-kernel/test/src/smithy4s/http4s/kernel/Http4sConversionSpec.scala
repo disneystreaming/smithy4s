@@ -17,8 +17,9 @@
 package smithy4s.http4s.kernel
 
 import weaver._
-import org.http4s.implicits._
-import org.http4s.Uri
+import org.http4s.syntax.all._
+import org.http4s._
+import org.http4s.Uri._
 import smithy4s.http.HttpUriScheme
 
 object Http4sConversionSpec extends SimpleIOSuite {
@@ -64,53 +65,58 @@ object Http4sConversionSpec extends SimpleIOSuite {
   )
 
   pureTest("URI: http4s to smithy4s defaults to http") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Http,
       toSmithy4sHttpUri(uri"/").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps http scheme") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Http,
       toSmithy4sHttpUri(uri"http://localhost").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps https scheme") {
-    assert.same(
+    expect.same(
       smithy4s.http.HttpUriScheme.Https,
       toSmithy4sHttpUri(uri"https://localhost").scheme
     )
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.http),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Http
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.https),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Https
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
 
-  private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri) = {
+  private def http4sToSmithyAndBackUriTest(
+      input: Uri,
+      output: Uri
+  ): Unit = {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
-      assert.eql(
+      expect.eql(
         output,
-        fromSmithy4sHttpUri(toSmithy4sHttpUri(input))
+        fromSmithy4sHttpUri(toSmithy4sHttpUri(input), encodePathSegments = true)
       )
     }
   }

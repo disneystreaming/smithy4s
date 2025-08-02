@@ -10,6 +10,7 @@ structure StructureConstrainingEnum {
     @length(min: 2)
     @pattern("$aaa$")
     letter: Letters
+
     @range(max: 1)
     card: FaceCard
 }

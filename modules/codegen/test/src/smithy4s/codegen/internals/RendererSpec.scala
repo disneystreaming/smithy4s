@@ -141,6 +141,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         case Some(code) => code
       }
     val classDoc = """/** this is an enum Suit
+                     |  * 
                      |  * @param DIAMOND
                      |  *   this is a DIAMOND
                      |  * @param HAERT
@@ -218,7 +219,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     )
     assert(
       definition.contains(
-        """case object TAIL extends Coin("t:a$i\l", "TAIL", 1, Hints.empty)"""
+        """case object TAIL extends Coin(s"t:a$$i\\l", "TAIL", 1, Hints.empty)"""
       ),
       "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
     )
@@ -258,6 +259,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
         case Some(code) => code
       }
     val classDoc = """/** this is an enum Suit
+                     |  * 
                      |  * @param DIAMOND
                      |  *   this is a DIAMOND
                      |  * @param HAERT

@@ -63,3 +63,10 @@ structure HasRecursiveDiscriminatedOpenUnion {
     @required
     rec: RecursiveDiscriminatedOpenUnion
 }
+
+structure StructWithOpenUnion {
+    @required
+    union: SampleOpenUnion
+    @required
+    str: String
+}

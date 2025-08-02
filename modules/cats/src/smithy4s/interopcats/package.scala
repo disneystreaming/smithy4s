@@ -34,6 +34,12 @@ package object interopcats {
       def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
       def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A] =
         MonadThrow[F].handleErrorWith(fa)(f)
+
+      override def onError[A](
+          fa: F[A]
+      )(f: PartialFunction[Throwable, F[Unit]]): F[A] =
+        MonadThrow[F].onError(fa)(f)
+
     }
 
   implicit def monoidEndpointMiddleware[Construct]

@@ -48,37 +48,6 @@ object MimaVersionPlugin extends AutoPlugin {
     }
   }
 
-  override def buildSettings: Seq[Setting[_]] =
-    GitPlugin.autoImport.versionWithGit ++ Seq(
-      git.gitTagToVersionNumber := {
-        case ReleaseTag(version) => Some(version)
-        case _                   => None
-      },
-      git.formattedShaVersion := {
-        val suffix = git.makeUncommittedSignifierSuffix(
-          git.gitUncommittedChanges.value,
-          git.uncommittedSignifier.value
-        )
-
-        val description = Try("git describe --tags --match v*".!!.trim).toOption
-        val optDistance = description collect { case Description(distance) =>
-          distance + "-"
-        }
-
-        val distance = optDistance.getOrElse("")
-
-        git.gitHeadCommit.value map { _.substring(0, 7) } map { sha =>
-          autoImport.mimaBaseVersion.value + "-" + distance + sha + suffix
-        }
-      },
-      git.gitUncommittedChanges := Try("git status -s".!!.trim.length > 0)
-        .getOrElse(true),
-      git.gitHeadCommit := Try("git rev-parse HEAD".!!.trim).toOption,
-      git.gitCurrentTags := Try(
-        "git tag --contains HEAD".!!.trim.split("\\s+").toList.filter(_ != "")
-      ).toOption.toList.flatten
-    )
-
   override def projectSettings: Seq[Setting[_]] = Seq(
     isMimaEnabled := false,
     mimaBinaryIssueFilters ++= Seq(

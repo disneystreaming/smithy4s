@@ -95,7 +95,9 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
       val baseUri = uri"http://localhost"
       val suppliedHost =
         testHost.map(host => Uri.unsafeFromString(s"http://$host"))
-      SimpleRestJsonBuilder(service)
+      SimpleRestJsonBuilder
+        .withSmithyPathEncoding(true)
+        .apply(service)
         .client(Client.fromHttpApp(app))
         .uri(suppliedHost.getOrElse(baseUri))
         .resource
@@ -106,12 +108,15 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
     ShapeId("aws.protocoltests.restjson", "RestJson")
 
   private val pizzaSpec = ShapeId("alloy.test", "PizzaAdminService")
+  private val routingSpec = ShapeId("alloy.test.routing", "RoutingService")
 
-  override def allTests(dsi: DynamicSchemaIndex) = genClientAndServerTests(
-    SimpleRestJsonIntegration,
-    simpleRestJsonSpec,
-    pizzaSpec
-  )(dsi)
+  override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
+    genClientAndServerTests(
+      SimpleRestJsonIntegration,
+      simpleRestJsonSpec,
+      pizzaSpec,
+      routingSpec
+    )(dsi)
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {

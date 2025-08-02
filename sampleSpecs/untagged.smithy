@@ -4,16 +4,16 @@ use alloy#untagged
 
 @untagged
 union UntaggedUnion {
-  three: Three,
-  four: Four
+    three: Three
+    four: Four
 }
 
 structure Three {
-  @required
-  three: String
+    @required
+    three: String
 }
 
 structure Four {
-  @required
-  four: Integer
+    @required
+    four: Integer
 }

@@ -30,6 +30,8 @@ object OpenString extends Enumeration[OpenString] with ShapeTag.Companion[OpenSt
 
   val $unknown: String => OpenString = $Unknown(_)
 
+  def fromStringOrUnknown(s: String): OpenString = fromString(s).getOrElse($unknown(s))
+
   val values: List[OpenString] = List(
     FOO,
     BAR,

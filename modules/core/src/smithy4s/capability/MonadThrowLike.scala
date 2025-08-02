@@ -22,6 +22,12 @@ trait MonadThrowLike[F[_]] extends Zipper[F] {
   def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
   def raiseError[A](e: Throwable): F[A]
   def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A]
+  def onError[A](fa: F[A])(f: PartialFunction[Throwable, F[Unit]]): F[A] = {
+    handleErrorWith(fa) { throwable =>
+      f.andThen(flatMap(_)(_ => raiseError[A](throwable)))
+        .applyOrElse(throwable, (_: Throwable) => raiseError(throwable))
+    }
+  }
 
   final def liftEither[E <: Throwable, A](either: Either[E, A]): F[A] =
     either match {

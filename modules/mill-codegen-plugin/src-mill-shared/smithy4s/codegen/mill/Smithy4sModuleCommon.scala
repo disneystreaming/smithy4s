@@ -21,28 +21,23 @@ import mill._
 import mill.api.JarManifest
 import mill.api.PathRef
 import mill.define.Target
-import mill.scalalib.CrossVersion.Binary
-import mill.scalalib.CrossVersion.Constant
-import mill.scalalib.CrossVersion.Full
 import mill.scalalib._
 import smithy4s.codegen.BuildInfo
 import smithy4s.codegen.CodegenArgs
 import smithy4s.codegen.FileType
-import smithy4s.codegen.JarUtils
 import smithy4s.codegen.SMITHY4S_DEPENDENCIES
 import smithy4s.codegen.{Codegen => Smithy4s}
 
 import scala.util.Success
 import scala.util.Try
+import scala.annotation.nowarn
 
-trait Smithy4sModule extends ScalaModule {
+trait Smithy4sModuleCommon extends ScalaModule {
 
   val AWS = smithy4s.codegen.AwsSpecs
 
   /** Input directory for .smithy files */
-  def smithy4sInputDirs: Target[Seq[PathRef]] = T.sources {
-    Seq(PathRef(millSourcePath / "smithy"))
-  }
+  def smithy4sInputDirs: Target[Seq[PathRef]]
 
   def smithy4sOutputDir: T[PathRef] = T {
     PathRef(T.ctx().dest / "scala")
@@ -74,6 +69,7 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
   }
 
+  @nowarn("cat=deprecation")
   override def manifest: T[JarManifest] = T {
     val m = super.manifest()
     val deps = smithy4sIvyDeps().iterator.toList.flatMap {
@@ -109,14 +105,7 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
-  def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]] = T {
-    resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
-      val deps = JarUtils
-        .extractSmithy4sDependencies(pathRef.path.toIO)
-        .map(dep => ivy"$dep")
-      Agg.from(deps)
-    }
-  }
+  def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]]
 
   def smithy4sAwsSpecs: T[Seq[String]] = T {
     Seq.empty[String]
@@ -132,6 +121,7 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sAwsSpecs().map { artifactName => ivy"$org:$artifactName:$version" }
   }
 
+  @nowarn("cat=deprecation")
   def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
     val bind = bindDependency()
     transitiveIvyDeps() ++
@@ -245,18 +235,4 @@ trait Smithy4sModule extends ScalaModule {
   }
 
   override def localClasspath = super.localClasspath() :+ generatedResources()
-}
-
-object Smithy4sModule {
-  def depIdEncode(dep: Dep): Option[String] = {
-    val mod = dep.dep.module
-    val org = mod.organization.value
-    val name = mod.name.value
-    val version = dep.dep.version
-    dep.cross match {
-      case Binary(_)      => Some(s"$org::$name:$version")
-      case Constant(_, _) => Some(s"$org:$name:$version")
-      case Full(_)        => None
-    }
-  }
 }

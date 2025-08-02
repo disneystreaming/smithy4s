@@ -16,6 +16,7 @@
 
 package smithy4s.codegen.transformers
 
+import smithy4s.codegen.CodegenRecord
 import smithy4s.meta.UnwrapTrait
 import smithy4s.meta.ValidateNewtypeTrait
 import software.amazon.smithy.build.ProjectionTransformer
@@ -30,7 +31,6 @@ import software.amazon.smithy.model.traits.PatternTrait
 import software.amazon.smithy.model.traits.RangeTrait
 
 import scala.jdk.OptionConverters._
-import smithy4s.codegen.CodegenRecord
 
 class ValidatedNewtypesTransformer extends ProjectionTransformer {
 

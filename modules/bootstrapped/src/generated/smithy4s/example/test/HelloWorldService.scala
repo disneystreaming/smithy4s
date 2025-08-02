@@ -13,6 +13,7 @@ import smithy4s.schema.OperationSchema
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP POST /{name} */
   def hello(name: String): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)

@@ -17,6 +17,7 @@
 package smithy4s.xml
 
 import cats.effect.IO
+import cats.Eq
 import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
@@ -589,6 +590,9 @@ object XmlCodecSpec extends SimpleIOSuite {
             .compile
             .string
       }
+
+      implicit val xmlDocumentEq: Eq[XmlDocument] =
+        Eq.fromUniversalEquals
 
       val encodingChecks = {
         val encoded = encodeDocument(expected)

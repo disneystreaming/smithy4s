@@ -30,7 +30,10 @@ class PathSpec() extends munit.FunSuite {
   import smithy4s.schema.Schema._
   object util {
 
-    def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = {
+    def encodePathAs[A](
+        schema: Schema[A],
+        urlEncodeHttpLabelValues: Boolean
+    ): Option[PathEncode[A]] = {
       val schemaA = schema
         .addHints(
           Http(
@@ -39,10 +42,10 @@ class PathSpec() extends munit.FunSuite {
             code = 200
           )
         )
-      SchemaVisitorPathEncoder(schemaA)
+      new SchemaVisitorPathEncoder(urlEncodeHttpLabelValues)(schemaA)
     }
 
-    val simpleString = encodePathAs(string)
+    val simpleString = encodePathAs(string, urlEncodeHttpLabelValues = true)
   }
 
   test("Parse path pattern into path segments") {
@@ -137,8 +140,9 @@ class PathSpec() extends munit.FunSuite {
           code = 200
         )
       )
-    val result = SchemaVisitorPathEncoder(schema)
-      .map(_.encode(()))
+    val result =
+      new SchemaVisitorPathEncoder(urlEncodeHttpLabelValues = true)(schema)
+        .map(_.encode(()))
 
     expect.eql(
       result,
@@ -159,8 +163,9 @@ class PathSpec() extends munit.FunSuite {
           code = 200
         )
       )
-    val result = SchemaVisitorPathEncoder(schema)
-      .map(_.encode(()))
+    val result =
+      new SchemaVisitorPathEncoder(urlEncodeHttpLabelValues = true)(schema)
+        .map(_.encode(()))
 
     expect.eql(
       result,
@@ -177,14 +182,16 @@ class PathSpec() extends munit.FunSuite {
 
   test("Write PathParams for a byte") {
     expect.eql(
-      util.encodePathAs(byte).map(_.encode(42)),
+      util
+        .encodePathAs(byte, urlEncodeHttpLabelValues = true)
+        .map(_.encode(42)),
       Some(List("42"))
     )
   }
 
   test("Write PathParams for an int") {
     expect.eql(
-      util.encodePathAs(int).map(_.encode(42)),
+      util.encodePathAs(int, urlEncodeHttpLabelValues = true).map(_.encode(42)),
       Some(List("42"))
     )
   }
@@ -195,14 +202,18 @@ class PathSpec() extends munit.FunSuite {
     })
 
     expect.eql(
-      util.encodePathAs(double).map(_.encode(42.0)),
+      util
+        .encodePathAs(double, urlEncodeHttpLabelValues = true)
+        .map(_.encode(42.0)),
       expected
     )
   }
 
   test("Write PathParams for a boolean") {
     expect.eql(
-      util.encodePathAs(boolean).map(_.encode(true)),
+      util
+        .encodePathAs(boolean, urlEncodeHttpLabelValues = true)
+        .map(_.encode(true)),
       Some(List("true"))
     )
   }
@@ -211,7 +222,9 @@ class PathSpec() extends munit.FunSuite {
     val input = "example with all kinds of strange characters / \\ & "
 
     expect.eql(
-      util.simpleString.map(_.encode(input)),
+      util
+        .encodePathAs(string, urlEncodeHttpLabelValues = false)
+        .map(_.encode(input)),
       Some(List(input))
     )
   }
@@ -222,14 +235,40 @@ class PathSpec() extends munit.FunSuite {
     val input = "example/with/slashes and spaces"
 
     expect.eql(
-      util.simpleString.map(_.encodeGreedy(input)),
+      util
+        .encodePathAs(string, urlEncodeHttpLabelValues = false)
+        .map(_.encodeGreedy(input)),
       Some(List("example", "with", "slashes and spaces"))
+    )
+  }
+
+  test("Write PathParams for a string with special characters encoded") {
+    val input = "example with all kinds of_strange-characters. / \\ & ~"
+    val expected =
+      "example%20with%20all%20kinds%20of_strange-characters.%20%2F%20%5C%20%26%20~"
+
+    expect.eql(
+      util.simpleString.map(_.encode(input)),
+      Some(List(expected))
+    )
+  }
+
+  test(
+    "Write PathParams for a string greedily by splitting it on /, encoded"
+  ) {
+    val input = "example/with/slashes and spaces"
+
+    expect.eql(
+      util.simpleString.map(_.encodeGreedy(input)),
+      Some(List("example", "with", "slashes%20and%20spaces"))
     )
   }
 
   test("Write PathParams for unit as None") {
     expect.eql(
-      util.encodePathAs(unit).map(_.encode(())),
+      util
+        .encodePathAs(unit, urlEncodeHttpLabelValues = true)
+        .map(_.encode(())),
       None
     )
   }

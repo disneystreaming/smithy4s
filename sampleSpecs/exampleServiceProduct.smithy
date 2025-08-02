@@ -6,7 +6,9 @@ use smithy4s.meta#generateServiceProduct
 
 @generateServiceProduct
 service ExampleService {
-    operations: [ExampleOperation]
+    operations: [
+        ExampleOperation
+    ]
 }
 
 operation ExampleOperation {
@@ -14,6 +16,7 @@ operation ExampleOperation {
         @required
         a: String
     }
+
     output := {
         @required
         b: String

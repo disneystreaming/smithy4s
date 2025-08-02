@@ -37,7 +37,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.3.19"
+    val alloyVersion = "0.3.29"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val protobuf = org % "alloy-protobuf" % alloyVersion
@@ -46,7 +46,7 @@ object Dependencies {
 
   val Smithytranslate = new {
     val org = "com.disneystreaming.smithy"
-    val smithyTranslateVersion = "0.5.7"
+    val smithyTranslateVersion = "0.5.10"
     val proto = org %% "smithytranslate-proto" % smithyTranslateVersion
   }
 
@@ -90,12 +90,15 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.13"
-
-    val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
-    val main = "com.lihaoyi" %% "mill-main" % millVersion
-    val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
-    val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
+    def scalalib(v: String) = "com.lihaoyi" %% "mill-scalalib" % v % Provided
+    def main(v: String) = "com.lihaoyi" %% "mill-main" % v % Provided
+    def mainApi(v: String) = "com.lihaoyi" %% "mill-main-api" % v % Provided
+    def mainTestkit(v: String) =
+      if (v.startsWith("0.11")) {
+        "com.lihaoyi" %% "mill-main-testkit" % v % Test
+      } else {
+        "com.lihaoyi" %% "mill-testkit" % v % Test
+      }
   }
 
   object Pprint {
@@ -125,14 +128,14 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.8.4"
+    val weaverVersion = "0.9.0"
 
     val cats: Def.Initialize[ModuleID] =
-      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
+      Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
 
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting(
-        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion
+        "org.typelevel" %%% "weaver-scalacheck" % weaverVersion
       )
   }
 
@@ -168,6 +171,10 @@ object Dependencies {
     val name = "aws-spec-summary"
     val awsSpecSummaryVersion = "2025.04.08"
     val value = org % name % awsSpecSummaryVersion
+  }
+
+  object Mima {
+    val core = "com.typesafe" %% "mima-core" % "1.1.4"
   }
 
 }

@@ -20,6 +20,7 @@ import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation.Severity
 import software.amazon.smithy.model.validation.ValidationEvent
 import weaver._
+
 import ModelUtils._
 
 object AdtTraitValidatorSpec extends FunSuite {
@@ -56,7 +57,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test("AdtTrait - return no error when union targets the structure") {
@@ -104,7 +105,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -139,7 +140,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -180,7 +181,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -217,7 +218,7 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 
   test(
@@ -256,6 +257,6 @@ object AdtTraitValidatorSpec extends FunSuite {
       )
       .build()
 
-    assert(events.contains(expected))
+    expect(events.contains(expected))
   }
 }

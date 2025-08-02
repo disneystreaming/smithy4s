@@ -62,6 +62,17 @@ myRoutes.mapErrors{
   case e: PayloadError => MyClientError(...)
 }.resource
 ```
+ #### Observing errors 
+You can also observe errors that are raised along the route, and log them or perform some other effect. For example, you can log errors like this:
+
+```scala
+myRoutes.onError{
+  case e: PayloadError => 
+    IO.println(s"payload error logged ${e.getMessage}")
+}.resource
+```
+onError takes a partial function that matches the errors you want to observe, and returns an `IO[Unit]` that will be executed when the error occurs.
+
 
 ## Wiring the routes
 

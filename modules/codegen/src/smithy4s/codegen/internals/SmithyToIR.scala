@@ -34,6 +34,7 @@ import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.knowledge.TopDownIndex
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
@@ -42,18 +43,20 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits.TimestampFormatTrait
 import software.amazon.smithy.model.traits._
 
-import scala.annotation.nowarn
-import scala.jdk.CollectionConverters._
-
-import Type.Alias
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.util.Locale
-import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
-import scala.util.Try
+import java.time.temporal.ChronoField
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import scala.annotation.nowarn
+import scala.jdk.CollectionConverters._
+import scala.util.Try
+
+import Type.Alias
+import smithy4s.meta.BincompatFriendlyTrait
+import smithy4s.meta.BincompatAddedTrait
 
 private[codegen] object SmithyToIR {
 
@@ -139,6 +142,8 @@ private[codegen] class SmithyToIR(
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
+    // Only structure mixins should be generated
+    .filterNot { s => s.hasTrait(classOf[MixinTrait]) && !s.isStructureShape() }
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
@@ -455,17 +460,14 @@ private[codegen] class SmithyToIR(
         // Aggregates both the operations of the current entity and the ones
         // in the sub-entities.
         def recursiveOperations(
-            entity: EntityShape
-        ): List[ShapeId] = {
-          entity
-            .getAllOperations()
+            service: ServiceShape
+        ): List[ShapeId] =
+          TopDownIndex
+            .of(model)
+            .getContainedOperations(service)
             .asScala
-            .toList ++ entity.getResources().asScala.flatMap { shapeId =>
-            recursiveOperations(
-              model.expectShape(shapeId, classOf[EntityShape])
-            )
-          }
-        }
+            .map(_.getId())
+            .toList
 
         val operations = recursiveOperations(shape)
           .map(model.getShape(_).asScala)
@@ -486,14 +488,13 @@ private[codegen] class SmithyToIR(
             val streamedInput = streamedMember(op.getInputShape())
             val streamedOutput = streamedMember(op.getOutputShape())
 
-            val errorTypes = (generalErrors ++ op
-              .getErrors()
-              .asScala
-              .map(_.tpe)
-              .collect { case Some(errorType) =>
-                errorType
-              }
-              .toList).distinct
+            val errorTypes = {
+              generalErrors ++ op
+                .getErrors()
+                .asScala
+                .flatMap(_.tpe)
+                .toList
+            }.distinct
 
             val outputType =
               op.getOutputShape().tpe.getOrElse(Type.unit)
@@ -868,7 +869,7 @@ private[codegen] class SmithyToIR(
         case ShapeType.SHORT       => Node.from(0: Short)
         case ShapeType.FLOAT       => Node.from(0.0f)
         case ShapeType.BOOLEAN     => Node.from(false)
-        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BLOB        => Node.from("")
         case ShapeType.BYTE        => Node.from(0)
         case ShapeType.TIMESTAMP =>
           shape
@@ -987,6 +988,11 @@ private[codegen] class SmithyToIR(
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case _: BincompatFriendlyTrait =>
+      Hint.BincompatFriendly
+    case b: BincompatAddedTrait =>
+      Hint.BincompatAdded(VersionNumber.parse(b.getVersion()))
+
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {
@@ -996,6 +1002,13 @@ private[codegen] class SmithyToIR(
       .getTrait(classOf[DocumentationTrait])
       .asScala
       .foldMap(doc => split(doc.getValue()))
+    val httpDocs = shape
+      .getTrait(classOf[HttpTrait])
+      .asScala
+      .map { http =>
+        List(s"HTTP ${http.getMethod} ${http.getUri.toString}")
+      }
+      .getOrElse(List.empty)
     def getMemberDocs(shape: Shape): Map[String, List[String]] =
       shape match {
         case _: UnionShape => Map.empty
@@ -1027,8 +1040,11 @@ private[codegen] class SmithyToIR(
       }
 
     val memberDocs = getMemberDocs(shape)
-    if (shapeDocs.nonEmpty || memberDocs.nonEmpty) {
-      Some(Hint.Documentation(shapeDocs, memberDocs))
+    val protocolSpecific = List(httpDocs).filter(_.nonEmpty)
+    if (
+      shapeDocs.nonEmpty || memberDocs.nonEmpty || protocolSpecific.nonEmpty
+    ) {
+      Some(Hint.Documentation(shapeDocs, memberDocs, protocolSpecific))
     } else None
   }
 
