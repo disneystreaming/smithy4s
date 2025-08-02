@@ -90,3 +90,26 @@ We **do not** use [Scalameta](https://scalameta.org/) to render code. This is mo
 Instead, we use a small DSL utilizing the `line` and `lines` string interpolators.
 
 **Note:** `CollisionAvoidance` is a separate phase, but some further sanitization happens in `Renderer` itself, such as the handling of naming conflicts within the generated code (resolved by using fully-qualified references rather than imports).
+
+## Feedback loop for codegen changes
+
+When working on new features / bugfixes in the code generator, it's useful to see your changes reflected live
+in real Scala files, and see what the compiler thinks about them.
+
+This is one of the reasons we have the `bootstrapped` module: it contains code generated from the Smithy files in the `sampleSpecs` directory (as long as their namespaces are included in the module's `allowedNamespaces`).
+
+These generated files are checked in (which means Git knows about them and you should commit all the changes that are made to them), and we have a build step that validates that **they are in sync with the codegen's output**.
+
+You can run the codegen in a loop that watches your inputs and updates the bootstrapped files every time, with:
+
+```bash
+sbt ~bootstrapped/managedSources
+```
+
+Or just run the `bootstrapped/managedSources` task in sbt whenever you see fit. In order to compile these, replace `managedSources` with `compile`.
+
+These generated files also exist so that you can use them in tests: `bootstrapped/test` will run these.
+
+As a rule of thumb, if you're fixing a bug or adding a feature that can be seen in existing bootstrapped code (e.g. you're changing the rendering of Scaladoc in a big way), you don't need to add anything new to the Smithy inputs. You should, however, add a test in `RenderingSpec` to ensure your changes aren't overlooked later.
+
+If the case you're handling needs new files to be showcased - add them first. This will give you an easy way to showcase how the code changes after you improve the codegen. Find a `sampleSpecs` file/namespace that fits your usecase, or create a new one.
