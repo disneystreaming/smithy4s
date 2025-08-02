@@ -979,7 +979,7 @@ private[codegen] class SmithyToIR(
       Hint.ScalaImports(s.getImports().asScala.toList)
     case _: ValidateNewtypeTrait =>
       Hint.ValidateNewtype
-    case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
+    case _: TraitDefinition =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
     case _: BincompatFriendlyTrait =>
