@@ -140,7 +140,6 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
     expect.eql(showOutput, "12:24:48")
   }
 
-  // TODO: For duration should show, show it as seconds.nanos format or the default `toString` for duration?
   test("duration ") {
     val schema: Schema[Duration] = duration
     val foo = 1.day

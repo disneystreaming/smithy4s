@@ -1670,15 +1670,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
+        ts => line"$timestamp_(${ts.getEpochSecond()}L, ${ts.getNano()})"
       case Primitive.LocalDate =>
-        date => line"${NameRef("smithy4s", "LocalDate")}(${date.toEpochDay()})"
+        date => line"$localdate_(${date.toEpochDay()})"
       case Primitive.LocalTime =>
-        time => line"${NameRef("smithy4s", "LocalTime")}(${time.toSecondOfDay()}, ${time.getNano()})"
+        time => line"$localtime_(${time.toSecondOfDay()}, ${time.getNano()})"
       case Primitive.OffsetDateTime =>
-        time => line"""${NameRef("smithy4s", "OffsetDateTime")}(${time.toEpochSecond()}, ${time.getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
+        time => line"""$offsetdatetime_(${time.toEpochSecond()}, ${time.getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
       case Primitive.Duration =>
-        duration => line"${NameRef("scala.concurrent.duration", "Duration")}(${renderStringLiteral(duration.toString)})"
+        duration => line"$duration_(${renderStringLiteral(duration.toString)})"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {

@@ -20,7 +20,7 @@ import scalajs.js.Date
 
 private[smithy4s] trait LocalDateCompanionPlatform {
 
-  /** JVM platform only method */
+  /** JS platform only method */
   def fromDate(x: Date): LocalDate = {
     val year = x.getFullYear().toInt
     val month = x.getMonth().toInt + 1
