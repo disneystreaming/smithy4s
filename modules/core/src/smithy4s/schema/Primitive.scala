@@ -20,6 +20,7 @@ package schema
 import smithy.api.TimestampFormat
 import smithy4s.http.HttpBinding
 import smithy4s.kinds.PolyFunction
+import smithy4s.time._
 import scala.concurrent.duration.Duration
 
 sealed trait Primitive[T] {

@@ -14,16 +14,26 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-private[smithy4s] trait TimestampCompanionPlatform {
+import scalajs.js.Date
+import scala.concurrent.duration.DurationInt
 
-  def nowUTC(): Timestamp = {
-    val currentMillis = System.currentTimeMillis
-    Timestamp(
-      (currentMillis / 1000).toLong,
-      (currentMillis % 1000).toInt * 100000
+private[time] trait OffsetDateTimeCompanionPlatform {
+
+  def fromDate(x: Date): OffsetDateTime = {
+    OffsetDateTime(
+      x.getFullYear().toInt,
+      x.getMonth().toInt + 1,
+      x.getDate().toInt,
+      x.getHours().toInt,
+      x.getMinutes().toInt,
+      x.getSeconds().toInt,
+      x.getMilliseconds().toInt * 100000,
+      x.getTimezoneOffset().toInt.minutes
     )
   }
+
+  def now(): OffsetDateTime = fromDate(new Date())
 
 }

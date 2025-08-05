@@ -21,7 +21,7 @@ import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Blob}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -29,6 +29,7 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema._
 import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.UUID
 import scala.concurrent.duration.Duration
@@ -76,10 +77,10 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   ): Argument[Timestamp] = {
     val format = formatOpt.getOrElse(TimestampFormat.EPOCH_SECONDS)
     Argument.from("timestamp") { s =>
-      smithy4s.Timestamp
+      Timestamp
         .parse(s, format)
         .toValidNel(
-          s"""Invalid timestamp "$s" for input ${fieldName.value}. Expected format: ${smithy4s.Timestamp
+          s"""Invalid timestamp "$s" for input ${fieldName.value}. Expected format: ${Timestamp
             .showFormat(format)}"""
         )
     }

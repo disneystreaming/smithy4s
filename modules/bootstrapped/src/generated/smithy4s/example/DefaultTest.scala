@@ -8,7 +8,6 @@ import smithy4s.Nullable.Null
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.Timestamp
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.byte
 import smithy4s.schema.Schema.bytes
@@ -21,6 +20,7 @@ import smithy4s.schema.Schema.short
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
+import smithy4s.time.Timestamp
 
 final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), nineteen: Nullable[Int] = Null, twenty: Nullable[Int] = Null, four: Option[List[String]] = None, five: Option[String] = None, six: Option[Int] = None, seven: Option[Document] = None, eight: Option[Map[String, String]] = None, nine: Option[Short] = None, ten: Option[Double] = None, eleven: Option[Float] = None, twelve: Option[Long] = None, thirteen: Option[Timestamp] = None, fourteen: Option[Timestamp] = None, fifteen: Option[Timestamp] = None, sixteen: Option[Byte] = None, seventeen: Option[Blob] = None, eighteen: Option[Boolean] = None)
 

@@ -17,13 +17,14 @@
 package smithy4s.interopcats
 
 import cats.Show
-import smithy4s.{Blob, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, ShapeId}
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.interopcats.testcases.IntOrString._
+import smithy4s.time._
 import java.util.UUID
 import scala.concurrent.duration.{Duration, DurationInt}
 

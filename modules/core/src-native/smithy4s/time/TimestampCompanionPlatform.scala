@@ -14,19 +14,16 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws
+package smithy4s.time
 
-package object kernel {
+private[time] trait TimestampCompanionPlatform {
 
-  type Timestamp = smithy4s.time.Timestamp
-  val Timestamp = smithy4s.time.Timestamp
-
-  val AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
-  val AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"
-  val AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN"
-  val AWS_PROFILE = "AWS_PROFILE"
-  val `X-Amzn-Errortype` = "X-Amzn-Errortype"
-
-  type AwsRegion = AwsRegion.Type
+  def nowUTC(): Timestamp = {
+    val currentMillis = System.currentTimeMillis
+    Timestamp(
+      (currentMillis / 1000).toLong,
+      (currentMillis % 1000).toInt * 100000
+    )
+  }
 
 }

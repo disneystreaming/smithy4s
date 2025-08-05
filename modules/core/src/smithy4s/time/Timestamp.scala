@@ -14,13 +14,15 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
 import smithy.api.TimestampFormat
-import scalajs.js.Date
-import scala.util.control.{NoStackTrace, NonFatal}
 
-case class Timestamp private (epochSecond: Long, nano: Int) {
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
+
+case class Timestamp private (epochSecond: Long, nano: Int)
+    extends TimestampPlatform {
 
   def epochMilli: Long = epochSecond * 1000 + nano / 1000000
 
@@ -38,14 +40,6 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   def conciseDateTime: String = formatToString(3)
 
   def conciseDate: String = formatToString(2)
-
-  /** JS platform only method */
-  def toDate: Date = {
-    // The 0 there is the key, which sets the date to the epoch
-    val date = new Date(0)
-    date.setUTCSeconds(epochSecond.toDouble + (nano / 1000000000.0))
-    date
-  }
 
   /**
     * @return a copy of this timestamp truncated to a miliseconds precision
@@ -130,48 +124,54 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
       s: java.lang.StringBuilder,
       addSeparator: Boolean
   ): Unit = {
-    val minutesOfDay = secsOfDay / 60
-    val hour = minutesOfDay / 60
-    val minute = minutesOfDay - hour * 60
-    val second = secsOfDay - minutesOfDay * 60
+    val y1 =
+      secsOfDay * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
+    val y2 = (y1 & 0xffffffffL) * 60
+    val y3 = (y2 & 0xffffffffL) * 60
 
     if (addSeparator) {
-      TimeUtil.append2Digits(hour, s)
-      TimeUtil.append2Digits(minute, s.append(':'))
-      TimeUtil.append2Digits(second, s.append(':'))
+      TimeUtil.append2Digits((y1 >> 32).toInt, s)
+      TimeUtil.append2Digits((y2 >> 32).toInt, s.append(':'))
+      TimeUtil.append2Digits((y3 >> 32).toInt, s.append(':'))
     } else {
-      TimeUtil.append2Digits(hour, s)
-      TimeUtil.append2Digits(minute, s)
-      TimeUtil.append2Digits(second, s)
+      TimeUtil.append2Digits((y1 >> 32).toInt, s)
+      TimeUtil.append2Digits((y2 >> 32).toInt, s)
+      TimeUtil.append2Digits((y3 >> 32).toInt, s)
     }
   }
 
   private[this] def appendNano(nano: Int, s: java.lang.StringBuilder): Unit =
     if (nano != 0) {
-      s.append('.')
-      val q1 = nano / 10000000
-      val r1 = nano - q1 * 10000000
-      TimeUtil.append2Digits(q1, s)
-      val q2 = r1 / 100000
-      val r2 = r1 - q2 * 100000
-      val d = TimeUtil.digits(q2)
-      s.append(d.toByte.toChar)
-      if (r2 != 0 || d > 0x3039) { // check if nano is divisible by 1000000
-        s.append((d >> 8).toByte.toChar)
-        val q3 = r2 / 1000
-        val r3 = r2 - q3 * 1000
-        TimeUtil.append2Digits(q3, s)
-        if (r3 != 0) { // check if nano is divisible by 1000
-          TimeUtil.append3Digits(r3, s)
+      val y1 =
+        nano * 1441151881L // Based on James Anhalt's algorithm for 9 digits: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
+      val y2 = (y1 & 0x1ffffffffffffffL) * 100
+      s.append('.').append(((y1 >>> 57).toInt + '0').toChar)
+      TimeUtil.append2Digits((y2 >>> 57).toInt, s)
+      if ((y2 & 0x1fffff800000000L) != 0) { // check if nano is divisible by 1000000
+        val y3 = (y2 & 0x1ffffffffffffffL) * 100
+        val y4 = (y3 & 0x1ffffffffffffffL) * 100
+        TimeUtil.append2Digits((y3 >>> 57).toInt, s)
+        val d = TimeUtil.digits((y4 >>> 57).toInt)
+        s.append((d & 0xff).toChar)
+        if ((y4 & 0x1ff000000000000L) != 0 || d > 0x3039) { // check if nano is divisible by 1000
+          TimeUtil.append2Digits(
+            ((y4 & 0x1ffffffffffffffL) * 100 >>> 57).toInt,
+            s.append((d >> 8).toChar)
+          )
         }
       }
     }
-
 }
 
-object Timestamp {
+object Timestamp extends TimestampCompanionPlatform {
 
   val epoch = Timestamp(0, 0)
+
+  def fromEpochMilli(epochMilli: Long): Timestamp = {
+    val secs = java.lang.Math.floorDiv(epochMilli, 1000)
+    val mos = java.lang.Math.floorMod(epochMilli, 1000)
+    Timestamp(secs, (mos * 1000000).toInt)
+  }
 
   def apply(epochSecond: Long, nano: Int): Timestamp = {
     require(
@@ -212,17 +212,6 @@ object Timestamp {
   }
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
-  def fromEpochMilli(epochMilli: Long): Timestamp = {
-    Timestamp(
-      (epochMilli / 1000),
-      (epochMilli % 1000).toInt * 1000000
-    )
-  }
-
-  /** JS platform only method */
-  def fromDate(x: Date): Timestamp = fromEpochMilli(x.valueOf().toLong)
-
-  def nowUTC(): Timestamp = fromDate(new Date())
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     new Some(format match {

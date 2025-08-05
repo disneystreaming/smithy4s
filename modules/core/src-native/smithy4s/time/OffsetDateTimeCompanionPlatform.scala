@@ -14,6 +14,19 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-private[smithy4s] trait TimestampPlatform
+import scala.concurrent.duration.Duration
+
+private[time] trait OffsetDateTimeCompanionPlatform  {
+
+  def now(): OffsetDateTime = {
+    val currentMillis = System.currentTimeMillis
+
+    OffsetDateTime(
+      (currentMillis / 1000).toLong,
+      (currentMillis % 1000).toInt * 100000,
+      Duration.Zero
+    )
+  }
+}

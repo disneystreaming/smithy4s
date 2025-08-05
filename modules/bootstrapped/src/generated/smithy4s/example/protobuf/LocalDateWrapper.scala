@@ -1,12 +1,12 @@
 package smithy4s.example.protobuf
 
 import smithy4s.Hints
-import smithy4s.LocalDate
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.localdate
 import smithy4s.schema.Schema.struct
+import smithy4s.time.LocalDate
 
 final case class LocalDateWrapper(localDate: Option[LocalDate] = None, compactLocalDate: Option[LocalDate] = None)
 

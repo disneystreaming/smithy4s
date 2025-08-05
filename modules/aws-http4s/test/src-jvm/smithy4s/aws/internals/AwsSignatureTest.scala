@@ -25,7 +25,7 @@ import org.http4s.Request
 import org.http4s.Uri
 import org.scalacheck.Gen
 import org.typelevel.ci.CIString
-import smithy4s.Timestamp
+import smithy4s.time.Timestamp
 import smithy4s.aws.kernel.AwsCredentials
 import smithy4s.aws.kernel.AwsRegion
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials

@@ -24,16 +24,13 @@ import cats.kernel.Eq
 import smithy4s.ShapeId
 import smithy.api.JsonName
 import java.util.UUID
-import smithy4s.Timestamp
 import smithy4s.Blob
 import smithy.api.Length
 import smithy4s.Newtype
 import smithy.api.Pattern
 import smithy4s.Service
 import scala.io.Source
-import smithy4s.LocalDate
-import smithy4s.LocalTime
-import smithy4s.OffsetDateTime
+import smithy4s.time._
 
 import scala.concurrent.duration.Duration
 

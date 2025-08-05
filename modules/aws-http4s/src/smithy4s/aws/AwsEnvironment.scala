@@ -21,7 +21,7 @@ import cats.effect.Temporal
 import cats.syntax.all._
 import fs2.io.file.Files
 import org.http4s.client.Client
-import smithy4s.Timestamp
+import smithy4s.time.Timestamp
 import smithy4s.Endpoint
 
 // scalafmt: {maxColumn = 120}

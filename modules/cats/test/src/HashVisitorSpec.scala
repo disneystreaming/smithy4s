@@ -19,11 +19,12 @@ package smithy4s.interopcats
 import cats.Hash
 import smithy4s.schema.Schema._
 import smithy4s.schema.Schema
-import smithy4s.{Blob, Hints, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, Hints, ShapeId}
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
 import smithy4s.interopcats.testcases.IntOrString._
 import smithy4s.interopcats.testcases.IntOrInt
+import smithy4s.time._
 import weaver.FunSuite
 import scala.util.hashing.MurmurHash3.productSeed
 import HashTestUtils._

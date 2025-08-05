@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
 import scala.util.control.{NoStackTrace, NonFatal}
 import scala.concurrent.duration.{Duration , DurationInt}

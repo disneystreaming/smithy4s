@@ -14,26 +14,19 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import java.time.{OffsetDateTime => JOffsetDateTime}
-import scala.concurrent.duration.DurationInt
+import scalajs.js.Date
 
-private[smithy4s] trait OffsetDateTimeCompanionPlatform {
+private[time] trait TimestampPlatform { self: Timestamp =>
 
-  /** JVM platform only method */
-  def fromJava(x: JOffsetDateTime): OffsetDateTime = {
-    OffsetDateTime(
-      x.getYear(),
-      x.getMonthValue(),
-      x.getDayOfMonth(),
-      x.getHour(),
-      x.getMinute(),
-      x.getSecond(),
-      x.getNano(),
-      x.getOffset().getTotalSeconds.seconds
-    )
+  /** JS platform only method */
+  def toDate: Date = {
+    // The 0 there is the key, which sets the date to the epoch
+    val date = new Date(0)
+    date.setUTCSeconds(epochSecond.toDouble + (nano / 1000000000.0))
+    date
   }
 
-  def now(): OffsetDateTime = fromJava(JOffsetDateTime.now())
+
 }

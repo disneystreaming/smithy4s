@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
+import smithy4s.time._
 import scala.concurrent.duration.Duration
 
 private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
@@ -68,6 +69,13 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
+  ): Option[E] = None
+
+  def enumeration[E](
+      shapeId: smithy4s.ShapeId,
+      hints: smithy4s.Hints,
+      tag: smithy4s.schema.EnumTag[E],
+      values: List[smithy4s.schema.EnumValue[E]]
   ): Option[E] = None
 
   def struct[S](

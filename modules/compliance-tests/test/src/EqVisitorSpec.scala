@@ -20,7 +20,8 @@ import cats.kernel.Eq
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
-import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, Enumeration, Hints, ShapeId}
+import smithy4s.time._
 import weaver.{Expectations, FunSuite}
 import scala.concurrent.duration.Duration
 

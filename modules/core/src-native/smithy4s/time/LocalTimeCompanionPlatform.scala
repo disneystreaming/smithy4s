@@ -14,19 +14,22 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws
+package smithy4s.time
 
-package object kernel {
+private[time] trait LocalTimeCompanionPlatform {
 
-  type Timestamp = smithy4s.time.Timestamp
-  val Timestamp = smithy4s.time.Timestamp
+  def now(): LocalTime = {
+    val currentMillis = System.currentTimeMillis
+    val epochSecond = currentMillis / 1000
+    val nanos = (currentMillis % 1000).toInt * 100000
 
-  val AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
-  val AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"
-  val AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN"
-  val AWS_PROFILE = "AWS_PROFILE"
-  val `X-Amzn-Errortype` = "X-Amzn-Errortype"
+    val epochDay =
+      (if (epochSecond >= 0) epochSecond
+       else epochSecond - 86399) / 86400 
 
-  type AwsRegion = AwsRegion.Type
+    val secsOfDay = (epochSecond - epochDay * 86400).toInt
+
+    LocalTime(secsOfDay, nanos)
+  }
 
 }

@@ -24,6 +24,7 @@ import java.time.{OffsetDateTime => JOffsetDateTime, _}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.scalacheck.Prop._
+import smithy4s.time.Timestamp
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 

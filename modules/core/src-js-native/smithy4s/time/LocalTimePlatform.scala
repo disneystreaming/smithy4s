@@ -14,15 +14,6 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import java.time.{LocalDate => JLocalDate}
-
-private[smithy4s] trait LocalDateCompanionPlatform {
-
-  /** JVM platform only method */
-  def fromJava(x: JLocalDate): LocalDate =
-    LocalDate(x.toEpochDay())
-
-  def now(): LocalDate = LocalDate(JLocalDate.now().toEpochDay())
-}
+private[time] trait LocalTimePlatform

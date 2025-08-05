@@ -27,7 +27,7 @@ import org.http4s.dsl.io._
 import org.http4s.HttpApp
 import org.typelevel.ci.CIString
 import smithy4s.example._
-import smithy4s.Timestamp
+import smithy4s.time.Timestamp
 import weaver._
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.RawErrorResponse

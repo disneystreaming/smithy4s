@@ -17,7 +17,8 @@
 package smithy4s.interopcats.instances
 
 import cats.{Eq, Hash}
-import smithy4s.{Blob, ShapeId, Timestamp, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, ShapeId}
+import smithy4s.time._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Primitive
 import scala.concurrent.duration.Duration

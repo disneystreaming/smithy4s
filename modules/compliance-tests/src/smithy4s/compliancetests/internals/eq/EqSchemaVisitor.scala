@@ -21,6 +21,7 @@ import cats.kernel.Eq
 import cats.syntax.all._
 import smithy4s._
 import smithy4s.schema.{Schema, _}
+import smithy4s.time._
 import scala.concurrent.duration.Duration
 
 import java.util.UUID

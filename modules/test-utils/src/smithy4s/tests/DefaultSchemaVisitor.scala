@@ -28,6 +28,7 @@ import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
+import smithy4s.time._
 import scala.concurrent.duration.Duration
 
 object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>

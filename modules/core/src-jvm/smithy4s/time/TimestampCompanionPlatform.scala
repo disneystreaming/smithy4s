@@ -14,19 +14,21 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-private[smithy4s] trait LocalDateCompanionPlatform {
+import java.time.Instant
+import java.time.{OffsetDateTime => JOffsetDateTime}
 
-  def now(): LocalDate = {
-    val currentMillis = System.currentTimeMillis
-    val epochSecond = currentMillis / 1000
+private[time] trait TimestampCompanionPlatform {
 
-    val epochDay =
-      (if (epochSecond >= 0) epochSecond
-       else epochSecond - 86399) / 86400 
+  /** JVM platform only method */
+  def fromInstant(x: Instant): Timestamp =
+    Timestamp(x.getEpochSecond, x.getNano)
 
-    LocalDate(epochDay)
-  }
+  /** JVM platform only method */
+  def fromOffsetDateTime(x: JOffsetDateTime): Timestamp =
+    Timestamp(x.toInstant.getEpochSecond, x.getNano)
+
+  def nowUTC(): Timestamp = fromInstant(Instant.now())
 
 }

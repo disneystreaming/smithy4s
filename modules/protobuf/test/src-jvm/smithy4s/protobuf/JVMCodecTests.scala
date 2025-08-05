@@ -19,16 +19,12 @@ package smithy4s.protobuf
 import munit._
 import smithy4s.Blob
 import smithy4s.Document
-import smithy4s.Timestamp
-import smithy4s.LocalDate
-import smithy4s.LocalTime
-import smithy4s.OffsetDateTime
+import smithy4s.time._
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
 import scala.concurrent.duration.Duration
 
 import java.util.UUID
-// import java.time.{LocalTime, Duration, OffsetDateTime}
 
 // A few tests utilising java code-generated classes that ScalaPB doesn't have a pure scala version of.
 class JVMCodecTests() extends FunSuite {
@@ -157,7 +153,7 @@ class JVMCodecTests() extends FunSuite {
       localDate1.toString(),
       Some(
         alloy.protobuf.types.CompactLocalDate(
-          localDate2.epochDay
+          localDate2.epochDay.toInt
         )
       )
     )

@@ -88,7 +88,7 @@ private[internals] object ToLine {
       case Primitive.Blob       => NameRef("smithy4s", "Blob")
       case Primitive.Bool       => scalaP("Boolean")
       case Primitive.String     => javaP("String")
-      case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
+      case Primitive.Timestamp  => NameRef("smithy4s.time", "Timestamp")
       case Primitive.Byte       => scalaP("Byte")
       case Primitive.Int        => scalaP("Int")
       case Primitive.Short      => scalaP("Short")
@@ -100,10 +100,10 @@ private[internals] object ToLine {
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
-      case Primitive.LocalDate    => NameRef("smithy4s", "LocalDate")
-      case Primitive.LocalTime    => NameRef("smithy4s", "LocalTime")
+      case Primitive.LocalDate    => NameRef("smithy4s.time", "LocalDate")
+      case Primitive.LocalTime    => NameRef("smithy4s.time", "LocalTime")
       case Primitive.Duration    => NameRef("scala.concurrent.duration", "Duration")
-      case Primitive.OffsetDateTime    => NameRef("smithy4s", "OffsetDateTime")
+      case Primitive.OffsetDateTime    => NameRef("smithy4s.time", "OffsetDateTime")
     }
   }
 }

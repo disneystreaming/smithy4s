@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2021-2025 Disney Streaming
  *
@@ -14,13 +15,13 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import java.time.{LocalTime => JLocalTime}
+import scalajs.js.Date
 
-private[smithy4s] trait LocalTimePlatform { self: LocalTime =>
+private[time] trait TimestampCompanionPlatform {
 
-  /** JVM platform only method */
-  def toJava: JLocalTime = JLocalTime.ofSecondOfDay(seconds.toLong).plusNanos(nano.toLong)
+  def fromDate(x: Date): Timestamp = Timestamp.fromEpochMilli(x.valueOf().toLong)
 
+  def nowUTC(): Timestamp = fromDate(new Date())
 }

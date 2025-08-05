@@ -18,7 +18,8 @@ package smithy4s.compliancetests.internals.eq
 
 import cats.implicits.{catsSyntaxEq, toContravariantOps}
 import cats.kernel.Eq
-import smithy4s.{Blob, Document, Timestamp, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, Document}
+import smithy4s.time._
 import cats.kernel.instances.StaticMethods
 import scala.concurrent.duration.Duration
 

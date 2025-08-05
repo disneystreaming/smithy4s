@@ -5,12 +5,12 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.Timestamp
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
 import smithy4s.schema.Schema.unit
+import smithy4s.time.Timestamp
 
 /** Just a dummy service to ensure that the rendered services compile
   * when testing core

@@ -21,11 +21,8 @@ import cats.Id
 
 import java.util.UUID
 import smithy4s.schema._
-import smithy4s.Timestamp
+import smithy4s.time._
 import smithy4s.Blob
-import smithy4s.LocalDate
-import smithy4s.LocalTime
-import smithy4s.OffsetDateTime
 import smithy4s.schema.Primitive._
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import scala.concurrent.duration.Duration

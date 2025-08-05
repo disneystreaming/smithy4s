@@ -21,6 +21,7 @@ import org.scalacheck._
 import smithy.api.TimestampFormat
 import scalajs.js.Date
 import org.scalacheck.Prop._
+import smithy4s.time.Timestamp
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 

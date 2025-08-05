@@ -30,6 +30,7 @@ import alloy.JsonUnknown
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
+import smithy4s.time.Timestamp
 import scala.util.Try
 import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList

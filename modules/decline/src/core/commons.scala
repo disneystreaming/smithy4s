@@ -20,9 +20,10 @@ import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{Blob, ConstraintError, Document, Schema, LocalDate, LocalTime, OffsetDateTime}
+import smithy4s.{Blob, ConstraintError, Document, Schema}
 import cats.implicits._
 import cats.MonadError
+import smithy4s.time._
 
 import java.util.Base64
 import java.time.format.DateTimeFormatter

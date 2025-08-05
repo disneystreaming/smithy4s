@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-private[smithy4s] object TimeUtil {
+private[time] object TimeUtil {
   def append4Digits(x: Int, s: java.lang.StringBuilder): Unit = {
     val q = x * 5243 >> 19 // divide a 4-digit positive int by 100
     append2Digits(q, s)

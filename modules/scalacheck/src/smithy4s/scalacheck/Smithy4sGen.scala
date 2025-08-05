@@ -2,6 +2,7 @@ package smithy4s
 package scalacheck
 
 import org.scalacheck.Gen
+import smithy4s.time._
 
 import scala.concurrent.duration.DurationInt
 

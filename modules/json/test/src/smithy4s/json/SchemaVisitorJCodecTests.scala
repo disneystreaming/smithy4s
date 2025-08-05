@@ -38,6 +38,7 @@ import smithy4s.example.Three
 import smithy4s.example.UntaggedUnion
 import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 import smithy4s.schema.Schema._
+import smithy4s.time._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try

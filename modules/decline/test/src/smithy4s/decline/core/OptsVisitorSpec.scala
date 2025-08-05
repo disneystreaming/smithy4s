@@ -24,10 +24,7 @@ import smithy.api.Length
 import smithy.api.TimestampFormat
 import smithy4s.Document
 import smithy4s.Hints
-import smithy4s.Timestamp
-import smithy4s.LocalDate
-import smithy4s.LocalTime
-import smithy4s.OffsetDateTime
+import smithy4s.time._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._

@@ -32,6 +32,7 @@ import alloy.Nullable
 import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
+import smithy4s.time._
 import smithy4s.schema.Primitive._
 
 import scala.collection.compat.immutable.ArraySeq

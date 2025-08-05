@@ -14,19 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import scala.concurrent.duration.Duration
+import scalajs.js.Date
 
-private[smithy4s] trait OffsetDateTimeCompanionPlatform  {
+private[time] trait LocalTimeCompanionPlatform {
 
-  def now(): OffsetDateTime = {
-    val currentMillis = System.currentTimeMillis
+  def fromDate(x: Date): LocalTime = {
+    val hours = x.getHours().toInt
+    val minutes = x.getMinutes().toInt
+    val seconds = x.getSeconds().toInt
+    val nano = x.getMilliseconds().toInt * 100000
 
-    OffsetDateTime(
-      (currentMillis / 1000).toLong,
-      (currentMillis % 1000).toInt * 100000,
-      Duration.Zero
-    )
+    LocalTime(hours, minutes, seconds, nano)
   }
+
+  def now(): LocalTime = fromDate(new Date())
 }

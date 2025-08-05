@@ -19,7 +19,7 @@ package http.internals
 
 import cats.syntax.all._
 import smithy4s.Schema
-import smithy4s.Timestamp
+import smithy4s.time.Timestamp
 import smithy4s.example.HeadersStruct
 import smithy4s.example.HeadersWithDefaults
 import smithy4s.example.PathParams

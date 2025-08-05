@@ -29,6 +29,7 @@ import smithy4s.capability.Covariant
 import smithy4s.codecs._
 import smithy4s.schema.Primitive._
 import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.Base64
 import java.util.UUID

@@ -31,9 +31,7 @@ import smithy4s.Document.DNull
 import smithy4s.Document.DNumber
 import smithy4s.Document.DObject
 import smithy4s.Document.DString
-import smithy4s.LocalDate
-import smithy4s.LocalTime
-import smithy4s.OffsetDateTime
+import smithy4s.time._
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.IntEnum

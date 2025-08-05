@@ -14,20 +14,15 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import scalajs.js.Date
+import java.time.{LocalTime => JLocalTime}
 
-private[smithy4s] trait LocalTimeCompanionPlatform {
+private[time] trait LocalTimeCompanionPlatform {
 
-  def fromDate(x: Date): LocalTime = {
-    val hours = x.getHours().toInt
-    val minutes = x.getMinutes().toInt
-    val seconds = x.getSeconds().toInt
-    val nano = x.getMilliseconds().toInt * 100000
+  /** JVM platform only method */
+  def fromJava(x: JLocalTime): LocalTime =
+    LocalTime(x.getSecond(), x.getNano())
 
-    LocalTime(hours, minutes, seconds, nano)
-  }
-
-  def now(): LocalTime = fromDate(new Date())
+  def now(): LocalTime = fromJava(JLocalTime.now())
 }

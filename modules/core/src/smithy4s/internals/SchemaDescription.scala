@@ -19,6 +19,7 @@ package internals
 
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema._
+import smithy4s.time._
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   // format: off

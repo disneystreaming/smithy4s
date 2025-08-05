@@ -23,7 +23,7 @@ import smithy4s.Document
 import smithy4s.Document._
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
-import smithy4s.Timestamp
+import smithy4s.time._
 import smithy4s.Blob
 import smithy4s.codecs.PayloadError
 
@@ -84,6 +84,10 @@ object CanonicalSmithyDecoder {
               ((value - epochSeconds) * 1000000000).toInt
             )
         }
+      case PLocalDate => ???
+      case PLocalTime => ???
+      case PDuration => ???
+      case POffsetDateTime => ???
       case PBlob =>
         from("Base64 binary blob") { case DString(string) =>
           Blob(string)

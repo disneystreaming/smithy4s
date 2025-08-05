@@ -21,6 +21,7 @@ import smithy4s._
 import smithy4s.schema.Schema._
 import java.util.UUID
 import smithy4s.example.OpenEnumTest
+import smithy4s.time.Timestamp
 
 final class StructurePatternRefinementProviderSpec extends FunSuite {
 

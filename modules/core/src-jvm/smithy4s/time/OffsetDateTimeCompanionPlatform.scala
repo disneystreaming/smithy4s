@@ -14,6 +14,26 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-private[smithy4s] trait LocalTimePlatform
+import java.time.{OffsetDateTime => JOffsetDateTime}
+import scala.concurrent.duration.DurationInt
+
+private[time] trait OffsetDateTimeCompanionPlatform {
+
+  /** JVM platform only method */
+  def fromJava(x: JOffsetDateTime): OffsetDateTime = {
+    OffsetDateTime(
+      x.getYear(),
+      x.getMonthValue(),
+      x.getDayOfMonth(),
+      x.getHour(),
+      x.getMinute(),
+      x.getSecond(),
+      x.getNano(),
+      x.getOffset().getTotalSeconds.seconds
+    )
+  }
+
+  def now(): OffsetDateTime = fromJava(JOffsetDateTime.now())
+}

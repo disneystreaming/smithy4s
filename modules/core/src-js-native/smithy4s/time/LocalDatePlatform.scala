@@ -14,15 +14,6 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.time
 
-import java.time.{LocalTime => JLocalTime}
-
-private[smithy4s] trait LocalTimeCompanionPlatform {
-
-  /** JVM platform only method */
-  def fromJava(x: JLocalTime): LocalTime =
-    LocalTime(x.getSecond(), x.getNano())
-
-  def now(): LocalTime = fromJava(JLocalTime.now())
-}
+private[time] trait LocalDatePlatform

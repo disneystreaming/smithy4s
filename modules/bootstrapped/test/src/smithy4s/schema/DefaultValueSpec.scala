@@ -19,6 +19,7 @@ package schema
 
 import munit._
 import smithy.api.TimestampFormat
+import smithy4s.time.Timestamp
 import java.time.Instant
 
 final class DefaultValueSpec extends FunSuite {

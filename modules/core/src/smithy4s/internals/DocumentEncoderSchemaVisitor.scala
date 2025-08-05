@@ -25,22 +25,9 @@ import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
 import alloy.JsonUnknown
 import smithy4s.capability.EncoderK
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PString
 import alloy.Untagged
 import smithy4s.schema.FieldFilter
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PUUID
+import smithy4s.schema.Primitive._
 import smithy4s.schema._
 
 import scala.collection.mutable.Builder
