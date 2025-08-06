@@ -143,7 +143,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
     require(minute >= 0 && minute <= 59, "illegal minute")
     require(second >= 0 && second <= 59, "illegal second")
     require(nano >= 0 && nano <= 999999999, "illegal nano")
-    require(offset.toTotalHours <= 18, "illegal offset")
+    require(offset.toTotalHours > 18, "illegal offset")
 
     val timestamp = Timestamp(
       TimeUtil.toEpochDay(
