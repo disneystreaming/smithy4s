@@ -16,8 +16,6 @@
 
 package smithy4s.time
 
-import scala.concurrent.duration.Duration
-
 private[time] trait OffsetDateTimeCompanionPlatform  {
 
   def now(): OffsetDateTime = {
@@ -26,7 +24,7 @@ private[time] trait OffsetDateTimeCompanionPlatform  {
     OffsetDateTime(
       (currentMillis / 1000).toLong,
       (currentMillis % 1000).toInt * 100000,
-      Duration.Zero
+      ZoneOffset.Zero
     )
   }
 }

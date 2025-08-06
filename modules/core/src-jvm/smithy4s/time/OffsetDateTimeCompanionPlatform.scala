@@ -17,7 +17,6 @@
 package smithy4s.time
 
 import java.time.{OffsetDateTime => JOffsetDateTime}
-import scala.concurrent.duration.DurationInt
 
 private[time] trait OffsetDateTimeCompanionPlatform {
 
@@ -31,7 +30,7 @@ private[time] trait OffsetDateTimeCompanionPlatform {
       x.getMinute(),
       x.getSecond(),
       x.getNano(),
-      x.getOffset().getTotalSeconds.seconds
+      ZoneOffset(x.getOffset().getTotalSeconds)
     )
   }
 

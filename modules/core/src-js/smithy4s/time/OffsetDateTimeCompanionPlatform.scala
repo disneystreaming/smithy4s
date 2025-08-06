@@ -17,7 +17,6 @@
 package smithy4s.time
 
 import scalajs.js.Date
-import scala.concurrent.duration.DurationInt
 
 private[time] trait OffsetDateTimeCompanionPlatform {
 
@@ -30,7 +29,8 @@ private[time] trait OffsetDateTimeCompanionPlatform {
       x.getMinutes().toInt,
       x.getSeconds().toInt,
       x.getMilliseconds().toInt * 100000,
-      x.getTimezoneOffset().toInt.minutes
+      // getTimezoneOffset returns the offset in minutes so need to adjust it into seconds
+      ZoneOffset(x.getTimezoneOffset().toInt * 60)
     )
   }
 

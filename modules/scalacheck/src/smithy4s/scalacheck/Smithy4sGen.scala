@@ -4,15 +4,13 @@ package scalacheck
 import org.scalacheck.Gen
 import smithy4s.time._
 
-import scala.concurrent.duration.DurationInt
-
 private[scalacheck] object Smithy4sGen {
 
   private val year = Gen.chooseNum(1900, 2100)
   private val month = Gen.chooseNum(1, 12)
   private val hour = Gen.chooseNum(0, 23)
   val minute, second = Gen.chooseNum(0, 59)
-  val offset = Gen.chooseNum(-18, 18).map(_.hours)
+  val offset = Gen.chooseNum(-18, 18).map(hours => ZoneOffset(hours * 3600))
 
   private def isLeap(year: Int) =
     (year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0)

@@ -18,7 +18,7 @@ package smithy4s.time
 
 import scala.util.control.{NoStackTrace, NonFatal}
 
-case class LocalDate private (epochDay: Long)
+case class LocalDate private(epochDay: Long)
     extends LocalDatePlatform {
 
   def isAfter(other: LocalDate): Boolean = {

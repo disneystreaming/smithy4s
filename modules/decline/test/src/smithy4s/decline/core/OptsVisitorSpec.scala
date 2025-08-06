@@ -458,7 +458,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("offsetDatetime") {
     expect.parsed(
       parseOpts(sampleStruct("offsetdatetime", offsetdatetime))("2025-07-22T13:14:28.123456-07:00"),
-      OffsetDateTime(2025, 7, 22, 13, 14, 28, 123456000, -7.hours)
+      OffsetDateTime(2025, 7, 22, 13, 14, 28, 123456000, ZoneOffset.hours(-7))
     )
   }
 

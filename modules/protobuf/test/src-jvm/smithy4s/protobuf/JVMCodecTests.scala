@@ -203,9 +203,9 @@ class JVMCodecTests() extends FunSuite {
   }
 
   // TODO: update smithy-translate to convert offsetdate time with RFC39999 hint to a string instead of timestamp
-  test("OffsetDateTime") {
-    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, Duration.Zero)
-    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, Duration.Zero)
+  test("OffsetDateTime".only) {
+    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.Zero)
+    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.Zero)
 
     val offsetDateTimes = protobuf.OffsetDateTimeWrapper(
       Some(offsetDateTime1),
@@ -228,13 +228,21 @@ class JVMCodecTests() extends FunSuite {
       )
     )
 
+    println("1")
     val bytes = protoOffsetDateTimes.toByteArray
     val codec = ProtobufCodec.fromSchema(protobuf.OffsetDateTimeWrapper.schema)
 
+    println("2")
+    println(protoOffsetDateTimes)
+    println(bytes)
+
     val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    println("3")
 
     val encoded = codec.writeBlob(offsetDateTimes)
 
+    println("4")
     val parsedRoundTrip = protobuf.protobuf.OffsetDateTimeWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, offsetDateTimes)

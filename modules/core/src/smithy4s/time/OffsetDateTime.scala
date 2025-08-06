@@ -17,9 +17,8 @@
 package smithy4s.time
 
 import scala.util.control.{NoStackTrace, NonFatal}
-import scala.concurrent.duration.{Duration , DurationInt}
 
-case class OffsetDateTime private (timestamp: Timestamp, offset: Duration) {
+case class OffsetDateTime private (timestamp: Timestamp, offset: ZoneOffset) {
   override def toString: String = {
     val s = new java.lang.StringBuilder(32)
     val epochSecond = timestamp.epochSecond
@@ -56,12 +55,7 @@ case class OffsetDateTime private (timestamp: Timestamp, offset: Duration) {
     TimeUtil.append2Digits(day, s.append('-'))
     appendTime(secsOfDay, s.append('T'), addSeparator = true)
     appendNano(nano, s)
-
-    if (offset == Duration.Zero) {
-      s.append('Z')
-    } else {
-      appendOffset(s)
-    }
+    s.append(offset.toString())
 
     s.toString
   }
@@ -84,20 +78,6 @@ case class OffsetDateTime private (timestamp: Timestamp, offset: Duration) {
       TimeUtil.append2Digits((y1 >> 32).toInt, s)
       TimeUtil.append2Digits((y2 >> 32).toInt, s)
       TimeUtil.append2Digits((y3 >> 32).toInt, s)
-    }
-  }
-
-  private[this] def appendOffset(s: java.lang.StringBuilder): Unit = {
-    if (offset == Duration.Zero) {
-      val _ = s.append('Z')
-    } else {
-      val sign = if (offset < Duration.Zero) '-' else '+'
-      val hours = Math.abs(offset.toSeconds) * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
-      val minutes = (hours & 0xffffffffL) * 60
-
-      s.append(sign)
-      TimeUtil.append2Digits((hours >> 32).toInt, s)
-      TimeUtil.append2Digits((minutes >> 32).toInt, s.append(':'))
     }
   }
 
@@ -126,15 +106,15 @@ case class OffsetDateTime private (timestamp: Timestamp, offset: Duration) {
 
 object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
 
-  val epoch = OffsetDateTime(Timestamp.epoch, Duration.Zero)
+  val epoch = OffsetDateTime(Timestamp.epoch, ZoneOffset.Zero)
 
-  def fromEpochMilli(epochMilli: Long, offset: Duration): OffsetDateTime = {
+  def fromEpochMilli(epochMilli: Long, offset: ZoneOffset): OffsetDateTime = {
     val secs = java.lang.Math.floorDiv(epochMilli, 1000)
     val mos = java.lang.Math.floorMod(epochMilli, 1000)
     OffsetDateTime(Timestamp(secs, (mos * 1000000).toInt), offset)
   }
 
-  def apply(seconds: Long, nano: Int, offset: Duration): OffsetDateTime = {
+  def apply(seconds: Long, nano: Int, offset: ZoneOffset): OffsetDateTime = {
     OffsetDateTime(Timestamp(seconds, nano), offset)
   }
 
@@ -146,7 +126,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
       minute: Int = 0,
       second: Int = 0,
       nano: Int = 0,
-      offset: Duration = Duration.Zero
+      offset: ZoneOffset = ZoneOffset.Zero
   ): OffsetDateTime = {
     require(year >= 0 && year <= 9999, "illegal year")
     require(month >= 1 && month <= 12, "illegal month")
@@ -158,7 +138,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
     require(minute >= 0 && minute <= 59, "illegal minute")
     require(second >= 0 && second <= 59, "illegal second")
     require(nano >= 0 && nano <= 999999999, "illegal nano")
-    require(offset.toHours <= 18, "illegal offset")
+    require(offset.toTotalHours <= 18, "illegal offset")
 
     val timestamp = Timestamp(
       TimeUtil.toEpochDay(
@@ -271,6 +251,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
         }
       }
     }
+    println("parsing offset")
     var offset = 0 
     if (ch != 'Z') {
       val isNeg = ch == '-' || (ch != '+' && {
@@ -319,7 +300,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
     if (pos != len) error()
 
     val timestamp = Timestamp(epochSecond, nano)
-    new OffsetDateTime(timestamp, offset.seconds)
+    new OffsetDateTime(timestamp, ZoneOffset(offset))
   }
 
   private[this] def error(): Throwable = throw new RuntimeException

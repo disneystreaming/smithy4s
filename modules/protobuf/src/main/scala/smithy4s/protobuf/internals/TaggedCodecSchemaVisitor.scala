@@ -101,10 +101,28 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       case PDuration => 
         durationSchema.compile(this)
       case POffsetDateTime => 
+        println("IN HERE WHOOOOO")
         if (hints.get(ProtoOffsetDateTimeFormat).contains(ProtoOffsetDateTimeFormat.PROTOBUF)) {
+          println("parsing PROTOBUF")
+          try {
           compactOffsetDateTimeSchema.compile(this)
+          } catch {
+            case x: Throwable => {
+              println(s"protobuf error $x")
+              throw(x)
+            }
+          }
         } else {
-          wrapLen(StringCodec).imap(OffsetDateTime.parseUnsafe(_), _.toString())
+          println("parsing String")
+          try {
+            wrapLen(StringCodec).imap(OffsetDateTime.parseUnsafe(_), _.toString())
+          } catch {
+            case x: Throwable => {
+              println(s"string error $x")
+              throw(x)
+            }
+          }
+
         }
     }
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
@@ -149,13 +167,12 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       Schema.string.addHints(ProtoIndex(3))
     )
     .biject { (offsetTriple: (Long, Int, String)) =>
-        val (seconds, nanos, _) = offsetTriple
-        // TODO: parse zoneStr into an offset
-        OffsetDateTime(seconds, nanos, Duration.Zero)
+        val (seconds, nanos, offsetString) = offsetTriple
+        val offset = ZoneOffset.parseUnsafe(offsetString)
+        OffsetDateTime(seconds, nanos, offset)
     }{ offsetDateTime =>
-      // TODO: parse offset into a string
       val timestamp = offsetDateTime.timestamp
-      (timestamp.epochSecond, timestamp.nano, "")
+      (timestamp.epochSecond, timestamp.nano, offsetDateTime.offset.toString)
     }
 
   private val protoTimestampSchema = Schema

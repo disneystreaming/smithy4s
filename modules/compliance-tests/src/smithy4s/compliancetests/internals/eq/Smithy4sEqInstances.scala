@@ -41,6 +41,7 @@ trait Smithy4sEqInstances {
     x == y || (x.isNaN && y.isNaN)
   implicit val localDateEq: Eq[LocalDate] = Eq[Long].contramap(_.epochDay)
   implicit val localTimeEq: Eq[LocalTime] = Eq[Long].contramap(_.toNanoOfDay)
+  implicit val zoneOffsetEq: Eq[ZoneOffset] = Eq[Int].contramap(_.seconds)
   implicit val durationEq:  Eq[Duration] = (x: Duration, y: Duration) => 
     x.compareTo(y) == 0
 
