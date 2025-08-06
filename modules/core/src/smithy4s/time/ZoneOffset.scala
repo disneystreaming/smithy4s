@@ -22,9 +22,6 @@ case class ZoneOffset private (seconds: Int) {
   def toTotalHours = Math.abs(seconds) * 1193047L
 
   override def toString: String = {
-    if (seconds == 0) {
-      "Z"
-    } else {
       val s = new java.lang.StringBuilder(32)
 
       val sign = if (seconds < 0) '-' else '+'
@@ -36,7 +33,6 @@ case class ZoneOffset private (seconds: Int) {
       TimeUtil.append2Digits((minutes >> 32).toInt, s.append(':'))
 
       s.toString()
-    }
   }
 }
 
@@ -68,6 +64,7 @@ object ZoneOffset {
 
     if (pos + 2 > len) error()
 
+    pos += 1
     var offsetTotal = {
       val ch0 = s.charAt(pos)
       val ch1 = s.charAt(pos + 1)
@@ -75,6 +72,7 @@ object ZoneOffset {
       pos += 2
       ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     } * 3600
+
     if (
       pos + 3 <= len && {
         ch = s.charAt(pos)

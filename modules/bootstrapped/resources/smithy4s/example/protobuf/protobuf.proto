@@ -6,8 +6,6 @@ import "google/protobuf/wrappers.proto";
 
 import "alloy/protobuf/types.proto";
 
-import "google/protobuf/timestamp.proto";
-
 message Integers {
   int32 int = 1;
   sint32 sint = 2;
@@ -166,6 +164,6 @@ message DurationWrapper {
 }
 
 message OffsetDateTimeWrapper {
-  google.protobuf.Timestamp string = 1;
+  string string = 1;
   alloy.protobuf.CompactOffsetDateTime compact = 2;
 }

@@ -81,6 +81,7 @@ object LocalTime extends LocalTimeCompanionPlatform {
 
 
   def parseUnsafe(s: String): LocalTime = {
+    println(s"parsing localTime $s")
     val len = s.length
     if (len < 8) error()
     var pos = 0

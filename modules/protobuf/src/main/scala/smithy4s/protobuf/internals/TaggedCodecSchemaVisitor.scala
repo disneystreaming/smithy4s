@@ -92,7 +92,6 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
           wrapLen(StringCodec).imap(LocalDate.parseUnsafe(_), _.toString())
         }
       case PLocalTime => 
-
         if (hints.has(ProtoCompactLocalTime)) {
           compactLocalTime.compile(this)
         } else {
@@ -101,28 +100,10 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       case PDuration => 
         durationSchema.compile(this)
       case POffsetDateTime => 
-        println("IN HERE WHOOOOO")
         if (hints.get(ProtoOffsetDateTimeFormat).contains(ProtoOffsetDateTimeFormat.PROTOBUF)) {
-          println("parsing PROTOBUF")
-          try {
           compactOffsetDateTimeSchema.compile(this)
-          } catch {
-            case x: Throwable => {
-              println(s"protobuf error $x")
-              throw(x)
-            }
-          }
         } else {
-          println("parsing String")
-          try {
-            wrapLen(StringCodec).imap(OffsetDateTime.parseUnsafe(_), _.toString())
-          } catch {
-            case x: Throwable => {
-              println(s"string error $x")
-              throw(x)
-            }
-          }
-
+          wrapLen(StringCodec).imap(OffsetDateTime.parseUnsafe(_), _.toString())
         }
     }
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying

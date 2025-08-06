@@ -55,9 +55,14 @@ case class OffsetDateTime private (timestamp: Timestamp, offset: ZoneOffset) {
     TimeUtil.append2Digits(day, s.append('-'))
     appendTime(secsOfDay, s.append('T'), addSeparator = true)
     appendNano(nano, s)
-    s.append(offset.toString())
+    if (offset.seconds == 0) {
+      s.append('Z')
+    } else {
+      s.append(offset.toString())
+    }
 
-    s.toString
+    val result = s.toString
+    result
   }
 
   private[this] def appendTime(
@@ -251,7 +256,6 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
         }
       }
     }
-    println("parsing offset")
     var offset = 0 
     if (ch != 'Z') {
       val isNeg = ch == '-' || (ch != '+' && {
