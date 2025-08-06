@@ -59,29 +59,25 @@ class UnionJsonBenchmark {
     regularCodec.decoders.fromSchema(Schema[SampleOpenUnion])
 
   val lenientStrJson =
-    """
-    {
+    """{
         "str": "foo",
         "u": null
     }"""
 
   val lenientUnknownJson =
-    """
-    {
+    """{
         "struct": null,
         "u": null,
         "foo": {"bar": "baz"}
     }"""
 
   val regularStrJson =
-    """
-    {
+    """{
         "str": "foo"
     }"""
 
   val regularUnknownJson =
-    """
-    {
+    """{
         "foo": {"bar": "baz"}
     }"""
 
