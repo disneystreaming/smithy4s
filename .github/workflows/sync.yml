@@ -1,0 +1,34 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '0 * * * *' # every hour
+  workflow_dispatch:     # allows manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          ref: series/0.18  # or your default branch
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Add upstream and fetch
+        run: |
+          git remote add upstream https://github.com/disneystreaming/smithy4s.git
+          git fetch upstream
+
+      - name: Rebase onto upstream/main
+        run: |
+          git checkout series/0.18
+          git rebase upstream/series/0.18
+
+      - name: Push changes
+        run: |
+          git push origin series/0.18 --force-with-lease
