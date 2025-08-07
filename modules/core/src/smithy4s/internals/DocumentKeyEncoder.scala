@@ -25,6 +25,7 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
+import smithy4s.time.DurationOps._
 
 trait DocumentKeyEncoder[A] { self =>
   def apply(a: A): String
@@ -87,7 +88,7 @@ object DocumentKeyEncoder {
           case PDocument => None
           case PLocalDate => asString
           case PLocalTime => asString
-          case PDuration => asString
+          case PDuration => forBigDecimal { dur => dur.toBigDecimal }
           case POffsetDateTime => asString
         }
       }

@@ -38,7 +38,6 @@ import scala.collection.immutable.ListMap
 import alloy.Untagged
 import alloy.JsonUnknown
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.duration.Duration
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -171,15 +170,14 @@ class DocumentDecoderSchemaVisitor(
         LocalDate.parseUnsafe(string)
       }
     case PLocalTime =>
-      from("LocalTime") { case DString(string) =>
+      fromUnsafe("LocalTime") { case DString(string) =>
         LocalTime.parseUnsafe(string)
       }
     case PDuration =>
-      from("Duration") { case DString(string) =>
-        Duration(string)
+      from("Duration") { case FlexibleNumber(bd) => DurationOps.fromBigDecimal(bd)
       }
     case POffsetDateTime => 
-      from("OffsetDateTime") { case DString(string) =>
+      fromUnsafe("OffsetDateTime") { case DString(string) =>
         OffsetDateTime.parseUnsafe(string)
       }
   }

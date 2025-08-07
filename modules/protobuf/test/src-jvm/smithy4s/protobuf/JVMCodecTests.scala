@@ -203,8 +203,8 @@ class JVMCodecTests() extends FunSuite {
   }
 
   test("OffsetDateTime") {
-    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.Zero)
-    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.Zero)
+    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.hours(-7))
+    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.hours(7))
 
     val offsetDateTimes = protobuf.OffsetDateTimeWrapper(
       Some(offsetDateTime1),
@@ -217,7 +217,7 @@ class JVMCodecTests() extends FunSuite {
         alloy.protobuf.types.CompactOffsetDateTime(
           offsetDateTime2.timestamp.epochSecond,
           offsetDateTime2.timestamp.nano,
-          "+00:00"
+          "+07:00"
         )
       )
     )

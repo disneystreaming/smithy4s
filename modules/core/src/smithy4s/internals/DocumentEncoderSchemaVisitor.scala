@@ -29,6 +29,7 @@ import alloy.Untagged
 import smithy4s.schema.FieldFilter
 import smithy4s.schema.Primitive._
 import smithy4s.schema._
+import smithy4s.time.DurationOps._
 
 import scala.collection.mutable.Builder
 
@@ -129,7 +130,7 @@ class DocumentEncoderSchemaVisitor(
     case PString   => from(DString(_))
     case PLocalDate => from(localDate => DString(localDate.toString()))
     case PLocalTime => from(localTime => DString(localTime.toString()))
-    case PDuration => from(duration => DString(duration.toString()))
+    case PDuration => from(duration => DNumber(duration.toBigDecimal))
     case POffsetDateTime => from (offsetDateTime => DString(offsetDateTime.toString()))
   }
 

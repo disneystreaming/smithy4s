@@ -787,6 +787,15 @@ private[codegen] class SmithyToIR(
       def bigDecimalShape(x: BigDecimalShape): Option[Type] = x match {
         case shape if shape.getId() == durationShapeId =>
           Type.PrimitiveType(Primitive.Duration).some
+        case T.durationSecondsFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.Duration),
+              isUnwrapped = false
+            )
+            .some
         case _ =>
           primitive(x, "smithy.api#BigDecimal", Primitive.BigDecimal)
       }
@@ -820,6 +829,24 @@ private[codegen] class SmithyToIR(
               isUnwrapped = false
             )
             .some
+        case T.localDateFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.LocalDate),
+              isUnwrapped = false
+            )
+            .some
+        case T.localTimeFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.LocalTime),
+              isUnwrapped = false
+            )
+            .some
         case _ =>
           primitive(x, "smithy.api#String", Primitive.String)
       }
@@ -848,6 +875,15 @@ private[codegen] class SmithyToIR(
       def timestampShape(x: TimestampShape): Option[Type] = x match {
         case shape if shape.getId() == offsetDateTimeShapeId =>
           Type.PrimitiveType(Primitive.OffsetDateTime).some
+        case T.offsetDateTimeFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.OffsetDateTime),
+              isUnwrapped = false
+            )
+            .some
         case _ => primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
       }
 

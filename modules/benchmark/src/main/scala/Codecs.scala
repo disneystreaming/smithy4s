@@ -28,7 +28,7 @@ object Circe {
 
   implicit val blobEncoder: Encoder[Blob] =
     Encoder.encodeString.contramap[Blob](_.toBase64String)
-
+ 
   implicit val timestampDecoder: Decoder[Timestamp] =
     Decoder.decodeLong.map(Timestamp(_, 0))
 

@@ -79,6 +79,10 @@ package object example {
     */
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type Menu = smithy4s.example.Menu.Type
+  type MyDuration = smithy4s.example.MyDuration.Type
+  type MyLocalDate = smithy4s.example.MyLocalDate.Type
+  type MyLocalTime = smithy4s.example.MyLocalTime.Type
+  type MyOffsetDateTime = smithy4s.example.MyOffsetDateTime.Type
   type Name = smithy4s.example.Name.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type

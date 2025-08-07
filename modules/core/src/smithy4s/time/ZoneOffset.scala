@@ -19,7 +19,7 @@ package smithy4s.time
 import scala.util.control.{NoStackTrace, NonFatal}
 
 case class ZoneOffset private (seconds: Int) {
-  def toTotalHours = Math.abs(seconds) * 1193047L
+  def toTotalHours: Int = Math.abs(seconds) / 3600
 
   override def toString: String = {
       val s = new java.lang.StringBuilder(32)

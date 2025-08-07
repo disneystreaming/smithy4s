@@ -27,7 +27,6 @@ import smithy4s.time._
 
 import java.util.Base64
 import java.util.UUID
-import scala.concurrent.duration.Duration
 
 trait DocumentKeyDecoder[A] { self =>
   def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =
@@ -132,14 +131,13 @@ object DocumentKeyDecoder {
           case PLocalDate => fromUnsafe(shortDesc) { case DString(string) =>
             LocalDate.parseUnsafe(string)
           }
-
-          case PLocalTime => from(shortDesc) { case DString(string) =>
+          case PLocalTime => fromUnsafe(shortDesc) { case DString(string) =>
             LocalTime.parseUnsafe(string)
           }
-          case PDuration => from(shortDesc) { case DString(string) =>
-            Duration(string)
+          case PDuration => fromUnsafe(shortDesc) { case FlexibleNumber(bd) => 
+            DurationOps.fromBigDecimal(bd)
           }
-          case POffsetDateTime => from(shortDesc) { case DString(string) =>
+          case POffsetDateTime => fromUnsafe(shortDesc) { case DString(string) =>
             OffsetDateTime.parseUnsafe(string)
           }
         }

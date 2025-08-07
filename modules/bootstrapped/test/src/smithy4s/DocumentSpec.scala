@@ -25,18 +25,23 @@ import smithy4s.example.SampleOpenUnion
 import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
 import smithy4s.example.StructForDiscrimination
 import smithy4s.example.SampleOpenDiscriminatedUnion
+import smithy4s.example.LocalDateStructure
+import smithy4s.example.LocalTimeStructure
+import smithy4s.example.OffsetDateTimeStructure
+import smithy4s.example.DurationStructure
 import alloy.Discriminated
 import alloy.JsonUnknown
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import smithy4s.example.TimestampOperationInput
-import smithy4s.time.Timestamp
+import smithy4s.time._
 import scala.util.Try
 import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList
 import munit._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
+import scala.concurrent.duration._
 
 class DocumentSpec() extends ScalaCheckSuite {
 
@@ -1489,6 +1494,78 @@ class DocumentSpec() extends ScalaCheckSuite {
     assertPF.lift
       .apply(a)
       .getOrElse(Assertions.fail("Value did not match the expected pattern"))
+  }
+
+  private def testRoundtrip[T](input: T, document: Document)(implicit schema: Schema[T]) = {
+    val documentResult = Document.encode(input)
+
+    expect.same(documentResult, document)
+
+    val decodeResult = Document.decode[T](document)
+
+    expect.same(decodeResult, Right(input))
+  }
+
+  test("Document codec - localDate") {
+    val structure = 
+      LocalDateStructure(
+        LocalDate(2025, 8, 9),
+        smithy4s.example.MyLocalDate(LocalDate(2024, 9, 10))
+      )
+    val document = 
+      Document.obj(
+        "localDate" -> Document.fromString("2025-08-09"),
+        "localDate2" -> Document.fromString("2024-09-10")
+      )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - localTime") {
+    val structure = 
+        LocalTimeStructure(
+          LocalTime(13, 30, 9),
+          smithy4s.example.MyLocalTime(LocalTime(18, 9, 10))
+        )
+
+    val document = 
+        Document.obj(
+          "localTime" -> Document.fromString("13:30:09"),
+          "localTime2" -> Document.fromString("18:09:10")
+        )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - offsetDateTime") {
+    val structure = 
+        OffsetDateTimeStructure(
+          OffsetDateTime(2025, 7, 8, 13, 30, 9, 0, ZoneOffset.hours(-7)),
+          smithy4s.example.MyOffsetDateTime(OffsetDateTime(2025, 9, 10, 18, 9, 10, 0, ZoneOffset.hours(6)))
+        )
+
+    val document = Document.obj(
+      "offsetDateTime" -> Document.fromString("2025-07-08T13:30:09-07:00"),
+      "offsetDateTime2" -> Document.fromString("2025-09-10T18:09:10+06:00")
+    )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - duration") {
+    val structure = 
+      DurationStructure(
+        1.day,
+        smithy4s.example.MyDuration(1.day + 6.hours + 42.minutes + 500.nanos)
+      )
+
+    val document = 
+      Document.obj(
+        "duration" -> Document.fromBigDecimal(BigDecimal(86400)),
+        "duration2" -> Document.fromBigDecimal(BigDecimal(110520.0000005))
+      )
+
+    testRoundtrip(structure, document)
   }
 
 }
