@@ -50,8 +50,31 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
   - Otherwise, it's treated as the absence of a value.
 
+## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
+Prevents using it as an implicit conversion in Scala 2
+
+# 0.18.41
+
+* codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
+* http4s: Revert the default behavior of URL path encoding in [#1793](https://github.com/disneystreaming/smithy4s/pull/1793)
+
+# 0.18.40 (broken)
+
+* codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
+* core: fix [#1663](https://github.com/disneystreaming/smithy4s/issues/1663) by reworking how path segments are encoded to conform with the Smithy spec in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
+* aws-http4s: fix AWS request signing for URIs with encoded path segments in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
+* json: support open lenient unions, fix #1713 in [#1782](https://github.com/disneystreaming/smithy4s/pull/1782)
+
+# 0.18.39
+
+* http4s: Partially fix [#1619](https://github.com/disneystreaming/smithy4s/issues/1619) by checking request query parameters against the static query parameters in [#1743](https://github.com/disneystreaming/smithy4s/pull/1743)
+* http4s: fix [#1567](https://github.com/disneystreaming/smithy4s/issues/1567), fix [#1753](https://github.com/disneystreaming/smithy4s/issues/1753)  by sorting the endpoints according to Smithy's URI pattern specificity rules in [#1766](https://github.com/disneystreaming/smithy4s/pull/1766)
+* http4s: always set JSON maxArity to Int.MaxValue on the client side, as this mechanism was intended to protect server-side and is very detrimental to clients.
+* codegen: Add HTTP method and pattern to Scaladoc (fixes [#728](https://github.com/disneystreaming/smithy4s/issues/728)) in [#1764](https://github.com/disneystreaming/smithy4s/pull/1764)
+
 # 0.18.38
 
+**WARNING**: This release includes a later version of [Alloy](https://github.com/disneystreaming/alloy) which has a new Org `io.github.disneystreaming` . As a result multiple instances of Alloy on the classpath may not be evicted and can produce errors.
 * core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
 * http4s: onError method added to the RouteBuilder in [#1755](https://github.com/disneystreaming/smithy4s/pull/1755)
 * codegen: Add fromStringOrUnknown and fromIntOrUnknown methods to Open Enums (fixes [#1626](https://github.com/disneystreaming/smithy4s/issues/1626) in [#1759](https://github.com/disneystreaming/smithy4s/pull/1759))

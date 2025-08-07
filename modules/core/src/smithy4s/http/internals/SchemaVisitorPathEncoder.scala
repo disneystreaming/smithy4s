@@ -31,7 +31,7 @@ import smithy4s.schema._
 
 import PathEncode.MaybePathEncode
 
-object SchemaVisitorPathEncoder
+class SchemaVisitorPathEncoder(urlEncodeHttpLabelValues: Boolean)
     extends SchemaVisitor[MaybePathEncode]
     with SchemaVisitor.Default[MaybePathEncode] {
   self =>
@@ -44,27 +44,43 @@ object SchemaVisitorPathEncoder
       tag: Primitive[P]
   ): MaybePathEncode[P] = {
     tag match {
-      case Primitive.PShort      => PathEncode.fromToString
-      case Primitive.PInt        => PathEncode.fromToString
-      case Primitive.PFloat      => PathEncode.fromToString
-      case Primitive.PLong       => PathEncode.fromToString
-      case Primitive.PDouble     => PathEncode.fromToString
-      case Primitive.PBigInt     => PathEncode.fromToString
-      case Primitive.PBigDecimal => PathEncode.fromToString
-      case Primitive.PBoolean    => PathEncode.fromToString
-      case Primitive.PString     => PathEncode.fromToString
-      case Primitive.PUUID       => PathEncode.fromToString
-      case Primitive.PByte       => PathEncode.fromToString
-      case Primitive.PBlob       => default
-      case Primitive.PDocument   => default
+      case Primitive.PShort =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PInt =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PFloat =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PLong =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PDouble =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PBigInt =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PBigDecimal =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PBoolean =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PString =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PUUID =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PByte =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PBlob     => default
+      case Primitive.PDocument => default
       case Primitive.PTimestamp =>
         val fmt =
           hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
-        Some(PathEncode.raw(_.format(fmt)))
-      case Primitive.PLocalDate => PathEncode.fromToString
-      case Primitive.PLocalTime => PathEncode.fromToString
-      case Primitive.PDuration => PathEncode.fromToString
-      case Primitive.POffsetDateTime => PathEncode.fromToString
+        Some(
+          PathEncode.raw(
+            _.format(fmt),
+            urlEncode = this.urlEncodeHttpLabelValues
+          )
+        )
+      case Primitive.PLocalDate => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PLocalTime => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PDuration => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.POffsetDateTime => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
     }
   }
 
@@ -76,9 +92,15 @@ object SchemaVisitorPathEncoder
   ): MaybePathEncode[E] =
     tag match {
       case EnumTag.IntEnum(value, _) =>
-        PathEncode.from(e => value(e).toString)
+        PathEncode.from(
+          e => value(e).toString,
+          urlEncode = this.urlEncodeHttpLabelValues
+        )
       case EnumTag.StringEnum(value, _) =>
-        PathEncode.from(value)
+        PathEncode.from(
+          value,
+          urlEncode = this.urlEncodeHttpLabelValues
+        )
     }
 
   override def struct[S](
@@ -98,6 +120,7 @@ object SchemaVisitorPathEncoder
       if (greedy) writer.map(_.encodeGreedy)
       else writer.map(_.encode)
     }
+
     def compile1(path: PathSegment): Option[Writer] = path match {
       case StaticSegment(value) => Some(Function.const(List(value)))
       case LabelSegment(value) =>
@@ -112,13 +135,15 @@ object SchemaVisitorPathEncoder
 
     def compilePath(path: Vector[PathSegment]): Option[Vector[Writer]] =
       path.traverse(compile1(_))
+
     for {
       httpHint <- hints.get[Http]
       path <- pathSegments(httpHint.uri.value)
       writers <- compilePath(path)
     } yield new PathEncode[S] {
-      def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
-      def encodeGreedy(s: S): List[String] = Nil
+      override def encode(s: S): List[String] =
+        writers.flatMap(_.apply(s)).toList
+      override def encodeGreedy(s: S): List[String] = Nil
     }
   }
 

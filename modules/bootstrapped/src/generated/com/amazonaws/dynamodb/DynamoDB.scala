@@ -38,6 +38,7 @@ trait DynamoDBGen[F[_, _, _, _, _]] {
   /** <p>Returns an array of table names associated with the current account and endpoint. The output
     *       from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table
     *       names.</p>
+    * 
     * @param ExclusiveStartTableName
     *   <p>The first table name that this operation will evaluate. Use the value that was returned for
     *           <code>LastEvaluatedTableName</code> in a previous operation, so that you can obtain the next page

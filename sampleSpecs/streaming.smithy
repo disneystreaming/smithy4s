@@ -1,25 +1,27 @@
 namespace smithy4s.example
 
-use alloy#simpleRestJson
-use alloy#UUID
-
 service StreamedObjects {
-  version: "1.0.0",
-  operations: [PutStreamedObject, GetStreamedObject, PutAndGetStreamedObject]
+    version: "1.0.0"
+    operations: [
+        PutStreamedObject
+        GetStreamedObject
+        PutAndGetStreamedObject
+    ]
 }
 
 operation PutStreamedObject {
-  input: PutStreamedObjectInput,
+    input: PutStreamedObjectInput
 }
 
 operation GetStreamedObject {
-  input: GetStreamedObjectInput,
-  output: GetStreamedObjectOutput
+    input: GetStreamedObjectInput
+    output: GetStreamedObjectOutput
 }
 
 structure PutStreamedObjectInput {
     @required
-    key: String,
+    key: String
+
     @documentation("data docs")
     data: StreamedBlob
 }
@@ -31,15 +33,13 @@ structure GetStreamedObjectInput {
 }
 
 structure GetStreamedObjectOutput {
-  data: StreamedBlob
+    data: StreamedBlob
 }
 
 operation PutAndGetStreamedObject {
-  input: PutStreamedObjectInput,
-  output: GetStreamedObjectOutput
+    input: PutStreamedObjectInput
+    output: GetStreamedObjectOutput
 }
 
 @streaming
 blob StreamedBlob
-
-

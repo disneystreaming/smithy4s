@@ -328,6 +328,125 @@
                 }
             }
         },
+        "/query-check?kind=x&variant=c": {
+            "get": {
+                "operationId": "CheckQueryKindXVariantC",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindXVariantC 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindXVariantCResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?kind=x&variant=d": {
+            "get": {
+                "operationId": "CheckQueryKindXVariantD",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindXVariantD 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindXVariantDResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?kind=y&variant": {
+            "get": {
+                "operationId": "CheckQueryKindYVariant",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindYVariant 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindYVariantResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?kind=z": {
+            "get": {
+                "operationId": "CheckQueryKindZ",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindZ 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindZResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?kind=z&variant=a": {
+            "get": {
+                "operationId": "CheckQueryKindZVariantA",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryKindZVariantA 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryKindZVariantAResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?variant=a": {
+            "get": {
+                "operationId": "CheckQueryVariantA",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryVariantA 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryVariantAResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/query-check?variant=b": {
+            "get": {
+                "operationId": "CheckQueryVariantB",
+                "responses": {
+                    "200": {
+                        "description": "CheckQueryVariantB 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckQueryVariantBResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/restaurant/{restaurant}/menu": {
             "get": {
                 "operationId": "GetMenu",
@@ -556,6 +675,237 @@
         "schemas": {
             "AddMenuItemOutputPayload": {
                 "type": "string"
+            },
+            "CheckQueryKindXVariantCResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryKindXVariantDResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryKindYVariantResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryKindZResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryKindZVariantAResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryVariantAResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "CheckQueryVariantBResponseContent": {
+                "type": "object",
+                "properties": {
+                    "variants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticVariants": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "staticKinds": {
+                        "type": "array",
+                        "default": null,
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
             },
             "EchoBody": {
                 "type": "object",

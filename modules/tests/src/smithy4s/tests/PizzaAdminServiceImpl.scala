@@ -33,7 +33,9 @@ object PizzaAdminServiceImpl {
   case object Boom extends Throwable with scala.util.control.NoStackTrace
 }
 
-class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
+class PizzaAdminServiceImpl(ref: Ref[IO, State])
+    extends PizzaAdminService[IO]
+    with PizzaCheckQueryServiceImpl {
 
   def reservation(name: String, town: Option[String]): IO[ReservationOutput] =
     IO.pure(ReservationOutput(message = s"Booked for $name"))
@@ -124,5 +126,4 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
 
   def noContentRequest(): cats.effect.IO[Unit] =
     IO.pure(())
-
 }

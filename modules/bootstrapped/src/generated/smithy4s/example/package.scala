@@ -94,6 +94,10 @@ package object example {
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type PublisherId = smithy4s.example.PublisherId.Type
   type PublishersList = smithy4s.example.PublishersList.Type
+  type QParams = smithy4s.example.QParams.Type
+  type QValues = smithy4s.example.QValues.Type
+  type QueryKinds = smithy4s.example.QueryKinds.Type
+  type QueryVariants = smithy4s.example.QueryVariants.Type
   type RecursiveList = smithy4s.example.RecursiveList.Type
   type RecursiveListTrait = smithy4s.example.RecursiveListTrait.Type
   type RecursiveMapTrait = smithy4s.example.RecursiveMapTrait.Type

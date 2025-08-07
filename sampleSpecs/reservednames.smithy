@@ -84,6 +84,7 @@ string TestReservedNamespaceTrait
 structure reservedKeywordStructTrait {
     @required
     implicit: String
+
     package: Packagee
 }
 
@@ -93,38 +94,45 @@ structure Packagee {
 }
 
 // trait usages
-@reservedKeywordStructTrait(implicit: "demo", package: {
-    class: 42
-})
+@reservedKeywordStructTrait(
+    implicit: "demo"
+    package: { class: 42 }
+)
 structure ReservedKeywordTraitExampleStruct {
-    @reservedKeywordStructTrait(implicit: "demo", package: {
-        class: 42
-    })
+    @reservedKeywordStructTrait(
+        implicit: "demo"
+        package: { class: 42 }
+    )
     member: String
 }
 
-@reservedKeywordStructTrait(implicit: "demo", package: {
-    class: 42
-})
+@reservedKeywordStructTrait(
+    implicit: "demo"
+    package: { class: 42 }
+)
 union ReservedKeywordTraitExampleUnion {
-    @reservedKeywordStructTrait(implicit: "demo", package: {
-        class: 42
-    })
+    @reservedKeywordStructTrait(
+        implicit: "demo"
+        package: { class: 42 }
+    )
     member: String
 }
 
-@reservedKeywordStructTrait(implicit: "demo", package: {
-    class: 42
-})
+@reservedKeywordStructTrait(
+    implicit: "demo"
+    package: { class: 42 }
+)
 string ReservedKeywordTraitExamplePrimitive
 
-@reservedKeywordStructTrait(implicit: "demo", package: {
-    class: 42
-})
+@reservedKeywordStructTrait(
+    implicit: "demo"
+    package: { class: 42 }
+)
 list ReservedKeywordTraitExampleCollection {
-    @reservedKeywordStructTrait(implicit: "demo", package: {
-        class: 42
-    })
+    @reservedKeywordStructTrait(
+        implicit: "demo"
+        package: { class: 42 }
+    )
     member: String
 }
 
@@ -139,13 +147,13 @@ union PackageUnion {
 }
 
 // trait usages
-@reservedKeywordUnionTrait(package: {
-    class: 42
-})
+@reservedKeywordUnionTrait(
+    package: { class: 42 }
+)
 structure ReservedKeywordTraitExampleStruct {
-    @reservedKeywordUnionTrait(package: {
-        class: 42
-    })
+    @reservedKeywordUnionTrait(
+        package: { class: 42 }
+    )
     member: String
 }
 
@@ -168,7 +176,7 @@ union class {
 structure AdtStruct {}
 
 // Regression test for https://github.com/disneystreaming/smithy4s/issues/1601
-@class(package: {
-
-})
+@class(
+    package: {}
+)
 string ReservedNameUnionTrait

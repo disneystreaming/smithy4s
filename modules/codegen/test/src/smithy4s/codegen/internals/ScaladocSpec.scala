@@ -52,6 +52,7 @@ final class ScaladocSpec extends munit.FunSuite {
 
     assertContainsSection(documentedStructCode, "/** Struct docs")(
       """|/** Struct docs
+         |  * 
          |  * @param int
          |  *   int docs
          |  * @param struct
@@ -107,6 +108,7 @@ final class ScaladocSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
     assertContainsSection(serviceCode, "/** operation docs")(
       """|/** operation docs
+         |  * 
          |  * @param string
          |  *   the string
          |  * @param int
@@ -118,6 +120,34 @@ final class ScaladocSpec extends munit.FunSuite {
     assertContainsSection(serviceCode, "/** packed operation docs")(
       """|/** packed operation docs */
          |def packedHelloOp(input: Hello): F[Hello, Nothing, Unit, Nothing, Nothing]""".stripMargin
+    )
+
+  }
+
+  test("Generate Scaladoc - operation with HTTP method and pattern") {
+    val smithy =
+      """
+        |$version: "2"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#packedInputs
+        |
+        |service Service {
+        |  operations: [GetHealth]
+        |}
+        |
+        |/// Health check operation
+        |@http(method: "GET", uri: "/health_check")
+        |operation GetHealth {}
+        |""".stripMargin
+
+    val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
+    assertContainsSection(serviceCode, "/** Health check operation")(
+      """|/** Health check operation
+         |  * 
+         |  * HTTP GET /health_check
+         |  */""".stripMargin
     )
 
   }

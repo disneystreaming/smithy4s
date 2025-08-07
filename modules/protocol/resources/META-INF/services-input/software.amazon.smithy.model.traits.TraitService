@@ -1,3 +1,4 @@
+# These are later combined with generated classes from smithy-trait-codegen. See build.sbt for details
 smithy4s.meta.PackedInputsTrait$Provider
 smithy4s.meta.AdtMemberTrait$Provider
 smithy4s.meta.VectorTrait$Provider

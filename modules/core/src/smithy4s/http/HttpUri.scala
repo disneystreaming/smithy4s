@@ -26,9 +26,6 @@ import java.net.URI
  */
 final case class HttpUri private (
     origin: Option[HttpUriOrigin],
-    /**
-      * A sequence of URL-decoded URI segment.
-      */
     path: IndexedSeq[String],
     queryParams: Map[String, Seq[String]],
     pathParams: Option[Map[String, String]]

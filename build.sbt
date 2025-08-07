@@ -1,3 +1,4 @@
+import software.amazon.smithy.model.traits.TraitService
 import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core.MissingClassProblem
 import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
@@ -10,6 +11,9 @@ import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 import java.io.File
 import sys.process._
+import sjsonnew._
+import BasicJsonProtocol._
+import Json.pathFormat
 
 ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
@@ -19,7 +23,7 @@ ThisBuild / mimaBaseVersion := "0.19.0"
 
 // for Alloy snapshots
 // as well as any other dependency snapshots.
-ThisBuild / resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -37,13 +41,6 @@ Global / startYear := Some(2021)
 Global / licenses := Seq(
   "TOST-1.0" -> new URL("https://disneystreaming.github.io/TOST-1.0.txt")
 )
-
-sonatypeCredentialHost := "s01.oss.sonatype.org"
-
-ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
-  else (ThisBuild / version).value
-}
 
 lazy val root = project
   .in(file("."))
@@ -72,6 +69,7 @@ lazy val allModules = Seq(
   `http4s-swagger`,
   decline,
   codegenPlugin,
+  `codegen-integration`,
   benchmark,
   protobuf,
   protocol,
@@ -241,6 +239,7 @@ lazy val core = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
     ),
+    libraryDependencies ++= weaverDeps.value,
     libraryDependencies += Dependencies.collectionsCompat.value,
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
@@ -291,10 +290,22 @@ lazy val core = projectMatrix
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy4s.http.HttpUnaryServerRouter#PartialFunctionRouter.this"
       ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        // this is a private case class so any problems are spurious
+        "smithy4s.http.HttpUnaryClientCodecs#HttpUnaryClientCodecsBuilderImpl.*"
+      ),
       // Breaking bin-compat to walk back ambiguous methods introduced in
       // https://github.com/disneystreaming/smithy4s/pull/1669
       ProblemFilters.exclude[IncompatibleMethTypeProblem](
         "smithy4s.http.HttpUnaryServerRouter.partialFunction"
+      ),
+      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime"
+      ),
+      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime$"
       )
     )
   )
@@ -471,8 +482,34 @@ lazy val codegen = projectMatrix
         .taskValue,
     },
     (Compile / compile) := (Compile / compile)
-      .dependsOn((protocol.jvm(autoScalaLibrary = false) / publishLocal))
+      .dependsOn((protocol.jvm(autoScalaLibrary = false) / cachedPublishLocal))
       .value
+  )
+
+lazy val `codegen-integration` = projectMatrix
+  .in(file("modules/codegen-integration"))
+  .dependsOn(codegen)
+  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Mima.core % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    scalacOptions := scalacOptions.value
+      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
+    bloopEnabled := true,
+    (Test / test) := {
+      // make sure that core is published before the
+      // tests are run
+      (Test / test)
+        .dependsOn(
+          (core.jvm(Scala212) / publishLocal),
+          (core.jvm(Scala213) / publishLocal),
+          (core.jvm(Scala3) / publishLocal)
+        )
+        .value
+    }
   )
 
 /**
@@ -586,6 +623,9 @@ lazy val decline = (projectMatrix in file("modules/decline"))
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
+val cachedPublishLocal =
+  taskKey[Unit]("Runs publishLocal only if classpath changes")
+
 /**
  * This module contains the smithy specification of a bunch of types
  * that are not provided by the smithy standard library, but are useful
@@ -600,13 +640,40 @@ lazy val protocol = projectMatrix
   .jvmPlatform(
     autoScalaLibrary = false,
     scalaVersions = Seq.empty,
-    settings = jvmDimSettings
+    settings = jvmDimSettings ++ Seq(
+      cachedPublishLocal := Def.taskDyn {
+        val log = streams.value.log
+        val cacheFile =
+          os.Path(
+            streams.value.cacheDirectory / "cachedPublishLocal" / "classpath.hash"
+          )
+
+        val fn = Tracked
+          .inputChanged[(Seq[File], String), Def.Initialize[Task[Unit]]](
+            cacheFile.toIO
+          ) {
+            case (changed, _) if changed =>
+              log.info("Classpath has changed. Running publishLocal...")
+              Def.task { publishLocal.value }
+
+            case (_, _) =>
+              log.info("Classpath unchanged. Skipping publishLocal.")
+              Def.task {}
+          }
+
+        fn(
+          ((Compile / fullClasspath).value.map(_.data).distinct, version.value)
+        )
+      }.value
+    )
   )
   .settings(
-    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value
-      .filterNot { case (file, path) =>
+    isMimaEnabled := true,
+    Compile / packageSrc / mappings ~= {
+      _.filterNot { case (file, path) =>
         path.equalsIgnoreCase("META-INF/smithy/manifest")
-      },
+      }
+    },
     resolvers += Resolver.mavenLocal,
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq(
@@ -619,6 +686,25 @@ lazy val protocol = projectMatrix
       // skip "Loading source file", "Generating" logs from Javadoc
       "-quiet"
     )
+  )
+  .enablePlugins(SmithyTraitCodegenPlugin)
+  .settings(
+    smithyTraitCodegenDependencies := Nil,
+    smithyTraitCodegenNamespace := "smithy4s.meta",
+    smithyTraitCodegenJavaPackage := "smithy4s.meta",
+    smithyTraitCodegenSourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "protocol" / "resources" / "META-INF" / "smithy",
+    smithyTraitCodegenExternalProviders ++=
+    // format: off
+      IO
+        .readLines(
+          (ThisBuild / baseDirectory).value / "modules" / "protocol" / "resources" / "META-INF" / "services-input" / classOf[TraitService].getName()
+        )
+        .filterNot(_.trim.startsWith("#"))
+        .filterNot(_.trim.isEmpty),
+    // format: on
+    Compile / packageBin / mappings ~= {
+      _.filterNot { case (_, path) => path.contains("services-input") }
+    }
   )
 
 lazy val protocolJvm = protocol.jvm(autoScalaLibrary = false)
@@ -993,7 +1079,8 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.protobuf",
       "weather",
       "smithy4s.example.product",
-      "smithy4s.example.reservedNameOverride"
+      "smithy4s.example.reservedNameOverride",
+      "smithy4s.example.bincompat"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"
@@ -1120,34 +1207,6 @@ def dumpModel(
       throw new Exception("No main class found")
     )
 
-    import sjsonnew._
-    import BasicJsonProtocol._
-    import sbt.FileInfo
-    import sbt.HashFileInfo
-    import sbt.io.Hash
-    import scala.jdk.CollectionConverters._
-    implicit val pathFormat: JsonFormat[File] =
-      BasicJsonProtocol.projectFormat[File, HashFileInfo](
-        p => {
-          if (p.isFile()) FileInfo.hash(p)
-          else
-            // If the path is a directory, we get the hashes of all files
-            // then hash the concatenation of the hash's bytes.
-            FileInfo.hash(
-              p,
-              Hash(
-                Files
-                  .walk(p.toPath(), 2)
-                  .collect(Collectors.toList())
-                  .asScala
-                  .map(_.toFile())
-                  .map(Hash(_))
-                  .foldLeft(Array.emptyByteArray)(_ ++ _)
-              )
-            )
-        },
-        hash => hash.file
-      )
     val s = (config / streams).value
 
     val args =
@@ -1232,40 +1291,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
 
   val mc = "smithy4s.codegen.cli.Main"
   val s = (config / streams).value
-
-  import sjsonnew._
-  import BasicJsonProtocol._
-  import sbt.FileInfo
-  import sbt.HashFileInfo
-  import sbt.io.Hash
-  import scala.jdk.CollectionConverters._
-
-  // Json codecs used by SBT's caching constructs
-  // This serialises a path by providing a hash of the content it points to.
-  // Because the hash is part of the Json, this allows SBT to detect when a file
-  // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
-  implicit val pathFormat: JsonFormat[File] =
-    BasicJsonProtocol.projectFormat[File, HashFileInfo](
-      p => {
-        if (p.isFile()) FileInfo.hash(p)
-        else
-          // If the path is a directory, we get the hashes of all files
-          // then hash the concatenation of the hash's bytes.
-          FileInfo.hash(
-            p,
-            Hash(
-              Files
-                .walk(p.toPath(), 2)
-                .collect(Collectors.toList())
-                .asScala
-                .map(_.toFile())
-                .map(Hash(_))
-                .foldLeft(Array.emptyByteArray)(_ ++ _)
-            )
-          )
-      },
-      hash => hash.file
-    )
 
   case class CodegenInput(files: Seq[File])
   object CodegenInput {

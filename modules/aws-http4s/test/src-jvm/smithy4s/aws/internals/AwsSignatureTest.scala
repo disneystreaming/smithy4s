@@ -19,7 +19,7 @@ package smithy4s.aws.internals
 import cats.Show
 import cats.effect.IO
 import cats.effect.kernel.Async
-import cats.implicits._
+import cats.syntax.all._
 import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
@@ -89,12 +89,77 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       awsRequest: SdkHttpFullRequest
   )
   object TestInput {
-    implicit val show: Show[TestInput] = Show.fromToString
+    implicit val showContentStreamProvider: Show[ContentStreamProvider] =
+      Show.show { csp =>
+        scala.io.Source.fromInputStream(csp.newStream()).mkString
+      }
 
-    val genAwsRequest = for {
+    implicit val showSdkHttpFullRequest: Show[SdkHttpFullRequest] = Show.show {
+      (req: SdkHttpFullRequest) =>
+        val headers = Option(req.headers().asScala.toList)
+          .filter(_.nonEmpty)
+          .map(_.map { case (k, v) => s"$k: $v" })
+          .map(
+            _.mkString("\n        ", System.lineSeparator() + "        ", "")
+          )
+          .getOrElse(" none")
+
+        s"""(SdkHttpFullRequest)
+           |    - protocol: ${req.protocol()}
+           |    - host: ${req.host()}
+           |    - port: ${req.port()}
+           |    - method: ${req.method()}
+           |    - encodedPath: ${req.encodedPath()}
+           |    - headers:$headers
+           |    - contentStreamProvider: ${req.contentStreamProvider.toScala.show}
+           |""".stripMargin
+    }
+
+    implicit val showTestInput: Show[TestInput] = Show.show { testInput =>
+      import testInput._
+      s"""TestInput:
+         |  - serviceName: $serviceName
+         |  - operationName: $operationName
+         |  - smithy4sTimestamp: $smithy4sTimestamp
+         |  - smithy4sCredentials: $smithy4sCredentials
+         |  - smithy4sRegion: $smithy4sRegion
+         |  - awsRequest: ${awsRequest.show}
+         |""".stripMargin
+    }
+
+    val genPathSegment: Gen[String] =
+      Gen
+        .frequency(
+          1 -> Gen.oneOf("..", "."),
+          9 -> Gen
+            .stringOf(
+              Gen.frequency(
+                9 -> Gen.oneOf(
+                  Gen.alphaNumChar,
+                  // this list from https://github.com/http4s/http4s/blob/ac5c5cc40f732df238ef38c8ef8f571b4e66bfe3/core/shared/src/main/scala/org/http4s/internal/UriCoding.scala#L26
+                  Gen.oneOf("-_.~".toIndexedSeq)
+                ),
+                1 -> Gen.oneOf(
+                  // this list from https://github.com/http4s/http4s/blob/ac5c5cc40f732df238ef38c8ef8f571b4e66bfe3/core/shared/src/main/scala/org/http4s/Uri.scala#L1069
+                  "!$&'()*+,;=:/?@".toIndexedSeq
+                )
+              )
+            )
+        )
+        .map(
+          Uri.encode(
+            _,
+            toSkip = org.http4s.internal.CharPredicate.AlphaNum ++ "-_.~"
+          )
+        )
+
+    val genAwsRequest: Gen[SdkHttpFullRequest] = for {
       httpMethod <- Gen.oneOf(SdkHttpMethod.values().toList)
       host <- Gen.identifier
-      path <- Gen.listOfN(3, Gen.identifier).map(_.mkString("/"))
+      path <- Gen
+        .choose(0, 3)
+        .flatMap(Gen.listOfN(_, genPathSegment))
+        .map(_.mkString("/"))
       content <- Gen.asciiStr
       queryParams <- Gen.listOfN(3, Gen.zip(Gen.identifier, Gen.alphaNumStr))
     } yield {
@@ -114,7 +179,11 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     }
 
     val gen: Gen[TestInput] = for {
-      serviceName <- Gen.oneOf(Gen.const("AmazonS3"), Gen.identifier)
+      serviceName <- Gen.oneOf(
+        Gen.const("AmazonS3"),
+        Gen.const("AWSS3ControlServiceV20180820"),
+        Gen.identifier
+      )
       operationName <- Gen.identifier
       timestamp <- Gen.chooseNum(0L, 4102444800L).map(Timestamp.fromEpochSecond)
       accessKeyId <- Gen.identifier
@@ -156,53 +225,62 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
     }
 
     val region = Region.of(smithy4sRegion.value)
-    val signedAwsRequest = if (testInput.serviceName == AwsSigning.S3) {
 
-      val signerParams = AwsS3V4SignerParams
-        .builder()
-        .awsCredentials(creds)
-        .signingRegion(region)
-        .signingClockOverride(fixedClock)
-        .enablePayloadSigning(true)
-        .signingName(serviceName)
-        .build()
+    val isS3Request =
+      Set(AwsSigning.S3, AwsSigning.S3Control).contains(serviceName)
 
-      // yes, this is an S3-specific signer.
-      val awsSigner = AwsS3V4Signer.create()
+    val signedAwsRequest =
+      if (isS3Request) {
+        val signerParams = AwsS3V4SignerParams
+          .builder()
+          .awsCredentials(creds)
+          .signingRegion(region)
+          .signingClockOverride(fixedClock)
+          .enablePayloadSigning(true)
+          .signingName(serviceName)
 
-      // Amending the AWS Request to force the AMZ target as it's added automatically
-      // by our implementation
-      //
-      // The hardcoded "required" header value is understood by the S3 signer as a signal that the `X-Amz-Content-SHA256` header
-      // should be replaced by the hash of the request payload, and that the same hash should be used in the signature.
-      val amendedAwsRequest = awsRequest
-        .toBuilder()
-        .appendHeader("X-Amz-Target", serviceName + "." + operationName)
-        .appendHeader(
-          "X-Amz-Content-SHA256",
-          "required"
-        ) // this is a magic addition that is understood by the S3 signer
-        .build()
+          // see https://github.com/aws/aws-sdk-java-v2/blob/b6b1ad9f25ea9ff89fd61f7639eb1aa74cc9d725/services/s3/src/main/java/software/amazon/awssdk/services/s3/internal/handlers/ConfigureSignerInterceptor.java#L33-L34
+          // and https://github.com/aws/aws-sdk-java-v2/blob/b6b1ad9f25ea9ff89fd61f7639eb1aa74cc9d725/services/s3control/src/main/java/software/amazon/awssdk/services/s3control/internal/interceptors/ConfigureSignerInterceptor.java#L33-L34
+          .doubleUrlEncode(false)
+          .normalizePath(false)
+          .build()
 
-      awsSigner.sign(amendedAwsRequest, signerParams)
-    } else {
-      val params = Aws4SignerParams
-        .builder()
-        .awsCredentials(creds)
-        .signingRegion(region)
-        .signingClockOverride(fixedClock)
-        .signingName(serviceName)
-        .build()
+        // yes, this is an S3-specific signer.
+        val awsSigner = AwsS3V4Signer.create()
 
-      val awsSigner = Aws4Signer.create()
-      // Amending the AWS Request to force the AMZ target as it's added automatically
-      // by our implementation
-      val amendedAwsRequest = awsRequest
-        .toBuilder()
-        .appendHeader("X-Amz-Target", serviceName + "." + operationName)
-        .build()
-      awsSigner.sign(amendedAwsRequest, params)
-    }
+        val amendedAwsRequest = awsRequest.toBuilder
+          // Amending the AWS Request to force the AMZ target as it's added automatically
+          // by our implementation
+          //
+          .appendHeader("X-Amz-Target", serviceName + "." + operationName)
+          // The hardcoded "required" header value is understood by the S3 signer as a signal that the `X-Amz-Content-SHA256` header
+          // should be replaced by the hash of the request payload, and that the same hash should be used in the signature.
+          .appendHeader(
+            "X-Amz-Content-SHA256",
+            "required"
+          ) // this is a magic addition that is understood by the S3 signer
+          .build()
+
+        awsSigner.sign(amendedAwsRequest, signerParams)
+      } else {
+        val params = Aws4SignerParams
+          .builder()
+          .awsCredentials(creds)
+          .signingRegion(region)
+          .signingClockOverride(fixedClock)
+          .signingName(serviceName)
+          .doubleUrlEncode(true)
+          .normalizePath(true)
+          .build()
+
+        val awsSigner = Aws4Signer.create()
+        // Amending the AWS Request to force the AMZ target as it's added automatically
+        // by our implementation
+        val amendedAwsRequest = awsRequest.toBuilder
+          .appendHeader("X-Amz-Target", serviceName + "." + operationName)
+          .build()
+        awsSigner.sign(amendedAwsRequest, params)
+      }
 
     val smithy4sSigner = AwsSigning.signingFunction[IO](
       serviceName,
@@ -246,7 +324,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
         }
       }
       .withHeaders(http4sHeaders(request))
-      .withUri(Uri.unsafeFromString(request.getUri().toString()))
+      .withUri(Uri.unsafeFromString(request.getUri.toASCIIString))
   }
 
   def http4sHeaders(request: SdkHttpFullRequest): Vector[(String, String)] =

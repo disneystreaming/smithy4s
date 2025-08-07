@@ -62,7 +62,7 @@ trait Refinement[A, B] { self =>
       def tag: ShapeTag[Constraint] = self.tag
       def constraint: Constraint = self.constraint
       def apply(a0: A0): Either[String, B0] =
-        self(bijectSource.from(a0)).map(bijectTarget)
+        self(bijectSource.from(a0)).map(bijectTarget.toFunction)
       def unsafe(a0: A0): B0 = bijectTarget(self.unsafe(bijectSource.from(a0)))
       def from(b: B0): A0 = bijectSource(self.from(bijectTarget.from(b)))
     }

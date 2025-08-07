@@ -14,7 +14,9 @@ import smithy4s.schema.Schema.unit
 trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP POST /simple/{bucketName}/{key} */
   def sendString(key: String, bucketName: String, body: String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
+  /** HTTP POST /complex/{bucketName}/{key} */
   def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
@@ -25,7 +27,9 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   val id: ShapeId = ShapeId("smithy4s.benchmark", "BenchmarkService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

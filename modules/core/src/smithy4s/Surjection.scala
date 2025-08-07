@@ -37,7 +37,7 @@ trait Surjection[A, B] extends Function[A, Either[String, B]] { outer =>
       targetBijection: Bijection[B, B0]
   ): Surjection[A0, B0] = new Surjection[A0, B0] {
     def to(a0: A0): Either[String, B0] =
-      outer.to(sourceBijection.from(a0)).map(targetBijection)
+      outer.to(sourceBijection.from(a0)).map(targetBijection.toFunction)
     def from(b0: B0): A0 = sourceBijection(outer.from(targetBijection.from(b0)))
   }
 

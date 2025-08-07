@@ -100,16 +100,18 @@ abstract class ProtocolComplianceSuite
       shapeIds: ShapeId*
   )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
     shapeIds.toList.flatMap(shapeId =>
-      dsi
-        .getService(shapeId)
-        .toList
-        .flatMap(wrapper => {
-          HttpProtocolCompliance
-            .clientAndServerTests(
-              impl,
-              wrapper.service
+      HttpProtocolCompliance
+        .clientAndServerTests(
+          impl,
+          dsi
+            .getService(shapeId)
+            .getOrElse(
+              sys.error(
+                s"Service with shapeId $shapeId not found in DynamicSchemaIndex"
+              )
             )
-        })
+            .service
+        )
     )
 
   def loadDynamic(

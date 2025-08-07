@@ -195,23 +195,18 @@ object HttpUnaryServerRouter {
 
     def apply(request: Request): Option[F[Response]] = {
       val method = getMethod(request)
-      val path = getUri(request).path
-      perMethodEndpoint.get(method) match {
-        case Some(httpUnaryEndpoints) =>
-          val maybeMatched =
-            httpUnaryEndpoints.iterator
-              .map(ep => (ep.handler, ep.httpEndpoint.matches(path)))
-              .find(_._2.isDefined)
-          maybeMatched.flatMap {
-            case (handler, Some(pathParams)) =>
+      val uri = getUri(request)
+      val path = uri.path
+      val query = uri.queryParams
+      perMethodEndpoint.get(method).flatMap { httpUnaryEndpoints =>
+        httpUnaryEndpoints.iterator
+          .flatMap(ep => ep.httpEndpoint.matches(path).map(ep -> _))
+          .collectFirst {
+            case (ep, pathParams) if isSubset(larger = query, smaller = ep.httpEndpoint.staticQueryParams) =>
               val amendedRequest = addDecodedPathParams(request, pathParams)
-              Some(handler(amendedRequest))
-            case (_, None) => None
+              ep.handler(amendedRequest)
           }
-
-        case None => None
       }
-
     }
 
     private def makeHttpEndpointHandler[I, E, O, SI, SO](
@@ -235,9 +230,13 @@ object HttpUnaryServerRouter {
         .map { makeHttpEndpointHandler(_) }
         .collect { case Right(endpointWrapper) => endpointWrapper }
 
-    private val perMethodEndpoint: Map[HttpMethod, List[HttpEndpointHandler]] =
-      httpEndpointHandlers.groupBy(_.httpEndpoint.method)
-
+    private val perMethodEndpoint: Map[HttpMethod, List[HttpEndpointHandler]] = {
+      httpEndpointHandlers.groupBy(_.httpEndpoint.method).map { case (method, handlers) =>
+        method -> handlers.sortWith { case (x, y) =>
+          HttpEndpoint.moreSpecific(x.httpEndpoint, y.httpEndpoint)
+        }
+      }
+    }
   }
 
   // scalafmt: {maxColumn = 120}
@@ -305,5 +304,11 @@ object HttpUnaryServerRouter {
       httpEndpointHandlers.groupBy(_.httpEndpoint.method)
 
   }
+
+  /** Checks if `larger` multimap is a subset of the `smaller` */
+  private def isSubset[K, V](larger: Map[K, Seq[V]], smaller: Map[K, Seq[V]]): Boolean =
+    smaller.forall { case (k, vRequired) =>
+      larger.get(k).exists(vs => vRequired.forall(vs.contains))
+    }
 
 }

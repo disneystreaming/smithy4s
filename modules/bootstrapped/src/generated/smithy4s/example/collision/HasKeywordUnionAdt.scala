@@ -21,7 +21,7 @@ sealed trait HasKeywordUnionAdt extends scala.Product with scala.Serializable { 
 }
 object HasKeywordUnionAdt extends ShapeTag.Companion[HasKeywordUnionAdt] {
 
-  def one(): Implicit = Implicit()
+  def _implicit(): Implicit = Implicit()
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "HasKeywordUnionAdt")
 

@@ -167,4 +167,8 @@ object Dependencies {
     val value = org % name % awsSpecSummaryVersion
   }
 
+  object Mima {
+    val core = "com.typesafe" %% "mima-core" % "1.1.4"
+  }
+
 }

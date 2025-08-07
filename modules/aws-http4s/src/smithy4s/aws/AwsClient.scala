@@ -115,7 +115,9 @@ object AwsClient {
       }
 
       val clientCodecs = clientCodecsBuilder
-        .withRequestTransformation(fromSmithy4sHttpRequest[F](_).pure[F])
+        .withRequestTransformation(
+          fromSmithy4sHttpRequest[F](_, encodePathSegments = !clientCodecsBuilder.hasSmithyPathEncoding).pure[F]
+        )
         .withResponseTransformation[Response[F]](toSmithy4sHttpResponse[F](_))
         .withBaseRequest(baseRequest)
         .build()

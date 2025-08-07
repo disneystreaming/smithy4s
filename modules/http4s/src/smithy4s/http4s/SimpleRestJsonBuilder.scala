@@ -26,7 +26,8 @@ object SimpleRestJsonBuilder
       new internals.SimpleRestJsonCodecs(
         jsonCodecs = Json.payloadCodecs,
         fieldFilter = FieldFilter.Default,
-        hostPrefixInjection = true
+        hostPrefixInjection = true,
+        smithyPathEncoding = false
       )
     )
 
@@ -54,7 +55,8 @@ class SimpleRestJsonBuilder private (
               .withFieldFilter(fieldFilter)
           ),
         fieldFilter,
-        hostPrefixInjection
+        hostPrefixInjection,
+        smithyPathEncoding = false
       )
     }
   }
@@ -68,7 +70,7 @@ class SimpleRestJsonBuilder private (
 
   @deprecated(
     message = """Use withFieldFilter instead.
-      
+
   Mapping:
    - explicitDefaultsEncoding = false -> FieldFilter.Default
    - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
@@ -90,6 +92,20 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs.withFieldFilter(fieldFilter)
     )
 
+  @deprecated(
+    "Use withSmithyPathEncoding instead (it has the opposite meaning)",
+    "0.18.41"
+  )
+  def withRawHttpLabelValues(
+      enabled: Boolean
+  ): SimpleRestJsonBuilder =
+    withSmithyPathEncoding(!enabled)
+
+  def withSmithyPathEncoding(enabled: Boolean): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(
+      simpleRestJsonCodecs.withSmithyPathEncoding(enabled)
+    )
+
   def disableHostPrefixInjection(): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.withHostPrefixInjection(false)
@@ -97,6 +113,9 @@ class SimpleRestJsonBuilder private (
 
   /**
     * Transforms the underlying JSON codec compiler to change its behaviour.
+    *
+    * Note that the `.maxArity` transformation is only taken into consideration
+    * for servers.
     */
   def transformJsonCodecs(
       f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler

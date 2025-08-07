@@ -20,6 +20,8 @@ trait FooServiceGen[F[_, _, _, _, _]] {
   /** Returns a useful Foo
     * No input necessary to find our Foo
     * The path for this operation is "/foo"
+    * 
+    * HTTP GET /foo
     */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
