@@ -33,6 +33,7 @@ import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.time._
+import smithy4s.time.DurationOps._
 import smithy4s.schema.Primitive._
 
 import scala.collection.compat.immutable.ArraySeq
@@ -476,30 +477,17 @@ private[smithy4s] class SchemaVisitorJCodec(
     val duration: JCodec[Duration] = new JCodec[Duration] {
       def expecting: String = "duration"
 
-      private def fromBigDecimal(x: BigDecimal): Duration = {
-        val seconds = x.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
-        val nanos = ((x - seconds) * 1000000000).toLong
-        seconds.seconds + nanos.nanos
-      }
-
-      private def toBigDecimal(x: Duration): BigDecimal = {
-        val seconds = java.math.BigDecimal.valueOf(x.toSeconds)
-        val nanos = x.toNanos - (x.toSeconds * 1000000000)
-
-        if (nanos == 0) seconds else seconds.add(java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros)
-      }
-
       def decodeValue(cursor: Cursor, in: JsonReader): Duration =
-        fromBigDecimal(in.readBigDecimal(null))
+        DurationOps.fromBigDecimal(in.readBigDecimal(null))
 
       def encodeValue(x: Duration, out: JsonWriter): Unit =
-        out.writeVal(toBigDecimal(x))
+        out.writeVal(x.toBigDecimal)
 
       def decodeKey(in: JsonReader): Duration =
-        fromBigDecimal(in.readKeyAsBigDecimal())
+        DurationOps.fromBigDecimal(in.readKeyAsBigDecimal())
 
       def encodeKey(x: Duration, out: JsonWriter): Unit =
-        out.writeKey(toBigDecimal(x))
+        out.writeKey(x.toBigDecimal)
     }
 
     val offsetDateTime: JCodec[OffsetDateTime] = new JCodec[OffsetDateTime] {
