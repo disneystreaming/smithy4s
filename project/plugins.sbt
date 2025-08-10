@@ -18,7 +18,7 @@ addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.13"
 addSbtPlugin("com.thesamet"         % "sbt-protoc"                    % "1.0.7")
 addSbtPlugin("com.github.sbt"       % "sbt-ci-release"                % "1.11.1")
 
-addSbtPlugin("org.polyvariant" % "smithy-trait-codegen-sbt" % "0.2.2")
+addSbtPlugin("org.polyvariant" % "smithy-trait-codegen-sbt" % "0.2.3")
 
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.10.7",
