@@ -39,7 +39,8 @@ object RecursiveOpenUnion extends ShapeTag.Companion[RecursiveOpenUnion] {
 
   final case class RecCase(rec: smithy4s.example.RecursiveOpenUnion) extends RecursiveOpenUnion { final def $ordinal: Int = 0 }
   case object EndCase extends RecursiveOpenUnion { final def $ordinal: Int = 1 }
-  private val EndCaseAlt = Schema.constant(RecursiveOpenUnion.EndCase).oneOf[RecursiveOpenUnion]("end").addHints(hints)
+  val EndCaseHints: Hints = Hints.empty
+  private val EndCaseAlt = Schema.constant(RecursiveOpenUnion.EndCase).oneOf[RecursiveOpenUnion]("end").addHints(EndCaseHints)
   final case class UnknownCase(unknown: Document) extends RecursiveOpenUnion { final def $ordinal: Int = 2 }
 
   object RecCase {

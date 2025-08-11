@@ -16,6 +16,7 @@ union OrderType {
     /// For an InStoreOrder a location ID isn't needed
     inStore: InStoreOrder
 
+    @jsonName("PREVIEW")
     preview: Unit
 }
 

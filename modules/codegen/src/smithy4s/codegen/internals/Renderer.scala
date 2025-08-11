@@ -1280,12 +1280,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         alts.zipWithIndex.map {
           case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(name, a)
+            val altHintsName = line"${cn.nameDef}Hints"
             // format: off
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
-              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name](${renderStringLiteral(realName)}).addHints(hints)""",
+              renderHintsVal(altHints, Some(cn.nameDef.name)),
+              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name](${renderStringLiteral(realName)}).addHints(${altHintsName})""",
             )
             // format: on
           case (
@@ -1713,8 +1715,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }
 
-  def renderHintsVal(hints: List[Hint]): Lines = {
-    val lhs = line"val hints: $Hints_"
+  def renderHintsVal(hints: List[Hint], prefix: Option[String] = None): Lines = {
+    val lhs = line"val ${prefix.fold("hints")(_ + "Hints")}: $Hints_"
 
     hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint) match {
       case Nil => lines(line"$lhs = $Hints_.empty")

@@ -39,7 +39,8 @@ object SampleOpenUnion extends ShapeTag.Companion[SampleOpenUnion] {
 
   final case class StrCase(str: String) extends SampleOpenUnion { final def $ordinal: Int = 0 }
   case object UCase extends SampleOpenUnion { final def $ordinal: Int = 1 }
-  private val UCaseAlt = Schema.constant(SampleOpenUnion.UCase).oneOf[SampleOpenUnion]("u").addHints(hints)
+  val UCaseHints: Hints = Hints.empty
+  private val UCaseAlt = Schema.constant(SampleOpenUnion.UCase).oneOf[SampleOpenUnion]("u").addHints(UCaseHints)
   final case class UnknownCase(unknown: Document) extends SampleOpenUnion { final def $ordinal: Int = 2 }
 
   object StrCase {
