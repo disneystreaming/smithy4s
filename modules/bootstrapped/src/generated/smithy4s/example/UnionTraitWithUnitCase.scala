@@ -36,7 +36,8 @@ object UnionTraitWithUnitCase extends ShapeTag.Companion[UnionTraitWithUnitCase]
   ).lazily
 
   case object UCase extends UnionTraitWithUnitCase { final def $ordinal: Int = 0 }
-  private val UCaseAlt = Schema.constant(UnionTraitWithUnitCase.UCase).oneOf[UnionTraitWithUnitCase]("u").addHints(hints)
+  val UCaseHints: Hints = Hints.empty
+  private val UCaseAlt = Schema.constant(UnionTraitWithUnitCase.UCase).oneOf[UnionTraitWithUnitCase]("u").addHints(UCaseHints)
   final case class SCase(s: String) extends UnionTraitWithUnitCase { final def $ordinal: Int = 1 }
 
   object SCase {

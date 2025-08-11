@@ -29,8 +29,6 @@ import org.http4s._
 import org.http4s.client.Client
 import cats.effect.Ref
 import org.http4s.syntax.literals._
-import cats.effect.Ref
-import org.http4s.syntax.literals._
 import smithy4s.example.hello._
 import weaver._
 

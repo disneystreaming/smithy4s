@@ -40,7 +40,8 @@ object SampleOpenDiscriminatedUnion extends ShapeTag.Companion[SampleOpenDiscrim
 
   final case class SCase(s: StructForDiscrimination) extends SampleOpenDiscriminatedUnion { final def $ordinal: Int = 0 }
   case object UCase extends SampleOpenDiscriminatedUnion { final def $ordinal: Int = 1 }
-  private val UCaseAlt = Schema.constant(SampleOpenDiscriminatedUnion.UCase).oneOf[SampleOpenDiscriminatedUnion]("u").addHints(hints)
+  val UCaseHints: Hints = Hints.empty
+  private val UCaseAlt = Schema.constant(SampleOpenDiscriminatedUnion.UCase).oneOf[SampleOpenDiscriminatedUnion]("u").addHints(UCaseHints)
   final case class UnknownCase(unknown: Document) extends SampleOpenDiscriminatedUnion { final def $ordinal: Int = 2 }
 
   object SCase {
