@@ -16,12 +16,12 @@
 
 package smithy4s.xml
 
-import weaver._
-
 import smithy.api.XmlAttribute
+import smithy4s.Blob
+import smithy4s.ShapeId
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
-import smithy4s.{ShapeId, Blob}
+import weaver._
 
 object XmlSpec extends FunSuite {
 

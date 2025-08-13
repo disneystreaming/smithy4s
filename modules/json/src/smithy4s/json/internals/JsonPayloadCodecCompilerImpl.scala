@@ -18,16 +18,15 @@ package smithy4s
 package json
 package internals
 
-import smithy4s.schema.CachedSchemaCompiler
+import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig => JsoniterReaderConfig
 }
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   WriterConfig => JsoniterWriterConfig
 }
-import com.github.plokhotnyuk.jsoniter_scala.core._
-
 import smithy4s.codecs._
+import smithy4s.schema.CachedSchemaCompiler
 
 private[json] case class JsonPayloadCodecCompilerImpl(
     jsoniterCodecCompiler: JsoniterCodecCompiler,

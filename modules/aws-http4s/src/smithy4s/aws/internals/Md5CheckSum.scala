@@ -22,13 +22,13 @@ import cats.syntax.all._
 import fs2.Chunk
 import fs2.Pipe
 import fs2.Stream
+import fs2.hashing.HashAlgorithm
+import fs2.hashing.Hashing
 import org.http4s._
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
 import smithy4s.Endpoint
 import smithy4s.Service
-import fs2.hashing.Hashing
-import fs2.hashing.HashAlgorithm
 
 private[aws] object Md5CheckSum {
 

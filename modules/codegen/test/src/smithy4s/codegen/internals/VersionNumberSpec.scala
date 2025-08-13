@@ -1,7 +1,7 @@
 package smithy4s.codegen.internals
 
-import munit._
 import cats.syntax.all._
+import munit._
 
 final class VersionNumberSpec extends FunSuite {
   test("VersionNumber ordering") {

@@ -27,11 +27,11 @@ import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.FieldFilter
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
 
 import java.util.Base64
-import smithy4s.schema.FieldFilter
 
 /**
  * This schema visitor works on data that is annotated with :

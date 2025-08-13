@@ -15,11 +15,11 @@
  */
 
 package smithy4s.xml
+import smithy4s.codecs.PayloadPath
 import smithy4s.xml.XPath.Segment.Attr
 import smithy4s.xml.XPath.Segment.Index
 import smithy4s.xml.XPath.Segment.Tag
 import smithy4s.xml.XmlDocument.XmlQName
-import smithy4s.codecs.PayloadPath
 
 /**
   * Represents a path in the XML payload. Segments can be either tags, indexes (when dealing with collections), or attributes.

@@ -77,10 +77,14 @@ class SchemaVisitorPathEncoder(urlEncodeHttpLabelValues: Boolean)
             urlEncode = this.urlEncodeHttpLabelValues
           )
         )
-      case Primitive.PLocalDate => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
-      case Primitive.PLocalTime => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
-      case Primitive.PDuration => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
-      case Primitive.POffsetDateTime => PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PLocalDate =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PLocalTime =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.PDuration =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
+      case Primitive.POffsetDateTime =>
+        PathEncode.fromToString(urlEncode = this.urlEncodeHttpLabelValues)
     }
   }
 

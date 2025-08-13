@@ -128,18 +128,22 @@ object DocumentKeyDecoder {
 
           case PDocument => None
 
-          case PLocalDate => fromUnsafe(shortDesc) { case DString(string) =>
-            LocalDate.parseUnsafe(string)
-          }
-          case PLocalTime => fromUnsafe(shortDesc) { case DString(string) =>
-            LocalTime.parseUnsafe(string)
-          }
-          case PDuration => fromUnsafe(shortDesc) { case FlexibleNumber(bd) => 
-            DurationOps.fromBigDecimal(bd)
-          }
-          case POffsetDateTime => fromUnsafe(shortDesc) { case DString(string) =>
-            OffsetDateTime.parseUnsafe(string)
-          }
+          case PLocalDate =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              LocalDate.parseUnsafe(string)
+            }
+          case PLocalTime =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              LocalTime.parseUnsafe(string)
+            }
+          case PDuration =>
+            fromUnsafe(shortDesc) { case FlexibleNumber(bd) =>
+              DurationOps.fromBigDecimal(bd)
+            }
+          case POffsetDateTime =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              OffsetDateTime.parseUnsafe(string)
+            }
         }
       }
       override def enumeration[E](

@@ -18,10 +18,11 @@ package smithy4s
 package dynamic
 
 import munit._
-import java.util.concurrent.atomic.AtomicInteger
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema._
 import software.amazon.smithy.model.{Model => SModel}
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class DynamicStabilitySpec extends FunSuite {
 

@@ -16,10 +16,8 @@
 
 package smithy4s.xml
 
-import smithy4s.schema.CachedSchemaCompiler
-
-// scalafmt: {maxColumn = 120}
 import smithy4s.codecs.PayloadEncoder
+import smithy4s.schema.CachedSchemaCompiler
 
 trait XmlPayloadEncoderCompiler extends CachedSchemaCompiler[PayloadEncoder] {
 

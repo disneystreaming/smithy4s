@@ -20,6 +20,7 @@ package http
 import smithy.api.Http
 import smithy4s.http.internals.SchemaVisitorPathEncoder
 import smithy4s.schema.OperationSchema
+
 import scala.annotation.tailrec
 
 trait HttpEndpoint[I] {

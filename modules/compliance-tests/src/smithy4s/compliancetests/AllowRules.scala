@@ -17,9 +17,10 @@
 package smithy4s.compliancetests
 
 import smithy.test.AppliesTo
+import smithy4s.ShapeId
 import smithy4s.compliancetests.TestConfig.TestType
 import smithy4s.schema.Schema
-import smithy4s.ShapeId
+
 import java.util.regex.Pattern
 
 final case class AlloyBorrowedTests(

@@ -16,10 +16,10 @@
 
 package smithy4s
 package dynamic
+import cats.syntax.all._
 import smithy4s.example.KVStore
 
 import DummyIO._
-import cats.syntax.all._
 
 /**
  * This spec dynamically compiles a KV Store service,

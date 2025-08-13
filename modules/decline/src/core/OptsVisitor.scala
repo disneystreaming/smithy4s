@@ -16,14 +16,25 @@
 
 package smithy4s.decline.core
 
-import cats.data.{NonEmptyVector, Validated, NonEmptyList}
+import cats.data.NonEmptyList
+import cats.data.NonEmptyVector
+import cats.data.Validated
 import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
-import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Blob}
+import smithy.api.Documentation
+import smithy.api.ExternalDocumentation
+import smithy.api.TimestampFormat
+import smithy4s.Bijection
+import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
+import smithy4s.schema.CollectionTag
+import smithy4s.schema.CollectionTag.ListTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
@@ -33,8 +44,6 @@ import smithy4s.time._
 
 import java.util.UUID
 import scala.concurrent.duration.Duration
-import smithy4s.schema.CollectionTag
-import smithy4s.schema.CollectionTag.ListTag
 
 object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
@@ -176,16 +185,16 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         implicit val blobArgument = commons.blobArgument
         field[Blob](hints)
       }
-      case PLocalDate => 
+      case PLocalDate =>
         implicit val arg = commons.localDateArgument
         field[LocalDate](hints)
-      case PLocalTime => 
+      case PLocalTime =>
         implicit val arg = commons.localTimeArgument
         field[LocalTime](hints)
-      case PDuration => 
+      case PDuration =>
         implicit val arg = commons.durationArgument
         field[Duration](hints)
-      case POffsetDateTime => 
+      case POffsetDateTime =>
         implicit val arg = commons.offsetDateTimeArgument
         field[OffsetDateTime](hints)
     }
@@ -217,16 +226,16 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         fieldPlural[Blob](member.hints)
 
       case PBoolean | PDocument => jsonFieldPlural(member)
-      case PLocalDate => 
+      case PLocalDate =>
         implicit val arg = commons.localDateArgument
         fieldPlural[LocalDate](member.hints)
-      case PLocalTime => 
+      case PLocalTime =>
         implicit val arg = commons.localTimeArgument
         fieldPlural[LocalTime](member.hints)
-      case PDuration => 
+      case PDuration =>
         implicit val arg = commons.durationArgument
         fieldPlural[Duration](member.hints)
-      case POffsetDateTime => 
+      case POffsetDateTime =>
         implicit val arg = commons.offsetDateTimeArgument
         fieldPlural[OffsetDateTime](member.hints)
 

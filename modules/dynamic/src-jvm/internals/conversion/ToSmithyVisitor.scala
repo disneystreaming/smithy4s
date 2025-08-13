@@ -16,12 +16,13 @@
 
 package smithy4s.dynamic.internals.conversion
 
-import smithy4s.schema.SchemaVisitor
-import software.amazon.smithy.model.shapes.Shape
-import smithy4s.{ShapeId => ScalaShapeId, _}
-import smithy4s.schema.{Schema => _, _}
 import smithy4s.schema.Primitive._
+import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.{Schema => _, _}
+import smithy4s.{ShapeId => ScalaShapeId, _}
+import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.shapes._
+
 import java.util.function.Consumer
 
 /**

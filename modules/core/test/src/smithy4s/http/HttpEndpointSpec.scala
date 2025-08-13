@@ -19,7 +19,8 @@ package smithy4s.http
 import cats.effect._
 import cats.syntax.all._
 import org.scalacheck.Gen
-import smithy.api.{Http, NonEmptyString}
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s._
 import smithy4s.http.HttpEndpoint._
 import weaver._

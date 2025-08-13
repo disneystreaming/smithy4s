@@ -16,22 +16,24 @@
 
 package smithy4s.codegen.internals
 
+import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
+import smithy4s.meta.BincompatAddedTrait
+import smithy4s.meta.BincompatFriendlyTrait
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
+import smithy4s.meta.TypeclassTrait
 import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
-import smithy4s.meta.AdtTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
-import smithy4s.meta.TypeclassTrait
-import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.knowledge.TopDownIndex
@@ -54,8 +56,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 import Type.Alias
-import smithy4s.meta.BincompatFriendlyTrait
-import smithy4s.meta.BincompatAddedTrait
 
 private[codegen] object SmithyToIR {
 

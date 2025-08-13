@@ -16,11 +16,14 @@
 
 package smithy4s.interopcats.instances
 
-import cats.{Eq, Hash}
-import smithy4s.{Blob, ShapeId}
-import smithy4s.time._
+import cats.Eq
+import cats.Hash
+import smithy4s.Blob
+import smithy4s.ShapeId
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Primitive
+import smithy4s.time._
+
 import scala.concurrent.duration.Duration
 
 private[interopcats] trait HashInstances {
@@ -39,7 +42,8 @@ private[interopcats] trait HashInstances {
   implicit val localDateHash: Hash[LocalDate] = Hash.fromUniversalHashCode
   implicit val localTimeHash: Hash[LocalTime] = Hash.fromUniversalHashCode
   implicit val durationHash: Hash[Duration] = Hash.fromUniversalHashCode
-  implicit val offsetDateTimeHash: Hash[OffsetDateTime] = Hash.fromUniversalHashCode
+  implicit val offsetDateTimeHash: Hash[OffsetDateTime] =
+    Hash.fromUniversalHashCode
 
   val primHashPf: PolyFunction[Primitive, Hash] = Primitive.deriving[Hash]
 }

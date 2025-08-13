@@ -21,6 +21,7 @@ import java.time.{LocalTime => JLocalTime}
 private[time] trait LocalTimePlatform { self: LocalTime =>
 
   /** JVM platform only method */
-  def toJava: JLocalTime = JLocalTime.ofSecondOfDay(seconds.toLong).plusNanos(nano.toLong)
+  def toJava: JLocalTime =
+    JLocalTime.ofSecondOfDay(seconds.toLong).plusNanos(nano.toLong)
 
 }

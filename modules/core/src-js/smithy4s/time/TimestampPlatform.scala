@@ -28,5 +28,4 @@ private[time] trait TimestampPlatform { self: Timestamp =>
     date
   }
 
-
 }

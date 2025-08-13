@@ -16,11 +16,12 @@
 
 package smithy4s
 
-import scala.util.hashing.MurmurHash3
-import smithy4s.capability.MonadThrowLike
 import cats.MonadThrow
-import cats.syntax.all._
 import cats.kernel.Monoid
+import cats.syntax.all._
+import smithy4s.capability.MonadThrowLike
+
+import scala.util.hashing.MurmurHash3
 
 package object interopcats {
 

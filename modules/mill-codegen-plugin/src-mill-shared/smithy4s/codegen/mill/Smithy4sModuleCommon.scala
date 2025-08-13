@@ -28,9 +28,9 @@ import smithy4s.codegen.FileType
 import smithy4s.codegen.SMITHY4S_DEPENDENCIES
 import smithy4s.codegen.{Codegen => Smithy4s}
 
+import scala.annotation.nowarn
 import scala.util.Success
 import scala.util.Try
-import scala.annotation.nowarn
 
 trait Smithy4sModuleCommon extends ScalaModule {
 

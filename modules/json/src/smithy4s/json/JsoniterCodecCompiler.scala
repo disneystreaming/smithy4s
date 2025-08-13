@@ -16,12 +16,11 @@
 
 package smithy4s.json
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
-import smithy4s.internals._
-import smithy4s.HintMask
-import smithy.api._
 import alloy._
-
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
+import smithy.api._
+import smithy4s.HintMask
+import smithy4s.internals._
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.FieldFilter
 

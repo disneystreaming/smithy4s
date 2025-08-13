@@ -85,10 +85,10 @@ object DocumentKeyEncoder {
               case EPOCH_SECONDS =>
                 forBigDecimal { ts => BigDecimal(ts.epochSecond) }
             }
-          case PDocument => None
-          case PLocalDate => asString
-          case PLocalTime => asString
-          case PDuration => forBigDecimal { dur => dur.toBigDecimal }
+          case PDocument       => None
+          case PLocalDate      => asString
+          case PLocalTime      => asString
+          case PDuration       => forBigDecimal { dur => dur.toBigDecimal }
           case POffsetDateTime => asString
         }
       }

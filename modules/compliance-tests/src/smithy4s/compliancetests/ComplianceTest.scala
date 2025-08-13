@@ -16,8 +16,9 @@
 
 package smithy4s.compliancetests
 
-import ComplianceTest.ComplianceResult
 import smithy4s.ShapeId
+
+import ComplianceTest.ComplianceResult
 
 case class ComplianceTest[F[_]](
     id: String,

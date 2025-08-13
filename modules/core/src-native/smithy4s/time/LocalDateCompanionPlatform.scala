@@ -24,7 +24,7 @@ private[time] trait LocalDateCompanionPlatform {
 
     val epochDay =
       (if (epochSecond >= 0) epochSecond
-       else epochSecond - 86399) / 86400 
+       else epochSecond - 86399) / 86400
 
     LocalDate(epochDay)
   }

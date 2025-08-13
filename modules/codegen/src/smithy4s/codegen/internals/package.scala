@@ -131,8 +131,10 @@ package object internals {
     object uuidFormat extends TraitExtractor[alloy.UuidFormatTrait]
     object localDateFormat extends TraitExtractor[alloy.DateFormatTrait]
     object localTimeFormat extends TraitExtractor[alloy.LocalTimeFormatTrait]
-    object durationSecondsFormat extends TraitExtractor[alloy.DurationSecondsFormatTrait]
-    object offsetDateTimeFormat extends TraitExtractor[alloy.OffsetDateTimeFormatTrait]
+    object durationSecondsFormat
+        extends TraitExtractor[alloy.DurationSecondsFormatTrait]
+    object offsetDateTimeFormat
+        extends TraitExtractor[alloy.OffsetDateTimeFormatTrait]
   }
 
   private[internals] object N {

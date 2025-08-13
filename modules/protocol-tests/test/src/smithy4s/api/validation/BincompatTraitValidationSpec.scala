@@ -16,11 +16,12 @@
 
 package smithy4s.api.validation
 
-import weaver._
-import ModelUtils._
-import software.amazon.smithy.model.validation.ValidationEvent
-import software.amazon.smithy.model.validation.Severity
 import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.model.validation.Severity
+import software.amazon.smithy.model.validation.ValidationEvent
+import weaver._
+
+import ModelUtils._
 
 object BincompatTraitValidationSpec extends FunSuite {
 

@@ -16,10 +16,11 @@
 
 package smithy4s.time
 
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
-case class LocalTime private (seconds: Int, nano: Int) 
-  extends LocalTimePlatform {
+case class LocalTime private (seconds: Int, nano: Int)
+    extends LocalTimePlatform {
 
   def isAfter(other: LocalTime): Boolean = {
     val diff = seconds - other.seconds
@@ -62,9 +63,9 @@ object LocalTime extends LocalTimeCompanionPlatform {
   }
 
   def apply(hour: Int, minute: Int, second: Int, nano: Int = 0): LocalTime = {
-    require(hour >= 0 && hour <=23, "illegal hour")
-    require(minute >= 0 && minute <=59, "illegal minute")
-    require(second >= 0 && second <=59, "illegal second")
+    require(hour >= 0 && hour <= 23, "illegal hour")
+    require(minute >= 0 && minute <= 59, "illegal minute")
+    require(second >= 0 && second <= 59, "illegal second")
     require(nano >= 0 && nano <= 999999999, "illegal nano")
 
     val totalSeconds = hour * 3600 + minute * 60 + second
@@ -74,11 +75,10 @@ object LocalTime extends LocalTimeCompanionPlatform {
   def fromSeconds(seconds: Int): LocalTime = LocalTime(seconds, 0)
 
   def parse(string: String): Option[LocalTime] = try {
-      Some(parseUnsafe(string))
+    Some(parseUnsafe(string))
   } catch {
     case NonFatal(_) => None
   }
-
 
   def parseUnsafe(s: String): LocalTime = {
     println(s"parsing localTime $s")

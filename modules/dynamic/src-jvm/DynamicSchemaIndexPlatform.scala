@@ -18,12 +18,13 @@ package smithy4s.dynamic
 
 import smithy4s.Service
 import smithy4s.schema.OperationSchema
-import software.amazon.smithy.model.shapes.Shape
 import smithy4s.schema.Schema
-import software.amazon.smithy.model.shapes.OperationShape
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.shapes.ServiceShape
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.OperationShape
+import software.amazon.smithy.model.shapes.ServiceShape
+import software.amazon.smithy.model.shapes.Shape
+
+import scala.jdk.CollectionConverters._
 
 private[dynamic] trait DynamicSchemaIndexPlatform {
   self: DynamicSchemaIndex =>

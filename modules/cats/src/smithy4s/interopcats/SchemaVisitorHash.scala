@@ -17,8 +17,13 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{catsKernelStdHashForList, toContravariantOps}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
+import cats.implicits.catsKernelStdHashForList
+import cats.implicits.toContravariantOps
+import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
 import smithy4s.schema.Schema

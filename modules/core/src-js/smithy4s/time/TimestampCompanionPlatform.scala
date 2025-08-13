@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2021-2025 Disney Streaming
  *
@@ -21,7 +20,8 @@ import scalajs.js.Date
 
 private[time] trait TimestampCompanionPlatform {
 
-  def fromDate(x: Date): Timestamp = Timestamp.fromEpochMilli(x.valueOf().toLong)
+  def fromDate(x: Date): Timestamp =
+    Timestamp.fromEpochMilli(x.valueOf().toLong)
 
   def nowUTC(): Timestamp = fromDate(new Date())
 }

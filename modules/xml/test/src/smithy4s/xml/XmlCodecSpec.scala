@@ -16,8 +16,8 @@
 
 package smithy4s.xml
 
-import cats.effect.IO
 import cats.Eq
+import cats.effect.IO
 import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
@@ -30,10 +30,11 @@ import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.ShapeId
+import smithy4s.example.OpenEnumTest
+import smithy4s.example.OpenIntEnumTest
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
-import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 
 object XmlCodecSpec extends SimpleIOSuite {
 

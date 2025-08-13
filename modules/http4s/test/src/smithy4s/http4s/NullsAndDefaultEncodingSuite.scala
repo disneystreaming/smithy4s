@@ -16,21 +16,21 @@
 
 package smithy4s.http4s
 
-import weaver._
-import org.http4s._
-import org.http4s.implicits._
 import cats.effect.IO
-import smithy4s.example.ServiceWithNullsAndDefaults
-import smithy4s.example.DefaultNullsOperationOutput
+import cats.effect.kernel.Deferred
 import io.circe.Json
-import org.typelevel.ci.CIString
-import org.typelevel.ci._
+import org.http4s._
 import org.http4s.circe.CirceInstances
 import org.http4s.client.Client
+import org.http4s.implicits._
+import org.typelevel.ci.CIString
+import org.typelevel.ci._
 import smithy4s.example.DefaultNullsOperationInput
-import cats.effect.kernel.Deferred
+import smithy4s.example.DefaultNullsOperationOutput
+import smithy4s.example.ServiceWithNullsAndDefaults
 import smithy4s.example.TimestampOperationInput
 import smithy4s.schema.FieldFilter
+import weaver._
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 

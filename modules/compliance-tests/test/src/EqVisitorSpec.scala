@@ -17,12 +17,18 @@
 package smithy4s.compliancetests
 
 import cats.kernel.Eq
+import smithy4s.Blob
+import smithy4s.Enumeration
+import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-import smithy4s.schema.{Schema, SchemaVisitor}
+import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
-import smithy4s.{Blob, Enumeration, Hints, ShapeId}
+import smithy4s.schema.SchemaVisitor
 import smithy4s.time._
-import weaver.{Expectations, FunSuite}
+import weaver.Expectations
+import weaver.FunSuite
+
 import scala.concurrent.duration.Duration
 
 object EqVisitorSpec extends FunSuite {

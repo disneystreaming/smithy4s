@@ -16,14 +16,14 @@
 
 package smithy4s.time
 
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
-case class LocalDate private(epochDay: Long)
-    extends LocalDatePlatform {
+case class LocalDate private (epochDay: Long) extends LocalDatePlatform {
 
   def isAfter(other: LocalDate): Boolean = {
     val diff = epochDay - other.epochDay
-    diff > 0 
+    diff > 0
   }
 
   override def toString: String = {
@@ -65,14 +65,15 @@ object LocalDate extends LocalDateCompanionPlatform {
   def apply(epochDay: Long): LocalDate = new LocalDate(epochDay)
 
   def apply(
-      year: Int, 
+      year: Int,
       month: Int,
-      day: Int,
+      day: Int
   ): LocalDate = {
     require(year >= 0 && year <= 9999, "illegal year")
     require(month >= 1 && month <= 12, "illegal month")
     require(
-      day >= 1 && (day <= 28 || day <= TimeUtil.maxDayForYearMonth(year, month)),
+      day >= 1 && (day <= 28 || day <= TimeUtil
+        .maxDayForYearMonth(year, month)),
       "illegal year, month, day combination"
     )
     new LocalDate(
@@ -80,7 +81,7 @@ object LocalDate extends LocalDateCompanionPlatform {
         year,
         month,
         day
-      ) 
+      )
     )
   }
 
@@ -124,14 +125,14 @@ object LocalDate extends LocalDateCompanionPlatform {
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
         ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day == 0 ||
-        (day > 28 && day > TimeUtil.maxDayForYearMonth(year, month)) 
+        (day > 28 && day > TimeUtil.maxDayForYearMonth(year, month))
       ) error()
       pos += 2
       day
     }
     if (pos != len) error()
     LocalDate(year, month, day)
-  } 
+  }
 
   private[this] def error(): Throwable = throw new RuntimeException
     with NoStackTrace

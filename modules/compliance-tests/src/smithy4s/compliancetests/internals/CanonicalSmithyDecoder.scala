@@ -16,16 +16,17 @@
 
 package smithy4s.compliancetests.internals
 
-import smithy4s.internals._
-import smithy4s.{Hints, ShapeId}
-import smithy4s.schema.Primitive
+import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Document._
-import smithy4s.schema._
-import smithy4s.schema.Primitive._
-import smithy4s.time._
-import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.codecs.PayloadError
+import smithy4s.internals._
+import smithy4s.schema.Primitive
+import smithy4s.schema.Primitive._
+import smithy4s.schema._
+import smithy4s.time._
 
 object CanonicalSmithyDecoder {
 

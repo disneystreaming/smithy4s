@@ -18,8 +18,8 @@ package smithy4s.json
 package internals
 
 import smithy4s.HintMask
-import smithy4s.schema._
 import smithy4s.schema.FieldFilter
+import smithy4s.schema._
 
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,

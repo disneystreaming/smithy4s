@@ -16,10 +16,10 @@
 
 package smithy4s.aws
 
-import weaver._
+import cats.effect.IO
 import fs2.io.file.Files
 import smithy4s.aws.kernel.AwsCredentials
-import cats.effect.IO
+import weaver._
 
 object AwsCredentialsFileReadTest extends SimpleIOSuite {
   test("read credentials from a file") {

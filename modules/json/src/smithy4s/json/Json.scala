@@ -16,14 +16,14 @@
 
 package smithy4s.json
 
-import smithy4s.Document
-import smithy4s.Blob
-import smithy4s.codecs.PayloadError
-import smithy4s.schema.Schema
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.PayloadEncoder
+import smithy4s.Blob
+import smithy4s.Document
 import smithy4s.codecs.PayloadDecoder
+import smithy4s.codecs.PayloadEncoder
+import smithy4s.codecs.PayloadError
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.Schema
 
 object Json {
 

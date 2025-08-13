@@ -18,17 +18,18 @@ package smithy4s
 package tests
 
 import cats.Id
-import java.util.UUID
-import smithy4s.schema.CollectionTag
-import smithy4s.schema.Field
-import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.Alt
-import smithy4s.schema.Schema
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
+import smithy4s.schema.Field
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
+import smithy4s.schema.Schema
+import smithy4s.schema.SchemaVisitor
 import smithy4s.time._
+
+import java.util.UUID
 import scala.concurrent.duration.Duration
 
 object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>

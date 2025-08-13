@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.Blob
+import smithy4s.aws.kernel.AwsInstanceMetadata
 
 object AwsInstanceMetadataTest extends weaver.FunSuite {
 

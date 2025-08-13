@@ -18,15 +18,19 @@ package smithy4s.compliancetests
 package internals
 
 import cats.Id
-
-import java.util.UUID
+import smithy4s.Bijection
+import smithy4s.Blob
+import smithy4s.Document.DNull
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
+import smithy4s.schema.Primitive._
 import smithy4s.schema._
 import smithy4s.time._
-import smithy4s.Blob
-import smithy4s.schema.Primitive._
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
+
+import java.util.UUID
 import scala.concurrent.duration.Duration
-import smithy4s.Document.DNull
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   self =>
@@ -36,23 +40,23 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       hints: Hints,
       tag: Primitive[P]
   ): Id[P] = tag match {
-    case PFloat      => 0: Float
-    case PBigDecimal => 0: BigDecimal
-    case PBigInt     => 0: BigInt
-    case PBlob       => Blob(Array.emptyByteArray)
-    case PDocument   => DNull
-    case PByte       => 0: Byte
-    case PInt        => 0
-    case PShort      => 0: Short
-    case PString     => ""
-    case PLong       => 0: Long
-    case PDouble     => 0: Double
-    case PBoolean    => true
-    case PTimestamp  => Timestamp(0L, 0)
-    case PUUID       => new UUID(0, 0)
-    case PLocalDate  => LocalDate.epoch
-    case PLocalTime  => LocalTime.midnight
-    case PDuration   => Duration.Zero
+    case PFloat          => 0: Float
+    case PBigDecimal     => 0: BigDecimal
+    case PBigInt         => 0: BigInt
+    case PBlob           => Blob(Array.emptyByteArray)
+    case PDocument       => DNull
+    case PByte           => 0: Byte
+    case PInt            => 0
+    case PShort          => 0: Short
+    case PString         => ""
+    case PLong           => 0: Long
+    case PDouble         => 0: Double
+    case PBoolean        => true
+    case PTimestamp      => Timestamp(0L, 0)
+    case PUUID           => new UUID(0, 0)
+    case PLocalDate      => LocalDate.epoch
+    case PLocalTime      => LocalTime.midnight
+    case PDuration       => Duration.Zero
     case POffsetDateTime => OffsetDateTime.epoch
   }
 

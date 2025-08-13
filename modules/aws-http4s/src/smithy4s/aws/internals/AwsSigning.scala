@@ -17,9 +17,9 @@
 package smithy4s.aws
 package internals
 
+import cats._
 import cats.effect.Concurrent
 import cats.effect.Resource
-import cats._
 import cats.syntax.all._
 import fs2.Chunk
 import org.http4s._
@@ -28,7 +28,8 @@ import org.typelevel.ci.CIString
 import smithy4s._
 import smithy4s.aws.kernel.AwsCrypto._
 
-import java.net.{URI, URLEncoder}
+import java.net.URI
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 /**

@@ -17,16 +17,19 @@
 package smithy4s.decline.core
 
 import cats.Functor
-import smithy4s.capability.Covariant
-import com.monovore.decline.Argument
-import cats.data.Validated.Valid
-import smithy4s.{Blob, ConstraintError, Document, Schema}
-import cats.implicits._
 import cats.MonadError
+import cats.data.Validated.Valid
+import cats.implicits._
+import com.monovore.decline.Argument
+import smithy4s.Blob
+import smithy4s.ConstraintError
+import smithy4s.Document
+import smithy4s.Schema
+import smithy4s.capability.Covariant
 import smithy4s.time._
 
-import java.util.Base64
 import java.time.format.DateTimeFormatter
+import java.util.Base64
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
@@ -60,25 +63,38 @@ object commons {
   }
   val localDateArgument: Argument[LocalDate] =
     Argument.from("localDate") { s =>
-      LocalDate.parse(s).toValidNel(s"""Invalid localDate "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_DATE}""")
+      LocalDate
+        .parse(s)
+        .toValidNel(
+          s"""Invalid localDate "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_DATE}"""
+        )
     }
 
   val localTimeArgument: Argument[LocalTime] =
     Argument.from("localTime") { s =>
-      LocalTime.parse(s).toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_TIME}""")
+      LocalTime
+        .parse(s)
+        .toValidNel(
+          s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_LOCAL_TIME}"""
+        )
     }
 
   val durationArgument: Argument[Duration] =
     Argument.from("duration") { s =>
       Try(s.toLong).toOption match {
         case Some(seconds) => Valid(Duration(seconds, "seconds"))
-        case None => Try(Duration(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
+        case None =>
+          Try(Duration(s)).toOption.toValidNel(s"""Invalid duration "$s".""")
       }
     }
 
   val offsetDateTimeArgument: Argument[OffsetDateTime] =
     Argument.from("offsetDateTime") { s =>
-      OffsetDateTime.parse(s).toValidNel(s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_OFFSET_DATE_TIME}""")
+      OffsetDateTime
+        .parse(s)
+        .toValidNel(
+          s"""Invalid localTime "$s". Expected format: ${DateTimeFormatter.ISO_OFFSET_DATE_TIME}"""
+        )
     }
 }
 

@@ -17,9 +17,9 @@
 package smithy4s
 package dynamic
 
-import software.amazon.smithy.model.{Model => SModel}
-import smithy4s.schema.Schema
 import smithy.api.{Documentation => Doc}
+import smithy4s.schema.Schema
+import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicMemberHintsSpec() extends DummyIO.Suite {
 

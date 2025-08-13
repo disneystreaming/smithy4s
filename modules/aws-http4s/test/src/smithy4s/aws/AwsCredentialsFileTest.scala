@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import weaver._
 import smithy4s.aws.kernel.AwsCredentials
+import weaver._
 
 object AwsCredentialsFileTest extends FunSuite {
   val creds = AwsCredentials.Default("key", "sec", Some("token"))

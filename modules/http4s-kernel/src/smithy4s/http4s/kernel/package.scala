@@ -16,25 +16,25 @@
 
 package smithy4s.http4s
 
+import cats.MonadThrow
+import cats.effect.Concurrent
 import cats.effect.SyncIO
 import cats.syntax.all._
+import fs2.Chunk
+import fs2.Stream
 import org.http4s._
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.Blob
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpUriAuthority
+import smithy4s.http.HttpUriOrigin
 import smithy4s.http.PathParams
-import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 import smithy4s.http.{HttpMethod => Smithy4sHttpMethod}
 import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
 import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
-import smithy4s.http.HttpUriOrigin
-import smithy4s.http.HttpUriAuthority
-import cats.MonadThrow
-import cats.effect.Concurrent
-import fs2.Stream
-import fs2.Chunk
+import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 
 // scalafmt: { maxColumn = 120}
 package object kernel {

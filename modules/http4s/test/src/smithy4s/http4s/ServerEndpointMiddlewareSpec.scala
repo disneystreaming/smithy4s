@@ -20,6 +20,7 @@ package http4s
 import cats.Eq
 import cats.data.OptionT
 import cats.effect.IO
+import cats.effect.Ref
 import cats.effect.Resource
 import cats.implicits._
 import fs2.Collector
@@ -27,7 +28,6 @@ import org.http4s.HttpApp
 import org.http4s.Uri
 import org.http4s._
 import org.http4s.client.Client
-import cats.effect.Ref
 import org.http4s.syntax.literals._
 import smithy4s.example.hello._
 import weaver._

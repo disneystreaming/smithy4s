@@ -16,7 +16,8 @@
 
 package smithy4s.time
 
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 case class OffsetDateTime private (timestamp: Timestamp, offset: ZoneOffset) {
   override def toString: String = {
@@ -136,7 +137,8 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
     require(year >= 0 && year <= 9999, "illegal year")
     require(month >= 1 && month <= 12, "illegal month")
     require(
-      day >= 1 && (day <= 28 || day <= TimeUtil.maxDayForYearMonth(year, month)),
+      day >= 1 && (day <= 28 || day <= TimeUtil
+        .maxDayForYearMonth(year, month)),
       "illegal year, month, day combination"
     )
     require(hour >= 0 && hour <= 23, "illegal hour")
@@ -197,7 +199,10 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
       val day = ch0 * 10 + ch1 - 528 // 528 == '0' * 11
       if (
         ch0 < '0' || ch0 > '3' || ch1 < '0' || ch1 > '9' || day == 0 ||
-        (day > 28 && day > TimeUtil.maxDayForYearMonth(year, month)) || ch2 != 'T'
+        (day > 28 && day > TimeUtil.maxDayForYearMonth(
+          year,
+          month
+        )) || ch2 != 'T'
       ) error()
       pos += 3
       day
@@ -256,7 +261,7 @@ object OffsetDateTime extends OffsetDateTimeCompanionPlatform {
         }
       }
     }
-    var offset = 0 
+    var offset = 0
     if (ch != 'Z') {
       val isNeg = ch == '-' || (ch != '+' && {
         error()

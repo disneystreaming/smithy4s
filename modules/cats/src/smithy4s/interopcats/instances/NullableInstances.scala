@@ -20,6 +20,7 @@ import cats._
 import cats.syntax.all._
 import smithy4s.Nullable
 import smithy4s.Nullable._
+
 import scala.annotation.tailrec
 
 trait NullableInstances {

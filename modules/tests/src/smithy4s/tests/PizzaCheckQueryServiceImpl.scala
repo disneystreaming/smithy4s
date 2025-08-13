@@ -16,7 +16,6 @@
 
 package smithy4s.tests
 import cats.effect._
-
 import smithy4s.example._
 
 trait PizzaCheckQueryServiceImpl {

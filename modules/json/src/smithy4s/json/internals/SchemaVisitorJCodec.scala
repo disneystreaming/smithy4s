@@ -18,31 +18,30 @@ package smithy4s
 package json
 package internals
 
-import java.util.UUID
-import java.util
-import scala.concurrent.duration._
-
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
-import smithy.api.JsonName
-import smithy.api.TimestampFormat
 import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Nullable
 import alloy.Untagged
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
+import smithy.api.JsonName
+import smithy.api.Required
+import smithy.api.TimestampFormat
 import smithy4s.internals.DiscriminatedUnionMember
-import smithy4s.schema._
-import smithy4s.time._
-import smithy4s.time.DurationOps._
+import smithy4s.schema.FieldFilter
 import smithy4s.schema.Primitive._
+import smithy4s.schema._
+import smithy4s.time.DurationOps._
+import smithy4s.time._
 
+import java.util
+import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.immutable.ListMap
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
-import scala.collection.immutable.ListMap
-import smithy4s.schema.FieldFilter
-import smithy.api.Required
+import scala.concurrent.duration._
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
@@ -638,10 +637,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PString     => PrimitiveJCodecs.string
       case PTimestamp  => timestampJCodec(hints)
 
-      case PUUID => PrimitiveJCodecs.uuid
-      case PLocalDate => PrimitiveJCodecs.localDate
-      case PLocalTime => PrimitiveJCodecs.localTime
-      case PDuration => PrimitiveJCodecs.duration
+      case PUUID           => PrimitiveJCodecs.uuid
+      case PLocalDate      => PrimitiveJCodecs.localDate
+      case PLocalTime      => PrimitiveJCodecs.localTime
+      case PDuration       => PrimitiveJCodecs.duration
       case POffsetDateTime => PrimitiveJCodecs.offsetDateTime
     }
   }

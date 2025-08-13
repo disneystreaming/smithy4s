@@ -17,7 +17,8 @@
 package smithy4s.time
 
 import java.time.Instant
-import java.time.{OffsetDateTime => JOffsetDateTime, ZoneOffset => JZoneOffset}
+import java.time.{OffsetDateTime => JOffsetDateTime}
+import java.time.{ZoneOffset => JZoneOffset}
 
 private[time] trait TimestampPlatform { self: Timestamp =>
 

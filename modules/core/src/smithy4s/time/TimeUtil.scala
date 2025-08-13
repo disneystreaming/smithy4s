@@ -77,7 +77,6 @@ private[time] object TimeUtil {
       "Dec"
     )
 
-
   def toEpochDay(year: Int, month: Int, day: Int): Long =
     year * 365L + ((year + 3 >> 2) - {
       val cp = year * 1374389535L

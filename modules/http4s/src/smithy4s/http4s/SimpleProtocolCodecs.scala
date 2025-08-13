@@ -16,8 +16,10 @@
 
 package smithy4s.http4s
 
-import org.http4s.{Uri, Request, Response}
 import cats.effect.Concurrent
+import org.http4s.Request
+import org.http4s.Response
+import org.http4s.Uri
 import smithy4s.client._
 import smithy4s.server.UnaryServerCodecs
 

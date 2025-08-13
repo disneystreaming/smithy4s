@@ -1,9 +1,9 @@
 package smithy4s.codegen
 
-import munit.FunSuite
-import com.typesafe.tools.mima.lib.MiMaLib
 import cats.syntax.all._
 import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
+import com.typesafe.tools.mima.lib.MiMaLib
+import munit.FunSuite
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
   private val scala212 = "2.12"

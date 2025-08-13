@@ -28,13 +28,13 @@ import fs2.data.xml.dom.DocumentBuilder
 import fs2.data.xml.dom.DocumentEventifier
 import smithy.api.XmlName
 import smithy4s.ShapeId
+import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 import smithy4s.xml.internals.XmlCursor
 import smithy4s.xml.internals.XmlDecoder
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlEncoder
 import smithy4s.xml.internals.XmlEncoderSchemaVisitor
-import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * A XmlDocument is an atomic piece of xml data that contains only one

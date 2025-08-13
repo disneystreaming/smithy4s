@@ -16,13 +16,11 @@
 
 package smithy4s.json
 
-import smithy4s.schema.CachedSchemaCompiler
-
-// scalafmt: {maxColumn = 120}
 import com.github.plokhotnyuk.jsoniter_scala.core.{ReaderConfig => JsoniterReaderConfig}
 import com.github.plokhotnyuk.jsoniter_scala.core.{WriterConfig => JsoniterWriterConfig}
 import smithy4s.codecs.PayloadDecoder
 import smithy4s.codecs.PayloadEncoder
+import smithy4s.schema.CachedSchemaCompiler
 
 trait JsonPayloadCodecCompiler {
 

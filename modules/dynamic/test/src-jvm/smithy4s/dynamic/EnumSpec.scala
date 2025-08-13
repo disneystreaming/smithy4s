@@ -16,17 +16,17 @@
 
 package smithy4s.dynamic
 
-import smithy4s.ShapeId
-import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
-import smithy4s.schema.EnumValue
-import smithy4s.Hints
-import smithy4s.Document
-import smithy4s.schema.Schema
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.EnumTag
-import org.scalacheck.Prop
 import org.scalacheck.Gen
+import org.scalacheck.Prop
+import smithy4s.Document
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.EnumTag
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema.EnumerationSchema
+import smithy4s.schema.SchemaVisitor
 
 class EnumSpec extends DummyIO.Suite {
   val model = """

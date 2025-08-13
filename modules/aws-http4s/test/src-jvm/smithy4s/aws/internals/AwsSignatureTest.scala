@@ -25,13 +25,15 @@ import org.http4s.Request
 import org.http4s.Uri
 import org.scalacheck.Gen
 import org.typelevel.ci.CIString
-import smithy4s.time.Timestamp
 import smithy4s.aws.kernel.AwsCredentials
 import smithy4s.aws.kernel.AwsRegion
+import smithy4s.time.Timestamp
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.auth.signer.Aws4Signer
+import software.amazon.awssdk.auth.signer.AwsS3V4Signer
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams
+import software.amazon.awssdk.auth.signer.params.AwsS3V4SignerParams
 import software.amazon.awssdk.http.ContentStreamProvider
 import software.amazon.awssdk.http.SdkHttpFullRequest
 import software.amazon.awssdk.http.SdkHttpMethod
@@ -46,8 +48,6 @@ import java.time.Clock
 import java.time.ZoneId
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
-import software.amazon.awssdk.auth.signer.AwsS3V4Signer
-import software.amazon.awssdk.auth.signer.params.AwsS3V4SignerParams
 
 /**
  * This suite verifies our implementation of the AWS signature algorithm against

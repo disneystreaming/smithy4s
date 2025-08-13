@@ -17,11 +17,12 @@
 package smithy4s.json
 
 import munit._
-import smithy4s.schema.Schema
 import smithy4s.Blob
 import smithy4s.Document
-import Schema._
 import smithy4s.example.DefaultTest
+import smithy4s.schema.Schema
+
+import Schema._
 
 class JsonSpec() extends FunSuite {
 

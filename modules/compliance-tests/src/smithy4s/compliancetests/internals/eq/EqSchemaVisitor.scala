@@ -16,17 +16,18 @@
 
 package smithy4s.compliancetests.internals.eq
 
-import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
 import cats.kernel.Eq
+import cats.kernel.Monoid
 import cats.syntax.all._
 import smithy4s._
-import smithy4s.schema.{Schema, _}
+import smithy4s.capability.EncoderK
+import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
+import smithy4s.schema.Schema
+import smithy4s.schema._
 import smithy4s.time._
-import scala.concurrent.duration.Duration
 
 import java.util.UUID
-import smithy4s.capability.EncoderK
-import cats.kernel.Monoid
+import scala.concurrent.duration.Duration
 
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
@@ -160,24 +161,24 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
-      case Primitive.PShort           => Eq[Short]
-      case Primitive.PInt             => Eq[Int]
-      case Primitive.PFloat           => floatEq
-      case Primitive.PLong            => Eq[Long]
-      case Primitive.PDouble          => doubleEq
-      case Primitive.PBigInt          => Eq[BigInt]
-      case Primitive.PBigDecimal      => Eq[BigDecimal]
-      case Primitive.PBoolean         => Eq[Boolean]
-      case Primitive.PString          => Eq[String]
-      case Primitive.PUUID            => Eq[UUID]
-      case Primitive.PByte            => Eq[Byte]
-      case Primitive.PBlob            => Eq[Blob]
-      case Primitive.PDocument        => Eq[Document]
-      case Primitive.PTimestamp       => Eq[Timestamp]
-      case Primitive.PLocalDate       => Eq[LocalDate]
-      case Primitive.PLocalTime       => Eq[LocalTime]
-      case Primitive.PDuration        => Eq[Duration]
-      case Primitive.POffsetDateTime  => Eq[OffsetDateTime]
+      case Primitive.PShort          => Eq[Short]
+      case Primitive.PInt            => Eq[Int]
+      case Primitive.PFloat          => floatEq
+      case Primitive.PLong           => Eq[Long]
+      case Primitive.PDouble         => doubleEq
+      case Primitive.PBigInt         => Eq[BigInt]
+      case Primitive.PBigDecimal     => Eq[BigDecimal]
+      case Primitive.PBoolean        => Eq[Boolean]
+      case Primitive.PString         => Eq[String]
+      case Primitive.PUUID           => Eq[UUID]
+      case Primitive.PByte           => Eq[Byte]
+      case Primitive.PBlob           => Eq[Blob]
+      case Primitive.PDocument       => Eq[Document]
+      case Primitive.PTimestamp      => Eq[Timestamp]
+      case Primitive.PLocalDate      => Eq[LocalDate]
+      case Primitive.PLocalTime      => Eq[LocalTime]
+      case Primitive.PDuration       => Eq[Duration]
+      case Primitive.POffsetDateTime => Eq[OffsetDateTime]
     }
   }
 

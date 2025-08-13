@@ -17,21 +17,21 @@
 package smithy4s.json
 
 import munit._
-import smithy4s.Document
-import smithy4s.Schema
-import smithy4s.example.SampleOpenUnion
-import smithy4s.example.StructWithOpenUnion
-import smithy4s.Blob
-import smithy4s.codecs.PayloadError
-import smithy4s.example.SampleOpenDiscriminatedUnion
-import smithy4s.example.StructForDiscrimination
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
-import smithy4s.example.OnlyUnknownOpenUnion
-import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
-import smithy4s.example.RecursiveOpenUnion
-import smithy4s.example.RecursiveDiscriminatedOpenUnion
+import smithy4s.Blob
+import smithy4s.Document
+import smithy4s.Schema
+import smithy4s.codecs.PayloadError
 import smithy4s.example.HasRecursiveDiscriminatedOpenUnion
+import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
+import smithy4s.example.OnlyUnknownOpenUnion
+import smithy4s.example.RecursiveDiscriminatedOpenUnion
+import smithy4s.example.RecursiveOpenUnion
+import smithy4s.example.SampleOpenDiscriminatedUnion
+import smithy4s.example.SampleOpenUnion
+import smithy4s.example.StructForDiscrimination
+import smithy4s.example.StructWithOpenUnion
 
 abstract class OpenUnionJsonSpec extends ScalaCheckSuite {
 

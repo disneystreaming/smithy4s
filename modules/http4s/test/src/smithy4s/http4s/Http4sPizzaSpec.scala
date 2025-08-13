@@ -18,10 +18,10 @@ package smithy4s.http4s
 
 import cats.effect.IO
 import cats.effect.Resource
-import org.http4s.Uri
 import org.http4s.Response
-import org.http4s.implicits._
+import org.http4s.Uri
 import org.http4s.client.Client
+import org.http4s.implicits._
 import smithy4s.example.PizzaAdminService
 
 object Http4sPizzaSpec extends smithy4s.tests.PizzaSpec {

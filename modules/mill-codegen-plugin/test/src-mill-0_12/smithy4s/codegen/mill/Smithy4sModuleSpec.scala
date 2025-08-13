@@ -16,15 +16,17 @@
 
 package smithy4s.codegen.mill
 
-import mill.testkit.{TestBaseModule, UnitTester}
-import mill.scalalib._
-import mill._
-import munit.Location
-import java.nio.file.Paths
-import mill.scalalib.publish.PomSettings
-import mill.scalalib.publish.VersionControl
 import coursier.Repository
 import coursier.ivy.IvyRepository
+import mill._
+import mill.scalalib._
+import mill.scalalib.publish.PomSettings
+import mill.scalalib.publish.VersionControl
+import mill.testkit.TestBaseModule
+import mill.testkit.UnitTester
+import munit.Location
+
+import java.nio.file.Paths
 
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =

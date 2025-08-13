@@ -19,12 +19,12 @@ package smithy4s.protobuf
 import munit._
 import smithy4s.Blob
 import smithy4s.Document
-import smithy4s.time._
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
-import scala.concurrent.duration.Duration
+import smithy4s.time._
 
 import java.util.UUID
+import scala.concurrent.duration.Duration
 
 // A few tests utilising java code-generated classes that ScalaPB doesn't have a pure scala version of.
 class JVMCodecTests() extends FunSuite {
@@ -146,10 +146,10 @@ class JVMCodecTests() extends FunSuite {
 
     val localDates = protobuf.LocalDateWrapper(
       Some(localDate1),
-      Some(localDate2),
+      Some(localDate2)
     )
 
-    val protoLocalDates = protobuf.protobuf.LocalDateWrapper( 
+    val protoLocalDates = protobuf.protobuf.LocalDateWrapper(
       localDate1.toString(),
       Some(
         alloy.protobuf.types.CompactLocalDate(
@@ -158,14 +158,14 @@ class JVMCodecTests() extends FunSuite {
       )
     )
 
-
     val bytes = protoLocalDates.toByteArray
     val codec = ProtobufCodec.fromSchema(protobuf.LocalDateWrapper.schema)
 
     val parsed = codec.unsafeReadBlob(Blob(bytes))
 
     val encoded = codec.writeBlob(localDates)
-    val parsedRoundTrip = protobuf.protobuf.LocalDateWrapper.parseFrom(encoded.toArray)
+    val parsedRoundTrip =
+      protobuf.protobuf.LocalDateWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, localDates)
     assertEquals(parsedRoundTrip, protoLocalDates)
@@ -177,10 +177,10 @@ class JVMCodecTests() extends FunSuite {
 
     val localTimes = protobuf.LocalTimeWrapper(
       Some(localTime1),
-      Some(localTime2),
+      Some(localTime2)
     )
 
-    val protoLocalTimes = protobuf.protobuf.LocalTimeWrapper( 
+    val protoLocalTimes = protobuf.protobuf.LocalTimeWrapper(
       localTime1.toString(),
       Some(
         alloy.protobuf.types.CompactLocalTime(
@@ -196,22 +196,25 @@ class JVMCodecTests() extends FunSuite {
     val parsed = codec.unsafeReadBlob(Blob(bytes))
 
     val encoded = codec.writeBlob(localTimes)
-    val parsedRoundTrip = protobuf.protobuf.LocalTimeWrapper.parseFrom(encoded.toArray)
+    val parsedRoundTrip =
+      protobuf.protobuf.LocalTimeWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, localTimes)
     assertEquals(parsedRoundTrip, protoLocalTimes)
   }
 
   test("OffsetDateTime") {
-    val offsetDateTime1 = OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.hours(-7))
-    val offsetDateTime2 = OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.hours(7))
+    val offsetDateTime1 =
+      OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.hours(-7))
+    val offsetDateTime2 =
+      OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.hours(7))
 
     val offsetDateTimes = protobuf.OffsetDateTimeWrapper(
       Some(offsetDateTime1),
-      Some(offsetDateTime2),
+      Some(offsetDateTime2)
     )
 
-    val protoOffsetDateTimes = protobuf.protobuf.OffsetDateTimeWrapper( 
+    val protoOffsetDateTimes = protobuf.protobuf.OffsetDateTimeWrapper(
       offsetDateTime1.toString(),
       Some(
         alloy.protobuf.types.CompactOffsetDateTime(
@@ -229,7 +232,8 @@ class JVMCodecTests() extends FunSuite {
 
     val encoded = codec.writeBlob(offsetDateTimes)
 
-    val parsedRoundTrip = protobuf.protobuf.OffsetDateTimeWrapper.parseFrom(encoded.toArray)
+    val parsedRoundTrip =
+      protobuf.protobuf.OffsetDateTimeWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, offsetDateTimes)
     assertEquals(parsedRoundTrip, protoOffsetDateTimes)
@@ -240,7 +244,9 @@ class JVMCodecTests() extends FunSuite {
 
     val durations = protobuf.DurationWrapper(Some(duration))
 
-    val protoLocalTimes = protobuf.protobuf.DurationWrapper(Some(alloy.protobuf.types.Duration(duration.toSeconds, 0)))
+    val protoLocalTimes = protobuf.protobuf.DurationWrapper(
+      Some(alloy.protobuf.types.Duration(duration.toSeconds, 0))
+    )
 
     val bytes = protoLocalTimes.toByteArray
     val codec = ProtobufCodec.fromSchema(protobuf.DurationWrapper.schema)
@@ -248,7 +254,8 @@ class JVMCodecTests() extends FunSuite {
     val parsed = codec.unsafeReadBlob(Blob(bytes))
 
     val encoded = codec.writeBlob(durations)
-    val parsedRoundTrip = protobuf.protobuf.DurationWrapper.parseFrom(encoded.toArray)
+    val parsedRoundTrip =
+      protobuf.protobuf.DurationWrapper.parseFrom(encoded.toArray)
 
     assertEquals(parsed, durations)
     assertEquals(parsedRoundTrip, protoLocalTimes)

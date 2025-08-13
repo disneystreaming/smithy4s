@@ -21,9 +21,9 @@ import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.ShowInstances._
+import smithy4s.schema.Alt.Precompiler
 import smithy4s.schema.Schema
 import smithy4s.schema._
-import smithy4s.schema.Alt.Precompiler
 
 object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
   protected type Aux[A] = Show[A]

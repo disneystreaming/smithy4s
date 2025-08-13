@@ -20,6 +20,8 @@ import com.google.protobuf.CodedInputStream
 import com.google.protobuf.CodedOutputStream
 import smithy4s.Bijection
 import smithy4s.Lazy
+import smithy4s.ShapeId
+import smithy4s.protobuf.ProtobufReadError
 import smithy4s.protobuf.internals.TaggedCodec.FieldTags.OneOf
 import smithy4s.protobuf.internals.TaggedCodec.FieldTags.Simple
 import smithy4s.schema.CollectionTag
@@ -27,8 +29,6 @@ import smithy4s.schema.CollectionTag
 import scala.collection.mutable.Buffer
 
 import TaggedCodec._
-import smithy4s.protobuf.ProtobufReadError
-import smithy4s.ShapeId
 
 private[protobuf] sealed trait TaggedCodec[A] {
   def wireType: Int

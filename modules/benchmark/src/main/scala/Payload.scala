@@ -16,8 +16,8 @@
 
 package smithy4s.benchmark
 
-import smithy4s._
 import smithy.api.TimestampFormat
+import smithy4s._
 import smithy4s.time.Timestamp
 
 object Payload {

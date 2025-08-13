@@ -18,9 +18,10 @@ package smithy4s.dynamic
 
 import smithy4s.Document
 import software.amazon.smithy.model.node._
+
+import java.util.function.BiConsumer
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters._
-import java.util.function.BiConsumer
 
 object NodeToDocument {
 

@@ -18,7 +18,9 @@ package smithy4s
 package internals
 
 import alloy.Discriminated
+import alloy.JsonUnknown
 import alloy.Nullable
+import alloy.Untagged
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -35,8 +37,6 @@ import java.util.Base64
 import java.util.UUID
 import java.{util => ju}
 import scala.collection.immutable.ListMap
-import alloy.Untagged
-import alloy.JsonUnknown
 import scala.collection.mutable.ListBuffer
 
 trait DocumentDecoder[A] { self =>
@@ -174,9 +174,10 @@ class DocumentDecoderSchemaVisitor(
         LocalTime.parseUnsafe(string)
       }
     case PDuration =>
-      from("Duration") { case FlexibleNumber(bd) => DurationOps.fromBigDecimal(bd)
+      from("Duration") { case FlexibleNumber(bd) =>
+        DurationOps.fromBigDecimal(bd)
       }
-    case POffsetDateTime => 
+    case POffsetDateTime =>
       fromUnsafe("OffsetDateTime") { case DString(string) =>
         OffsetDateTime.parseUnsafe(string)
       }

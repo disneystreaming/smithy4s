@@ -17,8 +17,8 @@
 package smithy4s
 package aws.kernel
 
-import smithy4s.schema.Schema._
 import smithy.api.TimestampFormat
+import smithy4s.schema.Schema._
 
 case class AwsInstanceMetadata(
     accessKeyId: String,

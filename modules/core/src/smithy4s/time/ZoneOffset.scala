@@ -16,23 +16,27 @@
 
 package smithy4s.time
 
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 case class ZoneOffset private (seconds: Int) {
   def toTotalHours: Int = Math.abs(seconds) / 3600
 
   override def toString: String = {
-      val s = new java.lang.StringBuilder(32)
+    val s = new java.lang.StringBuilder(32)
 
-      val sign = if (seconds < 0) '-' else '+'
-      val hours = Math.abs(seconds) * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
-      val minutes = (hours & 0xffffffffL) * 60
+    val sign = if (seconds < 0) '-' else '+'
+    val hours =
+      Math.abs(
+        seconds
+      ) * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
+    val minutes = (hours & 0xffffffffL) * 60
 
-      s.append(sign)
-      TimeUtil.append2Digits((hours >> 32).toInt, s)
-      TimeUtil.append2Digits((minutes >> 32).toInt, s.append(':'))
+    s.append(sign)
+    TimeUtil.append2Digits((hours >> 32).toInt, s)
+    TimeUtil.append2Digits((minutes >> 32).toInt, s.append(':'))
 
-      s.toString()
+    s.toString()
   }
 }
 
@@ -42,7 +46,7 @@ object ZoneOffset {
 
   def apply(seconds: Int): ZoneOffset = new ZoneOffset(seconds)
 
-  def hours(hours: Int): ZoneOffset =  ZoneOffset(hours * 3600)
+  def hours(hours: Int): ZoneOffset = ZoneOffset(hours * 3600)
 
   def minutes(minutes: Int): ZoneOffset = ZoneOffset(minutes * 60)
 

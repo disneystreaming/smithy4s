@@ -16,9 +16,8 @@
 
 package smithy4s.aws.kernel
 
-import smithy4s.schema.Schema
-
 import smithy4s.Newtype
+import smithy4s.schema.Schema
 
 object AwsRegion extends Newtype[String] {
 

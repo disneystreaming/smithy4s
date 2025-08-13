@@ -1507,12 +1507,12 @@ class DocumentSpec() extends ScalaCheckSuite {
   }
 
   test("Document codec - localDate") {
-    val structure = 
+    val structure =
       LocalDateStructure(
         LocalDate(2025, 8, 9),
         smithy4s.example.MyLocalDate(LocalDate(2024, 9, 10))
       )
-    val document = 
+    val document =
       Document.obj(
         "localDate" -> Document.fromString("2025-08-09"),
         "localDate2" -> Document.fromString("2024-09-10")
@@ -1522,27 +1522,27 @@ class DocumentSpec() extends ScalaCheckSuite {
   }
 
   test("Document codec - localTime") {
-    val structure = 
-        LocalTimeStructure(
-          LocalTime(13, 30, 9),
-          smithy4s.example.MyLocalTime(LocalTime(18, 9, 10))
-        )
+    val structure =
+      LocalTimeStructure(
+        LocalTime(13, 30, 9),
+        smithy4s.example.MyLocalTime(LocalTime(18, 9, 10))
+      )
 
-    val document = 
-        Document.obj(
-          "localTime" -> Document.fromString("13:30:09"),
-          "localTime2" -> Document.fromString("18:09:10")
-        )
+    val document =
+      Document.obj(
+        "localTime" -> Document.fromString("13:30:09"),
+        "localTime2" -> Document.fromString("18:09:10")
+      )
 
     testRoundtrip(structure, document)
   }
 
   test("Document codec - offsetDateTime") {
-    val structure = 
-        OffsetDateTimeStructure(
-          OffsetDateTime(2025, 7, 8, 13, 30, 9, 0, ZoneOffset.hours(-7)),
-          smithy4s.example.MyOffsetDateTime(OffsetDateTime(2025, 9, 10, 18, 9, 10, 0, ZoneOffset.hours(6)))
-        )
+    val structure =
+      OffsetDateTimeStructure(
+        OffsetDateTime(2025, 7, 8, 13, 30, 9, 0, ZoneOffset.hours(-7)),
+        smithy4s.example.MyOffsetDateTime(OffsetDateTime(2025, 9, 10, 18, 9, 10, 0, ZoneOffset.hours(6)))
+      )
 
     val document = Document.obj(
       "offsetDateTime" -> Document.fromString("2025-07-08T13:30:09-07:00"),
@@ -1553,13 +1553,13 @@ class DocumentSpec() extends ScalaCheckSuite {
   }
 
   test("Document codec - duration") {
-    val structure = 
+    val structure =
       DurationStructure(
         1.day,
         smithy4s.example.MyDuration(1.day + 6.hours + 42.minutes + 500.nanos)
       )
 
-    val document = 
+    val document =
       Document.obj(
         "duration" -> Document.fromBigDecimal(BigDecimal(86400)),
         "duration2" -> Document.fromBigDecimal(BigDecimal(110520.0000005))

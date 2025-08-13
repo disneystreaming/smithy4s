@@ -19,18 +19,18 @@ package http4s
 package internals
 
 import cats.effect.Concurrent
-import smithy4s.interopcats._
+import cats.syntax.all._
+import org.http4s.Request
+import org.http4s.Response
+import org.http4s.Uri
+import smithy4s.client._
+import smithy4s.codecs.BlobEncoder
 import smithy4s.http.HttpDiscriminator
+import smithy4s.http.HttpMethod
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.client._
-import smithy4s.codecs.BlobEncoder
-import cats.syntax.all._
-import org.http4s.Response
-import org.http4s.Request
-import org.http4s.Uri
-import smithy4s.http.HttpMethod
+import smithy4s.interopcats._
 import smithy4s.json.JsonPayloadCodecCompiler
 import smithy4s.schema.FieldFilter
 

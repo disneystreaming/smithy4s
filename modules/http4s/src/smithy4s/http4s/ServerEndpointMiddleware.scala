@@ -19,9 +19,9 @@ package http4s
 
 import cats.MonadThrow
 import cats.data.Kleisli
-import org.http4s.Response
-import org.http4s.HttpApp
 import cats.implicits._
+import org.http4s.HttpApp
+import org.http4s.Response
 
 object ServerEndpointMiddleware {
 

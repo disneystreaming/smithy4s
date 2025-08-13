@@ -16,11 +16,12 @@
 
 package smithy4s
 
-import smithy4s.dynamic.DummyIO._
-import java.nio.file.Paths
-import software.amazon.smithy.model.{Model => SModel}
-import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.syntax.all._
+import smithy4s.dynamic.DummyIO._
+import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model.{Model => SModel}
+
+import java.nio.file.Paths
 
 package object dynamic {
   // This is not ideal, but it does the job.

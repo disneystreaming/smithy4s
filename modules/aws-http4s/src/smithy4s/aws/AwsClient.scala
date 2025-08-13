@@ -21,17 +21,17 @@ import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
+import fs2.hashing.Hashing
 import org.http4s.Response
 import org.http4s.client.Client
 import smithy4s.Blob
 import smithy4s.aws.internals._
-import smithy4s.http._
 import smithy4s.client.UnaryClientCompiler
-import smithy4s.schema.OperationSchema
+import smithy4s.http.HttpMethod
+import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.interopcats._
-import smithy4s.http.HttpMethod
-import fs2.hashing.Hashing
+import smithy4s.schema.OperationSchema
 
 // scalafmt: { maxColumn = 120 }
 object AwsClient {

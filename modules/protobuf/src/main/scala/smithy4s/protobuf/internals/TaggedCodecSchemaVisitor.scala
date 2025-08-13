@@ -16,34 +16,34 @@
 
 package smithy4s.protobuf.internals
 
+import alloy.proto.ProtoCompactLocalDate
+import alloy.proto.ProtoCompactLocalTime
 import alloy.proto.ProtoCompactUUID
 import alloy.proto.ProtoIndex
 import alloy.proto.ProtoInlinedOneOf
 import alloy.proto.ProtoNumType
+import alloy.proto.ProtoOffsetDateTimeFormat
 import alloy.proto.ProtoTimestampFormat
 import alloy.proto.ProtoWrapped
-import alloy.proto.ProtoOffsetDateTimeFormat
-import alloy.proto.ProtoCompactLocalDate
-import alloy.proto.ProtoCompactLocalTime
+import smithy.api.Required
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
 import smithy4s.Document.DNull
 import smithy4s.Document.DNumber
 import smithy4s.Document.DObject
 import smithy4s.Document.DString
-import smithy4s.time._
+import smithy4s.protobuf.ProtobufReadError
 import smithy4s.protobuf.internals.TaggedCodec._
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag.IntEnum
 import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema._
+import smithy4s.time._
 import smithy4s.{Schema => _, _}
 
 import java.util.UUID
-import smithy.api.Required
 import scala.concurrent.duration._
-import smithy4s.protobuf.ProtobufReadError
 
 // scalafmt: {maxColumn = 120}
 private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[TaggedCodec])
@@ -85,21 +85,21 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
           protoTimestampSchema.compile(this)
         }
       case PDocument => protoJsonSchema.compile(this)
-      case PLocalDate => 
+      case PLocalDate =>
         if (hints.has(ProtoCompactLocalDate)) {
           compactLocalDate.compile(this)
         } else {
           wrapLen(StringCodec).imap(LocalDate.parseUnsafe(_), _.toString())
         }
-      case PLocalTime => 
+      case PLocalTime =>
         if (hints.has(ProtoCompactLocalTime)) {
           compactLocalTime.compile(this)
         } else {
           wrapLen(StringCodec).imap(LocalTime.parseUnsafe(_), _.toString())
         }
-      case PDuration => 
+      case PDuration =>
         durationSchema.compile(this)
-      case POffsetDateTime => 
+      case POffsetDateTime =>
         if (hints.get(ProtoOffsetDateTimeFormat).contains(ProtoOffsetDateTimeFormat.PROTOBUF)) {
           compactOffsetDateTimeSchema.compile(this)
         } else {
@@ -148,10 +148,10 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
       Schema.string.addHints(ProtoIndex(3))
     )
     .biject { (offsetTriple: (Long, Int, String)) =>
-        val (seconds, nanos, offsetString) = offsetTriple
-        val offset = ZoneOffset.parseUnsafe(offsetString)
-        OffsetDateTime(seconds, nanos, offset)
-    }{ offsetDateTime =>
+      val (seconds, nanos, offsetString) = offsetTriple
+      val offset = ZoneOffset.parseUnsafe(offsetString)
+      OffsetDateTime(seconds, nanos, offset)
+    } { offsetDateTime =>
       val timestamp = offsetDateTime.timestamp
       (timestamp.epochSecond, timestamp.nano, offsetDateTime.offset.toString)
     }
@@ -166,9 +166,12 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
     .tuple(
       Schema.long.addHints(ProtoIndex(1)),
       Schema.int.addHints(ProtoIndex(2))
-    ).biject { (durationTuple: (Long, Int)) => {
-      (durationTuple._1.seconds + durationTuple._2.nanos): Duration
-    }}( duration => {
+    )
+    .biject { (durationTuple: (Long, Int)) =>
+      {
+        (durationTuple._1.seconds + durationTuple._2.nanos): Duration
+      }
+    }(duration => {
       val seconds = duration.toSeconds
       val nano = (duration.toNanos - seconds * 1000000000).toInt
       (seconds, nano)

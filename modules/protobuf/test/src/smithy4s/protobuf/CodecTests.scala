@@ -19,9 +19,9 @@ package smithy4s.protobuf
 import munit._
 import scalapb.GeneratedMessage
 import smithy4s.Blob
+import smithy4s.ShapeId
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
-import smithy4s.ShapeId
 
 class CodecTests() extends FunSuite {
 

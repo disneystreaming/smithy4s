@@ -17,11 +17,11 @@
 package smithy4s.compliancetests
 
 import smithy.test.AppliesTo
-import smithy4s.compliancetests.TestConfig.TestType
-import smithy4s.Hints
 import smithy4s.Enumeration
-import smithy4s.ShapeId
+import smithy4s.Hints
 import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.compliancetests.TestConfig.TestType
 
 case class TestConfig(
     appliesTo: AppliesTo,

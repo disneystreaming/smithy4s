@@ -31,21 +31,23 @@ import smithy4s.example.CheckedOrUnchecked2
 import smithy4s.example.FaceCard
 import smithy4s.example.Four
 import smithy4s.example.One
+import smithy4s.example.OpenEnumTest
+import smithy4s.example.OpenIntEnumTest
 import smithy4s.example.PayloadData
 import smithy4s.example.RangeCheck
 import smithy4s.example.TestBiggerUnion
-import smithy4s.example.Three
 import smithy4s.example.UntaggedUnion
-import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
-import smithy4s.schema.Schema._
-import smithy4s.time._
+import smithy4s.json.internals.JsoniterCodecCompilerImpl
+import smithy4s.schema.Field
+import smithy4s.schema.Schema
 
 import scala.collection.immutable.ListMap
-import scala.util.Try
 import scala.concurrent.duration._
-import smithy4s.json.internals.JsoniterCodecCompilerImpl
-import smithy4s.schema.Schema
-import smithy4s.schema.Field
+import scala.util.Try
+
+import smithy4s.example.Three
+import smithy4s.schema.Schema._
+import smithy4s.time._
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -1187,7 +1189,6 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     assertEquals(doc, expected)
   }
-
 
   case class MyDuration(a: Duration)
 

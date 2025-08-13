@@ -16,7 +16,7 @@
 
 package smithy4s.time
 
-private[time] trait OffsetDateTimeCompanionPlatform  {
+private[time] trait OffsetDateTimeCompanionPlatform {
 
   def now(): OffsetDateTime = {
     val currentMillis = System.currentTimeMillis

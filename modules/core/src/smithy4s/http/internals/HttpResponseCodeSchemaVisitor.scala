@@ -17,6 +17,7 @@
 package smithy4s.http.internals
 
 import smithy4s.Hints
+import smithy4s.Refinement
 import smithy4s.ShapeId
 import smithy4s.capability.Contravariant
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.NoResponseCode
@@ -29,7 +30,6 @@ import smithy4s.schema.Field
 import smithy4s.schema.Primitive
 import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
-import smithy4s.Refinement
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {

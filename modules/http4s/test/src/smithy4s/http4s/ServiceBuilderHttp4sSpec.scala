@@ -33,23 +33,19 @@
 package smithy4s.http4s
 
 import cats.effect.IO
-import org.http4s.implicits._
 import org.http4s.Request
-import smithy4s.example.guides.auth.{
-  World,
-  HealthCheckOutput,
-  HelloWorldAuthServiceGen,
-  HelloWorldAuthService
-}
-import smithy4s.example.{
-  UnknownServerError,
-  UnknownServerErrorCode,
-  HealthResponse,
-  PizzaAdminService,
-  PizzaAdminServiceGen
-}
-import smithy4s.kinds.PolyFunction5
+import org.http4s.implicits._
 import smithy4s.Service
+import smithy4s.example.HealthResponse
+import smithy4s.example.PizzaAdminService
+import smithy4s.example.PizzaAdminServiceGen
+import smithy4s.example.UnknownServerError
+import smithy4s.example.UnknownServerErrorCode
+import smithy4s.example.guides.auth.HealthCheckOutput
+import smithy4s.example.guides.auth.HelloWorldAuthService
+import smithy4s.example.guides.auth.HelloWorldAuthServiceGen
+import smithy4s.example.guides.auth.World
+import smithy4s.kinds.PolyFunction5
 import weaver.SimpleIOSuite
 
 object ServiceBuilderHttp4sSpec extends SimpleIOSuite {

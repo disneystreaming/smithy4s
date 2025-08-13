@@ -100,10 +100,12 @@ private[internals] object ToLine {
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
-      case Primitive.LocalDate    => NameRef("smithy4s.time", "LocalDate")
-      case Primitive.LocalTime    => NameRef("smithy4s.time", "LocalTime")
-      case Primitive.Duration    => NameRef("scala.concurrent.duration", "Duration")
-      case Primitive.OffsetDateTime    => NameRef("smithy4s.time", "OffsetDateTime")
+      case Primitive.LocalDate  => NameRef("smithy4s.time", "LocalDate")
+      case Primitive.LocalTime  => NameRef("smithy4s.time", "LocalTime")
+      case Primitive.Duration =>
+        NameRef("scala.concurrent.duration", "Duration")
+      case Primitive.OffsetDateTime =>
+        NameRef("smithy4s.time", "OffsetDateTime")
     }
   }
 }

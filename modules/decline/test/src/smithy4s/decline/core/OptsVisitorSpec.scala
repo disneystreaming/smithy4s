@@ -18,19 +18,23 @@ package smithy4s.decline.core
 
 import cats.implicits._
 import cats.kernel.Eq
-import com.monovore.decline.{Command, Opts}
+import com.monovore.decline.Command
 import com.monovore.decline.Help
+import com.monovore.decline.Opts
 import smithy.api.Length
 import smithy.api.TimestampFormat
 import smithy4s.Document
 import smithy4s.Hints
-import smithy4s.time._
+import smithy4s.example.OpenEnumTest
+import smithy4s.example.OpenIntEnumTest
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
+import smithy4s.time._
 import weaver._
-import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
-import scala.concurrent.duration.{Duration, DurationInt}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
 
 object OptsSchematicSpec extends SimpleIOSuite {
   def sampleStruct[A](name: String, schema: Schema[A]): Schema[A] =
@@ -457,7 +461,9 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   pureTest("offsetDatetime") {
     expect.parsed(
-      parseOpts(sampleStruct("offsetdatetime", offsetdatetime))("2025-07-22T13:14:28.123456-07:00"),
+      parseOpts(sampleStruct("offsetdatetime", offsetdatetime))(
+        "2025-07-22T13:14:28.123456-07:00"
+      ),
       OffsetDateTime(2025, 7, 22, 13, 14, 28, 123456000, ZoneOffset.hours(-7))
     )
   }

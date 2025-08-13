@@ -21,18 +21,18 @@ import cats.effect._
 import cats.effect.std.UUIDGen
 import cats.syntax.all._
 import io.circe.Json
+import org.http4s.HttpApp
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
-import org.http4s.HttpApp
 import org.typelevel.ci.CIString
 import smithy4s.example._
+import smithy4s.http.CaseInsensitive
+import smithy4s.http.FailedDecodeAttempt.DecodingFailure
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.RawErrorResponse
 import smithy4s.time.Timestamp
 import weaver._
-import smithy4s.http.CaseInsensitive
-import smithy4s.http.RawErrorResponse
-import smithy4s.http.HttpDiscriminator
-import smithy4s.http.FailedDecodeAttempt.DecodingFailure
 
 abstract class PizzaClientSpec extends IOSuite {
 

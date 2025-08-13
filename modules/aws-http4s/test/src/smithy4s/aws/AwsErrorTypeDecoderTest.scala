@@ -16,11 +16,11 @@
 
 package smithy4s.aws
 
-import smithy4s.Blob
-import cats.syntax.all._
-import smithy4s.interopcats._
-import smithy4s.http._
 import cats.effect.IO
+import cats.syntax.all._
+import smithy4s.Blob
+import smithy4s.http._
+import smithy4s.interopcats._
 import weaver._
 
 // scalafmt: { maxColumn = 120 }

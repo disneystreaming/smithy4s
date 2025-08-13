@@ -1853,7 +1853,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.LocalTime =>
         time => line"$localtime_(${time.toSecondOfDay()}, ${time.getNano()})"
       case Primitive.OffsetDateTime =>
-        time => line"""$offsetdatetime_(${time.toEpochSecond()}, ${time.getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
+        time =>
+          line"""$offsetdatetime_(${time.toEpochSecond()}, ${time
+            .getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
       case Primitive.Duration =>
         duration => line"$duration_(${renderStringLiteral(duration.toString)})"
       case Primitive.Document => { (node: Node) =>

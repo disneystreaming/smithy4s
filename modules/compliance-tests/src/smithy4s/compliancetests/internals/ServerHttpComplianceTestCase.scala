@@ -17,22 +17,25 @@
 package smithy4s.compliancetests
 package internals
 
-import cats.implicits._
+import cats.MonadThrow
 import cats.effect.Async
 import cats.effect.syntax.all._
+import cats.implicits._
 import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.schema._
-import smithy4s.{Document, Hints, Service, ShapeId}
-import smithy4s.kinds._
-
-import scala.concurrent.duration._
-import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
+import smithy4s.Document
+import smithy4s.Hints
+import smithy4s.Service
+import smithy4s.ShapeId
 import smithy4s.compliancetests.TestConfig._
-import cats.MonadThrow
+import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
+import smithy4s.kinds._
+import smithy4s.schema._
+
 import java.util.concurrent.TimeoutException
+import scala.concurrent.duration._
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]

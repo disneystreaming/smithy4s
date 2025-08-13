@@ -16,21 +16,22 @@
 
 package smithy4s.benchmark
 
-import org.openjdk.jmh.annotations.BenchmarkMode
-import org.openjdk.jmh.annotations.OutputTimeUnit
-import org.openjdk.jmh.annotations.Warmup
-import org.openjdk.jmh.annotations.Measurement
-import org.openjdk.jmh.annotations.State
-import org.openjdk.jmh.annotations.Fork
-import org.openjdk.jmh.annotations.Mode
-import java.util.concurrent.TimeUnit
-import org.openjdk.jmh.annotations.Scope
-import smithy4s.json.internals.JsonPayloadCodecCompilerImpl
-import smithy4s.Schema
-import smithy4s.example.SampleOpenUnion
 import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Scope
+import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.Warmup
 import org.openjdk.jmh.infra.Blackhole
 import smithy4s.Blob
+import smithy4s.Schema
+import smithy4s.example.SampleOpenUnion
+import smithy4s.json.internals.JsonPayloadCodecCompilerImpl
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

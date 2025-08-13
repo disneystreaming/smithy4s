@@ -22,8 +22,8 @@ import mill.define.Target
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
-import smithy4s.codegen.JarUtils
 import mill.scalalib._
+import smithy4s.codegen.JarUtils
 
 trait Smithy4sModule extends Smithy4sModuleCommon {
 

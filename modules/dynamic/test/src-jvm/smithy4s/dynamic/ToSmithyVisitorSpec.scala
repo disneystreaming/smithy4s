@@ -16,23 +16,23 @@
 
 package smithy4s.dynamic
 
-import weaver._
-import smithy4s.schema._
-import smithy4s.schema.Schema._
-import software.amazon.smithy.model.Model
 import cats.kernel.Eq
-import smithy4s.ShapeId
 import smithy.api.JsonName
-import java.util.UUID
-import smithy4s.Blob
 import smithy.api.Length
-import smithy4s.Newtype
 import smithy.api.Pattern
+import smithy4s.Blob
+import smithy4s.Newtype
 import smithy4s.Service
-import scala.io.Source
+import smithy4s.ShapeId
+import smithy4s.schema.Schema._
+import smithy4s.schema._
 import smithy4s.time._
+import software.amazon.smithy.model.Model
+import weaver._
 
+import java.util.UUID
 import scala.concurrent.duration.Duration
+import scala.io.Source
 
 object ToSmithyVisitorSpec extends FunSuite {
 
@@ -95,7 +95,6 @@ object ToSmithyVisitorSpec extends FunSuite {
         o: LocalTime,
         p: Duration,
         q: OffsetDateTime
-
     )
     object Foo {
       implicit val schema: Schema[Foo] = {

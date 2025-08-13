@@ -18,6 +18,7 @@ package smithy4s.xml
 package internals
 
 import cats.MonoidK
+import cats.kernel.Monoid
 import cats.syntax.all._
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
@@ -26,7 +27,6 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import XmlDocument._
-import cats.kernel.Monoid
 
 private[smithy4s] class XmlEncoderSchemaVisitor(
     val cache: CompilationCache[XmlEncoder]

@@ -19,6 +19,7 @@ package schema
 
 import smithy4s.schema.Primitive._
 import smithy4s.time._
+
 import scala.concurrent.duration.Duration
 
 private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
@@ -29,24 +30,24 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       tag: Primitive[P]
   ): Option[P] =
     tag match {
-      case PShort      => Some(0: Short)
-      case PString     => Some("")
-      case PFloat      => Some(0f)
-      case PDouble     => Some(0d)
-      case PInt        => Some(0)
-      case PLong       => Some(0L)
-      case PBoolean    => Some(false)
-      case PTimestamp  => Some(Timestamp.epoch)
-      case PBlob       => Some(Blob.empty)
-      case PBigInt     => Some(BigInt(0))
-      case PBigDecimal => Some(BigDecimal(0))
-      case PDocument   => Some(Document.DNull)
-      case PUUID       => None
-      case PByte       => None
-      case PLocalDate  => Some(LocalDate.epoch)
-      case PLocalTime  => Some(LocalTime.midnight)
-      case PDuration   => Some(Duration.Zero)
-      case POffsetDateTime   => Some(OffsetDateTime.epoch)
+      case PShort          => Some(0: Short)
+      case PString         => Some("")
+      case PFloat          => Some(0f)
+      case PDouble         => Some(0d)
+      case PInt            => Some(0)
+      case PLong           => Some(0L)
+      case PBoolean        => Some(false)
+      case PTimestamp      => Some(Timestamp.epoch)
+      case PBlob           => Some(Blob.empty)
+      case PBigInt         => Some(BigInt(0))
+      case PBigDecimal     => Some(BigDecimal(0))
+      case PDocument       => Some(Document.DNull)
+      case PUUID           => None
+      case PByte           => None
+      case PLocalDate      => Some(LocalDate.epoch)
+      case PLocalTime      => Some(LocalTime.midnight)
+      case PDuration       => Some(Duration.Zero)
+      case POffsetDateTime => Some(OffsetDateTime.epoch)
     }
 
   def collection[C[_], A](

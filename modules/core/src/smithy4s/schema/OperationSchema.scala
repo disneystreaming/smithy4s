@@ -19,8 +19,8 @@ package smithy4s
 package schema
 
 import smithy4s.internals.InputOutput
-import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.PolyFunction
+import smithy4s.kinds.PolyFunction5
 
 final case class OperationSchema[I, E, O, SI, SO] private[smithy4s] (
     id: ShapeId,

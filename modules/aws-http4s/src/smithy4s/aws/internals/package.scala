@@ -16,9 +16,9 @@
 
 package smithy4s.aws
 
+import cats.effect.MonadCancelThrow
 import fs2.compression.Compression
 import org.http4s.client.Client
-import cats.effect.MonadCancelThrow
 import smithy4s.Endpoint
 import smithy4s.Service
 import smithy4s.http4s.kernel.GzipRequestCompression

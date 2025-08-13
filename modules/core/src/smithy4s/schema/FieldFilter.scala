@@ -16,12 +16,12 @@
 
 package smithy4s.schema
 
-import smithy4s.~>
 import alloy.Nullable
-import smithy4s.schema.Schema.OptionSchema
 import smithy4s.schema.Schema.BijectionSchema
-import smithy4s.schema.Schema.RefinementSchema
 import smithy4s.schema.Schema.LazySchema
+import smithy4s.schema.Schema.OptionSchema
+import smithy4s.schema.Schema.RefinementSchema
+import smithy4s.~>
 
 trait FieldFilter { self =>
   def compile[S, A](

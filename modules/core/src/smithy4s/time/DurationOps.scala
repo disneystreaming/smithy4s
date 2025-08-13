@@ -16,7 +16,8 @@
 
 package smithy4s.time
 
-import scala.concurrent.duration.{Duration, DurationLong}
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationLong
 
 object DurationOps {
   private val nanoScale = 1000000000L
@@ -33,7 +34,8 @@ object DurationOps {
       val seconds = BigDecimal(dur.toSeconds)
       val nanos = dur.toNanos - (dur.toSeconds * nanoScale)
 
-      if (nanos == 0) seconds else seconds + java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros
+      if (nanos == 0) seconds
+      else seconds + java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros
     }
   }
 }

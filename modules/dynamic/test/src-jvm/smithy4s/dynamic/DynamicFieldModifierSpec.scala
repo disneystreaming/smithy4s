@@ -18,9 +18,11 @@ package smithy4s
 package dynamic
 
 import munit.Location
-import software.amazon.smithy.model.{Model => SModel}
-import smithy4s.schema.{Field, Primitive, Schema}
 import smithy.api.Default
+import smithy4s.schema.Field
+import smithy4s.schema.Primitive
+import smithy4s.schema.Schema
+import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicFieldModifierSpec() extends DummyIO.Suite {
 
