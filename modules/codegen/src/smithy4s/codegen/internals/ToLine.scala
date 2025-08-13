@@ -74,7 +74,7 @@ private[internals] object ToLine {
       case e: Type.ExternalType =>
         NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
       case Type.Nullable(underlying) =>
-        NameRef("scala", "Option").copy(typeParams =
+        NameRef("smithy4s", "Nullable").copy(typeParams =
           List(typeToNameRef(underlying))
         )
     }
