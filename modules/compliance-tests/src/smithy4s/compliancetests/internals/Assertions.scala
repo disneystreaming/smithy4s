@@ -20,7 +20,7 @@ package internals
 import cats.Eq
 import cats.effect.Concurrent
 import cats.implicits._
-import fs2._
+import fs2.Stream
 import fs2.data.xml._
 import io.circe.Json
 import io.circe.parser._
