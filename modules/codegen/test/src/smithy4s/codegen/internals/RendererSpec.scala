@@ -711,4 +711,30 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     )
 
   }
+
+  test("nullable fields should be rendered as smithy4s.Nullable") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use alloy#nullable
+        |
+        |structure NullableExample {
+        |  @nullable
+        |  @required
+        |  nullableString: String
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(_.contains("final case class NullableExample")).get
+
+    assert(
+      definition.contains("nullableString: Nullable[String]"),
+      s"$definition does not contain Nullable[String]"
+    )
+  }
 }
