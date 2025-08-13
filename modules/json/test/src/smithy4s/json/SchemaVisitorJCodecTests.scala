@@ -36,18 +36,17 @@ import smithy4s.example.OpenIntEnumTest
 import smithy4s.example.PayloadData
 import smithy4s.example.RangeCheck
 import smithy4s.example.TestBiggerUnion
+import smithy4s.example.Three
 import smithy4s.example.UntaggedUnion
 import smithy4s.json.internals.JsoniterCodecCompilerImpl
 import smithy4s.schema.Field
 import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import smithy4s.time._
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration._
 import scala.util.Try
-
-import smithy4s.example.Three
-import smithy4s.schema.Schema._
-import smithy4s.time._
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
