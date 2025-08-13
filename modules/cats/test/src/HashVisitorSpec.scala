@@ -124,7 +124,8 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
 
   test("uuid") {
     val schema: Schema[UUID] = uuid
-    val foo = UUID.randomUUID()
+    // don't use randomUUID for this since scalaJS doesn't have out-of-box support for SecureRandom
+    val foo = UUID.fromString("757bb3a6-0fe9-4bd0-a6d3-ae7cffb55fee")
     val hashOutput = visitor(schema).hash(foo)
     expect.eql(foo.hashCode, hashOutput)
   }
