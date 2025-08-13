@@ -84,10 +84,6 @@ object CanonicalSmithyDecoder {
               ((value - epochSeconds) * 1000000000).toInt
             )
         }
-      case PLocalDate => ???
-      case PLocalTime => ???
-      case PDuration => ???
-      case POffsetDateTime => ???
       case PBlob =>
         from("Base64 binary blob") { case DString(string) =>
           Blob(string)
