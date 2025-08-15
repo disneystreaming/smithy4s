@@ -61,7 +61,10 @@ private[dynamic] object Compiler {
       }
 
   private object GetTrait {
-    class TraitExtractor[A](implicit tag: ShapeTag[A], dec: Document.Decoder[A]) {
+    class TraitExtractor[A](implicit
+        tag: ShapeTag[A],
+        dec: Document.Decoder[A]
+    ) {
       def unapply(traits: Map[IdRef, Document]): Option[A] =
         getTrait[A](traits)
     }
@@ -70,8 +73,10 @@ private[dynamic] object Compiler {
     object Enum extends TraitExtractor[smithy.api.Enum]
     object LocalDateFormat extends TraitExtractor[alloy.DateFormat]
     object LocalTimeFormat extends TraitExtractor[alloy.LocalTimeFormat]
-    object DurationSecondsFormat extends TraitExtractor[alloy.DurationSecondsFormat]
-    object OffsetDateTimeFormat extends TraitExtractor[alloy.OffsetDateTimeFormat]
+    object DurationSecondsFormat
+        extends TraitExtractor[alloy.DurationSecondsFormat]
+    object OffsetDateTimeFormat
+        extends TraitExtractor[alloy.OffsetDateTimeFormat]
   }
 
   private def toHint(id: ShapeId, tr: Document): Hint =
@@ -209,7 +214,8 @@ private[dynamic] object Compiler {
 
     override def bigDecimalShape(id: ShapeId, shape: BigDecimalShape): Unit =
       shape.traits match {
-        case GetTrait.DurationSecondsFormat(_) => update(id, shape.traits, duration)
+        case GetTrait.DurationSecondsFormat(_) =>
+          update(id, shape.traits, duration)
         case _ => update(id, shape.traits, bigdecimal)
       }
 
@@ -218,7 +224,8 @@ private[dynamic] object Compiler {
 
     override def timestampShape(id: ShapeId, shape: TimestampShape): Unit =
       shape.traits match {
-        case GetTrait.OffsetDateTimeFormat(_) => update(id, shape.traits, offsetdatetime)
+        case GetTrait.OffsetDateTimeFormat(_) =>
+          update(id, shape.traits, offsetdatetime)
         case _ => update(id, shape.traits, timestamp)
       }
 
@@ -310,10 +317,10 @@ private[dynamic] object Compiler {
 
     override def stringShape(id: ShapeId, shape: StringShape): Unit = {
       shape.traits match {
-        case GetTrait.UUIDFormat(_) => update(id, shape.traits, uuid)
+        case GetTrait.UUIDFormat(_)      => update(id, shape.traits, uuid)
         case GetTrait.LocalDateFormat(_) => update(id, shape.traits, localdate)
         case GetTrait.LocalTimeFormat(_) => update(id, shape.traits, localtime)
-        case GetTrait.Enum(e) => 
+        case GetTrait.Enum(e) =>
           val values = e.value.zipWithIndex.map {
             case (enumDefinition, intValue) =>
               val value = enumDefinition.value.value
