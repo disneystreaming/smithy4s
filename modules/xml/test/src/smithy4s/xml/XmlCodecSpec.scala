@@ -132,7 +132,7 @@ object XmlCodecSpec extends SimpleIOSuite {
   test("localdate") {
     implicit val schema: Schema[LocalDate] = localdate.x
     val xml = "<x>2025-08-15</x>"
-    checkContent(xml, LocalDate(2025,8,15))
+    checkContent(xml, LocalDate(2025, 8, 15))
   }
 
   test("localtime") {
@@ -150,7 +150,10 @@ object XmlCodecSpec extends SimpleIOSuite {
   test("offsetdatetime") {
     implicit val schema: Schema[OffsetDateTime] = offsetdatetime.x
     val xml = "<x>2025-08-15T14:28:59.123-07:00</x>"
-    checkContent(xml, OffsetDateTime(2025,8,15,14,28,59,123000000, ZoneOffset.hours(-7)))
+    checkContent(
+      xml,
+      OffsetDateTime(2025, 8, 15, 14, 28, 59, 123000000, ZoneOffset.hours(-7))
+    )
   }
 
   test("struct") {

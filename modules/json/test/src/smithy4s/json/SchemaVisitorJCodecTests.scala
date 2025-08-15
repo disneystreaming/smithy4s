@@ -1199,9 +1199,9 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   case class MyTimes(
-    date: LocalDate,
-    time: LocalTime,
-    dateTime: OffsetDateTime
+      date: LocalDate,
+      time: LocalTime,
+      dateTime: OffsetDateTime
   )
 
   object MyTimes {
@@ -1225,10 +1225,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Time types are correctly encoded/decoded") {
-    val jsonString= """{"date":"2025-08-15","time":"13:09:56","dateTime":"2025-08-15T13:09:56-07:00"}"""
+    val jsonString = """{"date":"2025-08-15","time":"13:09:56","dateTime":"2025-08-15T13:09:56-07:00"}"""
     val input = MyTimes(
       LocalDate(2025, 8, 15),
-      LocalTime(13,9,56),
+      LocalTime(13, 9, 56),
       OffsetDateTime(2025, 8, 15, 13, 9, 56, 0, ZoneOffset.hours(-7))
     )
 
