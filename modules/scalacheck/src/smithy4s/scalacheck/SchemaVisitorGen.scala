@@ -24,6 +24,7 @@ import org.scalacheck.Gen
 import scala.jdk.CollectionConverters._
 import smithy4s.schema.Primitive._
 import smithy.api.Length
+import scala.concurrent.duration.Duration
 
 object SchemaVisitorGen extends SchemaVisitorGen
 
@@ -58,7 +59,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
           .map(Blob.apply)
       case PLocalDate => Smithy4sGen.genLocalDate
       case PLocalTime => Smithy4sGen.genLocalTime
-      case PDuration => Gen.duration
+      // limit durations +/- 1 year to ensure they are finite for tests
+      case PDuration => Gen.chooseNum(-876582, 876582).map(hours => Duration.create(hours.toLong, "hours"))
       case POffsetDateTime => Smithy4sGen.genOffsetDateTime
     }
   }

@@ -60,6 +60,20 @@ private[dynamic] object Compiler {
         document.decode[A].toOption
       }
 
+  private object GetTrait {
+    class TraitExtractor[A](implicit tag: ShapeTag[A], dec: Document.Decoder[A]) {
+      def unapply(traits: Map[IdRef, Document]): Option[A] =
+        getTrait[A](traits)
+    }
+
+    object UUIDFormat extends TraitExtractor[alloy.UuidFormat]
+    object Enum extends TraitExtractor[smithy.api.Enum]
+    object LocalDateFormat extends TraitExtractor[alloy.DateFormat]
+    object LocalTimeFormat extends TraitExtractor[alloy.LocalTimeFormat]
+    object DurationSecondsFormat extends TraitExtractor[alloy.DurationSecondsFormat]
+    object OffsetDateTimeFormat extends TraitExtractor[alloy.OffsetDateTimeFormat]
+  }
+
   private def toHint(id: ShapeId, tr: Document): Hint =
     Hints.Binding.DynamicBinding(id, tr)
 
@@ -194,13 +208,19 @@ private[dynamic] object Compiler {
       update(id, shape.traits, bigint)
 
     override def bigDecimalShape(id: ShapeId, shape: BigDecimalShape): Unit =
-      update(id, shape.traits, bigdecimal)
+      shape.traits match {
+        case GetTrait.DurationSecondsFormat(_) => update(id, shape.traits, duration)
+        case _ => update(id, shape.traits, bigdecimal)
+      }
 
     override def byteShape(id: ShapeId, shape: ByteShape): Unit =
       update(id, shape.traits, byte)
 
     override def timestampShape(id: ShapeId, shape: TimestampShape): Unit =
-      update(id, shape.traits, timestamp)
+      shape.traits match {
+        case GetTrait.OffsetDateTimeFormat(_) => update(id, shape.traits, offsetdatetime)
+        case _ => update(id, shape.traits, timestamp)
+      }
 
     override def blobShape(id: ShapeId, shape: BlobShape): Unit =
       update(id, shape.traits, bytes)
@@ -289,11 +309,11 @@ private[dynamic] object Compiler {
       update(id, shape.traits, document)
 
     override def stringShape(id: ShapeId, shape: StringShape): Unit = {
-      val maybeUuid = getTrait[alloy.UuidFormat](shape.traits)
-      val maybeEnum = getTrait[smithy.api.Enum](shape.traits)
-      (maybeUuid, maybeEnum) match {
-        case (Some(_), _) => update(id, shape.traits, uuid)
-        case (None, Some(e)) => {
+      shape.traits match {
+        case GetTrait.UUIDFormat(_) => update(id, shape.traits, uuid)
+        case GetTrait.LocalDateFormat(_) => update(id, shape.traits, localdate)
+        case GetTrait.LocalTimeFormat(_) => update(id, shape.traits, localtime)
+        case GetTrait.Enum(e) => 
           val values = e.value.zipWithIndex.map {
             case (enumDefinition, intValue) =>
               val value = enumDefinition.value.value
@@ -312,7 +332,6 @@ private[dynamic] object Compiler {
             shape.traits,
             makeStringEnum(id, values, shape.traits)
           )
-        }
         case _ => update(id, shape.traits, string)
       }
     }

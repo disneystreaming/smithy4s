@@ -38,6 +38,7 @@ case class LocalTime private (seconds: Int, nano: Int)
     TimeUtil.append2Digits(hour, s)
     TimeUtil.append2Digits(minute, s.append(':'))
     TimeUtil.append2Digits(second, s.append(':'))
+    TimeUtil.appendNano(nano, s)
     s.toString
   }
 
@@ -81,7 +82,6 @@ object LocalTime extends LocalTimeCompanionPlatform {
   }
 
   def parseUnsafe(s: String): LocalTime = {
-    println(s"parsing localTime $s")
     val len = s.length
     if (len < 8) error()
     var pos = 0

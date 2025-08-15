@@ -1198,6 +1198,21 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  case class MyTimes(
+    date: LocalDate,
+    time: LocalTime,
+    dateTime: OffsetDateTime
+  )
+
+  object MyTimes {
+    implicit val schema: Schema[MyTimes] = {
+      val date = localdate.required[MyTimes]("date", _.date)
+      val time = localtime.required[MyTimes]("time", _.time)
+      val dateTime = offsetdatetime.required[MyTimes]("dateTime", _.dateTime)
+      struct(date, time, dateTime)(MyTimes.apply)
+    }
+  }
+
   test("Duration are correctly encoded/decoded from a BigDecimal") {
     val jsonString = """{"a":86400.000000001}"""
     val input = MyDuration(1.day + 1.nano)
@@ -1207,6 +1222,22 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
     assertEquals(jsonString, encoded)
     assertEquals(input, decoded)
+  }
+
+  test("Time types are correctly encoded/decoded") {
+    val jsonString= """{"date":"2025-08-15","time":"13:09:56","dateTime":"2025-08-15T13:09:56-07:00"}"""
+    val input = MyTimes(
+      LocalDate(2025, 8, 15),
+      LocalTime(13,9,56),
+      OffsetDateTime(2025, 8, 15, 13, 9, 56, 0, ZoneOffset.hours(-7))
+    )
+
+    val encoded = writeToString[MyTimes](input)
+    val decoded = readFromString[MyTimes](jsonString)
+
+    assertEquals(jsonString, encoded)
+    assertEquals(input, decoded)
+
   }
 
 }

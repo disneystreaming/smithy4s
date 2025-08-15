@@ -34,6 +34,28 @@ private[time] object TimeUtil {
     val _ = s.append((d & 0xff).toChar).append((d >> 8).toChar)
   }
 
+  def appendNano(nano: Int, s: java.lang.StringBuilder): Unit =
+    if (nano != 0) {
+      val y1 =
+        nano * 1441151881L // Based on James Anhalt's algorithm for 9 digits: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
+      val y2 = (y1 & 0x1ffffffffffffffL) * 100
+      s.append('.').append(((y1 >>> 57).toInt + '0').toChar)
+      TimeUtil.append2Digits((y2 >>> 57).toInt, s)
+      if ((y2 & 0x1fffff800000000L) != 0) { // check if nano is divisible by 1000000
+        val y3 = (y2 & 0x1ffffffffffffffL) * 100
+        val y4 = (y3 & 0x1ffffffffffffffL) * 100
+        TimeUtil.append2Digits((y3 >>> 57).toInt, s)
+        val d = TimeUtil.digits((y4 >>> 57).toInt)
+        s.append((d & 0xff).toChar)
+        if ((y4 & 0x1ff000000000000L) != 0 || d > 0x3039) { // check if nano is divisible by 1000
+          TimeUtil.append2Digits(
+            ((y4 & 0x1ffffffffffffffL) * 100 >>> 57).toInt,
+            s.append((d >> 8).toChar)
+          )
+        }
+      }
+    }
+
   def to400YearCycle(day: Long): Int =
     (day / 146097).toInt // 146097 == number of days in a 400 year cycle
 

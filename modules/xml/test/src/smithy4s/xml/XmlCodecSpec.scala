@@ -34,7 +34,10 @@ import smithy4s.example.OpenEnumTest
 import smithy4s.example.OpenIntEnumTest
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
+import smithy4s.time._
 import weaver._
+
+import scala.concurrent.duration.Duration
 
 object XmlCodecSpec extends SimpleIOSuite {
 
@@ -124,6 +127,30 @@ object XmlCodecSpec extends SimpleIOSuite {
     implicit val schema: Schema[Blob] = bytes.x
     val xml = "<x>Zm9vYmFy</x>"
     checkContent(xml, Blob("foobar"))
+  }
+
+  test("localdate") {
+    implicit val schema: Schema[LocalDate] = localdate.x
+    val xml = "<x>2025-08-15</x>"
+    checkContent(xml, LocalDate(2025,8,15))
+  }
+
+  test("localtime") {
+    implicit val schema: Schema[LocalTime] = localtime.x
+    val xml = "<x>14:28:59.123</x>"
+    checkContent(xml, LocalTime(14, 28, 59, 123000000))
+  }
+
+  test("duration") {
+    implicit val schema: Schema[Duration] = duration.x
+    val xml = "<x>86400 seconds</x>"
+    checkContent(xml, Duration(86400, "seconds").asInstanceOf[Duration])
+  }
+
+  test("offsetdatetime") {
+    implicit val schema: Schema[OffsetDateTime] = offsetdatetime.x
+    val xml = "<x>2025-08-15T14:28:59.123-07:00</x>"
+    checkContent(xml, OffsetDateTime(2025,8,15,14,28,59,123000000, ZoneOffset.hours(-7)))
   }
 
   test("struct") {
