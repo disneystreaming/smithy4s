@@ -14,7 +14,7 @@ object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnauthorizedError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
   ).lazily
 
   // constructor using the original order from the spec

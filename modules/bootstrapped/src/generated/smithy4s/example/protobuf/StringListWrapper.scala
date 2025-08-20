@@ -12,7 +12,7 @@ object StringListWrapper extends ShapeTag.Companion[StringListWrapper] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "StringListWrapper")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec

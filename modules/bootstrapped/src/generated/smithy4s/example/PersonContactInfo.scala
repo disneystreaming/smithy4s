@@ -31,7 +31,7 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   val id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
 
   val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "hash"), smithy4s.Document.obj()),
   ).lazily
 
   object optics {

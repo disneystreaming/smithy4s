@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.string
 object MyPackageStringTrait extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example.package", "MyPackageStringTrait")
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[MyPackageStringTrait] = recursive(bijection(underlyingSchema, asBijection))

@@ -10,9 +10,9 @@ import smithy4s.schema.Schema.string
 object StringWithEnumTraits extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "StringWithEnumTraits")
   val hints: Hints = Hints(
-    smithy4s.example.LeftRight.LEFT.widen,
-    smithy4s.example.OldStyleLeftRight.RIGHT.widen,
-    smithy4s.example.OneTwo.ONE.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "leftRight"), smithy4s.Document.fromString("left")),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "oldStyleLeftRight"), smithy4s.Document.fromString("right")),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "oneTwo"), smithy4s.Document.fromDouble(1.0d)),
   ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[StringWithEnumTraits] = bijection(underlyingSchema, asBijection)

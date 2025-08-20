@@ -30,7 +30,7 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked2")
 
   val hints: Hints = Hints(
-    alloy.Untagged(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "untagged"), smithy4s.Document.obj()),
   ).lazily
 
   final case class CheckedCase(checked: String) extends CheckedOrUnchecked2 { final def $ordinal: Int = 0 }

@@ -30,7 +30,7 @@ object MyInlinedUnion extends ShapeTag.Companion[MyInlinedUnion] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "MyInlinedUnion")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoInlinedOneOf(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoInlinedOneOf"), smithy4s.Document.obj()),
   ).lazily
 
   final case class IntCase(int: Int) extends MyInlinedUnion { final def $ordinal: Int = 0 }

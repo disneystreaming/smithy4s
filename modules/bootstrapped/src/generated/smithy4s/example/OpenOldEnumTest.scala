@@ -20,7 +20,7 @@ object OpenOldEnumTest extends Enumeration[OpenOldEnumTest] with ShapeTag.Compan
   val id: ShapeId = ShapeId("smithy4s.example", "OpenOldEnumTest")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
   ).lazily
 
   case object ONE extends OpenOldEnumTest("ONE", "ONE", 0, Hints.empty)

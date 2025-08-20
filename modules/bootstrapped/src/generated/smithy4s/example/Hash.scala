@@ -12,7 +12,7 @@ object Hash extends ShapeTag.Companion[Hash] {
   val id: ShapeId = ShapeId("smithy4s.example", "hash")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
   ).lazily
 
 

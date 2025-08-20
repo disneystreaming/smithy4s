@@ -12,7 +12,7 @@ object SetInput extends ShapeTag.Companion[SetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "SetInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec

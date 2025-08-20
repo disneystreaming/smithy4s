@@ -28,7 +28,7 @@ object BincompatFriendlyTraitStruct extends ShapeTag.Companion[BincompatFriendly
   val id: ShapeId = ShapeId("smithy4s.example.bincompat", "BincompatFriendlyTraitStruct")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -45,7 +45,7 @@ object BincompatFriendlyTraitStruct extends ShapeTag.Companion[BincompatFriendly
     string.required[BincompatFriendlyTraitStruct]("base1", _.base1),
     string.required[BincompatFriendlyTraitStruct]("base2", _.base2),
     string.optional[BincompatFriendlyTraitStruct]("base3", _.base3),
-    string.field[BincompatFriendlyTraitStruct]("added2_1", _.added2_1).addHints(smithy.api.Default(smithy4s.Document.fromString("woop2_1"))),
-    string.required[BincompatFriendlyTraitStruct]("added3_1", _.added3_1).addHints(smithy.api.Default(smithy4s.Document.fromString("woop3_1"))),
+    string.field[BincompatFriendlyTraitStruct]("added2_1", _.added2_1).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("woop2_1"))),
+    string.required[BincompatFriendlyTraitStruct]("added3_1", _.added3_1).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("woop3_1"))),
   )(make).withId(id).addHints(hints))
 }

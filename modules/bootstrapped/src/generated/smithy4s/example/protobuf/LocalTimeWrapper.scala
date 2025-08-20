@@ -14,7 +14,7 @@ object LocalTimeWrapper extends ShapeTag.Companion[LocalTimeWrapper] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "LocalTimeWrapper")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -22,6 +22,6 @@ object LocalTimeWrapper extends ShapeTag.Companion[LocalTimeWrapper] {
 
   implicit val schema: Schema[LocalTimeWrapper] = struct(
     localtime.optional[LocalTimeWrapper]("localTime", _.localTime),
-    localtime.optional[LocalTimeWrapper]("compactLocalTime", _.compactLocalTime).addHints(alloy.proto.ProtoCompactLocalTime()),
+    localtime.optional[LocalTimeWrapper]("compactLocalTime", _.compactLocalTime).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoCompactLocalTime"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

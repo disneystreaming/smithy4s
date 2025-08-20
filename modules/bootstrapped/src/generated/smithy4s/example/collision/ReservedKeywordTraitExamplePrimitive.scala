@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.string
 object ReservedKeywordTraitExamplePrimitive extends Newtype[java.lang.String] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedKeywordTraitExamplePrimitive")
   val hints: Hints = Hints(
-    smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait"), smithy4s.Document.obj("implicit" -> smithy4s.Document.fromString("demo"), "package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))),
   ).lazily
   val underlyingSchema: Schema[java.lang.String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[ReservedKeywordTraitExamplePrimitive] = bijection(underlyingSchema, asBijection)

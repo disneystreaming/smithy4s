@@ -21,7 +21,7 @@ object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Compan
   val id: ShapeId = ShapeId("smithy4s.example", "OpenIntEnumTest")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
   ).lazily
 
   object optics {

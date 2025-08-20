@@ -11,7 +11,7 @@ import smithy4s.time.LocalDate
 object MyLocalDate extends Newtype[LocalDate] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyLocalDate")
   val hints: Hints = Hints(
-    alloy.DateFormat(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "dateFormat"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[LocalDate] = localdate.withId(id).addHints(hints)
   implicit val schema: Schema[MyLocalDate] = bijection(underlyingSchema, asBijection)

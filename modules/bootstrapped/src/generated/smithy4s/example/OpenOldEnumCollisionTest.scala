@@ -20,7 +20,7 @@ object OpenOldEnumCollisionTest extends Enumeration[OpenOldEnumCollisionTest] wi
   val id: ShapeId = ShapeId("smithy4s.example", "OpenOldEnumCollisionTest")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
   ).lazily
 
   case object Unknown extends OpenOldEnumCollisionTest("Unknown", "unknown", 0, Hints.empty)

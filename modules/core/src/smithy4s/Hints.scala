@@ -255,10 +255,34 @@ object Hints {
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
+
+      override def equals(obj: Any): Boolean = obj match {
+        case sb: StaticBinding[_] =>
+          sb.key == this.key && sb.value == this.value
+        case db: DynamicBinding =>
+          this.toDynamicBinding == db
+        case _ => false
+      }
+
+      lazy val toDynamicBinding: DynamicBinding =
+        DynamicBinding(
+          this.keyId,
+          Document.Encoder
+            .fromSchema(key.schema)
+            .encode(this.value)
+        )
     }
     final case class DynamicBinding(keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
+
+      override def equals(obj: Any): Boolean = obj match {
+        case sb: StaticBinding[_] =>
+          sb.toDynamicBinding == this
+        case db: DynamicBinding =>
+          db.keyId == this.keyId && db.value == this.value
+        case _ => false
+      }
     }
 
     implicit def fromValue[A, AA <: A](value: AA)(implicit

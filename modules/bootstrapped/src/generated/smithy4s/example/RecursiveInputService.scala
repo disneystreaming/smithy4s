@@ -26,7 +26,7 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
   val version: String = "0.0.1"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -80,7 +80,7 @@ object RecursiveInputServiceOperation {
     val schema: OperationSchema[RecursiveInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RecursiveInputOperation"))
       .withInput(RecursiveInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200), smithy.api.Idempotent())
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("PUT"), "uri" -> smithy4s.Document.fromString("/subscriptions"))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "idempotent"), smithy4s.Document.obj()))
     def wrap(input: RecursiveInput): RecursiveInputOperation = RecursiveInputOperation(input)
   }
 }

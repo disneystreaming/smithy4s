@@ -25,7 +25,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -79,7 +79,7 @@ object HelloWorldServiceOperation {
     val schema: OperationSchema[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.test", "Hello"))
       .withInput(HelloInput.schema)
       .withOutput(HelloOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200), smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))))
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/{name}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.Binding.DynamicBinding(ShapeId("smithy.test", "httpRequestTests"), smithy4s.Document.array(smithy4s.Document.obj("id" -> smithy4s.Document.fromString("helloSuccess"), "protocol" -> smithy4s.Document.fromString("alloy#simpleRestJson"), "method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/World"), "params" -> smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), smithy4s.Document.obj("id" -> smithy4s.Document.fromString("helloFails"), "protocol" -> smithy4s.Document.fromString("alloy#simpleRestJson"), "method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/fail"), "params" -> smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))))))
     def wrap(input: HelloInput): Hello = Hello(input)
   }
 }

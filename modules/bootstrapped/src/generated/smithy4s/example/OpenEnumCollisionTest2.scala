@@ -21,7 +21,7 @@ object OpenEnumCollisionTest2 extends Enumeration[OpenEnumCollisionTest2] with S
   val id: ShapeId = ShapeId("smithy4s.example", "OpenEnumCollisionTest2")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
   ).lazily
 
   object optics {

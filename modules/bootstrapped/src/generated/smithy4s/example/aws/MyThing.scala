@@ -21,7 +21,7 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   val version: String = ""
 
   val hints: Hints = Hints(
-    aws.api.Service(sdkId = "MyThing", arnNamespace = None, cloudFormationName = None, cloudTrailEventSource = None, docId = None, endpointPrefix = Some("mything")),
+    Hints.Binding.DynamicBinding(ShapeId("aws.api", "service"), smithy4s.Document.obj("sdkId" -> smithy4s.Document.fromString("MyThing"), "endpointPrefix" -> smithy4s.Document.fromString("mything"))),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F

@@ -12,7 +12,7 @@ import smithy4s.schema.Schema.string
 object Strings extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "Strings")
   val hints: Hints = Hints(
-    smithy.api.Deprecated(message = None, since = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[List[String]] = list(string).withId(id).addHints(hints)
   implicit val schema: Schema[Strings] = bijection(underlyingSchema, asBijection)

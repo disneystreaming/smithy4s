@@ -17,7 +17,7 @@ object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
   ).lazily
 
   // constructor using the original order from the spec
@@ -25,6 +25,6 @@ object PriceError extends ShapeTag.Companion[PriceError] {
 
   implicit val schema: Schema[PriceError] = struct(
     string.required[PriceError]("message", _.message),
-    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE")),
+    int.required[PriceError]("code", _.code).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-CODE"))),
   )(make).withId(id).addHints(hints)
 }

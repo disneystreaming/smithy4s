@@ -13,7 +13,7 @@ object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOper
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec

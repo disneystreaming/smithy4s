@@ -11,7 +11,7 @@ import smithy4s.time.LocalTime
 object MyLocalTime extends Newtype[LocalTime] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyLocalTime")
   val hints: Hints = Hints(
-    alloy.LocalTimeFormat(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "localTimeFormat"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[LocalTime] = localtime.withId(id).addHints(hints)
   implicit val schema: Schema[MyLocalTime] = bijection(underlyingSchema, asBijection)

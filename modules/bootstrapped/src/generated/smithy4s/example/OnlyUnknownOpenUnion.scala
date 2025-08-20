@@ -33,7 +33,7 @@ object OnlyUnknownOpenUnion extends ShapeTag.Companion[OnlyUnknownOpenUnion] {
 
   object UnknownCase {
     val hints: Hints = Hints(
-      alloy.JsonUnknown(),
+      Hints.Binding.DynamicBinding(ShapeId("alloy", "jsonUnknown"), smithy4s.Document.obj()),
     ).lazily
     val schema: Schema[OnlyUnknownOpenUnion.UnknownCase] = bijection(document.addHints(hints), OnlyUnknownOpenUnion.UnknownCase(_), _.unknown)
     val alt = schema.oneOf[OnlyUnknownOpenUnion]("unknown")

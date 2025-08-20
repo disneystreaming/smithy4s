@@ -11,8 +11,8 @@ import smithy4s.time.OffsetDateTime
 object MyOffsetDateTime extends Newtype[OffsetDateTime] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyOffsetDateTime")
   val hints: Hints = Hints(
-    alloy.OffsetDateTimeFormat(),
-    smithy.api.TimestampFormat.DATE_TIME.widen,
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "offsetDateTimeFormat"), smithy4s.Document.obj()),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time")),
   ).lazily
   val underlyingSchema: Schema[OffsetDateTime] = offsetdatetime.withId(id).addHints(hints)
   implicit val schema: Schema[MyOffsetDateTime] = bijection(underlyingSchema, asBijection)

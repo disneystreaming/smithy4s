@@ -45,7 +45,7 @@ object Foo extends ShapeTag.Companion[Foo] {
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because.")),
   ).lazily
 
   final case class IntCase(int: Int) extends Foo { final def $ordinal: Int = 0 }
@@ -63,7 +63,7 @@ object Foo extends ShapeTag.Companion[Foo] {
   }
   object StrCase {
     val hints: Hints = Hints(
-      smithy.api.Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
+      Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this")),
     ).lazily
     val schema: Schema[Foo.StrCase] = bijection(string.addHints(hints), Foo.StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")

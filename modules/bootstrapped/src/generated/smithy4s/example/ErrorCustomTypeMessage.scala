@@ -15,7 +15,7 @@ object ErrorCustomTypeMessage extends ShapeTag.Companion[ErrorCustomTypeMessage]
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorCustomTypeMessage")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
   ).lazily
 
   // constructor using the original order from the spec

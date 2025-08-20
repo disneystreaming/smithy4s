@@ -28,7 +28,7 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -85,7 +85,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[SendStringInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "SendString"))
       .withInput(SendStringInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/simple/{bucketName}/{key}"), code = 200))
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/simple/{bucketName}/{key}"), "code" -> smithy4s.Document.fromDouble(200.0d))))
     def wrap(input: SendStringInput): SendString = SendString(input)
   }
   final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
@@ -97,7 +97,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "CreateObject"))
       .withInput(CreateObjectInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200))
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/complex/{bucketName}/{key}"), "code" -> smithy4s.Document.fromDouble(200.0d))))
     def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
   }
 }

@@ -54,14 +54,14 @@ object MyUnion extends ShapeTag.Companion[MyUnion] {
   }
   object ListCase {
     val hints: Hints = Hints(
-      alloy.proto.ProtoWrapped(),
+      Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoWrapped"), smithy4s.Document.obj()),
     ).lazily
     val schema: Schema[MyUnion.ListCase] = bijection(MyIntList.underlyingSchema.addHints(hints), MyUnion.ListCase(_), _.list)
     val alt = schema.oneOf[MyUnion]("list")
   }
   object MapCase {
     val hints: Hints = Hints(
-      alloy.proto.ProtoWrapped(),
+      Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoWrapped"), smithy4s.Document.obj()),
     ).lazily
     val schema: Schema[MyUnion.MapCase] = bijection(StringMap.underlyingSchema.addHints(hints), MyUnion.MapCase(_), _.map)
     val alt = schema.oneOf[MyUnion]("map")

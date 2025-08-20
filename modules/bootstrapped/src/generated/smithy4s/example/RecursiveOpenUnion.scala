@@ -49,7 +49,7 @@ object RecursiveOpenUnion extends ShapeTag.Companion[RecursiveOpenUnion] {
   }
   object UnknownCase {
     val hints: Hints = Hints(
-      alloy.JsonUnknown(),
+      Hints.Binding.DynamicBinding(ShapeId("alloy", "jsonUnknown"), smithy4s.Document.obj()),
     ).lazily
     val schema: Schema[RecursiveOpenUnion.UnknownCase] = bijection(document.addHints(hints), RecursiveOpenUnion.UnknownCase(_), _.unknown)
     val alt = schema.oneOf[RecursiveOpenUnion]("unknown")

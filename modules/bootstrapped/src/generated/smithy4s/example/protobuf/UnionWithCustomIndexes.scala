@@ -40,21 +40,21 @@ object UnionWithCustomIndexes extends ShapeTag.Companion[UnionWithCustomIndexes]
 
   object ACase {
     val hints: Hints = Hints(
-      alloy.proto.ProtoIndex(3),
+      Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromDouble(3.0d)),
     ).lazily
     val schema: Schema[UnionWithCustomIndexes.ACase] = bijection(int.addHints(hints), UnionWithCustomIndexes.ACase(_), _.a)
     val alt = schema.oneOf[UnionWithCustomIndexes]("a")
   }
   object BCase {
     val hints: Hints = Hints(
-      alloy.proto.ProtoIndex(2),
+      Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromDouble(2.0d)),
     ).lazily
     val schema: Schema[UnionWithCustomIndexes.BCase] = bijection(int.addHints(hints), UnionWithCustomIndexes.BCase(_), _.b)
     val alt = schema.oneOf[UnionWithCustomIndexes]("b")
   }
   object CCase {
     val hints: Hints = Hints(
-      alloy.proto.ProtoIndex(1),
+      Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromDouble(1.0d)),
     ).lazily
     val schema: Schema[UnionWithCustomIndexes.CCase] = bijection(int.addHints(hints), UnionWithCustomIndexes.CCase(_), _.c)
     val alt = schema.oneOf[UnionWithCustomIndexes]("c")

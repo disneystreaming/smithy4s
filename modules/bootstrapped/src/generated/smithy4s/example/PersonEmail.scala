@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.string
 object PersonEmail extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "PersonEmail")
   val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "hash"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[PersonEmail] = bijection(underlyingSchema, asBijection)

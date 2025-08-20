@@ -12,14 +12,14 @@ object ReservedKeywordTraitExampleStruct extends ShapeTag.Companion[ReservedKeyw
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedKeywordTraitExampleStruct")
 
   val hints: Hints = Hints(
-    smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
-    smithy4s.example.collision.ReservedKeywordUnionTrait.PackageCase(smithy4s.example.collision.PackageUnion.ClassCase(42).widen).widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait"), smithy4s.Document.obj("implicit" -> smithy4s.Document.fromString("demo"), "package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordUnionTrait"), smithy4s.Document.obj("package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))),
   ).lazily
 
   // constructor using the original order from the spec
   private def make(member: Option[String]): ReservedKeywordTraitExampleStruct = ReservedKeywordTraitExampleStruct(member)
 
   implicit val schema: Schema[ReservedKeywordTraitExampleStruct] = struct(
-    String.schema.optional[ReservedKeywordTraitExampleStruct]("member", _.member).addHints(smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))), smithy4s.example.collision.ReservedKeywordUnionTrait.PackageCase(smithy4s.example.collision.PackageUnion.ClassCase(42).widen).widen),
+    String.schema.optional[ReservedKeywordTraitExampleStruct]("member", _.member).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait"), smithy4s.Document.obj("implicit" -> smithy4s.Document.fromString("demo"), "package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))), Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordUnionTrait"), smithy4s.Document.obj("package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d))))),
   )(make).withId(id).addHints(hints)
 }

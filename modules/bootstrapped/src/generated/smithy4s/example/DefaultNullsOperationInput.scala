@@ -13,7 +13,7 @@ object DefaultNullsOperationInput extends ShapeTag.Companion[DefaultNullsOperati
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultNullsOperationInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -21,14 +21,14 @@ object DefaultNullsOperationInput extends ShapeTag.Companion[DefaultNullsOperati
 
   implicit val schema: Schema[DefaultNullsOperationInput] = struct(
     string.optional[DefaultNullsOperationInput]("optional", _.optional),
-    string.field[DefaultNullsOperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
-    string.required[DefaultNullsOperationInput]("requiredLabel", _.requiredLabel).addHints(smithy.api.Default(smithy4s.Document.fromString("required-label-with-default")), smithy.api.HttpLabel()),
-    string.required[DefaultNullsOperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
-    string.optional[DefaultNullsOperationInput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
-    string.field[DefaultNullsOperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
-    string.required[DefaultNullsOperationInput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader("required-header-with-default")),
-    string.optional[DefaultNullsOperationInput]("optionalQuery", _.optionalQuery).addHints(smithy.api.HttpQuery("optional-query")),
-    string.field[DefaultNullsOperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-query-with-default")), smithy.api.HttpQuery("optional-query-with-default")),
-    string.field[DefaultNullsOperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-query-with-default")), smithy.api.HttpQuery("required-query-with-default")),
+    string.field[DefaultNullsOperationInput]("optionalWithDefault", _.optionalWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("optional-default"))),
+    string.required[DefaultNullsOperationInput]("requiredLabel", _.requiredLabel).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-label-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    string.required[DefaultNullsOperationInput]("requiredWithDefault", _.requiredWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-default"))),
+    string.optional[DefaultNullsOperationInput]("optionalHeader", _.optionalHeader).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("optional-header"))),
+    string.field[DefaultNullsOperationInput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("optional-header-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("optional-header-with-default"))),
+    string.required[DefaultNullsOperationInput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-header-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("required-header-with-default"))),
+    string.optional[DefaultNullsOperationInput]("optionalQuery", _.optionalQuery).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("optional-query"))),
+    string.field[DefaultNullsOperationInput]("optionalQueryWithDefault", _.optionalQueryWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("optional-query-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("optional-query-with-default"))),
+    string.field[DefaultNullsOperationInput]("requiredQueryWithDefault", _.requiredQueryWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-query-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("required-query-with-default"))),
   )(make).withId(id).addHints(hints)
 }

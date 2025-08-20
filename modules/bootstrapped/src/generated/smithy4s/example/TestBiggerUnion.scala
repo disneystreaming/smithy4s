@@ -29,7 +29,7 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestBiggerUnion")
 
   val hints: Hints = Hints(
-    alloy.Discriminated("tpe"),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "discriminated"), smithy4s.Document.fromString("tpe")),
   ).lazily
 
   final case class OneCase(one: One) extends TestBiggerUnion { final def $ordinal: Int = 0 }

@@ -26,14 +26,14 @@ object ReservedKeywordTraitExampleUnion extends ShapeTag.Companion[ReservedKeywo
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedKeywordTraitExampleUnion")
 
   val hints: Hints = Hints(
-    smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait"), smithy4s.Document.obj("implicit" -> smithy4s.Document.fromString("demo"), "package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))),
   ).lazily
 
   final case class MemberCase(member: String) extends ReservedKeywordTraitExampleUnion { final def $ordinal: Int = 0 }
 
   object MemberCase {
     val hints: Hints = Hints(
-      smithy4s.example.collision.ReservedKeywordStructTrait(_implicit = smithy4s.example.collision.String("demo"), _package = Some(smithy4s.example.collision.Packagee(_class = Some(42)))),
+      Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait"), smithy4s.Document.obj("implicit" -> smithy4s.Document.fromString("demo"), "package" -> smithy4s.Document.obj("class" -> smithy4s.Document.fromDouble(42.0d)))),
     ).lazily
     val schema: Schema[ReservedKeywordTraitExampleUnion.MemberCase] = bijection(String.schema.addHints(hints), ReservedKeywordTraitExampleUnion.MemberCase(_), _.member)
     val alt = schema.oneOf[ReservedKeywordTraitExampleUnion]("member")

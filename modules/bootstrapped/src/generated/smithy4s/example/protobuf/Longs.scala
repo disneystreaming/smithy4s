@@ -13,7 +13,7 @@ object Longs extends ShapeTag.Companion[Longs] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "Longs")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -21,9 +21,9 @@ object Longs extends ShapeTag.Companion[Longs] {
 
   implicit val schema: Schema[Longs] = struct(
     long.required[Longs]("long", _.long),
-    long.required[Longs]("slong", _.slong).addHints(alloy.proto.ProtoNumType.SIGNED.widen),
-    long.required[Longs]("ulong", _.ulong).addHints(alloy.proto.ProtoNumType.UNSIGNED.widen),
-    long.required[Longs]("fixedLong", _.fixedLong).addHints(alloy.proto.ProtoNumType.FIXED.widen),
-    long.required[Longs]("fixedSlong", _.fixedSlong).addHints(alloy.proto.ProtoNumType.FIXED_SIGNED.widen),
+    long.required[Longs]("slong", _.slong).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoNumType"), smithy4s.Document.fromString("SIGNED"))),
+    long.required[Longs]("ulong", _.ulong).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoNumType"), smithy4s.Document.fromString("UNSIGNED"))),
+    long.required[Longs]("fixedLong", _.fixedLong).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoNumType"), smithy4s.Document.fromString("FIXED"))),
+    long.required[Longs]("fixedSlong", _.fixedSlong).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoNumType"), smithy4s.Document.fromString("FIXED_SIGNED"))),
   )(make).withId(id).addHints(hints)
 }

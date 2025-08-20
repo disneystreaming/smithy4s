@@ -20,7 +20,7 @@ object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
   private def make(itemId: String, added: Timestamp): AddMenuItemResult = AddMenuItemResult(itemId, added)
 
   implicit val schema: Schema[AddMenuItemResult] = struct(
-    string.required[AddMenuItemResult]("itemId", _.itemId).addHints(smithy.api.HttpPayload()),
-    timestamp.required[AddMenuItemResult]("added", _.added).addHints(smithy.api.HttpHeader("X-ADDED-AT"), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    string.required[AddMenuItemResult]("itemId", _.itemId).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
+    timestamp.required[AddMenuItemResult]("added", _.added).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-ADDED-AT")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
   )(make).withId(id).addHints(hints)
 }

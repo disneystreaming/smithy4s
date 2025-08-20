@@ -14,7 +14,7 @@ object LocalDateWrapper extends ShapeTag.Companion[LocalDateWrapper] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "LocalDateWrapper")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -22,6 +22,6 @@ object LocalDateWrapper extends ShapeTag.Companion[LocalDateWrapper] {
 
   implicit val schema: Schema[LocalDateWrapper] = struct(
     localdate.optional[LocalDateWrapper]("localDate", _.localDate),
-    localdate.optional[LocalDateWrapper]("compactLocalDate", _.compactLocalDate).addHints(alloy.proto.ProtoCompactLocalDate()),
+    localdate.optional[LocalDateWrapper]("compactLocalDate", _.compactLocalDate).addHints(Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoCompactLocalDate"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

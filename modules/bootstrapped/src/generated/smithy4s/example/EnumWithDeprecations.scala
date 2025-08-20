@@ -22,13 +22,13 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
   val hints: Hints = Hints(
-    smithy.api.Deprecated(message = None, since = None),
-    smithy.api.Documentation("some docs here"),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("some docs here")),
   ).lazily
 
   @deprecated(message = "N/A", since = "N/A")
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints.empty) {
-    override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None)).lazily
+    override val hints: Hints = Hints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj())).lazily
   }
   case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints.empty)
 

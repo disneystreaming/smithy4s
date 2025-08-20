@@ -12,7 +12,7 @@ object NameFormat extends ShapeTag.Companion[NameFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nameFormat")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = Some("string"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj("selector" -> smithy4s.Document.fromString("string"))),
   ).lazily
 
 

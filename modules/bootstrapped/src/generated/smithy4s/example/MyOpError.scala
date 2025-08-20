@@ -13,7 +13,7 @@ object MyOpError extends ShapeTag.Companion[MyOpError] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
   ).lazily
 
 

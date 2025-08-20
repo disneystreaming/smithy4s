@@ -14,8 +14,8 @@ object SimpleError extends ShapeTag.Companion[SimpleError] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SimpleError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(id = "simple_error", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), code = 400, authScheme = None, headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"expected\":-1}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("expected" -> smithy4s.Document.fromDouble(-1.0d))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.test", "httpResponseTests"), smithy4s.Document.array(smithy4s.Document.obj("id" -> smithy4s.Document.fromString("simple_error"), "protocol" -> smithy4s.Document.fromString("alloy#simpleRestJson"), "params" -> smithy4s.Document.obj("expected" -> smithy4s.Document.fromDouble(-1.0d)), "code" -> smithy4s.Document.fromDouble(400.0d), "body" -> smithy4s.Document.fromString("{\"expected\":-1}"), "bodyMediaType" -> smithy4s.Document.fromString("application/json"), "requireHeaders" -> smithy4s.Document.array(smithy4s.Document.fromString("X-Error-Type"))))),
   ).lazily
 
   // constructor using the original order from the spec

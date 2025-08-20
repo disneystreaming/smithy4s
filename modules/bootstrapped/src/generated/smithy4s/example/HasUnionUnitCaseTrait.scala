@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.string
 object HasUnionUnitCaseTrait extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "HasUnionUnitCaseTrait")
   val hints: Hints = Hints(
-    smithy4s.example.UnionTraitWithUnitCase.UCase.widen,
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "unionTraitWithUnitCase"), smithy4s.Document.obj("u" -> smithy4s.Document.obj())),
   ).lazily
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[HasUnionUnitCaseTrait] = bijection(underlyingSchema, asBijection)

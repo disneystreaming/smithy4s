@@ -13,7 +13,7 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperationInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec

@@ -13,7 +13,7 @@ object DefaultNullsOperationOutput extends ShapeTag.Companion[DefaultNullsOperat
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultNullsOperationOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
@@ -21,10 +21,10 @@ object DefaultNullsOperationOutput extends ShapeTag.Companion[DefaultNullsOperat
 
   implicit val schema: Schema[DefaultNullsOperationOutput] = struct(
     string.optional[DefaultNullsOperationOutput]("optional", _.optional),
-    string.field[DefaultNullsOperationOutput]("optionalWithDefault", _.optionalWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-default"))),
-    string.required[DefaultNullsOperationOutput]("requiredWithDefault", _.requiredWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-default"))),
-    string.optional[DefaultNullsOperationOutput]("optionalHeader", _.optionalHeader).addHints(smithy.api.HttpHeader("optional-header")),
-    string.field[DefaultNullsOperationOutput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("optional-header-with-default")), smithy.api.HttpHeader("optional-header-with-default")),
-    string.required[DefaultNullsOperationOutput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(smithy.api.Default(smithy4s.Document.fromString("required-header-with-default")), smithy.api.HttpHeader("required-header-with-default")),
+    string.field[DefaultNullsOperationOutput]("optionalWithDefault", _.optionalWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("optional-default"))),
+    string.required[DefaultNullsOperationOutput]("requiredWithDefault", _.requiredWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-default"))),
+    string.optional[DefaultNullsOperationOutput]("optionalHeader", _.optionalHeader).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("optional-header"))),
+    string.field[DefaultNullsOperationOutput]("optionalHeaderWithDefault", _.optionalHeaderWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("optional-header-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("optional-header-with-default"))),
+    string.required[DefaultNullsOperationOutput]("requiredHeaderWithDefault", _.requiredHeaderWithDefault).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("required-header-with-default")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("required-header-with-default"))),
   )(make).withId(id).addHints(hints)
 }

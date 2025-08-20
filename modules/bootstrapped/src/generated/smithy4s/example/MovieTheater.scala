@@ -14,7 +14,7 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
   val id: ShapeId = ShapeId("smithy4s.example", "MovieTheater")
 
   val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "hash"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec

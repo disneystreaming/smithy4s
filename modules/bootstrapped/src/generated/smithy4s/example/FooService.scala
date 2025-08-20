@@ -34,7 +34,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("The most basics of services\nGetFoo is its only operation")),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -89,7 +89,7 @@ object FooServiceOperation {
     val schema: OperationSchema[Unit, Nothing, GetFooOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetFoo"))
       .withInput(unit)
       .withOutput(GetFooOutput.schema)
-      .withHints(smithy.api.Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""), smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200), smithy.api.Readonly())
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\"")), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/foo"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): GetFoo = GetFoo()
   }
 }

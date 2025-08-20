@@ -12,7 +12,7 @@ object HasBincompatTrait extends ShapeTag.Companion[HasBincompatTrait] {
   val id: ShapeId = ShapeId("smithy4s.example.bincompat", "HasBincompatTrait")
 
   val hints: Hints = Hints(
-    smithy4s.example.bincompat.BincompatFriendlyTraitStruct(base1 = "b1", base2 = "b2", added2_1 = "woop2_1", added3_1 = "b4", base3 = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example.bincompat", "BincompatFriendlyTraitStruct"), smithy4s.Document.obj("base1" -> smithy4s.Document.fromString("b1"), "base2" -> smithy4s.Document.fromString("b2"), "added3_1" -> smithy4s.Document.fromString("b4"))),
   ).lazily
 
 

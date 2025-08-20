@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.string
 object StringSet extends Newtype[Set[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "StringSet")
   val hints: Hints = Hints(
-    smithy.api.UniqueItems(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "uniqueItems"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[Set[String]] = set(string).withId(id).addHints(hints)
   implicit val schema: Schema[StringSet] = bijection(underlyingSchema, asBijection)

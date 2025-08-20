@@ -21,7 +21,7 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
   val id: ShapeId = ShapeId("smithy4s.example", "NetworkConnectionType")
 
   val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+    Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "hash"), smithy4s.Document.obj()),
   ).lazily
 
   case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints.empty)

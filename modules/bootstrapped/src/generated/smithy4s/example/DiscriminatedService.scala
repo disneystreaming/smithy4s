@@ -25,7 +25,7 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -79,7 +79,7 @@ object DiscriminatedServiceOperation {
     val schema: OperationSchema[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TestDiscriminated"))
       .withInput(TestDiscriminatedInput.schema)
       .withOutput(TestDiscriminatedOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200), smithy.api.Readonly())
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/test/{key}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: TestDiscriminatedInput): TestDiscriminated = TestDiscriminated(input)
   }
 }

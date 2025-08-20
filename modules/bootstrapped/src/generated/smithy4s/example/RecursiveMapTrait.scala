@@ -12,8 +12,8 @@ import smithy4s.schema.Schema.string
 object RecursiveMapTrait extends Newtype[Map[String, String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveMapTrait")
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
   ).lazily
-  val underlyingSchema: Schema[Map[String, String]] = map(string.addMemberHints(smithy4s.example.RecursiveMapTrait(Map())), string).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Map[String, String]] = map(string.addMemberHints(Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "RecursiveMapTrait"), smithy4s.Document.obj())), string).withId(id).addHints(hints)
   implicit val schema: Schema[RecursiveMapTrait] = recursive(bijection(underlyingSchema, asBijection))
 }

@@ -34,7 +34,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   val version: String = "0.0"
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Just a dummy service to ensure that the rendered services compile\nwhen testing core")),
   ).lazily
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -94,7 +94,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[PathParams, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyPath"))
       .withInput(PathParams.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200), smithy.api.Readonly())
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: PathParams): DummyPath = DummyPath(input)
   }
   final case class Dummy(input: Queries) extends DummyServiceOperation[Queries, Nothing, Unit, Nothing, Nothing] {
@@ -106,7 +106,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[Queries, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Dummy"))
       .withInput(Queries.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200), smithy.api.Readonly())
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/dummy"))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Queries): Dummy = Dummy(input)
   }
   final case class DummyHostPrefix(input: HostLabelInput) extends DummyServiceOperation[HostLabelInput, Nothing, Unit, Nothing, Nothing] {
@@ -118,7 +118,7 @@ object DummyServiceOperation {
     val schema: OperationSchema[HostLabelInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DummyHostPrefix"))
       .withInput(HostLabelInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Endpoint(hostPrefix = smithy.api.NonEmptyString("foo.{label1}--abc{label2}.{label3}.secure.")), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/dummy"), code = 200))
+      .withHints(Hints.Binding.DynamicBinding(ShapeId("smithy.api", "endpoint"), smithy4s.Document.obj("hostPrefix" -> smithy4s.Document.fromString("foo.{label1}--abc{label2}.{label3}.secure."))), Hints.Binding.DynamicBinding(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/dummy"))))
     def wrap(input: HostLabelInput): DummyHostPrefix = DummyHostPrefix(input)
   }
 }

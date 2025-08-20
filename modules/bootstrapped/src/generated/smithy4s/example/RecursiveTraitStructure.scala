@@ -14,13 +14,13 @@ object RecursiveTraitStructure extends ShapeTag.Companion[RecursiveTraitStructur
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveTraitStructure")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
   ).lazily
 
   // constructor using the original order from the spec
   private def make(name: Option[String]): RecursiveTraitStructure = RecursiveTraitStructure(name)
 
   implicit val schema: Schema[RecursiveTraitStructure] = recursive(struct(
-    string.optional[RecursiveTraitStructure]("name", _.name).addHints(smithy4s.example.RecursiveTraitStructure(name = None)),
+    string.optional[RecursiveTraitStructure]("name", _.name).addHints(Hints.Binding.DynamicBinding(ShapeId("smithy4s.example", "RecursiveTraitStructure"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints))
 }

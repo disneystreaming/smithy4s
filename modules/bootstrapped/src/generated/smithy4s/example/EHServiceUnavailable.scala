@@ -16,8 +16,8 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHServiceUnavailable")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(503),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(503.0d)),
   ).lazily
 
   // constructor using the original order from the spec

@@ -16,8 +16,8 @@ object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
   val id: ShapeId = ShapeId("smithy4s.example.hello", "SpecificServerError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(599),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+    Hints.Binding.DynamicBinding(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(599.0d)),
   ).lazily
 
   // constructor using the original order from the spec

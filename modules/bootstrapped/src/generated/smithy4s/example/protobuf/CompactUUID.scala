@@ -11,8 +11,8 @@ import smithy4s.schema.Schema.uuid
 object CompactUUID extends Newtype[UUID] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "CompactUUID")
   val hints: Hints = Hints(
-    alloy.UuidFormat(),
-    alloy.proto.ProtoCompactUUID(),
+    Hints.Binding.DynamicBinding(ShapeId("alloy", "uuidFormat"), smithy4s.Document.obj()),
+    Hints.Binding.DynamicBinding(ShapeId("alloy.proto", "protoCompactUUID"), smithy4s.Document.obj()),
   ).lazily
   val underlyingSchema: Schema[UUID] = uuid.withId(id).addHints(hints)
   implicit val schema: Schema[CompactUUID] = bijection(underlyingSchema, asBijection)
