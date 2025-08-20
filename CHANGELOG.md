@@ -53,6 +53,11 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
 ## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
 Prevents using it as an implicit conversion in Scala 2
 
+## Render Hints with Dynamic Bindings in [1813](https://github.com/disneystreaming/smithy4s/pull/1813)
+
+Hints are now rendered in the generated code as dynamic bindings as opposed to static ones.
+This will improve compatibility as Smithy models like `smithy.api` and `alloy` evolve.
+
 # 0.18.41
 
 * codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
