@@ -75,7 +75,9 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
           //
           // We can't assume they were encoded in order. That's why we have to
           // then sort by index.
-          import scala.collection.compat._ // scalafix:ok
+          // scalafix:off
+          import scala.collection.compat._ 
+          // scalafix:on
           val groupedAndSortedCursors = values
             .collect {
               case formData @ UrlForm.FormData(
