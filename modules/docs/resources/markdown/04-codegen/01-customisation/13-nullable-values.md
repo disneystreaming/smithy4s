@@ -52,5 +52,6 @@ The annotation `@nullable` can be combined with both `@required` and `@default`,
 
 * annotating as `@required` will forbid the field from being omitted but permit null to be passed explicitly on deserialization. It will always include the field but potentially set it to null on serialization.
 * annotating as `@default` works the same as default values for non-nullable fields, with the exception that the default can be set to null and [not automatically adjusted into a "zero value"](../03-default-values.md)
+* annotating a collection as `@sparse` will render that collections value type as `Nullable` rather than `Option`
 
 In both cases, the resulting Scala type of the field will be `smithy.Nullable[T]`.

@@ -45,6 +45,7 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
   - **Breaking change**: previously generated non-optional Scala fields with type-specific defaults (e.g., `0`, `false`).
   - Now generates **optional (`Option`) fields without default**.
   - Still renders `Default(Document.DNull)` to preserve model fidelity.
+  - The underlying value type in `@sparse` collections are now rendered as `Nullable` rather than `Option`
 
 - **In smithy4s-core**:
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
