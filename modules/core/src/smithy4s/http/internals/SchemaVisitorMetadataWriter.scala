@@ -19,7 +19,6 @@ package http
 package internals
 
 import smithy.api.HttpQueryParams
-import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag

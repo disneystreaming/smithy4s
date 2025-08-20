@@ -18,7 +18,6 @@ package smithy4s.xml
 package internals
 
 import smithy4s.ConstraintError
-import smithy4s.xml.XmlDocument
 import smithy4s.xml.XmlDocument.XmlQName
 import smithy4s.xml.internals.XmlCursor._
 

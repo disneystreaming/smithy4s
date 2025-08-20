@@ -16,17 +16,14 @@
 
 package smithy4s.example.guides
 
-import smithy4s.example.guides.auth._
-import smithy4s.http4s._
 import cats.effect._
-import cats.implicits._
-import org.http4s.implicits._
 import org.http4s._
-import com.comcast.ip4s._
 import org.http4s.client._
 import org.http4s.ember.client.EmberClientBuilder
-import smithy4s.Hints
 import org.http4s.headers.Authorization
+import smithy4s.Hints
+import smithy4s.example.guides.auth._
+import smithy4s.http4s._
 
 object AuthClient {
   def apply(http4sClient: Client[IO]): Resource[IO, HelloWorldAuthService[IO]] =

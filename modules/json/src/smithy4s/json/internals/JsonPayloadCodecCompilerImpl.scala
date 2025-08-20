@@ -19,12 +19,14 @@ package json
 package internals
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
+//scalafix:off OrganizeImport
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig => JsoniterReaderConfig
 }
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   WriterConfig => JsoniterWriterConfig
 }
+//scalafix:on
 import smithy4s.codecs._
 import smithy4s.schema.CachedSchemaCompiler
 

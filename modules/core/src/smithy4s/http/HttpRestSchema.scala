@@ -18,7 +18,6 @@ package smithy4s
 package http
 
 import smithy.api.HttpPayload
-import smithy4s.PartialData
 import smithy4s.capability.Zipper
 import smithy4s.codecs.Decoder
 import smithy4s.codecs.Writer

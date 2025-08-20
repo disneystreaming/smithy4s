@@ -21,7 +21,6 @@ package internals
 import alloy.UrlFormFlattened
 import alloy.UrlFormName
 import smithy4s.codecs.PayloadPath
-import smithy4s.http._
 import smithy4s.schema._
 
 private[http] class UrlFormDataEncoderSchemaVisitor(

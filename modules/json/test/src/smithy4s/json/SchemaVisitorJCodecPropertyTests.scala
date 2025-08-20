@@ -24,8 +24,6 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop
 import smithy.api.Length
 import smithy.api.Range
-import smithy4s.Blob
-import smithy4s.Hints
 import smithy4s.codecs.PayloadError
 import smithy4s.scalacheck.DynData
 import smithy4s.scalacheck._
