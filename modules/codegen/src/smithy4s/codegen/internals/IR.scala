@@ -405,6 +405,7 @@ private[internals] object Hint {
   // https://github.com/disneystreaming/smithy4s/issues/1296
   case class Native(shapeId: ShapeId, typedNode: Eval[Fix[TypedNode]])
       extends Hint
+  case class DynamicBinding(shapeId: ShapeId, data: Node) extends Hint
   case object IntEnum extends Hint
   case object OpenEnum extends Hint
 
