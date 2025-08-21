@@ -21,7 +21,6 @@ import smithy4s.schema._
 import smithy4s.schema.Schema._
 
 import org.scalacheck.Gen
-import org.scalacheck.Gen.const
 import smithy.api.TimestampFormat
 
 object SchemaGenerator {

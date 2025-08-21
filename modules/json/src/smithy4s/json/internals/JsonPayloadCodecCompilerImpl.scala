@@ -18,13 +18,11 @@ package smithy4s
 package json
 package internals
 
-import com.github.plokhotnyuk.jsoniter_scala.core._
 //scalafix:off OrganizeImport
 import com.github.plokhotnyuk.jsoniter_scala.core.{
-  ReaderConfig => JsoniterReaderConfig
-}
-import com.github.plokhotnyuk.jsoniter_scala.core.{
-  WriterConfig => JsoniterWriterConfig
+  ReaderConfig => JsoniterReaderConfig,
+  WriterConfig => JsoniterWriterConfig,
+  _
 }
 //scalafix:on
 import smithy4s.codecs._
