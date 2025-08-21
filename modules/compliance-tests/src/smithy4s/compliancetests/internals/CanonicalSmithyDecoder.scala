@@ -95,6 +95,7 @@ object CanonicalSmithyDecoder {
             case DString(string) =>
               OffsetDateTime.parseUnsafe(string)
             case DNumber(value) =>
+              // Since there's no offset information if we are just given the epoch seconds just default to UTC, i.e ZoneOffset zero
               val epochSeconds = value.toLong
               OffsetDateTime(
                 epochSeconds,
