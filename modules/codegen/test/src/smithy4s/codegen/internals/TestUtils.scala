@@ -44,14 +44,14 @@ object TestUtils {
 
   def runTest(
       smithySpec: String,
-      expectedScalaCode: String
+      expectedScalaCode: String*
   )(implicit
       loc: Location
   ): Unit = {
     val scalaResults = generateScalaCode(smithySpec).values.toList
     Assertions.assertEquals(
-      scalaResults.map(_.trim()),
-      List(expectedScalaCode.trim())
+      scalaResults.map(_.trim()).sorted,
+      expectedScalaCode.map(_.trim()).toList.sorted
     )
   }
 

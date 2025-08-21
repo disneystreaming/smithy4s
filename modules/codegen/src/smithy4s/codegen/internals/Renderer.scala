@@ -1443,7 +1443,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         if (e.hints.isEmpty) baseLine
         else
           block(baseLine)(
-            line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)}).lazily"
+            line"override val hints: $Hints_ = $Hints_(${memberHints(e.hints)})${getLazySuffix(e.hints)}"
           )
       )
     }
@@ -1736,8 +1736,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     rendered match {
       case Nil => lines(line"$lhs = $Hints_.empty")
       case args =>
-        line"$lhs = $Hints_".args(args).appendToLast(".lazily")
+        line"$lhs = $Hints_".args(args).appendToLast(getLazySuffix(hints))
     }
+  }
+
+  // If all hints are any native bindings (static bindings)
+  // we need to use the lazily suffix to prevent compile time
+  // issues
+  private def getLazySuffix(hints: List[Hint]): String = {
+    if (
+      hints.forall {
+        case _: Hint.Native => false
+        case _              => true
+      }
+    ) ""
+    else ".lazily"
   }
 
   def memberHints(hints: List[Hint]): Line = {

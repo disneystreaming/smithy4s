@@ -124,6 +124,32 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     assert(
       os.read(metadata).contains("metadata smithy4sWildcardArgument = \"?\"")
     )
+    assert(
+      os.read(metadata)
+        .contains("metadata smithy4sRenderDynamicHintBindings = false")
+    )
+  }
+
+  test("codegen with dynamic hints") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "3.3.0"
+      override def ivyDeps = Agg(coreDep)
+      override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
+      override def millSourcePath = resourcePath / "service"
+      override def smithy4sRenderDynamicHintBindings = true
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName("codegen-wildcards-compiles"))
+
+    compileWorks(foo, ev)
+
+    val metadata =
+      ev.outPath / "smithy4sGeneratedSmithyMetadataFile.dest" / "smithy" / "generated-metadata.smithy"
+    checkFileExist(metadata, shouldExist = true)
+    assert(
+      os.read(metadata)
+        .contains("metadata smithy4sRenderDynamicHintBindings = true")
+    )
   }
 
   test("codegen with dependencies") {

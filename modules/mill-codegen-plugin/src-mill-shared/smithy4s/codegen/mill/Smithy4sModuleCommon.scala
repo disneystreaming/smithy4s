@@ -141,6 +141,8 @@ trait Smithy4sModuleCommon extends ScalaModule {
       smithy4sResolvedAllExternalDependencies()
   }
 
+  def smithy4sRenderDynamicHintBindings: T[Boolean] = false
+
   def smithy4sWildcardArgument: T[String] = T {
     // This logic configures the default wildcard argument based on the scala version and scalac options
     // In the following scenarios we use "?" instead of "_"
@@ -166,11 +168,13 @@ trait Smithy4sModuleCommon extends ScalaModule {
   def smithy4sGeneratedSmithyFiles: Sources = T.sources {
     val file = smithy4sGeneratedSmithyMetadataFile().path
     val wildcardArg = smithy4sWildcardArgument()
+    val dynamicHints = smithy4sRenderDynamicHintBindings()
     os.remove(file)
     os.write(
       file,
       s"""$$version: "2"
          |metadata smithy4sWildcardArgument = "$wildcardArg"
+         |metadata smithy4sRenderDynamicHintBindings = $dynamicHints
          |""".stripMargin,
       createFolders = true
     )

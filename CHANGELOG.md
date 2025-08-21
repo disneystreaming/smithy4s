@@ -5,6 +5,14 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.43
+
+* Add support for dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
+
+# 0.18.42
+
+* Fix for hints in union->unit case in [#1808](https://github.com/disneystreaming/smithy4s/pull/1808)
+
 # 0.18.41
 
 * codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)

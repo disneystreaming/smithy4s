@@ -141,6 +141,43 @@ class Smithy4sModuleSpec extends munit.FunSuite {
           .contains("metadata smithy4sWildcardArgument = \"?\""),
         clue = "Expected metadata to contain wildcard assignment"
       )
+      assert(
+        os.read(metadata)
+          .contains("metadata smithy4sRenderDynamicHintBindings = false"),
+        clue =
+          "dynamic hints are not enabled by default, should be set to false"
+      )
+    }
+  }
+
+  test("codegen with dynamic hints") {
+    object foo extends TestBaseModule with Smithy4sModule {
+      override def scalaVersion = "3.3.0"
+      override def ivyDeps = Agg(coreDep)
+      override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
+      override def smithy4sRenderDynamicHintBindings = true
+    }
+
+    val resourceFolder = resourcePath / "service"
+    UnitTester(foo, resourceFolder).scoped { eval =>
+      val compileResult = eval(foo.compile)
+      assertEquals(
+        compileResult.isRight,
+        true,
+        s"Compilation failed: ${compileResult.swap.getOrElse("unknown error")}"
+      )
+
+      val metadataFile =
+        eval(foo.smithy4sGeneratedSmithyMetadataFile).toOption.get.value.path
+
+      checkFileExist(metadataFile, shouldExist = true)
+
+      assert(
+        os.read(metadata)
+          .contains("metadata smithy4sRenderDynamicHintBindings = true"),
+        clue =
+          "dynamic hints are enabled in this test case, should be set to true"
+      )
     }
   }
 
