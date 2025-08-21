@@ -282,23 +282,22 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                 ) =>
               val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
                 cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
-              ) {
-                case (changed, prevResult) =>
-                  if (changed || prevResult.isEmpty) {
-                    val file =
-                      (config / smithy4sGeneratedSmithyMetadataFile).value
-                    IO.write(
-                      file,
-                      s"""$$version: "2"
-                         |metadata smithy4sWildcardArgument = "$wildcardArg"
-                         |metadata smithy4sRenderOptics = $shouldGenerateOptics
-                         |metadata smithy4sRenderDynamicHintBindings = $shouldRenderDynamicHints
-                         |""".stripMargin
-                    )
-                    Seq(file)
-                  } else {
-                    prevResult.get
-                  }
+              ) { case (changed, prevResult) =>
+                if (changed || prevResult.isEmpty) {
+                  val file =
+                    (config / smithy4sGeneratedSmithyMetadataFile).value
+                  IO.write(
+                    file,
+                    s"""$$version: "2"
+                       |metadata smithy4sWildcardArgument = "$wildcardArg"
+                       |metadata smithy4sRenderOptics = $shouldGenerateOptics
+                       |metadata smithy4sRenderDynamicHintBindings = $shouldRenderDynamicHints
+                       |""".stripMargin
+                  )
+                  Seq(file)
+                } else {
+                  prevResult.get
+                }
               }
               lastOutput(changed)
           }
