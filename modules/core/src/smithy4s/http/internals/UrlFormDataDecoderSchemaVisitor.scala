@@ -49,7 +49,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     }
   }
 
-  @annotation.nowarn("msg=Unused import")
+  @annotation.nowarn
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,

@@ -20,8 +20,6 @@ package internals
 
 import alloy.UrlFormFlattened
 import alloy.UrlFormName
-import smithy4s.Blob
-import smithy4s.Hints
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._

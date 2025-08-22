@@ -17,7 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.Newtype
 import smithy4s.schema._
 
 object HttpMediaType extends Newtype[String] {

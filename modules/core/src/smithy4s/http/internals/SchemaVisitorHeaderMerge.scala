@@ -17,10 +17,6 @@
 package smithy4s
 package http.internals
 
-import smithy4s.Bijection
-import smithy4s.Hints
-import smithy4s.Refinement
-import smithy4s.ShapeId
 import smithy4s.schema.Primitive.PString
 import smithy4s.schema._
 

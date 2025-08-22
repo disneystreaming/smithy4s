@@ -16,17 +16,17 @@
 
 package smithy4s.example.guides
 
-import smithy4s.example.guides.auth._
 import cats.effect._
 import cats.implicits._
-import org.http4s.implicits._
-import org.http4s.ember.server._
-import org.http4s._
 import com.comcast.ip4s._
-import smithy4s.http4s.SimpleRestJsonBuilder
-import smithy4s.Hints
+import org.http4s._
+import org.http4s.ember.server._
 import org.http4s.headers.Authorization
+import org.http4s.implicits._
+import smithy4s.Hints
+import smithy4s.example.guides.auth._
 import smithy4s.http4s.ServerEndpointMiddleware
+import smithy4s.http4s.SimpleRestJsonBuilder
 
 final case class ApiToken(value: String)
 
@@ -48,7 +48,6 @@ object AuthChecker extends AuthChecker {
 }
 
 object AuthExampleRoutes {
-  import org.http4s.server.middleware._
 
   private val helloRoutes: Resource[IO, HttpRoutes[IO]] =
     SimpleRestJsonBuilder

@@ -19,7 +19,6 @@ package http
 package internals
 
 import smithy4s.codecs.PayloadPath
-import smithy4s.http.UrlForm
 
 /**
   * This construct is an internal implementation-detail used for decoding

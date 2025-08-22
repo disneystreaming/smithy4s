@@ -21,7 +21,6 @@ import smithy4s.Blob
 import smithy4s.ShapeId
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases.IntOrString._
-import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.time._

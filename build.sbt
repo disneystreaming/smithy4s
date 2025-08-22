@@ -16,7 +16,6 @@ import BasicJsonProtocol._
 import Json.pathFormat
 
 ThisBuild / commands ++= createBuildCommands(allModules)
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.19.0"

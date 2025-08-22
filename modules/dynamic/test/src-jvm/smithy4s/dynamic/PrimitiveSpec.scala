@@ -17,8 +17,8 @@
 package smithy4s.dynamic
 
 import munit.Location
-import smithy4s.ShapeId
 import smithy4s.Schema.PrimitiveSchema
+import smithy4s.ShapeId
 import smithy4s.schema.Primitive
 import software.amazon.smithy.model.{Model => SModel}
 
