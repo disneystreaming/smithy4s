@@ -36,7 +36,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   }
   override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] =
     SchemaDescription.of(tag.name)
-  override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
+
+  override def map[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): SchemaDescription[C[K,V]] =
     SchemaDescription.of("Map")
 
   override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): SchemaDescription[E] =

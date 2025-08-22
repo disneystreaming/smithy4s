@@ -54,9 +54,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       counter.incrementAndGet()
     }
 
-    def map[K, V](
+    def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
     ): Unit = discard {

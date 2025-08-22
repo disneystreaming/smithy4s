@@ -23,6 +23,7 @@ import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
+import smithy4s.schema.MapTag
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -138,24 +139,25 @@ class SchemaVisitorMetadataWriter(
       case StructureMetaEncode(_) => EmptyMetaEncode
     }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): MetaEncode[Map[K, V]] = {
+  ): MetaEncode[C[K, V]] = {
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
-        StringMapMetaEncode(map =>
-          map.map { case (k, v) =>
-            (keyF(k), valueF(v))
-          }
+        StringMapMetaEncode[C[K, V]](map =>
+          tag.iterator(map).map { case (k, v) =>
+              (keyF(k), valueF(v))
+          }.toMap
         )
       case (StringValueMetaEncode(keyF), StringListMetaEncode(valueF)) =>
-        StringListMapMetaEncode(map =>
-          map.map { case (k, v) =>
-            (keyF(k), valueF(v))
-          }
+        StringListMapMetaEncode[C[K, V]](map =>
+          tag.iterator(map).map { case (k, v) =>
+              (keyF(k), valueF(v))
+          }.toMap
         )
       case _ => MetaEncode.empty
     }

@@ -100,12 +100,13 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
       }
   }
 
-  override def map[K, V](
+  override def map[C[_,_], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): UrlFormDataDecoder[Map[K, V]] = {
+  ): UrlFormDataDecoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -115,7 +116,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
         .addHints(UrlFormName("entry"))
     }
     compile(Schema.vector(kvSchema).addHints(hints))
-      .map(_.toMap)
+      .map(vector => tag.fromIterator(vector.iterator))
   }
 
   override def enumeration[E](

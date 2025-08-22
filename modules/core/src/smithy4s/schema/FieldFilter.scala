@@ -114,8 +114,8 @@ object FieldFilter {
           .map(predicateInner =>
             collectionA => collectionA.exists(predicateInner)
           )
-      case _: MapSchema[k, v] =>
-        Some(collectionA => collectionA.nonEmpty)
+      case c: MapSchema[c, k, v] =>
+        Some((collectionA: c[k, v]) => !c.tag.isEmpty(collectionA))
       case LazySchema(suspend) =>
         // it is safe to call .value here because we don't recurse into structs/unions schemas,
         // so we never see the same schema twice in this visitor.

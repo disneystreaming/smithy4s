@@ -282,18 +282,19 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] | _: Schema.OptionSchema[_] =>
+          _: Schema.MapSchema[_, _, _] | _: Schema.OptionSchema[_] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Opts[Map[K, V]] = jsonField(
-    Schema.MapSchema(shapeId, hints, key, value)
+  ): Opts[C[K, V]] = jsonField(
+    Schema.MapSchema(shapeId, hints, tag, key, value)
   )
 
   def enumeration[E](

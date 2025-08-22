@@ -42,7 +42,7 @@ sealed trait Schema[A]{
   final def withId(newId: ShapeId): Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: CollectionSchema[c, a] => CollectionSchema(newId, s.hints, s.tag, s.member).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(newId, s.hints, s.key, s.value).asInstanceOf[Schema[A]]
+    case s: MapSchema[c, k, v] => MapSchema(newId, s.hints, s.tag, s.key, s.value).asInstanceOf[Schema[A]]
     case EnumerationSchema(_, hints, values, tag) => EnumerationSchema(newId, hints, values, tag)
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
@@ -57,7 +57,7 @@ sealed trait Schema[A]{
   final def transformHintsLocally(f: Hints => Hints): Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema(s.shapeId, f(s.hints), s.tag, s.member).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key, s.value).asInstanceOf[Schema[A]]
+    case s: MapSchema[c, k, v] => MapSchema(s.shapeId, f(s.hints), s.tag, s.key, s.value).asInstanceOf[Schema[A]]
     case EnumerationSchema(shapeId, hints, values, tag) => EnumerationSchema(shapeId, f(hints), values, tag)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
@@ -166,7 +166,7 @@ object Schema {
 
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
   final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
-  final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
+  final case class MapSchema[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]) extends Schema[C[K, V]]
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
@@ -222,7 +222,7 @@ object Schema {
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>
         underlying(c.copy(member = this(c.member)))
-      case m @ MapSchema(_, _, _, _) =>
+      case m: MapSchema[c, k, v] =>
         underlying(m.copy(key = this(m.key), value = this(m.value)))
       case s @ StructSchema(_, _, _, _) =>
         underlying(s.copy(fields = s.fields.map(handleField(_))))
@@ -281,8 +281,8 @@ object Schema {
   def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(option(a))
   def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(option(a))
 
-  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
-  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, k, option(v))
+  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.MapTag, k, v)
+  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.MapTag, k, option(v))
 
   def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
 

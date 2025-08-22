@@ -105,15 +105,20 @@ final class SchemaVisitorShow(
   ): Show[B] =
     self(schema).contramap(refinement.from)
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Show[Map[K, V]] = {
+  ): Show[C[K, V]] = {
     implicit val showKey: Show[K] = self(key)
     implicit val showValue: Show[V] = self(value)
-    Show[Map[K, V]]
+    Show.show[C[K, V]] { c =>
+      tag.iterator(c).map { case ((k, v)) => 
+        showKey.show(k) + "->" + showValue.show(v)
+      }.mkString(s"${tag.name}(", ",", ")")
+    }
   }
 
   override def enumeration[E](

@@ -122,20 +122,21 @@ private[http] class SchemaVisitorMetadataReader(
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): MetaDecode[Map[K, V]] = {
+  ): MetaDecode[C[K, V]] = {
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
-        StringMapMetaDecode[Map[K, V]](map =>
-          map.map { case (k, v) => (readK(k), readV(v)) }.toMap
+        StringMapMetaDecode[C[K, V]](it =>
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v))})
         )
       case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
-        StringListMapMetaDecode[Map[K, V]](map =>
-          map.map { case (k, v) => (readK(k), readV(v)) }.toMap
+        StringListMapMetaDecode[C[K, V]](it =>
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v))})
         )
       case _ => EmptyMetaDecode
     }

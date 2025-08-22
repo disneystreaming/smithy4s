@@ -83,12 +83,13 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
     }
   }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): XmlDecoder[Map[K, V]] = {
+  ): XmlDecoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -96,7 +97,7 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
       Schema.struct(kField, vField)((_, _))
     }
     compile(Schema.vector(kvSchema.addHints(XmlName("entry"))).addHints(hints))
-      .map(_.toMap)
+      .map((v: Vector[(K, V)]) => tag.fromIterator(v.iterator))
   }
 
   def enumeration[E](

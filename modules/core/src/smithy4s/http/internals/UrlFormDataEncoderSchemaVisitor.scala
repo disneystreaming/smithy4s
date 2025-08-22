@@ -88,12 +88,13 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
       }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): UrlFormDataEncoder[Map[K, V]] = {
+  ): UrlFormDataEncoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -106,7 +107,8 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val collectionEncoder = compile(schema)
-    map => collectionEncoder.encode(map.toVector)
+    map => 
+      collectionEncoder.encode(tag.iterator(map).toVector)
   }
 
   override def enumeration[E](

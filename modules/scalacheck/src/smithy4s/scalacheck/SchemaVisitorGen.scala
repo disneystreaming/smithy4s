@@ -75,18 +75,19 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
       .flatMap(l => Gen.listOfN(l, member.compile(this)))
       .map(l => tag.fromIterator(l.iterator))
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Gen[Map[K, V]] =
+  ): Gen[C[K, V]] =
     length(hints).flatMap(l =>
-      Gen.mapOfN(
+      Gen.listOfN(
         l,
         key.compile(this).flatMap(k => value.compile(this).map(k -> _))
       )
-    )
+  ).map(l => tag.fromIterator(l.iterator))
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,

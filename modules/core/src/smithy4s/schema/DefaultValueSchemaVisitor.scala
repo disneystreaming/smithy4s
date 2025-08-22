@@ -57,12 +57,13 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       member: Schema[A]
   ): Option[C[A]] = Some(tag.empty)
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Option[Map[K, V]] = Some(Map.empty)
+  ): Option[C[K, V]] = Some(tag.empty)
 
   def enumeration[E](
       shapeId: ShapeId,

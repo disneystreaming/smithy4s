@@ -153,9 +153,10 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
         .captureHints(hints.targetHints)
     }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ScalaShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
   ): ShapeRecorder[ShapeId] =

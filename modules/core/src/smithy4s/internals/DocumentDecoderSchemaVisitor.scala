@@ -36,7 +36,6 @@ import smithy4s.time._
 import java.util.Base64
 import java.util.UUID
 import java.{util => ju}
-import scala.collection.immutable.ListMap
 import scala.collection.mutable.ListBuffer
 
 trait DocumentDecoder[A] { self =>
@@ -239,19 +238,19 @@ class DocumentDecoderSchemaVisitor(
       else Some(decoder(history, document))
     }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): DocumentDecoder[Map[K, V]] = {
+  ): DocumentDecoder[C[K, V]] = {
     val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
     val valueDecoder = self(value)
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          val builder = ListMap.newBuilder[K, V]
-          map.foreach { case (key, value) =>
+          tag.fromIterator(map.iterator.map { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
                 val path = PayloadPath.Segment.parse(key) :: pp
@@ -264,32 +263,27 @@ class DocumentDecoderSchemaVisitor(
               identity
             )
             val decodedValue = valueDecoder(key :: pp, value)
-            builder.+=((decodedKey, decodedValue))
-          }
-          builder.result()
+            (decodedKey, decodedValue)
+          })
         }
       case None =>
         val keyDecoder = apply(key)
         DocumentDecoder.instance("Map", "Array") { case (pp, DArray(value)) =>
-          val builder = Map.newBuilder[K, V]
-          var i = 0
-          val newPP = PayloadPath.Segment(i) :: pp
-          value.foreach {
-            case KeyValueObj(k, v) =>
+          tag.fromIterator(value.iterator.zipWithIndex.map {
+            case (KeyValueObj(k, v), i) =>
+              val updatedPP = PayloadPath.Segment(i) :: pp
               val decodedKey =
-                keyDecoder(PayloadPath.Segment("key") :: newPP, k)
+                keyDecoder(PayloadPath.Segment("key") :: updatedPP, k)
               val decodedValue =
-                valueDecoder(PayloadPath.Segment("value") :: newPP, v)
-              builder.+=((decodedKey, decodedValue))
-              i += 1
-            case _ =>
+                valueDecoder(PayloadPath.Segment("value") :: updatedPP, v)
+              (decodedKey, decodedValue)
+            case (_, i) =>
               throw new PayloadError(
                 PayloadPath((PayloadPath.Segment(i) :: pp).reverse),
                 "Key Value object",
                 """Expected a Json object containing two values indexed with "key" and "value". """
               )
-          }
-          builder.result()
+          })
         }
     }
   }

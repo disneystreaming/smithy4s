@@ -165,12 +165,13 @@ class DynamicStabilitySpec extends FunSuite {
         member: Schema[A]
     ): ConstUnit[C[A]] = { self(member) }
 
-    def map[K, V](
+    def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
-    ): ConstUnit[Map[K, V]] = {
+    ): ConstUnit[C[K, V]] = {
       self(key)
       self(value)
     }

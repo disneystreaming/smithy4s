@@ -243,16 +243,17 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
   }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): TaggedCodec[Map[K, V]] = {
+  ): TaggedCodec[C[K, V]] = {
     val underlying = this(
       Schema
         .vector(Schema.tuple(key.addHints(ProtoIndex(1)), value.addHints(ProtoIndex(2))))
-        .biject(_.toMap)(_.toVector)
+        .biject((v: Vector[(K, V)]) => tag.fromIterator(v.iterator))(tag.iterator(_).toVector)
     )
     if (hints.has(ProtoWrapped)) underlying.wrap else underlying
   }

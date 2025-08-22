@@ -863,56 +863,56 @@ private[smithy4s] class SchemaVisitorJCodec(
       )
   }
 
-  private def objectMap[K, V](
+  private def objectMap[C[_, _], K, V](
+      tag: MapTag[C],
       jk: JCodec[K],
       jv: JCodec[V]
-  ): JCodec[Map[K, V]] = new JCodec[Map[K, V]] {
+  ): JCodec[C[K, V]] = new JCodec[C[K, V]] {
     val expecting: String = "map"
 
     override def canBeKey: Boolean = false
 
-    def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
+    def decodeValue(cursor: Cursor, in: JsonReader): C[K, V] =
       if (in.isNextToken('{')) {
-        if (in.isNextToken('}')) Map.empty
+        if (in.isNextToken('}')) tag.empty
         else {
           in.rollbackToken()
-          val builder =
-            if (preserveMapOrder) ListMap.newBuilder[K, V]
-            else Map.newBuilder[K, V]
-          var i = 0
-          while ({
-            if (i >= maxArity) maxArityError(cursor)
-            builder += (
-              (
-                jk.decodeKey(in), {
-                  cursor.push(i)
-                  val result = cursor.decode(jv, in)
-                  cursor.pop()
-                  result
-                }
+          val result = tag.build[K, V](preserveMapOrder) { put =>
+            var i = 0
+            while ({
+              if (i >= maxArity) maxArityError(cursor)
+              put(
+                (
+                  jk.decodeKey(in), {
+                    cursor.push(i)
+                    val result = cursor.decode(jv, in)
+                    cursor.pop()
+                    result
+                  }
+                )
               )
-            )
-            i += 1
-            in.isNextToken(',')
-          }) ()
-          if (in.isCurrentToken('}')) builder.result()
+              i += 1
+              in.isNextToken(',')
+            }) ()
+          }
+          if (in.isCurrentToken('}')) result
           else in.objectEndOrCommaError()
         }
       } else in.decodeError("Expected JSON object")
 
-    def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
+    def encodeValue(xs: C[K, V], out: JsonWriter): Unit = {
       out.writeObjectStart()
-      xs.foreach { kv =>
+      tag.iterator(xs).foreach { kv =>
         jk.encodeKey(kv._1, out)
         jv.encodeValue(kv._2, out)
       }
       out.writeObjectEnd()
     }
 
-    def decodeKey(in: JsonReader): Map[K, V] =
+    def decodeKey(in: JsonReader): C[K, V] =
       in.decodeError("Cannot use maps as keys")
 
-    def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
+    def encodeKey(xs: C[K, V], out: JsonWriter): Unit =
       out.encodeError("Cannot use maps as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
@@ -922,68 +922,71 @@ private[smithy4s] class SchemaVisitorJCodec(
       )
   }
 
-  private def arrayMap[K, V](
+  private def arrayMap[C[_, _], K, V](
+      tag: MapTag[C],
       k: Schema[K],
       v: Schema[V]
-  ): JCodec[Map[K, V]] = {
+  ): JCodec[C[K, V]] = {
     val kField = Field.required[(K, V), K]("key", k, _._1)
     val vField = Field.required[(K, V), V]("value", v, _._2)
     val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
       (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )
-    listImpl(kvCodec).biject(_.toMap, _.toList)
+    listImpl(kvCodec).biject(l => tag.fromIterator(l.iterator), tag.iterator(_).toList)
   }
 
-  private def flexibleNullParsingMap[K, V](
+  private def flexibleNullParsingMap[C[_, _], K, V](
+      tag: MapTag[C],
       jk: JCodec[K],
       jv: JCodec[V]
-  ): JCodec[Map[K, V]] =
-    new JCodec[Map[K, V]] {
-      val expecting: String = "map"
+  ): JCodec[C[K, V]] =
+    new JCodec[C[K, V]] {
+      val expecting: String = tag.name
 
       override def canBeKey: Boolean = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
+      def decodeValue(cursor: Cursor, in: JsonReader): C[K, V] =
         if (in.isNextToken('{')) {
-          if (in.isNextToken('}')) Map.empty
+          if (in.isNextToken('}')) tag.empty
           else {
             in.rollbackToken()
-            val builder = Map.newBuilder[K, V]
-            var i = 0
-            while ({
-              if (i >= maxArity) maxArityError(cursor)
-              val key = jk.decodeKey(in)
-              cursor.push(i)
-              if (in.isNextToken('n')) {
-                in.readNullOrError[Unit]((), "Expected null")
-              } else {
-                in.rollbackToken()
-                val value = cursor.decode(jv, in)
-                builder += (key -> value)
-              }
-              cursor.pop()
+            val result = tag.build[K, V](preserveMapOrder) { put =>
+              var i = 0
+              while ({
+                if (i >= maxArity) maxArityError(cursor)
+                val key = jk.decodeKey(in)
+                cursor.push(i)
+                if (in.isNextToken('n')) {
+                  in.readNullOrError[Unit]((), "Expected null")
+                } else {
+                  in.rollbackToken()
+                  val value = cursor.decode(jv, in)
+                  put(key -> value)
+                }
+                cursor.pop()
 
-              i += 1
-              in.isNextToken(',')
-            }) ()
-            if (in.isCurrentToken('}')) builder.result()
+                i += 1
+                in.isNextToken(',')
+              }) ()
+            }
+            if (in.isCurrentToken('}')) result
             else in.objectEndOrCommaError()
           }
         } else in.decodeError("Expected JSON object")
 
-      def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
+      def encodeValue(xs: C[K, V], out: JsonWriter): Unit = {
         out.writeObjectStart()
-        xs.foreach { kv =>
+        tag.iterator(xs).foreach { kv =>
           jk.encodeKey(kv._1, out)
           jv.encodeValue(kv._2, out)
         }
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Map[K, V] =
+      def decodeKey(in: JsonReader): C[K, V] =
         in.decodeError("Cannot use maps as keys")
 
-      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
+      def encodeKey(xs: C[K, V], out: JsonWriter): Unit =
         out.encodeError("Cannot use maps as keys")
 
       private def maxArityError(cursor: Cursor): Nothing =
@@ -1007,19 +1010,20 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): JCodec[Map[K, V]] = {
+  ): JCodec[C[K, V]] = {
     val jk = apply(key)
     val jv = apply(value)
     if (jk.canBeKey) {
       if (flexibleCollectionsSupport && !value.isOption)
-        flexibleNullParsingMap(jk, jv)
-      else objectMap(jk, jv)
-    } else arrayMap(key, value)
+        flexibleNullParsingMap(tag, jk, jv)
+      else objectMap(tag, jk, jv)
+    } else arrayMap(tag, key, value)
   }
 
   override def biject[A, B](

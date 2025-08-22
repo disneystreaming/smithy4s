@@ -67,15 +67,19 @@ final class SchemaVisitorHash(
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Hash[Map[K, V]] = {
+  ): Hash[C[K, V]] = {
     implicit val keyHash: Hash[K] = self(key)
     implicit val valueHash: Hash[V] = self(value)
-    Hash[Map[K, V]]
+    tag match {
+      case MapTag.MapTag => Hash[Map[K, V]]
+      case _ => ???
+    }
   }
 
   override def enumeration[E](
