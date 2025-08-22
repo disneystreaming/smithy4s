@@ -142,7 +142,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
         clue = "Expected metadata to contain wildcard assignment"
       )
       assert(
-        os.read(metadata)
+        os.read(metadataFile)
           .contains("metadata smithy4sRenderDynamicHintBindings = false"),
         clue =
           "dynamic hints are not enabled by default, should be set to false"
@@ -173,7 +173,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       checkFileExist(metadataFile, shouldExist = true)
 
       assert(
-        os.read(metadata)
+        os.read(metadataFile)
           .contains("metadata smithy4sRenderDynamicHintBindings = true"),
         clue =
           "dynamic hints are enabled in this test case, should be set to true"
