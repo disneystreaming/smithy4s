@@ -253,16 +253,16 @@ class DocumentDecoderSchemaVisitor(
           tag.build[K, V](preserveOrder = true) { put =>
             map.foreach { case (key, value) =>
               val decodedKey = keyDecoder(DString(key)).fold(
-              { case DocumentKeyDecoder.DecodeError(expectedType) =>
-                val path = PayloadPath.Segment.parse(key) :: pp
-                throw PayloadError(
-                  PayloadPath(path.reverse),
-                  expectedType,
-                  "Wrong Json shape"
-                )
-              },
-              identity
-            )
+                { case DocumentKeyDecoder.DecodeError(expectedType) =>
+                  val path = PayloadPath.Segment.parse(key) :: pp
+                  throw PayloadError(
+                    PayloadPath(path.reverse),
+                    expectedType,
+                    "Wrong Json shape"
+                  )
+                },
+                identity
+              )
               val decodedValue = valueDecoder(key :: pp, value)
               put((decodedKey, decodedValue))
             }
