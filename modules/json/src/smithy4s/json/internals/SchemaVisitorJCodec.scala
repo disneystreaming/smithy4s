@@ -932,7 +932,10 @@ private[smithy4s] class SchemaVisitorJCodec(
     val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
       (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )
-    listImpl(kvCodec).biject(l => tag.fromIterator(l.iterator), tag.iterator(_).toList)
+    listImpl(kvCodec).biject(
+      l => tag.fromIterator(l.iterator),
+      tag.iterator(_).toList
+    )
   }
 
   private def flexibleNullParsingMap[C[_, _], K, V](

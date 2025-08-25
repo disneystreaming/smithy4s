@@ -20,10 +20,10 @@ package tests
 import cats.Id
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
-import smithy4s.schema.MapTag
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.MapTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema

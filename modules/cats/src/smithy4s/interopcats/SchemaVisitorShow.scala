@@ -115,9 +115,12 @@ final class SchemaVisitorShow(
     implicit val showKey: Show[K] = self(key)
     implicit val showValue: Show[V] = self(value)
     Show.show[C[K, V]] { c =>
-      tag.iterator(c).map { case ((k, v)) => 
-        showKey.show(k) + "->" + showValue.show(v)
-      }.mkString(s"${tag.name}(", ",", ")")
+      tag
+        .iterator(c)
+        .map { case ((k, v)) =>
+          showKey.show(k) + " -> " + showValue.show(v)
+        }
+        .mkString(s"${tag.name}(", ", ", ")")
     }
   }
 

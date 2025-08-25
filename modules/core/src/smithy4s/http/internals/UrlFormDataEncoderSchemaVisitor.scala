@@ -106,8 +106,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val collectionEncoder = compile(schema)
-    map => 
-      collectionEncoder.encode(tag.iterator(map).toVector)
+    map => collectionEncoder.encode(tag.iterator(map).toVector)
   }
 
   override def enumeration[E](

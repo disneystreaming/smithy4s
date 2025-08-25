@@ -132,11 +132,11 @@ private[http] class SchemaVisitorMetadataReader(
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[C[K, V]](it =>
-          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v))})
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v)) })
         )
       case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
         StringListMapMetaDecode[C[K, V]](it =>
-          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v))})
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v)) })
         )
       case _ => EmptyMetaDecode
     }

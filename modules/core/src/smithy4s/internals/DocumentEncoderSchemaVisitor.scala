@@ -165,23 +165,26 @@ class DocumentEncoderSchemaVisitor(
     maybeKeyEncoder match {
       case Some(keyEncoder) =>
         from[C[K, V]] { c =>
-          val map = tag.iterator(c).map { case (k, v) =>
+          val map = tag.toScalaMap(c).map { case (k, v) =>
             (keyEncoder.apply(k), valueEncoder.apply(v))
-          }.toMap
+          }
           DObject(map)
         }
       case None =>
         from[C[K, V]] { c =>
           val keyAsValueEncoder = apply(key)
 
-          val array = tag.iterator(c).map { case (k, v) =>
+          val array = tag
+            .iterator(c)
+            .map { case (k, v) =>
               DObject(
                 Map(
                   "key" -> keyAsValueEncoder.apply(k),
                   "value" -> valueEncoder.apply(v)
                 )
               )
-            }.toIndexedSeq
+            }
+            .toIndexedSeq
           DArray(array)
         }
     }

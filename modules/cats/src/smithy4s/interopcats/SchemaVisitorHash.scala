@@ -76,10 +76,8 @@ final class SchemaVisitorHash(
   ): Hash[C[K, V]] = {
     implicit val keyHash: Hash[K] = self(key)
     implicit val valueHash: Hash[V] = self(value)
-    tag match {
-      case MapTag.MapTag => Hash[Map[K, V]]
-      case _ => ???
-    }
+
+    Hash[Map[K, V]].contramap(c => tag.toScalaMap((c)))
   }
 
   override def enumeration[E](

@@ -22,12 +22,12 @@ import smithy.api.HttpQueryParams
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
-import smithy4s.schema.MapTag
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
 import smithy4s.schema.FieldFilter
+import smithy4s.schema.MapTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
 
@@ -148,15 +148,15 @@ class SchemaVisitorMetadataWriter(
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
         StringMapMetaEncode[C[K, V]](map =>
-          tag.iterator(map).map { case (k, v) =>
-              (keyF(k), valueF(v))
-          }.toMap
+          tag.toScalaMap(map).map { case (k, v) =>
+            (keyF(k), valueF(v))
+          }
         )
       case (StringValueMetaEncode(keyF), StringListMetaEncode(valueF)) =>
         StringListMapMetaEncode[C[K, V]](map =>
-          tag.iterator(map).map { case (k, v) =>
-              (keyF(k), valueF(v))
-          }.toMap
+          tag.toScalaMap(map).map { case (k, v) =>
+            (keyF(k), valueF(v))
+          }
         )
       case _ => MetaEncode.empty
     }

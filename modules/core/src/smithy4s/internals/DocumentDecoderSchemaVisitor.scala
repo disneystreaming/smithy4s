@@ -250,7 +250,7 @@ class DocumentDecoderSchemaVisitor(
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          tag.fromIterator(map.iterator.map { case (key, value) =>
+          tag.fromScalaMap(map.map { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
                 val path = PayloadPath.Segment.parse(key) :: pp

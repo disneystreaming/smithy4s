@@ -204,7 +204,9 @@ class HintsTransformationSpec() extends FunSuite {
       val ck = compile(key)
       val cv = compile(value)
       mkv => {
-        count(hints) + tag.iterator(mkv).toList.foldMap { case (k, v) => ck(k) + cv(v) }
+        count(hints) + tag.iterator(mkv).toList.foldMap { case (k, v) =>
+          ck(k) + cv(v)
+        }
       }
     }
 

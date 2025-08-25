@@ -100,7 +100,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
       }
   }
 
-  override def map[C[_,_], K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
       tag: MapTag[C],

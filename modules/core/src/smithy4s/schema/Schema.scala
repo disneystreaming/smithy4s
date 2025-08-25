@@ -281,8 +281,8 @@ object Schema {
   def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(option(a))
   def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(option(a))
 
-  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.MapTag, k, v)
-  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.MapTag, k, option(v))
+  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, v)
+  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, option(v))
 
   def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
 
