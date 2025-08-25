@@ -64,6 +64,8 @@ final class SchemaVisitorHash(
       case CollectionTag.VectorTag => Hash[Vector[A]]
       case CollectionTag.IndexedSeqTag =>
         Hash[scala.collection.immutable.Seq[A]].contramap(_.toIndexedSeq)
+      case _ =>
+        Hash[scala.collection.immutable.Seq[A]].contramap(x => tag.iterator(x).toList)
     }
   }
 

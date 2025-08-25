@@ -75,6 +75,20 @@ object CollectionTag {
     override def isEmpty[A](c: Vector[A]): Boolean = c.isEmpty
   }
 
+  // Just creating this so I can get errors on all non exhaustive matches
+  case object OpenTag extends CollectionTag[Set] {
+    override def name: String = "Set"
+    override def iterator[A](c: Set[A]): Iterator[A] = c.iterator
+
+    override def build[A](put: (A => Unit) => Unit): Set[A] = {
+      val builder = Set.newBuilder[A]
+      put(builder.+=(_))
+      builder.result()
+    }
+
+    override def isEmpty[A](c: Set[A]): Boolean = c.isEmpty
+  }
+
   case object IndexedSeqTag extends CollectionTag[IndexedSeq] {
 
     override def name: String = "IndexedSeq"
@@ -142,6 +156,7 @@ object CollectionTag {
       case SetTag => Some(implicitly[ClassTag[Set[A]]])
       case VectorTag => Some(implicitly[ClassTag[Vector[A]]])
       case IndexedSeqTag => Some(implicitly[ClassTag[IndexedSeq[A]]])
+      case OpenTag => ???
     }
     def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): MaybeCT[Map[K,V]] = Some(implicitly[ClassTag[Map[K, V]]])
     def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): MaybeCT[E] = None
