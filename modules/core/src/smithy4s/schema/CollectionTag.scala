@@ -143,8 +143,11 @@ object CollectionTag {
       case VectorTag => Some(implicitly[ClassTag[Vector[A]]])
       case IndexedSeqTag => Some(implicitly[ClassTag[IndexedSeq[A]]])
     }
-    // TODO: figure out a way to get the ClassTag 
-    def map[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): MaybeCT[C[K,V]] = None
+    def map[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): MaybeCT[C[K,V]] = 
+      tag match {
+        case MapTag.ScalaMapTag => Some(implicitly[ClassTag[Map[K, V]]])
+        case _ => None
+      }
     def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): MaybeCT[E] = None
     def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
     def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: Alt.Dispatcher[U]): MaybeCT[U] = None
