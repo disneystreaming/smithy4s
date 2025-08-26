@@ -7,6 +7,11 @@ Thank you!
 
 # 0.19.0
 
+## Unseal CollectionTag
+
+Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections
+can be built efficiently.
+
 ## Documentation fix
 
 Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`

@@ -657,7 +657,10 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
-  private def collectionImpl[C[_], A](tag: CollectionTag[C], member: Schema[A]) = new JCodec[C[A]] {
+  private def collectionImpl[C[_], A](
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ) = new JCodec[C[A]] {
     private[this] val a: JCodec[A] = apply(member)
 
     def expecting: String = tag.name
@@ -904,7 +907,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[C[A]] = {
     tag match {
       case CollectionTag.IndexedSeqTag => indexedSeq(member)
-      case x => collectionImpl(x, member)
+      case x                           => collectionImpl(x, member)
     }
   }
 

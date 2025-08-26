@@ -53,7 +53,8 @@ final class SchemaVisitorShow(
   ): Show[C[A]] = {
     implicit val showSchemaA: Show[A] = self(member)
     Show.show[C[A]] { seq =>
-      tag.iterator(seq)
+      tag
+        .iterator(seq)
         .map(showSchemaA.show)
         .mkString(s"${tag.name}(", ", ", ")")
     }
