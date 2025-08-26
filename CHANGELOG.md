@@ -7,7 +7,7 @@ Thank you!
 
 # 0.18.43
 
-* Add support for dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
+* Add support for generating dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
 
 # 0.18.42
 

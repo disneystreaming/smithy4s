@@ -1740,7 +1740,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  // If all hints are any native bindings (static bindings)
+  // If there are any native hints (static bindings) to be generated,
   // we need to use the lazily suffix to prevent compile time
   // issues
   private def getLazySuffix(hints: List[Hint]): String = {

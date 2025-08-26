@@ -6,30 +6,26 @@ title: Hint Bindings
 
 ## Configuration
 
-If you wish to use dynamic hint bindings, there are configuration options in the SBT and Mill plugins, as well as directly in Smithy Metadata:
-
-### SBT
-
-```scala
-// defaults to false, setting to true will enable dynamic hint bindings
-Compile / smithy4sRenderDynamicHintBindings := true
-```
-
-### Mill
-
-```scala
-// defaults to false, setting to true will enable dynamic hint bindings
-override def smithy4sRenderDynamicHintBindings: T[Boolean] = true
-```
-
-### Smithy Metadata
+If you wish to render dynamic hint bindings, you can do so with a Smithy Trait called `smithy4s.meta#renderAsDynamicBinding`.
 
 ```smithy
 $version: "2"
 
-// defaults to false, setting to true will enable dynamic hint bindings
-metadata smithy4sRenderDynamicHintBindings = true
+namespace test
+
+use smithy4s.meta#renderAsDynamicBinding
+
+@trait()
+@renderAsDynamicBinding
+structure myTrait {}
+
+@myTrait()
+structure Test {}
 ```
+
+With the above example, any shape using `test#myTrait`, such as `test#Test`, will render the Hint for this trait as a dynamic binding rather than a static one. This does not change the rendering of `test#myTrait` itself.
+
+__Note, it is likely that you will want to use the [smithy apply syntax](https://smithy.io/2.0/spec/model.html#applying-traits-externally) to apply this trait rather than putting it directly on the trait. You may also want to use a smithy-level transformation to automatically apply the trait to trait definitions from certain namespaces.__
 
 ## Justification
 

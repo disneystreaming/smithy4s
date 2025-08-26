@@ -150,10 +150,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Generated smithy files"
       )
 
-    val smithy4sRenderDynamicHintBindings = taskKey[Boolean](
-      "Boolean value to indicate whether or not to render code with dynamic hint bindings"
-    )
-
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -264,7 +260,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
     },
     config / smithy4sRenderOptics := false,
-    config / smithy4sRenderDynamicHintBindings := false,
     config / smithy4sGeneratedSmithyMetadataFile := {
       (config / sourceManaged).value / "smithy" / "generated-metadata.smithy"
     },
@@ -291,7 +286,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                     s"""$$version: "2"
                        |metadata smithy4sWildcardArgument = "$wildcardArg"
                        |metadata smithy4sRenderOptics = $shouldGenerateOptics
-                       |metadata smithy4sRenderDynamicHintBindings = $shouldRenderDynamicHints
                        |""".stripMargin
                   )
                   Seq(file)
@@ -303,7 +297,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           }
       val wildcardArg = (config / smithy4sWildcardArgument).value
       val generateOptics = (config / smithy4sRenderOptics).value
-      val renderDynamic = (config / smithy4sRenderDynamicHintBindings).value
       cached((wildcardArg, generateOptics, renderDynamic))
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(

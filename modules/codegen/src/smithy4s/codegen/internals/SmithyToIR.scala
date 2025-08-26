@@ -123,15 +123,6 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
-  private val renderDynamicHintBindings =
-    model
-      .getMetadata()
-      .asScala
-      .get("smithy4sRenderDynamicHintBindings")
-      .flatMap(_.asBooleanNode().asScala)
-      .map(_.getValue)
-      .getOrElse(false)
-
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
     val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
@@ -1293,7 +1284,10 @@ private[codegen] class SmithyToIR(
   }
 
   private def unfoldTraitNonConstraint(tr: Trait): Hint = {
-    if (renderDynamicHintBindings) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
+    val renderDynamic = model
+      .expectShape(tr.toShapeId)
+      .hasTrait(classOf[smithy4s.meta.RenderAsDynamicBindingTrait])
+    if (renderDynamic) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
     else
       Hint.Native(
         tr.toShapeId,
