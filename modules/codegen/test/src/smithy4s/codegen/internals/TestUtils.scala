@@ -63,7 +63,6 @@ object TestUtils {
   def assertContainsSection(fileContent: String, startsWith: String)(
       expectedSection: String
   )(implicit loc: Location) = {
-    println(fileContent)
     val lines =
       fileContent.linesIterator.filter(_.trim.nonEmpty).zipWithIndex.toList
     val lineMatches = lines.filter { case (l, _) =>

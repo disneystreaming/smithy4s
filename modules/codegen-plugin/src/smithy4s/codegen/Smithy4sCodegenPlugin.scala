@@ -266,38 +266,32 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory =
         (config / streams).value.cacheStoreFactory.sub(scalaVersion.value)
-      val cached =
-        Tracked
-          .inputChanged[(String, Boolean, Boolean), Seq[File]](
-            cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
-          ) {
-            case (
-                  changed,
-                  (wildcardArg, shouldGenerateOptics, shouldRenderDynamicHints)
-                ) =>
-              val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
-                cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
-              ) { case (changed, prevResult) =>
-                if (changed || prevResult.isEmpty) {
-                  val file =
-                    (config / smithy4sGeneratedSmithyMetadataFile).value
-                  IO.write(
-                    file,
-                    s"""$$version: "2"
-                       |metadata smithy4sWildcardArgument = "$wildcardArg"
-                       |metadata smithy4sRenderOptics = $shouldGenerateOptics
-                       |""".stripMargin
-                  )
-                  Seq(file)
-                } else {
-                  prevResult.get
-                }
-              }
-              lastOutput(changed)
+      val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
+        cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
+      ) { case (changed, (wildcardArg, shouldGenerateOptics)) =>
+        val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
+          cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
+        ) { case (changed, prevResult) =>
+          if (changed || prevResult.isEmpty) {
+            val file =
+              (config / smithy4sGeneratedSmithyMetadataFile).value
+            IO.write(
+              file,
+              s"""$$version: "2"
+                 |metadata smithy4sWildcardArgument = "$wildcardArg"
+                 |metadata smithy4sRenderOptics = $shouldGenerateOptics
+                 |""".stripMargin
+            )
+            Seq(file)
+          } else {
+            prevResult.get
           }
+        }
+        lastOutput(changed)
+      }
       val wildcardArg = (config / smithy4sWildcardArgument).value
       val generateOptics = (config / smithy4sRenderOptics).value
-      cached((wildcardArg, generateOptics, renderDynamic))
+      cached((wildcardArg, generateOptics))
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
