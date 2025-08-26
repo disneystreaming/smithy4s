@@ -150,10 +150,11 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
-  override def option[A](
+  override def option[C[_], A](
+      tag: OptionalTag[C],
       schema: Schema[A]
-  ): SchemaDescriptionDetailedImpl[Option[A]] =
-    apply(schema).mapResult { desc => s"Option[$desc]" }
+  ): SchemaDescriptionDetailedImpl[C[A]] =
+    apply(schema).mapResult { desc => s"${tag.name}[$desc]" }
 
   val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
     new (SchemaDescriptionDetailedImpl ~> SchemaDescription) {

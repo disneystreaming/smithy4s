@@ -30,6 +30,7 @@ import smithy4s.schema.Field
 import smithy4s.schema.Primitive
 import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.OptionalTag
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -85,16 +86,17 @@ class HttpResponseCodeSchemaVisitor()
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 
-  override def option[A](
+  override def option[C[_], A](
+      tag: OptionalTag[C],
       schema: Schema[A]
-  ): ResponseCodeExtractor[Option[A]] = {
+  ): ResponseCodeExtractor[C[A]] = {
     val aExt = apply(schema)
     aExt match {
       case NoResponseCode => NoResponseCode
       case RequiredResponseCode(f) =>
-        OptionalResponseCode((_: Option[A]).map(f))
+        OptionalResponseCode[C[A]](tag.toScalaOption(_).map(f))
       case OptionalResponseCode(f) =>
-        OptionalResponseCode((_: Option[A]).flatMap(f))
+        OptionalResponseCode[C[A]](tag.toScalaOption(_).flatMap(f))
     }
   }
 

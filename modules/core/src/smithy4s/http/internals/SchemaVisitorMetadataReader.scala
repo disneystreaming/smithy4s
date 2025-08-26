@@ -260,6 +260,6 @@ private[http] class SchemaVisitorMetadataReader(
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode
 
-  override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
-    self(schema).map(Some(_))
+  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): MetaDecode[C[A]] =
+    self(schema).map(tag(_))
 }

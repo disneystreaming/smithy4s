@@ -128,7 +128,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
-  def option[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
+  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Gen[C[A]] = Gen.option(this(schema)).map(tag.fromScalaOption(_))
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS

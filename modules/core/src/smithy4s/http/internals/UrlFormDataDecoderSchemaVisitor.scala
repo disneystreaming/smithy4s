@@ -208,8 +208,8 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     underlying.decode(_)
   }
 
-  override def option[A](schema: Schema[A]): UrlFormDataDecoder[Option[A]] =
-    compile(schema).optional
+  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): UrlFormDataDecoder[C[A]] =
+    compile(schema).optional(tag)
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
