@@ -7,6 +7,10 @@ Thank you!
 
 # 0.19.0
 
+## Add support for `@alloy#preserveKeyOrder` trait
+
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `ListMap` instead of a `Map` so that key order is preserved.
+
 ## Documentation fix
 
 Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`
