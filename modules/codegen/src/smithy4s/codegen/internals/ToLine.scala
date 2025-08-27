@@ -52,12 +52,10 @@ private[internals] object ToLine {
         val inner = typeToNameRef(member)
         val col = collectionType.tpe
         col.copy(typeParams = List(inner))
-      case Type.Map(key, _, value, _) =>
+      case Type.Map(mapType, key, _, value, _) =>
         val keyTpe = typeToNameRef(key)
         val valueTpe = typeToNameRef(value)
-        NameRef("scala.collection.immutable", "Map").copy(typeParams =
-          List(keyTpe, valueTpe)
-        )
+        mapType.tpe.copy(typeParams = List(keyTpe, valueTpe))
       case Type.Alias(
             ns,
             name,

@@ -250,7 +250,7 @@ class DocumentDecoderSchemaVisitor(
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          tag.build[K, V](preserveOrder = true) { put =>
+          tag.build[K, V] { put =>
             map.foreach { case (key, value) =>
               val decodedKey = keyDecoder(DString(key)).fold(
                 { case DocumentKeyDecoder.DecodeError(expectedType) =>

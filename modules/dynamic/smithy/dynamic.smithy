@@ -11,6 +11,7 @@ metadata suppressions = [
 namespace smithy4s.dynamic.model
 
 use alloy#discriminated
+use alloy#preserveKeyOrder
 
 /// This is a best-effort meta-representation of the smithy-model, that we should be able
 /// to deserialise from Json.
@@ -214,6 +215,7 @@ list MemberList {
     member: MemberShape
 }
 
+@preserveKeyOrder
 map MemberMap {
     key: String
     value: MemberShape

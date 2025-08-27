@@ -25,10 +25,6 @@ trait MapTag[C[_, _]] {
   def iterator[K, V](c: C[K, V]): Iterator[(K, V)]
   def toScalaMap[K, V](c: C[K, V]): Map[K, V] = iterator(c).toMap
   def build[K, V](put: (((K, V)) => Unit) => Unit): C[K, V]
-  def build[K, V](preserveOrder: Boolean)(
-      put: (((K, V)) => Unit) => Unit
-  ): C[K, V]
-
   def fromIterator[K, V](it: Iterator[(K, V)]): C[K, V] =
     build(put => it.foreach(put(_)))
   def fromScalaMap[K, V](map: Map[K, V]): C[K, V] =
@@ -51,15 +47,6 @@ object MapTag {
       builder.result()
     }
 
-    override def build[K, V](
-        preserveOrder: Boolean
-    )(put: (((K, V)) => Unit) => Unit): Map[K, V] = {
-      val builder =
-        if (preserveOrder) ListMap.newBuilder[K, V] else Map.newBuilder[K, V]
-      put(builder += (_))
-      builder.result()
-    }
-
     override def toScalaMap[K, V](c: Map[K, V]): Map[K, V] = c
 
     override def fromScalaMap[K, V](map: Map[K, V]): Map[K, V] = map
@@ -67,5 +54,23 @@ object MapTag {
     override def isEmpty[K, V](c: Map[K, V]): Boolean = c.isEmpty
 
     override def get[K, V](map: Map[K, V], key: K): Option[V] = map.get(key)
+  }
+
+  case object ListMapTag extends MapTag[ListMap] {
+    override def name: String = "ListMap"
+
+    override def iterator[K, V](c: ListMap[K, V]): Iterator[(K, V)] = c.iterator
+
+    override def build[K, V](put: (((K, V)) => Unit) => Unit): ListMap[K, V] = {
+      val builder = ListMap.newBuilder[K, V]
+      put(builder += (_))
+      builder.result()
+    }
+
+    override def toScalaMap[K, V](c: ListMap[K, V]): ListMap[K, V] = c
+
+    override def isEmpty[K, V](c: ListMap[K, V]): Boolean = c.isEmpty
+
+    override def get[K, V](map: ListMap[K, V], key: K): Option[V] = map.get(key)
   }
 }

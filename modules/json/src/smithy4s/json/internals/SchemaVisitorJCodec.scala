@@ -505,6 +505,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.writeNonEscapedAsciiKey(x.toString)
     }
 
+    // TODO: should preserveKeyOrder trait also be applicable to documents?
     def document(maxArity: Int): JCodec[Document] = new JCodec[Document] {
       import Document._
       override def canBeKey: Boolean = false
@@ -877,7 +878,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         if (in.isNextToken('}')) tag.empty
         else {
           in.rollbackToken()
-          val result = tag.build[K, V](preserveMapOrder) { put =>
+          val result = tag.build[K, V] { put =>
             var i = 0
             while ({
               if (i >= maxArity) maxArityError(cursor)
@@ -953,7 +954,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           if (in.isNextToken('}')) tag.empty
           else {
             in.rollbackToken()
-            val result = tag.build[K, V](preserveMapOrder) { put =>
+            val result = tag.build[K, V] { put =>
               var i = 0
               while ({
                 if (i >= maxArity) maxArityError(cursor)

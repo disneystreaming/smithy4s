@@ -147,3 +147,9 @@ union unionTraitWithUnitCase {
     u: {}
 )
 string HasUnionUnitCaseTrait
+
+@alloy#preserveKeyOrder
+map OrderedMap {
+    key: String
+    value: String
+}
