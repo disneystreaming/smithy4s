@@ -748,7 +748,8 @@ private[codegen] class SmithyToIR(
           if (x.hasTrait(classOf[SparseTrait])) Type.Nullable(tpe) else tpe
         }
         mapType =
-          if (x.hasTrait(classOf[alloy.PreserveKeyOrderTrait])) MapType.ListMap
+          if (x.hasTrait(classOf[alloy.PreserveKeyOrderTrait]))
+            MapType.LinkedHashMap
           else MapType.Map
       } yield Type.Map(
         mapType,

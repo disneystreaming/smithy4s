@@ -406,7 +406,7 @@ private[internals] object CollisionAvoidance {
     val indexedSeq = NameRef("scala.collection.immutable", "IndexedSeq")
     val set = NameRef("scala.collection.immutable", "Set")
     val map = NameRef("scala.collection.immutable", "Map")
-    val listMap = NameRef("scala.collection.immutable", "ListMap")
+    val linkedHashMap = NameRef("scala.collection.mutable", "LinkedHashMap")
     val vector = NameRef("scala", "Vector")
     val option = NameRef("scala", "Option")
     val none = NameRef("scala", "None")

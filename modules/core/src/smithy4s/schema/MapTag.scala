@@ -17,7 +17,7 @@
 package smithy4s
 package schema
 
-import scala.collection.immutable.ListMap
+import scala.collection.mutable.LinkedHashMap
 
 trait MapTag[C[_, _]] {
   def name: String
@@ -56,21 +56,27 @@ object MapTag {
     override def get[K, V](map: Map[K, V], key: K): Option[V] = map.get(key)
   }
 
-  case object ListMapTag extends MapTag[ListMap] {
-    override def name: String = "ListMap"
+  case object LinkedHashMapTag extends MapTag[LinkedHashMap] {
+    override def name: String = "LinkedHashMap"
 
-    override def iterator[K, V](c: ListMap[K, V]): Iterator[(K, V)] = c.iterator
+    override def iterator[K, V](c: LinkedHashMap[K, V]): Iterator[(K, V)] =
+      c.iterator
 
-    override def build[K, V](put: (((K, V)) => Unit) => Unit): ListMap[K, V] = {
-      val builder = ListMap.newBuilder[K, V]
+    override def build[K, V](
+        put: (((K, V)) => Unit) => Unit
+    ): LinkedHashMap[K, V] = {
+      val builder = LinkedHashMap.newBuilder[K, V]
       put(builder += (_))
       builder.result()
     }
 
-    override def toScalaMap[K, V](c: ListMap[K, V]): ListMap[K, V] = c
+    override def toScalaMap[K, V](c: LinkedHashMap[K, V]): Map[K, V] = {
+      c.toMap
+    }
 
-    override def isEmpty[K, V](c: ListMap[K, V]): Boolean = c.isEmpty
+    override def isEmpty[K, V](c: LinkedHashMap[K, V]): Boolean = c.isEmpty
 
-    override def get[K, V](map: ListMap[K, V], key: K): Option[V] = map.get(key)
+    override def get[K, V](map: LinkedHashMap[K, V], key: K): Option[V] =
+      map.get(key)
   }
 }
