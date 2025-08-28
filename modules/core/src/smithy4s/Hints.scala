@@ -267,7 +267,7 @@ object Hints {
         case _ => false
       }
 
-      lazy val toDynamicBinding: DynamicBinding =
+      private[smithy4s] lazy val toDynamicBinding: DynamicBinding =
         DynamicBinding(
           this.keyId,
           Document.Encoder

@@ -1712,11 +1712,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_(${renderStringLiteral(ns)}, ${renderStringLiteral(name)})"""
   }
 
-  private def getRenderedHints(hints: List[Hint]): List[Line] =
-    hints.collect { case nt: Hint.Native => nt }.sortBy(_.shapeId).map(renderHint) ++ hints
-      .collect { case nt: Hint.DynamicBinding => nt }
-      .sortBy(_.shapeId)
-      .map(renderHint)
+  private def getRenderedHints(hints: List[Hint]): List[Line] = {
+    // putting hints into an Either to keep track of dynamic vs native ones since they don't have a common super-type in order
+    // to otherwise access the `shapeId` member on each of them
+    val hintsToRender: List[Either[Hint.DynamicBinding, Hint.Native]] = hints.collect { case nt: Hint.Native =>
+      Right(nt)
+    } ++ hints
+      .collect { case nt: Hint.DynamicBinding => Left(nt) }
+    hintsToRender
+      .sortBy {
+        case Left(h)  => h.shapeId
+        case Right(h) => h.shapeId
+      }
+      .map {
+        case Left(h)  => renderHint(h)
+        case Right(h) => renderHint(h)
+      }
+  }
 
   def renderEnumTag(parentType: NameRef, tag: EnumTag): Line = {
     val tagStr = tag match {
@@ -1743,15 +1755,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   // If there are any native hints (static bindings) to be generated,
   // we need to use the lazily suffix to prevent compile time
   // issues
-  private def getLazySuffix(hints: List[Hint]): String = {
-    if (
-      hints.forall {
-        case _: Hint.Native => false
-        case _              => true
+  private def getLazySuffix(hints: List[Hint]): String =
+    hints
+      .collectFirst { case _: Hint.Native =>
+        ".lazily"
       }
-    ) ""
-    else ".lazily"
-  }
+      .getOrElse("")
 
   def memberHints(hints: List[Hint]): Line = {
     val h = getRenderedHints(hints)

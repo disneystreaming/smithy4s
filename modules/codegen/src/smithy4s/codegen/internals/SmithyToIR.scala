@@ -1283,6 +1283,8 @@ private[codegen] class SmithyToIR(
     )
   }
 
+  // We can only allow dynamic bindings for non-constraint traits, because
+  // constraints rely on types (static bindings) to find their refinement providers
   private def unfoldTraitNonConstraint(tr: Trait): Hint = {
     val renderDynamic = model
       .expectShape(tr.toShapeId)
