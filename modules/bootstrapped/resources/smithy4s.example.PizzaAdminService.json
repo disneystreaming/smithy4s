@@ -513,6 +513,7 @@
         },
         "/restaurant/{restaurant}/menu/item": {
             "post": {
+                "summary": "Add item to restaurant menu",
                 "operationId": "AddMenuItem",
                 "requestBody": {
                     "content": {
