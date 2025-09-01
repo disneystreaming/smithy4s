@@ -539,7 +539,7 @@ object PizzaAdminServiceOperation {
       .withInput(AddMenuItemRequest.schema)
       .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
+      .withHints(alloy.openapi.Summary("Add item to restaurant menu"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu/item"), code = 201))
     def wrap(input: AddMenuItemRequest): AddMenuItem = AddMenuItem(input)
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>

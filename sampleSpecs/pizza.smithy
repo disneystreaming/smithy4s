@@ -3,6 +3,7 @@ $version: "2"
 namespace smithy4s.example
 
 use alloy#simpleRestJson
+use alloy.openapi#summary
 
 @simpleRestJson
 service PizzaAdminService with [CheckQueryService] {
@@ -26,6 +27,7 @@ service PizzaAdminService with [CheckQueryService] {
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
+@summary("Add item to restaurant menu")
 operation AddMenuItem {
     input: AddMenuItemRequest
     errors: [
