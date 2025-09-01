@@ -222,19 +222,6 @@ object Filters {
 
   private type Predicate = TestName => Boolean
 
-  private object atLine {
-    def unapply(testPath: String): Option[(String, Int)] = {
-      // Can't use string interpolation in pattern (2.12)
-      val members = testPath.split(".line://")
-      if (members.size == 2) {
-        val suiteName = members(0)
-        // Can't use .toIntOption (2.12)
-        val maybeLine = scala.util.Try(members(1).toInt).toOption
-        maybeLine.map(suiteName -> _)
-      } else None
-    }
-  }
-
   def filterTests(
       suiteName: String
   )(args: List[String]): TestName => Boolean = {
@@ -242,9 +229,6 @@ object Filters {
     def toPredicate(filter: String): Predicate = {
       filter match {
 
-        case atLine(`suiteName`, line) => { case TestName(_, indicator, _) =>
-          indicator.line == line
-        }
         case regexStr => { case TestName(name, _, _) =>
           val fullName = suiteName + "." + name
           toPattern(regexStr).matcher(fullName).matches()
