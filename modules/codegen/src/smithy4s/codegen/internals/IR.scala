@@ -359,7 +359,7 @@ private[internals] sealed abstract class MapType(val tpe: NameRef)
 private[internals] object MapType {
   case object Map extends MapType(NameRef("scala.collection.immutable.Map"))
   case object LinkedHashMap
-      extends MapType(NameRef("scala.collection.mutable.LinkedHashMap"))
+      extends MapType(NameRef("scala.collection.mutable.Map"))
 }
 
 private[internals] sealed trait Hint {

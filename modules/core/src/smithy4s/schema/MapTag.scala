@@ -17,6 +17,7 @@
 package smithy4s
 package schema
 
+import scala.collection.mutable.{Map => MMap}
 import scala.collection.mutable.LinkedHashMap
 
 trait MapTag[C[_, _]] {
@@ -56,27 +57,25 @@ object MapTag {
     override def get[K, V](map: Map[K, V], key: K): Option[V] = map.get(key)
   }
 
-  case object LinkedHashMapTag extends MapTag[LinkedHashMap] {
+  case object LinkedHashMapTag extends MapTag[MMap] {
     override def name: String = "LinkedHashMap"
 
-    override def iterator[K, V](c: LinkedHashMap[K, V]): Iterator[(K, V)] =
+    override def iterator[K, V](c: MMap[K, V]): Iterator[(K, V)] =
       c.iterator
 
     override def build[K, V](
         put: (((K, V)) => Unit) => Unit
-    ): LinkedHashMap[K, V] = {
+    ): MMap[K, V] = {
       val builder = LinkedHashMap.newBuilder[K, V]
       put(builder += (_))
       builder.result()
     }
 
-    override def toScalaMap[K, V](c: LinkedHashMap[K, V]): Map[K, V] = {
-      c.toMap
-    }
+    override def toScalaMap[K, V](c: MMap[K, V]): Map[K, V] = c.toMap
 
-    override def isEmpty[K, V](c: LinkedHashMap[K, V]): Boolean = c.isEmpty
+    override def isEmpty[K, V](c: MMap[K, V]): Boolean = c.isEmpty
 
-    override def get[K, V](map: LinkedHashMap[K, V], key: K): Option[V] =
+    override def get[K, V](map: MMap[K, V], key: K): Option[V] =
       map.get(key)
   }
 }
