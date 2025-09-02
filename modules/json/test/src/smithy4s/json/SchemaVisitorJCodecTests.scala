@@ -781,7 +781,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "Input list exceeded max arity of 1024")
+        expect.same(message, "Input List exceeded max arity of 1024")
     }
   }
 

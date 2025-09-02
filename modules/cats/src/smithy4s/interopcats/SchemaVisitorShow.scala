@@ -52,17 +52,11 @@ final class SchemaVisitorShow(
       member: Schema[A]
   ): Show[C[A]] = {
     implicit val showSchemaA: Show[A] = self(member)
-    tag match {
-      case CollectionTag.ListTag => Show[List[A]]
-
-      case CollectionTag.SetTag => Show[Set[A]]
-
-      case CollectionTag.VectorTag => Show[Vector[A]]
-
-      case CollectionTag.IndexedSeqTag =>
-        Show.show { seq =>
-          seq.map(showSchemaA.show).mkString("IndexedSeq(", ", ", ")")
-        }
+    Show.show[C[A]] { seq =>
+      tag
+        .iterator(seq)
+        .map(showSchemaA.show)
+        .mkString(s"${tag.name}(", ", ", ")")
     }
   }
 

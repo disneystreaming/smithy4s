@@ -48,6 +48,15 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case CollectionTag.SetTag        => Eq[Set[A]]
       case CollectionTag.VectorTag     => Eq[Vector[A]]
       case CollectionTag.IndexedSeqTag => Eq[IndexedSeq[A]]
+      case _ =>
+        new Eq[C[A]] {
+          def eqv(x: C[A], y: C[A]): Boolean = {
+            cats.kernel.instances.StaticMethods.iteratorEq(
+              tag.iterator(x),
+              tag.iterator(y)
+            )
+          }
+        }
     }
   }
 
