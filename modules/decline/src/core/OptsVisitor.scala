@@ -34,7 +34,6 @@ import smithy4s.ShapeId
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
-import smithy4s.schema.CollectionTag.ListTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
@@ -246,16 +245,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       hints: Hints,
       tag: CollectionTag[C],
       member: Schema[A]
-  ): Opts[C[A]] =
-    tag match {
-      case ListTag => list(shapeId, hints, member)
-      case CollectionTag.IndexedSeqTag =>
-        list(shapeId, hints, member).map(_.toIndexedSeq)
-      case CollectionTag.SetTag =>
-        list(shapeId, hints, member).map(_.toSet)
-      case CollectionTag.VectorTag =>
-        list(shapeId, hints, member).map(_.toVector)
+  ): Opts[C[A]] = {
+    list(shapeId, hints, member).map { x =>
+      tag.fromIterator(x.iterator)
     }
+  }
 
   private def list[A](
       shapeId: ShapeId,

@@ -19,7 +19,7 @@ package schema
 
 import scala.reflect.ClassTag
 
-sealed trait CollectionTag[C[_]] {
+trait CollectionTag[C[_]] {
   def name: String
 
   def iterator[A](c: C[A]): Iterator[A]
@@ -142,6 +142,7 @@ object CollectionTag {
       case SetTag => Some(implicitly[ClassTag[Set[A]]])
       case VectorTag => Some(implicitly[ClassTag[Vector[A]]])
       case IndexedSeqTag => Some(implicitly[ClassTag[IndexedSeq[A]]])
+      case _ => None
     }
     def map[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): MaybeCT[C[K,V]] = 
       tag match {
