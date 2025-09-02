@@ -10,7 +10,7 @@ Thank you!
 ## Unseal CollectionTag
 
 Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections
-can be built efficiently.
+can be built efficiently. Existing and new usages of CollectionTags that start getting exhaustivity errors can handle unknown subtypes by using the CollectionTag instance's methods, such as `iterator` and `fromIterator`.
 
 ## Documentation fix
 
