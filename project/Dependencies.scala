@@ -128,7 +128,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.10-c027a6c-SNAPSHOT"
+    val weaverVersion = "0.11-b0644b4-SNAPSHOT"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
