@@ -749,7 +749,7 @@ private[codegen] class SmithyToIR(
         }
         mapType =
           if (x.hasTrait(classOf[alloy.PreserveKeyOrderTrait]))
-            MapType.LinkedHashMap
+            MapType.SeqMap
           else MapType.Map
       } yield Type.Map(
         mapType,

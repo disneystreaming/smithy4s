@@ -1643,7 +1643,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Map(mapType, key, keyHints, value, valueHints) =>
         val map = mapType match {
           case MapType.Map           => s"$schemaPkg_.map"
-          case MapType.LinkedHashMap => s"$schemaPkg_.linkedHashMap"
+          case MapType.SeqMap => s"$schemaPkg_.seqMap"
         }
         val keyHintsLine = hintsAndConstraintsLine(keyHints)
         val valueHintsLine = hintsAndConstraintsLine(valueHints)

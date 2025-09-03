@@ -17,8 +17,7 @@
 package smithy4s
 package schema
 
-import scala.collection.mutable.{Map => MMap}
-import scala.collection.mutable.LinkedHashMap
+// import scala.collection.immutable.TreeSeqMap
 
 trait MapTag[C[_, _]] {
   def name: String
@@ -36,7 +35,7 @@ trait MapTag[C[_, _]] {
   def get[K, V](map: C[K, V], key: K): Option[V]
 }
 
-object MapTag {
+object MapTag extends MapTagCompanionPlatform {
   case object ScalaMapTag extends MapTag[Map] {
     override def name: String = "Map"
 
@@ -55,27 +54,5 @@ object MapTag {
     override def isEmpty[K, V](c: Map[K, V]): Boolean = c.isEmpty
 
     override def get[K, V](map: Map[K, V], key: K): Option[V] = map.get(key)
-  }
-
-  case object LinkedHashMapTag extends MapTag[MMap] {
-    override def name: String = "LinkedHashMap"
-
-    override def iterator[K, V](c: MMap[K, V]): Iterator[(K, V)] =
-      c.iterator
-
-    override def build[K, V](
-        put: (((K, V)) => Unit) => Unit
-    ): MMap[K, V] = {
-      val builder = LinkedHashMap.newBuilder[K, V]
-      put(builder += (_))
-      builder.result()
-    }
-
-    override def toScalaMap[K, V](c: MMap[K, V]): Map[K, V] = c.toMap
-
-    override def isEmpty[K, V](c: MMap[K, V]): Boolean = c.isEmpty
-
-    override def get[K, V](map: MMap[K, V], key: K): Option[V] =
-      map.get(key)
   }
 }

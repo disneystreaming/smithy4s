@@ -9,7 +9,12 @@ Thank you!
 
 ## Add support for `@alloy#preserveKeyOrder` trait
 
-Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `ListMap` instead of a `Map` so that key order is preserved.
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `LinkedHashMap` instead of a `Map` so that key order is preserved.
+
+## Unseal CollectionTag
+
+Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections
+can be built efficiently. Existing and new usages of CollectionTags that start getting exhaustivity errors can handle unknown subtypes by using the CollectionTag instance's methods, such as `iterator` and `fromIterator`.
 
 ## Documentation fix
 
