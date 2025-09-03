@@ -657,96 +657,48 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
-  private def listImpl[A](member: Schema[A]) = new JCodec[List[A]] {
+  private def collectionImpl[C[_], A](
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ) = new JCodec[C[A]] {
     private[this] val a: JCodec[A] = apply(member)
 
-    def expecting: String = "list"
+    def expecting: String = tag.name
 
     override def canBeKey: Boolean = false
 
-    def decodeValue(cursor: Cursor, in: JsonReader): List[A] =
+    def decodeValue(cursor: Cursor, in: JsonReader): C[A] =
       if (in.isNextToken('[')) {
-        if (in.isNextToken(']')) Nil
+        if (in.isNextToken(']')) tag.empty
         else {
           in.rollbackToken()
-          val builder = new ListBuffer[A]
-          var i = 0
-          while ({
-            if (i >= maxArity) maxArityError(cursor)
-            cursor.push(i)
-            builder += cursor.decode(a, in)
-            cursor.pop()
-            i += 1
-            in.isNextToken(',')
-          }) ()
-          if (in.isCurrentToken(']')) builder.result()
+          val result = tag.build[A] { put =>
+            var i = 0
+            while ({
+              if (i >= maxArity) maxArityError(cursor)
+              cursor.push(i)
+              put(cursor.decode(a, in))
+              cursor.pop()
+              i += 1
+              in.isNextToken(',')
+            }) ()
+          }
+          if (in.isCurrentToken(']')) result
           else in.arrayEndOrCommaError()
         }
       } else in.decodeError("Expected JSON array")
 
-    def encodeValue(xs: List[A], out: JsonWriter): Unit = {
+    def encodeValue(xs: C[A], out: JsonWriter): Unit = {
       out.writeArrayStart()
-      var list = xs
-      while (list ne Nil) {
-        a.encodeValue(list.head, out)
-        list = list.tail
-      }
+      tag.iterator(xs).foreach(x => a.encodeValue(x, out))
       out.writeArrayEnd()
     }
 
-    def decodeKey(in: JsonReader): List[A] =
-      in.decodeError("Cannot use vectors as keys")
+    def decodeKey(in: JsonReader): C[A] =
+      in.decodeError(s"Cannot use ${tag.name} as keys")
 
-    def encodeKey(xs: List[A], out: JsonWriter): Unit =
-      out.encodeError("Cannot use vectors as keys")
-
-    private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
-        this,
-        s"Input $expecting exceeded max arity of $maxArity"
-      )
-  }
-
-  private def vector[A](
-      member: Schema[A]
-  ): JCodec[Vector[A]] = new JCodec[Vector[A]] {
-    private[this] val a = apply(member)
-
-    def expecting: String = "list"
-
-    override def canBeKey: Boolean = false
-
-    def decodeValue(cursor: Cursor, in: JsonReader): Vector[A] =
-      if (in.isNextToken('[')) {
-        if (in.isNextToken(']')) Vector.empty
-        else {
-          in.rollbackToken()
-          val builder = Vector.newBuilder[A]
-          var i = 0
-          while ({
-            if (i >= maxArity) maxArityError(cursor)
-            cursor.push(i)
-            builder += cursor.decode(a, in)
-            cursor.pop()
-            i += 1
-            in.isNextToken(',')
-          }) ()
-          if (in.isCurrentToken(']')) builder.result()
-          else in.arrayEndOrCommaError()
-        }
-      } else in.decodeError("Expected JSON array")
-
-    def encodeValue(xs: Vector[A], out: JsonWriter): Unit = {
-      out.writeArrayStart()
-      xs.foreach(x => a.encodeValue(x, out))
-      out.writeArrayEnd()
-    }
-
-    def decodeKey(in: JsonReader): Vector[A] =
-      in.decodeError("Cannot use vectors as keys")
-
-    def encodeKey(xs: Vector[A], out: JsonWriter): Unit =
-      out.encodeError("Cannot use vectors as keys")
+    def encodeKey(xs: C[A], out: JsonWriter): Unit =
+      out.encodeError(s"Cannot use ${tag.name} as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
       throw cursor.payloadError(
@@ -807,53 +759,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       in.decodeError("Cannot use vectors as keys")
 
     def encodeKey(xs: IndexedSeq[A], out: JsonWriter): Unit =
-      out.encodeError("Cannot use vectors as keys")
-
-    private[this] def maxArityError(cursor: Cursor): Nothing =
-      throw cursor.payloadError(
-        this,
-        s"Input $expecting exceeded max arity of $maxArity"
-      )
-  }
-
-  private def set[A](
-      member: Schema[A]
-  ): JCodec[Set[A]] = new JCodec[Set[A]] {
-    private[this] val a = apply(member)
-    def expecting: String = "list"
-
-    override def canBeKey: Boolean = false
-
-    def decodeValue(cursor: Cursor, in: JsonReader): Set[A] =
-      if (in.isNextToken('[')) {
-        if (in.isNextToken(']')) Set.empty
-        else {
-          in.rollbackToken()
-          val builder = Set.newBuilder[A]
-          var i = 0
-          while ({
-            if (i >= maxArity) maxArityError(cursor)
-            cursor.push(i)
-            builder += cursor.decode(a, in)
-            cursor.pop()
-            i += 1
-            in.isNextToken(',')
-          }) ()
-          if (in.isCurrentToken(']')) builder.result()
-          else in.arrayEndOrCommaError()
-        }
-      } else in.decodeError("Expected JSON array")
-
-    def encodeValue(xs: Set[A], out: JsonWriter): Unit = {
-      out.writeArrayStart()
-      xs.foreach(x => a.encodeValue(x, out))
-      out.writeArrayEnd()
-    }
-
-    def decodeKey(in: JsonReader): Set[A] =
-      in.decodeError("Cannot use vectors as keys")
-
-    def encodeKey(xs: Set[A], out: JsonWriter): Unit =
       out.encodeError("Cannot use vectors as keys")
 
     private[this] def maxArityError(cursor: Cursor): Nothing =
@@ -931,7 +836,8 @@ private[smithy4s] class SchemaVisitorJCodec(
     val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
       (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )
-    listImpl(kvCodec).biject(_.toMap, _.toList)
+
+    collectionImpl(CollectionTag.ListTag, kvCodec).biject(_.toMap, _.toList)
   }
 
   private def flexibleNullParsingMap[K, V](
@@ -1000,10 +906,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       member: Schema[A]
   ): JCodec[C[A]] = {
     tag match {
-      case CollectionTag.ListTag       => listImpl(member)
-      case CollectionTag.SetTag        => set(member)
-      case CollectionTag.VectorTag     => vector(member)
       case CollectionTag.IndexedSeqTag => indexedSeq(member)
+      case x                           => collectionImpl(x, member)
     }
   }
 
