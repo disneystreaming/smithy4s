@@ -21,6 +21,7 @@ package internals
 import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Nullable
+import alloy.PreserveKeyOrder
 import alloy.Untagged
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
@@ -47,6 +48,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
+    @deprecated("use @alloy#preserveKeyOrder")
     preserveMapOrder: Boolean,
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
@@ -505,8 +507,9 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.writeNonEscapedAsciiKey(x.toString)
     }
 
-    // TODO: should preserveKeyOrder trait also be applicable to documents?
-    def document(maxArity: Int): JCodec[Document] = new JCodec[Document] {
+    // TODO: once preserveKeyOrder is removed this annotation can be remove
+    @scala.annotation.nowarn("cat=deprecation")
+    def document(maxArity: Int, hints: Hints): JCodec[Document] = new JCodec[Document] {
       import Document._
       override def canBeKey: Boolean = false
 
@@ -592,8 +595,9 @@ private[smithy4s] class SchemaVisitorJCodec(
             else {
               in.rollbackToken()
               // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
+              println(s"IN HERE YEAH WHOOOOOOOO $preserveMapOrder, $hints")
               val obj =
-                if (preserveMapOrder) ListMap.newBuilder[String, Document]
+                if (preserveMapOrder || hints.has(PreserveKeyOrder)) ListMap.newBuilder[String, Document]
                 else Map.newBuilder[String, Document]
               var i = 0
               while ({
@@ -617,7 +621,6 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
   }
 
-  private val documentJCodec = PrimitiveJCodecs.document(maxArity)
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -629,7 +632,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PBlob       => PrimitiveJCodecs.bytes
       case PBoolean    => PrimitiveJCodecs.boolean
       case PByte       => PrimitiveJCodecs.byte
-      case PDocument   => documentJCodec
+      case PDocument   => PrimitiveJCodecs.document(maxArity, hints)
       case PDouble     => PrimitiveJCodecs.double
       case PFloat      => PrimitiveJCodecs.float
       case PInt        => PrimitiveJCodecs.int
@@ -1506,7 +1509,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           case Document.DObject(value) =>
             value.foreach { case (label: String, value: Document) =>
               writeLabel(label, out)
-              documentJCodec.encodeValue(value, out)
+              PrimitiveJCodecs.document(maxArity, field.hints).encodeValue(value, out)
             }
           case _ =>
             out.encodeError(
@@ -1575,7 +1578,7 @@ private[smithy4s] class SchemaVisitorJCodec(
               val key = in.readKeyAsString()
               val handler = handlers.get(key)
               if (handler eq null) {
-                val value = documentJCodec.decodeValue(cursor, in)
+                val value = PrimitiveJCodecs.document(maxArity, Hints.empty).decodeValue(cursor, in)
                 unknownValues += (key -> value)
               } else handler(cursor, in, buffer)
               in.isNextToken(',')
