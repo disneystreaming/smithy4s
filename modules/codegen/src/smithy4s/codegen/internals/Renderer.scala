@@ -1642,7 +1642,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${NameRef(col)}(${member.schemaRef}$hintsAndConstraints)"
       case Type.Map(mapType, key, keyHints, value, valueHints) =>
         val map = mapType match {
-          case MapType.Map           => s"$schemaPkg_.map"
+          case MapType.Map    => s"$schemaPkg_.map"
           case MapType.SeqMap => s"$schemaPkg_.seqMap"
         }
         val keyHintsLine = hintsAndConstraintsLine(keyHints)

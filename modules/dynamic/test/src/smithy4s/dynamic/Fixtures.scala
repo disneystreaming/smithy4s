@@ -17,7 +17,7 @@
 package smithy4s
 package dynamic
 
-import scala.collection.immutable.TreeSeqMap
+import scala.collection.immutable.ListMap
 
 import model._
 
@@ -71,7 +71,7 @@ object Fixtures {
         ),
         IdRef("foo#Input") -> Shape.StructureCase(
           StructureShape(
-            members = TreeSeqMap(
+            members = ListMap(
               "name" -> MemberShape(
                 IdRef("smithy.api#String"),
                 traits = Map(
@@ -84,7 +84,7 @@ object Fixtures {
         ),
         IdRef("foo#Output") -> Shape.StructureCase(
           StructureShape(
-            members = TreeSeqMap(
+            members = ListMap(
               "someFloat" -> MemberShape(
                 IdRef("smithy.api#Float")
               ),

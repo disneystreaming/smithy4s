@@ -17,7 +17,7 @@
 package smithy4s
 package schema
 
-// import scala.collection.immutable.TreeSeqMap
+import scala.collection.immutable.ListMap
 
 trait MapTag[C[_, _]] {
   def name: String
@@ -35,7 +35,7 @@ trait MapTag[C[_, _]] {
   def get[K, V](map: C[K, V], key: K): Option[V]
 }
 
-object MapTag extends MapTagCompanionPlatform {
+object MapTag {
   case object ScalaMapTag extends MapTag[Map] {
     override def name: String = "Map"
 
@@ -54,5 +54,28 @@ object MapTag extends MapTagCompanionPlatform {
     override def isEmpty[K, V](c: Map[K, V]): Boolean = c.isEmpty
 
     override def get[K, V](map: Map[K, V], key: K): Option[V] = map.get(key)
+  }
+
+  // TODO: Once Scala 2.12 support we can use SeqMap instead of ListMap for better performance
+  case object SeqMapTag extends MapTag[ListMap] {
+    override def name: String = "SeqMap"
+
+    override def iterator[K, V](c: ListMap[K, V]): Iterator[(K, V)] =
+      c.iterator
+
+    override def build[K, V](
+        put: (((K, V)) => Unit) => Unit
+    ): ListMap[K, V] = {
+      val builder = ListMap.newBuilder[K, V]
+      put(builder += (_))
+      builder.result()
+    }
+
+    override def toScalaMap[K, V](c: ListMap[K, V]): Map[K, V] = c
+
+    override def isEmpty[K, V](c: ListMap[K, V]): Boolean = c.isEmpty
+
+    override def get[K, V](map: ListMap[K, V], key: K): Option[V] =
+      map.get(key)
   }
 }

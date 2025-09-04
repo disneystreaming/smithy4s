@@ -356,9 +356,10 @@ private[internals] object CollectionType {
 }
 
 private[internals] sealed abstract class MapType(val tpe: NameRef)
-private[internals] object MapType extends MapTypeCompanionPlatform {
+private[internals] object MapType {
   case object Map extends MapType(NameRef("scala.collection.immutable.Map"))
-  case object SeqMap extends MapType(seqMapRef)
+  case object SeqMap
+      extends MapType(NameRef("scala.collection.immutable.ListMap"))
 }
 
 private[internals] sealed trait Hint {

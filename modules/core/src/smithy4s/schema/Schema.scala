@@ -282,7 +282,7 @@ object Schema {
   def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(option(a))
 
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, v)
-  def seqMap[K, V](k: Schema[K], v: Schema[V]): Schema[MapTag.SeqMapType[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.SeqMapTag, k, v)
+  def seqMap[K, V](k: Schema[K], v: Schema[V]): Schema[scala.collection.immutable.ListMap[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.SeqMapTag, k, v)
   def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, option(v))
 
   def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
