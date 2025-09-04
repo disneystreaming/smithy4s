@@ -277,7 +277,7 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
     }
   }
 
-  def option[A](schema: Schema[A]): ShapeRecorder[ShapeId] =
+  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): ShapeRecorder[ShapeId] =
     self(schema)
 
 }

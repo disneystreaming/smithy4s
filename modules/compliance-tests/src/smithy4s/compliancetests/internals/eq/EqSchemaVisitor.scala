@@ -162,10 +162,12 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   }
 
   override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Eq[C[A]] = {
-    LenientOptionalCollectionEquality(schema) match {
+    val optionEq: Eq[Option[A]] = LenientOptionalCollectionEquality(schema) match {
       case Some(eq) => eq
       case None     => Eq.catsKernelEqForOption(self(schema))
     }
+
+    Eq.by[C[A], Option[A]](tag.toScalaOption(_))(optionEq)
   }
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
@@ -191,11 +193,12 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     }
   }
 
-  type EqOpt[C[_], A] = Eq[C[A]]
+  type EqOpt[A] = Eq[Option[A]]
   // A sub-visitor that provides lenient equality for Option-wrapped collections,
   // where None and `Some(Empty)` are considered equivalent. s
   object LenientOptionalCollectionEquality
       extends SchemaVisitor.Optional[EqOpt] {
+
     override def collection[C[_], A](
         shapeId: ShapeId,
         hints: Hints,
@@ -231,5 +234,4 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       }
     }
   }
-
 }

@@ -24,6 +24,9 @@ trait OptionalTag[C[_]] { self =>
     if (a == null) some(a) else none()
   def some[A](a: A): C[A]
   def none[A](): C[A]
+  def map[A, B](a: C[A], fn: A => B): C[B] = 
+    fold[A, C[B]](a, (a: A) => some(fn(a)), none())
+
   def fromScalaOption[A](c: Option[A]): C[A] =
     c match {
       case Some(a) => some(a)

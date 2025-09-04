@@ -1,4 +1,5 @@
-/*
+
+/*schemavisito
  *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
@@ -17,7 +18,7 @@
 package smithy4s
 package schema
 
-// import smithy4s.kinds.OptionK
+import smithy4s.kinds.OptionK
 
 import Schema._
 
@@ -67,9 +68,9 @@ object SchemaVisitor { outer =>
     override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): F[C[A]] = default
   }
 
-  // trait Optional[F[_]] extends Default[OptionK[F, *]]{
-  //   def default[A]: Option[F[A]] = None
-  // }
+  trait Optional[F[_]] extends Default[OptionK[F, *]]{
+    def default[A]: Option[F[A]] = None
+  }
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {
     protected val cache: CompilationCache[F]

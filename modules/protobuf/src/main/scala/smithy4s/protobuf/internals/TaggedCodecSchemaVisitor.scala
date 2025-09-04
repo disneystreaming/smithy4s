@@ -366,9 +366,9 @@ private[protobuf] class TaggedCodecSchemaVisitor(val cache: CompilationCache[Tag
   def lazily[A](suspend: Lazy[Schema[A]]): TaggedCodec[A] =
     RecursiveCodec(suspend.map(this.apply))
 
-  def option[A](schema: Schema[A]): TaggedCodec[Option[A]] = {
+  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): TaggedCodec[C[A]] = {
     val underlying = this(schema)
-    OptionCodec(underlying)
+    OptionCodec(underlying).imap(tag.fromScalaOption(_), tag.toScalaOption(_))
   }
 
 }

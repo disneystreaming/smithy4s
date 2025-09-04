@@ -258,12 +258,9 @@ class HintsTransformationSpec() extends FunSuite {
       a => underlying(a)
     }
 
-    def option[A](schema: Schema[A]): Count[Option[A]] = {
+    def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Count[C[A]] = {
       val count = compile(schema)
-      locally {
-        case Some(a) => count(a)
-        case None    => 0
-      }
+      a => tag.fold(a, count(_), 0)
     }
 
   }
