@@ -1580,7 +1580,7 @@ class DocumentSpec() extends ScalaCheckSuite {
     struct(doc)(OrderedDoc.apply)
   }
 
-  test("Document maps should preserve key order with @preserveKeyOrder hint".only) {
+  test("Document maps should preserve key order with @preserveKeyOrder hint") {
     val keyGen = Gen.listOfN(100, Gen.alphaNumStr).map(_.distinct)
 
     forAll(keyGen) { (keys: List[String]) =>
