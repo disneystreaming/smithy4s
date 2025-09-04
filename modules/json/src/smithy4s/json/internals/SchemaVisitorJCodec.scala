@@ -595,7 +595,6 @@ private[smithy4s] class SchemaVisitorJCodec(
             else {
               in.rollbackToken()
               // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
-              println(s"IN HERE YEAH WHOOOOOOOO $preserveMapOrder, $hints")
               val obj =
                 if (preserveMapOrder || hints.has(PreserveKeyOrder)) ListMap.newBuilder[String, Document]
                 else Map.newBuilder[String, Document]
