@@ -94,9 +94,10 @@ private[codegen] object LineSegment {
       "scala.Predef",
       "scala.collection.immutable"
     )
-    // ListMap is part of the autoImportedNames, but is not part of scala.Predef which
+    // ListMap and SeqMap is part of the autoImportedNames, but is not part of scala.Predef which
     // is where the auto imports is defined so it has to be explicitly imported
     val autoImportExceptions: List[String] = List(
+      "scala.collection.immutable.SeqMap",
       "scala.collection.immutable.ListMap"
     )
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
