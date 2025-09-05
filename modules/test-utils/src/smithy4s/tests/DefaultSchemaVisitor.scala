@@ -20,10 +20,10 @@ package tests
 import cats.Id
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
-import smithy4s.schema.OptionalTag
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
@@ -110,5 +110,8 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Id[C[A]] = tag.none()
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Id[C[A]] = tag.none()
 }

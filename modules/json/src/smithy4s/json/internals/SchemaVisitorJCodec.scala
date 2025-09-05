@@ -1388,7 +1388,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.writeKey(tag.value(x))
   }
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): JCodec[C[A]] =
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): JCodec[C[A]] =
     new JCodec[C[A]] {
       val underlying: JCodec[A] = self(schema)
       val aIsNullable =
@@ -1396,17 +1399,20 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = s"JsNull or ${underlying.expecting}"
       def decodeKey(in: JsonReader): C[A] = ???
       def encodeKey(x: C[A], out: JsonWriter): Unit = ???
-      def encodeValue(x: C[A], out: JsonWriter): Unit = tag.toScalaOption(x) match {
-        case None        => out.writeNull()
-        case Some(value) => underlying.encodeValue(value, out)
-      }
+      def encodeValue(x: C[A], out: JsonWriter): Unit =
+        tag.toScalaOption(x) match {
+          case None        => out.writeNull()
+          case Some(value) => underlying.encodeValue(value, out)
+        }
 
       def decodeValue(cursor: Cursor, in: JsonReader): C[A] =
         // if `A` is an option and has nullable, we delegate the handling of `null` to it.
         // This allows for supporting Json-merge patches, where the absence of value
         // and the presence of "null" have different meanings.
         if (in.isNextToken('n') && !aIsNullable)
-          tag.fromScalaOption(in.readNullOrError[Option[A]](None, "Expected null"))
+          tag.fromScalaOption(
+            in.readNullOrError[Option[A]](None, "Expected null")
+          )
         else {
           in.rollbackToken()
           tag.some(underlying.decodeValue(cursor, in))

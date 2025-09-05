@@ -226,7 +226,10 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
     }
   }
 
-  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): XmlDecoder[C[A]] =
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): XmlDecoder[C[A]] =
     compile(schema).optional(tag)
 
   private def getXmlName(

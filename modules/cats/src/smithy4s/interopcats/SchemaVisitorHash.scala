@@ -200,7 +200,12 @@ final class SchemaVisitorHash(
     }
   }
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Hash[C[A]] =
-    cats.instances.option.catsKernelStdHashForOption(self(schema)).contramap(tag.toScalaOption(_))
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Hash[C[A]] =
+    cats.instances.option
+      .catsKernelStdHashForOption(self(schema))
+      .contramap(tag.toScalaOption(_))
 
 }

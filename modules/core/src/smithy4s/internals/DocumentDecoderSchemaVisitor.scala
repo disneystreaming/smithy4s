@@ -226,7 +226,10 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): DocumentDecoder[C[A]] =
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): DocumentDecoder[C[A]] =
     new DocumentDecoder[C[A]] {
       val decoder = schema.compile(self)
       val aIsNullable = schema.hints.has(Nullable) && schema.isOption

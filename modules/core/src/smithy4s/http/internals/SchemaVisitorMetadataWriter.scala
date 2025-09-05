@@ -22,12 +22,12 @@ import smithy.api.HttpQueryParams
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
-import smithy4s.schema.OptionalTag
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
 import smithy4s.schema.FieldFilter
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
 
@@ -112,7 +112,10 @@ class SchemaVisitorMetadataWriter(
 
   }
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): MetaEncode[C[A]] =
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): MetaEncode[C[A]] =
     self(schema) match {
       case StringValueMetaEncode(f) =>
         StringValueMetaEncode { optional =>

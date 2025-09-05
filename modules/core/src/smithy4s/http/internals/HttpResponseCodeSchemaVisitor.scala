@@ -27,10 +27,10 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.ResponseCodeExtract
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.OptionalTag
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {

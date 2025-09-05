@@ -186,10 +186,12 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     underlying.encode(_)
   }
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): UrlFormDataEncoder[C[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): UrlFormDataEncoder[C[A]] = {
     val encoder = compile(schema)
-    optional =>
-      tag.fold(optional, encoder.encode(_), Nil)
+    optional => tag.fold(optional, encoder.encode(_), Nil)
   }
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =

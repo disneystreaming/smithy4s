@@ -70,7 +70,7 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     checkNullable(field, false)
     field.schema match {
       case Schema.OptionSchema(_, s) => expectPrimitiveStringSchema(s)
-      case other                  => fail(s"Expected option schema, got $other")
+      case other => fail(s"Expected option schema, got $other")
     }
   }
 

@@ -181,7 +181,10 @@ private[smithy4s] class XmlEncoderSchemaVisitor(
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }
 
-  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): XmlEncoder[C[A]] =
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): XmlEncoder[C[A]] =
     compile(schema).optional.contramap(tag.toScalaOption(_))
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =

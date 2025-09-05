@@ -161,8 +161,13 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: A, y: A) => eq.value.eqv(x, y)
   }
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Eq[C[A]] = {
-    val optionEq: Eq[Option[A]] = LenientOptionalCollectionEquality(schema) match {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Eq[C[A]] = {
+    val optionEq: Eq[Option[A]] = LenientOptionalCollectionEquality(
+      schema
+    ) match {
       case Some(eq) => eq
       case None     => Eq.catsKernelEqForOption(self(schema))
     }

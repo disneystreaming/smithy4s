@@ -228,7 +228,10 @@ class DynamicStabilitySpec extends FunSuite {
       }
     }
 
-    def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): ConstUnit[C[A]] = {
+    def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): ConstUnit[C[A]] = {
       self(schema)
     }
   }

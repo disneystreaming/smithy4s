@@ -359,6 +359,9 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
 
-  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Opts[C[A]] =
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Opts[C[A]] =
     schema.compile(this).map(tag.some(_)).withDefault(tag.none())
 }

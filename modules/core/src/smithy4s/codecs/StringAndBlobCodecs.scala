@@ -124,7 +124,7 @@ object StringAndBlobCodecs {
       )
 
     override def option[C[_], A](
-      tag: OptionalTag[C],
+        tag: OptionalTag[C],
         schema: Schema[A]
     ): MaybeBlobDecoder[C[A]] =
       self(schema).map(decoderA =>
@@ -183,7 +183,7 @@ object StringAndBlobCodecs {
     ): MaybeBlobEncoder[C[A]] =
       self(schema).map(writerA =>
         new BlobEncoder[C[A]] {
-          def encode(maybeA: C[A]): Blob = 
+          def encode(maybeA: C[A]): Blob =
             tag.fold(maybeA, writerA.encode(_), Blob.empty)
         }
       )

@@ -24,13 +24,13 @@ trait OptionalTag[C[_]] { self =>
     if (a == null) none() else some(a)
   def some[A](a: A): C[A]
   def none[A](): C[A]
-  def map[A, B](a: C[A], fn: A => B): C[B] = 
+  def map[A, B](a: C[A], fn: A => B): C[B] =
     fold[A, C[B]](a, (a: A) => some(fn(a)), none())
 
   def fromScalaOption[A](c: Option[A]): C[A] =
     c match {
       case Some(a) => some(a)
-      case None => none()
+      case None    => none()
     }
   def fold[A, B](c: C[A], isSome: A => B, isNone: => B): B
 
@@ -47,8 +47,10 @@ object OptionalTag {
     override def some[A](a: A): Option[A] = Some(a)
     override def none[A](): Option[A] = None
     override def isNone[A](c: Option[A]): Boolean = c.isEmpty
-    override def exists[A](c: Option[A], fn: A => Boolean): Boolean = c.exists(fn)
-    override def fold[A, B](c: Option[A], isSome: A => B, isNone: => B): B = c.fold(isNone)(isSome)
+    override def exists[A](c: Option[A], fn: A => Boolean): Boolean =
+      c.exists(fn)
+    override def fold[A, B](c: Option[A], isSome: A => B, isNone: => B): B =
+      c.fold(isNone)(isSome)
     override def fromScalaOption[A](c: Option[A]): Option[A] = c
     override def toScalaOption[A](c: Option[A]): Option[A] = c
   }

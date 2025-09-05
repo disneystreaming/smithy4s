@@ -17,8 +17,8 @@
 package smithy4s.xml
 package internals
 
-import smithy4s.schema.OptionalTag
 import smithy4s.ConstraintError
+import smithy4s.schema.OptionalTag
 import smithy4s.xml.XmlDocument.XmlQName
 import smithy4s.xml.internals.XmlCursor._
 
@@ -57,14 +57,15 @@ private[smithy4s] trait XmlDecoder[A] { self =>
       self.decode(cursor.attr(attr))
   }
 
-  def optional[C[_]](tag: OptionalTag[C]): XmlDecoder[C[A]] = new XmlDecoder[C[A]] {
-    def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
-      cursor match {
-        case NoNode(_) => Right(tag.none())
-        case other     => self.decode(other).map(tag.some(_))
+  def optional[C[_]](tag: OptionalTag[C]): XmlDecoder[C[A]] =
+    new XmlDecoder[C[A]] {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
+        cursor match {
+          case NoNode(_) => Right(tag.none())
+          case other     => self.decode(other).map(tag.some(_))
+        }
       }
     }
-  }
   def withDefault(value: A): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
       case NoNode(_) => Right(value)
