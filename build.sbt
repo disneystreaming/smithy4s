@@ -66,6 +66,7 @@ lazy val allModules = Seq(
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
+  `http4s-protocol-tests`,
   decline,
   codegenPlugin,
   `codegen-integration`,
@@ -387,7 +388,8 @@ lazy val `aws-http4s` = projectMatrix
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile",
-    bootstrapped % "test->compile"
+    bootstrapped % "test->compile",
+    `http4s-protocol-tests` % "test->compile"
   )
   .settings(
     libraryDependencies ++= {
@@ -752,7 +754,7 @@ lazy val dynamic = projectMatrix
     }
   )
   .jvmPlatform(
-    allJvmScalaVersions,
+    latest2ScalaVersions,
     jvmDimSettings ++ Seq(
       libraryDependencies ++= Seq(
         Dependencies.Smithy.model,
@@ -866,10 +868,7 @@ lazy val http4s = projectMatrix
     `http4s-kernel`,
     json,
     bootstrapped % "test->compile",
-    complianceTests % "test->compile",
-    dynamic % "test->compile",
-    tests % "test->compile",
-    testUtils % "test->compile"
+    tests % "test->compile"
   )
   .settings(
     isMimaEnabled := true,
@@ -912,6 +911,48 @@ lazy val http4s = projectMatrix
     )
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+/**
+ * Module that contains the protocol tests for http4s which only work for Scala 2.13+, while
+ * the http4s module works for Scala 2.12+
+ */
+lazy val `http4s-protocol-tests` = projectMatrix
+  .in(file("modules/http4s-protocol-tests"))
+  .dependsOn(
+    http4s,
+    dynamic,
+    tests % "test->compile",
+    testUtils % "test->compile",
+    complianceTests
+  )
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies ++= {
+      Seq(
+        Dependencies.Alloy.core % Test
+      ) ++ weaverDeps.value.map(_.withConfigurations(Some("compile")))
+    },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.example.guides.auth"
+    ),
+    Test / complianceTestDependencies := Seq(
+      Dependencies.Alloy.`protocol-tests`
+    ),
+    (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
+    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
+    (Test / envVars) := {
+      val files: Seq[File] =
+        (Test / resourceGenerators) {
+          _.join.map(_.flatten)
+        }.value
+      files.headOption
+        .map { file =>
+          Map("MODEL_DUMP" -> file.getAbsolutePath)
+        }
+        .getOrElse(Map.empty)
+    }
+  )
+  .http4sPlatform(latest2ScalaVersions, jvmDimSettings)
 
 /**
  * Module that contains a function to derive a documentation endpoint
@@ -959,7 +1000,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core, complianceTests, dynamic)
+  .dependsOn(core, complianceTests)
   .settings(
     libraryDependencies ++= {
       Seq(

@@ -23,24 +23,24 @@ trait MapTagCompanionPlatform {
   type SeqMapType[K, V] = ListMap[K, V]
 
   case object SeqMapTag extends MapTag[ListMap] {
-      override def name: String = "ListMap"
+    override def name: String = "ListMap"
 
-      override def iterator[K, V](c: ListMap[K, V]): Iterator[(K, V)] =
-        c.iterator
+    override def iterator[K, V](c: ListMap[K, V]): Iterator[(K, V)] =
+      c.iterator
 
-      override def build[K, V](
-          put: (((K, V)) => Unit) => Unit
-      ): ListMap[K, V] = {
-        val builder = ListMap.newBuilder[K, V]
-        put(builder += (_))
-        builder.result()
-      }
-
-      override def toScalaMap[K, V](c: ListMap[K, V]): Map[K, V] = c
-
-      override def isEmpty[K, V](c: ListMap[K, V]): Boolean = c.isEmpty
-
-      override def get[K, V](map: ListMap[K, V], key: K): Option[V] =
-        map.get(key)
+    override def build[K, V](
+        put: (((K, V)) => Unit) => Unit
+    ): ListMap[K, V] = {
+      val builder = ListMap.newBuilder[K, V]
+      put(builder += (_))
+      builder.result()
     }
+
+    override def toScalaMap[K, V](c: ListMap[K, V]): Map[K, V] = c
+
+    override def isEmpty[K, V](c: ListMap[K, V]): Boolean = c.isEmpty
+
+    override def get[K, V](map: ListMap[K, V], key: K): Option[V] =
+      map.get(key)
+  }
 }

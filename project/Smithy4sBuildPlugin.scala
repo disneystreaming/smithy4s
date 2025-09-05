@@ -320,7 +320,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .filterNot(_ == "-Xcheckinit")
 
   def filterScala2_12Options(opts: Seq[String]) =
-    opts.filterNot(_ == "-Xlint:missing-interpolator")
+    opts
+      .filterNot(_ == "-Xlint:missing-interpolator")
       .filterNot(_ == "-Wunused:imports")
 
   def priorTo2_13(scalaVersion: String): Boolean =
