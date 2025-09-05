@@ -21,7 +21,7 @@ trait OptionalTag[C[_]] { self =>
   def name: String
 
   def apply[A](a: A): C[A] =
-    if (a == null) some(a) else none()
+    if (a == null) none() else some(a)
   def some[A](a: A): C[A]
   def none[A](): C[A]
   def map[A, B](a: C[A], fn: A => B): C[B] = 

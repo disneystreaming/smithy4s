@@ -147,7 +147,7 @@ class DocumentEncoderSchemaVisitor(
 
   override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): DocumentEncoder[C[A]] = {
     val encoder = self(schema)
-    locally { optional =>
+    optional => {
       tag.fold(optional, encoder.apply(_), Document.DNull)
     }
   }
