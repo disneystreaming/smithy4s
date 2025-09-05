@@ -1,4 +1,4 @@
-/*schemavisito
+/*
  *  Copyright 2021-2025 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
