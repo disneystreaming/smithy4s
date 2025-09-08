@@ -357,7 +357,7 @@ object Schema {
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
-    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]) : Option[C[A]] = Some(tag.none())
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]) : Option[C[A]] = Some(tag.none)
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
       if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
     }
@@ -386,7 +386,7 @@ object Schema {
         None
       }
     
-    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none())
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none)
   }
 
 }

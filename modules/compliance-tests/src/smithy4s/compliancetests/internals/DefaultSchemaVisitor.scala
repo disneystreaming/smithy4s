@@ -115,6 +115,6 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def option[C[_], A](
       tag: OptionalTag[C],
       schema: Schema[A]
-  ): Id[C[A]] = tag.none()
+  ): Id[C[A]] = tag.none
 
 }

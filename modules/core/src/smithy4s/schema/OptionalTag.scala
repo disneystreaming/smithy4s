@@ -20,17 +20,17 @@ package schema
 trait OptionalTag[C[_]] { self =>
   def name: String
 
-  def apply[A](a: A): C[A] =
-    if (a == null) none() else some(a)
+  def fromNullable[A](a: A): C[A] =
+    if (a == null) none else some(a)
   def some[A](a: A): C[A]
-  def none[A](): C[A]
+  def none[A]: C[A]
   def map[A, B](a: C[A], fn: A => B): C[B] =
-    fold[A, C[B]](a, (a: A) => some(fn(a)), none())
+    fold[A, C[B]](a, (a: A) => some(fn(a)), none)
 
   def fromScalaOption[A](c: Option[A]): C[A] =
     c match {
       case Some(a) => some(a)
-      case None    => none()
+      case None    => none
     }
   def fold[A, B](c: C[A], isSome: A => B, isNone: => B): B
 
@@ -45,7 +45,7 @@ object OptionalTag {
   case object ScalaOptionTag extends OptionalTag[Option] {
     override def name: String = "Option"
     override def some[A](a: A): Option[A] = Some(a)
-    override def none[A](): Option[A] = None
+    override def none[A]: Option[A] = None
     override def isNone[A](c: Option[A]): Boolean = c.isEmpty
     override def exists[A](c: Option[A], fn: A => Boolean): Boolean =
       c.exists(fn)

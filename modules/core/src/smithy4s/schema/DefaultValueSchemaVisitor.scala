@@ -110,5 +110,5 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
     suspend.map(_.compile(this)).value
 
   def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] =
-    Some(tag.none())
+    Some(tag.none)
 }

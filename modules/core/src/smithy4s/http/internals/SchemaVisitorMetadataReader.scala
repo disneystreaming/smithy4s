@@ -264,5 +264,5 @@ private[http] class SchemaVisitorMetadataReader(
       tag: OptionalTag[C],
       schema: Schema[A]
   ): MetaDecode[C[A]] =
-    self(schema).map(tag(_))
+    self(schema).map(tag.fromNullable(_))
 }

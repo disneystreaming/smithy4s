@@ -41,7 +41,7 @@ private[http] trait UrlFormDataDecoder[A] { self =>
     cursor => self.decode(cursor).map(f)
 
   def optional[C[_]](tag: OptionalTag[C]): UrlFormDataDecoder[C[A]] = {
-    case UrlFormCursor(_, Nil) => Right(tag.none())
+    case UrlFormCursor(_, Nil) => Right(tag.none)
     case other                 => self.decode(other).map(tag.some(_))
   }
 }

@@ -363,5 +363,5 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       tag: OptionalTag[C],
       schema: Schema[A]
   ): Opts[C[A]] =
-    schema.compile(this).map(tag.some(_)).withDefault(tag.none())
+    schema.compile(this).map(tag.some(_)).withDefault(tag.none)
 }

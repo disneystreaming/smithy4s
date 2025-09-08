@@ -130,7 +130,7 @@ object StringAndBlobCodecs {
       self(schema).map(decoderA =>
         new BlobDecoder[C[A]] {
           def decode(blob: Blob): Either[PayloadError, C[A]] =
-            if (blob.isEmpty) Right(tag.none())
+            if (blob.isEmpty) Right(tag.none)
             else decoderA.decode(blob).map(a => tag.some(a))
         }
       )

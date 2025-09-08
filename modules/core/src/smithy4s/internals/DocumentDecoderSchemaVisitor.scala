@@ -238,7 +238,7 @@ class DocumentDecoderSchemaVisitor(
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): C[A] = if (document == Document.DNull && !aIsNullable) tag.none()
+      ): C[A] = if (document == Document.DNull && !aIsNullable) tag.none
       else tag.some(decoder(history, document))
     }
 

@@ -61,7 +61,7 @@ private[smithy4s] trait XmlDecoder[A] { self =>
     new XmlDecoder[C[A]] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         cursor match {
-          case NoNode(_) => Right(tag.none())
+          case NoNode(_) => Right(tag.none)
           case other     => self.decode(other).map(tag.some(_))
         }
       }
