@@ -17,18 +17,12 @@
 package smithy4s
 package schema
 
-import scala.collection.immutable.ListMap
-
 trait MapTag[C[_, _]] {
   def name: String
 
   def iterator[K, V](c: C[K, V]): Iterator[(K, V)]
   def toScalaMap[K, V](c: C[K, V]): Map[K, V] = iterator(c).toMap
   def build[K, V](put: (((K, V)) => Unit) => Unit): C[K, V]
-  def build[K, V](preserveOrder: Boolean)(
-      put: (((K, V)) => Unit) => Unit
-  ): C[K, V]
-
   def fromIterator[K, V](it: Iterator[(K, V)]): C[K, V] =
     build(put => it.foreach(put(_)))
   def fromScalaMap[K, V](map: Map[K, V]): C[K, V] =
@@ -39,7 +33,7 @@ trait MapTag[C[_, _]] {
   def get[K, V](map: C[K, V], key: K): Option[V]
 }
 
-object MapTag {
+object MapTag extends MapTagCompanionPlatform {
   case object ScalaMapTag extends MapTag[Map] {
     override def name: String = "Map"
 
@@ -47,15 +41,6 @@ object MapTag {
 
     override def build[K, V](put: (((K, V)) => Unit) => Unit): Map[K, V] = {
       val builder = Map.newBuilder[K, V]
-      put(builder += (_))
-      builder.result()
-    }
-
-    override def build[K, V](
-        preserveOrder: Boolean
-    )(put: (((K, V)) => Unit) => Unit): Map[K, V] = {
-      val builder =
-        if (preserveOrder) ListMap.newBuilder[K, V] else Map.newBuilder[K, V]
       put(builder += (_))
       builder.result()
     }

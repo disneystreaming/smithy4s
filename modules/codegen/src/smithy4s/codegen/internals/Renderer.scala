@@ -1640,10 +1640,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         val hintsAndConstraints = hintsAndConstraintsLine(hints)
         line"${NameRef(col)}(${member.schemaRef}$hintsAndConstraints)"
-      case Type.Map(key, keyHints, value, valueHints) =>
+      case Type.Map(mapType, key, keyHints, value, valueHints) =>
+        val map = mapType match {
+          case MapType.Map    => s"$schemaPkg_.map"
+          case MapType.SeqMap => s"$schemaPkg_.seqMap"
+        }
         val keyHintsLine = hintsAndConstraintsLine(keyHints)
         val valueHintsLine = hintsAndConstraintsLine(valueHints)
-        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
+        line"${NameRef(map)}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
             name,
@@ -1814,7 +1818,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe
       line"$col(${values.map(_.runDefault).intercalate(Line.comma)})".writeCollection
-    case MapTN(values) =>
+    case MapTN(mapType, values) =>
+      val map = mapType.tpe
       line"$map(${values
         .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
         .intercalate(Line.comma)})".writeCollection

@@ -124,8 +124,9 @@ private[internals] object CollisionAvoidance {
         member = modType(member),
         memberHints = memberHints.map(modHint(_))
       )
-    case Type.Map(key, keyHints, value, valueHints) =>
+    case Type.Map(mapType, key, keyHints, value, valueHints) =>
       Type.Map(
+        mapType = mapType,
         key = modType(key),
         keyHints = keyHints.map(modHint(_)),
         value = modType(value),
@@ -253,8 +254,8 @@ private[internals] object CollisionAvoidance {
           // Alt names in this context are always capitalized before being printed
           // (Renderer.scala:1614 at the time of writing).
           AltTN(modRef(ref), altName, alt)
-        case MapTN(values) =>
-          MapTN(values)
+        case MapTN(mapType, values) =>
+          MapTN(mapType, values)
         case CollectionTN(collectionType, values) =>
           CollectionTN(collectionType, values)
         case PrimitiveTN(prim, value) =>
@@ -405,6 +406,8 @@ private[internals] object CollisionAvoidance {
     val indexedSeq = NameRef("scala.collection.immutable", "IndexedSeq")
     val set = NameRef("scala.collection.immutable", "Set")
     val map = NameRef("scala.collection.immutable", "Map")
+    val seqMap = NameRef("scala.collection.immutable", "SeqMap")
+    val listMap = NameRef("scala.collection.immutable", "ListMap")
     val vector = NameRef("scala", "Vector")
     val option = NameRef("scala", "Option")
     val none = NameRef("scala", "None")

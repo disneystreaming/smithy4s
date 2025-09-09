@@ -92,6 +92,7 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
+  type OrderedMap = smithy4s.example.OrderedMap.Type
   type PNG = smithy4s.example.PNG.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type PersonEmail = smithy4s.example.PersonEmail.Type

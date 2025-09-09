@@ -747,7 +747,12 @@ private[codegen] class SmithyToIR(
         v <- x.getValue().accept(this).map { tpe =>
           if (x.hasTrait(classOf[SparseTrait])) Type.Nullable(tpe) else tpe
         }
+        mapType =
+          if (x.hasTrait(classOf[alloy.PreserveKeyOrderTrait]))
+            MapType.SeqMap
+          else MapType.Map
       } yield Type.Map(
+        mapType,
         k,
         getHints(k, x.getKey()),
         v,
@@ -1115,12 +1120,8 @@ private[codegen] class SmithyToIR(
 
   private def hints(shape: Shape): List[Hint] = {
     val allTraits = shape.getAllTraits().asScala.values.toList
-    val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
-    val traits =
-      if (isNullable) allTraits
-      else allTraits
     val nonMetaTraits =
-      traits
+      allTraits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
         // traits from the synthetic namespace, e.g. smithy.synthetic.enum
         // don't have shapes in the model - so we can't generate hints for them.
@@ -1135,7 +1136,7 @@ private[codegen] class SmithyToIR(
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint(shape)) ++
+    allTraits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filter(tr =>
@@ -1460,18 +1461,21 @@ private[codegen] class SmithyToIR(
           ) =>
         TypedNode.CollectionTN(collectionType, list.map(NodeAndType(_, mem)))
       // Map
-      case (N.MapNode(map), Type.Map(keyType, _, valueType, _)) =>
-        TypedNode.MapTN(map.map { case (k, v) =>
-          (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
-        })
+      case (N.MapNode(map), Type.Map(mapType, keyType, _, valueType, _)) =>
+        TypedNode.MapTN(
+          mapType,
+          map.map { case (k, v) =>
+            (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
+          }
+        )
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
         unfoldNodeAndTypeP(node, p)
       case (node, Type.Collection(collectionType, _, _))
           if node == Node.nullNode =>
         TypedNode.CollectionTN(collectionType, List.empty)
-      case (node, Type.Map(_, _, _, _)) if node == Node.nullNode =>
-        TypedNode.MapTN(List.empty)
+      case (node, Type.Map(mapType, _, _, _, _)) if node == Node.nullNode =>
+        TypedNode.MapTN(mapType, List.empty)
       case (node, IdRefCase()) =>
         val ref = Type.Ref("smithy4s", "ShapeId")
         val namespace :: name :: _ =

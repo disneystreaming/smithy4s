@@ -314,11 +314,13 @@ private[internals] object Type {
   ) extends Type
 
   case class Map(
+      mapType: MapType,
       key: Type,
       keyHints: List[Hint],
       value: Type,
       valueHints: List[Hint]
   ) extends Type
+
   case class Ref(namespace: String, name: String) extends Type {
     def show: String = NameRef
       .splitPath(namespace)
@@ -351,6 +353,12 @@ private[internals] object CollectionType {
       extends CollectionType(NameRef("scala.collection.immutable.Set"))
   case object Vector extends CollectionType(NameRef("scala.Vector"))
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
+}
+
+private[internals] sealed abstract class MapType(val tpe: NameRef)
+private[internals] object MapType extends MapTypeCompanionPlatform {
+  case object Map extends MapType(NameRef("scala.collection.immutable.Map"))
+  case object SeqMap extends MapType(seqMapRef)
 }
 
 private[internals] sealed trait Hint {
@@ -530,12 +538,12 @@ private[internals] object TypedNode {
           f(target).map(ValidatedNewTypeTN(ref, _))
         case AltTN(ref, altName, alt) =>
           alt.traverse(f).map(AltTN(ref, altName, _))
-        case MapTN(values) =>
+        case MapTN(mapType, values) =>
           values
             .traverse { case (k, v) =>
               (f(k), f(v)).tupled
             }
-            .map(MapTN(_))
+            .map(MapTN(mapType, _))
         case CollectionTN(collectionType, values) =>
           values.traverse(f).map(CollectionTN(collectionType, _))
         case PrimitiveTN(prim, value) =>
@@ -562,7 +570,8 @@ private[internals] object TypedNode {
       extends TypedNode[A]
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
-  case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
+  case class MapTN[A](mapType: MapType, values: List[(A, A)])
+      extends TypedNode[A]
   case class CollectionTN[A](collectionType: CollectionType, values: List[A])
       extends TypedNode[A]
   case class PrimitiveTN[T](prim: Primitive.Aux[T], value: Option[T])

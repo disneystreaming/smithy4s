@@ -11,6 +11,14 @@ Thank you!
 
 Add `OptionalTag` trait and add the tag to `Schema.OptionSchema` to allow Option-like types to be efficiently created.
 
+## Add support for `@alloy#preserveKeyOrder` trait
+
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `SeqMap` in Scala 2.13+ and `ListMap` in Scala 2.12 instead of a `Map` so that key order is preserved.
+
+## Add MapTag
+
+Add `MapTag` trait to allow creation of Map-like types to be efficiently created.
+
 ## Unseal CollectionTag
 
 Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections
