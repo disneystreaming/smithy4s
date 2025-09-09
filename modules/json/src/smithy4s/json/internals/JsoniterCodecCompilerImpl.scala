@@ -25,6 +25,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
     flexibleCollectionsSupport: Boolean,
     infinitySupport: Boolean,
+    preserveMapOrder: Boolean,
     hintMask: Option[HintMask],
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
@@ -52,6 +53,11 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler =
     copy(infinitySupport = infinitySupport)
 
+  def withMapOrderPreservation(
+      preserveMapOrder: Boolean
+  ): JsoniterCodecCompiler =
+    copy(preserveMapOrder = preserveMapOrder)
+
   def withLenientTaggedUnionDecoding: JsoniterCodecCompiler =
     copy(lenientTaggedUnionDecoding = true)
 
@@ -63,6 +69,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
       maxArity,
       infinitySupport,
       flexibleCollectionsSupport,
+      preserveMapOrder,
       lenientTaggedUnionDecoding,
       lenientNumericDecoding,
       cache,
@@ -85,6 +92,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
       fieldFilter = FieldFilter.Default,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
+      preserveMapOrder = false,
       lenientTaggedUnionDecoding = false,
       lenientNumericDecoding = false,
       hintMask = Some(JsoniterCodecCompiler.defaultHintMask)

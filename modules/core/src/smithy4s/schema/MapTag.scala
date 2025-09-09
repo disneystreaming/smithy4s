@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+// import scala.collection.immutable.TreeSeqMap
+
 trait MapTag[C[_, _]] {
   def name: String
 
