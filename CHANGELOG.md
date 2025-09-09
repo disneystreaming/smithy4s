@@ -9,7 +9,7 @@ Thank you!
 
 ## Add support for `@alloy#preserveKeyOrder` trait
 
-Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `LinkedHashMap` instead of a `Map` so that key order is preserved.
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `SeqMap` in Scala 2.13+ and `ListMap` in Scala 2.12 instead of a `Map` so that key order is preserved.
 
 ## Unseal CollectionTag
 
