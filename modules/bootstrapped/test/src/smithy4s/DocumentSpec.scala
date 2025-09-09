@@ -33,6 +33,7 @@ import alloy.Discriminated
 import alloy.JsonUnknown
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
+import alloy.PreserveKeyOrder
 import smithy4s.example.TimestampOperationInput
 import smithy4s.time._
 import scala.util.Try
@@ -41,7 +42,10 @@ import smithy4s.refined.NonEmptyList
 import munit._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
+import org.scalacheck.Gen
 import scala.concurrent.duration._
+import scala.collection.immutable.ListMap
+import smithy4s.Document.DObject
 
 class DocumentSpec() extends ScalaCheckSuite {
 
@@ -1566,6 +1570,50 @@ class DocumentSpec() extends ScalaCheckSuite {
       )
 
     testRoundtrip(structure, document)
+  }
+
+  case class OrderedDoc(doc: Document)
+
+  implicit val orderedMapSchema: Schema[OrderedDoc] = {
+    val doc = document.required[OrderedDoc]("doc", _.doc).addHints(PreserveKeyOrder())
+
+    struct(doc)(OrderedDoc.apply)
+  }
+
+  test("Document maps should preserve key order with @preserveKeyOrder hint") {
+    val keyGen = Gen.listOfN(100, Gen.alphaNumStr).map(_.distinct)
+
+    forAll(keyGen) { (keys: List[String]) =>
+      val entries = keys.zipWithIndex.map { case (key, value) =>
+        (key, Document.fromInt(value))
+      }
+      val orderedMap = ListMap(entries: _*)
+      val input = OrderedDoc(Document.DObject(orderedMap))
+
+      def getKeys(obj: Document): List[String] = obj match {
+        case DObject(doc) if doc.contains("doc") =>
+          doc("doc") match {
+            case DObject(map) => map.keys.toList
+            case _            => List.empty
+          }
+        case DObject(map) => map.keys.toList
+        case _            => List.empty
+      }
+
+      val encodeResult = Document.encode(input)
+      val encodeKeyOrder = getKeys(encodeResult)
+
+      assertEquals(keys, encodeKeyOrder)
+
+      val decodeResult = Document.decode[OrderedDoc](encodeResult)
+      val decodeKeyOrder = decodeResult match {
+        case Right(result) => getKeys(result.doc)
+        case _             => List.empty[String]
+      }
+
+      assertEquals(keys, decodeKeyOrder)
+
+    }
   }
 
 }

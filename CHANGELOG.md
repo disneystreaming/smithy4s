@@ -7,6 +7,10 @@ Thank you!
 
 # 0.19.0
 
+## Add support for `@alloy#preserveKeyOrder` trait
+
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `SeqMap` in Scala 2.13+ and `ListMap` in Scala 2.12 instead of a `Map` so that key order is preserved.
+
 ## Unseal CollectionTag
 
 Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections

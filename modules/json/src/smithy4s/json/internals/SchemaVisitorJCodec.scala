@@ -21,6 +21,7 @@ package internals
 import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Nullable
+import alloy.PreserveKeyOrder
 import alloy.Untagged
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
@@ -505,118 +506,121 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.writeNonEscapedAsciiKey(x.toString)
     }
 
-    def document(maxArity: Int): JCodec[Document] = new JCodec[Document] {
-      import Document._
-      override def canBeKey: Boolean = false
+    def document(maxArity: Int, hints: Hints): JCodec[Document] =
+      new JCodec[Document] {
+        import Document._
+        override def canBeKey: Boolean = false
 
-      def encodeValue(doc: Document, out: JsonWriter): Unit = doc match {
-        case s: DString  => out.writeVal(s.value)
-        case b: DBoolean => out.writeVal(b.value)
-        case n: DNumber  => out.writeVal(n.value)
-        case a: DArray =>
-          out.writeArrayStart()
-          a.value match {
-            // short-circuiting on empty arrays to avoid the downcast to array of documents
-            // which has proven to be dangerous in Scala 3:
-            // https://github.com/disneystreaming/smithy4s/issues/1158
-            case x: ArraySeq[_] =>
-              if (x.isEmpty) ()
-              else {
-                val xs = x.unsafeArray.asInstanceOf[Array[Document]]
-                var i = 0
-                while (i < xs.length) {
-                  encodeValue(xs(i), out)
-                  i += 1
+        def encodeValue(doc: Document, out: JsonWriter): Unit = doc match {
+          case s: DString  => out.writeVal(s.value)
+          case b: DBoolean => out.writeVal(b.value)
+          case n: DNumber  => out.writeVal(n.value)
+          case a: DArray =>
+            out.writeArrayStart()
+            a.value match {
+              // short-circuiting on empty arrays to avoid the downcast to array of documents
+              // which has proven to be dangerous in Scala 3:
+              // https://github.com/disneystreaming/smithy4s/issues/1158
+              case x: ArraySeq[_] =>
+                if (x.isEmpty) ()
+                else {
+                  val xs = x.unsafeArray.asInstanceOf[Array[Document]]
+                  var i = 0
+                  while (i < xs.length) {
+                    encodeValue(xs(i), out)
+                    i += 1
+                  }
                 }
-              }
-            case xs =>
-              xs.foreach(encodeValue(_, out))
-          }
-          out.writeArrayEnd()
-        case o: DObject =>
-          out.writeObjectStart()
-          o.value.foreach { kv =>
-            out.writeKey(kv._1)
-            encodeValue(kv._2, out)
-          }
-          out.writeObjectEnd()
-        case _ => out.writeNull()
-      }
+              case xs =>
+                xs.foreach(encodeValue(_, out))
+            }
+            out.writeArrayEnd()
+          case o: DObject =>
+            out.writeObjectStart()
+            o.value.foreach { kv =>
+              out.writeKey(kv._1)
+              encodeValue(kv._2, out)
+            }
+            out.writeObjectEnd()
+          case _ => out.writeNull()
+        }
 
-      def decodeKey(in: JsonReader): Document =
-        in.decodeError("Cannot use JSON document as keys")
+        def decodeKey(in: JsonReader): Document =
+          in.decodeError("Cannot use JSON document as keys")
 
-      def encodeKey(x: Document, out: JsonWriter): Unit =
-        out.encodeError("Cannot use JSON documents as keys")
+        def encodeKey(x: Document, out: JsonWriter): Unit =
+          out.encodeError("Cannot use JSON documents as keys")
 
-      def expecting: String = "JSON document"
+        def expecting: String = "JSON document"
 
-      // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
-      def decodeValue(cursor: Cursor, in: JsonReader): Document = {
-        val b = in.nextToken()
-        if (b == '"') {
-          in.rollbackToken()
-          new DString(in.readString(null))
-        } else if (b == 'f' || b == 't') {
-          in.rollbackToken()
-          new DBoolean(in.readBoolean())
-        } else if ((b >= '0' && b <= '9') || b == '-') {
-          in.rollbackToken()
-          new DNumber(in.readBigDecimal(null))
-        } else if (b == '[') {
-          new DArray({
-            if (in.isNextToken(']')) ArraySeq.empty[Document]
-            else
-              ArraySeq.unsafeWrapArray {
+        private val preserveKeyOrder =
+          preserveMapOrder || hints.has(PreserveKeyOrder)
+        // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
+        def decodeValue(cursor: Cursor, in: JsonReader): Document = {
+          val b = in.nextToken()
+          if (b == '"') {
+            in.rollbackToken()
+            new DString(in.readString(null))
+          } else if (b == 'f' || b == 't') {
+            in.rollbackToken()
+            new DBoolean(in.readBoolean())
+          } else if ((b >= '0' && b <= '9') || b == '-') {
+            in.rollbackToken()
+            new DNumber(in.readBigDecimal(null))
+          } else if (b == '[') {
+            new DArray({
+              if (in.isNextToken(']')) ArraySeq.empty[Document]
+              else
+                ArraySeq.unsafeWrapArray {
+                  in.rollbackToken()
+                  var arr = new Array[Document](4)
+                  var i = 0
+                  while ({
+                    if (i >= maxArity) maxArityError(cursor)
+                    if (i == arr.length)
+                      arr = java.util.Arrays.copyOf(arr, i << 1)
+                    arr(i) = decodeValue(in, null)
+                    i += 1
+                    in.isNextToken(',')
+                  }) {}
+                  if (in.isCurrentToken(']')) {
+                    if (i == arr.length) arr
+                    else java.util.Arrays.copyOf(arr, i)
+                  } else in.arrayEndOrCommaError()
+                }
+            })
+          } else if (b == '{') {
+            new DObject({
+              if (in.isNextToken('}')) Map.empty
+              else {
                 in.rollbackToken()
-                var arr = new Array[Document](4)
+                val obj =
+                  if (preserveKeyOrder)
+                    ListMap.newBuilder[String, Document]
+                  else Map.newBuilder[String, Document]
                 var i = 0
                 while ({
+                  // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
                   if (i >= maxArity) maxArityError(cursor)
-                  if (i == arr.length)
-                    arr = java.util.Arrays.copyOf(arr, i << 1)
-                  arr(i) = decodeValue(in, null)
+                  obj += ((in.readKeyAsString(), decodeValue(in, null)))
                   i += 1
                   in.isNextToken(',')
                 }) {}
-                if (in.isCurrentToken(']')) {
-                  if (i == arr.length) arr
-                  else java.util.Arrays.copyOf(arr, i)
-                } else in.arrayEndOrCommaError()
+                if (in.isCurrentToken('}')) obj.result()
+                else in.objectEndOrCommaError()
               }
-          })
-        } else if (b == '{') {
-          new DObject({
-            if (in.isNextToken('}')) Map.empty
-            else {
-              in.rollbackToken()
-              // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
-              val obj =
-                if (preserveMapOrder) ListMap.newBuilder[String, Document]
-                else Map.newBuilder[String, Document]
-              var i = 0
-              while ({
-                if (i >= maxArity) maxArityError(cursor)
-                obj += ((in.readKeyAsString(), decodeValue(in, null)))
-                i += 1
-                in.isNextToken(',')
-              }) {}
-              if (in.isCurrentToken('}')) obj.result()
-              else in.objectEndOrCommaError()
-            }
-          })
-        } else in.readNullOrError(DNull, "expected JSON document")
-      }
+            })
+          } else in.readNullOrError(DNull, "expected JSON document")
+        }
 
-      private def maxArityError(cursor: Cursor): Nothing =
-        throw cursor.payloadError(
-          this,
-          s"Input $expecting exceeded max arity of $maxArity"
-        )
-    }
+        private def maxArityError(cursor: Cursor): Nothing =
+          throw cursor.payloadError(
+            this,
+            s"Input $expecting exceeded max arity of $maxArity"
+          )
+      }
   }
 
-  private val documentJCodec = PrimitiveJCodecs.document(maxArity)
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -628,7 +632,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PBlob       => PrimitiveJCodecs.bytes
       case PBoolean    => PrimitiveJCodecs.boolean
       case PByte       => PrimitiveJCodecs.byte
-      case PDocument   => documentJCodec
+      case PDocument   => PrimitiveJCodecs.document(maxArity, hints)
       case PDouble     => PrimitiveJCodecs.double
       case PFloat      => PrimitiveJCodecs.float
       case PInt        => PrimitiveJCodecs.int
@@ -782,7 +786,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         if (in.isNextToken('}')) tag.empty
         else {
           in.rollbackToken()
-          val result = tag.build[K, V](preserveMapOrder) { put =>
+          val result = tag.build[K, V] { put =>
             var i = 0
             while ({
               if (i >= maxArity) maxArityError(cursor)
@@ -859,7 +863,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           if (in.isNextToken('}')) tag.empty
           else {
             in.rollbackToken()
-            val result = tag.build[K, V](preserveMapOrder) { put =>
+            val result = tag.build[K, V] { put =>
               var i = 0
               while ({
                 if (i >= maxArity) maxArityError(cursor)
@@ -1505,7 +1509,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           case Document.DObject(value) =>
             value.foreach { case (label: String, value: Document) =>
               writeLabel(label, out)
-              documentJCodec.encodeValue(value, out)
+              PrimitiveJCodecs
+                .document(maxArity, field.hints)
+                .encodeValue(value, out)
             }
           case _ =>
             out.encodeError(
@@ -1574,7 +1580,9 @@ private[smithy4s] class SchemaVisitorJCodec(
               val key = in.readKeyAsString()
               val handler = handlers.get(key)
               if (handler eq null) {
-                val value = documentJCodec.decodeValue(cursor, in)
+                val value = PrimitiveJCodecs
+                  .document(maxArity, Hints.empty)
+                  .decodeValue(cursor, in)
                 unknownValues += (key -> value)
               } else handler(cursor, in, buffer)
               in.isNextToken(',')
