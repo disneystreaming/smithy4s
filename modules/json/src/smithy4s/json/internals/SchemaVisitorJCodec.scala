@@ -553,7 +553,8 @@ private[smithy4s] class SchemaVisitorJCodec(
 
         def expecting: String = "JSON document"
 
-        private val preserveKeyOrder = preserveMapOrder || hints.has(PreserveKeyOrder)
+        private val preserveKeyOrder =
+          preserveMapOrder || hints.has(PreserveKeyOrder)
         // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
         def decodeValue(cursor: Cursor, in: JsonReader): Document = {
           val b = in.nextToken()
