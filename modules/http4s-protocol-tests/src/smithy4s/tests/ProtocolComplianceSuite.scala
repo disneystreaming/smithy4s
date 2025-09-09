@@ -99,7 +99,6 @@ abstract class ProtocolComplianceSuite
       impl: ReverseRouter[IO] with Router[IO],
       shapeIds: ShapeId*
   )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] = {
-    println(s"generating tests for $shapeIds")
     shapeIds.toList.flatMap(shapeId =>
       HttpProtocolCompliance
         .clientAndServerTests(
