@@ -24,6 +24,7 @@ import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
 import smithy4s.schema.MapTag
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
@@ -111,5 +112,8 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
-  override def option[A](schema: Schema[A]): Id[Option[A]] = None
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Id[C[A]] = tag.none
 }

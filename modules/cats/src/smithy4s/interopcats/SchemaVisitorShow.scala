@@ -159,11 +159,13 @@ final class SchemaVisitorShow(
     a => ss.value.show(a)
   }
 
-  override def option[A](schema: Schema[A]): Show[Option[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Show[C[A]] = {
     val showA = self(schema)
-    locally {
-      case None        => "None"
-      case Some(value) => s"Some(${showA.show(value)})"
+    Show.show[C[A]] { opt =>
+      tag.fold[A, String](opt, a => s"Some(${showA.show(a)})", "None")
     }
   }
 

@@ -145,11 +145,13 @@ class DocumentEncoderSchemaVisitor(
     from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
   }
 
-  override def option[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): DocumentEncoder[C[A]] = {
     val encoder = self(schema)
-    locally {
-      case Some(a) => encoder.apply(a)
-      case None    => Document.DNull
+    optional => {
+      tag.fold(optional, encoder.apply(_), Document.DNull)
     }
   }
 

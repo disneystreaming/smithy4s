@@ -77,7 +77,10 @@ object HttpMediaType extends Newtype[String] {
         refinement: Refinement[A, B]
     ): Option[String] = self(schema)
 
-    override def option[A](schema: Schema[A]): Option[String] = self(
+    override def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): Option[String] = self(
       schema
     )
   }

@@ -49,7 +49,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.withId(newId)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.withId(newId)).asInstanceOf[Schema[A]]
   }
 
   final def withId(namespace: String, name: String): Schema[A] = withId(ShapeId(namespace, name))
@@ -64,7 +64,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
 
@@ -97,7 +97,7 @@ sealed trait Schema[A]{
   final def nullable: Schema[Nullable[A]] = Nullable.schema(this)
 
   final def isOption: Boolean = this match {
-    case _: OptionSchema[_] => true
+    case _: OptionSchema[_, _] => true
     case BijectionSchema(underlying, _) => underlying.isOption
     case RefinementSchema(underlying, _) => underlying.isOption
     case _ => false
@@ -170,7 +170,7 @@ object Schema {
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
-  final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
+  final case class OptionSchema[C[_], A](tag: OptionalTag[C], underlying: Schema[A]) extends Schema[C[A]]{
     def hints: Hints = underlying.hints
     def shapeId: ShapeId = underlying.shapeId
   }
@@ -226,8 +226,8 @@ object Schema {
         underlying(m.copy(key = this(m.key), value = this(m.value)))
       case s @ StructSchema(_, _, _, _) =>
         underlying(s.copy(fields = s.fields.map(handleField(_))))
-      case n @ OptionSchema(_) =>
-        underlying(n.copy(underlying = this(n.underlying)))
+      case o: OptionSchema[c, a] =>
+        underlying(o.copy(underlying = this(o.underlying)))
     }
 
     private def handleField[S, A](
@@ -284,7 +284,7 @@ object Schema {
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, v)
   def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, option(v))
 
-  def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
+  def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(OptionalTag.ScalaOptionTag, s)
 
   def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
 
@@ -357,7 +357,7 @@ object Schema {
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
-    override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]) : Option[C[A]] = Some(tag.none)
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
       if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
     }
@@ -386,7 +386,7 @@ object Schema {
         None
       }
     
-    override def option[A](schema: Schema[A]): Option[Option[A]] = Some(None)
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none)
   }
 
 }

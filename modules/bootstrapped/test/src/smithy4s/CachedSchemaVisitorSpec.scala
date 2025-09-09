@@ -125,7 +125,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       }
     }
 
-    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
+    def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): ConstUnit[C[A]] = discard {
       self(schema)
       counter.incrementAndGet()
     }

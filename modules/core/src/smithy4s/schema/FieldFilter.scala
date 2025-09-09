@@ -109,10 +109,10 @@ object FieldFilter {
       case r: RefinementSchema[inner, a] =>
         asNonEmptyCollectionPredicate[inner](r.underlying)
           .map(_.compose(r.refinement.from))
-      case o: OptionSchema[inner] =>
+      case o: OptionSchema[f, inner] =>
         asNonEmptyCollectionPredicate(o.underlying)
           .map(predicateInner =>
-            collectionA => collectionA.exists(predicateInner)
+            (collectionA: f[inner]) => o.tag.exists(collectionA, predicateInner)
           )
       case c: MapSchema[c, k, v] =>
         Some((collectionA: c[k, v]) => !c.tag.isEmpty(collectionA))
@@ -169,11 +169,11 @@ object FieldFilter {
 
     def apply[A](schema: Schema[A]): Predicate[A] = schema match {
       // nullables are technically never None, so we fall through
-      case OptionSchema(underlying) =>
-        if (underlying.hints.has(Nullable) && !underlying.isOption)
+      case o: OptionSchema[f, inner] =>
+        if (o.underlying.hints.has(Nullable) && !o.underlying.isOption)
           Function.const(false)
         else
-          _ == None
+          (v: f[inner]) => o.tag.isNone(v)
 
       case BijectionSchema(underlying, bijection) =>
         this(underlying).compose(bijection.from)

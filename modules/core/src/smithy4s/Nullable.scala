@@ -67,8 +67,8 @@ object Nullable {
       schema match {
         case bs: BijectionSchema[_, _] if bs.hints.has(alloy.Nullable) =>
           bs.underlying match {
-            case os: OptionSchema[_] => Some(os.underlying)
-            case _                   => None
+            case os: OptionSchema[_, _] => Some(os.underlying)
+            case _                      => None
           }
         case _ => None
       }

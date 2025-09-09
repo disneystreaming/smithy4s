@@ -123,14 +123,15 @@ object StringAndBlobCodecs {
         }
       )
 
-    override def option[A](
+    override def option[C[_], A](
+        tag: OptionalTag[C],
         schema: Schema[A]
-    ): MaybeBlobDecoder[Option[A]] =
+    ): MaybeBlobDecoder[C[A]] =
       self(schema).map(decoderA =>
-        new BlobDecoder[Option[A]] {
-          def decode(blob: Blob): Either[PayloadError, Option[A]] =
-            if (blob.isEmpty) Right(None)
-            else decoderA.decode(blob).map(a => Some(a))
+        new BlobDecoder[C[A]] {
+          def decode(blob: Blob): Either[PayloadError, C[A]] =
+            if (blob.isEmpty) Right(tag.none)
+            else decoderA.decode(blob).map(a => tag.some(a))
         }
       )
   }
@@ -176,15 +177,14 @@ object StringAndBlobCodecs {
     ): MaybeBlobEncoder[B] =
       self(schema).map(_.contramap(refinement.from))
 
-    override def option[A](
+    override def option[C[_], A](
+        tag: OptionalTag[C],
         schema: Schema[A]
-    ): MaybeBlobEncoder[Option[A]] =
+    ): MaybeBlobEncoder[C[A]] =
       self(schema).map(writerA =>
-        new BlobEncoder[Option[A]] {
-          def encode(maybeA: Option[A]): Blob = maybeA match {
-            case Some(a) => writerA.encode(a)
-            case None    => Blob.empty
-          }
+        new BlobEncoder[C[A]] {
+          def encode(maybeA: C[A]): Blob =
+            tag.fold(maybeA, writerA.encode(_), Blob.empty)
         }
       )
   }

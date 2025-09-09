@@ -27,6 +27,7 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.ResponseCodeExtract
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
@@ -85,16 +86,17 @@ class HttpResponseCodeSchemaVisitor()
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 
-  override def option[A](
+  override def option[C[_], A](
+      tag: OptionalTag[C],
       schema: Schema[A]
-  ): ResponseCodeExtractor[Option[A]] = {
+  ): ResponseCodeExtractor[C[A]] = {
     val aExt = apply(schema)
     aExt match {
       case NoResponseCode => NoResponseCode
       case RequiredResponseCode(f) =>
-        OptionalResponseCode((_: Option[A]).map(f))
+        OptionalResponseCode[C[A]](tag.toScalaOption(_).map(f))
       case OptionalResponseCode(f) =>
-        OptionalResponseCode((_: Option[A]).flatMap(f))
+        OptionalResponseCode[C[A]](tag.toScalaOption(_).flatMap(f))
     }
   }
 

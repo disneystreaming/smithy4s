@@ -69,8 +69,8 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     checkRequired(field, false)
     checkNullable(field, false)
     field.schema match {
-      case Schema.OptionSchema(s) => expectPrimitiveStringSchema(s)
-      case other                  => fail(s"Expected option schema, got $other")
+      case Schema.OptionSchema(_, s) => expectPrimitiveStringSchema(s)
+      case other => fail(s"Expected option schema, got $other")
     }
   }
 
@@ -108,7 +108,7 @@ class DynamicFieldModifierSpec() extends DummyIO.Suite {
     checkRequired(field, false)
     checkNullable(field, true)
     field.schema match {
-      case Schema.OptionSchema(Nullable.Schema(s)) =>
+      case Schema.OptionSchema(_, Nullable.Schema(s)) =>
         expectPrimitiveStringSchema(s)
       case other => fail(s"Expected optional nullable schema, got $other")
     }

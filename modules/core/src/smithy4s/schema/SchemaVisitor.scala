@@ -32,7 +32,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B]
   def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B]
   def lazily[A](suspend: Lazy[Schema[A]]): F[A]
-  def option[A](schema: Schema[A]): F[Option[A]]
+  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): F[C[A]]
 
   def apply[A](schema: Schema[A]): F[A] = schema match {
     case PrimitiveSchema(shapeId, hints, tag) => primitive(shapeId, hints, tag)
@@ -44,7 +44,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case BijectionSchema(schema, bijection) => biject(schema, bijection)
     case RefinementSchema(schema, refinement) => refine(schema, refinement)
     case LazySchema(make) => lazily(make)
-    case OptionSchema(a) => option(a)
+    case o: OptionSchema[c, a] => option[c,a](o.tag, o.underlying)
   }
 
 }
@@ -64,13 +64,12 @@ object SchemaVisitor { outer =>
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
     override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
-    override def option[A](schema: Schema[A]): F[Option[A]] = default
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): F[C[A]] = default
   }
 
   trait Optional[F[_]] extends Default[OptionK[F, *]]{
     def default[A]: Option[F[A]] = None
   }
-
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {
     protected val cache: CompilationCache[F]

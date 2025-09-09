@@ -28,6 +28,7 @@ import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
 import smithy4s.schema.FieldFilter
 import smithy4s.schema.MapTag
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
 
@@ -112,27 +113,26 @@ class SchemaVisitorMetadataWriter(
 
   }
 
-  override def option[A](schema: Schema[A]): MetaEncode[Option[A]] =
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): MetaEncode[C[A]] =
     self(schema) match {
       case StringValueMetaEncode(f) =>
-        StringValueMetaEncode {
-          case Some(value) => f(value)
-          case None        => ""
+        StringValueMetaEncode { optional =>
+          tag.fold(optional, f(_), "")
         }
       case StringListMetaEncode(f) =>
-        StringListMetaEncode {
-          case Some(value) => f(value)
-          case None        => List.empty
+        StringListMetaEncode { optional =>
+          tag.fold(optional, f(_), List.empty)
         }
       case StringMapMetaEncode(f) =>
-        StringMapMetaEncode {
-          case Some(value) => f(value)
-          case None        => Map.empty
+        StringMapMetaEncode { optional =>
+          tag.fold(optional, f(_), Map.empty)
         }
       case StringListMapMetaEncode(f) =>
-        StringListMapMetaEncode {
-          case Some(value) => f(value)
-          case None        => Map.empty
+        StringListMapMetaEncode { optional =>
+          tag.fold(optional, f(_), Map.empty)
         }
       case EmptyMetaEncode        => EmptyMetaEncode
       case StructureMetaEncode(_) => EmptyMetaEncode

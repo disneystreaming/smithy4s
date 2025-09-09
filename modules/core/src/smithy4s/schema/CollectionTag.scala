@@ -158,7 +158,10 @@ object CollectionTag {
     }
     def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
-    def option[A](schema: Schema[A]) = Some(implicitly[ClassTag[Option[A]]])
+    def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): MaybeCT[C[A]] = tag match {
+      case OptionalTag.ScalaOptionTag => Some(implicitly[ClassTag[Option[A]]])
+      case _ => None
+    }
   }
   // format: off
 }

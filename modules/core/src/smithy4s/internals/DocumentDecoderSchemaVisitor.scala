@@ -225,8 +225,11 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
-    new DocumentDecoder[Option[A]] {
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): DocumentDecoder[C[A]] =
+    new DocumentDecoder[C[A]] {
       val decoder = schema.compile(self)
       val aIsNullable = schema.hints.has(Nullable) && schema.isOption
       def expected = decoder.expected
@@ -234,8 +237,8 @@ class DocumentDecoderSchemaVisitor(
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): Option[A] = if (document == Document.DNull && !aIsNullable) None
-      else Some(decoder(history, document))
+      ): C[A] = if (document == Document.DNull && !aIsNullable) tag.none
+      else tag.some(decoder(history, document))
     }
 
   override def map[C[_, _], K, V](

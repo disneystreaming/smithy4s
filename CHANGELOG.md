@@ -7,6 +7,10 @@ Thank you!
 
 # 0.19.0
 
+## Add OptionalTag
+
+Add `OptionalTag` trait and add the tag to `Schema.OptionSchema` to allow Option-like types to be efficiently created.
+
 ## Unseal CollectionTag
 
 Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections

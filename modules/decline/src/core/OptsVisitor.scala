@@ -276,7 +276,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _, _] | _: Schema.OptionSchema[_] =>
+          _: Schema.MapSchema[_, _, _] | _: Schema.OptionSchema[_, _] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
@@ -360,6 +360,9 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
 
-  override def option[A](schema: Schema[A]): Opts[Option[A]] =
-    schema.compile(this).orNone
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Opts[C[A]] =
+    schema.compile(this).map(tag.some(_)).withDefault(tag.none)
 }
