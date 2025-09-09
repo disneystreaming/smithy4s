@@ -48,8 +48,6 @@ private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
-    @deprecated("use @alloy#preserveKeyOrder")
-    preserveMapOrder: Boolean,
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
     val cache: CompilationCache[JCodec],
@@ -507,8 +505,6 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.writeNonEscapedAsciiKey(x.toString)
     }
 
-    // TODO: once preserveKeyOrder is removed this annotation can be remove
-    @scala.annotation.nowarn("cat=deprecation")
     def document(maxArity: Int, hints: Hints): JCodec[Document] =
       new JCodec[Document] {
         import Document._
@@ -556,6 +552,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
         def expecting: String = "JSON document"
 
+        private val preserveKeyOrder = hints.has(PreserveKeyOrder)
         // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
         def decodeValue(cursor: Cursor, in: JsonReader): Document = {
           val b = in.nextToken()
@@ -595,13 +592,12 @@ private[smithy4s] class SchemaVisitorJCodec(
               if (in.isNextToken('}')) Map.empty
               else {
                 in.rollbackToken()
-                // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
                 val obj =
-                  if (preserveMapOrder || hints.has(PreserveKeyOrder))
-                    ListMap.newBuilder[String, Document]
+                  if (preserveKeyOrder) ListMap.newBuilder[String, Document]
                   else Map.newBuilder[String, Document]
                 var i = 0
                 while ({
+                  // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
                   if (i >= maxArity) maxArityError(cursor)
                   obj += ((in.readKeyAsString(), decodeValue(in, null)))
                   i += 1
