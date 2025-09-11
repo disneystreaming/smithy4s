@@ -62,8 +62,7 @@ object Dependencies {
   }
 
   object Decline {
-    // must be kept at 2.4.1 until upgrade to scala-native 0.5
-    val declineVersion = "2.4.1"
+    val declineVersion = "2.5.0"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
