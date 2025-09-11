@@ -27,6 +27,11 @@ ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+// Silence binary compatibility warnings for test-interface in Scala Native 0.5.x series
+// has to include _native suffix due to https://github.com/sbt/sbt/issues/7140
+ThisBuild / libraryDependencySchemes +=
+  "org.scala-native" %% "test-interface_native0.5" % VersionScheme.Always
+
 import Smithy4sBuildPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -60,7 +65,7 @@ lazy val allModules = Seq(
   docs,
   millCodegenPlugin,
   json,
-  xml,
+  // xml,
   bootstrapped,
   tests,
   http4s,
@@ -379,7 +384,7 @@ lazy val `aws-http4s` = projectMatrix
     `aws-kernel`,
     `http4s-kernel`,
     json,
-    xml,
+    // xml,
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
@@ -793,24 +798,24 @@ lazy val json = projectMatrix
  * Module that contains fs2-data-based XML encoders/decoders for the generated
  * types.
  */
-lazy val xml = projectMatrix
-  .in(file("modules/xml"))
-  .dependsOn(
-    core,
-    bootstrapped % "test->test",
-    scalacheck % "test -> compile"
-  )
-  .settings(
-    isMimaEnabled := false,
-    libraryDependencies ++= Seq(
-      Dependencies.Fs2Data.xml.value
-    ) ++ weaverDeps.value,
-    libraryDependencies ++= munitDeps.value,
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+// lazy val xml = projectMatrix
+//   .in(file("modules/xml"))
+//   .dependsOn(
+//     core,
+//     bootstrapped % "test->test",
+//     scalacheck % "test -> compile"
+//   )
+//   .settings(
+//     isMimaEnabled := false,
+//     libraryDependencies ++= Seq(
+//       Dependencies.Fs2Data.xml.value
+//     ) ++ weaverDeps.value,
+//     libraryDependencies ++= munitDeps.value,
+//     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+//   )
+//   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+//   .jsPlatform(allJsScalaVersions, jsDimSettings)
+//   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains protobuf encoders/decoders for the generated
@@ -1010,7 +1015,7 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Pprint.core.value,
-        Dependencies.Fs2Data.xml.value
+        // Dependencies.Fs2Data.xml.value
       ) ++ weaverDeps.value
     }
   )

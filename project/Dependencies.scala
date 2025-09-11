@@ -10,8 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    // must keep 2.30.2 until upgrade to scala native 0.5
-    val jsoniterScalaVersion = "2.30.2"
+    val jsoniterScalaVersion = "2.37.10"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
