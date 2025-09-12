@@ -19,6 +19,8 @@ package smithy4s.aws
 import aws.protocols._
 import cats.effect.IO
 import cats.syntax.all._
+import smithy4s.Hints
+import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
@@ -106,7 +108,13 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, jsonDecoders))
+        .map(
+          decodeDocument(
+            _,
+            jsonDecoders,
+            Schema.document.addHints(Hints(alloy.PreserveKeyOrder()))
+          )
+        )
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

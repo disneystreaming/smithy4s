@@ -625,19 +625,19 @@ private[smithy4s] class SchemaVisitorJCodec(
       tag: Primitive[P]
   ): JCodec[P] = {
     tag match {
-      case PBigDecimal => PrimitiveJCodecs.bigdecimal
-      case PBigInt     => PrimitiveJCodecs.bigint
-      case PBlob       => PrimitiveJCodecs.bytes
-      case PBoolean    => PrimitiveJCodecs.boolean
-      case PByte       => PrimitiveJCodecs.byte
-      case PDocument   => PrimitiveJCodecs.document(maxArity, hints)
-      case PDouble     => PrimitiveJCodecs.double
-      case PFloat      => PrimitiveJCodecs.float
-      case PInt        => PrimitiveJCodecs.int
-      case PLong       => PrimitiveJCodecs.long
-      case PShort      => PrimitiveJCodecs.short
-      case PString     => PrimitiveJCodecs.string
-      case PTimestamp  => timestampJCodec(hints)
+      case PBigDecimal     => PrimitiveJCodecs.bigdecimal
+      case PBigInt         => PrimitiveJCodecs.bigint
+      case PBlob           => PrimitiveJCodecs.bytes
+      case PBoolean        => PrimitiveJCodecs.boolean
+      case PByte           => PrimitiveJCodecs.byte
+      case PDocument       => PrimitiveJCodecs.document(maxArity, hints)
+      case PDouble         => PrimitiveJCodecs.double
+      case PFloat          => PrimitiveJCodecs.float
+      case PInt            => PrimitiveJCodecs.int
+      case PLong           => PrimitiveJCodecs.long
+      case PShort          => PrimitiveJCodecs.short
+      case PString         => PrimitiveJCodecs.string
+      case PTimestamp      => timestampJCodec(hints)
       case PUUID           => PrimitiveJCodecs.uuid
       case PLocalDate      => PrimitiveJCodecs.localDate
       case PLocalTime      => PrimitiveJCodecs.localTime
