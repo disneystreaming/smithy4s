@@ -48,7 +48,6 @@ private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
-    preserveMapOrder: Boolean,
     lenientTaggedUnionDecoding: Boolean,
     lenientNumericDecoding: Boolean,
     val cache: CompilationCache[JCodec],
@@ -553,8 +552,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
         def expecting: String = "JSON document"
 
-        private val preserveKeyOrder =
-          preserveMapOrder || hints.has(PreserveKeyOrder)
+        private val preserveKeyOrder = hints.has(PreserveKeyOrder)
         // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
         def decodeValue(cursor: Cursor, in: JsonReader): Document = {
           val b = in.nextToken()
@@ -640,7 +638,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PShort      => PrimitiveJCodecs.short
       case PString     => PrimitiveJCodecs.string
       case PTimestamp  => timestampJCodec(hints)
-
       case PUUID           => PrimitiveJCodecs.uuid
       case PLocalDate      => PrimitiveJCodecs.localDate
       case PLocalTime      => PrimitiveJCodecs.localTime

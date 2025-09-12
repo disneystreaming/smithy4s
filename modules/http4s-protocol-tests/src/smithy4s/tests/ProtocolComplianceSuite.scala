@@ -22,6 +22,7 @@ import cats.syntax.all._
 import fs2.Stream
 import fs2.io.file.Path
 import smithy4s.Blob
+import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -132,7 +133,7 @@ abstract class ProtocolComplianceSuite
       bytes: Array[Byte],
       codecApi: BlobDecoder.Compiler
   ): Document = {
-    val codec: PayloadDecoder[Document] = codecApi.fromSchema(Schema.document)
+    val codec: PayloadDecoder[Document] = codecApi.fromSchema(Schema.document.addHints(Hints(alloy.PreserveKeyOrder())))
     codec
       .decode(Blob(bytes))
       .leftMap(
