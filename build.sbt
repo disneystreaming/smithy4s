@@ -79,7 +79,8 @@ lazy val allModules = Seq(
   dynamic,
   testUtils,
   guides,
-  complianceTests
+  complianceTests,
+  scalacheck
 ).flatMap(_.projectRefs)
 
 lazy val docsRendering =
