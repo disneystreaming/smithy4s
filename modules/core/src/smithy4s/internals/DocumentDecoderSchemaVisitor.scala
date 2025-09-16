@@ -267,7 +267,7 @@ class DocumentDecoderSchemaVisitor(
                 identity
               )
               val decodedValue = valueDecoder(key :: pp, value)
-              put((decodedKey, decodedValue))
+              put(decodedKey, decodedValue)
             }
           }
         }

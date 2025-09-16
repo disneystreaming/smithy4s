@@ -169,7 +169,7 @@ class DocumentEncoderSchemaVisitor(
         from[C[K, V]] { c =>
           val map = tag.build[String, Document] { put =>
             tag.iterator(c).foreach { case (k, v) =>
-              put((keyEncoder.apply(k), valueEncoder.apply(v)))
+              put(keyEncoder.apply(k), valueEncoder.apply(v))
             }
           }
 

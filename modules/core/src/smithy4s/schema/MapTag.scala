@@ -22,11 +22,11 @@ trait MapTag[C[_, _]] {
 
   def iterator[K, V](c: C[K, V]): Iterator[(K, V)]
   def toScalaMap[K, V](c: C[K, V]): Map[K, V] = iterator(c).toMap
-  def build[K, V](put: (((K, V)) => Unit) => Unit): C[K, V]
+  def build[K, V](put: ((K, V) => Unit) => Unit): C[K, V]
   def fromIterator[K, V](it: Iterator[(K, V)]): C[K, V] =
-    build(put => it.foreach(put(_)))
+    build(put => it.foreach(x => put(x._1, x._2)))
   def fromScalaMap[K, V](map: Map[K, V]): C[K, V] =
-    build(put => map.foreach(put(_)))
+    build(put => map.foreach(x => put(x._1, x._2)))
 
   def isEmpty[K, V](c: C[K, V]): Boolean
   def empty[K, V]: C[K, V] = build(_ => ())
@@ -39,9 +39,9 @@ object MapTag extends MapTagCompanionPlatform {
 
     override def iterator[K, V](c: Map[K, V]): Iterator[(K, V)] = c.iterator
 
-    override def build[K, V](put: (((K, V)) => Unit) => Unit): Map[K, V] = {
+    override def build[K, V](put: ((K, V) => Unit) => Unit): Map[K, V] = {
       val builder = Map.newBuilder[K, V]
-      put(builder += (_))
+      put((k, v) => builder += (k -> v))
       builder.result()
     }
 

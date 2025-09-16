@@ -29,10 +29,10 @@ trait MapTagCompanionPlatform {
       c.iterator
 
     override def build[K, V](
-        put: (((K, V)) => Unit) => Unit
+        put: ((K, V) => Unit) => Unit
     ): ListMap[K, V] = {
       val builder = ListMap.newBuilder[K, V]
-      put(builder += (_))
+      put((k, v) => builder += (k -> v))
       builder.result()
     }
 

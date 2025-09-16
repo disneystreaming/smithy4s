@@ -787,16 +787,14 @@ private[smithy4s] class SchemaVisitorJCodec(
             var i = 0
             while ({
               if (i >= maxArity) maxArityError(cursor)
-              put(
-                (
-                  jk.decodeKey(in), {
-                    cursor.push(i)
-                    val result = cursor.decode(jv, in)
-                    cursor.pop()
-                    result
-                  }
-                )
-              )
+              val key = jk.decodeKey(in)
+              val value = {
+                cursor.push(i)
+                val result = cursor.decode(jv, in)
+                cursor.pop()
+                result
+              }
+              put(key, value)
               i += 1
               in.isNextToken(',')
             }) ()
@@ -871,7 +869,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                 } else {
                   in.rollbackToken()
                   val value = cursor.decode(jv, in)
-                  put(key -> value)
+                  put(key, value)
                 }
                 cursor.pop()
 
