@@ -148,8 +148,11 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     object foo extends TestBaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.16"
       override def ivyDeps = Agg(coreDep)
+      override def scalacPluginIvyDeps =
+        Agg(ivy"org.typelevel:::kind-projector:0.13.3")
       override def scalacOptions =
         Seq("-Xsource:3", "-P:kind-projector:underscore-placeholders")
+
     }
 
     val resourceFolder = resourcePath / "service"
