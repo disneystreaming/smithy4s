@@ -67,14 +67,11 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       key: Schema[K],
       value: Schema[V]
   ): Eq[C[K, V]] = {
-    implicit val valueEq: Eq[V] = self(value)
+    val valueEq: Eq[V] = self(value)
     new Eq[C[K, V]] {
       def eqv(x: C[K, V], y: C[K, V]): Boolean = {
         tag.iterator(x).forall { case (key, xValue) =>
-          tag.get(y, key) match {
-            case Some(yValue) => valueEq.eqv(xValue, yValue)
-            case None         => false
-          }
+          tag.get(y, key).exists(valueEQ.eqv(xValue, _))
         }
       }
     }

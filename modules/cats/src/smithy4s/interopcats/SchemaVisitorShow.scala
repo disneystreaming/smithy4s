@@ -51,7 +51,7 @@ final class SchemaVisitorShow(
       tag: CollectionTag[C],
       member: Schema[A]
   ): Show[C[A]] = {
-    implicit val showSchemaA: Show[A] = self(member)
+    val showSchemaA: Show[A] = self(member)
     Show.show[C[A]] { seq =>
       tag
         .iterator(seq)
@@ -106,8 +106,8 @@ final class SchemaVisitorShow(
       key: Schema[K],
       value: Schema[V]
   ): Show[C[K, V]] = {
-    implicit val showKey: Show[K] = self(key)
-    implicit val showValue: Show[V] = self(value)
+    val showKey: Show[K] = self(key)
+    val showValue: Show[V] = self(value)
     Show.show[C[K, V]] { c =>
       tag
         .iterator(c)
