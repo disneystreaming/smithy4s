@@ -243,20 +243,39 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       // In the following scenarios we use "?" instead of "_"
       // 1. Scala version >= 3.1 ("_" is deprecated in 3.1 and becomes an error in 3.2)
       // 2. Scala version is 3 and "-source:future" or "-source future" are in scalac options
+      // 3. Scala version is 2.13.5+ and "-P:kind-projector:underscore-placeholders" are in scalac options
+      // 4. Scala version is 2.12.14+ and "-P:kind-projector:underscore-placeholders" are in scalac options
       val version = (config / scalaVersion).value
       val majorVersion = version.takeWhile(_ != '.')
       val minorVersion =
         version.drop(majorVersion.length + 1).takeWhile(_ != '.')
+      val patchVersion =
+        version.drop(majorVersion.length + minorVersion.length + 2)
+
+      val options = (config / scalacOptions).value
+
       def scalaOptionsContainsSourceFuture() = {
-        val options = (config / scalacOptions).value
         options.contains("-source:future") || options
           .sliding(2, 1)
           .contains(Seq("-source", "future"))
       }
-      (Try(majorVersion.toInt), Try(minorVersion.toInt)) match {
-        case (Success(3), Success(minorVersion)) if minorVersion >= 1 => "?"
-        case (Success(3), _) if scalaOptionsContainsSourceFuture()    => "?"
-        case _                                                        => "_"
+      def scalaOptionsContainsKindProjectorPlaceholders() =
+        options.contains("-P:kind-projector:underscore-placeholders")
+
+      (
+        Try(majorVersion.toInt),
+        Try(minorVersion.toInt),
+        Try(patchVersion.toInt)
+      ) match {
+        case (Success(3), Success(minorVersion), _) if minorVersion >= 1 => "?"
+        case (Success(3), _, _) if scalaOptionsContainsSourceFuture()    => "?"
+        case (Success(2), Success(13), Success(patchVersion))
+            if patchVersion >= 5 && scalaOptionsContainsKindProjectorPlaceholders() =>
+          "?"
+        case (Success(2), Success(12), Success(patchVersion))
+            if patchVersion >= 14 && scalaOptionsContainsKindProjectorPlaceholders() =>
+          "?"
+        case _ => "_"
       }
     },
     config / smithy4sRenderOptics := false,
