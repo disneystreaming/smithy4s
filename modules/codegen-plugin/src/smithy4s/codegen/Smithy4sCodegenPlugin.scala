@@ -275,11 +275,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         case (Success(2), Success(12), Success(patchVersion))
             if patchVersion >= 14 && scalaOptionsContainsKindProjectorPlaceholders() =>
           "?"
-        case v =>
-          println("------------HERE------------------")
-          println(v)
-          println("----------------------------------------")
-          "_"
+        case _ => "_"
       }
     },
     config / smithy4sRenderOptics := false,
