@@ -126,6 +126,29 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     )
   }
 
+  test("2.13 codegen with placeholder wildcards") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.16"
+      override def ivyDeps = Agg(coreDep)
+      override def scalacPluginIvyDeps =
+        Agg(ivy"org.typelevel:::kind-projector:0.13.3")
+      override def scalacOptions =
+        Seq("-Xsource:3", "-P:kind-projector:underscore-placeholders")
+      override def millSourcePath = resourcePath / "service"
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName("codegen-wildcards-compiles"))
+
+    compileWorks(foo, ev)
+
+    val metadata =
+      ev.outPath / "smithy4sGeneratedSmithyMetadataFile.dest" / "smithy" / "generated-metadata.smithy"
+    checkFileExist(metadata, shouldExist = true)
+    assert(
+      os.read(metadata).contains("metadata smithy4sWildcardArgument = \"?\"")
+    )
+  }
+
   test("codegen with dependencies") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.16"
