@@ -54,9 +54,9 @@ final case class HttpUri(
     uriStr.append(schemeStr)
     uriStr.append("://")
     uriStr.append(host)
-    port.foreach( p => {
-        uriStr.append(':')
-        uriStr.append(p)
+    port.foreach(p => {
+      uriStr.append(':')
+      uriStr.append(p)
     })
     uriStr.append(pathStr)
     if (queryParams.nonEmpty) {
