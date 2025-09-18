@@ -15,8 +15,9 @@
  */
 
 package smithy4s.http
-import java.net.URI
+import java.net._
 import scala.runtime.AbstractFunction6
+import java.nio.charset.StandardCharsets
 
 /**
  * Represents an HTTP URI.
@@ -38,13 +39,33 @@ final case class HttpUri(
       case HttpUriScheme.Https => "https"
     }
 
-    val pathStr = path.mkString("/", "/", "")
+    val pathStr = path.map(HttpUri.uriEncode).mkString("/", "/", "")
     val queryStr = queryParams
       .map { case (k, v) =>
-        v.map(vv => s"$k=$vv").mkString("&")
+        val encodedKey = HttpUri.uriEncode(k)
+        v.map(vv => {
+          val encodedValue = HttpUri.uriEncode(vv)
+          s"$encodedKey=$encodedValue"
+        }).mkString("&")
       }
       .mkString("&")
-    new URI(schemeStr, null, host, port.getOrElse(-1), pathStr, queryStr, null)
+
+    val uriStr = new java.lang.StringBuilder()
+    uriStr.append(schemeStr)
+    uriStr.append("://")
+    uriStr.append(host)
+    port.foreach { p => {
+      uriStr.append(':')
+      uriStr.append(p)
+    }}
+    uriStr.append(pathStr)
+    if (queryParams.nonEmpty) {
+      uriStr.append('?')
+      uriStr.append(queryStr)
+    }
+
+    val result = uriStr.toString()
+    new URI(result)
   }
 }
 
@@ -75,12 +96,12 @@ object HttpUri
     val host = uri.getHost()
     val port = Option(uri.getPort()).filter(_ >= 0)
     val path = uri.getPath.split('/').filter(_.nonEmpty).toIndexedSeq
-    val queryParams: Map[String, Seq[String]] = Option(uri.getQuery())
+    val queryParams: Map[String, Seq[String]] = Option(uri.getRawQuery())
       .map { query =>
         query
           .split("&")
           .map { pair =>
-            pair.split("=") match {
+            pair.split("=").map(uriDecode) match {
               case Array(k: String, v: String) => k -> Seq(v)
               case Array(k: String)            => k -> Seq.empty[String]
               // cases where you have q1=v1=v2 => q1 -> "v1=v2"
@@ -93,4 +114,8 @@ object HttpUri
       .getOrElse(Map.empty)
     HttpUri(scheme, host, port, path, queryParams, None)
   }
+
+  private def uriDecode(v: String): String = URLDecoder.decode(v, StandardCharsets.UTF_8.toString())
+  private def uriEncode(v: String): String = URLEncoder.encode(v, StandardCharsets.UTF_8.toString()).replaceAll("\\+", "%20")
+
 }
