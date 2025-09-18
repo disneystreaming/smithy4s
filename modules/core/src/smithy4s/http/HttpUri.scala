@@ -65,6 +65,10 @@ final case class HttpUri(
     }
 
     val result = uriStr.toString()
+    // Using single argument constructor instead of multi-argument constructor since single argument assumes given string
+    // will be URL encoded properly, while the multi-argument constructor will URL encode strings.
+    // This means that if a path or query param has a special character like `&` and `=` and they are not encoded before hand, then it will not be properly encoded.
+    // If the param is encoded before hand, then the `%` to denote the escaped characters will be encoded when passed resulting in a double encode.
     new URI(result)
   }
 }
