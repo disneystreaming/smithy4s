@@ -146,6 +146,8 @@ trait Smithy4sModuleCommon extends ScalaModule {
     // In the following scenarios we use "?" instead of "_"
     // 1. Scala version >= 3.1 ("_" is deprecated in 3.1 and becomes an error in 3.2)
     // 2. Scala version is 3 and "-source:future" or "-source future" are in scalac options
+    // 3. Scala version is 2.13.5+ and "-P:kind-projector:underscore-placeholders" are in scalac options
+    // 4. Scala version is 2.12.14+ and "-P:kind-projector:underscore-placeholders" are in scalac options
     val version = scalaVersion()
     val majorVersion = version.takeWhile(_ != '.')
     val minorVersion =
