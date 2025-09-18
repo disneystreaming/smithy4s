@@ -43,7 +43,10 @@ final class HttpUriSpec extends FunSuite {
     )
     val uri = httpUri.toURI
 
-    assertEquals(uri.toString, "http://example.com/foo?bar=2&baz=a%3D%3D2&qux=a%26b%26c")
+    assertEquals(
+      uri.toString,
+      "http://example.com/foo?bar=2&baz=a%3D%3D2&qux=a%26b%26c"
+    )
     assertEquals(httpUri, HttpUri.fromURI(uri))
   }
 

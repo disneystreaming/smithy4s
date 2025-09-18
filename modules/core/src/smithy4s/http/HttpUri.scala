@@ -54,10 +54,10 @@ final case class HttpUri(
     uriStr.append(schemeStr)
     uriStr.append("://")
     uriStr.append(host)
-    port.foreach { p => {
-      uriStr.append(':')
-      uriStr.append(p)
-    }}
+    port.foreach( p => {
+        uriStr.append(':')
+        uriStr.append(p)
+    })
     uriStr.append(pathStr)
     if (queryParams.nonEmpty) {
       uriStr.append('?')
@@ -115,7 +115,10 @@ object HttpUri
     HttpUri(scheme, host, port, path, queryParams, None)
   }
 
-  private def uriDecode(v: String): String = URLDecoder.decode(v, StandardCharsets.UTF_8.toString())
-  private def uriEncode(v: String): String = URLEncoder.encode(v, StandardCharsets.UTF_8.toString()).replaceAll("\\+", "%20")
+  private def uriDecode(v: String): String =
+    URLDecoder.decode(v, StandardCharsets.UTF_8.toString())
+  private def uriEncode(v: String): String = URLEncoder
+    .encode(v, StandardCharsets.UTF_8.toString())
+    .replaceAll("\\+", "%20")
 
 }
