@@ -256,7 +256,8 @@ private[codegen] object CodegenImpl { self =>
       AwsStandardTypesTransformer.name :+
       OpenEnumTransformer.name :+
       KeepOnlyMarkedShapes.name :+
-      ValidatedNewtypesTransformer.name
+      ValidatedNewtypesTransformer.name :+
+      NamespacesPrefixer.name
 }
 
 case class RepeatedNamespaceException(
