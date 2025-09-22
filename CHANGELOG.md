@@ -9,6 +9,7 @@ Thank you!
 
 * Add support for generating dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
 * codegen: Allow `alloy.openapi.*` namespaces by default [#1822](https://github.com/disneystreaming/smithy4s/pull/1822)
+* Properly encode special characters when converting HttpUri to Java URI [#1832](https://github.com/disneystreaming/smithy4s/pull/1832)
 
 # 0.18.42
 
