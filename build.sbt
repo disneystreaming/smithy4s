@@ -907,7 +907,10 @@ lazy val cats = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value
+      Dependencies.Cats.core.value,
+      Dependencies.Cats.laws.value % Test,
+      Dependencies.Cats.weaverDiscipline.value % Test,
+      Dependencies.Cats.alleycatsLaws.value % Test,
     ) ++ weaverDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)

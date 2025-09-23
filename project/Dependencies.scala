@@ -47,6 +47,12 @@ object Dependencies {
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
+    val laws: Def.Initialize[ModuleID] =
+      Def.setting("org.typelevel" %%% "cats-laws" % "2.11.0")
+    val alleycatsLaws: Def.Initialize[ModuleID] =
+      Def.setting("org.typelevel" %%% "alleycats-laws" % "2.11.0")
+    val weaverDiscipline: Def.Initialize[ModuleID] =
+      Def.setting("org.typelevel" %%% "weaver-discipline" % "0.10.1")
   }
 
   val Monocle = new {
