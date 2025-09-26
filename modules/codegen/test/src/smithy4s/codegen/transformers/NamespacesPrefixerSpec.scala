@@ -27,6 +27,17 @@ import cats.syntax.all._
 
 final class NamespacesPrefixerSpec extends munit.FunSuite {
 
+  private val prefixer = new NamespacesPrefixer()
+
+  private val defaultMetadata = Map(
+    "smithy4sTransformedNamespacesPrefix" -> Node.from(
+      "com.example.transformed"
+    ),
+    "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
+      Node.from("mynamespace")
+    )
+  )
+
   test("NamespacesPrefixer skips transformation when no metadata is provided") {
     val smithyContent = """
                           |$version: "2"
@@ -37,8 +48,8 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |}
     """.stripMargin
 
-    val model = buildModelFromSmithy(smithyContent)
-    val prefixer = new NamespacesPrefixer()
+    val model =
+      buildModelFromSmithy(smithyContent = smithyContent, metadata = Map.empty)
     val context = createTransformContext(model)
 
     val transformedModel = prefixer.transform(context)
@@ -61,17 +72,7 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |}
     """.stripMargin
 
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
-      ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
-    )
-
-    val model = buildModelFromSmithy(smithyContent, metadata)
-    val prefixer = new NamespacesPrefixer()
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -185,26 +186,13 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                          |}
     """.stripMargin
 
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
+    val model = buildModelFromSmithy(
+      smithyContent = List(
+        ("mynamespace.smithy", namespacedContent),
+        ("other.smithy", otherContent)
       ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
+      metadata = defaultMetadata
     )
-
-    val assembler = Model
-      .assembler()
-      .addUnparsedModel("mynamespace.smithy", namespacedContent)
-      .addUnparsedModel("other.smithy", otherContent)
-
-    metadata.foreach { case (key, value) =>
-      assembler.putMetadata(key, value)
-    }
-
-    val model = assembler.assemble().unwrap()
-    val prefixer = new NamespacesPrefixer()
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -247,17 +235,7 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |}
     """.stripMargin
 
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
-      ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
-    )
-
-    val model = buildModelFromSmithy(smithyContent, metadata)
-    val prefixer = new NamespacesPrefixer()
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -303,17 +281,7 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |}
     """.stripMargin
 
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
-      ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
-    )
-
-    val model = buildModelFromSmithy(smithyContent, metadata)
-    val prefixer = new NamespacesPrefixer()
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -357,17 +325,7 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |}
     """.stripMargin
 
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
-      ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
-    )
-
-    val model = buildModelFromSmithy(smithyContent, metadata)
-    val prefixer = new NamespacesPrefixer()
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -410,16 +368,8 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
                           |    bar: String
                           |}
     """.stripMargin
-    val metadata = Map(
-      "smithy4sTransformedNamespacesPrefix" -> Node.from(
-        "com.example.transformed"
-      ),
-      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
-        Node.from("mynamespace")
-      )
-    )
-    val model = buildModelFromSmithy(smithyContent, metadata)
-    val prefixer = new NamespacesPrefixer()
+
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
     val context = createTransformContext(model)
     val transformedModel = prefixer.transform(context)
 
@@ -427,7 +377,38 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
       transformedModel,
       "com.example.transformed.mynamespace#MainStructure"
     )
-    println(s"traitIds: $traitIds")
+
+    assert(
+      traitIds.contains(
+        ShapeId.from("com.example.transformed.mynamespace#MyTrait")
+      )
+    )
+  }
+
+  test("NamespacesPrefixer transforms traits for a member shape") {
+    val smithyContent = """
+                          |$version: "2"
+                          |namespace mynamespace
+                          |
+                          |@trait
+                          |structure MyTrait {
+                          |    foo: String
+                          |}
+                          |
+                          |structure MainStructure {
+                          |    @MyTrait(foo: "bar")
+                          |    bar: String
+                          |}
+    """.stripMargin
+
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
+    val context = createTransformContext(model)
+    val transformedModel = prefixer.transform(context)
+
+    val traitIds = getTraitsFor(
+      transformedModel,
+      "com.example.transformed.mynamespace#MainStructure$bar"
+    )
 
     assert(
       traitIds.contains(
@@ -447,11 +428,22 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
 
   private def buildModelFromSmithy(
       smithyContent: String,
-      metadata: Map[String, Node] = Map.empty
+      metadata: Map[String, Node]
+  ): Model = buildModelFromSmithy(
+    smithyContent = List(("test.smithy", smithyContent)),
+    metadata = metadata
+  )
+
+  private def buildModelFromSmithy(
+      smithyContent: List[(String, String)],
+      metadata: Map[String, Node]
   ): Model = {
-    val assembler = Model
-      .assembler()
-      .addUnparsedModel("test.smithy", smithyContent)
+    val assembler = smithyContent.foldLeft(
+      Model
+        .assembler()
+    ) { case (assembler, (filename, content)) =>
+      assembler.addUnparsedModel(filename, content)
+    }
 
     metadata.foreach { case (key, value) =>
       assembler.putMetadata(key, value)
