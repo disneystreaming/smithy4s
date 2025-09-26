@@ -19,8 +19,10 @@ package smithy4s.codegen.transformers
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node.StringNode
 import software.amazon.smithy.model.shapes._
+import software.amazon.smithy.model.traits.Trait
 
 import java.util.stream.Collectors
 import scala.jdk.CollectionConverters._
@@ -118,11 +120,11 @@ final class NamespacesPrefixer extends ProjectionTransformer {
         renamespaceForShape(shape, (_: BigDecimalShape).toBuilder)
 
       override def structureShape(shape: StructureShape): Shape = {
-        shape
+        val withMembers = shape
           .toBuilder()
           .id(renameNamespaceForId(shape.getId))
           .clearMembers()
-          .members(
+          .members {
             shape
               .getAllMembers()
               .asScala
@@ -131,7 +133,8 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               }
               .toList
               .asJava
-          )
+          }
+        withMembers
           .clearMixins()
           .mixins {
             shape
@@ -148,7 +151,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
                     mixinShapeId.getNamespace.startsWith
                   )
                 ) {
-                  sourceShape.accept(self)
+                  sourceShape.accept(this)
                 } else {
                   sourceShape
                 }
@@ -156,8 +159,14 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               .toSet
               .asJava
           }
+          .transformTraits
           .build()
       }
+
+      implicit def toShapeOps[S <: Shape, B <: AbstractShapeBuilder[B, S]](
+          builder: AbstractShapeBuilder[B, S]
+      ): ShapeOps[S, B] =
+        new ShapeOps[S, B](namespacesToTransform, renameNamespaceForId)(builder)
 
       override def resourceShape(shape: ResourceShape): Shape = {
         shape
@@ -197,6 +206,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               .toSet
               .asJava
           )
+          .transformTraits
           .build()
       }
 
@@ -381,6 +391,38 @@ object NamespacesPrefixer {
             }
           }
       } yield Some(NamespacesPrefixerParams(prefix, namespacesToTransform))
+    }
+
+  }
+}
+
+private class ShapeOps[S <: Shape, B <: AbstractShapeBuilder[B, S]](
+    val namespacesToTransform: Set[String],
+    renameNamespaceForId: ShapeId => ShapeId
+)(val builder: AbstractShapeBuilder[B, S]) {
+  def transformTraits: B =
+    builder.traits {
+      builder
+        .build()
+        .getAllTraits()
+        .asScala
+        .values
+        .map(transformTrait)
+        .toList
+        .asJava
+    }
+
+  private def transformTrait(_trait: Trait): Trait = {
+    val shapeId = _trait.toShapeId
+    if (namespacesToTransform.exists(shapeId.getNamespace.startsWith)) {
+      val newShapeId = renameNamespaceForId(shapeId)
+      val node = _trait.toNode()
+      new Trait {
+        override def toShapeId(): ShapeId = newShapeId
+        override def toNode(): Node = node
+      }
+    } else {
+      _trait
     }
   }
 }

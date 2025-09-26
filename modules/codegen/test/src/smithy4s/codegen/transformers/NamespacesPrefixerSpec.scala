@@ -22,6 +22,7 @@ import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import cats.syntax.all._
 
 final class NamespacesPrefixerSpec extends munit.FunSuite {
@@ -393,6 +394,56 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
       Set("com.example.transformed.mynamespace#MixinStructure")
     )
   }
+
+  test("NamespacesPrefixer transforms traits for a shape") {
+    val smithyContent = """
+                          |$version: "2"
+                          |namespace mynamespace
+                          |
+                          |@trait
+                          |structure MyTrait {
+                          |    foo: String
+                          |}
+                          |
+                          |@MyTrait(foo: "bar")
+                          |structure MainStructure {
+                          |    bar: String
+                          |}
+    """.stripMargin
+    val metadata = Map(
+      "smithy4sTransformedNamespacesPrefix" -> Node.from(
+        "com.example.transformed"
+      ),
+      "smithy4sTransformedNamespacesNamespacesToTransform" -> Node.arrayNode(
+        Node.from("mynamespace")
+      )
+    )
+    val model = buildModelFromSmithy(smithyContent, metadata)
+    val prefixer = new NamespacesPrefixer()
+    val context = createTransformContext(model)
+    val transformedModel = prefixer.transform(context)
+
+    val traitIds = getTraitsFor(
+      transformedModel,
+      "com.example.transformed.mynamespace#MainStructure"
+    )
+    println(s"traitIds: $traitIds")
+
+    assert(
+      traitIds.contains(
+        ShapeId.from("com.example.transformed.mynamespace#MyTrait")
+      )
+    )
+  }
+
+  private def getTraitsFor(model: Model, shapeId: String): Set[ShapeId] =
+    model
+      .getShape(ShapeId.from(shapeId))
+      .toScala
+      .map {
+        _.getAllTraits().keySet().asScala.toSet
+      }
+      .getOrElse(fail(s"Expected to find shape with id $shapeId"))
 
   private def buildModelFromSmithy(
       smithyContent: String,
