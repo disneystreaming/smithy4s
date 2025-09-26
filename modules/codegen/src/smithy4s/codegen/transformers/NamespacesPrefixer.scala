@@ -93,7 +93,10 @@ final class NamespacesPrefixer extends ProjectionTransformer {
         T
       ]](shape: T, builderField: T => B): T = {
         if (namespacesToTransform.exists(shape.getId.getNamespace.startsWith)) {
-          builderField(shape).id(renameNamespaceForId(shape.getId)).build()
+          builderField(shape)
+            .id(renameNamespaceForId(shape.getId))
+            .transformTraits
+            .build()
         } else {
           shape
         }
@@ -110,6 +113,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
             shape.getOutput.map[ShapeId](renameNamespaceForId).toScala.orNull
           )
           .errors(shape.getErrors.asScala.map(renameNamespaceForId).asJava)
+          .transformTraits
           .build()
       }
 
@@ -241,6 +245,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               .toList
               .asJava
           )
+          .transformTraits
           .build()
       }
 
@@ -262,6 +267,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               .toList
               .asJava
           )
+          .transformTraits
           .build()
 
       override def longShape(shape: LongShape): Shape =
@@ -282,6 +288,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
           .id(renameNamespaceForId(shape.getId))
           .key(transformMemberShape(shape.getKey()))
           .value(transformMemberShape(shape.getValue()))
+          .transformTraits
           .build()
       }
 
@@ -308,6 +315,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
           .toBuilder()
           .id(renameNamespaceForId(shape.getId))
           .member(transformMemberShape(shape.getMember()))
+          .transformTraits
           .build()
 
       private def transformMemberShape(shape: MemberShape): MemberShape = {
@@ -315,6 +323,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
           .toBuilder()
           .id(renameNamespaceForId(shape.getId))
           .target(renameNamespaceForId(shape.getTarget))
+          .transformTraits
           .build()
       }
     }
