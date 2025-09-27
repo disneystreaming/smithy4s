@@ -417,6 +417,37 @@ final class NamespacesPrefixerSpec extends munit.FunSuite {
     )
   }
 
+  test("NamespacesPrefixer transforms mixins for a string shape") {
+    val smithyContent = """
+                          |$version: "2"
+                          |namespace mynamespace
+                          |
+                          |@mixin
+                          |@pattern("[a-zA-Z0-1]*")
+                          |string AlphaNumericMixin
+                          |
+                          |@length(min: 8, max: 32)
+                          |string Username with [AlphaNumericMixin]
+    """.stripMargin
+
+    val model = buildModelFromSmithy(smithyContent, defaultMetadata)
+    val context = createTransformContext(model)
+    val transformedModel = prefixer.transform(context)
+
+    val usernameShape = transformedModel
+      .getShape(
+        ShapeId.from("com.example.transformed.mynamespace#Username")
+      )
+      .get()
+    val mixins = usernameShape.getMixins.asScala
+
+    assert(
+      mixins.contains(
+        ShapeId.from("com.example.transformed.mynamespace#AlphaNumericMixin")
+      )
+    )
+  }
+
   private def getTraitsFor(model: Model, shapeId: String): Set[ShapeId] =
     model
       .getShape(ShapeId.from(shapeId))

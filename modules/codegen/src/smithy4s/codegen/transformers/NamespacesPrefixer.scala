@@ -27,6 +27,7 @@ import software.amazon.smithy.model.traits.Trait
 import java.util.stream.Collectors
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOptional
+import cats.syntax.all._
 
 final class NamespacesPrefixer extends ProjectionTransformer {
 
@@ -93,8 +94,8 @@ final class NamespacesPrefixer extends ProjectionTransformer {
         T
       ]](shape: T, builderField: T => B): T = {
         if (namespacesToTransform.exists(shape.getId.getNamespace.startsWith)) {
-          builderField(shape)
-            .id(renameNamespaceForId(shape.getId))
+          builderField(shape).transformId
+            .transformMixins(shape.getMixins())
             .transformTraits
             .build()
         } else {
@@ -105,7 +106,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def operationShape(shape: OperationShape): Shape = {
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .input(
             shape.getInput.map[ShapeId](renameNamespaceForId).toScala.orNull
           )
@@ -126,8 +127,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def structureShape(shape: StructureShape): Shape = {
         val withMembers = shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
-          .clearMembers()
+          .transformId
           .members {
             shape
               .getAllMembers()
@@ -139,30 +139,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               .asJava
           }
         withMembers
-          .clearMixins()
-          .mixins {
-            shape
-              .getMixins()
-              .asScala
-              .map { mixinShapeId =>
-                val sourceShape = resolveShapeId(mixinShapeId).getOrElse(
-                  throw new IllegalArgumentException(
-                    s"Cannot resolve mixin shape $mixinShapeId while renaming namespaces"
-                  )
-                )
-                if (
-                  namespacesToTransform.exists(
-                    mixinShapeId.getNamespace.startsWith
-                  )
-                ) {
-                  sourceShape.accept(this)
-                } else {
-                  sourceShape
-                }
-              }
-              .toSet
-              .asJava
-          }
+          .transformMixins(shape.getMixins)
           .transformTraits
           .build()
       }
@@ -170,12 +147,17 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       implicit def toShapeOps[S <: Shape, B <: AbstractShapeBuilder[B, S]](
           builder: AbstractShapeBuilder[B, S]
       ): ShapeOps[S, B] =
-        new ShapeOps[S, B](namespacesToTransform, renameNamespaceForId)(builder)
+        new ShapeOps[S, B](
+          namespacesToTransform = namespacesToTransform,
+          resolveShapeId = resolveShapeId,
+          renameNamespaceForId = renameNamespaceForId,
+          transformer = self
+        )(builder = builder)
 
       override def resourceShape(shape: ResourceShape): Shape = {
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .identifiers(
             shape.getIdentifiers.asScala
               .map { case (name, id) =>
@@ -220,7 +202,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def serviceShape(shape: ServiceShape): Shape = {
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .operations(
             shape.getOperations.asScala
               .map(id => renameNamespaceForId(id))
@@ -255,9 +237,8 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def unionShape(shape: UnionShape): Shape =
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
-          .clearMembers()
-          .members(
+          .transformId
+          .members {
             shape
               .getAllMembers()
               .asScala
@@ -266,7 +247,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
               }
               .toList
               .asJava
-          )
+          }
           .transformTraits
           .build()
 
@@ -285,7 +266,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def mapShape(shape: MapShape): Shape = {
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .key(transformMemberShape(shape.getKey()))
           .value(transformMemberShape(shape.getValue()))
           .transformTraits
@@ -313,7 +294,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       override def listShape(shape: ListShape): Shape =
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .member(transformMemberShape(shape.getMember()))
           .transformTraits
           .build()
@@ -321,7 +302,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       private def transformMemberShape(shape: MemberShape): MemberShape = {
         shape
           .toBuilder()
-          .id(renameNamespaceForId(shape.getId))
+          .transformId
           .target(renameNamespaceForId(shape.getTarget))
           .transformTraits
           .build()
@@ -352,7 +333,6 @@ object NamespacesPrefixer {
       TransformedNamespacesNamespacesToTransformMetadataKey
     )
 
-    // Validation logic
     val hasPrefix = prefixMetadata != null
     val hasNamespaces = namespacesToTransformMetadata != null
     val namespacesCount = if (hasNamespaces) {
@@ -387,17 +367,15 @@ object NamespacesPrefixer {
             s"$TransformedNamespacesNamespacesToTransformMetadataKey must be an array"
           )
           .flatMap { arrayNode =>
-            try {
-              Right(arrayNode.getElements.asScala.map {
-                case stringNode: StringNode => stringNode.getValue
+            arrayNode.getElements.asScala.toList
+              .traverse {
+                case stringNode: StringNode => Right(stringNode.getValue)
                 case other =>
-                  throw new IllegalArgumentException(
+                  Left(
                     s"All elements in $TransformedNamespacesNamespacesToTransformMetadataKey must be strings, got: $other"
                   )
-              }.toSet)
-            } catch {
-              case e: IllegalArgumentException => Left(e.getMessage)
-            }
+              }
+              .map(_.toSet)
           }
       } yield Some(NamespacesPrefixerParams(prefix, namespacesToTransform))
     }
@@ -406,9 +384,14 @@ object NamespacesPrefixer {
 }
 
 private class ShapeOps[S <: Shape, B <: AbstractShapeBuilder[B, S]](
-    val namespacesToTransform: Set[String],
-    renameNamespaceForId: ShapeId => ShapeId
+    namespacesToTransform: Set[String],
+    resolveShapeId: ShapeId => Option[Shape],
+    renameNamespaceForId: ShapeId => ShapeId,
+    transformer: ShapeVisitor[Shape]
 )(val builder: AbstractShapeBuilder[B, S]) {
+
+  def transformId: B = builder.id(renameNamespaceForId(builder.getId))
+
   def transformTraits: B =
     builder.traits {
       builder
@@ -420,6 +403,31 @@ private class ShapeOps[S <: Shape, B <: AbstractShapeBuilder[B, S]](
         .toList
         .asJava
     }
+
+  def transformMixins(sourceMixins: java.util.Set[ShapeId]): B =
+    builder
+      .clearMixins()
+      .mixins {
+        sourceMixins.asScala
+          .map { mixinShapeId =>
+            val sourceShape = resolveShapeId(mixinShapeId).getOrElse(
+              throw new IllegalArgumentException(
+                s"Cannot resolve mixin shape $mixinShapeId while renaming namespaces"
+              )
+            )
+            if (
+              namespacesToTransform.exists(
+                mixinShapeId.getNamespace.startsWith
+              )
+            ) {
+              sourceShape.accept(transformer)
+            } else {
+              sourceShape
+            }
+          }
+          .toSet
+          .asJava
+      }
 
   private def transformTrait(_trait: Trait): Trait = {
     val shapeId = _trait.toShapeId
