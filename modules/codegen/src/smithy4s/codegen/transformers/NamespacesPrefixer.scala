@@ -89,7 +89,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
         } else shapeId
       }
 
-      private def renamespaceForShape[T <: Shape, B <: AbstractShapeBuilder[
+      private def transformBaseShape[T <: Shape, B <: AbstractShapeBuilder[
         B,
         T
       ]](shape: T, builderField: T => B): T = {
@@ -119,10 +119,10 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       }
 
       override def stringShape(shape: StringShape): Shape =
-        renamespaceForShape(shape, (_: StringShape).toBuilder)
+        transformBaseShape(shape, (_: StringShape).toBuilder)
 
       override def bigDecimalShape(shape: BigDecimalShape): Shape =
-        renamespaceForShape(shape, (_: BigDecimalShape).toBuilder)
+        transformBaseShape(shape, (_: BigDecimalShape).toBuilder)
 
       override def structureShape(shape: StructureShape): Shape = {
         val withMembers = shape
@@ -197,7 +197,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       }
 
       override def booleanShape(shape: BooleanShape): Shape =
-        renamespaceForShape(shape, (_: BooleanShape).toBuilder)
+        transformBaseShape(shape, (_: BooleanShape).toBuilder)
 
       override def serviceShape(shape: ServiceShape): Shape = {
         shape
@@ -232,7 +232,7 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       }
 
       override def integerShape(shape: IntegerShape): Shape =
-        renamespaceForShape(shape, (_: IntegerShape).toBuilder)
+        transformBaseShape(shape, (_: IntegerShape).toBuilder)
 
       override def unionShape(shape: UnionShape): Shape =
         shape
@@ -252,16 +252,16 @@ final class NamespacesPrefixer extends ProjectionTransformer {
           .build()
 
       override def longShape(shape: LongShape): Shape =
-        renamespaceForShape(shape, (_: LongShape).toBuilder)
+        transformBaseShape(shape, (_: LongShape).toBuilder)
 
       override def doubleShape(shape: DoubleShape): Shape =
-        renamespaceForShape(shape, (_: DoubleShape).toBuilder)
+        transformBaseShape(shape, (_: DoubleShape).toBuilder)
 
       override def bigIntegerShape(shape: BigIntegerShape): Shape =
-        renamespaceForShape(shape, (_: BigIntegerShape).toBuilder)
+        transformBaseShape(shape, (_: BigIntegerShape).toBuilder)
 
       override def shortShape(shape: ShortShape): Shape =
-        renamespaceForShape(shape, (_: ShortShape).toBuilder)
+        transformBaseShape(shape, (_: ShortShape).toBuilder)
 
       override def mapShape(shape: MapShape): Shape = {
         shape
@@ -274,19 +274,19 @@ final class NamespacesPrefixer extends ProjectionTransformer {
       }
 
       override def byteShape(shape: ByteShape): Shape =
-        renamespaceForShape(shape, (_: ByteShape).toBuilder)
+        transformBaseShape(shape, (_: ByteShape).toBuilder)
 
       override def documentShape(shape: DocumentShape): Shape =
-        renamespaceForShape(shape, (_: DocumentShape).toBuilder)
+        transformBaseShape(shape, (_: DocumentShape).toBuilder)
 
       override def floatShape(shape: FloatShape): Shape =
-        renamespaceForShape(shape, (_: FloatShape).toBuilder)
+        transformBaseShape(shape, (_: FloatShape).toBuilder)
 
       override def blobShape(shape: BlobShape): Shape =
-        renamespaceForShape(shape, (_: BlobShape).toBuilder)
+        transformBaseShape(shape, (_: BlobShape).toBuilder)
 
       override def timestampShape(shape: TimestampShape): Shape =
-        renamespaceForShape(shape, (_: TimestampShape).toBuilder)
+        transformBaseShape(shape, (_: TimestampShape).toBuilder)
 
       override def memberShape(shape: MemberShape): Shape =
         transformMemberShape(shape)
