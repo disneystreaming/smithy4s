@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import OrderType.PreviewCaseAlt
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -20,7 +19,7 @@ sealed trait OrderType extends scala.Product with scala.Serializable { self =>
   object project {
     def online: Option[OrderNumber] = OrderType.OnlineCase.alt.project.lift(self).map(_.online)
     def inStore: Option[OrderType.InStoreOrder] = OrderType.InStoreOrder.alt.project.lift(self)
-    def preview: Option[OrderType.PreviewCase.type] = PreviewCaseAlt.project.lift(self)
+    def preview: Option[OrderType.PreviewCase.type] = OrderType.PreviewCase.alt.project.lift(self)
   }
 
   def accept[A](visitor: OrderType.Visitor[A]): A = this match {
@@ -65,8 +64,13 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
     val alt = schema.oneOf[OrderType]("inStore")
   }
-  case object PreviewCase extends OrderType { final def $ordinal: Int = 2 }
-  private val PreviewCaseAlt = Schema.constant(OrderType.PreviewCase).oneOf[OrderType]("preview").addHints(hints)
+  case object PreviewCase extends OrderType {
+    final def $ordinal: Int = 2
+    val hints: Hints = Hints(
+      smithy.api.JsonName("PREVIEW"),
+    ).lazily
+    val alt = Schema.constant(OrderType.PreviewCase).oneOf[OrderType]("preview").addHints(PreviewCase.hints)
+  }
 
   object OnlineCase {
     val hints: Hints = Hints.empty
@@ -92,7 +96,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   implicit val schema: Schema[OrderType] = union(
     OrderType.OnlineCase.alt,
     OrderType.InStoreOrder.alt,
-    PreviewCaseAlt,
+    OrderType.PreviewCase.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)

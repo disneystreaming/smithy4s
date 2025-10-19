@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import RecursiveOpenUnion.EndCaseAlt
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Schema
@@ -17,7 +16,7 @@ sealed trait RecursiveOpenUnion extends scala.Product with scala.Serializable { 
 
   object project {
     def rec: Option[smithy4s.example.RecursiveOpenUnion] = RecursiveOpenUnion.RecCase.alt.project.lift(self).map(_.rec)
-    def end: Option[RecursiveOpenUnion.EndCase.type] = EndCaseAlt.project.lift(self)
+    def end: Option[RecursiveOpenUnion.EndCase.type] = RecursiveOpenUnion.EndCase.alt.project.lift(self)
     def unknown: Option[Document] = RecursiveOpenUnion.UnknownCase.alt.project.lift(self).map(_.unknown)
   }
 
@@ -38,8 +37,11 @@ object RecursiveOpenUnion extends ShapeTag.Companion[RecursiveOpenUnion] {
   val hints: Hints = Hints.empty
 
   final case class RecCase(rec: smithy4s.example.RecursiveOpenUnion) extends RecursiveOpenUnion { final def $ordinal: Int = 0 }
-  case object EndCase extends RecursiveOpenUnion { final def $ordinal: Int = 1 }
-  private val EndCaseAlt = Schema.constant(RecursiveOpenUnion.EndCase).oneOf[RecursiveOpenUnion]("end").addHints(hints)
+  case object EndCase extends RecursiveOpenUnion {
+    final def $ordinal: Int = 1
+    val hints: Hints = Hints.empty
+    val alt = Schema.constant(RecursiveOpenUnion.EndCase).oneOf[RecursiveOpenUnion]("end").addHints(EndCase.hints)
+  }
   final case class UnknownCase(unknown: Document) extends RecursiveOpenUnion { final def $ordinal: Int = 2 }
 
   object RecCase {
@@ -72,7 +74,7 @@ object RecursiveOpenUnion extends ShapeTag.Companion[RecursiveOpenUnion] {
 
   implicit val schema: Schema[RecursiveOpenUnion] = recursive(union(
     RecursiveOpenUnion.RecCase.alt,
-    EndCaseAlt,
+    RecursiveOpenUnion.EndCase.alt,
     RecursiveOpenUnion.UnknownCase.alt,
   ){
     _.$ordinal

@@ -979,7 +979,7 @@ private[codegen] class SmithyToIR(
       Hint.ScalaImports(s.getImports().asScala.toList)
     case _: ValidateNewtypeTrait =>
       Hint.ValidateNewtype
-    case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
+    case _: TraitDefinition =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
     case _: BincompatFriendlyTrait =>
@@ -1070,7 +1070,7 @@ private[codegen] class SmithyToIR(
         .filter(tr =>
           tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
         )
-        .map(unfoldTrait) ++
+        .map(unfoldTraitNonConstraint) ++
       maybeTypeclassesHint(shape)
   }
 
@@ -1281,6 +1281,20 @@ private[codegen] class SmithyToIR(
       tr.toShapeId,
       cats.Eval.later(unfoldNode(tr.toNode(), tr.toShapeId()))
     )
+  }
+
+  // We can only allow dynamic bindings for non-constraint traits, because
+  // constraints rely on types (static bindings) to find their refinement providers
+  private def unfoldTraitNonConstraint(tr: Trait): Hint = {
+    val renderDynamic = model
+      .expectShape(tr.toShapeId)
+      .hasTrait(classOf[smithy4s.meta.RenderAsDynamicBindingTrait])
+    if (renderDynamic) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
+    else
+      Hint.Native(
+        tr.toShapeId,
+        cats.Eval.later(unfoldNode(tr.toNode(), tr.toShapeId()))
+      )
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =

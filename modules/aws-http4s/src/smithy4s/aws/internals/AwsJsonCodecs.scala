@@ -53,7 +53,7 @@ private[aws] object AwsJsonCodecs {
       .withErrorBodyDecoders(jsonDecoders)
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(jsonDecoders))
       .withRequestMediaType(contentType)
-      .withRawHttpLabelValues(true)
+      .withSmithyPathEncoding(false)
   }
 
 }

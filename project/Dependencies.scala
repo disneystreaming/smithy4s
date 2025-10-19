@@ -31,7 +31,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.3.29"
+    val alloyVersion = "0.3.33"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val protobuf = org % "alloy-protobuf" % alloyVersion
@@ -122,7 +122,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.9.0"
+    val weaverVersion = "0.10.0"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)

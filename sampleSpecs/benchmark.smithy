@@ -2,6 +2,7 @@ $version: "2"
 
 namespace smithy4s.benchmark
 
+@alloy#simpleRestJson
 service BenchmarkService {
     version: "1.0.0"
     operations: [

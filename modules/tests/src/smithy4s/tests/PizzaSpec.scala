@@ -440,11 +440,13 @@ abstract class PizzaSpec
         )
         val containsAllExpectedHeaders =
           expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
+        val missingHeadersMessage =
+          s"Expected to find all of $expectedHeaders inside of $headers"
         expect.same(code, 200) &&
         expect.same(body, "") &&
         expect(
           containsAllExpectedHeaders,
-          s"Expected to find all of $expectedHeaders inside of $headers"
+          missingHeadersMessage
         )
       }
   }

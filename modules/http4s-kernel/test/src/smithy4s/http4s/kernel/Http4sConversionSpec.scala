@@ -91,7 +91,8 @@ object Http4sConversionSpec extends SimpleIOSuite {
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Http
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
@@ -102,7 +103,8 @@ object Http4sConversionSpec extends SimpleIOSuite {
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Https
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
@@ -114,7 +116,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
       expect.eql(
         output,
-        fromSmithy4sHttpUri(toSmithy4sHttpUri(input))
+        fromSmithy4sHttpUri(toSmithy4sHttpUri(input), encodePathSegments = true)
       )
     }
   }

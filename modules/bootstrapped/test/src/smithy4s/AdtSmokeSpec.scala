@@ -32,7 +32,7 @@ class AdtSmokeSpec() extends FunSuite {
     val d3 = Document.encode(x3)
     val expected1 =
       Document.obj("inStore" -> Document.obj("id" -> Document.fromInt(1)))
-    val expected2 = Document.obj("preview" -> Document.obj())
+    val expected2 = Document.obj("PREVIEW" -> Document.obj())
     val expected3 = Document.obj("online" -> Document.fromInt(1))
     assertEquals(d1, expected1)
     assertEquals(d2, expected2)

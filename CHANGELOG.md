@@ -5,7 +5,28 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.40
+# 0.18.44
+
+* Avoid an issue in which `SurfaceError` transformations would throw a `MatchError` upon being called for an operation that doesn't declare errors in [#1846](https://github.com/disneystreaming/smithy4s/pull/1846).
+
+# 0.18.43
+
+* Add support for generating dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
+* codegen: Allow `alloy.openapi.*` namespaces by default [#1822](https://github.com/disneystreaming/smithy4s/pull/1822)
+* Properly encode special characters when converting HttpUri to Java URI [#1832](https://github.com/disneystreaming/smithy4s/pull/1832)
+
+# 0.18.42
+
+* Fix for hints in union->unit case in [#1808](https://github.com/disneystreaming/smithy4s/pull/1808)
+
+# 0.18.41
+
+* codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
+* http4s: Revert the default behavior of URL path encoding in [#1793](https://github.com/disneystreaming/smithy4s/pull/1793)
+
+# 0.18.40 (broken)
+
+
 
 * codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
 * core: fix [#1663](https://github.com/disneystreaming/smithy4s/issues/1663) by reworking how path segments are encoded to conform with the Smithy spec in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)

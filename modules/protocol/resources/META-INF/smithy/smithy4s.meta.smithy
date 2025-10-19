@@ -232,3 +232,8 @@ structure bincompatAdded {
     @pattern("^(\\d+\\.)*\\d+$")
     version: String
 }
+
+/// When present, references to this trait will be rendered
+/// as Dynamic Hint Bindings rather than Static ones
+@trait(selector: "[trait|trait]")
+structure renderAsDynamicBinding {}
