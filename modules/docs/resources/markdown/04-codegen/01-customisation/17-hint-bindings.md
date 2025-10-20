@@ -31,13 +31,17 @@ __Note, it is likely that you will want to use the [smithy apply syntax](https:/
 
 ### Metadata Based
 
-If you want to enable dynamic hint bindings for an entire namespace, you can do so with the `smithy4sRenderDynamicHintNamespaces` metadata key. For example, if we want to render all instances of traits from `foo` namespace as dynamic, we'd set the following:
+If you want to enable dynamic hint bindings for an entire namespace, you can do so with the `smithy4sRenderDynamicHintNamespacePatterns` metadata key. For example, if we want to render all instances of traits from `foo` namespace as dynamic, we'd set the following:
 
 ```smithy
-metadata smithy4sRenderDynamicHintNamespaces = ["foo"]
+metadata smithy4sRenderDynamicHintNamespacePatterns = ["foo.*"]
 ```
 
-Note that this will set any namespaces under `foo` as dynamic as well. So `foo.bar`, for example, would also be rendered as dynamic, but `food` would not.
+Note that this will set any namespaces under `foo` as dynamic as well. So `foo.bar`, for example, would also be rendered as dynamic, but `food` would not. You can use other patterns, consider the following examples:
+
+- `a.b.c` - exact match, will match only `a.b.c`
+- `a.b.*` - will match `a.b` followed with some segments.
+- `a.b*` - like above, but will also match `a.b` or `a.bc`
 
 ## Justification
 

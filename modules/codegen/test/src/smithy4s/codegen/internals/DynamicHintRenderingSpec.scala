@@ -48,7 +48,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
     val smithySpec1 =
       """|$version: "2.0"
          |
-         |metadata smithy4sRenderDynamicHintNamespaces = ["test"]
+         |metadata smithy4sRenderDynamicHintNamespacePatterns = ["test"]
          |
          |namespace test
          |
@@ -80,7 +80,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
     val smithySpec1 =
       """|$version: "2.0"
          |
-         |metadata smithy4sRenderDynamicHintNamespaces = ["test"]
+         |metadata smithy4sRenderDynamicHintNamespacePatterns = ["test.*"]
          |
          |namespace test.secondary
          |
