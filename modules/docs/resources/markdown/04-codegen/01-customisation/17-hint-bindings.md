@@ -6,6 +6,8 @@ title: Hint Bindings
 
 ## Configuration
 
+### Trait Based
+
 If you wish to render dynamic hint bindings, you can do so with a Smithy Trait called `smithy4s.meta#renderAsDynamicBinding`.
 
 ```smithy
@@ -26,6 +28,16 @@ structure Test {}
 With the above example, any shape using `test#myTrait`, such as `test#Test`, will render the Hint for this trait as a dynamic binding rather than a static one. This does not change the rendering of `test#myTrait` itself.
 
 __Note, it is likely that you will want to use the [smithy apply syntax](https://smithy.io/2.0/spec/model.html#applying-traits-externally) to apply this trait rather than putting it directly on the trait. You may also want to use a smithy-level transformation to automatically apply the trait to trait definitions from certain namespaces.__
+
+### Metadata Based
+
+If you want to enable dynamic hint bindings for an entire namespace, you can do so with the `smithy4sRenderDynamicHintNamespaces` metadata key. For example, if we want to render all instances of traits from `foo` namespace as dynamic, we'd set the following:
+
+```smithy
+metadata smithy4sRenderDynamicHintNamespaces = ["foo"]
+```
+
+Note that this will set any namespaces under `foo` as dynamic as well. So `foo.bar`, for example, would also be rendered as dynamic, but `food` would not.
 
 ## Justification
 

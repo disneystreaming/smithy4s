@@ -123,6 +123,27 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
+  private case class NamespaceFragment(value: String) {
+    // Checks if `namespace` is "under" this fragment
+    // meaning is a sub-namespace of this fragment.
+    // This prevents things such as considering that "food" is
+    // under "foo"
+    def isNamespaceUnder(namespace: String): Boolean =
+      value.nonEmpty && (
+        value == namespace || namespace.startsWith(s"$value.")
+      )
+  }
+
+  private val smithy4sRenderDynamicHintNamespaces: Set[NamespaceFragment] =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sRenderDynamicHintNamespaces")
+      .toSet
+      .flatMap((n: Node) => n.asArrayNode().asScala)
+      .flatMap(_.getElements().asScala)
+      .flatMap(_.asStringNode().asScala.map(n => NamespaceFragment(n.getValue)))
+
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
     val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
@@ -1288,7 +1309,11 @@ private[codegen] class SmithyToIR(
   private def unfoldTraitNonConstraint(tr: Trait): Hint = {
     val renderDynamic = model
       .expectShape(tr.toShapeId)
-      .hasTrait(classOf[smithy4s.meta.RenderAsDynamicBindingTrait])
+      .hasTrait(
+        classOf[smithy4s.meta.RenderAsDynamicBindingTrait]
+      ) || smithy4sRenderDynamicHintNamespaces.exists(
+      _.isNamespaceUnder(tr.toShapeId().namespace)
+    )
     if (renderDynamic) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
     else
       Hint.Native(

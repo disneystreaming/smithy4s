@@ -3,6 +3,7 @@ $version: "2.0"
 namespace smithy4s.example
 
 use smithy4s.meta#renderAsDynamicBinding
+use smithy4s.example.dynamic_traits#thisWillBeDynamic
 
 @trait
 @renderAsDynamicBinding
@@ -12,6 +13,7 @@ structure testDynamicBinding {
 }
 
 @testDynamicBinding(str: "test")
+@thisWillBeDynamic(test: 101)
 @since("1")
 structure ShouldHaveDynamicBinding {
     @testDynamicBinding(str: "test2", int: 1234)
