@@ -69,6 +69,12 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
 
 ## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
 Prevents using it as an implicit conversion in Scala 2
+
+# 0.18.44
+
+* Avoid an issue in which `SurfaceError` transformations would throw a `MatchError` upon being called for an operation that doesn't declare errors in [#1846](https://github.com/disneystreaming/smithy4s/pull/1846).
+* Add option to configure Dynamic Hint Bindings via Smithy metadata in [#1848](https://github.com/disneystreaming/smithy4s/pull/1848)
+
 # 0.18.43
 
 * Add support for generating dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)

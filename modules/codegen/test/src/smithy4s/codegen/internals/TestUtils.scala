@@ -23,11 +23,14 @@ import software.amazon.smithy.model.Model
 object TestUtils {
 
   /** Key is the name (like my.package.name.SomeFile) and the value is the contents of that file */
-  def generateScalaCode(smithySpec: String): Map[String, String] = {
-    val model = Model
+  def generateScalaCode(smithySpecs: String*): Map[String, String] = {
+    val modelA = Model
       .assembler()
       .discoverModels()
-      .addUnparsedModel("foo.smithy", smithySpec)
+    smithySpecs.zipWithIndex.foreach { case (smithySpec, i) =>
+      modelA.addUnparsedModel(s"foo$i.smithy", smithySpec)
+    }
+    val model = modelA
       .assemble()
       .unwrap()
     generateScalaCode(model)

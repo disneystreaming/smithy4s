@@ -22,6 +22,7 @@ import java.time.LocalDate
 import scala.util.Try
 import smithy4s.{Refinement, RefinementProvider}
 
+
 object Refinements {
   object dateFormat {
     private def newDate(value: String): Either[String, LocalDate] =

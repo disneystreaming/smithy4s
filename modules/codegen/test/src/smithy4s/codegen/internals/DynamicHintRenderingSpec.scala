@@ -41,7 +41,71 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
          |
          |""".stripMargin
 
-    runTest(smithySpec)
+    runTest(smithySpec)()
+  }
+
+  test("dynamic hint rendering mode - config based - exact match namespace") {
+    val smithySpec1 =
+      """|$version: "2.0"
+         |
+         |metadata smithy4sRenderDynamicHintNamespacePatterns = ["test"]
+         |
+         |namespace test
+         |
+         |@trait
+         |structure someTrait {
+         |  @required
+         |  int: Integer
+         |}
+         |""".stripMargin
+
+    val smithySpec2 =
+      """|$version: "2.0"
+         |
+         |namespace foo
+         |
+         |use test#someTrait
+         |
+         |@someTrait(int: 1)
+         |structure Test {
+         | @someTrait(int: 2)
+         | one: String
+         |}
+         |""".stripMargin
+
+    runTest(smithySpec1, smithySpec2)()
+  }
+
+  test("dynamic hint rendering mode - config based - starts with namespace") {
+    val smithySpec1 =
+      """|$version: "2.0"
+         |
+         |metadata smithy4sRenderDynamicHintNamespacePatterns = ["test.*"]
+         |
+         |namespace test.secondary
+         |
+         |@trait
+         |structure someTrait {
+         |  @required
+         |  int: Integer
+         |}
+         |""".stripMargin
+
+    val smithySpec2 =
+      """|$version: "2.0"
+         |
+         |namespace foo
+         |
+         |use test.secondary#someTrait
+         |
+         |@someTrait(int: 1)
+         |structure Test {
+         | @someTrait(int: 2)
+         | one: String
+         |}
+         |""".stripMargin
+
+    runTest(smithySpec1, smithySpec2)(ns = "test.secondary")
   }
 
   test("dynamic hint rendering mode - enum") {
@@ -64,7 +128,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
                         |
                         |""".stripMargin
 
-    runTest(smithySpec)
+    runTest(smithySpec)()
   }
 
   test("dynamic hint rendering mode - union") {
@@ -88,7 +152,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
                         |
                         |""".stripMargin
 
-    runTest(smithySpec)
+    runTest(smithySpec)()
   }
 
   test("dynamic hint rendering mode - primitive") {
@@ -110,7 +174,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
                         |integer Other
                         |""".stripMargin
 
-    runTest(smithySpec)
+    runTest(smithySpec)()
   }
 
   test("dynamic hint rendering mode - service") {
@@ -135,16 +199,18 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
                         |
                         |""".stripMargin
 
-    runTest(smithySpec)
+    runTest(smithySpec)()
   }
 
-  private def runTest(smithySpec: String)(implicit loc: Location): Unit = {
+  private def runTest(
+      smithySpecs: String*
+  )(ns: String = "test")(implicit loc: Location): Unit = {
     val expect = List(
-      """Hints.dynamic(ShapeId("test", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(1.0d)))""",
-      """Hints.dynamic(ShapeId("test", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(2.0d)))"""
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(1.0d)))""",
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(2.0d)))"""
     )
 
-    val result = TestUtils.generateScalaCode(smithySpec).values.toList
+    val result = TestUtils.generateScalaCode(smithySpecs: _*).values.toList
 
     TestUtils.assertContainsSection(
       files = result,
