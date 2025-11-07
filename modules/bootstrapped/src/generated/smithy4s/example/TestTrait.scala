@@ -17,8 +17,8 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
   val id: ShapeId = ShapeId("smithy4s.example", "testTrait")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(orderType: Option[OrderType]): TestTrait = TestTrait(orderType)

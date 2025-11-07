@@ -24,14 +24,14 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
 
   implicit val schema: Schema[StructureWithRefinedTypes] = struct(
     smithy4s.example.Age.schema.optional[StructureWithRefinedTypes]("age", _.age),
-    PersonAge.schema.field[StructureWithRefinedTypes]("personAge", _.personAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
+    PersonAge.schema.field[StructureWithRefinedTypes]("personAge", _.personAge).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.0d))),
     smithy4s.example.Age.schema.required[StructureWithRefinedTypes]("requiredAge", _.requiredAge),
     smithy4s.example.FancyList.schema.optional[StructureWithRefinedTypes]("fancyList", _.fancyList),
     UnwrappedFancyList.underlyingSchema.optional[StructureWithRefinedTypes]("unwrappedFancyList", _.unwrappedFancyList),
     smithy4s.example.Name.schema.optional[StructureWithRefinedTypes]("name", _.name),
     DogName.underlyingSchema.optional[StructureWithRefinedTypes]("dogName", _.dogName),
-    int.refined[smithy4s.refined.Age](smithy4s.example.AgeFormat()).field[StructureWithRefinedTypes]("inlineFieldConstraint", _.inlineFieldConstraint).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    uuid.field[StructureWithRefinedTypes]("uuidField", _.uuidField).addHints(smithy.api.Default(smithy4s.Document.fromString("00000000-0000-0000-0000-000000000000"))),
-    uuid.optional[StructureWithRefinedTypes]("uuidField2", _.uuidField2).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    int.refined[smithy4s.refined.Age](smithy4s.example.AgeFormat()).field[StructureWithRefinedTypes]("inlineFieldConstraint", _.inlineFieldConstraint).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.0d))),
+    uuid.field[StructureWithRefinedTypes]("uuidField", _.uuidField).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("00000000-0000-0000-0000-000000000000"))),
+    uuid.optional[StructureWithRefinedTypes]("uuidField2", _.uuidField2).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
   )(make).withId(id).addHints(hints)
 }

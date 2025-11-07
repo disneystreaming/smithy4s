@@ -40,8 +40,8 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
 
   val hints: Hints = Hints(
-    smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj("message" -> smithy4s.Document.fromString("A compelling reason"), "since" -> smithy4s.Document.fromString("0.0.1"))),
+  )
 
   @deprecated(message = "N/A", since = "N/A")
   final case class SCase(s: String) extends DeprecatedUnion { final def $ordinal: Int = 0 }
@@ -55,8 +55,8 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
     val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    ).lazily
+      Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
+    )
 
 
     val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
@@ -72,8 +72,8 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
     val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    ).lazily
+      Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
+    )
 
 
     val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
@@ -83,8 +83,8 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
   object SCase {
     val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    ).lazily
+      Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
+    )
     val schema: Schema[DeprecatedUnion.SCase] = bijection(string.addHints(hints), DeprecatedUnion.SCase(_), _.s)
     val alt = schema.oneOf[DeprecatedUnion]("s")
   }

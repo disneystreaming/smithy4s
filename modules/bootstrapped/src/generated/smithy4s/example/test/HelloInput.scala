@@ -13,13 +13,13 @@ object HelloInput extends ShapeTag.Companion[HelloInput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(name: String): HelloInput = HelloInput(name)
 
   implicit val schema: Schema[HelloInput] = struct(
-    string.required[HelloInput]("name", _.name).addHints(smithy.api.HttpLabel()),
+    string.required[HelloInput]("name", _.name).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

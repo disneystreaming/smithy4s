@@ -12,8 +12,8 @@ object UnionWrapper extends ShapeTag.Companion[UnionWrapper] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "UnionWrapper")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(myUnion: Option[MyUnion]): UnionWrapper = UnionWrapper(myUnion)

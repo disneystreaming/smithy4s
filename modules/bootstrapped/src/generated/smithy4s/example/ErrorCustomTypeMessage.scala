@@ -15,8 +15,8 @@ object ErrorCustomTypeMessage extends ShapeTag.Companion[ErrorCustomTypeMessage]
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorCustomTypeMessage")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[CustomErrorMessageType]): ErrorCustomTypeMessage = ErrorCustomTypeMessage(message)

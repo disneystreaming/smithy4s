@@ -19,8 +19,8 @@ object DefaultVariants extends ShapeTag.Companion[DefaultVariants] {
 
   implicit val schema: Schema[DefaultVariants] = struct(
     string.required[DefaultVariants]("req", _.req),
-    string.required[DefaultVariants]("reqDef", _.reqDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
+    string.required[DefaultVariants]("reqDef", _.reqDef).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("default"))),
     string.optional[DefaultVariants]("opt", _.opt),
-    string.field[DefaultVariants]("optDef", _.optDef).addHints(smithy.api.Default(smithy4s.Document.fromString("default"))),
+    string.field[DefaultVariants]("optDef", _.optDef).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("default"))),
   )(make).withId(id).addHints(hints)
 }

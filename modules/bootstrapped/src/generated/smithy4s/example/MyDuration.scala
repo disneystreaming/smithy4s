@@ -11,8 +11,8 @@ import smithy4s.schema.Schema.duration
 object MyDuration extends Newtype[Duration] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyDuration")
   val hints: Hints = Hints(
-    alloy.DurationSecondsFormat(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "durationSecondsFormat"), smithy4s.Document.obj()),
+  )
   val underlyingSchema: Schema[Duration] = duration.withId(id).addHints(hints)
   implicit val schema: Schema[MyDuration] = bijection(underlyingSchema, asBijection)
 }

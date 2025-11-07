@@ -18,6 +18,6 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
   private def make(one: String): DefaultInMixinUsageTest = DefaultInMixinUsageTest(one)
 
   implicit val schema: Schema[DefaultInMixinUsageTest] = struct(
-    string.field[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+    string.field[DefaultInMixinUsageTest]("one", _.one).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
   )(make).withId(id).addHints(hints)
 }

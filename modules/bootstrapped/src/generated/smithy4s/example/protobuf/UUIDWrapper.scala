@@ -14,8 +14,8 @@ object UUIDWrapper extends ShapeTag.Companion[UUIDWrapper] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "UUIDWrapper")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(uuid: Option[UUID], compactUUID: Option[CompactUUID]): UUIDWrapper = UUIDWrapper(uuid, compactUUID)

@@ -18,8 +18,8 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
   private def make(key: String, bucketName: String, payload: S3Object): CreateObjectInput = CreateObjectInput(key, bucketName, payload)
 
   implicit val schema: Schema[CreateObjectInput] = struct(
-    string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),
-    string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
-    S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(smithy.api.HttpPayload()),
+    string.required[CreateObjectInput]("key", _.key).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

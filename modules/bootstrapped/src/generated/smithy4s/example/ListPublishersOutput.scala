@@ -12,8 +12,8 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListPublishersOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(publishers: List[PublisherId]): ListPublishersOutput = ListPublishersOutput(publishers)

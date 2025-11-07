@@ -21,8 +21,8 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
   val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("FaceCard types"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("FaceCard types")),
+  )
 
   case object JACK extends FaceCard("JACK", "JACK", 1, Hints.empty)
   case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints.empty)

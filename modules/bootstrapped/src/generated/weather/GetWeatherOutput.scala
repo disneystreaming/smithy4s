@@ -13,8 +13,8 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
   val id: ShapeId = ShapeId("weather", "GetWeatherOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(weather: String): GetWeatherOutput = GetWeatherOutput(weather)

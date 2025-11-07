@@ -14,14 +14,14 @@ object WrappedScalars extends ShapeTag.Companion[WrappedScalars] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "WrappedScalars")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(int: Option[Int], bool: Option[Boolean]): WrappedScalars = WrappedScalars(int, bool)
 
   implicit val schema: Schema[WrappedScalars] = struct(
-    int.optional[WrappedScalars]("int", _.int).addHints(alloy.proto.ProtoWrapped()),
-    boolean.optional[WrappedScalars]("bool", _.bool).addHints(alloy.proto.ProtoWrapped()),
+    int.optional[WrappedScalars]("int", _.int).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoWrapped"), smithy4s.Document.obj())),
+    boolean.optional[WrappedScalars]("bool", _.bool).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoWrapped"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

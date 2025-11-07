@@ -27,8 +27,8 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   val version: String = ""
 
   val hints: Hints = Hints(
-    smithy.api.Deprecated(message = None, since = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -82,7 +82,7 @@ object DeprecatedServiceOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DeprecatedOperation"))
       .withInput(unit)
       .withOutput(unit)
-      .withHints(smithy.api.Deprecated(message = None, since = None))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()))
     def wrap(input: Unit): DeprecatedOperation = DeprecatedOperation()
   }
 }

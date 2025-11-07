@@ -10,8 +10,8 @@ import smithy4s.schema.Schema.byte
 object StreamedBlob extends Newtype[Byte] {
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedBlob")
   val hints: Hints = Hints(
-    smithy.api.Streaming(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "streaming"), smithy4s.Document.obj()),
+  )
   val underlyingSchema: Schema[Byte] = byte.withId(id).addHints(hints)
   implicit val schema: Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
 }

@@ -17,6 +17,6 @@ object DefaultNotCapitalized extends ShapeTag.Companion[DefaultNotCapitalized] {
   private def make(name: Username): DefaultNotCapitalized = DefaultNotCapitalized(name)
 
   implicit val schema: Schema[DefaultNotCapitalized] = struct(
-    Username.schema.required[DefaultNotCapitalized]("name", _.name).addHints(smithy.api.Default(smithy4s.Document.fromString("hello"))),
+    Username.schema.required[DefaultNotCapitalized]("name", _.name).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("hello"))),
   )(make).withId(id).addHints(hints)
 }

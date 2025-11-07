@@ -20,6 +20,6 @@ object AStructure extends ShapeTag.Companion[AStructure] {
   private def make(astring: AString): AStructure = AStructure(astring)
 
   implicit val schema: Schema[AStructure] = struct(
-    AString.schema.field[AStructure]("astring", _.astring).addHints(smithy.api.Default(smithy4s.Document.fromString("\"Hello World\" with \"quotes\""))),
+    AString.schema.field[AStructure]("astring", _.astring).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("\"Hello World\" with \"quotes\""))),
   )(make).withId(id).addHints(hints)
 }

@@ -11,8 +11,8 @@ import smithy4s.schema.Schema.string
 object AString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "AString")
   val hints: Hints = Hints(
-    smithy.api.Documentation("This is a simple example of a \"quoted string\""),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("This is a simple example of a \"quoted string\"")),
+  )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[AString] = bijection(underlyingSchema, asBijection)
 }

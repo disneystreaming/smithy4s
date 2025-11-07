@@ -12,9 +12,9 @@ import smithy4s.schema.Schema.uuid
 object UuidTrait extends Newtype[UUID] {
   val id: ShapeId = ShapeId("smithy4s.example", "uuidTrait")
   val hints: Hints = Hints(
-    alloy.UuidFormat(),
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "uuidFormat"), smithy4s.Document.obj()),
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
   val underlyingSchema: Schema[UUID] = uuid.withId(id).addHints(hints)
   implicit val schema: Schema[UuidTrait] = recursive(bijection(underlyingSchema, asBijection))
 }

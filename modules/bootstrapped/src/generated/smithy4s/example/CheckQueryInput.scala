@@ -17,6 +17,6 @@ object CheckQueryInput extends ShapeTag.Companion[CheckQueryInput] {
   private def make(inp: Option[Map[String, List[String]]]): CheckQueryInput = CheckQueryInput(inp)
 
   implicit val schema: Schema[CheckQueryInput] = struct(
-    QParams.underlyingSchema.optional[CheckQueryInput]("inp", _.inp).addHints(smithy.api.Default(smithy4s.Document.nullDoc), smithy.api.HttpQueryParams()),
+    QParams.underlyingSchema.optional[CheckQueryInput]("inp", _.inp).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc), Hints.dynamic(ShapeId("smithy.api", "httpQueryParams"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

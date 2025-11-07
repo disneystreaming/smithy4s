@@ -25,8 +25,8 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   val version: String = ""
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -79,7 +79,7 @@ object WeatherServiceOperation {
     val schema: OperationSchema[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = Schema.operation(ShapeId("weather", "GetWeather"))
       .withInput(GetWeatherInput.schema)
       .withOutput(GetWeatherOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/weather/{city}"))))
     def wrap(input: GetWeatherInput): GetWeather = GetWeather(input)
   }
 }

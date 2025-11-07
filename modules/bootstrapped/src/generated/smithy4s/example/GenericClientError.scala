@@ -16,9 +16,9 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericClientError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(418),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(418.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(message: String): GenericClientError = GenericClientError(message)

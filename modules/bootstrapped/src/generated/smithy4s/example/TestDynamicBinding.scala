@@ -15,8 +15,8 @@ object TestDynamicBinding extends ShapeTag.Companion[TestDynamicBinding] {
   val id: ShapeId = ShapeId("smithy4s.example", "testDynamicBinding")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(str: Option[String], int: Option[Int]): TestDynamicBinding = TestDynamicBinding(str, int)

@@ -17,8 +17,8 @@ object OtherScalars extends ShapeTag.Companion[OtherScalars] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "OtherScalars")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(boolean: Boolean, byte: Byte, float: Float, double: Double, short: Short): OtherScalars = OtherScalars(boolean, byte, float, double, short)

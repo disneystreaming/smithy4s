@@ -16,8 +16,8 @@ object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHFallbackServerError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[String]): EHFallbackServerError = EHFallbackServerError(message)

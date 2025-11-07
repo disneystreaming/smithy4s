@@ -20,8 +20,8 @@ object BincompatOpenEnum extends Enumeration[BincompatOpenEnum] with ShapeTag.Co
   val id: ShapeId = ShapeId("smithy4s.example.bincompat", "BincompatOpenEnum")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
+  )
 
   private object impl {
     case object A extends BincompatOpenEnum("A", "A", 0, Hints.empty)

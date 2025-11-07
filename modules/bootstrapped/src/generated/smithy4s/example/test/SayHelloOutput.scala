@@ -18,7 +18,7 @@ object SayHelloOutput extends ShapeTag.Companion[SayHelloOutput] {
   private def make(payload: SayHelloPayload, header1: String): SayHelloOutput = SayHelloOutput(payload, header1)
 
   implicit val schema: Schema[SayHelloOutput] = struct(
-    SayHelloPayload.schema.required[SayHelloOutput]("payload", _.payload).addHints(smithy.api.HttpPayload()),
-    string.required[SayHelloOutput]("header1", _.header1).addHints(smithy.api.HttpHeader("X-H1")),
+    SayHelloPayload.schema.required[SayHelloOutput]("payload", _.payload).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
+    string.required[SayHelloOutput]("header1", _.header1).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-H1"))),
   )(make).withId(id).addHints(hints)
 }

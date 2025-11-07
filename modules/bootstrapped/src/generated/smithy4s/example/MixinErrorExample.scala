@@ -17,8 +17,8 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinErrorExample")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+  )
 
   // constructor using the original order from the spec
   private def make(a: Option[String], b: Option[Int], c: Option[Long], d: Option[Boolean]): MixinErrorExample = MixinErrorExample(a, b, c, d)

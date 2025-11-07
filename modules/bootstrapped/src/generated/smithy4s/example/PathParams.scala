@@ -22,13 +22,13 @@ object PathParams extends ShapeTag.Companion[PathParams] {
   private def make(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): PathParams = PathParams(str, int, ts1, ts2, ts3, ts4, b, ie)
 
   implicit val schema: Schema[PathParams] = struct(
-    string.required[PathParams]("str", _.str).addHints(smithy.api.HttpLabel()),
-    int.required[PathParams]("int", _.int).addHints(smithy.api.HttpLabel()),
-    timestamp.required[PathParams]("ts1", _.ts1).addHints(smithy.api.HttpLabel()),
-    timestamp.required[PathParams]("ts2", _.ts2).addHints(smithy.api.HttpLabel(), smithy.api.TimestampFormat.DATE_TIME.widen),
-    timestamp.required[PathParams]("ts3", _.ts3).addHints(smithy.api.HttpLabel(), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    timestamp.required[PathParams]("ts4", _.ts4).addHints(smithy.api.HttpLabel(), smithy.api.TimestampFormat.HTTP_DATE.widen),
-    boolean.required[PathParams]("b", _.b).addHints(smithy.api.HttpLabel()),
-    Numbers.schema.required[PathParams]("ie", _.ie).addHints(smithy.api.HttpLabel()),
+    string.required[PathParams]("str", _.str).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    int.required[PathParams]("int", _.int).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    timestamp.required[PathParams]("ts1", _.ts1).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    timestamp.required[PathParams]("ts2", _.ts2).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time"))),
+    timestamp.required[PathParams]("ts3", _.ts3).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
+    timestamp.required[PathParams]("ts4", _.ts4).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("http-date"))),
+    boolean.required[PathParams]("b", _.b).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    Numbers.schema.required[PathParams]("ie", _.ie).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

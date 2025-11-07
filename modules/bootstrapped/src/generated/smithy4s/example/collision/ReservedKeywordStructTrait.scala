@@ -13,8 +13,8 @@ object ReservedKeywordStructTrait extends ShapeTag.Companion[ReservedKeywordStru
   val id: ShapeId = ShapeId("smithy4s.example.collision", "reservedKeywordStructTrait")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(_implicit: String, _package: Option[Packagee]): ReservedKeywordStructTrait = ReservedKeywordStructTrait(_implicit, _package)

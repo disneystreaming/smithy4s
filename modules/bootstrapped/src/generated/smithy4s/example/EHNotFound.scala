@@ -16,9 +16,9 @@ object EHNotFound extends ShapeTag.Companion[EHNotFound] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHNotFound")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(404),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(404.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[String]): EHNotFound = EHNotFound(message)

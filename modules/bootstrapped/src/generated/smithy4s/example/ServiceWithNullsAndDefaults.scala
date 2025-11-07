@@ -28,8 +28,8 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -85,7 +85,7 @@ object ServiceWithNullsAndDefaultsOperation {
     val schema: OperationSchema[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "DefaultNullsOperation"))
       .withInput(DefaultNullsOperationInput.schema)
       .withOutput(DefaultNullsOperationOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/operation/{requiredLabel}"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/operation/{requiredLabel}"))))
     def wrap(input: DefaultNullsOperationInput): DefaultNullsOperation = DefaultNullsOperation(input)
   }
   final case class TimestampOperation(input: TimestampOperationInput) extends ServiceWithNullsAndDefaultsOperation[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] {
@@ -97,7 +97,7 @@ object ServiceWithNullsAndDefaultsOperation {
     val schema: OperationSchema[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TimestampOperation"))
       .withInput(TimestampOperationInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/timestamp-operation"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/timestamp-operation"))))
     def wrap(input: TimestampOperationInput): TimestampOperation = TimestampOperation(input)
   }
 }

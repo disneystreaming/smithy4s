@@ -22,7 +22,7 @@ object Metadata extends ShapeTag.Companion[Metadata] {
 
   implicit val schema: Schema[Metadata] = struct(
     string.optional[Metadata]("contentType", _.contentType),
-    timestamp.optional[Metadata]("lastModified", _.lastModified).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    timestamp.optional[Metadata]("lastModified", _.lastModified).addHints(Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
     string.optional[Metadata]("checkSum", _.checkSum),
     boolean.optional[Metadata]("pendingDeletion", _.pendingDeletion),
     string.optional[Metadata]("etag", _.etag),

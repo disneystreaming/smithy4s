@@ -18,6 +18,6 @@ object OpOutput extends ShapeTag.Companion[OpOutput] {
   private def make(output: String): OpOutput = OpOutput(output)
 
   implicit val schema: Schema[OpOutput] = struct(
-    string.required[OpOutput]("output", _.output).addHints(smithy.api.HttpPayload()),
+    string.required[OpOutput]("output", _.output).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

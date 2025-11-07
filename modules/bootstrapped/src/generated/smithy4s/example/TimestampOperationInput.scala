@@ -14,15 +14,15 @@ object TimestampOperationInput extends ShapeTag.Companion[TimestampOperationInpu
   val id: ShapeId = ShapeId("smithy4s.example", "TimestampOperationInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(httpDate: Timestamp, epochSeconds: Timestamp, dateTime: Timestamp): TimestampOperationInput = TimestampOperationInput(httpDate, epochSeconds, dateTime)
 
   implicit val schema: Schema[TimestampOperationInput] = struct(
-    timestamp.required[TimestampOperationInput]("httpDate", _.httpDate).addHints(smithy.api.Default(smithy4s.Document.fromString("Thu, 23 May 2024 10:20:30 GMT")), smithy.api.TimestampFormat.HTTP_DATE.widen),
-    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.71645963E9d)), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    timestamp.required[TimestampOperationInput]("dateTime", _.dateTime).addHints(smithy.api.Default(smithy4s.Document.fromString("2024-05-23T10:20:30.000Z")), smithy.api.TimestampFormat.DATE_TIME.widen),
+    timestamp.required[TimestampOperationInput]("httpDate", _.httpDate).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("Thu, 23 May 2024 10:20:30 GMT")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("http-date"))),
+    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.71645963E9d)), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
+    timestamp.required[TimestampOperationInput]("dateTime", _.dateTime).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("2024-05-23T10:20:30.000Z")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time"))),
   )(make).withId(id).addHints(hints)
 }

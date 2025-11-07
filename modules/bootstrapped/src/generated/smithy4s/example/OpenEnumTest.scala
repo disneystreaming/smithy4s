@@ -21,8 +21,8 @@ object OpenEnumTest extends Enumeration[OpenEnumTest] with ShapeTag.Companion[Op
   val id: ShapeId = ShapeId("smithy4s.example", "OpenEnumTest")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
+  )
 
   object optics {
     val ONE: Prism[OpenEnumTest, OpenEnumTest.ONE.type] = Prism.partial[OpenEnumTest, OpenEnumTest.ONE.type]{ case OpenEnumTest.ONE => OpenEnumTest.ONE }(identity)

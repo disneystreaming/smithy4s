@@ -22,17 +22,17 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
   private def make(str: Option[String], int: Option[Int], ts1: Option[Timestamp], ts2: Option[Timestamp], ts3: Option[Timestamp], ts4: Option[Timestamp], b: Option[Boolean], sl: Option[List[String]], ie: Option[Numbers], on: Option[OpenNums], ons: Option[OpenNumsStr], slm: Option[Map[String, String]]): HeadersStruct = HeadersStruct(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, slm)
 
   implicit val schema: Schema[HeadersStruct] = struct(
-    string.optional[HeadersStruct]("str", _.str).addHints(smithy.api.HttpHeader("str")),
-    int.optional[HeadersStruct]("int", _.int).addHints(smithy.api.HttpHeader("int")),
-    timestamp.optional[HeadersStruct]("ts1", _.ts1).addHints(smithy.api.HttpHeader("ts1")),
-    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(smithy.api.HttpHeader("ts2"), smithy.api.TimestampFormat.DATE_TIME.widen),
-    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(smithy.api.HttpHeader("ts3"), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(smithy.api.HttpHeader("ts4"), smithy.api.TimestampFormat.HTTP_DATE.widen),
-    boolean.optional[HeadersStruct]("b", _.b).addHints(smithy.api.HttpHeader("b")),
-    StringList.underlyingSchema.optional[HeadersStruct]("sl", _.sl).addHints(smithy.api.HttpHeader("sl")),
-    Numbers.schema.optional[HeadersStruct]("ie", _.ie).addHints(smithy.api.HttpHeader("nums")),
-    OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(smithy.api.HttpHeader("openNums")),
-    OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(smithy.api.HttpHeader("openNumsStr")),
-    StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(smithy.api.HttpPrefixHeaders("foo-")),
+    string.optional[HeadersStruct]("str", _.str).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("str"))),
+    int.optional[HeadersStruct]("int", _.int).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("int"))),
+    timestamp.optional[HeadersStruct]("ts1", _.ts1).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("ts1"))),
+    timestamp.optional[HeadersStruct]("ts2", _.ts2).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("ts2")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time"))),
+    timestamp.optional[HeadersStruct]("ts3", _.ts3).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("ts3")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
+    timestamp.optional[HeadersStruct]("ts4", _.ts4).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("ts4")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("http-date"))),
+    boolean.optional[HeadersStruct]("b", _.b).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("b"))),
+    StringList.underlyingSchema.optional[HeadersStruct]("sl", _.sl).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("sl"))),
+    Numbers.schema.optional[HeadersStruct]("ie", _.ie).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("nums"))),
+    OpenNums.schema.optional[HeadersStruct]("on", _.on).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("openNums"))),
+    OpenNumsStr.schema.optional[HeadersStruct]("ons", _.ons).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("openNumsStr"))),
+    StringMap.underlyingSchema.optional[HeadersStruct]("slm", _.slm).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPrefixHeaders"), smithy4s.Document.fromString("foo-"))),
   )(make).withId(id).addHints(hints)
 }

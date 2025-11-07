@@ -10,7 +10,9 @@ import smithy4s.schema.Schema.string
 
 object TestStructurePattern extends Newtype[TestStructurePatternTarget] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestStructurePattern")
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    Hints.dynamic(ShapeId("alloy", "structurePattern"), smithy4s.Document.obj("pattern" -> smithy4s.Document.fromString("{one}-{two}"), "target" -> smithy4s.Document.fromString("smithy4s.example#TestStructurePatternTarget"))),
+  )
   val underlyingSchema: Schema[TestStructurePatternTarget] = string.refined[TestStructurePatternTarget](alloy.StructurePattern(pattern = "{one}-{two}", target = smithy4s.ShapeId(namespace = "smithy4s.example", name = "TestStructurePatternTarget"))).withId(id).addHints(hints)
   implicit val schema: Schema[TestStructurePattern] = bijection(underlyingSchema, asBijection)
 }

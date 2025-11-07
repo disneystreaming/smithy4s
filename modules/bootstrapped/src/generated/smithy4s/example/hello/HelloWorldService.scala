@@ -28,9 +28,9 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-    smithy.api.Tags(List("testServiceTag")),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+    Hints.dynamic(ShapeId("smithy.api", "tags"), smithy4s.Document.array(smithy4s.Document.fromString("testServiceTag"))),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -86,7 +86,7 @@ object HelloWorldServiceOperation {
       .withInput(Person.schema)
       .withError(HelloError.errorSchema)
       .withOutput(Greeting.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200), smithy.api.Tags(List("testOperationTag")))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/{name}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "tags"), smithy4s.Document.array(smithy4s.Document.fromString("testOperationTag"))))
     def wrap(input: Person): Hello = Hello(input)
   }
   sealed trait HelloError extends scala.Product with scala.Serializable { self =>

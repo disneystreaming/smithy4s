@@ -13,8 +13,8 @@ object ExampleOperationOutput extends ShapeTag.Companion[ExampleOperationOutput]
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperationOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(b: String): ExampleOperationOutput = ExampleOperationOutput(b)

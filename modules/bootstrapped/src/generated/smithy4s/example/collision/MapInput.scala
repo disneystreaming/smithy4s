@@ -12,8 +12,8 @@ object MapInput extends ShapeTag.Companion[MapInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "MapInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(value: Map[String, String]): MapInput = MapInput(value)

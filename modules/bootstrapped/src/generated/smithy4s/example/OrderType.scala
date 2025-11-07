@@ -38,8 +38,8 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID")),
+  )
 
   final case class OnlineCase(online: OrderNumber) extends OrderType { final def $ordinal: Int = 0 }
   /** For an InStoreOrder a location ID isn't needed */
@@ -51,8 +51,8 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints: Hints = Hints(
-      smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
-    ).lazily
+      Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("For an InStoreOrder a location ID isn\'t needed")),
+    )
 
     // constructor using the original order from the spec
     private def make(id: OrderNumber, locationId: Option[String]): InStoreOrder = InStoreOrder(id, locationId)
@@ -67,8 +67,8 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   case object PreviewCase extends OrderType {
     final def $ordinal: Int = 2
     val hints: Hints = Hints(
-      smithy.api.JsonName("PREVIEW"),
-    ).lazily
+      Hints.dynamic(ShapeId("smithy.api", "jsonName"), smithy4s.Document.fromString("PREVIEW")),
+    )
     val alt = Schema.constant(OrderType.PreviewCase).oneOf[OrderType]("preview").addHints(PreviewCase.hints)
   }
 

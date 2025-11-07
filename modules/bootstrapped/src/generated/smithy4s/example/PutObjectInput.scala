@@ -14,17 +14,17 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("A key and bucket is always required for putting a new file in a bucket")),
+  )
 
   // constructor using the original order from the spec
   private def make(key: ObjectKey, bucketName: BucketName, foo: Option[LowHigh], someValue: Option[SomeValue], data: String): PutObjectInput = PutObjectInput(key, bucketName, data, foo, someValue)
 
   implicit val schema: Schema[PutObjectInput] = struct(
-    ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel()),
-    BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
-    LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(smithy.api.HttpHeader("X-Foo")),
-    SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(smithy.api.HttpQuery("paramName")),
-    string.required[PutObjectInput]("data", _.data).addHints(smithy.api.HttpPayload()),
+    ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-Foo"))),
+    SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("paramName"))),
+    string.required[PutObjectInput]("data", _.data).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

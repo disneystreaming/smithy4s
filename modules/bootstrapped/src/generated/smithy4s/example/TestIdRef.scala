@@ -18,7 +18,7 @@ object TestIdRef extends ShapeTag.Companion[TestIdRef] {
   private def make(test: Option[ShapeId], test2: Option[TestIdRefTwo]): TestIdRef = TestIdRef(test, test2)
 
   implicit val schema: Schema[TestIdRef] = struct(
-    string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).optional[TestIdRef]("test", _.test),
+    string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).optional[TestIdRef]("test", _.test).addHints(Hints.dynamic(ShapeId("smithy.api", "idRef"), smithy4s.Document.obj())),
     TestIdRefTwo.schema.optional[TestIdRef]("test2", _.test2),
   )(make).withId(id).addHints(hints)
 }

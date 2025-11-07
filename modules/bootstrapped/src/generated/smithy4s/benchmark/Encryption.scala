@@ -21,7 +21,7 @@ object Encryption extends ShapeTag.Companion[Encryption] {
 
   implicit val schema: Schema[Encryption] = struct(
     string.optional[Encryption]("user", _.user),
-    timestamp.optional[Encryption]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    timestamp.optional[Encryption]("date", _.date).addHints(Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
     EncryptionMetadata.schema.optional[Encryption]("metadata", _.metadata),
   )(make).withId(id).addHints(hints)
 }

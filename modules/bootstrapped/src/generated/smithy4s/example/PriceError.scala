@@ -17,14 +17,14 @@ object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+  )
 
   // constructor using the original order from the spec
   private def make(message: String, code: Int): PriceError = PriceError(message, code)
 
   implicit val schema: Schema[PriceError] = struct(
     string.required[PriceError]("message", _.message),
-    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE")),
+    int.required[PriceError]("code", _.code).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-CODE"))),
   )(make).withId(id).addHints(hints)
 }

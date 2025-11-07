@@ -20,14 +20,14 @@ object InternalServerError extends ShapeTag.Companion[InternalServerError] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InternalServerError")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("<p>An error occurred on the server side.</p>"),
-    smithy.api.Error.SERVER.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("<p>An error occurred on the server side.</p>")),
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[ErrorMessage]): InternalServerError = InternalServerError(message)
 
   implicit val schema: Schema[InternalServerError] = struct(
-    ErrorMessage.schema.optional[InternalServerError]("message", _.message).addHints(smithy.api.Documentation("<p>The server encountered an internal error trying to fulfill the request.</p>")),
+    ErrorMessage.schema.optional[InternalServerError]("message", _.message).addHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("<p>The server encountered an internal error trying to fulfill the request.</p>"))),
   )(make).withId(id).addHints(hints)
 }

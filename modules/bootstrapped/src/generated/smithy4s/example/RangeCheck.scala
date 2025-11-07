@@ -13,8 +13,8 @@ object RangeCheck extends ShapeTag.Companion[RangeCheck] {
   val id: ShapeId = ShapeId("smithy4s.example", "RangeCheck")
 
   val hints: Hints = Hints(
-    smithy.api.Suppress(List("UnreferencedShape")),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "suppress"), smithy4s.Document.array(smithy4s.Document.fromString("UnreferencedShape"))),
+  )
 
   // constructor using the original order from the spec
   private def make(qty: Int): RangeCheck = RangeCheck(qty)

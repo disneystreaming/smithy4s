@@ -17,9 +17,9 @@ object CheckQueryOutput extends ShapeTag.Companion[CheckQueryOutput] {
   private def make(variants: Option[List[String]], staticVariants: Option[List[String]], kinds: Option[List[String]], staticKinds: Option[List[String]]): CheckQueryOutput = CheckQueryOutput(variants, staticVariants, kinds, staticKinds)
 
   implicit val schema: Schema[CheckQueryOutput] = struct(
-    QueryVariants.underlyingSchema.optional[CheckQueryOutput]("variants", _.variants).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    QueryVariants.underlyingSchema.optional[CheckQueryOutput]("staticVariants", _.staticVariants).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    QueryKinds.underlyingSchema.optional[CheckQueryOutput]("kinds", _.kinds).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    QueryKinds.underlyingSchema.optional[CheckQueryOutput]("staticKinds", _.staticKinds).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+    QueryVariants.underlyingSchema.optional[CheckQueryOutput]("variants", _.variants).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
+    QueryVariants.underlyingSchema.optional[CheckQueryOutput]("staticVariants", _.staticVariants).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
+    QueryKinds.underlyingSchema.optional[CheckQueryOutput]("kinds", _.kinds).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
+    QueryKinds.underlyingSchema.optional[CheckQueryOutput]("staticKinds", _.staticKinds).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
   )(make).withId(id).addHints(hints)
 }

@@ -12,8 +12,8 @@ object NonEmptyMapFormat extends ShapeTag.Companion[NonEmptyMapFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyMapFormat")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = Some("map"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj("selector" -> smithy4s.Document.fromString("map"))),
+  )
 
 
   implicit val schema: Schema[NonEmptyMapFormat] = constant(NonEmptyMapFormat()).withId(id).addHints(hints)

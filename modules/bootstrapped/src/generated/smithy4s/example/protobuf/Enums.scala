@@ -12,8 +12,8 @@ object Enums extends ShapeTag.Companion[Enums] {
   val id: ShapeId = ShapeId("smithy4s.example.protobuf", "Enums")
 
   val hints: Hints = Hints(
-    alloy.proto.ProtoEnabled(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy.proto", "protoEnabled"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(closedString: ClosedString, openString: OpenString, closedInt: ClosedInt, openInt: OpenInt): Enums = Enums(closedString, openString, closedInt, openInt)

@@ -18,8 +18,8 @@ object EchoInput extends ShapeTag.Companion[EchoInput] {
   private def make(pathParam: String, queryParam: Option[String], body: EchoBody): EchoInput = EchoInput(pathParam, body, queryParam)
 
   implicit val schema: Schema[EchoInput] = struct(
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).required[EchoInput]("pathParam", _.pathParam).addHints(smithy.api.HttpLabel()),
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[EchoInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
-    EchoBody.schema.required[EchoInput]("body", _.body).addHints(smithy.api.HttpPayload()),
+    string.validated(smithy.api.Length(min = Some(10L), max = None)).required[EchoInput]("pathParam", _.pathParam).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[EchoInput]("queryParam", _.queryParam).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("queryParam"))),
+    EchoBody.schema.required[EchoInput]("body", _.body).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

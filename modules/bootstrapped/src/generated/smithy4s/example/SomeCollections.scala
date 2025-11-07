@@ -13,8 +13,8 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
   val id: ShapeId = ShapeId("smithy4s.example", "SomeCollections")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(someList: List[String], someSet: Set[String], someMap: Map[String, String]): SomeCollections = SomeCollections(someList, someSet, someMap)

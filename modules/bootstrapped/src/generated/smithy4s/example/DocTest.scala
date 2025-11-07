@@ -15,8 +15,8 @@ object DocTest extends ShapeTag.Companion[DocTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DocTest")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Test if an at-sign is rendered appropriately\n@test"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Test if an at-sign is rendered appropriately\n@test")),
+  )
 
 
   implicit val schema: Schema[DocTest] = constant(DocTest()).withId(id).addHints(hints)

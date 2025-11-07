@@ -18,8 +18,8 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
   private def make(key: String, bucketName: String, body: String): SendStringInput = SendStringInput(key, bucketName, body)
 
   implicit val schema: Schema[SendStringInput] = struct(
-    string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel()),
-    string.required[SendStringInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel()),
-    string.required[SendStringInput]("body", _.body).addHints(smithy.api.HttpPayload()),
+    string.required[SendStringInput]("key", _.key).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    string.required[SendStringInput]("bucketName", _.bucketName).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
+    string.required[SendStringInput]("body", _.body).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

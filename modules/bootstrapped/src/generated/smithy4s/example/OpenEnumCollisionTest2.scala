@@ -21,8 +21,8 @@ object OpenEnumCollisionTest2 extends Enumeration[OpenEnumCollisionTest2] with S
   val id: ShapeId = ShapeId("smithy4s.example", "OpenEnumCollisionTest2")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
+  )
 
   object optics {
     val ONE: Prism[OpenEnumCollisionTest2, OpenEnumCollisionTest2.ONE.type] = Prism.partial[OpenEnumCollisionTest2, OpenEnumCollisionTest2.ONE.type]{ case OpenEnumCollisionTest2.ONE => OpenEnumCollisionTest2.ONE }(identity)

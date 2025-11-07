@@ -22,6 +22,6 @@ object JsonUnknownExample extends ShapeTag.Companion[JsonUnknownExample] {
   implicit val schema: Schema[JsonUnknownExample] = struct(
     string.optional[JsonUnknownExample]("s", _.s),
     int.optional[JsonUnknownExample]("i", _.i),
-    AdditionalProperties.underlyingSchema.optional[JsonUnknownExample]("additionalProperties", _.additionalProperties).addHints(alloy.JsonUnknown()),
+    AdditionalProperties.underlyingSchema.optional[JsonUnknownExample]("additionalProperties", _.additionalProperties).addHints(Hints.dynamic(ShapeId("alloy", "jsonUnknown"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

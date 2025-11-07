@@ -12,8 +12,8 @@ object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyListFormat")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = Some("list"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj("selector" -> smithy4s.Document.fromString("list"))),
+  )
 
 
   implicit val schema: Schema[NonEmptyListFormat] = constant(NonEmptyListFormat()).withId(id).addHints(hints)

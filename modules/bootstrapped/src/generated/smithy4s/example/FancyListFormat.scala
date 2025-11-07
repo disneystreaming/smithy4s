@@ -12,8 +12,8 @@ object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "fancyListFormat")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = Some("list:test(> member > string)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj("selector" -> smithy4s.Document.fromString("list:test(> member > string)"))),
+  )
 
 
   implicit val schema: Schema[FancyListFormat] = constant(FancyListFormat()).withId(id).addHints(hints)

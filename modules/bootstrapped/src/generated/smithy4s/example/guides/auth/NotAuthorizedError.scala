@@ -16,9 +16,9 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
   val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(401),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(401.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(message: String): NotAuthorizedError = NotAuthorizedError(message)

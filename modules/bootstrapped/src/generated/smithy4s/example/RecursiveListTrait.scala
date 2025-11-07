@@ -12,8 +12,8 @@ import smithy4s.schema.Schema.string
 object RecursiveListTrait extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveListTrait")
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
   val underlyingSchema: Schema[List[String]] = list(string.addMemberHints(smithy4s.example.RecursiveListTrait(List()))).withId(id).addHints(hints)
   implicit val schema: Schema[RecursiveListTrait] = recursive(bijection(underlyingSchema, asBijection))
 }

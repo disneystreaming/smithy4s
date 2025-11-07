@@ -20,8 +20,8 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
   val id: ShapeId = ShapeId("smithy4s.example", "AudioEnum")
 
   val hints: Hints = Hints(
-    smithy.api.MediaType("audio/mpeg3"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "mediaType"), smithy4s.Document.fromString("audio/mpeg3")),
+  )
 
   case object GUITAR extends AudioEnum("GUITAR", "guitar", 0, Hints.empty)
   case object BASS extends AudioEnum("BASS", "bass", 1, Hints.empty)

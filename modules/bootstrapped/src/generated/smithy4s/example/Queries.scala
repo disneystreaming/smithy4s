@@ -23,18 +23,18 @@ object Queries extends ShapeTag.Companion[Queries] {
   private def make(str: Option[String], int: Option[Int], ts1: Option[Timestamp], ts2: Option[Timestamp], ts3: Option[Timestamp], ts4: Option[Timestamp], b: Option[Boolean], sl: Option[List[String]], ie: Option[Numbers], on: Option[OpenNums], ons: Option[OpenNumsStr], dbl: Option[Double], slm: Option[Map[String, String]]): Queries = Queries(str, int, ts1, ts2, ts3, ts4, b, sl, ie, on, ons, dbl, slm)
 
   implicit val schema: Schema[Queries] = struct(
-    string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str")),
-    int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int")),
-    timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery("ts1")),
-    timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.HttpQuery("ts2"), smithy.api.TimestampFormat.DATE_TIME.widen),
-    timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.HttpQuery("ts3"), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    timestamp.optional[Queries]("ts4", _.ts4).addHints(smithy.api.HttpQuery("ts4"), smithy.api.TimestampFormat.HTTP_DATE.widen),
-    boolean.optional[Queries]("b", _.b).addHints(smithy.api.HttpQuery("b")),
-    StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(smithy.api.HttpQuery("sl")),
-    Numbers.schema.optional[Queries]("ie", _.ie).addHints(smithy.api.HttpQuery("nums")),
-    OpenNums.schema.optional[Queries]("on", _.on).addHints(smithy.api.HttpQuery("openNums")),
-    OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(smithy.api.HttpQuery("openNumsStr")),
-    double.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(0.0)), max = Some(scala.math.BigDecimal(100.0)))).optional[Queries]("dbl", _.dbl).addHints(smithy.api.HttpQuery("dbl")),
-    StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(smithy.api.HttpQueryParams()),
+    string.optional[Queries]("str", _.str).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("str"))),
+    int.optional[Queries]("int", _.int).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("int"))),
+    timestamp.optional[Queries]("ts1", _.ts1).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("ts1"))),
+    timestamp.optional[Queries]("ts2", _.ts2).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("ts2")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time"))),
+    timestamp.optional[Queries]("ts3", _.ts3).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("ts3")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
+    timestamp.optional[Queries]("ts4", _.ts4).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("ts4")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("http-date"))),
+    boolean.optional[Queries]("b", _.b).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("b"))),
+    StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("sl"))),
+    Numbers.schema.optional[Queries]("ie", _.ie).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("nums"))),
+    OpenNums.schema.optional[Queries]("on", _.on).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("openNums"))),
+    OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("openNumsStr"))),
+    double.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(0.0)), max = Some(scala.math.BigDecimal(100.0)))).optional[Queries]("dbl", _.dbl).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("dbl"))),
+    StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQueryParams"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

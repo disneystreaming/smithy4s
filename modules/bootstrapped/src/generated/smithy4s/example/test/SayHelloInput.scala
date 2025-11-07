@@ -13,15 +13,15 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(greeting: Option[String], query: Option[String], name: Option[String]): SayHelloInput = SayHelloInput(greeting, query, name)
 
   implicit val schema: Schema[SayHelloInput] = struct(
-    string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),
-    string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery("Hi")),
+    string.optional[SayHelloInput]("greeting", _.greeting).addHints(Hints.dynamic(ShapeId("smithy.api", "httpHeader"), smithy4s.Document.fromString("X-Greeting"))),
+    string.optional[SayHelloInput]("query", _.query).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("Hi"))),
     string.optional[SayHelloInput]("name", _.name),
   )(make).withId(id).addHints(hints)
 }

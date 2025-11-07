@@ -16,9 +16,9 @@ object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointExcept
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InvalidEndpointException")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(421),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(421.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[String]): InvalidEndpointException = InvalidEndpointException(message)

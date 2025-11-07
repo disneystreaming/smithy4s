@@ -13,8 +13,8 @@ object GreetInput extends ShapeTag.Companion[GreetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(name: String): GreetInput = GreetInput(name)

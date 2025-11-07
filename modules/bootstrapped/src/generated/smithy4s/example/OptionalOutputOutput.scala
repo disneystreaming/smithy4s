@@ -13,13 +13,13 @@ object OptionalOutputOutput extends ShapeTag.Companion[OptionalOutputOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "OptionalOutputOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(body: Option[String]): OptionalOutputOutput = OptionalOutputOutput(body)
 
   implicit val schema: Schema[OptionalOutputOutput] = struct(
-    string.optional[OptionalOutputOutput]("body", _.body).addHints(smithy.api.HttpPayload()),
+    string.optional[OptionalOutputOutput]("body", _.body).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

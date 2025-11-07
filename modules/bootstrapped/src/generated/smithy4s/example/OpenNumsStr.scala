@@ -20,8 +20,8 @@ object OpenNumsStr extends Enumeration[OpenNumsStr] with ShapeTag.Companion[Open
   val id: ShapeId = ShapeId("smithy4s.example", "OpenNumsStr")
 
   val hints: Hints = Hints(
-    alloy.OpenEnum(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "openEnum"), smithy4s.Document.obj()),
+  )
 
   case object ONE extends OpenNumsStr("ONE", "ONE", 0, Hints.empty)
   case object TWO extends OpenNumsStr("TWO", "TWO", 1, Hints.empty)

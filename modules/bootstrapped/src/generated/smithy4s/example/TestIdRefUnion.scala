@@ -35,7 +35,9 @@ object TestIdRefUnion extends ShapeTag.Companion[TestIdRefUnion] {
   final case class TestTwoCase(testTwo: TestIdRefTwo) extends TestIdRefUnion { final def $ordinal: Int = 1 }
 
   object TestCase {
-    val hints: Hints = Hints.empty
+    val hints: Hints = Hints(
+      Hints.dynamic(ShapeId("smithy.api", "idRef"), smithy4s.Document.obj()),
+    )
     val schema: Schema[TestIdRefUnion.TestCase] = bijection(string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).addHints(hints), TestIdRefUnion.TestCase(_), _.test)
     val alt = schema.oneOf[TestIdRefUnion]("test")
   }

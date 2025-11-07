@@ -18,13 +18,13 @@ object EnvVarString extends ShapeTag.Companion[EnvVarString] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnvVarString")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation(s"This is meant to be used with $${ENV_VAR}"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"This is meant to be used with $${ENV_VAR}")),
+  )
 
   // constructor using the original order from the spec
   private def make(member: Option[String]): EnvVarString = EnvVarString(member)
 
   implicit val schema: Schema[EnvVarString] = struct(
-    string.optional[EnvVarString]("member", _.member).addHints(smithy.api.Documentation(s"This is meant to be used with $$ENV_VAR")),
+    string.optional[EnvVarString]("member", _.member).addHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"This is meant to be used with $$ENV_VAR"))),
   )(make).withId(id).addHints(hints)
 }

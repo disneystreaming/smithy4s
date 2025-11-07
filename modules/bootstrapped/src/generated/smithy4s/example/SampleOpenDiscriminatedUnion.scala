@@ -34,8 +34,8 @@ object SampleOpenDiscriminatedUnion extends ShapeTag.Companion[SampleOpenDiscrim
   val id: ShapeId = ShapeId("smithy4s.example", "SampleOpenDiscriminatedUnion")
 
   val hints: Hints = Hints(
-    alloy.Discriminated("type"),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "discriminated"), smithy4s.Document.fromString("type")),
+  )
 
   final case class SCase(s: StructForDiscrimination) extends SampleOpenDiscriminatedUnion { final def $ordinal: Int = 0 }
   case object UCase extends SampleOpenDiscriminatedUnion {
@@ -52,8 +52,8 @@ object SampleOpenDiscriminatedUnion extends ShapeTag.Companion[SampleOpenDiscrim
   }
   object UnknownCase {
     val hints: Hints = Hints(
-      alloy.JsonUnknown(),
-    ).lazily
+      Hints.dynamic(ShapeId("alloy", "jsonUnknown"), smithy4s.Document.obj()),
+    )
     val schema: Schema[SampleOpenDiscriminatedUnion.UnknownCase] = bijection(document.addHints(hints), SampleOpenDiscriminatedUnion.UnknownCase(_), _.unknown)
     val alt = schema.oneOf[SampleOpenDiscriminatedUnion]("unknown")
   }

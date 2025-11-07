@@ -20,7 +20,7 @@ object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
   private def make(date: Timestamp, location: String): ErrorDetails = ErrorDetails(date, location)
 
   implicit val schema: Schema[ErrorDetails] = struct(
-    timestamp.required[ErrorDetails]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    timestamp.required[ErrorDetails]("date", _.date).addHints(Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
     string.required[ErrorDetails]("location", _.location),
   )(make).withId(id).addHints(hints)
 }

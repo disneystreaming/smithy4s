@@ -18,6 +18,6 @@ object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
   private def make(code: Int): CustomCodeInput = CustomCodeInput(code)
 
   implicit val schema: Schema[CustomCodeInput] = struct(
-    int.required[CustomCodeInput]("code", _.code).addHints(smithy.api.HttpLabel()),
+    int.required[CustomCodeInput]("code", _.code).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

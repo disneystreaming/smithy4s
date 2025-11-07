@@ -26,8 +26,8 @@ object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverride
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -80,7 +80,7 @@ object ReservedNameOverrideServiceOperation {
     val schema: OperationSchema[SetOpInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.reservedNameOverride", "SetOp"))
       .withInput(SetOpInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/set/"), "code" -> smithy4s.Document.fromDouble(204.0d))))
     def wrap(input: SetOpInput): SetOp = SetOp(input)
   }
 }

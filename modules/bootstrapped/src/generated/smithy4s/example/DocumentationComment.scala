@@ -18,13 +18,13 @@ object DocumentationComment extends ShapeTag.Companion[DocumentationComment] {
   val id: ShapeId = ShapeId("smithy4s.example", "DocumentationComment")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("We should be able to use comments in documentation /* */"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("We should be able to use comments in documentation /* */")),
+  )
 
   // constructor using the original order from the spec
   private def make(member: Option[String]): DocumentationComment = DocumentationComment(member)
 
   implicit val schema: Schema[DocumentationComment] = struct(
-    string.optional[DocumentationComment]("member", _.member).addHints(smithy.api.Documentation("/*")),
+    string.optional[DocumentationComment]("member", _.member).addHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("/*"))),
   )(make).withId(id).addHints(hints)
 }

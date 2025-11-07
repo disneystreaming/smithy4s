@@ -14,8 +14,8 @@ object FallbackError2 extends ShapeTag.Companion[FallbackError2] {
   val id: ShapeId = ShapeId("smithy4s.example", "FallbackError2")
 
   val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
+  )
 
   // constructor using the original order from the spec
   private def make(error: String): FallbackError2 = FallbackError2(error)

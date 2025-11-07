@@ -27,8 +27,8 @@ object Class extends ShapeTag.Companion[Class] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "class")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   final case class AdtStruct() extends Class {
     def $ordinal: Int = 0

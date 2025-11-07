@@ -17,6 +17,6 @@ object ValidatedFoo extends ShapeTag.Companion[ValidatedFoo] {
   private def make(name: ValidatedString): ValidatedFoo = ValidatedFoo(name)
 
   implicit val schema: Schema[ValidatedFoo] = struct(
-    ValidatedString.schema.field[ValidatedFoo]("name", _.name).addHints(smithy.api.Default(smithy4s.Document.fromString("abc"))),
+    ValidatedString.schema.field[ValidatedFoo]("name", _.name).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("abc"))),
   )(make).withId(id).addHints(hints)
 }

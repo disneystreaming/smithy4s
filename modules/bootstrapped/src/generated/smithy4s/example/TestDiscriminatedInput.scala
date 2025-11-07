@@ -18,6 +18,6 @@ object TestDiscriminatedInput extends ShapeTag.Companion[TestDiscriminatedInput]
   private def make(key: String): TestDiscriminatedInput = TestDiscriminatedInput(key)
 
   implicit val schema: Schema[TestDiscriminatedInput] = struct(
-    string.required[TestDiscriminatedInput]("key", _.key).addHints(smithy.api.HttpLabel()),
+    string.required[TestDiscriminatedInput]("key", _.key).addHints(Hints.dynamic(ShapeId("smithy.api", "httpLabel"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

@@ -16,9 +16,9 @@ object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServ
   val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherServerErrorWithCode")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(503),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(503.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Option[String]): RandomOtherServerErrorWithCode = RandomOtherServerErrorWithCode(message)

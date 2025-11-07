@@ -27,8 +27,8 @@ object ReservedKeywordUnionTrait extends ShapeTag.Companion[ReservedKeywordUnion
   val id: ShapeId = ShapeId("smithy4s.example.collision", "reservedKeywordUnionTrait")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "trait"), smithy4s.Document.obj()),
+  )
 
   final case class PackageCase(_package: PackageUnion) extends ReservedKeywordUnionTrait { final def $ordinal: Int = 0 }
 

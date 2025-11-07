@@ -18,6 +18,6 @@ object World extends ShapeTag.Companion[World] {
   private def make(message: String): World = World(message)
 
   implicit val schema: Schema[World] = struct(
-    string.field[World]("message", _.message).addHints(smithy.api.Default(smithy4s.Document.fromString("World !"))),
+    string.field[World]("message", _.message).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("World !"))),
   )(make).withId(id).addHints(hints)
 }

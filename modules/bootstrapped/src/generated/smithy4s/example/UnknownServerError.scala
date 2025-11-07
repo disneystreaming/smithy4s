@@ -14,9 +14,9 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnknownServerError")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(500),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(500.0d)),
+  )
 
   // constructor using the original order from the spec
   private def make(errorCode: UnknownServerErrorCode, description: Option[String], stateHash: Option[String]): UnknownServerError = UnknownServerError(errorCode, description, stateHash)

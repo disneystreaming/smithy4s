@@ -11,6 +11,6 @@ import smithy4s.schema.Schema.string
 object TestIdRefList extends Newtype[List[ShapeId]] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestIdRefList")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[ShapeId]] = list(string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None))).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[ShapeId]] = list(string.refined[ShapeId](smithy.api.IdRef(selector = "*", failWhenMissing = None, errorMessage = None)).addMemberHints(Hints.dynamic(ShapeId("smithy.api", "idRef"), smithy4s.Document.obj()))).withId(id).addHints(hints)
   implicit val schema: Schema[TestIdRefList] = bijection(underlyingSchema, asBijection)
 }

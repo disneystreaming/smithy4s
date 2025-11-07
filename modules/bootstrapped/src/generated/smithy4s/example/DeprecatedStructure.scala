@@ -14,16 +14,16 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedStructure")
 
   val hints: Hints = Hints(
-    smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj("message" -> smithy4s.Document.fromString("A compelling reason"), "since" -> smithy4s.Document.fromString("0.0.1"))),
+  )
 
   // constructor using the original order from the spec
   private def make(strings: Option[List[String]], other: Option[List[String]], name: Option[String], nameV2: Option[String]): DeprecatedStructure = DeprecatedStructure(strings, other, name, nameV2)
 
   implicit val schema: Schema[DeprecatedStructure] = struct(
-    Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings).addHints(smithy.api.Deprecated(message = None, since = None)),
+    Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings).addHints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj())),
     Strings.underlyingSchema.optional[DeprecatedStructure]("other", _.other),
-    string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None)),
+    string.optional[DeprecatedStructure]("name", _.name).addHints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj())),
     string.optional[DeprecatedStructure]("nameV2", _.nameV2),
   )(make).withId(id).addHints(hints)
 }

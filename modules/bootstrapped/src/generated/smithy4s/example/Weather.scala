@@ -32,9 +32,9 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   val version: String = "2006-03-01"
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Provides weather forecasts."),
-    smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("nextToken")), outputToken = Some(smithy.api.NonEmptyString("nextToken")), items = None, pageSize = Some(smithy.api.NonEmptyString("pageSize"))),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Provides weather forecasts.")),
+    Hints.dynamic(ShapeId("smithy.api", "paginated"), smithy4s.Document.obj("inputToken" -> smithy4s.Document.fromString("nextToken"), "outputToken" -> smithy4s.Document.fromString("nextToken"), "pageSize" -> smithy4s.Document.fromString("pageSize"))),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -99,7 +99,7 @@ object WeatherOperation {
     val schema: OperationSchema[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetCurrentTime"))
       .withInput(unit)
       .withOutput(GetCurrentTimeOutput.schema)
-      .withHints(smithy.api.Readonly())
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): GetCurrentTime = GetCurrentTime()
   }
   final case class GetCity(input: GetCityInput) extends WeatherOperation[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
@@ -112,7 +112,7 @@ object WeatherOperation {
       .withInput(GetCityInput.schema)
       .withError(GetCityError.errorSchema)
       .withOutput(GetCityOutput.schema)
-      .withHints(smithy.api.Readonly())
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetCityInput): GetCity = GetCity(input)
   }
   sealed trait GetCityError extends scala.Product with scala.Serializable { self =>
@@ -176,7 +176,7 @@ object WeatherOperation {
     val schema: OperationSchema[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetForecast"))
       .withInput(GetForecastInput.schema)
       .withOutput(GetForecastOutput.schema)
-      .withHints(smithy.api.Readonly())
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetForecastInput): GetForecast = GetForecast(input)
   }
   final case class ListCities(input: ListCitiesInput) extends WeatherOperation[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
@@ -188,7 +188,7 @@ object WeatherOperation {
     val schema: OperationSchema[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "ListCities"))
       .withInput(ListCitiesInput.schema)
       .withOutput(ListCitiesOutput.schema)
-      .withHints(smithy.api.Paginated(inputToken = None, outputToken = None, items = Some(smithy.api.NonEmptyString("items")), pageSize = None), smithy.api.Readonly())
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "paginated"), smithy4s.Document.obj("items" -> smithy4s.Document.fromString("items"))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: ListCitiesInput): ListCities = ListCities(input)
   }
 }

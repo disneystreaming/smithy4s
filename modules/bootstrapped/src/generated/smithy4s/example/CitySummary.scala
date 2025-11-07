@@ -13,8 +13,8 @@ object CitySummary extends ShapeTag.Companion[CitySummary] {
   val id: ShapeId = ShapeId("smithy4s.example", "CitySummary")
 
   val hints: Hints = Hints(
-    smithy.api.References(List(smithy.api.Reference(resource = smithy.api.NonEmptyString("smithy4s.example#City"), ids = None, service = None, rel = None))),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "references"), smithy4s.Document.array(smithy4s.Document.obj("resource" -> smithy4s.Document.fromString("smithy4s.example#City")))),
+  )
 
   // constructor using the original order from the spec
   private def make(cityId: CityId, name: String): CitySummary = CitySummary(cityId, name)

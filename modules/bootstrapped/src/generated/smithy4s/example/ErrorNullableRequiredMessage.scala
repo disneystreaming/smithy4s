@@ -17,8 +17,8 @@ object ErrorNullableRequiredMessage extends ShapeTag.Companion[ErrorNullableRequ
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorNullableRequiredMessage")
 
   val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
+  )
 
   // constructor using the original order from the spec
   private def make(message: Nullable[String]): ErrorNullableRequiredMessage = ErrorNullableRequiredMessage(message)

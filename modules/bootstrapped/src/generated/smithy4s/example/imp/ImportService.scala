@@ -31,8 +31,8 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   val version: String = "1.0.0"
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -89,7 +89,7 @@ object ImportServiceOperation {
       .withInput(unit)
       .withError(ImportOperationError.errorSchema)
       .withOutput(OpOutput.schema)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/test"), "code" -> smithy4s.Document.fromDouble(200.0d))))
     def wrap(input: Unit): ImportOperation = ImportOperation()
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable { self =>

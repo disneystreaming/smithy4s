@@ -28,15 +28,15 @@ object OnlyUnknownDiscriminatedOpenUnion extends ShapeTag.Companion[OnlyUnknownD
   val id: ShapeId = ShapeId("smithy4s.example", "OnlyUnknownDiscriminatedOpenUnion")
 
   val hints: Hints = Hints(
-    alloy.Discriminated("type"),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "discriminated"), smithy4s.Document.fromString("type")),
+  )
 
   final case class UnknownCase(unknown: Document) extends OnlyUnknownDiscriminatedOpenUnion { final def $ordinal: Int = 0 }
 
   object UnknownCase {
     val hints: Hints = Hints(
-      alloy.JsonUnknown(),
-    ).lazily
+      Hints.dynamic(ShapeId("alloy", "jsonUnknown"), smithy4s.Document.obj()),
+    )
     val schema: Schema[OnlyUnknownDiscriminatedOpenUnion.UnknownCase] = bijection(document.addHints(hints), OnlyUnknownDiscriminatedOpenUnion.UnknownCase(_), _.unknown)
     val alt = schema.oneOf[OnlyUnknownDiscriminatedOpenUnion]("unknown")
   }
