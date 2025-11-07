@@ -50,7 +50,7 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       }
 
     val memberSchemaString =
-      """string.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("listFoo"))"""
+      """string.addMemberHints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("listFoo"))"""
     val requiredString =
       s"""val underlyingSchema: Schema[List[String]] = list($memberSchemaString)"""
     assert(definition.contains(requiredString))
@@ -84,9 +84,9 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       }
 
     val keySchemaString =
-      """string.addMemberHints(smithy.api.Documentation("mapFoo"))"""
+      """string.addMemberHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("mapFoo")))"""
     val valueSchemaString =
-      """int.addMemberHints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("mapBar"))"""
+      """int.addMemberHints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("mapBar")))"""
     val requiredString =
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
@@ -152,14 +152,14 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     val diamondWithDocRendered =
       List(
         """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints.empty)""",
-        """override val hints: Hints = Hints(smithy.api.Documentation("this is a DIAMOND")).lazily"""
+        """override val hints: Hints = Hints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("this is a DIAMOND")))"""
       )
     // NOTE: enum trait and enum shape are not 100% compatible. For example, enum trait doesn't support deprecated$since and deprecated$message.
     val haertWithDeprecationAndDocRendered = List(
       "/** this is a HAERT */",
       "@deprecated",
       """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty)""",
-      """override val hints: Hints = Hints(smithy.api.Deprecated(message = None, since = None), smithy.api.Documentation("this is a HAERT")).lazily"""
+      """override val hints: Hints = Hints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj()), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("this is a HAERT")))"""
     )
 
     assert(
@@ -269,13 +269,13 @@ final class RendererSpec extends munit.ScalaCheckSuite {
                      |  */""".stripMargin
     val diamondWithDocRendered =
       """  case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints.empty) {
-        |    override val hints: Hints = Hints(smithy.api.Documentation("this is a DIAMOND")).lazily
+        |    override val hints: Hints = Hints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("this is a DIAMOND")))
         |  }""".stripMargin
     val haertWithDeprecationAndDocRendered =
       """|  /** this is a HAERT */
          |  @deprecated(message = "typo", since = "0.0.0")
          |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints.empty) {
-         |    override val hints: Hints = Hints(smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0")), smithy.api.Documentation("this is a HAERT")).lazily
+         |    override val hints: Hints = Hints(Hints.dynamic(ShapeId("smithy.api", "deprecated"), smithy4s.Document.obj("since" -> smithy4s.Document.fromString("0.0.0"), "message" -> smithy4s.Document.fromString("typo"))), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("this is a HAERT")))
          |  }""".stripMargin
 
     assert(
@@ -425,7 +425,13 @@ final class RendererSpec extends munit.ScalaCheckSuite {
 
     val contents = generateScalaCode(smithy).values
 
-    assert(contents.exists(_.contains("smithy.api.Documentation(\"foo bar\")")))
+    assert(
+      contents.exists(
+        _.contains(
+          """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("foo bar"))"""
+        )
+      )
+    )
   }
   test(
     "string literal containing $ is rendered as an interpolated string with $ escaped as $$"
@@ -442,7 +448,11 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     val contents = generateScalaCode(smithy).values
 
     assert(
-      contents.exists(_.contains("smithy.api.Documentation(s\"foo $$bar\")"))
+      contents.exists(
+        _.contains(
+          """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"foo $$bar"))"""
+        )
+      )
     )
   }
 
@@ -461,7 +471,13 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     val contents = generateScalaCode(smithy).values
 
     assert(contents.exists(_.contains("/** /&ast; */")))
-    assert(contents.exists(_.contains("""smithy.api.Documentation("/*")""")))
+    assert(
+      contents.exists(
+        _.contains(
+          """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("/*"))"""
+        )
+      )
+    )
   }
 
   test("trait with subcomponent targeting smithy.api#Unit") {

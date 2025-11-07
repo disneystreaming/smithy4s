@@ -69,12 +69,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
-         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
-         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.required[Test]("four", _.four).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.nullable.optional[Test]("five", _.five),
-         |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+         |    string.nullable.field[Test]("six", _.six).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
+         |    string.nullable.field[Test]("seven", _.seven).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
          |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
@@ -133,12 +133,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
-         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
-         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.required[Test]("four", _.four).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.nullable.optional[Test]("five", _.five),
-         |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+         |    string.nullable.field[Test]("six", _.six).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
+         |    string.nullable.field[Test]("seven", _.seven).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
          |  )(make).withId(id).addHints(hints)
          |}""".stripMargin
@@ -199,12 +199,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
-         |    string.field[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.field[Test]("two", _.two).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.required[Test]("three", _.three),
-         |    string.required[Test]("four", _.four).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
+         |    string.required[Test]("four", _.four).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
          |    string.nullable.optional[Test]("five", _.five),
-         |    string.nullable.field[Test]("six", _.six).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
-         |    string.nullable.field[Test]("seven", _.seven).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
+         |    string.nullable.field[Test]("six", _.six).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
+         |    string.nullable.field[Test]("seven", _.seven).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),
          |    string.nullable.required[Test]("eight", _.eight),
          |  )(make).withId(id).addHints(hints)
          |}
