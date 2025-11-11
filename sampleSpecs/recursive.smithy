@@ -15,3 +15,20 @@ structure RecursiveListWrapper {
     @required
     items: RecursiveList
 }
+
+union Tree {
+  tree: TreeNode
+  leaf: LeafNode
+}
+
+structure TreeNode {
+  @required
+  left: Tree
+  @required
+  right: Tree
+}
+
+structure LeafNode {
+  @required
+  value: Integer
+}

@@ -216,6 +216,7 @@ object Schema {
   private final class TransitiveCompiler(
       underlying: Schema ~> Schema
   ) extends (Schema ~> Schema) {
+    val lazyCompileCache: MMap[Any, Any] = MMap.empty
 
     def apply[A](
         fa: Schema[A]
@@ -226,8 +227,14 @@ object Schema {
         underlying(u.copy(alternatives = u.alternatives.map(handleAlt(_))))
       case BijectionSchema(s, bijection) =>
         underlying(BijectionSchema(this(s), bijection))
-      case LazySchema(suspend) =>
-        underlying(LazySchema(suspend.map(this.apply)))
+      case l @ LazySchema(suspend) => {
+        lazyCompileCache
+          .getOrElseUpdate(
+            l,
+            LazySchema(suspend.map(this.apply))
+          )
+          .asInstanceOf[Schema[A]]
+      }
       case RefinementSchema(s, refinement) =>
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>
@@ -390,13 +397,13 @@ object Schema {
     override def biject[A, B](
         schema: Schema[A],
         bijection: Bijection[A, B]
-    ): Option[B] = 
+    ): Option[B] =
       if(schema.hints.has(alloy.Nullable)) {
         schema.compile(this).map(bijection.to)
       } else {
         None
       }
-    
+
     override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none)
   }
 
