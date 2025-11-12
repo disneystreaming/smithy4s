@@ -2,13 +2,20 @@ package smithy4s
 
 import munit.FunSuite
 
-import smithy4s.example.{Tree, TreeNode, LeafNode}
-import smithy4s.schema.CompilationCache
+import smithy4s.example.{
+  Tree,
+  TreeNode,
+  LeafNode,
+  Foo,
+  ConsList,
+  Cons,
+  Nil => Nill
+}
+import cats.Hash
+import smithy4s.schema._
 import scala.annotation.tailrec
 import smithy4s.internals.maps.MMap
-
-// import cats.Show
-import smithy4s.interopcats.SchemaVisitorShow
+import smithy4s.interopcats.SchemaVisitorHash
 
 class RecursiveSpec extends FunSuite {
 
@@ -26,7 +33,7 @@ class RecursiveSpec extends FunSuite {
             .sliding(2, 2)
             .flatMap {
               case left :: right :: Nil =>
-                List(Tree.tree(TreeNode(Some(left), Some(right))))
+                List(Tree.tree(TreeNode(left, right)))
               case x => x
             }
             .toList
@@ -37,31 +44,91 @@ class RecursiveSpec extends FunSuite {
     recursiveFold(nodes)
   }
 
-  def testCache[F[_]](store: MMap[Any, Any]) = new CompilationCache[F] {
+  def buildConsList(size: Int): ConsList = {
+    (1 to size).foldLeft(ConsList.nil(Nill()))((list, i) =>
+      ConsList.cons(Cons(i, list))
+    )
+  }
+
+  def useLazyTestCache[F[_]](store: MMap[Any, Any]) = new CompilationCache[F] {
     override def getOrElseUpdate[A](
         schema: Schema[A],
         fetch: Schema[A] => F[A]
     ): F[A] = {
-      // Lazy is tricky in that the thunk it contains can never be expressed
-      // in a "stable" way, even in a dynamic context when most accessors/injectors can be
-      // expressed in a serialisable fashion.
-      if (schema.isInstanceOf[Schema.LazySchema[_]]) { fetch(schema) }
-      else store.getOrElseUpdate(schema, fetch(schema)).asInstanceOf[F[A]]
+      store.getOrElseUpdate(schema, fetch(schema)).asInstanceOf[F[A]]
     }
   }
 
-  test("recursive doesn't blow up the stack") {
-    val tree = buildTree(1024)
-    val store: MMap[Any, Any] = MMap.empty
+  def ignoreLazyTestCache[F[_]](store: MMap[Any, Any]) =
+    new CompilationCache[F] {
+      override def getOrElseUpdate[A](
+          schema: Schema[A],
+          fetch: Schema[A] => F[A]
+      ): F[A] = {
+        if (schema.isInstanceOf[Schema.LazySchema[_]]) { fetch(schema) }
+        else store.getOrElseUpdate(schema, fetch(schema)).asInstanceOf[F[A]]
+      }
+    }
 
-    val updatedSchema = Tree.schema.withId("exampole.test", "Tree2")
+  def runTest[A](
+      caseString: String,
+      value: Int => A,
+      buildCache: MMap[Any, Any] => CompilationCache[Hash],
+      transformSchema: Schema[A] => Schema[A] = (x: Schema[A]) => x
+  )(implicit schema: Schema[A]) =
+    test(s"$caseString case") {
+      val store: MMap[Any, Any] = MMap.empty
+      val updatedSchema = transformSchema(schema)
 
-    val showVisitor =
-      SchemaVisitorShow.fromSchema(updatedSchema, testCache(store))
+      val hashVisitor: Hash[A] =
+        SchemaVisitorHash.fromSchema(updatedSchema, buildCache(store))
 
-    println(showVisitor.show(tree))
-    println(store.size)
-    assert(true)
+      val sizeAfterVisitor = store.size
+      val sizes = List(1, 10, 100, 1000, 100, 10, 1)
+      val storeSizeAfterHashing = sizes.map(i => {
+        hashVisitor.hash(value(i))
+        store.size
+      })
+
+      println(
+        s"$caseString: afterVisitor=$sizeAfterVisitor, afterHashing=$storeSizeAfterHashing"
+      )
+
+      assert(true)
+    }
+
+  def addHints[A](schema: Schema[A]): Schema[A] =
+    schema.transformHintsTransitively(hints =>
+      hints.add(smithy.api.Documentation("Adding some hints"))
+    )
+
+  def runTestCases[A: Schema](caseString: String, value: Int => A) = {
+    runTest(
+      s"$caseString current cache, hints unchanged",
+      value,
+      buildCache = ignoreLazyTestCache
+    )
+    runTest(
+      s"$caseString current cache, hints transformed",
+      value,
+      buildCache = ignoreLazyTestCache,
+      transformSchema = addHints[A]
+    )
+    runTest(
+      s"$caseString updated cache, hints unchanged",
+      value,
+      buildCache = useLazyTestCache
+    )
+    runTest(
+      s"$caseString updated cache, hints transformed",
+      value,
+      buildCache = useLazyTestCache,
+      transformSchema = addHints[A]
+    )
   }
+
+  runTestCases("Foo", Foo.int)
+  runTestCases("Tree", buildTree)
+  runTestCases("Cons", buildConsList)
 
 }
