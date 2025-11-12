@@ -20,9 +20,8 @@ import smithy4s.interopcats.SchemaVisitorHash
 class RecursiveSpec extends FunSuite {
 
   def buildTree(size: Int): Tree = {
-    val nodes = List.unfold(1)(count => {
-      if (count <= size) Some((Tree.leaf(LeafNode(count)), count + 1)) else None
-    })
+    val seed = Math.round(Math.random() * 1000).toInt
+    val nodes = (1 to size).map(i => Tree.leaf(LeafNode(i * seed))).toList
 
     @tailrec()
     def recursiveFold(els: List[Tree]): Tree =
@@ -45,8 +44,9 @@ class RecursiveSpec extends FunSuite {
   }
 
   def buildConsList(size: Int): ConsList = {
+    val seed = Math.round(Math.random() * 1000).toInt
     (1 to size).foldLeft(ConsList.nil(Nill()))((list, i) =>
-      ConsList.cons(Cons(i, list))
+      ConsList.cons(Cons(i * seed, list))
     )
   }
 
