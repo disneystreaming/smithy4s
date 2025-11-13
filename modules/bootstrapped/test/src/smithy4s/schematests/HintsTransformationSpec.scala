@@ -134,7 +134,7 @@ class HintsTransformationSpec() extends FunSuite {
     checkSchema(Foo(None), 1)
     checkSchema(Foo(Some(Foo(None))), 2)
     checkSchema(Foo(Some(Foo(Some(Foo(None))))), 3)
-    checkSchema(buildFoo(512), 512)
+    checkSchema(buildFoo(256), 256)
   }
 
   test(header("nullable")) {

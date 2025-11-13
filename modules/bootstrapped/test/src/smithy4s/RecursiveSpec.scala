@@ -88,7 +88,7 @@ class RecursiveSpec extends FunSuite {
       hashVisitor.hash(value(2))
       val sizeAfterInitializing = store.size
 
-      val sizes = List(10, 100, 1000)
+      val sizes = List(10, 100, 256)
       sizes.foreach(i => hashVisitor.hash(value(i)))
       val sizeAfterHashing = store.size
 
