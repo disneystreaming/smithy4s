@@ -2,22 +2,26 @@ package smithy4s
 
 import munit.FunSuite
 
-import smithy4s.example.{
-  Tree,
-  TreeNode,
-  LeafNode,
-  Foo,
-  ConsList,
-  Cons,
-  Nil => Nill
-}
+import smithy4s.example.{Tree, TreeNode, LeafNode, Foo}
 import cats.Hash
 import smithy4s.schema._
 import scala.annotation.tailrec
 import smithy4s.internals.maps.MMap
 import smithy4s.interopcats.SchemaVisitorHash
+import smithy4s.schema.Schema.recursive
+import smithy4s.schema.Schema._
 
 class RecursiveSpec extends FunSuite {
+
+  case class Recurse(n: Option[Recurse])
+
+  object Recurse {
+    implicit val schema: Schema[Recurse] = recursive {
+      struct(
+        schema.optional[Recurse]("n", _.n)
+      )(Recurse.apply)
+    }
+  }
 
   def buildTree(size: Int): Tree = {
     val seed = Math.round(Math.random() * 1000).toInt
@@ -43,12 +47,8 @@ class RecursiveSpec extends FunSuite {
     recursiveFold(nodes)
   }
 
-  def buildConsList(size: Int): ConsList = {
-    val seed = Math.round(Math.random() * 1000).toInt
-    (1 to size).foldLeft(ConsList.nil(Nill()))((list, i) =>
-      ConsList.cons(Cons(i * seed, list))
-    )
-  }
+  def buildRecursive(size: Int): Recurse =
+    (1 to size).foldLeft(Recurse(None))((tail, i) => Recurse(Some(tail)))
 
   def useLazyTestCache[F[_]](store: MMap[Any, Any]) = new CompilationCache[F] {
     override def getOrElseUpdate[A](
@@ -76,51 +76,56 @@ class RecursiveSpec extends FunSuite {
       buildCache: MMap[Any, Any] => CompilationCache[Hash],
       transformSchema: Schema[A] => Schema[A] = (x: Schema[A]) => x
   )(implicit schema: Schema[A]) =
-    test(s"$caseString case") {
+    test(s"$caseString") {
       val store: MMap[Any, Any] = MMap.empty
+
       val updatedSchema = transformSchema(schema)
 
       val hashVisitor: Hash[A] =
         SchemaVisitorHash.fromSchema(updatedSchema, buildCache(store))
 
-      val sizeAfterVisitor = store.size
-      val sizes = List(1, 10, 100, 1000, 100, 10, 1)
-      val storeSizeAfterHashing = sizes.map(i => {
-        hashVisitor.hash(value(i))
-        store.size
-      })
+      // Invoke hash with a size that will have some recursion so that the build cache an be materialized
+      hashVisitor.hash(value(2))
+      val sizeAfterInitializing = store.size
 
-      println(
-        s"$caseString: afterVisitor=$sizeAfterVisitor, afterHashing=$storeSizeAfterHashing"
+      val sizes = List(10, 100, 1000)
+      sizes.foreach(i => hashVisitor.hash(value(i)))
+      val sizeAfterHashing = store.size
+
+      assertEquals(
+        sizeAfterHashing,
+        sizeAfterInitializing,
+        "cache store size has grown after initialization"
       )
-
-      assert(true)
     }
 
-  def addHints[A](schema: Schema[A]): Schema[A] =
-    schema.transformHintsTransitively(hints =>
-      hints.add(smithy.api.Documentation("Adding some hints"))
+  def addHints[A](schema: Schema[A]): Schema[A] = {
+    schema.transformHintsTransitively(
+      _.add(
+        smithy.api.Documentation("Adding some hints")
+      )
     )
+  }
 
   def runTestCases[A: Schema](caseString: String, value: Int => A) = {
     runTest(
-      s"$caseString current cache, hints unchanged",
+      s"$caseString: current cache, hints unchanged",
       value,
       buildCache = ignoreLazyTestCache
     )
     runTest(
-      s"$caseString current cache, hints transformed",
+      s"$caseString: current cache, hints transformed",
       value,
       buildCache = ignoreLazyTestCache,
       transformSchema = addHints[A]
     )
     runTest(
-      s"$caseString updated cache, hints unchanged",
+      s"$caseString: updated cache, hints unchanged",
       value,
       buildCache = useLazyTestCache
     )
     runTest(
-      s"$caseString updated cache, hints transformed",
+      s"$caseString: updated cache, hints transformed",
       value,
       buildCache = useLazyTestCache,
       transformSchema = addHints[A]
@@ -129,6 +134,6 @@ class RecursiveSpec extends FunSuite {
 
   runTestCases("Foo", Foo.int)
   runTestCases("Tree", buildTree)
-  runTestCases("Cons", buildConsList)
+  runTestCases("Recurse", buildRecursive)
 
 }

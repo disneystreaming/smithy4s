@@ -32,17 +32,3 @@ structure LeafNode {
   @required
   value: Integer
 }
-
-union ConsList {
-  cons: Cons
-  nil: Nil
-}
-
-structure Cons {
-  @required
-  head: Integer
-  @required
-  tail: ConsList
-} 
-
-structure Nil {}
