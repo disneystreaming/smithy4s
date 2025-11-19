@@ -86,15 +86,15 @@ object ObjectCollisionOperation {
     def _notifyAll(): NotifyAll = NotifyAll()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectCollisionGen[P], f: PolyFunction5[P, P1]) extends ObjectCollisionGen[P1] {
-    def _finalize(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._finalize())
-    def _getClass(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._getClass())
-    def _equals(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._equals())
-    def _toString(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._toString())
-    def _notify(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notify())
-    def _hashCode(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._hashCode())
-    def _wait(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._wait())
-    def _clone(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._clone())
-    def _notifyAll(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg._notifyAll())
+    def _finalize(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._finalize())
+    def _getClass(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._getClass())
+    def _equals(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._equals())
+    def _toString(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._toString())
+    def _notify(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._notify())
+    def _hashCode(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._hashCode())
+    def _wait(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._wait())
+    def _clone(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._clone())
+    def _notifyAll(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg._notifyAll())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectCollisionGen[P]): PolyFunction5[ObjectCollisionOperation, P] = new PolyFunction5[ObjectCollisionOperation, P] {

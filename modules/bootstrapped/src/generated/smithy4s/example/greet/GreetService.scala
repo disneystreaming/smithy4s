@@ -61,7 +61,7 @@ object GreetServiceOperation {
     def greet(name: String): Greet = Greet(GreetInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: GreetServiceGen[P], f: PolyFunction5[P, P1]) extends GreetServiceGen[P1] {
-    def greet(name: String): P1[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
+    def greet(name: String): P1[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](this.alg.greet(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = new PolyFunction5[GreetServiceOperation, P] {

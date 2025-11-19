@@ -77,8 +77,8 @@ object HelloWorldAuthServiceOperation {
     def healthCheck(): HealthCheck = HealthCheck()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldAuthServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldAuthServiceGen[P1] {
-    def sayWorld(): P1[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing](alg.sayWorld())
-    def healthCheck(): P1[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing](alg.healthCheck())
+    def sayWorld(): P1[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing](this.alg.sayWorld())
+    def healthCheck(): P1[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = f[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing](this.alg.healthCheck())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[P]): PolyFunction5[HelloWorldAuthServiceOperation, P] = new PolyFunction5[HelloWorldAuthServiceOperation, P] {

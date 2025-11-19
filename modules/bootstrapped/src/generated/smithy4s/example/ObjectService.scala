@@ -84,8 +84,8 @@ object ObjectServiceOperation {
     def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): PutObject = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectServiceGen[P], f: PolyFunction5[P, P1]) extends ObjectServiceGen[P1] {
-    def getObject(key: ObjectKey, bucketName: BucketName): P1[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = f[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing](alg.getObject(key, bucketName))
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): P1[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
+    def getObject(key: ObjectKey, bucketName: BucketName): P1[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = f[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing](this.alg.getObject(key, bucketName))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): P1[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](this.alg.putObject(key, bucketName, data, foo, someValue))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = new PolyFunction5[ObjectServiceOperation, P] {

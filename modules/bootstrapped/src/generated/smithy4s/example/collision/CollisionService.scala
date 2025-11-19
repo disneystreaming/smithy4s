@@ -62,7 +62,7 @@ object CollisionServiceOperation {
     def algParameterOperation(alg: smithy4s.example.collision.String): AlgParameterOperation = AlgParameterOperation(AlgParameterOperationInput(alg))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: CollisionServiceGen[P], f: PolyFunction5[P, P1]) extends CollisionServiceGen[P1] {
-    def algParameterOperation(alg: smithy4s.example.collision.String): P1[AlgParameterOperationInput, Nothing, Unit, Nothing, Nothing] = f[AlgParameterOperationInput, Nothing, Unit, Nothing, Nothing](alg.algParameterOperation(alg))
+    def algParameterOperation(alg: smithy4s.example.collision.String): P1[AlgParameterOperationInput, Nothing, Unit, Nothing, Nothing] = f[AlgParameterOperationInput, Nothing, Unit, Nothing, Nothing](this.alg.algParameterOperation(alg))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: CollisionServiceGen[P]): PolyFunction5[CollisionServiceOperation, P] = new PolyFunction5[CollisionServiceOperation, P] {

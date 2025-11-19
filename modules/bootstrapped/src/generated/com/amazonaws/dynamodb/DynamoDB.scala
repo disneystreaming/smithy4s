@@ -108,8 +108,8 @@ object DynamoDBOperation {
     def describeEndpoints(): DescribeEndpoints = DescribeEndpoints(DescribeEndpointsRequest())
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DynamoDBGen[P], f: PolyFunction5[P, P1]) extends DynamoDBGen[P1] {
-    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): P1[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = f[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing](alg.listTables(exclusiveStartTableName, limit))
-    def describeEndpoints(): P1[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](alg.describeEndpoints())
+    def listTables(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None): P1[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = f[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing](this.alg.listTables(exclusiveStartTableName, limit))
+    def describeEndpoints(): P1[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = f[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing](this.alg.describeEndpoints())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DynamoDBGen[P]): PolyFunction5[DynamoDBOperation, P] = new PolyFunction5[DynamoDBOperation, P] {

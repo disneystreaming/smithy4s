@@ -506,7 +506,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val opName = op.methodName
             line"def $opName(${op.renderArgs}): P1[${op
               .renderAlgParams(opTraitNameRef.name)}] = f[${op
-              .renderAlgParams(opTraitNameRef.name)}](alg.$opName(${op.renderParams}))"
+              .renderAlgParams(opTraitNameRef.name)}](this.alg.$opName(${op.renderParams}))"
           }
         },
         newline,

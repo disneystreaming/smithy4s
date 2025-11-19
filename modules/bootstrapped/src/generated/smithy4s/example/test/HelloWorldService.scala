@@ -64,7 +64,7 @@ object HelloWorldServiceOperation {
     def hello(name: String): Hello = Hello(HelloInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def hello(name: String): P1[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](alg.hello(name))
+    def hello(name: String): P1[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](this.alg.hello(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {

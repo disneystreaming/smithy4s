@@ -66,7 +66,7 @@ object HelloWorldServiceOperation {
     def sayWorld(): SayWorld = SayWorld()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def sayWorld(): P1[Unit, Nothing, World, Nothing, Nothing] = f[Unit, Nothing, World, Nothing, Nothing](alg.sayWorld())
+    def sayWorld(): P1[Unit, Nothing, World, Nothing, Nothing] = f[Unit, Nothing, World, Nothing, Nothing](this.alg.sayWorld())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {
