@@ -57,14 +57,12 @@ final class SchemaSpec extends FunSuite {
 
   test("ErrorSchema can be created by users using a partial function") {
     val s = string
-    case class E(s: String) extends Throwable
 
     s.error(E(_)) { case E(s) => s }
   }
 
   test("ErrorSchema can be created by users using an optional function") {
     val s = string
-    case class E(s: String) extends Throwable
 
     val f: Throwable => Option[String] = {
       case E(s) => Some(s)
@@ -74,4 +72,5 @@ final class SchemaSpec extends FunSuite {
     s.asError(E(_))(f)
   }
 
+  case class E(s: String) extends Throwable
 }
