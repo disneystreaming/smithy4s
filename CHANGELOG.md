@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.45
+
+* Avoid an overloaded method issue in calls to `Schema#error` in [#1861](https://github.com/disneystreaming/smithy4s/pull/1861)
+
 # 0.18.44
 
 * Avoid a name shadowing issue in which an operation with an `alg` parameter would cause compilation errors in generated code in [#1859](https://github.com/disneystreaming/smithy4s/pull/1859).
