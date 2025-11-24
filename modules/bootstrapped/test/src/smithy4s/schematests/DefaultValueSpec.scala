@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package schema
+package schematests
 
 import munit._
 import smithy.api.TimestampFormat

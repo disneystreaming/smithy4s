@@ -15,11 +15,13 @@
  */
 
 package smithy4s
-package schema
+package schematests
 
 import cats.syntax.all._
 import Schema._
 import munit._
+import smithy4s.schema.SchemaPartition
+import smithy4s.schema.Field
 
 final class SchemaPartitionSpec extends FunSuite {
 

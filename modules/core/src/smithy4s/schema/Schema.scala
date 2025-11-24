@@ -165,7 +165,7 @@ sealed trait Schema[A]{
     * Turns this schema into an error schema.
     */
   @deprecated("This function can't be called due to having an overload. Use `asError` instead", "0.18.45")
-  private[Schema] final def error(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
+  private[schema] final def error(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
 }
 
 object Schema {
