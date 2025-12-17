@@ -79,16 +79,4 @@ private[dynamic] object syntax {
       case _ => shape
     }
   }
-
-  private def toSmithyTraits(hints: Hints): java.util.Collection[Trait] = {
-    hints.asTraits
-  }
-
-  private def toSmithy4sHints(traits: java.util.Collection[Trait]): Hints = {
-    Hints(traits.asScala.map { t =>
-      Hints.Binding.DynamicBinding(
-        ShapeId(t.toShapeId.getNamespace, t.toShapeId.getName)
-      )
-    }.toSeq: _*)
-  }
 }
