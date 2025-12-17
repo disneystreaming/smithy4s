@@ -25,6 +25,7 @@ import software.amazon.smithy.model.shapes.{
 }
 import software.amazon.smithy.utils.ToSmithyBuilder
 import software.amazon.smithy.model.traits.Trait
+import software.amazon.smithy.model.node.Node
 import smithy4s.dynamic.syntax._
 import scala.jdk.CollectionConverters._
 
@@ -42,12 +43,36 @@ private[dynamic] object syntax {
     def captureHints(hints: Hints): A = addTraits(a, hints)
   }
 
+  private def documentToNode(doc: Document): Node = doc.toSmithyNode
+
+  def smithyTrait(id: ShapeId, document: Document): Trait = new Trait {
+    def toShapeId() = SmithyShapeId.fromParts(id.namespace, id.name)
+    def toNode() = documentToNode(document)
+  }
+
+  implicit class HintsOpts(val hints: Hints) extends AnyVal {
+    def asTraits: java.util.Collection[Trait] = {
+      hints.all.toList
+        .map {
+          case Hints.Binding.DynamicBinding(keyId, value) =>
+            smithyTrait(keyId, value)
+          case Hints.Binding.StaticBinding(key, value) =>
+            val doc = Document.Encoder.fromSchema(key.schema).encode(value)
+            smithyTrait(key.id, doc)
+        }
+        .filterNot(in =>
+          in.toShapeId() == SmithyShapeId.fromParts("smithy4s", "InputOutput")
+        )
+        .asJava
+    }
+  }
+
   def addTraits[A <: Shape](shape: A, hints: Hints): A = {
     shape match {
       case s: ToSmithyBuilder[_] =>
         s.toBuilder match {
           case s: AbstractShapeBuilder[_, _] =>
-            s.addTraits(toSmithyTraits(hints))
+            s.addTraits(hints.asTraits)
             s.build().asInstanceOf[A]
           case _ => shape
         }
@@ -55,30 +80,11 @@ private[dynamic] object syntax {
     }
   }
 
-  def toSmithyTraits(hints: Hints): java.util.Collection[Trait] = {
-    hints.all.toList
-      .map {
-        case Hints.Binding.DynamicBinding(keyId, value) =>
-          new Trait {
-            def toShapeId() =
-              SmithyShapeId.fromParts(keyId.namespace, keyId.name)
-            def toNode() = value.toSmithyNode
-          }
-        case Hints.Binding.StaticBinding(key, value) =>
-          val doc = Document.Encoder.fromSchema(key.schema).encode(value)
-          new Trait {
-            def toShapeId() =
-              SmithyShapeId.fromParts(key.id.namespace, key.id.name)
-            def toNode() = doc.toSmithyNode
-          }
-      }
-      .filterNot(
-        _.toShapeId == SmithyShapeId.fromParts("smithy4s", "InputOutput")
-      )
-      .asJava
+  private def toSmithyTraits(hints: Hints): java.util.Collection[Trait] = {
+    hints.asTraits
   }
 
-  def toSmithy4sHints(traits: java.util.Collection[Trait]): Hints = {
+  private def toSmithy4sHints(traits: java.util.Collection[Trait]): Hints = {
     Hints(traits.asScala.map { t =>
       Hints.Binding.DynamicBinding(
         ShapeId(t.toShapeId.getNamespace, t.toShapeId.getName)
