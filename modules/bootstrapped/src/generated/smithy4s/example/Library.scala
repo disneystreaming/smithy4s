@@ -68,9 +68,9 @@ object LibraryOperation {
     def buyBook(): BuyBook = BuyBook()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: LibraryGen[P], f: PolyFunction5[P, P1]) extends LibraryGen[P1] {
-    def listPublishers(): P1[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](alg.listPublishers())
-    def getBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.getBook())
-    def buyBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.buyBook())
+    def listPublishers(): P1[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](this.alg.listPublishers())
+    def getBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.getBook())
+    def buyBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.buyBook())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = new PolyFunction5[LibraryOperation, P] {

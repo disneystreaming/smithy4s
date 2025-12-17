@@ -64,7 +64,7 @@ object WeatherServiceOperation {
     def getWeather(city: String): GetWeather = GetWeather(GetWeatherInput(city))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherServiceGen[P], f: PolyFunction5[P, P1]) extends WeatherServiceGen[P1] {
-    def getWeather(city: String): P1[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
+    def getWeather(city: String): P1[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](this.alg.getWeather(city))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = new PolyFunction5[WeatherServiceOperation, P] {

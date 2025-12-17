@@ -77,10 +77,10 @@ object ReservedNameServiceOperation {
     def list(list: scala.List[smithy4s.example.collision.String]): List = List(ListInput(list))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
-    def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): P1[SetInput, Nothing, Unit, Nothing, Nothing] = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
-    def option(value: scala.Option[smithy4s.example.collision.String] = None): P1[OptionInput, Nothing, Unit, Nothing, Nothing] = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
-    def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): P1[MapInput, Nothing, Unit, Nothing, Nothing] = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
-    def list(list: scala.List[smithy4s.example.collision.String]): P1[ListInput, Nothing, Unit, Nothing, Nothing] = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
+    def set(set: scala.collection.immutable.Set[smithy4s.example.collision.String]): P1[SetInput, Nothing, Unit, Nothing, Nothing] = f[SetInput, Nothing, Unit, Nothing, Nothing](this.alg.set(set))
+    def option(value: scala.Option[smithy4s.example.collision.String] = None): P1[OptionInput, Nothing, Unit, Nothing, Nothing] = f[OptionInput, Nothing, Unit, Nothing, Nothing](this.alg.option(value))
+    def map(value: scala.collection.immutable.Map[smithy4s.example.collision.String, smithy4s.example.collision.String]): P1[MapInput, Nothing, Unit, Nothing, Nothing] = f[MapInput, Nothing, Unit, Nothing, Nothing](this.alg.map(value))
+    def list(list: scala.List[smithy4s.example.collision.String]): P1[ListInput, Nothing, Unit, Nothing, Nothing] = f[ListInput, Nothing, Unit, Nothing, Nothing](this.alg.list(list))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {

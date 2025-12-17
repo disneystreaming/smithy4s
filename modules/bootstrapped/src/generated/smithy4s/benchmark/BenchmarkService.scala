@@ -69,8 +69,8 @@ object BenchmarkServiceOperation {
     def createObject(key: String, bucketName: String, payload: S3Object): CreateObject = CreateObject(CreateObjectInput(key, bucketName, payload))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BenchmarkServiceGen[P], f: PolyFunction5[P, P1]) extends BenchmarkServiceGen[P1] {
-    def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
-    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](this.alg.sendString(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](this.alg.createObject(key, bucketName, payload))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = new PolyFunction5[BenchmarkServiceOperation, P] {

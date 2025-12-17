@@ -92,7 +92,7 @@ object ExampleServiceOperation {
     def exampleOperation(a: String): ExampleOperation = ExampleOperation(ExampleOperationInput(a))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ExampleServiceGen[P], f: PolyFunction5[P, P1]) extends ExampleServiceGen[P1] {
-    def exampleOperation(a: String): P1[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](alg.exampleOperation(a))
+    def exampleOperation(a: String): P1[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](this.alg.exampleOperation(a))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ExampleServiceGen[P]): PolyFunction5[ExampleServiceOperation, P] = new PolyFunction5[ExampleServiceOperation, P] {

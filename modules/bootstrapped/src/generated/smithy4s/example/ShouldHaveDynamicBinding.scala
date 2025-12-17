@@ -15,6 +15,7 @@ object ShouldHaveDynamicBinding extends ShapeTag.Companion[ShouldHaveDynamicBind
   val hints: Hints = Hints(
     smithy.api.Since("1"),
     Hints.dynamic(ShapeId("smithy4s.example", "testDynamicBinding"), smithy4s.Document.obj("str" -> smithy4s.Document.fromString("test"))),
+    Hints.dynamic(ShapeId("smithy4s.example.dynamic_traits", "thisWillBeDynamic"), smithy4s.Document.obj("test" -> smithy4s.Document.fromDouble(101.0d))),
   ).lazily
 
   // constructor using the original order from the spec

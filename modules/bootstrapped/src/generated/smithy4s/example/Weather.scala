@@ -80,10 +80,10 @@ object WeatherOperation {
     def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): ListCities = ListCities(ListCitiesInput(nextToken, pageSize))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherGen[P], f: PolyFunction5[P, P1]) extends WeatherGen[P1] {
-    def getCurrentTime(): P1[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](alg.getCurrentTime())
-    def getCity(cityId: CityId): P1[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](alg.getCity(cityId))
-    def getForecast(cityId: CityId): P1[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](alg.getForecast(cityId))
-    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): P1[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
+    def getCurrentTime(): P1[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](this.alg.getCurrentTime())
+    def getCity(cityId: CityId): P1[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](this.alg.getCity(cityId))
+    def getForecast(cityId: CityId): P1[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](this.alg.getForecast(cityId))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): P1[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](this.alg.listCities(nextToken, pageSize))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherGen[P]): PolyFunction5[WeatherOperation, P] = new PolyFunction5[WeatherOperation, P] {

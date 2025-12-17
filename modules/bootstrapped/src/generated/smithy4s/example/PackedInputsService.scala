@@ -62,7 +62,7 @@ object PackedInputsServiceOperation {
     def packedInputOperation(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PackedInputsServiceGen[P], f: PolyFunction5[P, P1]) extends PackedInputsServiceGen[P1] {
-    def packedInputOperation(input: PackedInput): P1[PackedInput, Nothing, Unit, Nothing, Nothing] = f[PackedInput, Nothing, Unit, Nothing, Nothing](alg.packedInputOperation(input))
+    def packedInputOperation(input: PackedInput): P1[PackedInput, Nothing, Unit, Nothing, Nothing] = f[PackedInput, Nothing, Unit, Nothing, Nothing](this.alg.packedInputOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = new PolyFunction5[PackedInputsServiceOperation, P] {

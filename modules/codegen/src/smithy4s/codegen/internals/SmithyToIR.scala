@@ -123,6 +123,17 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
+  private val smithy4sRenderDynamicHintNamespacePatterns
+      : Set[NamespacePattern] =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sRenderDynamicHintNamespacePatterns")
+      .toSet
+      .flatMap((n: Node) => n.asArrayNode().asScala)
+      .flatMap(_.getElements().asScala)
+      .flatMap(_.asStringNode().asScala.map(n => NamespacePattern(n.getValue)))
+
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
     val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
@@ -1288,7 +1299,11 @@ private[codegen] class SmithyToIR(
   private def unfoldTraitNonConstraint(tr: Trait): Hint = {
     val renderDynamic = model
       .expectShape(tr.toShapeId)
-      .hasTrait(classOf[smithy4s.meta.RenderAsDynamicBindingTrait])
+      .hasTrait(
+        classOf[smithy4s.meta.RenderAsDynamicBindingTrait]
+      ) || smithy4sRenderDynamicHintNamespacePatterns.exists(
+      _.matches(tr.toShapeId().namespace)
+    )
     if (renderDynamic) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
     else
       Hint.Native(

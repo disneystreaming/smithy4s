@@ -65,7 +65,7 @@ object RecursiveInputServiceOperation {
     def recursiveInputOperation(hello: Option[RecursiveInput] = None): RecursiveInputOperation = RecursiveInputOperation(RecursiveInput(hello))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: RecursiveInputServiceGen[P], f: PolyFunction5[P, P1]) extends RecursiveInputServiceGen[P1] {
-    def recursiveInputOperation(hello: Option[RecursiveInput] = None): P1[RecursiveInput, Nothing, Unit, Nothing, Nothing] = f[RecursiveInput, Nothing, Unit, Nothing, Nothing](alg.recursiveInputOperation(hello))
+    def recursiveInputOperation(hello: Option[RecursiveInput] = None): P1[RecursiveInput, Nothing, Unit, Nothing, Nothing] = f[RecursiveInput, Nothing, Unit, Nothing, Nothing](this.alg.recursiveInputOperation(hello))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: RecursiveInputServiceGen[P]): PolyFunction5[RecursiveInputServiceOperation, P] = new PolyFunction5[RecursiveInputServiceOperation, P] {

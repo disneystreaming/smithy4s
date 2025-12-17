@@ -78,9 +78,9 @@ object HelloServiceOperation {
     def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): SayHello = SayHello(SayHelloInput(greeting, query, name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloServiceGen[P], f: PolyFunction5[P, P1]) extends HelloServiceGen[P1] {
-    def listen(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.listen())
-    def testPath(path: String): P1[TestPathInput, Nothing, Unit, Nothing, Nothing] = f[TestPathInput, Nothing, Unit, Nothing, Nothing](alg.testPath(path))
-    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): P1[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](alg.sayHello(greeting, query, name))
+    def listen(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.listen())
+    def testPath(path: String): P1[TestPathInput, Nothing, Unit, Nothing, Nothing] = f[TestPathInput, Nothing, Unit, Nothing, Nothing](this.alg.testPath(path))
+    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): P1[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](this.alg.sayHello(greeting, query, name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloServiceGen[P]): PolyFunction5[HelloServiceOperation, P] = new PolyFunction5[HelloServiceOperation, P] {
