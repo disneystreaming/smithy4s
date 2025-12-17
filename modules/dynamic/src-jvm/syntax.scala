@@ -17,9 +17,9 @@
 package smithy4s.dynamic
 
 import smithy4s.{Document, ShapeId}
-import smithy4s.Document._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.{ShapeId => SmithyShapeId}
+import scala.jdk.CollectionConverters._
 
 object syntax {
   final implicit class DocumentOps(private val doc: Document) extends AnyVal {
