@@ -43,7 +43,7 @@ private[dynamic] object syntax {
     def captureHints(hints: Hints): A = addTraits(a, hints)
   }
 
-  private def documentToNode(doc: Document): Node = doc.toSmithyNode
+  private def documentToNode(doc: Document): Node = doc.toSmithy
 
   def smithyTrait(id: ShapeId, document: Document): Trait = new Trait {
     def toShapeId() = SmithyShapeId.fromParts(id.namespace, id.name)

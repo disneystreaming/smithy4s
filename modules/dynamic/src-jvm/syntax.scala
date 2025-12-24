@@ -23,22 +23,22 @@ import scala.jdk.CollectionConverters._
 
 object syntax {
   final implicit class DocumentOps(private val doc: Document) extends AnyVal {
-    def toSmithyNode: Node = doc match {
+    def toSmithy: Node = doc match {
       case Document.DString(value)  => Node.from(value)
       case Document.DNumber(value)  => Node.from(value)
       case Document.DBoolean(value) => Node.from(value)
       case Document.DObject(values) =>
         Node.objectNode(values.map { case (k, v) =>
-          Node.from(k) -> v.toSmithyNode
+          Node.from(k) -> v.toSmithy
         }.asJava)
       case Document.DArray(values) =>
-        Node.fromNodes(values.map(_.toSmithyNode): _*)
+        Node.fromNodes(values.map(_.toSmithy): _*)
       case Document.DNull => Node.nullNode()
     }
   }
 
   final implicit class NodeOps(private val node: Node) extends AnyVal {
-    def toSmithy4sDocument: Document = NodeToDocument(node)
+    def toSmithy4s: Document = NodeToDocument(node)
   }
 
   final implicit class ShapeIdOps(private val sid: ShapeId) extends AnyVal {
