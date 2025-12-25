@@ -420,15 +420,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
         ).when(generateServiceProduct),
         newline,
-        block(line"implicit final class TransformFunctorOps[F[_]](private val alg: $FunctorAlgebra_[$genNameRef, F]) extends AnyVal")(
+        block(
+          line"implicit final class TransformFunctorOps[F[_]](private val alg: $FunctorAlgebra_[$genNameRef, F]) extends AnyVal"
+        )(
           line"def transform: $Transformation.PartiallyApplied[$FunctorAlgebra_[$genNameRef, F]] = $Transformation.of(alg)"
         ),
         newline,
-        block(line"implicit final class TransformBifunctorOps[F[_, _]](private val alg: $BiFunctorAlgebra_[$genNameRef, F]) extends AnyVal")(
+        block(
+          line"implicit final class TransformBifunctorOps[F[_, _]](private val alg: $BiFunctorAlgebra_[$genNameRef, F]) extends AnyVal"
+        )(
           line"def transform: $Transformation.PartiallyApplied[$BiFunctorAlgebra_[$genNameRef, F]] = $Transformation.of(alg)"
         ),
         newline,
-        block(line"implicit final class TransformOps[F[_, _, _, _, _]](private val alg: $genNameRef[F]) extends AnyVal")(
+        block(
+          line"implicit final class TransformOps[F[_, _, _, _, _]](private val alg: $genNameRef[F]) extends AnyVal"
+        )(
           line"def transform: $Transformation.PartiallyApplied[$genNameRef[F]] = $Transformation.of(alg)"
         )
       ),
