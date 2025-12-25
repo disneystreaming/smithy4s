@@ -21,6 +21,7 @@ import smithy4s.schema.Schema.unit
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP GET /test */
   def importOperation(): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
 
 }

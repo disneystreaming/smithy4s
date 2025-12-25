@@ -16,23 +16,33 @@
 
 package smithy4s.decline.core
 
-import cats.data.{NonEmptyVector, Validated, NonEmptyList}
+import cats.data.NonEmptyList
+import cats.data.NonEmptyVector
+import cats.data.Validated
 import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
-import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob}
+import smithy.api.Documentation
+import smithy.api.ExternalDocumentation
+import smithy.api.TimestampFormat
+import smithy4s.Bijection
+import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema._
 import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.UUID
-import smithy4s.schema.CollectionTag
-import smithy4s.schema.CollectionTag.ListTag
+import scala.concurrent.duration.Duration
 
 object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
@@ -75,10 +85,10 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   ): Argument[Timestamp] = {
     val format = formatOpt.getOrElse(TimestampFormat.EPOCH_SECONDS)
     Argument.from("timestamp") { s =>
-      smithy4s.Timestamp
+      Timestamp
         .parse(s, format)
         .toValidNel(
-          s"""Invalid timestamp "$s" for input ${fieldName.value}. Expected format: ${smithy4s.Timestamp
+          s"""Invalid timestamp "$s" for input ${fieldName.value}. Expected format: ${Timestamp
             .showFormat(format)}"""
         )
     }
@@ -174,6 +184,18 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         implicit val blobArgument = commons.blobArgument
         field[Blob](hints)
       }
+      case PLocalDate =>
+        implicit val arg = commons.localDateArgument
+        field[LocalDate](hints)
+      case PLocalTime =>
+        implicit val arg = commons.localTimeArgument
+        field[LocalTime](hints)
+      case PDuration =>
+        implicit val arg = commons.durationArgument
+        field[Duration](hints)
+      case POffsetDateTime =>
+        implicit val arg = commons.offsetDateTimeArgument
+        field[OffsetDateTime](hints)
     }
 
   private def primitives[P](
@@ -203,6 +225,19 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         fieldPlural[Blob](member.hints)
 
       case PBoolean | PDocument => jsonFieldPlural(member)
+      case PLocalDate =>
+        implicit val arg = commons.localDateArgument
+        fieldPlural[LocalDate](member.hints)
+      case PLocalTime =>
+        implicit val arg = commons.localTimeArgument
+        fieldPlural[LocalTime](member.hints)
+      case PDuration =>
+        implicit val arg = commons.durationArgument
+        fieldPlural[Duration](member.hints)
+      case POffsetDateTime =>
+        implicit val arg = commons.offsetDateTimeArgument
+        fieldPlural[OffsetDateTime](member.hints)
+
     }
 
   def collection[C[_], A](
@@ -210,16 +245,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       hints: Hints,
       tag: CollectionTag[C],
       member: Schema[A]
-  ): Opts[C[A]] =
-    tag match {
-      case ListTag => list(shapeId, hints, member)
-      case CollectionTag.IndexedSeqTag =>
-        list(shapeId, hints, member).map(_.toIndexedSeq)
-      case CollectionTag.SetTag =>
-        list(shapeId, hints, member).map(_.toSet)
-      case CollectionTag.VectorTag =>
-        list(shapeId, hints, member).map(_.toVector)
+  ): Opts[C[A]] = {
+    list(shapeId, hints, member).map { x =>
+      tag.fromIterator(x.iterator)
     }
+  }
 
   private def list[A](
       shapeId: ShapeId,
@@ -246,18 +276,19 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] | _: Schema.OptionSchema[_] =>
+          _: Schema.MapSchema[_, _, _] | _: Schema.OptionSchema[_, _] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Opts[Map[K, V]] = jsonField(
-    Schema.MapSchema(shapeId, hints, key, value)
+  ): Opts[C[K, V]] = jsonField(
+    Schema.MapSchema(shapeId, hints, tag, key, value)
   )
 
   def enumeration[E](
@@ -329,6 +360,9 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
 
-  override def option[A](schema: Schema[A]): Opts[Option[A]] =
-    schema.compile(this).orNone
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Opts[C[A]] =
+    schema.compile(this).map(tag.some(_)).withDefault(tag.none)
 }

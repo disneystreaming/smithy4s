@@ -21,7 +21,6 @@ package internals
 import alloy.UrlFormFlattened
 import alloy.UrlFormName
 import smithy4s.codecs.PayloadPath
-import smithy4s.http._
 import smithy4s.schema._
 
 private[http] class UrlFormDataEncoderSchemaVisitor(
@@ -88,12 +87,13 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
       }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): UrlFormDataEncoder[Map[K, V]] = {
+  ): UrlFormDataEncoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -106,7 +106,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val collectionEncoder = compile(schema)
-    map => collectionEncoder.encode(map.toVector)
+    map => collectionEncoder.encode(tag.iterator(map).toVector)
   }
 
   override def enumeration[E](
@@ -187,12 +187,12 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     underlying.encode(_)
   }
 
-  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): UrlFormDataEncoder[C[A]] = {
     val encoder = compile(schema)
-    ({
-      case Some(value) => encoder.encode(value)
-      case None        => Nil
-    })
+    optional => tag.fold(optional, encoder.encode(_), Nil)
   }
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =

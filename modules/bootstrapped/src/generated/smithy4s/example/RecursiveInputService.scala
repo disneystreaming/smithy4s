@@ -16,6 +16,7 @@ import smithy4s.schema.Schema.unit
 trait RecursiveInputServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP PUT /subscriptions */
   def recursiveInputOperation(hello: Option[RecursiveInput] = None): F[RecursiveInput, Nothing, Unit, Nothing, Nothing]
 
 }

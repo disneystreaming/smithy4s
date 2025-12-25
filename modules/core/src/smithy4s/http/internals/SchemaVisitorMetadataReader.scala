@@ -122,20 +122,21 @@ private[http] class SchemaVisitorMetadataReader(
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): MetaDecode[Map[K, V]] = {
+  ): MetaDecode[C[K, V]] = {
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
-        StringMapMetaDecode[Map[K, V]](map =>
-          map.map { case (k, v) => (readK(k), readV(v)) }.toMap
+        StringMapMetaDecode[C[K, V]](it =>
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v)) })
         )
       case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
-        StringListMapMetaDecode[Map[K, V]](map =>
-          map.map { case (k, v) => (readK(k), readV(v)) }.toMap
+        StringListMapMetaDecode[C[K, V]](it =>
+          tag.fromIterator(it.map { case (k, v) => (readK(k), readV(v)) })
         )
       case _ => EmptyMetaDecode
     }
@@ -250,7 +251,7 @@ private[http] class SchemaVisitorMetadataReader(
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): MetaDecode[B] = self(schema).map(bijection)
+  ): MetaDecode[B] = self(schema).map(bijection.toFunction)
 
   override def refine[A, B](
       schema: Schema[A],
@@ -260,6 +261,9 @@ private[http] class SchemaVisitorMetadataReader(
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode
 
-  override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
-    self(schema).map(Some(_))
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): MetaDecode[C[A]] =
+    self(schema).map(tag.fromNullable(_))
 }

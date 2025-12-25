@@ -16,10 +16,11 @@
 
 package smithy4s.xml.internals
 
-import smithy4s.schema.Schema
-import Schema._
-import smithy4s.ShapeTag
 import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema
+
+import Schema._
 
 case class XmlStartingPath(path: List[String])
 

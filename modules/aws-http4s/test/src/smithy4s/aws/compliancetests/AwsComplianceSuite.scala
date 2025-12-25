@@ -19,6 +19,8 @@ package smithy4s.aws
 import aws.protocols._
 import cats.effect.IO
 import cats.syntax.all._
+import smithy4s.Hints
+import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
@@ -56,7 +58,20 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
       "AwsJson10ClientPopulatesNestedDefaultsWhenMissingInResponseBody",
       "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
       "RestJsonHttpPayloadWithUnsetUnion",
-      "RestXmlHttpPayloadWithUnsetUnion"
+      "RestXmlHttpPayloadWithUnsetUnion",
+
+      // TODO same as above, added between 1.49 and 1.56. Mostly default-related
+      "NullAndEmptyHeaders",
+      "HttpPrefixEmptyHeaders",
+      "HttpEmptyPrefixHeadersRequestClient",
+      "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+      "RestJsonClientPopulatesNestedDefaultValuesWhenMissing",
+      "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
+      "RestJsonClientPopulatesDefaultValuesInInput",
+      "RestJsonNullAndEmptyHeaders",
+      "RestJsonHttpPrefixEmptyHeaders",
+      "RestJsonHttpEmptyPrefixHeadersRequestClient",
+      "AwsJson10ClientErrorCorrectsWithDefaultValuesWhenServerFailsToSerializeRequiredValues"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
@@ -82,10 +97,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
-  val jsonDecoders =
-    smithy4s.json.Json.payloadCodecs.withJsoniterCodecCompiler {
-      smithy4s.json.Json.jsoniter.withMapOrderPreservation(true)
-    }.decoders
+  val jsonDecoders = smithy4s.json.Json.payloadCodecs.decoders
 
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
@@ -96,7 +108,13 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, jsonDecoders))
+        .map(
+          decodeDocument(
+            _,
+            jsonDecoders,
+            Schema.document.addHints(Hints(alloy.PreserveKeyOrder()))
+          )
+        )
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

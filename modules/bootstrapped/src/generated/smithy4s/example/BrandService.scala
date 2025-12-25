@@ -16,6 +16,7 @@ import smithy4s.schema.Schema.unit
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP POST /brands */
   def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
 }

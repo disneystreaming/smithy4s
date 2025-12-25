@@ -7,8 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.Smithy4sThrowable
 import smithy4s.schema.Schema.constant
 
-final case class MyOpError() extends Smithy4sThrowable {
-}
+final case class MyOpError() extends Smithy4sThrowable
 
 object MyOpError extends ShapeTag.Companion[MyOpError] {
   val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")

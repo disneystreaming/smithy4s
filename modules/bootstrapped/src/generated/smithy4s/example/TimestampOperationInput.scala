@@ -4,9 +4,9 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.Timestamp
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
+import smithy4s.time.Timestamp
 
 final case class TimestampOperationInput(httpDate: Timestamp = Timestamp(1716459630L, 0), epochSeconds: Timestamp = Timestamp(1716459630L, 0), dateTime: Timestamp = Timestamp(1716459630L, 0))
 

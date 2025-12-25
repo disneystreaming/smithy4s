@@ -19,8 +19,9 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt._
 
-import Smithy4sCodegenPlugin.autoImport._
 import scala.collection.immutable.ListSet
+
+import Smithy4sCodegenPlugin.autoImport._
 
 private final case class SmithyBuildData(
     sources: ListSet[String],

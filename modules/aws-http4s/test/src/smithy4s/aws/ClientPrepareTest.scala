@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import weaver._
 import smithy4s.example.aws.MyThing
+import weaver._
 
 object ClientPrepareTest extends FunSuite {
   test(
@@ -25,7 +25,7 @@ object ClientPrepareTest extends FunSuite {
   ) {
     AwsClient.prepare(MyThing) match {
       case Left(p) =>
-        assert.same(
+        expect.same(
           p,
           AwsClientInitialisationError.UnsupportedProtocol(
             MyThing.id,

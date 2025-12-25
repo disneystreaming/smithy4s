@@ -18,6 +18,7 @@ package smithy4s.xml
 package internals
 
 import cats.MonoidK
+import cats.kernel.Monoid
 import cats.syntax.all._
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
@@ -26,7 +27,6 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import XmlDocument._
-import cats.kernel.Monoid
 
 private[smithy4s] class XmlEncoderSchemaVisitor(
     val cache: CompilationCache[XmlEncoder]
@@ -111,12 +111,13 @@ private[smithy4s] class XmlEncoderSchemaVisitor(
       }
     }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): XmlEncoder[Map[K, V]] = {
+  ): XmlEncoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -126,7 +127,7 @@ private[smithy4s] class XmlEncoderSchemaVisitor(
     compile(
       Schema.vector(kvSchema.addMemberHints(XmlName("entry"))).addHints(hints)
     )
-      .contramap(_.toVector)
+      .contramap(tag.iterator(_).toVector)
   }
 
   def enumeration[E](
@@ -181,8 +182,11 @@ private[smithy4s] class XmlEncoderSchemaVisitor(
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }
 
-  def option[A](schema: Schema[A]): XmlEncoder[Option[A]] =
-    compile(schema).optional
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): XmlEncoder[C[A]] =
+    compile(schema).optional.contramap(tag.toScalaOption(_))
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints

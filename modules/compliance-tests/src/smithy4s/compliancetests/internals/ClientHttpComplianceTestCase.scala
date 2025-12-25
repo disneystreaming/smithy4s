@@ -17,23 +17,24 @@
 package smithy4s.compliancetests
 package internals
 
-import cats.implicits._
+import cats.Eq
 import cats.effect.Async
 import cats.effect.syntax.all._
-import org.http4s.HttpApp
+import cats.implicits._
 import org.http4s.Headers
+import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
 import smithy.test._
-import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.Document
 import smithy4s.Service
-import cats.Eq
+import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.compliancetests.TestConfig._
-import scala.concurrent.duration._
 import smithy4s.http.HttpContractError
+
+import scala.concurrent.duration._
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -75,10 +76,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         }
         .toList
 
-    val receivedPathSegments =
-      request.uri.path.segments.map(_.decoded())
-    val expectedPathSegments =
-      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+    val receivedPathSegments = request.uri.path.segments
+    val expectedPathSegments = Uri.Path.unsafeFromString(testCase.uri).segments
 
     val expectedUri = baseUri
       .withPath(Uri.Path.unsafeFromString(testCase.uri))

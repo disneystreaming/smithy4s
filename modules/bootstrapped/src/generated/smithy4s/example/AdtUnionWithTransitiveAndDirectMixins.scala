@@ -24,8 +24,8 @@ sealed trait AdtUnionWithTransitiveAndDirectMixins extends AdtMixinOne with Tran
 }
 object AdtUnionWithTransitiveAndDirectMixins extends ShapeTag.Companion[AdtUnionWithTransitiveAndDirectMixins] {
 
-  def s1(lng: Option[Long] = None): AdtMemberWithTransitiveMixin2 = AdtMemberWithTransitiveMixin2(lng)
-  def s2(lng: Option[Long] = None): AdtMemberWithTransitiveMixin3 = AdtMemberWithTransitiveMixin3(lng)
+  def adtMemberWithTransitiveMixin2(lng: Option[Long] = None): AdtMemberWithTransitiveMixin2 = AdtMemberWithTransitiveMixin2(lng)
+  def adtMemberWithTransitiveMixin3(lng: Option[Long] = None): AdtMemberWithTransitiveMixin3 = AdtMemberWithTransitiveMixin3(lng)
 
   val id: ShapeId = ShapeId("smithy4s.example", "AdtUnionWithTransitiveAndDirectMixins")
 

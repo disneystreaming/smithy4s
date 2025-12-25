@@ -54,9 +54,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       counter.incrementAndGet()
     }
 
-    def map[K, V](
+    def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
     ): Unit = discard {
@@ -124,7 +125,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       }
     }
 
-    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
+    def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): ConstUnit[C[A]] = discard {
       self(schema)
       counter.incrementAndGet()
     }

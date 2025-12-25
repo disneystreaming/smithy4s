@@ -17,11 +17,11 @@
 package smithy4s
 package http
 
-import smithy4s.schema._
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.NoResponseCode
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.OptionalResponseCode
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.RequiredResponseCode
+import smithy4s.schema._
 
 /**
   * Typeclass construct allowing to retrieve the status code associated to a value.

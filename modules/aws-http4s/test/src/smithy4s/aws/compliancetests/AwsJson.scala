@@ -16,13 +16,15 @@
 
 package smithy4s.aws
 
-import cats.effect.{IO, Resource}
-import org.http4s.client.Client
+import cats.effect.IO
+import cats.effect.Resource
 import org.http4s.HttpApp
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.{Service, ShapeTag}
+import org.http4s.client.Client
+import smithy4s.Service
+import smithy4s.ShapeTag
 import smithy4s.compliancetests._
 import smithy4s.http.HttpMediaType
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.schema.Schema
 
 object AwsJson extends smithy4s.aws.Compat {

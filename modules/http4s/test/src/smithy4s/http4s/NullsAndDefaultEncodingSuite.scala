@@ -16,34 +16,34 @@
 
 package smithy4s.http4s
 
-import weaver._
-import org.http4s._
-import org.http4s.implicits._
 import cats.effect.IO
-import smithy4s.example.ServiceWithNullsAndDefaults
-import smithy4s.example.DefaultNullsOperationOutput
+import cats.effect.kernel.Deferred
 import io.circe.Json
-import org.typelevel.ci.CIString
-import org.typelevel.ci._
+import org.http4s._
 import org.http4s.circe.CirceInstances
 import org.http4s.client.Client
+import org.http4s.implicits._
+import org.typelevel.ci.CIString
+import org.typelevel.ci._
 import smithy4s.example.DefaultNullsOperationInput
-import cats.effect.kernel.Deferred
+import smithy4s.example.DefaultNullsOperationOutput
+import smithy4s.example.ServiceWithNullsAndDefaults
 import smithy4s.example.TimestampOperationInput
 import smithy4s.schema.FieldFilter
+import weaver._
 
 object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
   test("routes - FieldFilter.Default") {
     runServerTest(fieldFilter = FieldFilter.Default)
       .map { response =>
-        assert.same(
+        expect.same(
           Map(
             ci"required-header-with-default" -> "required-header-with-default"
           ),
           response.headers
         ) &&
-        assert.same(
+        expect.same(
           Json.obj(
             "requiredWithDefault" -> Json.fromString("required-default")
           ),
@@ -54,11 +54,11 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
 
   test("routes - FieldFilter.EncodeAll") {
     runServerTest(fieldFilter = FieldFilter.EncodeAll).map { response =>
-      assert.same(
+      expect.same(
         Map(ci"required-header-with-default" -> "required-header-with-default"),
         response.headers
       ) &&
-      assert.same(
+      expect.same(
         Json.obj(
           "requiredWithDefault" -> Json.fromString("required-default"),
           "optionalWithDefault" -> Json.fromString("optional-default"),
@@ -75,21 +75,21 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       DefaultNullsOperationInput()
     )
       .map { request =>
-        assert.same(
+        expect.same(
           Map(
             ci"required-header-with-default" -> "required-header-with-default"
           ),
           request.headers
         ) &&
-        assert.same(
+        expect.same(
           Map.empty,
           request.query
         ) &&
-        assert.same(
+        expect.same(
           List("operation", "required-label-with-default"),
           request.labels
         ) &&
-        assert.same(
+        expect.same(
           Json.obj(
             "requiredWithDefault" -> Json.fromString("required-default")
           ),
@@ -104,22 +104,22 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
       DefaultNullsOperationInput()
     )
       .map { request =>
-        assert.same(
+        expect.same(
           Map(
             ci"optional-header-with-default" -> "optional-header-with-default",
             ci"required-header-with-default" -> "required-header-with-default"
           ),
           request.headers
-        ) && assert.same(
+        ) && expect.same(
           Map(
             "optional-query-with-default" -> "optional-query-with-default",
             "required-query-with-default" -> "required-query-with-default"
           ),
           request.query
-        ) && assert.same(
+        ) && expect.same(
           List("operation", "required-label-with-default"),
           request.labels
-        ) && assert.same(
+        ) && expect.same(
           Json.obj(
             "optional" -> Json.Null,
             "optionalWithDefault" -> Json.fromString("optional-default"),

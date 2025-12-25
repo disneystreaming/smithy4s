@@ -21,7 +21,6 @@ import smithy4s.schema._
 import smithy4s.schema.Schema._
 
 import org.scalacheck.Gen
-import org.scalacheck.Gen.const
 import smithy.api.TimestampFormat
 
 object SchemaGenerator {
@@ -63,7 +62,11 @@ class SchemaGenerator(maxWidth: Int) {
       timestamp,
       timestamp.addHints(TimestampFormat.DATE_TIME.widen),
       timestamp.addHints(TimestampFormat.EPOCH_SECONDS.widen),
-      timestamp.addHints(TimestampFormat.HTTP_DATE.widen)
+      timestamp.addHints(TimestampFormat.HTTP_DATE.widen),
+      localdate,
+      localtime,
+      duration,
+      offsetdatetime
     ).asInstanceOf[Vector[DynSchema]]
 
   def inductive(recurse: Gen[DynSchema]): Vector[Gen[DynSchema]] = {

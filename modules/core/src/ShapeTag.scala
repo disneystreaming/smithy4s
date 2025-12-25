@@ -17,7 +17,12 @@
 package smithy4s
 
 /**
-  * A tag that can be used as keys for higher-kinded maps
+  * A tag that can be used as keys for higher-kinded maps.
+  *
+  * Note: The assumption is that ShapeTags can be compared against each other using **instance equality**.
+  * This means that two ShapeTags based on the same schema/type may not be considered equal if they don't come from the exact same instance.
+  * You can find an example of instance equality (`eq`) being used in [[smithy4s.Hints]].
+  * More discussion on this topic: https://github.com/disneystreaming/smithy4s/issues/1658#issuecomment-2685543923
   */
 trait ShapeTag[A] extends HasId {
   def schema: Schema[A]

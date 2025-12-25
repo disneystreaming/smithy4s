@@ -17,7 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.Newtype
 import smithy4s.schema._
 
 object HttpMediaType extends Newtype[String] {
@@ -78,7 +77,10 @@ object HttpMediaType extends Newtype[String] {
         refinement: Refinement[A, B]
     ): Option[String] = self(schema)
 
-    override def option[A](schema: Schema[A]): Option[String] = self(
+    override def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): Option[String] = self(
       schema
     )
   }

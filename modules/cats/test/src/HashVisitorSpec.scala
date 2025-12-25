@@ -17,15 +17,23 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import smithy4s.schema.Schema._
-import smithy4s.schema.Schema
-import smithy4s.{Blob, Hints, ShapeId, Timestamp}
+import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.interopcats.testcases.FooBar
-import smithy4s.interopcats.testcases._
-import smithy4s.interopcats.testcases.IntOrString._
 import smithy4s.interopcats.testcases.IntOrInt
+import smithy4s.interopcats.testcases.IntOrString._
+import smithy4s.interopcats.testcases._
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import smithy4s.time._
 import weaver.FunSuite
+
+import java.util.UUID
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
 import scala.util.hashing.MurmurHash3.productSeed
+
 import HashTestUtils._
 
 object HashVisitorSpec extends FunSuite with CompatProvider {
@@ -117,6 +125,42 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
     val foo = getTimestamp
     val hashOutput = visitor(schema).hash(foo)
     expect.eql(foo.hashCode(), hashOutput)
+  }
+
+  test("uuid") {
+    val schema: Schema[UUID] = uuid
+    // don't use randomUUID for this since scalaJS doesn't have out-of-box support for SecureRandom
+    val foo = UUID.fromString("757bb3a6-0fe9-4bd0-a6d3-ae7cffb55fee")
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("localDate") {
+    val schema: Schema[LocalDate] = localdate
+    val foo = LocalDate.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("localTime") {
+    val schema: Schema[LocalTime] = localtime
+    val foo = LocalTime.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("duration ") {
+    val schema: Schema[Duration] = duration
+    val foo = 1.day
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
+  }
+
+  test("offsetdatetime") {
+    val schema: Schema[OffsetDateTime] = offsetdatetime
+    val foo = OffsetDateTime.now()
+    val hashOutput = visitor(schema).hash(foo)
+    expect.eql(foo.hashCode, hashOutput)
   }
 
   test("list") {

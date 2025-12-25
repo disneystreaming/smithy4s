@@ -16,12 +16,12 @@
 
 package smithy4s.schema
 
-import smithy4s.~>
 import alloy.Nullable
-import smithy4s.schema.Schema.OptionSchema
 import smithy4s.schema.Schema.BijectionSchema
-import smithy4s.schema.Schema.RefinementSchema
 import smithy4s.schema.Schema.LazySchema
+import smithy4s.schema.Schema.OptionSchema
+import smithy4s.schema.Schema.RefinementSchema
+import smithy4s.~>
 
 trait FieldFilter { self =>
   def compile[S, A](
@@ -109,13 +109,13 @@ object FieldFilter {
       case r: RefinementSchema[inner, a] =>
         asNonEmptyCollectionPredicate[inner](r.underlying)
           .map(_.compose(r.refinement.from))
-      case o: OptionSchema[inner] =>
+      case o: OptionSchema[f, inner] =>
         asNonEmptyCollectionPredicate(o.underlying)
           .map(predicateInner =>
-            collectionA => collectionA.exists(predicateInner)
+            (collectionA: f[inner]) => o.tag.exists(collectionA, predicateInner)
           )
-      case _: MapSchema[k, v] =>
-        Some(collectionA => collectionA.nonEmpty)
+      case c: MapSchema[c, k, v] =>
+        Some((collectionA: c[k, v]) => !c.tag.isEmpty(collectionA))
       case LazySchema(suspend) =>
         // it is safe to call .value here because we don't recurse into structs/unions schemas,
         // so we never see the same schema twice in this visitor.
@@ -169,11 +169,11 @@ object FieldFilter {
 
     def apply[A](schema: Schema[A]): Predicate[A] = schema match {
       // nullables are technically never None, so we fall through
-      case OptionSchema(underlying) =>
-        if (underlying.hints.has(Nullable) && !underlying.isOption)
+      case o: OptionSchema[f, inner] =>
+        if (o.underlying.hints.has(Nullable) && !o.underlying.isOption)
           Function.const(false)
         else
-          _ == None
+          (v: f[inner]) => o.tag.isNone(v)
 
       case BijectionSchema(underlying, bijection) =>
         this(underlying).compose(bijection.from)

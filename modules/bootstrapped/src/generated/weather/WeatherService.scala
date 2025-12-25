@@ -15,6 +15,7 @@ import smithy4s.schema.OperationSchema
 trait WeatherServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP GET /weather/{city} */
   def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
 }

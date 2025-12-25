@@ -44,6 +44,7 @@ class ConstraintsSmokeSpec extends FunSuite {
           case Schema.MapSchema(
                 _,
                 _,
+                _,
                 keySchema,
                 valueSchema
               ) =>

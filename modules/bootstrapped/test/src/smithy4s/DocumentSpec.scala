@@ -20,17 +20,42 @@ import smithy.api.JsonName
 import smithy.api.Default
 import smithy4s.example.IntList
 import smithy4s.example.RecursiveListWrapper
+import smithy4s.example.OnlyUnknownOpenUnion
+import smithy4s.example.SampleOpenUnion
+import smithy4s.example.OnlyUnknownDiscriminatedOpenUnion
+import smithy4s.example.StructForDiscrimination
+import smithy4s.example.SampleOpenDiscriminatedUnion
+import smithy4s.example.LocalDateStructure
+import smithy4s.example.LocalTimeStructure
+import smithy4s.example.OffsetDateTimeStructure
+import smithy4s.example.DurationStructure
 import alloy.Discriminated
 import alloy.JsonUnknown
-import munit._
 import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
+import alloy.PreserveKeyOrder
 import smithy4s.example.TimestampOperationInput
+import smithy4s.time._
 import scala.util.Try
 import smithy4s.schema.FieldFilter
 import smithy4s.refined.NonEmptyList
+import munit._
+import org.scalacheck.Arbitrary
+import org.scalacheck.Prop.forAll
+import org.scalacheck.Gen
+import scala.concurrent.duration._
+import scala.collection.immutable.ListMap
+import smithy4s.Document.DObject
 
-class DocumentSpec() extends FunSuite {
+class DocumentSpec() extends ScalaCheckSuite {
+
+  private val genDocument =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(Schema.document)
+
+  private val genDocumentMap =
+    smithy4s.scalacheck.SchemaVisitorGen.apply(
+      Schema.map(Schema.string, Schema.document)
+    )
 
   private case class TestCase(
       expectedToSkip: Boolean,
@@ -1195,6 +1220,89 @@ class DocumentSpec() extends FunSuite {
     )
   }
 
+  test("open tagged union - decoding still fails if no tag is present") {
+    assert(Document.decode[SampleOpenUnion](Document.obj()).isLeft)
+  }
+
+  test("open tagged union - known tags decode normally") {
+    roundtripTest(Document.obj("u" -> Document.obj()), SampleOpenUnion.u())
+    roundtripTest(Document.obj("str" -> Document.fromString("hello")), SampleOpenUnion.str("hello"))
+  }
+
+  test("open tagged union - unknown tags can be roundtripped") {
+    val stringCase = Document.obj("brand-new-member" -> Document.fromString("oh wow i'm a string"))
+    roundtripTest(stringCase, SampleOpenUnion.unknown(stringCase))
+
+    val objectCase = Document.obj("brand-new-obj-member" -> Document.obj("inner-key" -> Document.fromInt(42)))
+    roundtripTest(objectCase, SampleOpenUnion.unknown(objectCase))
+  }
+
+  test("open tagged union - if the key used by the unknown member appears, it still roundtrips") {
+    val input = Document.obj("unknown" -> Document.obj())
+    roundtripTest(input, SampleOpenUnion.unknown(input))
+  }
+
+  test("open tagged union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocument, Arbitrary.arbitrary[String]) { (document, tag) =>
+      val input = document.nest(tag)
+
+      roundtripTest(input, OnlyUnknownOpenUnion.unknown(input))
+    }
+  }
+
+  test("open discriminated union - decoding still fails if the discriminator key is missing") {
+    assert(
+      Document.decode[SampleOpenDiscriminatedUnion](Document.obj("ignoredKey" -> Document.fromString("foo"))).isLeft
+    )
+  }
+
+  test("open discriminated union - known tags decode normally") {
+    roundtripTest(Document.obj("type" -> Document.fromString("u")), SampleOpenDiscriminatedUnion.u())
+    roundtripTest(
+      Document.obj("type" -> Document.fromString("s"), "str" -> Document.fromString("hello")),
+      SampleOpenDiscriminatedUnion.s(StructForDiscrimination("hello"))
+    )
+  }
+
+  test("open discriminated union - unknown tags can be roundtripped") {
+    val stringCase = Document.obj(
+      "type" -> Document.fromString("brand-new-member"),
+      "extra" -> Document.fromString("oh wow i'm a string")
+    )
+
+    roundtripTest(stringCase, SampleOpenDiscriminatedUnion.unknown(stringCase))
+
+    val objectCase =
+      Document.obj(
+        "type" -> Document.fromString("brand-new-obj-member"),
+        "inner-key" -> Document.fromInt(42)
+      )
+
+    roundtripTest(objectCase, SampleOpenDiscriminatedUnion.unknown(objectCase))
+  }
+
+  test("open discriminated union - if the key used by the unknown member appears, it still roundtrips") {
+    val input = Document.obj("type" -> Document.fromString("unknown"), "extra" -> Document.obj())
+    roundtripTest(input, SampleOpenDiscriminatedUnion.unknown(input))
+  }
+
+  test("open discriminated union with only an unknown member - unknown tags can be roundtripped") {
+    forAll(genDocumentMap, Arbitrary.arbitrary[String]) { (documentKeys, tag) =>
+      val input = Document.DObject(documentKeys + ("type" -> Document.fromString(tag)))
+
+      roundtripTest(input, OnlyUnknownDiscriminatedOpenUnion.unknown(input))
+    }
+  }
+
+  private def roundtripTest[T: Document.Encoder: Document.Decoder](input: Document, expectedOutput: T)(implicit
+      loc: Location
+  ) = {
+    val decoded = Document.decode[T](input)
+    assertEquals(decoded, Right(expectedOutput), clue = "decoded value is not the same")
+    val encoded = Document.encode(expectedOutput)
+    assertEquals(encoded, input, clue = "roundtripped encoding is not the same")
+  }
+
   List(
     TestCase(expectedToSkip = false, FieldFilter.EncodeAll),
     TestCase(expectedToSkip = false, FieldFilter.SkipEmptyOptionalCollection),
@@ -1390,6 +1498,122 @@ class DocumentSpec() extends FunSuite {
     assertPF.lift
       .apply(a)
       .getOrElse(Assertions.fail("Value did not match the expected pattern"))
+  }
+
+  private def testRoundtrip[T](input: T, document: Document)(implicit schema: Schema[T]) = {
+    val documentResult = Document.encode(input)
+
+    expect.same(documentResult, document)
+
+    val decodeResult = Document.decode[T](document)
+
+    expect.same(decodeResult, Right(input))
+  }
+
+  test("Document codec - localDate") {
+    val structure =
+      LocalDateStructure(
+        LocalDate(2025, 8, 9),
+        smithy4s.example.MyLocalDate(LocalDate(2024, 9, 10))
+      )
+    val document =
+      Document.obj(
+        "localDate" -> Document.fromString("2025-08-09"),
+        "localDate2" -> Document.fromString("2024-09-10")
+      )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - localTime") {
+    val structure =
+      LocalTimeStructure(
+        LocalTime(13, 30, 9),
+        smithy4s.example.MyLocalTime(LocalTime(18, 9, 10))
+      )
+
+    val document =
+      Document.obj(
+        "localTime" -> Document.fromString("13:30:09"),
+        "localTime2" -> Document.fromString("18:09:10")
+      )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - offsetDateTime") {
+    val structure =
+      OffsetDateTimeStructure(
+        OffsetDateTime(2025, 7, 8, 13, 30, 9, 0, ZoneOffset.hours(-7)),
+        smithy4s.example.MyOffsetDateTime(OffsetDateTime(2025, 9, 10, 18, 9, 10, 0, ZoneOffset.hours(6)))
+      )
+
+    val document = Document.obj(
+      "offsetDateTime" -> Document.fromString("2025-07-08T13:30:09-07:00"),
+      "offsetDateTime2" -> Document.fromString("2025-09-10T18:09:10+06:00")
+    )
+
+    testRoundtrip(structure, document)
+  }
+
+  test("Document codec - duration") {
+    val structure =
+      DurationStructure(
+        1.day,
+        smithy4s.example.MyDuration(1.day + 6.hours + 42.minutes + 500.nanos)
+      )
+
+    val document =
+      Document.obj(
+        "duration" -> Document.fromBigDecimal(BigDecimal(86400)),
+        "duration2" -> Document.fromBigDecimal(BigDecimal(110520.0000005))
+      )
+
+    testRoundtrip(structure, document)
+  }
+
+  case class OrderedDoc(doc: Document)
+
+  implicit val orderedMapSchema: Schema[OrderedDoc] = {
+    val doc = document.required[OrderedDoc]("doc", _.doc).addHints(PreserveKeyOrder())
+
+    struct(doc)(OrderedDoc.apply)
+  }
+
+  test("Document maps should preserve key order with @preserveKeyOrder hint") {
+    val keyGen = Gen.listOfN(100, Gen.alphaNumStr).map(_.distinct)
+
+    forAll(keyGen) { (keys: List[String]) =>
+      val entries = keys.zipWithIndex.map { case (key, value) =>
+        (key, Document.fromInt(value))
+      }
+      val orderedMap = ListMap(entries: _*)
+      val input = OrderedDoc(Document.DObject(orderedMap))
+
+      def getKeys(obj: Document): List[String] = obj match {
+        case DObject(doc) if doc.contains("doc") =>
+          doc("doc") match {
+            case DObject(map) => map.keys.toList
+            case _            => List.empty
+          }
+        case DObject(map) => map.keys.toList
+        case _            => List.empty
+      }
+
+      val encodeResult = Document.encode(input)
+      val encodeKeyOrder = getKeys(encodeResult)
+
+      assertEquals(keys, encodeKeyOrder)
+
+      val decodeResult = Document.decode[OrderedDoc](encodeResult)
+      val decodeKeyOrder = decodeResult match {
+        case Right(result) => getKeys(result.doc)
+        case _             => List.empty[String]
+      }
+
+      assertEquals(keys, decodeKeyOrder)
+
+    }
   }
 
 }

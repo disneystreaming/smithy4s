@@ -16,14 +16,14 @@
 
 package smithy4s.xml
 
-import smithy4s.Blob
-import smithy4s.schema.Schema
+import cats.effect.SyncIO
+import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
 import fs2.data.xml.dom._
-import cats.syntax.all._
+import smithy4s.Blob
 import smithy4s.codecs._
-import cats.effect.SyncIO
+import smithy4s.schema.Schema
 
 object Xml {
 

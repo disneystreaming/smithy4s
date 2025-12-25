@@ -17,23 +17,24 @@
 package smithy4s
 package http4s
 
+import cats.data.OptionT
 import cats.effect._
 import cats.syntax.all._
+import org.http4s.HttpApp
 import org.http4s.HttpRoutes
+import org.http4s.Request
+import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
-import smithy4s.interopcats._
-import smithy4s.kinds._
 import smithy4s.client.UnaryClientCompiler
 import smithy4s.http.HttpUnaryServerRouter
 import smithy4s.http4s.internals.Http4sToSmithy4sClient
-import smithy4s.http4s.kernel.{toSmithy4sHttpMethod, pathParamsKey}
-import org.http4s.HttpApp
-import org.http4s.Request
-import org.http4s.Response
-import cats.data.OptionT
+import smithy4s.http4s.kernel.pathParamsKey
+import smithy4s.http4s.kernel.toSmithy4sHttpMethod
 import smithy4s.http4s.kernel.toSmithy4sHttpUri
+import smithy4s.interopcats._
+import smithy4s.kinds._
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -60,6 +61,7 @@ abstract class SimpleProtocolBuilder[P](
       service,
       impl,
       PartialFunction.empty,
+      PartialFunction.empty,
       Endpoint.Middleware.noop,
       encodeErrorsBeforeMiddleware = false
     )
@@ -78,6 +80,7 @@ abstract class SimpleProtocolBuilder[P](
       new RouterBuilder[Alg, F](
         service,
         impl,
+        PartialFunction.empty,
         PartialFunction.empty,
         Endpoint.Middleware.noop,
         encodeErrorsBeforeMiddleware = false
@@ -133,6 +136,7 @@ abstract class SimpleProtocolBuilder[P](
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      onError: PartialFunction[Throwable, F[Unit]],
       middleware: ServerEndpointMiddleware[F],
       encodeErrorsBeforeMiddleware: Boolean
   )(implicit
@@ -183,6 +187,15 @@ abstract class SimpleProtocolBuilder[P](
     ): RouterBuilder[Alg, F] =
       copy(errorTransformation = fe)
 
+    /**
+     * Registers a handler for ALL errors including those defined in the Smithy spec.
+     **/
+    def onError(
+        fe: PartialFunction[Throwable, F[Unit]]
+    ): RouterBuilder[Alg, F] = {
+      copy(onError = fe)
+    }
+
     def middleware(
         mid: ServerEndpointMiddleware[F]
     ): RouterBuilder[Alg, F] =
@@ -212,8 +225,13 @@ abstract class SimpleProtocolBuilder[P](
             ServerEndpointMiddleware.flatMapErrors(errorTransformation)
           val finalMiddleware =
             errorHandler.andThen(middleware).andThen(errorHandler)
+
           val router =
-            HttpUnaryServerRouter(service, encodeErrorsBeforeMiddleware)(
+            HttpUnaryServerRouter(
+              service,
+              encodeErrorsBeforeMiddleware,
+              onError
+            )(
               impl,
               simpleProtocolCodecs.makeServerCodecs[F],
               finalMiddleware.biject(_.run)(HttpApp(_)),
@@ -237,6 +255,7 @@ abstract class SimpleProtocolBuilder[P](
         impl: FunctorAlgebra[Alg, F] = impl,
         errorTransformation: PartialFunction[Throwable, F[Throwable]] =
           errorTransformation,
+        onError: PartialFunction[Throwable, F[Unit]] = onError,
         middleware: ServerEndpointMiddleware[F] = middleware,
         encodeErrorsBeforeMiddleware: Boolean = encodeErrorsBeforeMiddleware
     ): RouterBuilder[Alg, F] =
@@ -244,6 +263,7 @@ abstract class SimpleProtocolBuilder[P](
         service,
         impl,
         errorTransformation,
+        onError,
         middleware,
         encodeErrorsBeforeMiddleware
       )

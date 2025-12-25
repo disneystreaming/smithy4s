@@ -16,10 +16,10 @@
 
 package smithy4s.codegen.transformers
 
-import software.amazon.smithy.build.TransformContext
 import smithy4s.meta.ValidateNewtypeTrait
-import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.ShapeId
 
 class ValidatedNewtypesTransformerSpec extends munit.FunSuite {
 

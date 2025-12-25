@@ -23,6 +23,7 @@ import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
+import smithy4s.time._
 
 import java.util.Base64
 import java.util.UUID
@@ -55,6 +56,7 @@ object DocumentKeyDecoder {
           if (f.isDefinedAt(doc)) f(doc)
           else throw DecodeError(expectedType)
         }
+
       def fromUnsafe[A](
           expectedType: String
       )(f: PartialFunction[Document, A]): OptDocumentKeyDecoder[A] =
@@ -125,6 +127,23 @@ object DocumentKeyDecoder {
             }
 
           case PDocument => None
+
+          case PLocalDate =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              LocalDate.parseUnsafe(string)
+            }
+          case PLocalTime =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              LocalTime.parseUnsafe(string)
+            }
+          case PDuration =>
+            fromUnsafe(shortDesc) { case FlexibleNumber(bd) =>
+              DurationOps.fromBigDecimal(bd)
+            }
+          case POffsetDateTime =>
+            fromUnsafe(shortDesc) { case DString(string) =>
+              OffsetDateTime.parseUnsafe(string)
+            }
         }
       }
       override def enumeration[E](

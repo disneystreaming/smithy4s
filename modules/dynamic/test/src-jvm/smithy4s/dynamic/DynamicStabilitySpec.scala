@@ -18,10 +18,11 @@ package smithy4s
 package dynamic
 
 import munit._
-import java.util.concurrent.atomic.AtomicInteger
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema._
 import software.amazon.smithy.model.{Model => SModel}
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class DynamicStabilitySpec extends FunSuite {
 
@@ -164,12 +165,13 @@ class DynamicStabilitySpec extends FunSuite {
         member: Schema[A]
     ): ConstUnit[C[A]] = { self(member) }
 
-    def map[K, V](
+    def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
-    ): ConstUnit[Map[K, V]] = {
+    ): ConstUnit[C[K, V]] = {
       self(key)
       self(value)
     }
@@ -227,7 +229,10 @@ class DynamicStabilitySpec extends FunSuite {
       }
     }
 
-    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = {
+    def option[C[_], A](
+        tag: OptionalTag[C],
+        schema: Schema[A]
+    ): ConstUnit[C[A]] = {
       self(schema)
     }
   }

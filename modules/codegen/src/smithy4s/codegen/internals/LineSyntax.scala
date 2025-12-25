@@ -34,6 +34,7 @@ private[codegen] object LineSyntax {
       }
       val renderLines: List[Line] = renderables.map(r => aux(r))
       sc.parts.toList
+        .map(StringContext.processEscapes(_))
         .map(Line(_))
         .zipAll(renderLines, Line.empty, Line.empty)
         .flatMap { case (a, b) => List(a, b) }

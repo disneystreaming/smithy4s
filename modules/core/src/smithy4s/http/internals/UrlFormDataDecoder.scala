@@ -19,6 +19,7 @@ package http
 package internals
 
 import smithy4s.codecs.PayloadPath
+import smithy4s.schema.OptionalTag
 
 private[http] trait UrlFormDataDecoder[A] { self =>
 
@@ -39,9 +40,9 @@ private[http] trait UrlFormDataDecoder[A] { self =>
   def map[B](f: A => B): UrlFormDataDecoder[B] =
     cursor => self.decode(cursor).map(f)
 
-  def optional: UrlFormDataDecoder[Option[A]] = {
-    case UrlFormCursor(_, Nil) => Right(None)
-    case other                 => self.decode(other).map(Some(_))
+  def optional[C[_]](tag: OptionalTag[C]): UrlFormDataDecoder[C[A]] = {
+    case UrlFormCursor(_, Nil) => Right(tag.none)
+    case other                 => self.decode(other).map(tag.some(_))
   }
 }
 

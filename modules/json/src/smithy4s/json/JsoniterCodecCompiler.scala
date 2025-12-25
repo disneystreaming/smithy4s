@@ -16,12 +16,11 @@
 
 package smithy4s.json
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
-import smithy4s.internals._
-import smithy4s.HintMask
-import smithy.api._
 import alloy._
-
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
+import smithy.api._
+import smithy4s.HintMask
+import smithy4s.internals._
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.FieldFilter
 
@@ -48,7 +47,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     */
   @deprecated(
     message = """Use withFieldFilter instead.
-      
+
   Mapping:
    - explicitNulls = false -> FieldFilter.Default
    - explicitNulls = true -> FieldFilter.EncodeAll
@@ -64,12 +63,12 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     )
 
   /**
-    * Configures the JSON encoder to use a custom {@link FieldFilter}, 
+    * Configures the JSON encoder to use a custom [[smithy4s.schema.FieldFilter]],
     * allowing fine-grained control over which fields should be skipped during encoding.
     *
-    * @param fieldFilter an instance of {@link FieldFilter} responsible for 
+    * @param fieldFilter an instance of [[smithy4s.schema.FieldFilter]] responsible for
     *                          determining whether a given field should be rendered.
-    * @return a new instance of {@link JsoniterCodecCompiler} with the specified field skipping behavior.
+    * @return a new instance of [[JsoniterCodecCompiler]] with the specified field skipping behavior.
     */
   def withFieldFilter(fieldFilter: FieldFilter): JsoniterCodecCompiler
 
@@ -86,11 +85,6 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     * This behaviour has a performance overhead.
     */
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler
-
-  /**
-    * Changes the behaviour of Json decoders so that the preserve the ordering of maps.
-    */
-  def withMapOrderPreservation(preserveMapOrder: Boolean): JsoniterCodecCompiler
 
   /**
     * Changes the hint mask with which the decoder works. Depending on the hint mask, some
@@ -127,7 +121,8 @@ object JsoniterCodecCompiler {
       Default,
       Required,
       Nullable,
-      JsonUnknown
+      JsonUnknown,
+      PreserveKeyOrder
     )
 
 }

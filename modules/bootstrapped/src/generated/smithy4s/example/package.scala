@@ -79,6 +79,10 @@ package object example {
     */
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
   type Menu = smithy4s.example.Menu.Type
+  type MyDuration = smithy4s.example.MyDuration.Type
+  type MyLocalDate = smithy4s.example.MyLocalDate.Type
+  type MyLocalTime = smithy4s.example.MyLocalTime.Type
+  type MyOffsetDateTime = smithy4s.example.MyOffsetDateTime.Type
   type Name = smithy4s.example.Name.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
@@ -88,13 +92,20 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
+  type OrderedMap = smithy4s.example.OrderedMap.Type
   type PNG = smithy4s.example.PNG.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type PersonEmail = smithy4s.example.PersonEmail.Type
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type PublisherId = smithy4s.example.PublisherId.Type
   type PublishersList = smithy4s.example.PublishersList.Type
+  type QParams = smithy4s.example.QParams.Type
+  type QValues = smithy4s.example.QValues.Type
+  type QueryKinds = smithy4s.example.QueryKinds.Type
+  type QueryVariants = smithy4s.example.QueryVariants.Type
   type RecursiveList = smithy4s.example.RecursiveList.Type
+  type RecursiveListTrait = smithy4s.example.RecursiveListTrait.Type
+  type RecursiveMapTrait = smithy4s.example.RecursiveMapTrait.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type SomeValue = smithy4s.example.SomeValue.Type
@@ -120,6 +131,7 @@ package object example {
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
   type Username = smithy4s.example.Username.Type
+  type UuidTrait = smithy4s.example.UuidTrait.Type
   type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }

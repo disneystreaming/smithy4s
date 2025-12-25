@@ -17,9 +17,11 @@
 package smithy4s.json
 
 import munit._
-import smithy4s.schema.Schema
 import smithy4s.Blob
 import smithy4s.Document
+import smithy4s.example.DefaultTest
+import smithy4s.schema.Schema
+
 import Schema._
 
 class JsonSpec() extends FunSuite {
@@ -86,6 +88,11 @@ class JsonSpec() extends FunSuite {
 
     assertEquals(result, expectedJson)
     assertEquals(roundTripped, Right(foo))
+  }
+
+  test("Json read - optional field with a default value accepts nulls") {
+    val result = Json.read[DefaultTest](Blob("""{"two": null}"""))
+    assertEquals(result, Right(DefaultTest()))
   }
 
 }

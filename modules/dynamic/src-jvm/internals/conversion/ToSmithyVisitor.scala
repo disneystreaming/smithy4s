@@ -16,12 +16,13 @@
 
 package smithy4s.dynamic.internals.conversion
 
-import smithy4s.schema.SchemaVisitor
-import software.amazon.smithy.model.shapes.Shape
-import smithy4s.{ShapeId => ScalaShapeId, _}
-import smithy4s.schema.{Schema => _, _}
 import smithy4s.schema.Primitive._
+import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.{Schema => _, _}
+import smithy4s.{ShapeId => ScalaShapeId, _}
+import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.shapes._
+
 import java.util.function.Consumer
 
 /**
@@ -105,20 +106,24 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
       tag: Primitive[P]
   ): ShapeRecorder[ShapeId] = {
     def shp = tag match {
-      case PUUID       => StringShape.builder().setId(shapeId).build()
-      case PBigDecimal => BigDecimalShape.builder().setId(shapeId).build()
-      case PBigInt     => BigIntegerShape.builder().setId(shapeId).build()
-      case PString     => StringShape.builder().setId(shapeId).build()
-      case PDouble     => DoubleShape.builder().setId(shapeId).build()
-      case PInt        => IntegerShape.builder().setId(shapeId).build()
-      case PBlob       => BlobShape.builder().setId(shapeId).build()
-      case PTimestamp  => TimestampShape.builder().setId(shapeId).build()
-      case PFloat      => FloatShape.builder().setId(shapeId).build()
-      case PLong       => BigDecimalShape.builder().setId(shapeId).build()
-      case PByte       => ByteShape.builder().setId(shapeId).build()
-      case PDocument   => DocumentShape.builder().setId(shapeId).build()
-      case PBoolean    => BooleanShape.builder().setId(shapeId).build()
-      case PShort      => ShortShape.builder().setId(shapeId).build()
+      case PUUID           => StringShape.builder().setId(shapeId).build()
+      case PBigDecimal     => BigDecimalShape.builder().setId(shapeId).build()
+      case PBigInt         => BigIntegerShape.builder().setId(shapeId).build()
+      case PString         => StringShape.builder().setId(shapeId).build()
+      case PDouble         => DoubleShape.builder().setId(shapeId).build()
+      case PInt            => IntegerShape.builder().setId(shapeId).build()
+      case PBlob           => BlobShape.builder().setId(shapeId).build()
+      case PTimestamp      => TimestampShape.builder().setId(shapeId).build()
+      case PFloat          => FloatShape.builder().setId(shapeId).build()
+      case PLong           => BigDecimalShape.builder().setId(shapeId).build()
+      case PByte           => ByteShape.builder().setId(shapeId).build()
+      case PDocument       => DocumentShape.builder().setId(shapeId).build()
+      case PBoolean        => BooleanShape.builder().setId(shapeId).build()
+      case PShort          => ShortShape.builder().setId(shapeId).build()
+      case PLocalDate      => StringShape.builder().setId(shapeId).build()
+      case PLocalTime      => StringShape.builder().setId(shapeId).build()
+      case PDuration       => BigDecimalShape.builder().setId(shapeId).build()
+      case POffsetDateTime => TimestampShape.builder().setId(shapeId).build()
     }
     record(shp.captureHints(hints.targetHints))
   }
@@ -148,9 +153,10 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
         .captureHints(hints.targetHints)
     }
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ScalaShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
   ): ShapeRecorder[ShapeId] =
@@ -272,7 +278,10 @@ private[dynamic] object ToSmithyVisitor extends SchemaVisitor[ToSmithy] {
     }
   }
 
-  def option[A](schema: Schema[A]): ShapeRecorder[ShapeId] =
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): ShapeRecorder[ShapeId] =
     self(schema)
 
 }

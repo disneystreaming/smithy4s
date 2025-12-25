@@ -24,6 +24,7 @@ import org.scalacheck.Gen
 import scala.jdk.CollectionConverters._
 import smithy4s.schema.Primitive._
 import smithy.api.Length
+import scala.concurrent.duration.Duration
 
 object SchemaVisitorGen extends SchemaVisitorGen
 
@@ -56,6 +57,11 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
           .flatMap(l => Gen.stringOfN(l, Gen.asciiPrintableChar))
           .map(_.getBytes)
           .map(Blob.apply)
+      case PLocalDate => Smithy4sGen.genLocalDate
+      case PLocalTime => Smithy4sGen.genLocalTime
+      // limit durations +/- 1 year to ensure they are finite for tests
+      case PDuration => Gen.chooseNum(-876582, 876582).map(hours => Duration.create(hours.toLong, "hours"))
+      case POffsetDateTime => Smithy4sGen.genOffsetDateTime
     }
   }
 
@@ -69,18 +75,19 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
       .flatMap(l => Gen.listOfN(l, member.compile(this)))
       .map(l => tag.fromIterator(l.iterator))
 
-  def map[K, V](
+  def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Gen[Map[K, V]] =
+  ): Gen[C[K, V]] =
     length(hints).flatMap(l =>
       Gen.mapOfN(
         l,
         key.compile(this).flatMap(k => value.compile(this).map(k -> _))
       )
-    )
+  ).map(l => tag.fromScalaMap(l))
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
@@ -113,7 +120,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   }
 
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Gen[B] =
-    schema.compile(this).map(bijection)
+    schema.compile(this).map(bijection.toFunction)
 
   def refine[A, B](
       schema: Schema[A],
@@ -122,7 +129,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
-  def option[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
+  def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Gen[C[A]] = Gen.option(this(schema)).map(tag.fromScalaOption(_))
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS

@@ -124,8 +124,9 @@ private[internals] object CollisionAvoidance {
         member = modType(member),
         memberHints = memberHints.map(modHint(_))
       )
-    case Type.Map(key, keyHints, value, valueHints) =>
+    case Type.Map(mapType, key, keyHints, value, valueHints) =>
       Type.Map(
+        mapType = mapType,
         key = modType(key),
         keyHints = keyHints.map(modHint(_)),
         value = modType(value),
@@ -198,11 +199,12 @@ private[internals] object CollisionAvoidance {
   private def modRef(ref: Type.Ref): Type.Ref =
     Type.Ref(ref.namespace, protectKeyword(ref.name.capitalize))
 
-  private def modNativeHint(hint: Hint.Native): Hint.Native =
+  private def modNativeHint(hint: Hint.Native): Hint.Native = {
     Hint.Native(
       hint.shapeId,
-      recursion.preprocess(modTypedNode)(hint.typedNode)
+      hint.typedNode.map(recursion.preprocess(modTypedNode))
     )
+  }
 
   private def modDefaultHint(hint: Hint.Default): Hint.Default =
     Hint.Default(recursion.preprocess(modTypedNode)(hint.typedNode))
@@ -252,8 +254,8 @@ private[internals] object CollisionAvoidance {
           // Alt names in this context are always capitalized before being printed
           // (Renderer.scala:1614 at the time of writing).
           AltTN(modRef(ref), altName, alt)
-        case MapTN(values) =>
-          MapTN(values)
+        case MapTN(mapType, values) =>
+          MapTN(mapType, values)
         case CollectionTN(collectionType, values) =>
           CollectionTN(collectionType, values)
         case PrimitiveTN(prim, value) =>
@@ -379,7 +381,8 @@ private[internals] object CollisionAvoidance {
     val smithy4sThrowable = NameRef("smithy4s", "Smithy4sThrowable")
 
     // We reserve these keywords as they collide with types that the
-    // users are bound to manipulate when using Smithy4s .
+    // users are bound to manipulate when using Smithy4s.
+    val any_ = NameRef("scala", "Any")
     val short_ = NameRef("scala", "Short")
     val int_ = NameRef("scala", "Int")
     val javaInt_ = NameRef("java.lang", "Integer")
@@ -392,19 +395,25 @@ private[internals] object CollisionAvoidance {
     val boolean_ = NameRef("scala", "Boolean")
     val byte_ = NameRef("scala", "Byte")
     val unit_ = NameRef("scala", "Unit")
-    val timestamp_ = NameRef("smithy4s", "Timestamp")
+    val timestamp_ = NameRef("smithy4s.time", "Timestamp")
     val document_ = NameRef("smithy4s", "Document")
     val uuid_ = NameRef("smithy4s", "UUID")
+    val localdate_ = NameRef("smithy4s.time", "LocalDate")
+    val localtime_ = NameRef("smithy4s.time", "LocalTime")
+    val duration_ = NameRef("scala.concurrent.duration", "Duration")
+    val offsetdatetime_ = NameRef("smithy4s.time", "OffsetDateTime")
     val list = NameRef("scala", "List")
     val indexedSeq = NameRef("scala.collection.immutable", "IndexedSeq")
     val set = NameRef("scala.collection.immutable", "Set")
     val map = NameRef("scala.collection.immutable", "Map")
+    val seqMap = NameRef("scala.collection.immutable", "SeqMap")
+    val listMap = NameRef("scala.collection.immutable", "ListMap")
     val vector = NameRef("scala", "Vector")
     val option = NameRef("scala", "Option")
     val none = NameRef("scala", "None")
     val some = NameRef("scala", "Some")
     val noStackTrace = NameRef("scala.util.control", "NoStackTrace")
-    val throwable = NameRef("java.lang", "Throwable")
+    val serializable = NameRef("scala", "Serializable")
 
   }
 

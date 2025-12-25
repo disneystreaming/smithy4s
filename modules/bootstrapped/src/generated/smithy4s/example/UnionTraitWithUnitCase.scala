@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import UnionTraitWithUnitCase.UCaseAlt
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -15,7 +14,7 @@ sealed trait UnionTraitWithUnitCase extends scala.Product with scala.Serializabl
   def $ordinal: Int
 
   object project {
-    def u: Option[UnionTraitWithUnitCase.UCase.type] = UCaseAlt.project.lift(self)
+    def u: Option[UnionTraitWithUnitCase.UCase.type] = UnionTraitWithUnitCase.UCase.alt.project.lift(self)
     def s: Option[String] = UnionTraitWithUnitCase.SCase.alt.project.lift(self).map(_.s)
   }
 
@@ -35,8 +34,11 @@ object UnionTraitWithUnitCase extends ShapeTag.Companion[UnionTraitWithUnitCase]
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ).lazily
 
-  case object UCase extends UnionTraitWithUnitCase { final def $ordinal: Int = 0 }
-  private val UCaseAlt = Schema.constant(UnionTraitWithUnitCase.UCase).oneOf[UnionTraitWithUnitCase]("u").addHints(hints)
+  case object UCase extends UnionTraitWithUnitCase {
+    final def $ordinal: Int = 0
+    val hints: Hints = Hints.empty
+    val alt = Schema.constant(UnionTraitWithUnitCase.UCase).oneOf[UnionTraitWithUnitCase]("u").addHints(UCase.hints)
+  }
   final case class SCase(s: String) extends UnionTraitWithUnitCase { final def $ordinal: Int = 1 }
 
   object SCase {
@@ -59,7 +61,7 @@ object UnionTraitWithUnitCase extends ShapeTag.Companion[UnionTraitWithUnitCase]
   }
 
   implicit val schema: Schema[UnionTraitWithUnitCase] = recursive(union(
-    UCaseAlt,
+    UnionTraitWithUnitCase.UCase.alt,
     UnionTraitWithUnitCase.SCase.alt,
   ){
     _.$ordinal

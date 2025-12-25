@@ -16,18 +16,17 @@
 
 package smithy4s.example.guides
 
-import smithy4s.example.guides.hello._
-import cats.effect.*
-import cats.implicits.*
-import org.http4s.implicits.*
-import org.http4s.ember.server.*
-import org.http4s.*
-import com.comcast.ip4s.*
-import smithy4s.http4s.SimpleRestJsonBuilder
-import org.http4s.server.Middleware
+import cats.effect._
+import cats.implicits._
+import com.comcast.ip4s._
+import org.http4s._
+import org.http4s.ember.server._
 import org.http4s.headers.Origin
-import org.typelevel.ci.CIString.apply
+import org.http4s.implicits._
 import org.typelevel.ci.CIString
+import smithy4s.example.guides.hello._
+import smithy4s.http4s.SimpleRestJsonBuilder
+
 import scala.concurrent.duration.Duration
 
 object HelloWorldImpl extends HelloWorldService[IO] {

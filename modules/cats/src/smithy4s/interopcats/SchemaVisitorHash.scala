@@ -17,8 +17,13 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{catsKernelStdHashForList, toContravariantOps}
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
+import cats.implicits.catsKernelStdHashForList
+import cats.implicits.toContravariantOps
+import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
 import smithy4s.schema.Schema
@@ -59,18 +64,24 @@ final class SchemaVisitorHash(
       case CollectionTag.VectorTag => Hash[Vector[A]]
       case CollectionTag.IndexedSeqTag =>
         Hash[scala.collection.immutable.Seq[A]].contramap(_.toIndexedSeq)
+      case _ =>
+        Hash[scala.collection.immutable.Seq[A]].contramap(x =>
+          tag.iterator(x).toList
+        )
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Hash[Map[K, V]] = {
+  ): Hash[C[K, V]] = {
     implicit val keyHash: Hash[K] = self(key)
     implicit val valueHash: Hash[V] = self(value)
-    Hash[Map[K, V]]
+
+    Hash[Map[K, V]].contramap(c => tag.toScalaMap((c)))
   }
 
   override def enumeration[E](
@@ -191,7 +202,12 @@ final class SchemaVisitorHash(
     }
   }
 
-  override def option[A](schema: Schema[A]): Hash[Option[A]] =
-    cats.instances.option.catsKernelStdHashForOption(self(schema))
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Hash[C[A]] =
+    cats.instances.option
+      .catsKernelStdHashForOption(self(schema))
+      .contramap(tag.toScalaOption(_))
 
 }

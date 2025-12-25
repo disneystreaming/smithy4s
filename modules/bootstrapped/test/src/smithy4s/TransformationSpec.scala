@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy4s.example._
+import smithy4s.example.greet._
 import smithy4s.kinds.PolyFunction
 import munit._
 import scala.util.{Failure, Success, Try}
@@ -107,6 +108,41 @@ class TransformationSpec() extends FunSuite {
       )
     )
 
+  }
+
+  test(
+    "surfacing unhandled errors on an operation without errors doesn't throw"
+  ) {
+    val e = new Exception("Expected, but unexpected error")
+
+    val impl: GreetService[Try] =
+      new GreetService.Default[Try](Failure(e))
+
+    type Result[E, A] = Either[Either[Throwable, E], A]
+
+    // If you hit this, you should make sure either that Greet has no errors
+    // or switch to another operation that matches this assumption.
+    // Otherwise, this test is useless.
+    require(
+      GreetServiceOperation.Greet.error.isEmpty,
+      "The issue we're testing against can only be reproduced with error-unaware operations."
+    )
+
+    val result = impl
+      .transform(new Transformation.SurfaceError[Try, Result] {
+        def apply[E, A](fa: Try[A], projectError: Throwable => Option[E])
+            : Result[E, A] =
+          fa match {
+            case Success(value) => Right(value)
+            case Failure(exception) =>
+              projectError(exception).fold[Result[E, A]](Left(Left(exception)))(
+                e => Left(Right(e))
+              )
+          }
+      })
+      .greet("hello")
+
+    expect.same(result, Left(Left(e)))
   }
 
 }

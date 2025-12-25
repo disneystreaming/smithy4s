@@ -16,31 +16,27 @@
 
 package smithy4s.http4s.kernel
 
-import weaver._
-import org.http4s.implicits._
-import org.http4s.Uri
+import org.http4s.Uri._
+import org.http4s._
+import org.http4s.syntax.all._
 import smithy4s.http.HttpUriScheme
+import weaver._
 
 object Http4sConversionSpec extends SimpleIOSuite {
 
   // note: these actually work (http4s runs them as HTTP GET against localhost:80)
   http4sToSmithyAndBackUriTest(
     uri"/",
-    uri"http:/"
+    uri"/"
   )
 
   http4sToSmithyAndBackUriTest(
     uri"/hello",
-    uri"http:/hello"
+    uri"/hello"
   )
 
   http4sToSmithyAndBackUriTest(
     uri"http://example.com",
-    uri"http://example.com/"
-  )
-
-  http4sToSmithyAndBackUriTest(
-    uri"//example.com",
     uri"http://example.com/"
   )
 
@@ -64,68 +60,67 @@ object Http4sConversionSpec extends SimpleIOSuite {
     uri"http://localhost/"
   )
 
-  pureTest("URI: http4s to smithy4s defaults to http") {
-    assert.same(
-      smithy4s.http.HttpUriScheme.Http,
+  pureTest("URI: http4s to smithy4s defaults to none") {
+    expect.same(
+      None,
       toSmithy4sHttpUri(uri"/").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps http scheme") {
-    assert.same(
-      smithy4s.http.HttpUriScheme.Http,
+    expect.same(
+      Some(smithy4s.http.HttpUriScheme.Http),
       toSmithy4sHttpUri(uri"http://localhost").scheme
     )
   }
 
   pureTest("URI: http4s to smithy4s keeps https scheme") {
-    assert.same(
-      smithy4s.http.HttpUriScheme.Https,
+    expect.same(
+      Some(smithy4s.http.HttpUriScheme.Https),
       toSmithy4sHttpUri(uri"https://localhost").scheme
     )
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.http),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Http
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
 
   pureTest("URI: smithy4s to http4s keeps http scheme") {
-    assert.same(
+    expect.same(
       Some(Uri.Scheme.https),
       fromSmithy4sHttpUri(
         aSmithy4sUri(
           scheme = HttpUriScheme.Https
-        )
+        ),
+        encodePathSegments = true
       ).scheme
     )
   }
 
-  private def http4sToSmithyAndBackUriTest(input: Uri, output: Uri)(implicit
-      loc: SourceLocation
-  ) = {
+  private def http4sToSmithyAndBackUriTest(
+      input: Uri,
+      output: Uri
+  ): Unit = {
     pureTest(s"URI: http4s to smithy4s and back: $input -> $output") {
-      val intermediate = toSmithy4sHttpUri(input)
-
-      assert.eql(
+      expect.eql(
         output,
-        fromSmithy4sHttpUri(intermediate)
-      ) || failure(
-        s"comparison failed. Intermediate value for debugging: $intermediate"
+        fromSmithy4sHttpUri(toSmithy4sHttpUri(input), encodePathSegments = true)
       )
     }
   }
 
   private def aSmithy4sUri(scheme: HttpUriScheme) =
-    smithy4s.http.HttpUri(
+    smithy4s.http.HttpUri.absolute(
       scheme = scheme,
-      host = None,
+      host = "example.com",
       port = None,
       path = IndexedSeq.empty,
       queryParams = Map.empty,

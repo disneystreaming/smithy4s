@@ -16,18 +16,19 @@
 
 package smithy4s.dynamic
 
+import software.amazon.smithy.build.TransformContext
+import software.amazon.smithy.build.transforms.FilterSuppressions
+import software.amazon.smithy.diff.ModelDiff
 import software.amazon.smithy.model._
 import software.amazon.smithy.model.node._
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.build.transforms.FilterSuppressions
-import software.amazon.smithy.build.TransformContext
-import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
-import software.amazon.smithy.model.transform.ModelTransformer
-import software.amazon.smithy.model.traits.Trait
 import software.amazon.smithy.model.shapes.Shape
+import software.amazon.smithy.model.shapes.SmithyIdlModelSerializer
 import software.amazon.smithy.model.traits.BoxTrait
-import software.amazon.smithy.diff.ModelDiff
+import software.amazon.smithy.model.traits.Trait
+import software.amazon.smithy.model.transform.ModelTransformer
+
 import java.util.stream.Collectors
+import scala.jdk.CollectionConverters._
 
 // In order to have nice comparisons from test reports.
 class ModelWrapper(val model: Model) {

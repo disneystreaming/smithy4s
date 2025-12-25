@@ -51,7 +51,14 @@ trait Hints {
   )
   final def get[T](nt: AbstractNewtype[T]): Option[nt.Type] = get(nt.tag)
   final def filter(predicate: Hint => Boolean): Hints =
-    Hints.fromSeq(all.filter(predicate).toSeq)
+    Hints.Impl(
+      memberHintsMap = memberHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      },
+      targetHintsMap = targetHintsMap.filter { case (_, hint) =>
+        predicate(hint)
+      }
+    )
   final def filterNot(predicate: Hint => Boolean): Hints =
     filter(hint => !predicate(hint))
 
@@ -122,6 +129,9 @@ object Hints {
       case (Some(id), v) => Binding.DynamicBinding(id, v)
     })
 
+  def dynamic(id: ShapeId, value: Document): Hints.Binding.DynamicBinding =
+    Binding.DynamicBinding(id, value)
+
   implicit final class HintsLazyOps(underlying: => Hints) {
 
     /**
@@ -174,12 +184,19 @@ object Hints {
         targetHintsMap = targetHintsMap ++ hints.toMap
       )
 
-    override def toString(): String =
-      s"Hints(${all.mkString(", ")})"
+    override def toString(): String = {
+      val memberStr =
+        memberHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      val targetStr =
+        targetHintsMap.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      s"Hints(member=[$memberStr], target=[$targetStr])"
+    }
 
     override def equals(obj: Any): Boolean = obj match {
-      case h: Hints => toMap == h.toMap
-      case _        => false
+      case h: Hints =>
+        this.memberHintsMap == h.memberHintsMap &&
+          this.targetHintsMap == h.targetHintsMap
+      case _ => false
     }
 
     override def hashCode(): Int = toMap.hashCode()
@@ -241,10 +258,34 @@ object Hints {
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
+
+      override def equals(obj: Any): Boolean = obj match {
+        case sb: StaticBinding[_] =>
+          sb.key == this.key && sb.value == this.value
+        case db: DynamicBinding =>
+          this.toDynamicBinding == db
+        case _ => false
+      }
+
+      private[smithy4s] lazy val toDynamicBinding: DynamicBinding =
+        DynamicBinding(
+          this.keyId,
+          Document.Encoder
+            .fromSchema(key.schema)
+            .encode(this.value)
+        )
     }
     final case class DynamicBinding(keyId: ShapeId, value: Document)
         extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
+
+      override def equals(obj: Any): Boolean = obj match {
+        case sb: StaticBinding[_] =>
+          sb.toDynamicBinding == this
+        case db: DynamicBinding =>
+          db.keyId == this.keyId && db.value == this.value
+        case _ => false
+      }
     }
 
     implicit def fromValue[A, AA <: A](value: AA)(implicit

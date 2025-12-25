@@ -88,7 +88,7 @@ object Transformation {
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
             val endpoint = service.endpoint(op)
             val catcher: Throwable => Option[E] = endpoint.error match {
-              case None => PartialFunction.empty[Throwable, Option[E]]
+              case None => Function.const(None)
               case Some(value) => value.liftError(_)
             }
             func.apply(polyFunction(op), catcher)

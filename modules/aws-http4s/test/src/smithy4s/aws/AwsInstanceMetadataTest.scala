@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.Blob
+import smithy4s.aws.kernel.AwsInstanceMetadata
 
 object AwsInstanceMetadataTest extends weaver.FunSuite {
 
@@ -33,6 +33,6 @@ object AwsInstanceMetadataTest extends weaver.FunSuite {
                            |  "Token":"token",
                            |  "Expiration":"2023-03-03T17:56:46Z"
                            |}""".stripMargin))
-    assert(result.isRight)
+    expect(result.isRight)
   }
 }

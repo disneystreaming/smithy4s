@@ -7,6 +7,23 @@ Thank you!
 
 # 0.19.0
 
+## Add OptionalTag
+
+Add `OptionalTag` trait and add the tag to `Schema.OptionSchema` to allow Option-like types to be efficiently created.
+
+## Add support for `@alloy#preserveKeyOrder` trait
+
+Any map types that are annotated with `@alloy#preserveKeyOrder` will be rendered as a `SeqMap` in Scala 2.13+ and `ListMap` in Scala 2.12 instead of a `Map` so that key order is preserved.
+
+## Add MapTag
+
+Add `MapTag` trait to allow creation of Map-like types to be efficiently created.
+
+## Unseal CollectionTag
+
+Make `CollectionTag` just a trait instead of a sealed trait to allow third party libraries to implement their own `CollectionTag` so that collections
+can be built efficiently. Existing and new usages of CollectionTags that start getting exhaustivity errors can handle unknown subtypes by using the CollectionTag instance's methods, such as `iterator` and `fromIterator`.
+
 ## Documentation fix
 
 Prevent documentation from being generated for case class when the field are not generated because they're annotated with `@streaming`
@@ -49,6 +66,79 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
 - **In smithy4s-core**:
   - `Document.DNull` is interpreted as `Nullable.Null` when `@nullable` is present.
   - Otherwise, it's treated as the absence of a value.
+
+## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
+Prevents using it as an implicit conversion in Scala 2
+
+# 0.18.44
+
+* Avoid an issue in which `SurfaceError` transformations would throw a `MatchError` upon being called for an operation that doesn't declare errors in [#1846](https://github.com/disneystreaming/smithy4s/pull/1846).
+* Add option to configure Dynamic Hint Bindings via Smithy metadata in [#1848](https://github.com/disneystreaming/smithy4s/pull/1848)
+
+# 0.18.43
+
+* Add support for generating dynamic hint bindings in [#1816](https://github.com/disneystreaming/smithy4s/pull/1816)
+* codegen: Allow `alloy.openapi.*` namespaces by default [#1822](https://github.com/disneystreaming/smithy4s/pull/1822)
+* Properly encode special characters when converting HttpUri to Java URI [#1832](https://github.com/disneystreaming/smithy4s/pull/1832)
+
+# 0.18.42
+
+* Fix for hints in union->unit case in [#1808](https://github.com/disneystreaming/smithy4s/pull/1808)
+
+# 0.18.41
+
+* codegen: Avoid collision with `Schema.*` methods in certain cases of ADT unions in [#1789](https://github.com/disneystreaming/smithy4s/pull/1789)
+* http4s: Revert the default behavior of URL path encoding in [#1793](https://github.com/disneystreaming/smithy4s/pull/1793)
+
+# 0.18.40 (broken)
+
+* codegen: Add support for [bincompat-friendly code generation mode](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/binary-compatibility) in [#1737](https://github.com/disneystreaming/smithy4s/pull/1737/) + [#1780](https://github.com/disneystreaming/smithy4s/pull/1780).
+* core: fix [#1663](https://github.com/disneystreaming/smithy4s/issues/1663) by reworking how path segments are encoded to conform with the Smithy spec in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
+* aws-http4s: fix AWS request signing for URIs with encoded path segments in [#1668](https://github.com/disneystreaming/smithy4s/issues/1668)
+* json: support open lenient unions, fix #1713 in [#1782](https://github.com/disneystreaming/smithy4s/pull/1782)
+
+# 0.18.39
+
+* http4s: Partially fix [#1619](https://github.com/disneystreaming/smithy4s/issues/1619) by checking request query parameters against the static query parameters in [#1743](https://github.com/disneystreaming/smithy4s/pull/1743)
+* http4s: fix [#1567](https://github.com/disneystreaming/smithy4s/issues/1567), fix [#1753](https://github.com/disneystreaming/smithy4s/issues/1753)  by sorting the endpoints according to Smithy's URI pattern specificity rules in [#1766](https://github.com/disneystreaming/smithy4s/pull/1766)
+* http4s: always set JSON maxArity to Int.MaxValue on the client side, as this mechanism was intended to protect server-side and is very detrimental to clients.
+* codegen: Add HTTP method and pattern to Scaladoc (fixes [#728](https://github.com/disneystreaming/smithy4s/issues/728)) in [#1764](https://github.com/disneystreaming/smithy4s/pull/1764)
+
+# 0.18.38
+
+**WARNING**: This release includes a later version of [Alloy](https://github.com/disneystreaming/alloy) which has a new Org `io.github.disneystreaming` . As a result multiple instances of Alloy on the classpath may not be evicted and can produce errors.
+* core: Fix Hints methods to distinguish member and target hints (fixes [#1658](https://github.com/disneystreaming/smithy4s/issues/1658)) in [#1756](https://github.com/disneystreaming/smithy4s/pull/1756)
+* http4s: onError method added to the RouteBuilder in [#1755](https://github.com/disneystreaming/smithy4s/pull/1755)
+* codegen: Add fromStringOrUnknown and fromIntOrUnknown methods to Open Enums (fixes [#1626](https://github.com/disneystreaming/smithy4s/issues/1626) in [#1759](https://github.com/disneystreaming/smithy4s/pull/1759))
+
+# 0.18.37
+
+* json: Allow decoding nulls for optional fields in defaults (fixes [#1581](https://github.com/disneystreaming/smithy4s/issues/1581)) in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
+* codegen: Fix generating empty defaults on blob shapes in [#1744](https://github.com/disneystreaming/smithy4s/pull/1744)
+* http: Add mapping between HttpUri and java.net.URI in [#1719](https://github.com/disneystreaming/smithy4s/pull/1719)
+* codegen: Add an STDERR log message when a codegen-time model transformation is requested but not found in [#1726](https://github.com/disneystreaming/smithy4s/pull/1726)
+* codegen: Don't generate code for mixins that aren't structs in [#1445](https://github.com/disneystreaming/smithy4s/pull/1445)
+* mill-plugin: Add support for 0.12 in [#1728](https://github.com/disneystreaming/smithy4s/pull/1728)
+
+# 0.18.36
+
+* codegen: Pass the correct ClassLoader to prevent validators/transformers from breaking on externally-defined trait classes in [#1709](https://github.com/disneystreaming/smithy4s/pull/1709)
+
+# 0.18.35
+
+* json, documents: Add support for `@jsonUnknown` in unions (Open Unions) in [#1677](https://github.com/disneystreaming/smithy4s/pull/1677)
+* codegen: Prevent `StackOverflowError` in dealing with recursive collection traits in [#1708](https://github.com/disneystreaming/smithy4s/pull/1708)
+
+# 0.18.34
+
+* codegen-cli: Ensure the command returns a failing exit code if command line arguments aren't valid in [#1694](https://github.com/disneystreaming/smithy4s/pull/1694).
+* codegen: Mixins - fix several bugs and a performance regression in [#1701](https://github.com/disneystreaming/smithy4s/pull/1701).
+
+# 0.18.33
+
+* codegen: Fix an issue in which using UUIDs as trait or default values would prevent code generation in [#1685](https://github.com/disneystreaming/smithy4s/pull/1685)
+* general: Update dependencies across the board in [#1686](https://github.com/disneystreaming/smithy4s/pull/1686)
+* http: Update `HttpUnaryServerRouter#partialFunction` to remove ambiguity between the two methods
 
 # 0.18.32
 

@@ -18,13 +18,13 @@ package smithy4s.json
 
 import munit.FunSuite
 import smithy.api.JsonName
-import smithy4s.Blob
-import smithy4s.schema.Schema
-import smithy4s.HintMask
-import smithy4s.schema.FieldFilter
 import smithy.api.Length
-import smithy4s.RefinementProvider
+import smithy4s.Blob
+import smithy4s.HintMask
 import smithy4s.Nullable
+import smithy4s.RefinementProvider
+import smithy4s.schema.FieldFilter
+import smithy4s.schema.Schema
 
 class JsonCodecApiTests extends FunSuite {
 

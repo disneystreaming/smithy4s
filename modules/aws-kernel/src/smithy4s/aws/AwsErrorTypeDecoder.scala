@@ -17,12 +17,12 @@
 package smithy4s.aws
 
 import smithy4s.Blob
-import smithy4s.capability.MonadThrowLike
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
-import smithy4s.http.HttpDiscriminator
+import smithy4s.capability.MonadThrowLike
 import smithy4s.codecs.BlobDecoder
-import smithy4s.http.HttpResponse
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.HttpResponse
 
 // scalafmt: { maxColumn: 120 }
 object AwsErrorTypeDecoder {

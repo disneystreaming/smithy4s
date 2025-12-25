@@ -16,15 +16,18 @@
 
 package smithy4s.compliancetests.internals.eq
 
-import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
 import cats.kernel.Eq
+import cats.kernel.Monoid
 import cats.syntax.all._
 import smithy4s._
-import smithy4s.schema.{Schema, _}
+import smithy4s.capability.EncoderK
+import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
+import smithy4s.schema.Schema
+import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.UUID
-import smithy4s.capability.EncoderK
-import cats.kernel.Monoid
+import scala.concurrent.duration.Duration
 
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
@@ -45,17 +48,33 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case CollectionTag.SetTag        => Eq[Set[A]]
       case CollectionTag.VectorTag     => Eq[Vector[A]]
       case CollectionTag.IndexedSeqTag => Eq[IndexedSeq[A]]
+      case _ =>
+        new Eq[C[A]] {
+          def eqv(x: C[A], y: C[A]): Boolean = {
+            cats.kernel.instances.StaticMethods.iteratorEq(
+              tag.iterator(x),
+              tag.iterator(y)
+            )
+          }
+        }
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Eq[Map[K, V]] = {
-    implicit val valueEq: Eq[V] = self(value)
-    Eq[Map[K, V]]
+  ): Eq[C[K, V]] = {
+    val valueEq: Eq[V] = self(value)
+    new Eq[C[K, V]] {
+      def eqv(x: C[K, V], y: C[K, V]): Boolean = {
+        tag.iterator(x).forall { case (key, xValue) =>
+          tag.get(y, key).exists(valueEq.eqv(xValue, _))
+        }
+      }
+    }
   }
 
   override def enumeration[E](
@@ -149,29 +168,40 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: A, y: A) => eq.value.eqv(x, y)
   }
 
-  override def option[A](schema: Schema[A]): Eq[Option[A]] = {
-    LenientOptionalCollectionEquality(schema) match {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Eq[C[A]] = {
+    val optionEq: Eq[Option[A]] = LenientOptionalCollectionEquality(
+      schema
+    ) match {
       case Some(eq) => eq
       case None     => Eq.catsKernelEqForOption(self(schema))
     }
+
+    Eq.by[C[A], Option[A]](tag.toScalaOption(_))(optionEq)
   }
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
-      case Primitive.PShort      => Eq[Short]
-      case Primitive.PInt        => Eq[Int]
-      case Primitive.PFloat      => floatEq
-      case Primitive.PLong       => Eq[Long]
-      case Primitive.PDouble     => doubleEq
-      case Primitive.PBigInt     => Eq[BigInt]
-      case Primitive.PBigDecimal => Eq[BigDecimal]
-      case Primitive.PBoolean    => Eq[Boolean]
-      case Primitive.PString     => Eq[String]
-      case Primitive.PUUID       => Eq[UUID]
-      case Primitive.PByte       => Eq[Byte]
-      case Primitive.PBlob       => Eq[Blob]
-      case Primitive.PDocument   => Eq[Document]
-      case Primitive.PTimestamp  => Eq[Timestamp]
+      case Primitive.PShort          => Eq[Short]
+      case Primitive.PInt            => Eq[Int]
+      case Primitive.PFloat          => floatEq
+      case Primitive.PLong           => Eq[Long]
+      case Primitive.PDouble         => doubleEq
+      case Primitive.PBigInt         => Eq[BigInt]
+      case Primitive.PBigDecimal     => Eq[BigDecimal]
+      case Primitive.PBoolean        => Eq[Boolean]
+      case Primitive.PString         => Eq[String]
+      case Primitive.PUUID           => Eq[UUID]
+      case Primitive.PByte           => Eq[Byte]
+      case Primitive.PBlob           => Eq[Blob]
+      case Primitive.PDocument       => Eq[Document]
+      case Primitive.PTimestamp      => Eq[Timestamp]
+      case Primitive.PLocalDate      => Eq[LocalDate]
+      case Primitive.PLocalTime      => Eq[LocalTime]
+      case Primitive.PDuration       => Eq[Duration]
+      case Primitive.POffsetDateTime => Eq[OffsetDateTime]
     }
   }
 
@@ -180,6 +210,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   // where None and `Some(Empty)` are considered equivalent. s
   object LenientOptionalCollectionEquality
       extends SchemaVisitor.Optional[EqOpt] {
+
     override def collection[C[_], A](
         shapeId: ShapeId,
         hints: Hints,
@@ -197,23 +228,23 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       }
     }
 
-    override def map[K, V](
+    override def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
-    ): Option[Eq[Option[Map[K, V]]]] = Some {
-      val mapEq = EqSchemaVisitor.map(shapeId, hints, key, value)
-      new Eq[Option[Map[K, V]]] {
-        def eqv(x: Option[Map[K, V]], y: Option[Map[K, V]]): Boolean =
+    ): Option[Eq[Option[C[K, V]]]] = Some {
+      val mapEq = EqSchemaVisitor.map(shapeId, hints, tag, key, value)
+      new Eq[Option[C[K, V]]] {
+        def eqv(x: Option[C[K, V]], y: Option[C[K, V]]): Boolean =
           (x, y) match {
             case (Some(left), Some(right)) => mapEq.eqv(left, right)
-            case (None, Some(right))       => right.isEmpty
-            case (Some(left), None)        => left.isEmpty
+            case (None, Some(right))       => tag.isEmpty(right)
+            case (Some(left), None)        => tag.isEmpty(left)
             case (None, None)              => true
           }
       }
     }
   }
-
 }

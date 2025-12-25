@@ -16,11 +16,9 @@
 
 package smithy4s
 
-import smithy4s.schema._
-
-import schema.ErrorSchema
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds._
+import smithy4s.schema._
 
 /**
   * A representation of a smithy operation.

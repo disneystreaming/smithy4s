@@ -20,8 +20,8 @@ import cats.MonadThrow
 
 package object aws {
 
-  type Timestamp = smithy4s.Timestamp
-  val Timestamp = smithy4s.Timestamp
+  type Timestamp = smithy4s.time.Timestamp
+  val Timestamp = smithy4s.time.Timestamp
   type AwsRegion = aws.kernel.AwsRegion
   val AwsRegion = aws.kernel.AwsRegion
   type AwsCredentials = aws.kernel.AwsCredentials

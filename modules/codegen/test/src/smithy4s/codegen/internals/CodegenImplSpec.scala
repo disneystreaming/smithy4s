@@ -16,13 +16,12 @@
 
 package smithy4s.codegen.internals
 
-import software.amazon.smithy.model.{Model, SourceLocation}
-import software.amazon.smithy.model.node.{
-  Node,
-  ArrayNode,
-  ObjectNode,
-  StringNode
-}
+import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.node.ArrayNode
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.node.ObjectNode
+import software.amazon.smithy.model.node.StringNode
 
 import scala.jdk.CollectionConverters._
 

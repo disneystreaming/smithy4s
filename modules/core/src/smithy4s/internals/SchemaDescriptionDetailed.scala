@@ -57,15 +57,16 @@ private[internals] object SchemaDescriptionDetailedImpl
   ): SchemaDescriptionDetailedImpl[C[A]] = {
     apply(member).mapResult(s => s"${tag.name}[$s]")
   }
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): SchemaDescriptionDetailedImpl[Map[K, V]] = {
+  ): SchemaDescriptionDetailedImpl[C[K, V]] = {
     apply(key).flatMapResult { kDesc =>
       apply(value).mapResult { vDesc =>
-        s"Map[$kDesc, $vDesc]"
+        s"${tag.name}[$kDesc, $vDesc]"
       }
     }
   }
@@ -150,10 +151,11 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
-  override def option[A](
+  override def option[C[_], A](
+      tag: OptionalTag[C],
       schema: Schema[A]
-  ): SchemaDescriptionDetailedImpl[Option[A]] =
-    apply(schema).mapResult { desc => s"Option[$desc]" }
+  ): SchemaDescriptionDetailedImpl[C[A]] =
+    apply(schema).mapResult { desc => s"${tag.name}[$desc]" }
 
   val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
     new (SchemaDescriptionDetailedImpl ~> SchemaDescription) {

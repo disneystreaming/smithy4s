@@ -19,11 +19,12 @@ package smithy4s.protobuf
 import munit._
 import smithy4s.Blob
 import smithy4s.Document
-import smithy4s.Timestamp
 import smithy4s.example.protobuf
 import smithy4s.schema.Schema
+import smithy4s.time._
 
 import java.util.UUID
+import scala.concurrent.duration.Duration
 
 // A few tests utilising java code-generated classes that ScalaPB doesn't have a pure scala version of.
 class JVMCodecTests() extends FunSuite {
@@ -137,6 +138,127 @@ class JVMCodecTests() extends FunSuite {
 
     assertEquals(parsedDocument, document)
     assertEquals(parsedProtoJson, protoJson)
+  }
+
+  test("LocalDate") {
+    val localDate1 = LocalDate(2025, 7, 21)
+    val localDate2 = LocalDate(2024, 7, 21)
+
+    val localDates = protobuf.LocalDateWrapper(
+      Some(localDate1),
+      Some(localDate2)
+    )
+
+    val protoLocalDates = protobuf.protobuf.LocalDateWrapper(
+      localDate1.toString(),
+      Some(
+        alloy.protobuf.types.CompactLocalDate(
+          localDate2.epochDay.toInt
+        )
+      )
+    )
+
+    val bytes = protoLocalDates.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.LocalDateWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(localDates)
+    val parsedRoundTrip =
+      protobuf.protobuf.LocalDateWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, localDates)
+    assertEquals(parsedRoundTrip, protoLocalDates)
+  }
+
+  test("LocalTime") {
+    val localTime1 = LocalTime(13, 26, 50)
+    val localTime2 = LocalTime(18, 48, 21)
+
+    val localTimes = protobuf.LocalTimeWrapper(
+      Some(localTime1),
+      Some(localTime2)
+    )
+
+    val protoLocalTimes = protobuf.protobuf.LocalTimeWrapper(
+      localTime1.toString(),
+      Some(
+        alloy.protobuf.types.CompactLocalTime(
+          localTime2.seconds,
+          localTime2.nano
+        )
+      )
+    )
+
+    val bytes = protoLocalTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.LocalTimeWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(localTimes)
+    val parsedRoundTrip =
+      protobuf.protobuf.LocalTimeWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, localTimes)
+    assertEquals(parsedRoundTrip, protoLocalTimes)
+  }
+
+  test("OffsetDateTime") {
+    val offsetDateTime1 =
+      OffsetDateTime(2025, 7, 25, 16, 32, 50, 0, ZoneOffset.hours(-7))
+    val offsetDateTime2 =
+      OffsetDateTime(2024, 7, 21, 16, 32, 50, 0, ZoneOffset.hours(7))
+
+    val offsetDateTimes = protobuf.OffsetDateTimeWrapper(
+      Some(offsetDateTime1),
+      Some(offsetDateTime2)
+    )
+
+    val protoOffsetDateTimes = protobuf.protobuf.OffsetDateTimeWrapper(
+      offsetDateTime1.toString(),
+      Some(
+        alloy.protobuf.types.CompactOffsetDateTime(
+          offsetDateTime2.timestamp.epochSecond,
+          offsetDateTime2.timestamp.nano,
+          "+07:00"
+        )
+      )
+    )
+
+    val bytes = protoOffsetDateTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.OffsetDateTimeWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(offsetDateTimes)
+
+    val parsedRoundTrip =
+      protobuf.protobuf.OffsetDateTimeWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, offsetDateTimes)
+    assertEquals(parsedRoundTrip, protoOffsetDateTimes)
+  }
+
+  test("Duration") {
+    val duration = Duration(13, "hours")
+
+    val durations = protobuf.DurationWrapper(Some(duration))
+
+    val protoLocalTimes = protobuf.protobuf.DurationWrapper(
+      Some(alloy.protobuf.types.Duration(duration.toSeconds, 0))
+    )
+
+    val bytes = protoLocalTimes.toByteArray
+    val codec = ProtobufCodec.fromSchema(protobuf.DurationWrapper.schema)
+
+    val parsed = codec.unsafeReadBlob(Blob(bytes))
+
+    val encoded = codec.writeBlob(durations)
+    val parsedRoundTrip =
+      protobuf.protobuf.DurationWrapper.parseFrom(encoded.toArray)
+
+    assertEquals(parsed, durations)
+    assertEquals(parsedRoundTrip, protoLocalTimes)
   }
 
 }

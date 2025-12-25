@@ -17,8 +17,8 @@
 package smithy4s.aws.kernel
 
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.Uint8Array
 import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.typedarray.Uint8Array
 
 @js.native
 @JSGlobal

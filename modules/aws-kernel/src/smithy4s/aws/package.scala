@@ -18,8 +18,8 @@ package smithy4s.aws
 
 package object kernel {
 
-  type Timestamp = smithy4s.Timestamp
-  val Timestamp = smithy4s.Timestamp
+  type Timestamp = smithy4s.time.Timestamp
+  val Timestamp = smithy4s.time.Timestamp
 
   val AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
   val AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"

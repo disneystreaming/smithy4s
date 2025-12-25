@@ -16,8 +16,9 @@
 
 package smithy4s.interopcats
 
+import smithy4s.time.Timestamp
+
 import scalajs.js.Date
-import smithy4s.Timestamp
 
 trait CompatProvider {
   def getTimestamp: Timestamp = {

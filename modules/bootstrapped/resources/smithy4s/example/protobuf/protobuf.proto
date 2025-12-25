@@ -148,3 +148,22 @@ message UnionWithCustomIndexes {
     int32 c = 1;
   }
 }
+
+message LocalDateWrapper {
+  string localDate = 1;
+  alloy.protobuf.CompactLocalDate compactLocalDate = 2;
+}
+
+message LocalTimeWrapper {
+  string localTime = 1;
+  alloy.protobuf.CompactLocalTime compactLocalTime = 2;
+}
+
+message DurationWrapper {
+  alloy.protobuf.Duration duration = 1;
+}
+
+message OffsetDateTimeWrapper {
+  string string = 1;
+  alloy.protobuf.CompactOffsetDateTime compact = 2;
+}

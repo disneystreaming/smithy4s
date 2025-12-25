@@ -25,13 +25,13 @@ class CollectionMemberTraitsSmokeSpec() extends FunSuite {
 
   test("Traits applied to map members are generated as member hints") {
     MapWithMemberHints.underlyingSchema match {
-      case m: Schema.MapSchema[String, Int] =>
-        val keyDoc = m.key.hints.memberHints.get(Doc)
-        val valueDoc = m.value.hints.memberHints.get(Doc)
+      case Schema.MapSchema(_, _, _, key, value) =>
+        val keyDoc = key.hints.memberHints.get(Doc)
+        val valueDoc = value.hints.memberHints.get(Doc)
         assertEquals(keyDoc, Some(Doc("mapFoo")))
         assertEquals(valueDoc, Some(Doc("mapBar")))
-        assert(m.key.hints.targetHints.isEmpty)
-        assert(m.value.hints.targetHints.isEmpty)
+        assert(key.hints.targetHints.isEmpty)
+        assert(value.hints.targetHints.isEmpty)
       case _ => fail("expected map Schema")
     }
   }

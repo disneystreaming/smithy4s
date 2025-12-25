@@ -16,6 +16,7 @@ import smithy4s.schema.Schema.unit
 trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP POST /api/set/ */
   def setOp(set: Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
 
 }

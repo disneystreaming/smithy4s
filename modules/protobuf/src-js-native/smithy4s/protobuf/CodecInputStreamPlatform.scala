@@ -16,8 +16,8 @@
 
 package smithy4s.protobuf
 
-import smithy4s.Blob
 import com.google.protobuf.CodedInputStream
+import smithy4s.Blob
 
 private[protobuf] object CodecInputStreamPlatform {
 

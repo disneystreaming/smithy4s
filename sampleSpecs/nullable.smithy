@@ -16,16 +16,20 @@ structure PatchableEdgeCases {
     @nullable
     @required
     required: Integer
+
     @nullable
     @required
     requiredDefaultValue: Integer = 3
+
     @nullable
     @required
     @default
     requiredDefaultNull: Integer
+
     @nullable
     defaultValue: Integer = 5
+
     @nullable
     @default
-    defaultNull : Integer
+    defaultNull: Integer
 }

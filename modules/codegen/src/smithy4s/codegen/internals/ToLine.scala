@@ -18,12 +18,12 @@ package smithy4s.codegen.internals
 
 import cats.data.Chain
 import cats.implicits.toFoldableOps
+import cats.kernel.Eq
 import cats.kernel.Monoid
 
 import java.util.UUID
 
 import LineSegment._
-import cats.kernel.Eq
 
 private[internals] trait ToLine[A] {
   def render(a: A): Line
@@ -52,12 +52,10 @@ private[internals] object ToLine {
         val inner = typeToNameRef(member)
         val col = collectionType.tpe
         col.copy(typeParams = List(inner))
-      case Type.Map(key, _, value, _) =>
+      case Type.Map(mapType, key, _, value, _) =>
         val keyTpe = typeToNameRef(key)
         val valueTpe = typeToNameRef(value)
-        NameRef("scala.collection.immutable", "Map").copy(typeParams =
-          List(keyTpe, valueTpe)
-        )
+        mapType.tpe.copy(typeParams = List(keyTpe, valueTpe))
       case Type.Alias(
             ns,
             name,
@@ -88,7 +86,7 @@ private[internals] object ToLine {
       case Primitive.Blob       => NameRef("smithy4s", "Blob")
       case Primitive.Bool       => scalaP("Boolean")
       case Primitive.String     => javaP("String")
-      case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
+      case Primitive.Timestamp  => NameRef("smithy4s.time", "Timestamp")
       case Primitive.Byte       => scalaP("Byte")
       case Primitive.Int        => scalaP("Int")
       case Primitive.Short      => scalaP("Short")
@@ -100,6 +98,12 @@ private[internals] object ToLine {
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
+      case Primitive.LocalDate  => NameRef("smithy4s.time", "LocalDate")
+      case Primitive.LocalTime  => NameRef("smithy4s.time", "LocalTime")
+      case Primitive.Duration =>
+        NameRef("scala.concurrent.duration", "Duration")
+      case Primitive.OffsetDateTime =>
+        NameRef("smithy4s.time", "OffsetDateTime")
     }
   }
 }

@@ -17,9 +17,9 @@
 package smithy4s
 package dynamic
 
-import software.amazon.smithy.model.{Model => SModel}
-import smithy4s.schema.Schema
 import smithy.api.{Documentation => Doc}
+import smithy4s.schema.Schema
+import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicMemberHintsSpec() extends DummyIO.Suite {
 
@@ -51,7 +51,7 @@ class DynamicMemberHintsSpec() extends DummyIO.Suite {
                    |}
                    |""".stripMargin
     loadFrom(model, ShapeId("foo", "MyMap")) match {
-      case m: Schema.MapSchema[_, _] =>
+      case m: Schema.MapSchema[_, _, _] =>
         expect.same(m.hints.get(Doc), Some(Doc("map")))
         expect.same(m.key.hints.memberHints.get(Doc), Some(Doc("key")))
         expect.same(m.value.hints.memberHints.get(Doc), Some(Doc("value")))

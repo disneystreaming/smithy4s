@@ -16,17 +16,17 @@
 
 package smithy4s.aws
 
-import weaver._
+import _root_.smithy4s.Endpoint
+import _root_.smithy4s.Service
 import cats.effect.IO
+import com.amazonaws.dynamodb.DynamoDB
+import org.http4s.Headers
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.client.Client
-import com.amazonaws.dynamodb.DynamoDB
-import _root_.smithy4s.Endpoint
-import _root_.smithy4s.Service
-import org.http4s.Headers
 import org.typelevel.ci.CIString
+import weaver._
 
 object AwsMiddlewareTest extends SimpleIOSuite with Compat {
 

@@ -16,11 +16,12 @@
 
 package smithy4s
 
-import scala.util.hashing.MurmurHash3
-import smithy4s.capability.MonadThrowLike
 import cats.MonadThrow
-import cats.syntax.all._
 import cats.kernel.Monoid
+import cats.syntax.all._
+import smithy4s.capability.MonadThrowLike
+
+import scala.util.hashing.MurmurHash3
 
 package object interopcats {
 
@@ -34,6 +35,12 @@ package object interopcats {
       def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
       def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A] =
         MonadThrow[F].handleErrorWith(fa)(f)
+
+      override def onError[A](
+          fa: F[A]
+      )(f: PartialFunction[Throwable, F[Unit]]): F[A] =
+        MonadThrow[F].onError(fa)(f)
+
     }
 
   implicit def monoidEndpointMiddleware[Construct]

@@ -20,10 +20,11 @@ import cats.Show
 import org.scalacheck.Gen.Choose
 import org.scalacheck._
 import smithy.api.TimestampFormat
-import java.time._
+import java.time.{OffsetDateTime => JOffsetDateTime, _}
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.scalacheck.Prop._
+import smithy4s.time.Timestamp
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
@@ -68,7 +69,7 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   property("Converts from/to OffsetDateTime") {
     forAll { (i: Instant) =>
-      val odt = OffsetDateTime.ofInstant(i, ZoneOffset.UTC)
+      val odt = JOffsetDateTime.ofInstant(i, ZoneOffset.UTC)
       val ts = Timestamp.fromOffsetDateTime(odt)
       val odt2 = ts.toOffsetDateTime
       val ts2 = Timestamp.fromOffsetDateTime(odt)

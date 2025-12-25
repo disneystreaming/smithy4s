@@ -18,9 +18,9 @@ package smithy4s
 package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
+import munit._
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
-import munit._
 
 class SchemaVisitorJCodecCustomisationTests extends FunSuite {
 

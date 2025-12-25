@@ -81,10 +81,12 @@ private[internals] case class Product(
     name: String,
     fields: List[Field],
     mixins: List[Type],
-    recursive: Boolean = false,
+    recursive: Boolean,
     hints: List[Hint] = Nil,
-    isMixin: Boolean = false
-) extends Decl
+    isMixin: Boolean
+) extends Decl {
+  def isBincompatFriendly = hints.contains(Hint.BincompatFriendly)
+}
 
 private[internals] case class Union(
     shapeId: ShapeId,
@@ -278,6 +280,14 @@ private[internals] object Primitive {
   case object String extends Primitive { type T = String }
   case object Timestamp extends Primitive { type T = java.time.Instant }
   case object Uuid extends Primitive { type T = java.util.UUID }
+  case object LocalDate extends Primitive { type T = java.time.LocalDate }
+  case object LocalTime extends Primitive { type T = java.time.LocalTime }
+  case object Duration extends Primitive {
+    type T = scala.concurrent.duration.Duration
+  }
+  case object OffsetDateTime extends Primitive {
+    type T = java.time.OffsetDateTime
+  }
   case object Byte extends Primitive { type T = Byte }
   case object Int extends Primitive { type T = Int }
   case object Short extends Primitive { type T = Short }
@@ -304,11 +314,13 @@ private[internals] object Type {
   ) extends Type
 
   case class Map(
+      mapType: MapType,
       key: Type,
       keyHints: List[Hint],
       value: Type,
       valueHints: List[Hint]
   ) extends Type
+
   case class Ref(namespace: String, name: String) extends Type {
     def show: String = NameRef
       .splitPath(namespace)
@@ -343,11 +355,56 @@ private[internals] object CollectionType {
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
-private[internals] sealed trait Hint
+private[internals] sealed abstract class MapType(val tpe: NameRef)
+private[internals] object MapType extends MapTypeCompanionPlatform {
+  case object Map extends MapType(NameRef("scala.collection.immutable.Map"))
+  case object SeqMap extends MapType(seqMapRef)
+}
+
+private[internals] sealed trait Hint {
+  def sameNativeTrait(native: Hint.Native): Boolean =
+    this match {
+      case Hint.Native(shapeId, _) => shapeId == native.shapeId
+      case _                       => false
+    }
+}
+
+case class VersionNumber private (private val components: List[Int]) {
+  def render: String = components.mkString(".")
+}
+
+object VersionNumber {
+
+  // 1.0 < 1.0.1
+  // 1.0.1 < 1.1
+  // 1.1.2 < 1.1.3
+  implicit val order: Order[VersionNumber] = Order.from { (a, b) =>
+    val comparison = a.components
+      .zip(b.components)
+      .map { case (x, y) => x.compareTo(y) }
+      .find(_ != 0)
+
+    comparison match {
+      case Some(c) => c
+      case None    =>
+        // If all compared components are equal, the longer version is greater.
+        a.components.length.compareTo(b.components.length)
+    }
+  }
+
+  implicit val ordering: Ordering[VersionNumber] =
+    Order.catsKernelOrderingForOrder
+
+  def parse(s: String): VersionNumber = VersionNumber(
+    s.split("\\.").toList.map(_.toInt)
+  )
+}
 
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object BincompatFriendly extends Hint
+  case class BincompatAdded(version: VersionNumber) extends Hint
   case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint
@@ -357,12 +414,19 @@ private[internals] object Hint {
   case class Default(typedNode: Fix[TypedNode]) extends Hint
   case class Documentation(
       docLines: List[String],
-      memberDocLines: Map[String, List[String]]
+      memberDocLines: Map[String, List[String]],
+      protocolSpecificLines: List[List[String]]
   ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
-  // traits that get rendered generically
-  case class Native(shapeId: ShapeId, typedNode: Fix[TypedNode]) extends Hint
+
+  // Traits that get rendered generically.
+  // The typed node is potentially lazy, to simplify the handling of recursive traits:
+  // https://github.com/disneystreaming/smithy4s/issues/1308
+  // https://github.com/disneystreaming/smithy4s/issues/1296
+  case class Native(shapeId: ShapeId, typedNode: Eval[Fix[TypedNode]])
+      extends Hint
+  case class DynamicBinding(shapeId: ShapeId, data: Node) extends Hint
   case object IntEnum extends Hint
   case object OpenEnum extends Hint
 
@@ -475,12 +539,12 @@ private[internals] object TypedNode {
           f(target).map(ValidatedNewTypeTN(ref, _))
         case AltTN(ref, altName, alt) =>
           alt.traverse(f).map(AltTN(ref, altName, _))
-        case MapTN(values) =>
+        case MapTN(mapType, values) =>
           values
             .traverse { case (k, v) =>
               (f(k), f(v)).tupled
             }
-            .map(MapTN(_))
+            .map(MapTN(mapType, _))
         case CollectionTN(collectionType, values) =>
           values.traverse(f).map(CollectionTN(collectionType, _))
         case PrimitiveTN(prim, value) =>
@@ -507,7 +571,8 @@ private[internals] object TypedNode {
       extends TypedNode[A]
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
-  case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
+  case class MapTN[A](mapType: MapType, values: List[(A, A)])
+      extends TypedNode[A]
   case class CollectionTN[A](collectionType: CollectionType, values: List[A])
       extends TypedNode[A]
   case class PrimitiveTN[T](prim: Primitive.Aux[T], value: Option[T])

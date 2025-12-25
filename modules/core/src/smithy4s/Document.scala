@@ -17,12 +17,12 @@
 package smithy4s
 
 import smithy4s.Document._
+import smithy4s.codecs.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.FieldFilter
 
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
-import smithy4s.codecs.PayloadError
-import smithy4s.schema.FieldFilter
 
 /**
   * A json-like free-form structure serving as a model for
@@ -64,6 +64,11 @@ sealed trait Document extends Product with Serializable {
       value.map { case (k, v) => k + "=" + v.show }.mkString("{", ", ", "}")
   }
 
+  /**
+    * Nests this document under the given key.
+    * The result is a single-entry Document object.
+    */
+  def nest(k: String): Document = obj(k -> this)
 }
 
 object Document {

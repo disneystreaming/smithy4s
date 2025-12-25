@@ -16,9 +16,9 @@
 
 package smithy4s.aws
 
+import cats.effect.IO
 import fs2.compression.Compression
 import fs2.io.compression._
-import cats.effect.IO
 
 trait Compat {
   implicit val fs2ioCompressionForIO: Compression[IO] =

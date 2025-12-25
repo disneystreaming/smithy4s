@@ -1,34 +1,46 @@
 $version: "2"
 
-metadata "proto_options" = [{
+metadata proto_options = [
+    {}
+]
 
-}]
 namespace smithy4s.example.protobuf
 
 use alloy#UUID
 use alloy#openEnum
 use alloy#uuidFormat
-use alloy.openapi#openapiExtensions
 use alloy.proto#protoCompactUUID
 use alloy.proto#protoEnabled
 use alloy.proto#protoIndex
 use alloy.proto#protoInlinedOneOf
+use alloy.proto#protoCompactLocalDate
+use alloy.proto#protoCompactDuration
+use alloy.proto#protoCompactLocalTime
+use alloy.proto#protoOffsetDateTimeFormat
 use alloy.proto#protoNumType
 use alloy.proto#protoWrapped
+use alloy#LocalDate
+use alloy#LocalTime
+use alloy#Duration
+use alloy#OffsetDateTime
 
 @protoEnabled
 structure Integers {
     @required
     int: Integer
+
     @protoNumType("SIGNED")
     @required
     sint: Integer
+
     @protoNumType("UNSIGNED")
     @required
     uint: Integer
+
     @protoNumType("FIXED")
     @required
     fixedUint: Integer
+
     @protoNumType("FIXED_SIGNED")
     @required
     fixedSint: Integer
@@ -38,15 +50,19 @@ structure Integers {
 structure Longs {
     @required
     long: Long
+
     @protoNumType("SIGNED")
     @required
     slong: Long
+
     @protoNumType("UNSIGNED")
     @required
     ulong: Long
+
     @protoNumType("FIXED")
     @required
     fixedLong: Long
+
     @protoNumType("FIXED_SIGNED")
     @required
     fixedSlong: Long
@@ -56,12 +72,16 @@ structure Longs {
 structure OtherScalars {
     @required
     boolean: Boolean
+
     @required
     byte: Byte
+
     @required
     float: Float
+
     @required
     double: Double
+
     @required
     short: Short
 }
@@ -70,6 +90,7 @@ structure OtherScalars {
 structure WrappedScalars {
     @protoWrapped
     int: Integer
+
     @protoWrapped
     bool: Boolean
 }
@@ -135,6 +156,7 @@ list WrappedStringList {
 structure StringListWrapper {
     @required
     strings: StringList
+
     @required
     wrappedStrings: WrappedStringList
 }
@@ -163,9 +185,12 @@ structure UnionWrapper {
 
 union MyUnion {
     int: Integer
+
     bool: Boolean
+
     @protoWrapped
     list: MyIntList
+
     @protoWrapped
     map: StringMap
 }
@@ -196,10 +221,13 @@ map StringMap {
 structure Enums {
     @required
     closedString: ClosedString
+
     @required
     openString: OpenString
+
     @required
     closedInt: ClosedInt
+
     @required
     openInt: OpenInt
 }
@@ -218,6 +246,7 @@ enum OpenString {
 intEnum ClosedInt {
     @protoIndex(0)
     FOO = 0
+
     @protoIndex(1)
     BAR = 1
 }
@@ -239,11 +268,14 @@ structure RefinedIntWrapped {
 structure StructureWithCustomIndexes {
     @protoIndex(4)
     a: Integer
+
     @protoIndex(3)
     b: Integer = 0
+
     @protoIndex(2)
     @required
     c: Integer
+
     @protoIndex(1)
     d: UnionWithCustomIndexes
 }
@@ -251,8 +283,37 @@ structure StructureWithCustomIndexes {
 union UnionWithCustomIndexes {
     @protoIndex(3)
     a: Integer
+
     @protoIndex(2)
     b: Integer
+
     @protoIndex(1)
     c: Integer
+}
+
+@protoEnabled
+structure LocalDateWrapper {
+    localDate: LocalDate
+    @protoCompactLocalDate
+    compactLocalDate: LocalDate
+}
+
+@protoEnabled
+structure LocalTimeWrapper {
+    localTime: LocalTime
+    @protoCompactLocalTime
+    compactLocalTime: LocalTime
+}
+
+@protoEnabled
+structure DurationWrapper {
+    duration: Duration
+}
+
+@protoEnabled
+structure OffsetDateTimeWrapper {
+    @protoOffsetDateTimeFormat("RFC3339_STRING")
+    string: OffsetDateTime
+    @protoOffsetDateTimeFormat("PROTOBUF")
+    compact: OffsetDateTime
 }

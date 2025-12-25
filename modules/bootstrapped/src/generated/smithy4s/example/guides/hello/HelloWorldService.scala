@@ -16,6 +16,7 @@ import smithy4s.schema.Schema.unit
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** HTTP GET /hello */
   def sayWorld(): F[Unit, Nothing, World, Nothing, Nothing]
 
 }

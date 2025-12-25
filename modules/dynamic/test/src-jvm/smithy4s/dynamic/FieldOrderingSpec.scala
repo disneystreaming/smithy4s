@@ -18,12 +18,12 @@ package smithy4s.dynamic
 
 import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
-import software.amazon.smithy.model.shapes.StructureShape
-import software.amazon.smithy.model.shapes.ShapeId
-import software.amazon.smithy.model.shapes.UnionShape
-import software.amazon.smithy.model.Model
-import smithy4s.schema.Schema
 import org.scalacheck.Shrink
+import smithy4s.schema.Schema
+import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.model.shapes.StructureShape
+import software.amazon.smithy.model.shapes.UnionShape
 
 class FieldOrderingSpec extends munit.ScalaCheckSuite {
 

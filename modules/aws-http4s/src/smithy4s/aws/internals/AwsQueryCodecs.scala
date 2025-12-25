@@ -27,10 +27,10 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.http._
 import smithy4s.http.internals.StaticUrlFormElements
 import smithy4s.kinds.PolyFunction5
+import smithy4s.schema.ErrorSchema
+import smithy4s.schema.OperationSchema
 import smithy4s.xml.Xml
 import smithy4s.xml.internals.XmlStartingPath
-import smithy4s.schema.OperationSchema
-import smithy4s.schema.ErrorSchema
 
 // scalafmt: { maxColumn = 120}
 private[aws] object AwsQueryCodecs {
@@ -108,6 +108,7 @@ private[aws] object AwsQueryCodecs {
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
+      .withSmithyPathEncoding(false)
 
   }
 

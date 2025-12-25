@@ -16,20 +16,22 @@
 
 package smithy4s.dynamic
 
-import weaver._
-import smithy4s.schema._
-import smithy4s.schema.Schema._
-import software.amazon.smithy.model.Model
 import cats.kernel.Eq
-import smithy4s.ShapeId
 import smithy.api.JsonName
-import java.util.UUID
-import smithy4s.Timestamp
-import smithy4s.Blob
 import smithy.api.Length
-import smithy4s.Newtype
 import smithy.api.Pattern
+import smithy4s.Blob
+import smithy4s.Newtype
 import smithy4s.Service
+import smithy4s.ShapeId
+import smithy4s.schema.Schema._
+import smithy4s.schema._
+import smithy4s.time._
+import software.amazon.smithy.model.Model
+import weaver._
+
+import java.util.UUID
+import scala.concurrent.duration.Duration
 import scala.io.Source
 
 object ToSmithyVisitorSpec extends FunSuite {
@@ -64,6 +66,14 @@ object ToSmithyVisitorSpec extends FunSuite {
                     |  l: Blob
                     |  @required
                     |  m: Timestamp
+                    |  @required
+                    |  n: alloy#LocalDate
+                    |  @required
+                    |  o: alloy#LocalTime
+                    |  @required
+                    |  p: alloy#Duration
+                    |  @required
+                    |  q: alloy#OffsetDateTime
                     |}
                     |""".stripMargin
 
@@ -80,7 +90,11 @@ object ToSmithyVisitorSpec extends FunSuite {
         j: Byte,
         k: UUID,
         l: Blob,
-        m: Timestamp
+        m: Timestamp,
+        n: LocalDate,
+        o: LocalTime,
+        p: Duration,
+        q: OffsetDateTime
     )
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -97,7 +111,11 @@ object ToSmithyVisitorSpec extends FunSuite {
         val k = uuid.required[Foo]("k", _.k)
         val l = blob.required[Foo]("l", _.l)
         val m = timestamp.required[Foo]("m", _.m)
-        struct(a, b, c, d, e, f, g, h, i, j, k, l, m)(Foo.apply)
+        val n = localdate.required[Foo]("n", _.n)
+        val o = localtime.required[Foo]("o", _.o)
+        val p = duration.required[Foo]("p", _.p)
+        val q = offsetdatetime.required[Foo]("q", _.q)
+        struct(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)(Foo.apply)
       }.withId(ShapeId("foo", "Test"))
     }
     runTest(smithy, Foo.schema)

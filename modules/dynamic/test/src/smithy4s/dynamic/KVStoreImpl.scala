@@ -18,6 +18,7 @@ package smithy4s
 package dynamic
 
 import smithy4s.example._
+
 import DummyIO._
 
 class KVStoreImpl(map: scala.collection.mutable.Map[String, String])

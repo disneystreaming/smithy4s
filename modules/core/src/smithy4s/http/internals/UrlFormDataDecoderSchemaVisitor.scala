@@ -49,7 +49,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     }
   }
 
-  @annotation.nowarn("msg=Unused import")
+  @annotation.nowarn
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
@@ -100,12 +100,13 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
       }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): UrlFormDataDecoder[Map[K, V]] = {
+  ): UrlFormDataDecoder[C[K, V]] = {
     type KV = (K, V)
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
@@ -115,7 +116,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
         .addHints(UrlFormName("entry"))
     }
     compile(Schema.vector(kvSchema).addHints(hints))
-      .map(_.toMap)
+      .map(vector => tag.fromIterator(vector.iterator))
   }
 
   override def enumeration[E](
@@ -208,8 +209,11 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     underlying.decode(_)
   }
 
-  override def option[A](schema: Schema[A]): UrlFormDataDecoder[Option[A]] =
-    compile(schema).optional
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): UrlFormDataDecoder[C[A]] =
+    compile(schema).optional(tag)
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints

@@ -16,13 +16,15 @@
 
 package smithy4s.json
 
-import smithy4s.schema.CachedSchemaCompiler
-
-// scalafmt: {maxColumn = 120}
-import com.github.plokhotnyuk.jsoniter_scala.core.{ReaderConfig => JsoniterReaderConfig}
-import com.github.plokhotnyuk.jsoniter_scala.core.{WriterConfig => JsoniterWriterConfig}
+import com.github.plokhotnyuk.jsoniter_scala.core.{
+  ReaderConfig => JsoniterReaderConfig
+}
+import com.github.plokhotnyuk.jsoniter_scala.core.{
+  WriterConfig => JsoniterWriterConfig
+}
 import smithy4s.codecs.PayloadDecoder
 import smithy4s.codecs.PayloadEncoder
+import smithy4s.schema.CachedSchemaCompiler
 
 trait JsonPayloadCodecCompiler {
 
@@ -30,7 +32,9 @@ trait JsonPayloadCodecCompiler {
     * Changes the jsoniter codec compiler that backs this compiler. This can be used
     * to tweak the behaviour of Json encoding and decoding alike.
     */
-  def withJsoniterCodecCompiler(jsoniterCodecCompiler: JsoniterCodecCompiler): JsonPayloadCodecCompiler
+  def withJsoniterCodecCompiler(
+      jsoniterCodecCompiler: JsoniterCodecCompiler
+  ): JsonPayloadCodecCompiler
 
   /**
    * Like withJsoniterCodecCompiler, but allows you to modify the current codec compiler more easily.
@@ -42,7 +46,9 @@ trait JsonPayloadCodecCompiler {
   /**
     * Changes the jsoniter reader config that is used when parsing json payloads into data.
     */
-  def withJsoniterReaderConfig(jsoniterReaderConfig: JsoniterReaderConfig): JsonPayloadCodecCompiler
+  def withJsoniterReaderConfig(
+      jsoniterReaderConfig: JsoniterReaderConfig
+  ): JsonPayloadCodecCompiler
 
   /**
     * Changes the jsoniter writer config that is used when writing data into json.
@@ -50,7 +56,9 @@ trait JsonPayloadCodecCompiler {
     * @param jsoniterWriterConfig
     * @return
     */
-  def withJsoniterWriterConfig(jsoniterWriterConfig: JsoniterWriterConfig): JsonPayloadCodecCompiler
+  def withJsoniterWriterConfig(
+      jsoniterWriterConfig: JsoniterWriterConfig
+  ): JsonPayloadCodecCompiler
 
   def decoders: CachedSchemaCompiler[PayloadDecoder]
   def encoders: CachedSchemaCompiler[PayloadEncoder]

@@ -16,24 +16,27 @@
 
 package smithy4s.codegen.internals
 
+import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
+import smithy4s.meta.BincompatAddedTrait
+import smithy4s.meta.BincompatFriendlyTrait
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.meta.GenerateOpticsTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
+import smithy4s.meta.TypeclassTrait
 import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
-import smithy4s.meta.AdtTrait
-import smithy4s.meta.GenerateServiceProductTrait
-import smithy4s.meta.GenerateOpticsTrait
-import smithy4s.meta.TypeclassTrait
-import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.knowledge.TopDownIndex
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
@@ -41,16 +44,18 @@ import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
-import scala.annotation.nowarn
-import scala.jdk.CollectionConverters._
-
-import Type.Alias
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.util.Locale
-import java.time.temporal.ChronoField
 import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
+import java.util.Locale
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import scala.annotation.nowarn
+import scala.jdk.CollectionConverters._
 import scala.util.Try
+
+import Type.Alias
 
 private[codegen] object SmithyToIR {
 
@@ -80,7 +85,10 @@ private[codegen] class SmithyToIR(
     namespace: String
 ) {
 
-  val finder = PathFinder.create(model)
+  private val finder = PathFinder.create(model)
+
+  // Contains mixins of the given shape that have matching fields.
+  private val mixinsOfCache = new ConcurrentHashMap[ShapeId, Set[ShapeId]]()
 
   val allShapes =
     model
@@ -114,6 +122,17 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
+  private val smithy4sRenderDynamicHintNamespacePatterns
+      : Set[NamespacePattern] =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sRenderDynamicHintNamespacePatterns")
+      .toSet
+      .flatMap((n: Node) => n.asArrayNode().asScala)
+      .flatMap(_.getElements().asScala)
+      .flatMap(_.asStringNode().asScala.map(n => NamespacePattern(n.getValue)))
+
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
     val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
@@ -133,6 +152,8 @@ private[codegen] class SmithyToIR(
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
+    // Only structure mixins should be generated
+    .filterNot { s => s.hasTrait(classOf[MixinTrait]) && !s.isStructureShape() }
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
@@ -151,7 +172,7 @@ private[codegen] class SmithyToIR(
 
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
-            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
             TypeAlias(
               shape.getId(),
               name,
@@ -211,7 +232,7 @@ private[codegen] class SmithyToIR(
           fields
             .find(_.name == memberName)
             .forall { field =>
-              field.modifier == fieldModifier(member)
+              field.modifier.typeMod == fieldModifier(member).typeMod
             }
         }
       }
@@ -225,10 +246,7 @@ private[codegen] class SmithyToIR(
         val rec = isRecursive(shape.getId()) || isTrait
 
         val fields = shape.fields
-        val filteredMixins = shape
-          .getMixins()
-          .asScala
-          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val filteredMixins = getMixinsMatchingFields(shape)
         val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
           .flatMap(_.tpe)
           .toList
@@ -261,20 +279,28 @@ private[codegen] class SmithyToIR(
           .map(mem => model.expectShape(mem.getTarget))
 
         val mixins: List[Set[ShapeId]] = memberTargets
-          .map { targetShape =>
-            def allMixinsOf(s: Shape): Set[ShapeId] =
-              s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
-                allMixinsOf(model.expectShape(m)) + m
-              }
-
-            allMixinsOf(targetShape)
-              .filter(mixinId => doFieldsMatch(mixinId, targetShape.fields))
-          }
+          .map(getMixinsMatchingFields)
 
         val result =
           if (mixins.isEmpty) Set.empty else mixins.reduce(_ intersect _)
 
         result.toList
+      }
+
+      private def getMixinsMatchingFields(shape: Shape): Set[ShapeId] = {
+        def allMixinsOf(s: Shape): Set[ShapeId] =
+          s.getMixins.asScala.toSet[ShapeId].flatMap { m =>
+            allMixinsOf(model.expectShape(m)) + m
+          }
+
+        mixinsOfCache
+          .computeIfAbsent(
+            shape.getId,
+            _ =>
+              allMixinsOf(shape)
+                // This filter is the more intensive part worth caching
+                .filter(doFieldsMatch(_, shape.fields))
+          )
       }
 
       // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)
@@ -444,17 +470,14 @@ private[codegen] class SmithyToIR(
         // Aggregates both the operations of the current entity and the ones
         // in the sub-entities.
         def recursiveOperations(
-            entity: EntityShape
-        ): List[ShapeId] = {
-          entity
-            .getAllOperations()
+            service: ServiceShape
+        ): List[ShapeId] =
+          TopDownIndex
+            .of(model)
+            .getContainedOperations(service)
             .asScala
-            .toList ++ entity.getResources().asScala.flatMap { shapeId =>
-            recursiveOperations(
-              model.expectShape(shapeId, classOf[EntityShape])
-            )
-          }
-        }
+            .map(_.getId())
+            .toList
 
         val operations = recursiveOperations(shape)
           .map(model.getShape(_).asScala)
@@ -475,14 +498,13 @@ private[codegen] class SmithyToIR(
             val streamedInput = streamedMember(op.getInputShape())
             val streamedOutput = streamedMember(op.getOutputShape())
 
-            val errorTypes = (generalErrors ++ op
-              .getErrors()
-              .asScala
-              .map(_.tpe)
-              .collect { case Some(errorType) =>
-                errorType
-              }
-              .toList).distinct
+            val errorTypes = {
+              generalErrors ++ op
+                .getErrors()
+                .asScala
+                .flatMap(_.tpe)
+                .toList
+            }.distinct
 
             val outputType =
               op.getOutputShape().tpe.getOrElse(Type.unit)
@@ -675,8 +697,9 @@ private[codegen] class SmithyToIR(
       def getHints(tpe: Type, shape: Shape): List[Hint] = {
         val h = hints(shape)
         tpe match {
-          case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
-          case _                    => h
+          case e: Type.ExternalType =>
+            h.filterNot(_ sameNativeTrait e.refinementHint)
+          case _ => h
         }
       }
 
@@ -690,13 +713,7 @@ private[codegen] class SmithyToIR(
           }
           .map { tpe =>
             val _hints = hints(x)
-            val memberHints = {
-              val h = hints(x.getMember())
-              tpe match {
-                case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
-                case _                    => h
-              }
-            }
+            val memberHints = getHints(tpe, x.getMember)
             if (_hints.contains(Hint.UniqueItems)) {
               Type.Collection(CollectionType.Set, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.Vector)) {
@@ -741,7 +758,12 @@ private[codegen] class SmithyToIR(
         v <- x.getValue().accept(this).map { tpe =>
           if (x.hasTrait(classOf[SparseTrait])) Type.Nullable(tpe) else tpe
         }
+        mapType =
+          if (x.hasTrait(classOf[alloy.PreserveKeyOrderTrait]))
+            MapType.SeqMap
+          else MapType.Map
       } yield Type.Map(
+        mapType,
         k,
         getHints(k, x.getKey()),
         v,
@@ -778,8 +800,21 @@ private[codegen] class SmithyToIR(
       def bigIntegerShape(x: BigIntegerShape): Option[Type] =
         primitive(x, "smithy.api#BigInteger", Primitive.BigInteger)
 
-      def bigDecimalShape(x: BigDecimalShape): Option[Type] =
-        primitive(x, "smithy.api#BigDecimal", Primitive.BigDecimal)
+      def bigDecimalShape(x: BigDecimalShape): Option[Type] = x match {
+        case shape if shape.getId() == durationShapeId =>
+          Type.PrimitiveType(Primitive.Duration).some
+        case T.durationSecondsFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.Duration),
+              isUnwrapped = false
+            )
+            .some
+        case _ =>
+          primitive(x, "smithy.api#BigDecimal", Primitive.BigDecimal)
+      }
 
       def operationShape(x: OperationShape): Option[Type] = None
 
@@ -797,12 +832,34 @@ private[codegen] class SmithyToIR(
         case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
           Type.PrimitiveType(Primitive.Uuid).some
+        case shape if shape.getId() == localDateShapeId =>
+          Type.PrimitiveType(Primitive.LocalDate).some
+        case shape if shape.getId() == localTimeShapeId =>
+          Type.PrimitiveType(Primitive.LocalTime).some
         case T.uuidFormat(_) =>
           Type
             .Alias(
               x.namespace,
               x.name,
               Type.PrimitiveType(Primitive.Uuid),
+              isUnwrapped = false
+            )
+            .some
+        case T.localDateFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.LocalDate),
+              isUnwrapped = false
+            )
+            .some
+        case T.localTimeFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.LocalTime),
               isUnwrapped = false
             )
             .some
@@ -831,8 +888,20 @@ private[codegen] class SmithyToIR(
             .accept(this)
         }
 
-      def timestampShape(x: TimestampShape): Option[Type] =
-        primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
+      def timestampShape(x: TimestampShape): Option[Type] = x match {
+        case shape if shape.getId() == offsetDateTimeShapeId =>
+          Type.PrimitiveType(Primitive.OffsetDateTime).some
+        case T.offsetDateTimeFormat(_) =>
+          Type
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.OffsetDateTime),
+              isUnwrapped = false
+            )
+            .some
+        case _ => primitive(x, "smithy.api#Timestamp", Primitive.Timestamp)
+      }
 
     }
 
@@ -933,9 +1002,14 @@ private[codegen] class SmithyToIR(
       Hint.ScalaImports(s.getImports().asScala.toList)
     case _: ValidateNewtypeTrait =>
       Hint.ValidateNewtype
-    case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
+    case _: TraitDefinition =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+    case _: BincompatFriendlyTrait =>
+      Hint.BincompatFriendly
+    case b: BincompatAddedTrait =>
+      Hint.BincompatAdded(VersionNumber.parse(b.getVersion()))
+
   }
 
   private def streamingOperation(
@@ -1001,6 +1075,14 @@ private[codegen] class SmithyToIR(
         }
     }
 
+    val httpDocs = shape
+      .getTrait(classOf[HttpTrait])
+      .asScala
+      .map { http =>
+        List(s"HTTP ${http.getMethod} ${http.getUri.toString}")
+      }
+      .getOrElse(List.empty)
+
     def getMemberDocs(shape: Shape): Map[String, List[String]] =
       shape match {
         case _: UnionShape => Map.empty
@@ -1033,20 +1115,24 @@ private[codegen] class SmithyToIR(
       }
 
     val memberDocs = getMemberDocs(shape)
-    val allShapeDocs = shapeDocs ++ operationDocs
-    if (allShapeDocs.nonEmpty || memberDocs.nonEmpty) {
-      Some(Hint.Documentation(allShapeDocs, memberDocs))
+    val protocolSpecific = List(httpDocs).filter(_.nonEmpty)
+    if (
+      shapeDocs.nonEmpty || operationDocs.nonEmpty || memberDocs.nonEmpty || protocolSpecific.nonEmpty
+    ) {
+      Some(
+        Hint.Documentation(
+          shapeDocs ++ operationDocs,
+          memberDocs,
+          protocolSpecific
+        )
+      )
     } else None
   }
 
   private def hints(shape: Shape): List[Hint] = {
     val allTraits = shape.getAllTraits().asScala.values.toList
-    val isNullable = allTraits.exists(_.toShapeId == alloy.NullableTrait.ID)
-    val traits =
-      if (isNullable) allTraits
-      else allTraits
     val nonMetaTraits =
-      traits
+      allTraits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
         // traits from the synthetic namespace, e.g. smithy.synthetic.enum
         // don't have shapes in the model - so we can't generate hints for them.
@@ -1061,13 +1147,13 @@ private[codegen] class SmithyToIR(
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint(shape)) ++
+    allTraits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filter(tr =>
           tr.toShapeId != RequiredTrait.ID && tr.toShapeId != alloy.NullableTrait.ID
         )
-        .map(unfoldTrait) ++
+        .map(unfoldTraitNonConstraint) ++
       maybeTypeclassesHint(shape)
   }
 
@@ -1082,7 +1168,7 @@ private[codegen] class SmithyToIR(
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    private def fieldsInternal(hintsExtractor: Shape => List[Hint]) = {
+    def fields: List[Field] = {
       val noDefault =
         if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
@@ -1101,13 +1187,13 @@ private[codegen] class SmithyToIR(
             member.getMemberName(),
             member.tpe,
             modifier,
-            hintsExtractor(member) ++ default ++ noDefault
+            hints(member) ++ default ++ noDefault
           )
         }
         .zipWithIndex
         .collect {
           case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
-            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
             Field(name, tpe, modifier, index, newHints)
           case ((name, Some(tpe), modifier, hints), index) =>
             Field(name, tpe, modifier, index, hints)
@@ -1124,20 +1210,6 @@ private[codegen] class SmithyToIR(
         case DefaultRenderMode.NoDefaults => result
       }
     }
-
-    /**
-      * Should be used when calculating schema for a structure.
-      *
-      * See https://github.com/disneystreaming/smithy4s/issues/1296 for details.
-      */
-    def fields: List[Field] = fieldsInternal(hintsExtractor = hints)
-
-    /**
-      * Should be used only on the call site
-      * of the trait application where there is no need to call `unfoldTrait` for every hint of the trait.
-      */
-    def getFieldsPlain: List[Field] =
-      fieldsInternal(hintsExtractor = _ => List.empty)
 
     def alts = {
       shape
@@ -1162,7 +1234,7 @@ private[codegen] class SmithyToIR(
             Alt(
               name,
               UnionMember.TypeCase(tpe),
-              h.filterNot(_ == tpe.refinementHint)
+              h.filterNot(_ sameNativeTrait tpe.refinementHint)
             )
           case (name, Some(Right(tpe)), h) =>
             Alt(name, UnionMember.TypeCase(tpe), h)
@@ -1288,7 +1360,28 @@ private[codegen] class SmithyToIR(
   }
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
-    Hint.Native(tr.toShapeId, unfoldNode(tr.toNode(), tr.toShapeId()))
+    Hint.Native(
+      tr.toShapeId,
+      cats.Eval.later(unfoldNode(tr.toNode(), tr.toShapeId()))
+    )
+  }
+
+  // We can only allow dynamic bindings for non-constraint traits, because
+  // constraints rely on types (static bindings) to find their refinement providers
+  private def unfoldTraitNonConstraint(tr: Trait): Hint = {
+    val renderDynamic = model
+      .expectShape(tr.toShapeId)
+      .hasTrait(
+        classOf[smithy4s.meta.RenderAsDynamicBindingTrait]
+      ) || smithy4sRenderDynamicHintNamespacePatterns.exists(
+      _.matches(tr.toShapeId().namespace)
+    )
+    if (renderDynamic) Hint.DynamicBinding(tr.toShapeId, tr.toNode)
+    else
+      Hint.Native(
+        tr.toShapeId,
+        cats.Eval.later(unfoldNode(tr.toNode(), tr.toShapeId()))
+      )
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
@@ -1297,8 +1390,8 @@ private[codegen] class SmithyToIR(
       case (N.ObjectNode(map), UnRef(S.Structure(struct))) =>
         val shapeId = struct.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
-        val structFields = struct.getFieldsPlain
-        val fieldNames = struct.getFieldsPlain.map(_.name)
+        val structFields = struct.fields
+        val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, mod, _, _)
               if mod.typeMod == Field.TypeModification.None =>
@@ -1397,18 +1490,21 @@ private[codegen] class SmithyToIR(
           ) =>
         TypedNode.CollectionTN(collectionType, list.map(NodeAndType(_, mem)))
       // Map
-      case (N.MapNode(map), Type.Map(keyType, _, valueType, _)) =>
-        TypedNode.MapTN(map.map { case (k, v) =>
-          (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
-        })
+      case (N.MapNode(map), Type.Map(mapType, keyType, _, valueType, _)) =>
+        TypedNode.MapTN(
+          mapType,
+          map.map { case (k, v) =>
+            (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
+          }
+        )
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
         unfoldNodeAndTypeP(node, p)
       case (node, Type.Collection(collectionType, _, _))
           if node == Node.nullNode =>
         TypedNode.CollectionTN(collectionType, List.empty)
-      case (node, Type.Map(_, _, _, _)) if node == Node.nullNode =>
-        TypedNode.MapTN(List.empty)
+      case (node, Type.Map(mapType, _, _, _, _)) if node == Node.nullNode =>
+        TypedNode.MapTN(mapType, List.empty)
       case (node, IdRefCase()) =>
         val ref = Type.Ref("smithy4s", "ShapeId")
         val namespace :: name :: _ =
@@ -1519,6 +1615,18 @@ private[codegen] class SmithyToIR(
           Primitive.Unit,
           None
         )
+      case (node, Primitive.Uuid) if node == Node.nullNode =>
+        TypedNode.PrimitiveTN(Primitive.Uuid, None)
+      case (N.StringNode(s), Primitive.Uuid) =>
+        Try(UUID.fromString(s))
+          .map(uuid => TypedNode.PrimitiveTN(Primitive.Uuid, Some(uuid)))
+          .adaptErr { case e =>
+            new Exception(
+              s"UUID failed validation at codegen time. Defined at: ${node.getSourceLocation()}",
+              e
+            )
+          }
+          .get
       case other =>
         notSupported(other)
     }

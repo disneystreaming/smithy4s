@@ -16,7 +16,8 @@
 
 package smithy4s.codegen.internals
 
-import smithy4s.codegen.{SmithyBuildJson, BuildInfo}
+import smithy4s.codegen.BuildInfo
+import smithy4s.codegen.SmithyBuildJson
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.openapi.OpenApiVersion
 

@@ -18,14 +18,19 @@ package smithy4s.compliancetests
 package internals
 
 import cats.Id
+import smithy4s.Bijection
+import smithy4s.Blob
+import smithy4s.Document.DNull
+import smithy4s.Hints
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
+import smithy4s.schema.Primitive._
+import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.UUID
-import smithy4s.schema._
-import smithy4s.Timestamp
-import smithy4s.Blob
-import smithy4s.schema.Primitive._
-import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
-import smithy4s.Document.DNull
+import scala.concurrent.duration.Duration
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   self =>
@@ -35,20 +40,24 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       hints: Hints,
       tag: Primitive[P]
   ): Id[P] = tag match {
-    case PFloat      => 0: Float
-    case PBigDecimal => 0: BigDecimal
-    case PBigInt     => 0: BigInt
-    case PBlob       => Blob(Array.emptyByteArray)
-    case PDocument   => DNull
-    case PByte       => 0: Byte
-    case PInt        => 0
-    case PShort      => 0: Short
-    case PString     => ""
-    case PLong       => 0: Long
-    case PDouble     => 0: Double
-    case PBoolean    => true
-    case PTimestamp  => Timestamp(0L, 0)
-    case PUUID       => new UUID(0, 0)
+    case PFloat          => 0: Float
+    case PBigDecimal     => 0: BigDecimal
+    case PBigInt         => 0: BigInt
+    case PBlob           => Blob(Array.emptyByteArray)
+    case PDocument       => DNull
+    case PByte           => 0: Byte
+    case PInt            => 0
+    case PShort          => 0: Short
+    case PString         => ""
+    case PLong           => 0: Long
+    case PDouble         => 0: Double
+    case PBoolean        => true
+    case PTimestamp      => Timestamp(0L, 0)
+    case PUUID           => new UUID(0, 0)
+    case PLocalDate      => LocalDate.epoch
+    case PLocalTime      => LocalTime.midnight
+    case PDuration       => Duration.Zero
+    case POffsetDateTime => OffsetDateTime.epoch
   }
 
   override def collection[C[_], A](
@@ -58,12 +67,13 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       member: Schema[A]
   ): Id[C[A]] = tag.empty
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Id[Map[K, V]] = Map.empty
+  ): Id[C[K, V]] = tag.empty
 
   override def enumeration[E](
       shapeId: ShapeId,
@@ -103,6 +113,9 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     suspend.map(apply).value
   }
 
-  override def option[A](schema: Schema[A]): Id[Option[A]] = None
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Id[C[A]] = tag.none
 
 }

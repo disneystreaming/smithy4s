@@ -2,14 +2,15 @@ package smithy4s
 package scalacheck
 
 import org.scalacheck.Gen
+import smithy4s.time._
 
 private[scalacheck] object Smithy4sGen {
 
   private val year = Gen.chooseNum(1900, 2100)
   private val month = Gen.chooseNum(1, 12)
   private val hour = Gen.chooseNum(0, 23)
-  // private val nanos = Gen.chooseNum(0, math.pow(10, 8).toInt)
   val minute, second = Gen.chooseNum(0, 59)
+  val offset = Gen.chooseNum(-18, 18).map(hours => ZoneOffset(hours * 3600))
 
   private def isLeap(year: Int) =
     (year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0)
@@ -29,6 +30,29 @@ private[scalacheck] object Smithy4sGen {
     mm <- minute
     ss <- second
   } yield Timestamp(YYYY, MM, DD, hh, mm, ss, 0)
+
+  val genLocalDate: Gen[LocalDate] = for {
+    YYYY <- year
+    MM <- month
+    DD <- day(YYYY, MM)
+  } yield LocalDate(YYYY, MM, DD)
+
+  val genLocalTime: Gen[LocalTime] = for {
+    hh <- hour
+    mm <- minute
+    ss <- second
+  } yield LocalTime(hh, mm, ss, 0)
+
+  val genOffsetDateTime: Gen[OffsetDateTime] = 
+    for {
+      YYYY <- year
+      MM <- month
+      DD <- day(YYYY, MM)
+      hh <- hour
+      mm <- minute
+      ss <- second
+      off <- offset
+    } yield OffsetDateTime(YYYY, MM, DD, hh, mm, ss, 0, off)
 
   def genDocument(maxDepth: Int): Gen[Document] = if (maxDepth <= 0) {
     Gen.oneOf(

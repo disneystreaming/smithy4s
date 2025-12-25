@@ -19,7 +19,6 @@ package http
 package internals
 
 import smithy.api.HttpQueryParams
-import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.Alt
 import smithy4s.schema.CollectionTag
@@ -27,11 +26,13 @@ import smithy4s.schema.CompilationCache
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Field
+import smithy4s.schema.FieldFilter
+import smithy4s.schema.MapTag
+import smithy4s.schema.OptionalTag
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
 
 import java.util.Base64
-import smithy4s.schema.FieldFilter
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -112,48 +113,48 @@ class SchemaVisitorMetadataWriter(
 
   }
 
-  override def option[A](schema: Schema[A]): MetaEncode[Option[A]] =
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): MetaEncode[C[A]] =
     self(schema) match {
       case StringValueMetaEncode(f) =>
-        StringValueMetaEncode {
-          case Some(value) => f(value)
-          case None        => ""
+        StringValueMetaEncode { optional =>
+          tag.fold(optional, f(_), "")
         }
       case StringListMetaEncode(f) =>
-        StringListMetaEncode {
-          case Some(value) => f(value)
-          case None        => List.empty
+        StringListMetaEncode { optional =>
+          tag.fold(optional, f(_), List.empty)
         }
       case StringMapMetaEncode(f) =>
-        StringMapMetaEncode {
-          case Some(value) => f(value)
-          case None        => Map.empty
+        StringMapMetaEncode { optional =>
+          tag.fold(optional, f(_), Map.empty)
         }
       case StringListMapMetaEncode(f) =>
-        StringListMapMetaEncode {
-          case Some(value) => f(value)
-          case None        => Map.empty
+        StringListMapMetaEncode { optional =>
+          tag.fold(optional, f(_), Map.empty)
         }
       case EmptyMetaEncode        => EmptyMetaEncode
       case StructureMetaEncode(_) => EmptyMetaEncode
     }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): MetaEncode[Map[K, V]] = {
+  ): MetaEncode[C[K, V]] = {
     (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
-        StringMapMetaEncode(map =>
-          map.map { case (k, v) =>
+        StringMapMetaEncode[C[K, V]](map =>
+          tag.toScalaMap(map).map { case (k, v) =>
             (keyF(k), valueF(v))
           }
         )
       case (StringValueMetaEncode(keyF), StringListMetaEncode(valueF)) =>
-        StringListMapMetaEncode(map =>
-          map.map { case (k, v) =>
+        StringListMapMetaEncode[C[K, V]](map =>
+          tag.toScalaMap(map).map { case (k, v) =>
             (keyF(k), valueF(v))
           }
         )

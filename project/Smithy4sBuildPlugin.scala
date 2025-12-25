@@ -25,14 +25,54 @@ case object JSPlatform extends Platform
 case object NativePlatform extends Platform
 case object JVMPlatform extends Platform
 
-case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
-    extends VirtualAxis.WeakAxis
+case class MillAxis(millVersion: String) extends VirtualAxis.WeakAxis {
+  override val idSuffix =
+    Smithy4sBuildPlugin.millPlatform(millVersion).replace('.', '_')
+  override val directorySuffix = s"mill-${idSuffix}"
+}
+
+trait CustomRow { self =>
+  def axisValues: List[VirtualAxis]
+  def process: Project => Project
+}
+
+case class MillCustomRow(mv: String) extends CustomRow {
+  def axisValues: List[VirtualAxis] =
+    List(MillAxis(mv), VirtualAxis.jvm)
+
+  def process: Project => Project = { p: Project =>
+    val millVersion = Smithy4sBuildPlugin.millPlatform(mv)
+    val suffix = millVersion.replace('.', '_')
+
+    p.settings(
+      crossVersion := CrossVersion
+        .binaryWith(s"mill${Smithy4sBuildPlugin.millPlatform(mv)}_", ""),
+      libraryDependencies ++= Seq(
+        Dependencies.Mill.main(mv),
+        Dependencies.Mill.mainApi(mv),
+        Dependencies.Mill.scalalib(mv),
+        Dependencies.Mill.mainTestkit(mv)
+      ),
+      Compile / unmanagedSourceDirectories ++=
+        Seq(
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-shared",
+          (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-${suffix}"
+        ),
+      Test / unmanagedSourceDirectories ++=
+        Seq(
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-shared",
+          (Test / sourceDirectory).value.getParentFile.getParentFile / "test" / s"src-mill-${suffix}"
+        )
+    )
+  }
+
+}
 
 object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.20"
   val Scala213 = "2.13.16"
-  val Scala3 = "3.3.5"
+  val Scala3 = "3.3.6"
 
   object autoImport {
     // format: off
@@ -66,9 +106,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     def http4sPlatform(
         scalaVersions: Seq[String],
-        settings: Seq[Setting[_]]
+        jvmSettings: Seq[Setting[_]]
     ) = {
-      http4sJvmPlatform(scalaVersions, settings)
+      http4sJvmPlatform(scalaVersions, jvmSettings)
         .customRow(
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
           axisValues = Seq(VirtualAxis.js),
@@ -78,6 +118,28 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           scalaVersions = scalaVersions.filter(_.startsWith("3")),
           axisValues = Seq(VirtualAxis.native),
           _.enablePlugins(ScalaNativePlugin).settings(nativeDimSettings)
+        )
+    }
+
+    def millPlatforms(
+        scalaVersion: String,
+        millVersions: Seq[String]
+    ): ProjectMatrix = {
+      millVersions
+        .map { mv =>
+          MillCustomRow(mv)
+        }
+        .foldLeft(pm) { (m, row) =>
+          m
+            .jvmPlatform(
+              scalaVersions = List(scalaVersion),
+              axisValues = row.axisValues,
+              configure = row.process
+            )
+        }
+        .defaultAxes(
+          VirtualAxis.jvm,
+          VirtualAxis.scalaPartialVersion(scalaVersion)
         )
     }
   }
@@ -258,7 +320,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .filterNot(_ == "-Xcheckinit")
 
   def filterScala2_12Options(opts: Seq[String]) =
-    opts.filterNot(_ == "-Xlint:missing-interpolator")
+    opts
+      .filterNot(_ == "-Xlint:missing-interpolator")
+      .filterNot(_ == "-Wunused:imports")
 
   def priorTo2_13(scalaVersion: String): Boolean =
     CrossVersion.partialVersion(scalaVersion) match {
@@ -296,7 +360,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.
     "-Ywarn-numeric-widen", // Warn when numerics are widened.
     "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
-    "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
+    "-Wunused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-unused:locals", // Warn if a local definition is unused.
     "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
     "-Ywarn-unused:privates", // Warn if a private member is unused.
@@ -316,7 +380,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
       "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
       "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit" // Warn when nullary methods return Unit.
+      "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
+      "-Ywarn-unused-import" // Warn if an import selector is not referenced.
     )
 
   lazy val doNotPublishArtifact = Seq(
@@ -449,15 +514,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   lazy val publishSettings = Seq(
     organization := "com.disneystreaming.smithy4s",
     sonatypeProfileName := "com.disneystreaming",
-    version := sys.env
-      .get("GITHUB_REF")
-      .filter(_.startsWith("refs/tags/v"))
-      .map(_.drop("refs/tags/v".length))
-      .getOrElse(version.value),
-    publishTo := sonatypePublishToBundle.value,
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
-    publishMavenStyle := true,
-    publishLocal / publishMavenStyle := false,
+    pomIncludeRepository := { _ => false },
     homepage := Some(url("https://github.com/disneystreaming")),
     scmInfo := Some(
       ScmInfo(
@@ -490,20 +547,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         email = "kubukoz@gmail.com",
         url = url("https://github.com/kubukoz")
       )
-    ),
-    credentials ++=
-      sys.env
-        .get("SONATYPE_USERNAME")
-        .zip(sys.env.get("SONATYPE_PASSWORD"))
-        .map { case (username, password) =>
-          Credentials(
-            "Sonatype Nexus Repository Manager",
-            "oss.sonatype.org",
-            username,
-            password
-          )
-        }
-        .toSeq
+    )
   )
 
   def createBuildCommands(projects: Seq[ProjectReference]) = {
@@ -586,7 +630,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
+  val millVersions = List("0.11.13", "0.12.11")
+
   def millPlatform(millVersion: String): String = millVersion match {
+    case mv if mv.startsWith("0.12") => "0.12"
     case mv if mv.startsWith("0.11") => "0.11"
     case _                           => sys.error("Unsupported mill platform.")
   }

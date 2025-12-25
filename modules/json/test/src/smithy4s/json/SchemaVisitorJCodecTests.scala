@@ -31,19 +31,22 @@ import smithy4s.example.CheckedOrUnchecked2
 import smithy4s.example.FaceCard
 import smithy4s.example.Four
 import smithy4s.example.One
+import smithy4s.example.OpenEnumTest
+import smithy4s.example.OpenIntEnumTest
 import smithy4s.example.PayloadData
 import smithy4s.example.RangeCheck
 import smithy4s.example.TestBiggerUnion
 import smithy4s.example.Three
 import smithy4s.example.UntaggedUnion
-import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
+import smithy4s.json.internals.JsoniterCodecCompilerImpl
+import smithy4s.schema.Field
+import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
+import smithy4s.time._
 
 import scala.collection.immutable.ListMap
+import scala.concurrent.duration._
 import scala.util.Try
-import smithy4s.json.internals.JsoniterCodecCompilerImpl
-import smithy4s.schema.Schema
-import smithy4s.schema.Field
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -778,7 +781,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "Input list exceeded max arity of 1024")
+        expect.same(message, "Input List exceeded max arity of 1024")
     }
   }
 
@@ -1184,6 +1187,57 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val doc = readFromString[Document](jsonStr)
 
     assertEquals(doc, expected)
+  }
+
+  case class MyDuration(a: Duration)
+
+  object MyDuration {
+    implicit val schema: Schema[MyDuration] = {
+      val a = duration.required[MyDuration]("a", _.a)
+      struct(a)(MyDuration.apply)
+    }
+  }
+
+  case class MyTimes(
+      date: LocalDate,
+      time: LocalTime,
+      dateTime: OffsetDateTime
+  )
+
+  object MyTimes {
+    implicit val schema: Schema[MyTimes] = {
+      val date = localdate.required[MyTimes]("date", _.date)
+      val time = localtime.required[MyTimes]("time", _.time)
+      val dateTime = offsetdatetime.required[MyTimes]("dateTime", _.dateTime)
+      struct(date, time, dateTime)(MyTimes.apply)
+    }
+  }
+
+  test("Duration are correctly encoded/decoded from a BigDecimal") {
+    val jsonString = """{"a":86400.000000001}"""
+    val input = MyDuration(1.day + 1.nano)
+
+    val encoded = writeToString[MyDuration](input)
+    val decoded = readFromString[MyDuration](jsonString)
+
+    assertEquals(jsonString, encoded)
+    assertEquals(input, decoded)
+  }
+
+  test("Time types are correctly encoded/decoded") {
+    val jsonString = """{"date":"2025-08-15","time":"13:09:56","dateTime":"2025-08-15T13:09:56-07:00"}"""
+    val input = MyTimes(
+      LocalDate(2025, 8, 15),
+      LocalTime(13, 9, 56),
+      OffsetDateTime(2025, 8, 15, 13, 9, 56, 0, ZoneOffset.hours(-7))
+    )
+
+    val encoded = writeToString[MyTimes](input)
+    val decoded = readFromString[MyTimes](jsonString)
+
+    assertEquals(jsonString, encoded)
+    assertEquals(input, decoded)
+
   }
 
 }

@@ -16,29 +16,28 @@
 
 package smithy4s.tests
 
+import cats.Show
 import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
-
 import io.circe._
-import org.http4s._
+import org.http4s.EntityDecoder
+import org.http4s.Response
 import org.http4s.Uri
+import org.http4s._
 import org.http4s.circe._
 import org.http4s.client.Client
-import org.typelevel.ci.CIString
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
-import org.http4s.Response
-import smithy4s.http.HttpPayloadError
+import org.typelevel.ci.CIString
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.FailedDecodeAttempt
 import smithy4s.http.HttpContractError
 import smithy4s.http.HttpDiscriminator
-import smithy4s.http.FailedDecodeAttempt
+import smithy4s.http.HttpPayloadError
 import smithy4s.http.RawErrorResponse
 import weaver._
-import cats.Show
-import org.http4s.EntityDecoder
 
 abstract class PizzaSpec
     extends IOSuite
@@ -345,7 +344,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("query param failing refinement results in a BadRequest") {
@@ -359,7 +358,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("body failing refinement results in a BadRequest") {
@@ -372,7 +371,7 @@ abstract class PizzaSpec
           log
         )
         .map(_._1)
-        .map(assert.eql(_, 400))
+        .map(expect.eql(_, 400))
   }
 
   routerTest("Optional payload set to empty") { (client, uri, log) =>
@@ -451,11 +450,13 @@ abstract class PizzaSpec
         )
         val containsAllExpectedHeaders =
           expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
+        val missingHeadersMessage =
+          s"Expected to find all of $expectedHeaders inside of $headers"
         expect.same(code, 200) &&
         expect.same(body, "") &&
         expect(
           containsAllExpectedHeaders,
-          s"Expected to find all of $expectedHeaders inside of $headers"
+          missingHeadersMessage
         )
       }
   }
@@ -579,6 +580,142 @@ abstract class PizzaSpec
           failure("Expected RawErrorResponse with status 500")
       }
     }
+  }
+
+  routerTest("Respects Static Query Parameters") { (client, uri, log) =>
+    val quri = uri / "query-check"
+    def response(params: (String, String)*) = Json.fromFields(
+      params
+        .groupBy(_._1)
+        .map { case (k, is) =>
+          k -> Json.fromValues(is.map { case (_, v) => Json.fromString(v) })
+        }
+    )
+    for {
+      resXC <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "x", "variant" -> "c"))),
+        log
+      )
+
+      resXD <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "x", "variant" -> "d"))),
+        log
+      )
+
+      resZ <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "z", "variant" -> "c"))),
+        log
+      )
+
+      resY <- client.send[Json](
+        GET(quri.withQueryParams(Map("kind" -> "y", "variant" -> ""))),
+        log
+      )
+
+      resY0 <- client.send[Unit](
+        GET(quri.withQueryParam("kind", "y")),
+        log
+      )
+
+      resA <- client.send[Json](
+        GET(quri.withQueryParam("variant", "a")),
+        log
+      )
+      resB <- client.send[Json](
+        GET(quri.withQueryParam("variant", "b")),
+        log
+      )
+    } yield {
+      val (codeXC, _, bodyXC) = resXC
+      expect.same(codeXC, 200) &&
+      expect.same(
+        bodyXC,
+        response(
+          "variants" -> "c",
+          "staticVariants" -> "c",
+          "kinds" -> "x",
+          "staticKinds" -> "x"
+        )
+      )
+    } && {
+      val (codeXD, _, bodyXD) = resXD
+      expect.same(codeXD, 200) &&
+      expect.same(
+        bodyXD,
+        response(
+          "variants" -> "d",
+          "staticVariants" -> "d",
+          "kinds" -> "x",
+          "staticKinds" -> "x"
+        )
+      )
+    } && {
+      val (codeZ, _, bodyZ) = resZ
+      expect.same(codeZ, 200) &&
+      expect.same(
+        bodyZ,
+        response("variants" -> "c", "kinds" -> "z", "staticKinds" -> "z")
+      )
+    } && {
+      val (codeY, _, bodyY) = resY
+      expect.same(codeY, 200) &&
+      expect.same(
+        bodyY,
+        response(
+          "variants" -> "",
+          "staticVariants" -> "",
+          "kinds" -> "y",
+          "staticKinds" -> "y"
+        )
+      )
+    } && {
+      val (codeY0, _, _) = resY0
+      expect.same(codeY0, 404)
+    } && {
+      val (code, _, body) = resA
+      expect.same(code, 200) &&
+      expect.same(body, response("variants" -> "a", "staticVariants" -> "a"))
+    } && {
+      val (codeB, _, bodyB) = resB
+      expect.same(codeB, 200) &&
+      expect.same(bodyB, response("variants" -> "b", "staticVariants" -> "b"))
+    }
+  }
+
+  routerTest("Respects Overlapping Static Query Parameters") {
+    (client, uri, log) =>
+      val quri = uri / "query-check"
+      def response(params: (String, String)*) = Json.fromFields(
+        params
+          .groupBy(_._1)
+          .map { case (k, is) =>
+            k -> Json.fromValues(is.map { case (_, v) => Json.fromString(v) })
+          }
+      )
+      for {
+        _ <- ignore(
+          """Test assumes having proper parameter priority implemented,
+            | see https://github.com/disneystreaming/smithy4s/issues/1619,
+            | https://github.com/disneystreaming/smithy4s/issues/1567""".stripMargin
+        ).void
+        resZA <- client.send[Json](
+          GET(quri.withQueryParams(Map("kind" -> "z", "variant" -> "a"))),
+          log
+        )
+
+      } yield {
+        val (codeZA, _, bodyZA) = resZA
+        expect.same(codeZA, 200) &&
+        expect.same(
+          bodyZA,
+          response(
+            "variants" -> "a",
+            "staticVariants" -> "a",
+            "kinds" -> "z",
+            "staticKinds" -> "z"
+          )
+        )
+      }
   }
 
   type Res = (Client[IO], Uri)

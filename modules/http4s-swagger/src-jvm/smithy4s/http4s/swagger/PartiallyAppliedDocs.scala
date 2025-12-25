@@ -17,11 +17,11 @@
 package smithy4s
 package http4s.swagger
 
+import cats.data.NonEmptyList
 import cats.effect.Sync
 import org.http4s.HttpRoutes
 import org.http4s.Request
 import org.http4s.StaticFile
-import cats.data.NonEmptyList
 
 case class PartiallyAppliedDocs[F[_]](path: String, swaggerUiPath: String) {
   def apply(

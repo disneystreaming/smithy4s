@@ -21,9 +21,9 @@ import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.ShowInstances._
+import smithy4s.schema.Alt.Precompiler
 import smithy4s.schema.Schema
 import smithy4s.schema._
-import smithy4s.schema.Alt.Precompiler
 
 object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
   protected type Aux[A] = Show[A]
@@ -51,18 +51,12 @@ final class SchemaVisitorShow(
       tag: CollectionTag[C],
       member: Schema[A]
   ): Show[C[A]] = {
-    implicit val showSchemaA: Show[A] = self(member)
-    tag match {
-      case CollectionTag.ListTag => Show[List[A]]
-
-      case CollectionTag.SetTag => Show[Set[A]]
-
-      case CollectionTag.VectorTag => Show[Vector[A]]
-
-      case CollectionTag.IndexedSeqTag =>
-        Show.show { seq =>
-          seq.map(showSchemaA.show).mkString("IndexedSeq(", ", ", ")")
-        }
+    val showSchemaA: Show[A] = self(member)
+    Show.show[C[A]] { seq =>
+      tag
+        .iterator(seq)
+        .map(showSchemaA.show)
+        .mkString(s"${tag.name}(", ", ", ")")
     }
   }
 
@@ -105,15 +99,23 @@ final class SchemaVisitorShow(
   ): Show[B] =
     self(schema).contramap(refinement.from)
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): Show[Map[K, V]] = {
-    implicit val showKey: Show[K] = self(key)
-    implicit val showValue: Show[V] = self(value)
-    Show[Map[K, V]]
+  ): Show[C[K, V]] = {
+    val showKey: Show[K] = self(key)
+    val showValue: Show[V] = self(value)
+    Show.show[C[K, V]] { c =>
+      tag
+        .iterator(c)
+        .map { case ((k, v)) =>
+          showKey.show(k) + " -> " + showValue.show(v)
+        }
+        .mkString(s"${tag.name}(", ", ", ")")
+    }
   }
 
   override def enumeration[E](
@@ -157,11 +159,13 @@ final class SchemaVisitorShow(
     a => ss.value.show(a)
   }
 
-  override def option[A](schema: Schema[A]): Show[Option[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): Show[C[A]] = {
     val showA = self(schema)
-    locally {
-      case None        => "None"
-      case Some(value) => s"Some(${showA.show(value)})"
+    Show.show[C[A]] { opt =>
+      tag.fold[A, String](opt, a => s"Some(${showA.show(a)})", "None")
     }
   }
 

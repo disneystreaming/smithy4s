@@ -22,7 +22,7 @@ sealed trait Class extends scala.Product with scala.Serializable { self =>
 }
 object Class extends ShapeTag.Companion[Class] {
 
-  def _package(): AdtStruct = AdtStruct()
+  def adtStruct(): AdtStruct = AdtStruct()
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "class")
 

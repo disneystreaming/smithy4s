@@ -17,13 +17,18 @@
 package smithy4s.interopcats
 
 import cats.Show
-import smithy4s.{Blob, ShapeId, Timestamp}
+import smithy4s.Blob
+import smithy4s.ShapeId
+import smithy4s.interopcats.testcases.FooBar
+import smithy4s.interopcats.testcases.IntOrString._
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
+import smithy4s.time._
 import weaver.FunSuite
-import smithy4s.interopcats.testcases.FooBar
-import smithy4s.interopcats.testcases.IntOrString.schema
-import smithy4s.interopcats.testcases.IntOrString._
+
+import java.util.UUID
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
 
 object ShowVisitorSpec extends FunSuite with CompatProvider {
 
@@ -115,6 +120,41 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
     val foo = getTimestamp
     val showOutput = schemaVisitorShow(schema).show(foo)
     expect.eql(showOutput, foo.toString)
+  }
+
+  test("uuid") {
+    val schema: Schema[UUID] = uuid
+    val foo = UUID.fromString("edfad239-da90-497f-a2bd-85ebc1c3b09d")
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "edfad239-da90-497f-a2bd-85ebc1c3b09d")
+  }
+
+  test("localDate") {
+    val schema: Schema[LocalDate] = localdate
+    val foo = LocalDate(2025, 7, 16)
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "2025-07-16")
+  }
+
+  test("localTime") {
+    val schema: Schema[LocalTime] = localtime
+    val foo = LocalTime(12, 24, 48, 0)
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "12:24:48")
+  }
+
+  test("duration ") {
+    val schema: Schema[Duration] = duration
+    val foo = 1.day
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "1 day")
+  }
+
+  test("offsetdatetime") {
+    val schema: Schema[OffsetDateTime] = offsetdatetime
+    val foo = OffsetDateTime.parseUnsafe("2025-07-16T12:24:48-07:00")
+    val showOutput = schemaVisitorShow(schema).show(foo)
+    expect.eql(showOutput, "2025-07-16T12:24:48-07:00")
   }
 
   test("struct") {

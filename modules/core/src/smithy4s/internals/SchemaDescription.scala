@@ -19,6 +19,7 @@ package internals
 
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema._
+import smithy4s.time._
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   // format: off
@@ -35,7 +36,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   }
   override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] =
     SchemaDescription.of(tag.name)
-  override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
+
+  override def map[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): SchemaDescription[C[K,V]] =
     SchemaDescription.of("Map")
 
   override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): SchemaDescription[E] =
@@ -52,8 +54,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
 
-  override def option[A](schema: Schema[A]): SchemaDescription[Option[A]] =
-    SchemaDescription.of("Option")
+  override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): SchemaDescription[C[A]] =
+    SchemaDescription.of(tag.name)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value

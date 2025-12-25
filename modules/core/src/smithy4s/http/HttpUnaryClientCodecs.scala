@@ -46,7 +46,8 @@ object HttpUnaryClientCodecs {
       requestMediaType = "text/plain",
       requestTransformation = F.pure(_),
       responseTransformation = F.pure(_),
-      hostPrefixInjection = true
+      hostPrefixInjection = true,
+      smithyPathEncoding = false
     )
 
   trait Builder[F[_], Request, Response] {
@@ -64,6 +65,10 @@ object HttpUnaryClientCodecs {
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response]
+    @deprecated("use withSmithyPathEncoding instead (opposite meaning)", "0.18.41")
+    def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response]
+    def withSmithyPathEncoding(enabled: Boolean): Builder[F, Request, Response]
+    def hasSmithyPathEncoding: Boolean
     def build(): UnaryClientCodecs.Make[F, Request, Response]
   }
 
@@ -81,7 +86,8 @@ object HttpUnaryClientCodecs {
       requestMediaType: String,
       requestTransformation: HttpRequest[Blob] => F[Request],
       responseTransformation: Response => F[HttpResponse[Blob]],
-      hostPrefixInjection: Boolean
+      hostPrefixInjection: Boolean,
+      smithyPathEncoding: Boolean
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
     def withOperationPreprocessor(fk: PolyFunction5[OperationSchema, OperationSchema]): Builder[F, Request, Response] =
@@ -113,6 +119,13 @@ object HttpUnaryClientCodecs {
       copy(responseTransformation = f.andThen(F.flatMap(_)(responseTransformation)))
 
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response] = copy(hostPrefixInjection = enabled)
+    override def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response] =
+      withSmithyPathEncoding(!enabled)
+
+    override def withSmithyPathEncoding(enabled: Boolean): Builder[F, Request, Response] =
+      copy(smithyPathEncoding = enabled)
+
+    def hasSmithyPathEncoding: Boolean = smithyPathEncoding
 
     def build(): UnaryClientCodecs.Make[F, Request, Response] = {
       val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
@@ -190,7 +203,7 @@ object HttpUnaryClientCodecs {
             HttpEndpoint.cast(endpoint).toOption match {
               case Some(httpEndpoint) => {
                 val httpInputEncoder =
-                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint)
+                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint, smithyPathEncoding)
                 val requestEncoder =
                   inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
                 httpInputEncoder.combine(requestEncoder)

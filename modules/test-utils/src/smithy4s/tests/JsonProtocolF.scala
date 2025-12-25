@@ -17,13 +17,13 @@
 package smithy4s
 package tests
 
-import Document._
-
-import cats.syntax.all._
 import cats.MonadThrow
-import smithy4s.kinds._
-import smithy4s.codecs._
+import cats.syntax.all._
 import smithy4s.capability.instances.either._
+import smithy4s.codecs._
+import smithy4s.kinds._
+
+import Document._
 
 /**
   * These are toy interpreters that turn services into json-in/json-out

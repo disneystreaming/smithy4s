@@ -21,8 +21,8 @@ import cats.effect.Temporal
 import cats.syntax.all._
 import fs2.io.file.Files
 import org.http4s.client.Client
-import smithy4s.Timestamp
 import smithy4s.Endpoint
+import smithy4s.time.Timestamp
 
 // scalafmt: {maxColumn = 120}
 trait AwsEnvironment[F[_]] {

@@ -17,31 +17,19 @@
 package smithy4s
 package internals
 
+import alloy.Discriminated
+import alloy.JsonUnknown
+import alloy.Untagged
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import alloy.Discriminated
-import alloy.JsonUnknown
 import smithy4s.capability.EncoderK
-import smithy4s.schema.Primitive.PBigDecimal
-import smithy4s.schema.Primitive.PBigInt
-import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PBoolean
-import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PDocument
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PFloat
-import smithy4s.schema.Primitive.PInt
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PShort
-import smithy4s.schema.Primitive.PString
-import alloy.Untagged
 import smithy4s.schema.FieldFilter
-import smithy4s.schema.Primitive.PTimestamp
-import smithy4s.schema.Primitive.PUUID
+import smithy4s.schema.Primitive._
 import smithy4s.schema._
+import smithy4s.time.DurationOps._
 
 import scala.collection.mutable.Builder
 
@@ -134,12 +122,17 @@ class DocumentEncoderSchemaVisitor(
               })
             )
       }
-    case PDocument => from(identity)
-    case PFloat    => from(float => DNumber(BigDecimal(float.toDouble)))
-    case PUUID     => from(uuid => DString(uuid.toString()))
-    case PDouble   => from(double => DNumber(BigDecimal(double)))
-    case PLong     => from(long => DNumber(BigDecimal(long)))
-    case PString   => from(DString(_))
+    case PDocument  => from(identity)
+    case PFloat     => from(float => DNumber(BigDecimal(float.toDouble)))
+    case PUUID      => from(uuid => DString(uuid.toString()))
+    case PDouble    => from(double => DNumber(BigDecimal(double)))
+    case PLong      => from(long => DNumber(BigDecimal(long)))
+    case PString    => from(DString(_))
+    case PLocalDate => from(localDate => DString(localDate.toString()))
+    case PLocalTime => from(localTime => DString(localTime.toString()))
+    case PDuration  => from(duration => DNumber(duration.toBigDecimal))
+    case POffsetDateTime =>
+      from(offsetDateTime => DString(offsetDateTime.toString()))
   }
 
   override def collection[C[_], A](
@@ -152,48 +145,52 @@ class DocumentEncoderSchemaVisitor(
     from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
   }
 
-  override def option[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
+  override def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): DocumentEncoder[C[A]] = {
     val encoder = self(schema)
-    locally {
-      case Some(a) => encoder.apply(a)
-      case None    => Document.DNull
+    optional => {
+      tag.fold(optional, encoder.apply(_), Document.DNull)
     }
   }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): DocumentEncoder[Map[K, V]] = {
+  ): DocumentEncoder[C[K, V]] = {
     val maybeKeyEncoder = DocumentKeyEncoder.trySchemaVisitor(key)
     val valueEncoder = self(value)
     maybeKeyEncoder match {
       case Some(keyEncoder) =>
-        from[Map[K, V]] { map =>
-          val mapBuilder = Map.newBuilder[String, Document]
-          map.foreach { case (k, v) =>
-            val key = keyEncoder.apply(k)
-            val value = valueEncoder.apply(v)
-            mapBuilder.+=((key, value))
+        from[C[K, V]] { c =>
+          val map = tag.build[String, Document] { put =>
+            tag.iterator(c).foreach { case (k, v) =>
+              put(keyEncoder.apply(k), valueEncoder.apply(v))
+            }
           }
-          DObject(mapBuilder.result())
+
+          DObject(tag.toScalaMap(map))
         }
       case None =>
-        from[Map[K, V]] { map =>
+        from[C[K, V]] { c =>
           val keyAsValueEncoder = apply(key)
-          val arrayBuilder = IndexedSeq.newBuilder[Document]
-          map.map { case (k, v) =>
-            arrayBuilder.+=(
+
+          val array = tag
+            .iterator(c)
+            .map { case (k, v) =>
               DObject(
                 Map(
                   "key" -> keyAsValueEncoder.apply(k),
                   "value" -> valueEncoder.apply(v)
                 )
               )
-            )
-          }
-          DArray(arrayBuilder.result())
+            }
+            .toIndexedSeq
+          DArray(array)
         }
     }
   }
@@ -285,6 +282,10 @@ class DocumentEncoderSchemaVisitor(
         val jsonLabel =
           schema.hints.get(JsonName).map(_.value).getOrElse(label)
         hints match {
+          // NB. just like in untagged unions
+          case _ if schema.hints.has(JsonUnknown) =>
+            self.apply(schema)
+
           case Discriminated.hint(discriminated) =>
             val unionMemberHint = DiscriminatedUnionMember(
               discriminated.value,
@@ -293,7 +294,7 @@ class DocumentEncoderSchemaVisitor(
             self.apply(schema.addHints(unionMemberHint))
           case Untagged.hint(_) => self.apply(schema)
           case _ =>
-            self.apply(schema).mapDocument(d => Document.obj(jsonLabel -> d))
+            self.apply(schema).mapDocument(_.nest(jsonLabel))
         }
       }
     }

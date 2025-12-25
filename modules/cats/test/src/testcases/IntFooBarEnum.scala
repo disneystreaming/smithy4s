@@ -16,8 +16,9 @@
 
 package smithy4s.interopcats.testcases
 
+import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.schema.Schema
-import smithy4s.{Hints, ShapeId}
 
 sealed abstract class IntFooBar(val stringValue: String, val intValue: Int)
     extends smithy4s.Enumeration.Value {

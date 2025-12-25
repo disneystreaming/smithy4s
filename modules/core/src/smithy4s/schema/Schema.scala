@@ -42,14 +42,14 @@ sealed trait Schema[A]{
   final def withId(newId: ShapeId): Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: CollectionSchema[c, a] => CollectionSchema(newId, s.hints, s.tag, s.member).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(newId, s.hints, s.key, s.value).asInstanceOf[Schema[A]]
+    case s: MapSchema[c, k, v] => MapSchema(newId, s.hints, s.tag, s.key, s.value).asInstanceOf[Schema[A]]
     case EnumerationSchema(_, hints, values, tag) => EnumerationSchema(newId, hints, values, tag)
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.withId(newId)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.withId(newId)).asInstanceOf[Schema[A]]
   }
 
   final def withId(namespace: String, name: String): Schema[A] = withId(ShapeId(namespace, name))
@@ -57,14 +57,14 @@ sealed trait Schema[A]{
   final def transformHintsLocally(f: Hints => Hints): Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema(s.shapeId, f(s.hints), s.tag, s.member).asInstanceOf[Schema[A]]
-    case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key, s.value).asInstanceOf[Schema[A]]
+    case s: MapSchema[c, k, v] => MapSchema(s.shapeId, f(s.hints), s.tag, s.key, s.value).asInstanceOf[Schema[A]]
     case EnumerationSchema(shapeId, hints, values, tag) => EnumerationSchema(shapeId, f(hints), values, tag)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
-    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
 
@@ -97,7 +97,7 @@ sealed trait Schema[A]{
   final def nullable: Schema[Nullable[A]] = Nullable.schema(this)
 
   final def isOption: Boolean = this match {
-    case _: OptionSchema[_] => true
+    case _: OptionSchema[_, _] => true
     case BijectionSchema(underlying, _) => underlying.isOption
     case RefinementSchema(underlying, _) => underlying.isOption
     case _ => false
@@ -154,9 +154,14 @@ sealed trait Schema[A]{
   final def isUnit: Boolean = this.shapeId == ShapeId("smithy.api", "Unit")
 
   /**
-    * Turns this schema into an error schema.
+    * Turns this schema into an error schema, using a partial function.
     */
   final def error(unlift: A => Throwable)(lift: PartialFunction[Throwable, A]) : ErrorSchema[A] = ErrorSchema(this, lift.lift, unlift)
+
+  /**
+    * Turns this schema into an error schema.
+    */
+  final def error(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
 
 }
 
@@ -166,11 +171,11 @@ object Schema {
 
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
   final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
-  final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
+  final case class MapSchema[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]) extends Schema[C[K, V]]
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
-  final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
+  final case class OptionSchema[C[_], A](tag: OptionalTag[C], underlying: Schema[A]) extends Schema[C[A]]{
     def hints: Hints = underlying.hints
     def shapeId: ShapeId = underlying.shapeId
   }
@@ -222,12 +227,12 @@ object Schema {
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>
         underlying(c.copy(member = this(c.member)))
-      case m @ MapSchema(_, _, _, _) =>
+      case m: MapSchema[c, k, v] =>
         underlying(m.copy(key = this(m.key), value = this(m.value)))
       case s @ StructSchema(_, _, _, _) =>
         underlying(s.copy(fields = s.fields.map(handleField(_))))
-      case n @ OptionSchema(_) =>
-        underlying(n.copy(underlying = this(n.underlying)))
+      case o: OptionSchema[c, a] =>
+        underlying(o.copy(underlying = this(o.underlying)))
     }
 
     private def handleField[S, A](
@@ -259,9 +264,13 @@ object Schema {
   val byte: Schema[Byte] = Primitive.PByte.schema(prelude, "Byte")
   val bytes: Schema[Blob] = Primitive.PBlob.schema(prelude, "Blob")
   val blob: Schema[Blob] = Primitive.PBlob.schema(prelude, "Blob")
-  val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
+  val timestamp: Schema[time.Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
+  val localdate: Schema[time.LocalDate] = Primitive.PLocalDate.schema("alloy", "LocalDate")
+  val localtime: Schema[time.LocalTime] = Primitive.PLocalTime.schema("alloy", "LocalTime")
+  val duration: Schema[scala.concurrent.duration.Duration] = Primitive.PDuration.schema("alloy", "Duration")
+  val offsetdatetime: Schema[time.OffsetDateTime] = Primitive.POffsetDateTime.schema("alloy", "OffsetDateTime")
 
   val unit: Schema[Unit] = Schema.StructSchema(ShapeId("smithy.api", "Unit"), Hints.empty, Vector.empty, _ => ())
 
@@ -277,10 +286,11 @@ object Schema {
   def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(option(a))
   def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(option(a))
 
-  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
-  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, k, option(v))
+  def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, v)
+  def seqMap[K, V](k: Schema[K], v: Schema[V]): Schema[MapTag.SeqMapType[K, V]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.SeqMapTag, k, v)
+  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, MapTag.ScalaMapTag, k, option(v))
 
-  def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
+  def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(OptionalTag.ScalaOptionTag, s)
 
   def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
 
@@ -353,7 +363,7 @@ object Schema {
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
-    override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]) : Option[C[A]] = Some(tag.none)
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] = {
       if (schema.hints.has[alloy.Nullable]) None else this.apply(schema).map(bijection.to)
     }
@@ -382,7 +392,7 @@ object Schema {
         None
       }
     
-    override def option[A](schema: Schema[A]): Option[Option[A]] = Some(None)
+    override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none)
   }
 
 }

@@ -18,7 +18,9 @@ package smithy4s
 package internals
 
 import alloy.Discriminated
+import alloy.JsonUnknown
 import alloy.Nullable
+import alloy.Untagged
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -29,13 +31,11 @@ import smithy4s.capability.Covariant
 import smithy4s.codecs._
 import smithy4s.schema.Primitive._
 import smithy4s.schema._
+import smithy4s.time._
 
 import java.util.Base64
 import java.util.UUID
 import java.{util => ju}
-import scala.collection.immutable.ListMap
-import alloy.Untagged
-import alloy.JsonUnknown
 import scala.collection.mutable.ListBuffer
 
 trait DocumentDecoder[A] { self =>
@@ -164,6 +164,22 @@ class DocumentDecoderSchemaVisitor(
       from("Byte") {
         case FlexibleNumber(bd) if bd.isValidByte => bd.toByte
       }
+    case PLocalDate =>
+      fromUnsafe("LocalDate") { case DString(string) =>
+        LocalDate.parseUnsafe(string)
+      }
+    case PLocalTime =>
+      fromUnsafe("LocalTime") { case DString(string) =>
+        LocalTime.parseUnsafe(string)
+      }
+    case PDuration =>
+      from("Duration") { case FlexibleNumber(bd) =>
+        DurationOps.fromBigDecimal(bd)
+      }
+    case POffsetDateTime =>
+      fromUnsafe("OffsetDateTime") { case DString(string) =>
+        OffsetDateTime.parseUnsafe(string)
+      }
   }
 
   def forTimestampFormat(format: TimestampFormat) = {
@@ -209,8 +225,11 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
-    new DocumentDecoder[Option[A]] {
+  def option[C[_], A](
+      tag: OptionalTag[C],
+      schema: Schema[A]
+  ): DocumentDecoder[C[A]] =
+    new DocumentDecoder[C[A]] {
       val decoder = schema.compile(self)
       val aIsNullable = schema.hints.has(Nullable) && schema.isOption
       def expected = decoder.expected
@@ -218,61 +237,58 @@ class DocumentDecoderSchemaVisitor(
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): Option[A] = if (document == Document.DNull && !aIsNullable) None
-      else Some(decoder(history, document))
+      ): C[A] = if (document == Document.DNull && !aIsNullable) tag.none
+      else tag.some(decoder(history, document))
     }
 
-  override def map[K, V](
+  override def map[C[_, _], K, V](
       shapeId: ShapeId,
       hints: Hints,
+      tag: MapTag[C],
       key: Schema[K],
       value: Schema[V]
-  ): DocumentDecoder[Map[K, V]] = {
+  ): DocumentDecoder[C[K, V]] = {
     val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
     val valueDecoder = self(value)
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          val builder = ListMap.newBuilder[K, V]
-          map.foreach { case (key, value) =>
-            val decodedKey = keyDecoder(DString(key)).fold(
-              { case DocumentKeyDecoder.DecodeError(expectedType) =>
-                val path = PayloadPath.Segment.parse(key) :: pp
-                throw PayloadError(
-                  PayloadPath(path.reverse),
-                  expectedType,
-                  "Wrong Json shape"
-                )
-              },
-              identity
-            )
-            val decodedValue = valueDecoder(key :: pp, value)
-            builder.+=((decodedKey, decodedValue))
+          tag.build[K, V] { put =>
+            map.foreach { case (key, value) =>
+              val decodedKey = keyDecoder(DString(key)).fold(
+                { case DocumentKeyDecoder.DecodeError(expectedType) =>
+                  val path = PayloadPath.Segment.parse(key) :: pp
+                  throw PayloadError(
+                    PayloadPath(path.reverse),
+                    expectedType,
+                    "Wrong Json shape"
+                  )
+                },
+                identity
+              )
+              val decodedValue = valueDecoder(key :: pp, value)
+              put(decodedKey, decodedValue)
+            }
           }
-          builder.result()
         }
       case None =>
         val keyDecoder = apply(key)
         DocumentDecoder.instance("Map", "Array") { case (pp, DArray(value)) =>
-          val builder = Map.newBuilder[K, V]
-          var i = 0
-          val newPP = PayloadPath.Segment(i) :: pp
-          value.foreach {
-            case KeyValueObj(k, v) =>
+          tag.fromIterator(value.iterator.zipWithIndex.map {
+            case (KeyValueObj(k, v), i) =>
+              val updatedPP = PayloadPath.Segment(i) :: pp
               val decodedKey =
-                keyDecoder(PayloadPath.Segment("key") :: newPP, k)
+                keyDecoder(PayloadPath.Segment("key") :: updatedPP, k)
               val decodedValue =
-                valueDecoder(PayloadPath.Segment("value") :: newPP, v)
-              builder.+=((decodedKey, decodedValue))
-              i += 1
-            case _ =>
+                valueDecoder(PayloadPath.Segment("value") :: updatedPP, v)
+              (decodedKey, decodedValue)
+            case (_, i) =>
               throw new PayloadError(
                 PayloadPath((PayloadPath.Segment(i) :: pp).reverse),
                 "Key Value object",
                 """Expected a Json object containing two values indexed with "key" and "value". """
               )
-          }
-          builder.result()
+          })
         }
     }
   }
@@ -447,7 +463,8 @@ class DocumentDecoderSchemaVisitor(
 
   private def discriminatedUnion[S](
       discriminated: Discriminated,
-      decoders: DecoderMap[S]
+      decoders: DecoderMap[S],
+      handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S
   ): DocumentDecoder[S] = handleUnion {
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
@@ -457,12 +474,7 @@ class DocumentDecoderSchemaVisitor(
             case Some(value: Document.DString) =>
               decoders.get(value.value) match {
                 case Some(decoder) => decoder(pp, document)
-                case None =>
-                  throw new PayloadError(
-                    PayloadPath(pp.reverse),
-                    "Union",
-                    s"Unknown discriminator: ${value.value}"
-                  )
+                case None => handleUnknownTag(value.value, pp, document)
               }
             case _ =>
               throw new PayloadError(
@@ -482,7 +494,8 @@ class DocumentDecoderSchemaVisitor(
   }
 
   private def taggedUnion[S](
-      decoders: DecoderMap[S]
+      decoders: DecoderMap[S],
+      handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S
   ): DocumentDecoder[S] = handleUnion {
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
@@ -490,12 +503,7 @@ class DocumentDecoderSchemaVisitor(
           val (key: String, value: Document) = map.head
           decoders.get(key) match {
             case Some(decoder) => decoder(pp, value)
-            case None =>
-              throw new PayloadError(
-                PayloadPath(pp.reverse),
-                "Union",
-                s"Unknown discriminator: $key"
-              )
+            case None          => handleUnknownTag(key, pp, document)
           }
         case _ =>
           throw new PayloadError(
@@ -544,29 +552,52 @@ class DocumentDecoderSchemaVisitor(
     def jsonLabel[A](alt: Alt[U, A]): String =
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-    val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
-        val label = jsonLabel(alt)
-        val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(apply(instance)(label :: pp, doc))
+    def hasUnknown[A](alt: Alt[U, A]): Boolean =
+      alt.schema.hints.has(JsonUnknown)
+
+    val handleUnknownTag: (String, List[PayloadPath.Segment], Document) => U =
+      alternatives
+        .find(hasUnknown(_))
+        .map { case Alt(_, instance, inject, _) =>
+          val compiled = apply(instance)
+          (_: String, pp: List[PayloadPath.Segment], doc: Document) =>
+            inject(compiled(pp, doc))
         }
-        jsonLabel(alt) -> encoder
-      }.toMap
+        .getOrElse { (key, pp, _) =>
+          throw new PayloadError(
+            PayloadPath(pp.reverse),
+            "Union",
+            s"Unknown discriminator: $key"
+          )
+        }
+
+    val decoders: DecoderMap[U] =
+      alternatives
+        .filterNot(hasUnknown(_))
+        .map { case alt @ Alt(_, instance, inject, _) =>
+          val label = jsonLabel(alt)
+          val compiled = apply(instance)
+          val decoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
+            inject(compiled(label :: pp, doc))
+          }
+          label -> decoder
+        }
+        .toMap
 
     hints match {
       case Discriminated.hint(discriminated) =>
-        discriminatedUnion(discriminated, decoders)
+        discriminatedUnion(discriminated, decoders, handleUnknownTag)
       case Untagged.hint(_) =>
         untaggedUnion(decoders)
       case _ =>
-        taggedUnion(decoders)
+        taggedUnion(decoders, handleUnknownTag)
     }
   }
 
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): DocumentDecoder[B] = apply(schema).map(bijection)
+  ): DocumentDecoder[B] = apply(schema).map(bijection.toFunction)
 
   override def refine[A, B](
       schema: Schema[A],

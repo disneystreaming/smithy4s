@@ -16,7 +16,7 @@
 
 package smithy4s.interopcats
 
-import smithy4s.Timestamp
+import smithy4s.time.Timestamp
 
 trait CompatProvider {
 

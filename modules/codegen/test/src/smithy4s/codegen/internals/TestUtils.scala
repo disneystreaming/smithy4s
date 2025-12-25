@@ -23,11 +23,14 @@ import software.amazon.smithy.model.Model
 object TestUtils {
 
   /** Key is the name (like my.package.name.SomeFile) and the value is the contents of that file */
-  def generateScalaCode(smithySpec: String): Map[String, String] = {
-    val model = Model
+  def generateScalaCode(smithySpecs: String*): Map[String, String] = {
+    val modelA = Model
       .assembler()
       .discoverModels()
-      .addUnparsedModel("foo.smithy", smithySpec)
+    smithySpecs.zipWithIndex.foreach { case (smithySpec, i) =>
+      modelA.addUnparsedModel(s"foo$i.smithy", smithySpec)
+    }
+    val model = modelA
       .assemble()
       .unwrap()
     generateScalaCode(model)
@@ -44,14 +47,14 @@ object TestUtils {
 
   def runTest(
       smithySpec: String,
-      expectedScalaCode: String
+      expectedScalaCode: String*
   )(implicit
       loc: Location
   ): Unit = {
     val scalaResults = generateScalaCode(smithySpec).values.toList
     Assertions.assertEquals(
-      scalaResults.map(_.trim()),
-      List(expectedScalaCode.trim())
+      scalaResults.map(_.trim()).sorted,
+      expectedScalaCode.map(_.trim()).toList.sorted
     )
   }
 
@@ -84,6 +87,34 @@ object TestUtils {
       case _ :: _ :: _ =>
         Assertions.fail("Multiple lines match the code section pattern")
       case Nil => Assertions.fail("No line matches the code section pattern")
+    }
+  }
+
+  /**
+    * Asserts that one of the inputted files contains at least one occurrence of each
+    * of the expectedSections
+    */
+  def assertContainsSection(
+      files: List[String],
+      expectedSections: List[String]
+  )(implicit loc: Location) = {
+    val allFiles = files.mkString("/n")
+
+    expectedSections.foreach { section =>
+      if (!allFiles.contains(section)) {
+        Assertions.fail(
+          "No matching section was found in file contents",
+          new munit.Clues(
+            List(
+              new munit.Clue(
+                source = allFiles,
+                value = section,
+                valueType = "string"
+              )
+            )
+          )
+        )
+      }
     }
   }
 

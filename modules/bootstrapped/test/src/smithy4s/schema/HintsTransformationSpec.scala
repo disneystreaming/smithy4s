@@ -194,16 +194,19 @@ class HintsTransformationSpec() extends FunSuite {
       }
     }
 
-    def map[K, V](
+    def map[C[_, _], K, V](
         shapeId: ShapeId,
         hints: Hints,
+        tag: MapTag[C],
         key: Schema[K],
         value: Schema[V]
-    ): Count[Map[K, V]] = {
+    ): Count[C[K, V]] = {
       val ck = compile(key)
       val cv = compile(value)
       mkv => {
-        count(hints) + mkv.toList.foldMap { case (k, v) => ck(k) + cv(v) }
+        count(hints) + tag.iterator(mkv).toList.foldMap { case (k, v) =>
+          ck(k) + cv(v)
+        }
       }
     }
 
@@ -258,12 +261,9 @@ class HintsTransformationSpec() extends FunSuite {
       a => underlying(a)
     }
 
-    def option[A](schema: Schema[A]): Count[Option[A]] = {
+    def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Count[C[A]] = {
       val count = compile(schema)
-      locally {
-        case Some(a) => count(a)
-        case None    => 0
-      }
+      a => tag.fold(a, count(_), 0)
     }
 
   }

@@ -20,6 +20,9 @@ package schema
 import smithy.api.TimestampFormat
 import smithy4s.http.HttpBinding
 import smithy4s.kinds.PolyFunction
+import smithy4s.time._
+
+import scala.concurrent.duration.Duration
 
 sealed trait Primitive[T] {
   final def schema(shapeId: ShapeId): Schema[T] =
@@ -45,6 +48,10 @@ object Primitive extends smithy4s.ScalaCompat {
   case object PBlob extends Primitive[Blob]
   case object PDocument extends Primitive[Document]
   case object PTimestamp extends Primitive[Timestamp]
+  case object PLocalDate extends Primitive[LocalDate]
+  case object PLocalTime extends Primitive[LocalTime]
+  case object PDuration extends Primitive[Duration]
+  case object POffsetDateTime extends Primitive[OffsetDateTime]
 
   def deriving[F[_]](implicit
       short: F[Short],
@@ -60,41 +67,53 @@ object Primitive extends smithy4s.ScalaCompat {
       byte: F[Byte],
       blob: F[Blob],
       document: F[Document],
-      timestamp: F[Timestamp]
+      timestamp: F[Timestamp],
+      localDate: F[LocalDate],
+      localTime: F[LocalTime],
+      duration: F[Duration],
+      offsetDateTime: F[OffsetDateTime]
   ): PolyFunction[Primitive, F] = new PolyFunction[Primitive, F] {
     def apply[T](prim: Primitive[T]): F[T] = prim match {
-      case PShort      => short
-      case PInt        => int
-      case PFloat      => float
-      case PLong       => long
-      case PDouble     => double
-      case PBigInt     => bigint
-      case PBigDecimal => bigdecimal
-      case PBoolean    => boolean
-      case PString     => string
-      case PUUID       => uuid
-      case PByte       => byte
-      case PBlob       => blob
-      case PDocument   => document
-      case PTimestamp  => timestamp
+      case PShort          => short
+      case PInt            => int
+      case PFloat          => float
+      case PLong           => long
+      case PDouble         => double
+      case PBigInt         => bigint
+      case PBigDecimal     => bigdecimal
+      case PBoolean        => boolean
+      case PString         => string
+      case PUUID           => uuid
+      case PByte           => byte
+      case PBlob           => blob
+      case PDocument       => document
+      case PTimestamp      => timestamp
+      case PLocalDate      => localDate
+      case PLocalTime      => localTime
+      case PDuration       => duration
+      case POffsetDateTime => offsetDateTime
     }
   }
 
   def describe(p: Primitive[_]): String = p match {
-    case Primitive.PShort      => "Short"
-    case Primitive.PInt        => "Int"
-    case Primitive.PFloat      => "Float"
-    case Primitive.PLong       => "Long"
-    case Primitive.PDouble     => "Double"
-    case Primitive.PBigInt     => "BigInt"
-    case Primitive.PBigDecimal => "BigDecimal"
-    case Primitive.PBoolean    => "Boolean"
-    case Primitive.PString     => "String"
-    case Primitive.PUUID       => "UUID"
-    case Primitive.PByte       => "Byte"
-    case Primitive.PBlob       => "Bytes"
-    case Primitive.PDocument   => "Document"
-    case Primitive.PTimestamp  => "Timestamp"
+    case Primitive.PShort          => "Short"
+    case Primitive.PInt            => "Int"
+    case Primitive.PFloat          => "Float"
+    case Primitive.PLong           => "Long"
+    case Primitive.PDouble         => "Double"
+    case Primitive.PBigInt         => "BigInt"
+    case Primitive.PBigDecimal     => "BigDecimal"
+    case Primitive.PBoolean        => "Boolean"
+    case Primitive.PString         => "String"
+    case Primitive.PUUID           => "UUID"
+    case Primitive.PByte           => "Byte"
+    case Primitive.PBlob           => "Bytes"
+    case Primitive.PDocument       => "Document"
+    case Primitive.PTimestamp      => "Timestamp"
+    case Primitive.PLocalDate      => "LocalDate"
+    case Primitive.PLocalTime      => "LocalTime"
+    case Primitive.PDuration       => "Duration"
+    case Primitive.POffsetDateTime => "OffsetDateTime"
   }
 
   private[smithy4s] def stringParser[A](
@@ -118,8 +137,12 @@ object Primitive extends smithy4s.ScalaCompat {
         )
       case Primitive.PUUID =>
         Some(unsafeStringParser(java.util.UUID.fromString))
-      case Primitive.PTimestamp => Some(timestampParser(hints))
-      case Primitive.PDocument  => None
+      case Primitive.PTimestamp      => Some(timestampParser(hints))
+      case Primitive.PDocument       => None
+      case Primitive.PLocalDate      => Some(LocalDate.parse(_))
+      case Primitive.PLocalTime      => Some(LocalTime.parse(_))
+      case Primitive.PDuration       => Some(unsafeStringParser(Duration(_)))
+      case Primitive.POffsetDateTime => Some(OffsetDateTime.parse(_))
     }
   }
 
@@ -142,7 +165,11 @@ object Primitive extends smithy4s.ScalaCompat {
       case Primitive.PTimestamp  => Some(timestampWriter(hints))
       case Primitive.PBlob =>
         Some(bytes => bytes.toBase64String)
-      case Primitive.PDocument => None
+      case Primitive.PDocument       => None
+      case Primitive.PLocalDate      => Some(_.toString())
+      case Primitive.PLocalTime      => Some(_.toString())
+      case Primitive.PDuration       => Some(_.toString())
+      case Primitive.POffsetDateTime => Some(_.toString())
     }
   }
 

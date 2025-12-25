@@ -16,23 +16,25 @@
 
 package smithy4s.http4s
 
+import cats.MonadThrow
+import cats.effect.Concurrent
 import cats.effect.SyncIO
 import cats.syntax.all._
+import fs2.Chunk
+import fs2.Stream
 import org.http4s._
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.Blob
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpUriAuthority
+import smithy4s.http.HttpUriOrigin
 import smithy4s.http.PathParams
-import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 import smithy4s.http.{HttpMethod => Smithy4sHttpMethod}
 import smithy4s.http.{HttpRequest => Smithy4sHttpRequest}
 import smithy4s.http.{HttpResponse => Smithy4sHttpResponse}
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
-import cats.MonadThrow
-import cats.effect.Concurrent
-import fs2.Stream
-import fs2.Chunk
+import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 
 // scalafmt: { maxColumn = 120}
 package object kernel {
@@ -47,26 +49,51 @@ package object kernel {
     }
   }
 
+  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
   def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
+    fromSmithy4sHttpRequest(req, encodePathSegments = true)
+  }
+
+  /**
+    * Converts a Smithy4sHttpRequest to an http4s Request.
+    * This method allows you to specify whether path segments should be encoded.
+    * If `encodePathSegments` is true, path segments will be encoded as per the
+    * URI encoding rules of Http4s. If false, they will be treated as already encoded.
+    * @param req
+    * @param encodePathSegments
+    * @return
+    */
+  def fromSmithy4sHttpRequest[F[_]: MonadThrow](
+      req: Smithy4sHttpRequest[Blob],
+      encodePathSegments: Boolean
+  ): Request[F] = {
     val method = unsafeFromSmithy4sHttpMethod(req.method)
     val headers = toHeaders(req.headers)
     val updatedHeaders = req.body.size match {
       case 0             => headers
       case contentLength => headers.put("Content-Length" -> contentLength.toString)
     }
-    Request(method, fromSmithy4sHttpUri(req.uri), headers = updatedHeaders, body = toStream(req.body))
+    Request(
+      method,
+      fromSmithy4sHttpUri(req.uri, encodePathSegments = encodePathSegments),
+      headers = updatedHeaders,
+      body = toStream(req.body)
+    )
   }
 
   def toSmithy4sHttpUri(uri: Uri, pathParams: Option[PathParams] = None): Smithy4sHttpUri = {
-    val uriScheme = uri.scheme match {
-      case Some(Uri.Scheme.https) => Smithy4sHttpUriScheme.Https
-      case _                      => Smithy4sHttpUriScheme.Http
+    val uriScheme = uri.scheme.map {
+      case Uri.Scheme.https => Smithy4sHttpUriScheme.Https
+      case _                => Smithy4sHttpUriScheme.Http
     }
-
+    val origin = uri.host.map(_.renderString).map { host =>
+      HttpUriOrigin(
+        uriScheme,
+        HttpUriAuthority(host, uri.port)
+      )
+    }
     Smithy4sHttpUri(
-      uriScheme,
-      uri.host.map(_.renderString),
-      uri.port,
+      origin,
       uri.path.segments.map(_.decoded()),
       getQueryParams(uri),
       pathParams
@@ -96,17 +123,28 @@ package object kernel {
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
 
+  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
-    val path = Uri.Path.Root.addSegments(uri.path.map(Uri.Path.Segment(_)).toVector)
-    val authority = uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
+    fromSmithy4sHttpUri(uri, encodePathSegments = true)
+  }
+
+  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, encodePathSegments: Boolean): Uri = {
+    val mkSegment: String => Uri.Path.Segment =
+      // Segment.apply will call pathEncode on the segment,
+      // which is what we want if encodePathSegments is true.
+      if (encodePathSegments) Uri.Path.Segment.apply
+      else Uri.Path.Segment.encoded
+
+    val path = Uri.Path.Root.addSegments(uri.path.map(mkSegment))
+    val authority =
+      uri.host.map(h => Uri.Authority(host = Uri.RegName(h), port = uri.port))
     Uri(
       path = path,
       authority = authority,
-      scheme = Some {
-        uri.scheme match {
-          case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
-          case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
-        }
+      scheme = uri.scheme.map {
+        case Smithy4sHttpUriScheme.Http  => Uri.Scheme.http
+        case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
+
       }
     ).withMultiValueQueryParams(uri.queryParams)
   }

@@ -16,10 +16,15 @@
 
 package smithy4s.compliancetests.internals.eq
 
-import cats.implicits.{catsSyntaxEq, toContravariantOps}
+import cats.implicits.catsSyntaxEq
+import cats.implicits.toContravariantOps
 import cats.kernel.Eq
-import smithy4s.{Blob, Document, Timestamp}
 import cats.kernel.instances.StaticMethods
+import smithy4s.Blob
+import smithy4s.Document
+import smithy4s.time._
+
+import scala.concurrent.duration.Duration
 
 trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>
@@ -37,6 +42,15 @@ trait Smithy4sEqInstances {
     x == y || (x.isNaN && y.isNaN)
   implicit val doubleEq: Eq[Double] = (x: Double, y: Double) =>
     x == y || (x.isNaN && y.isNaN)
+  implicit val localDateEq: Eq[LocalDate] = Eq[Long].contramap(_.epochDay)
+  implicit val localTimeEq: Eq[LocalTime] = Eq[Long].contramap(_.toNanoOfDay)
+  implicit val zoneOffsetEq: Eq[ZoneOffset] = Eq[Int].contramap(_.seconds)
+  implicit val durationEq: Eq[Duration] = (x: Duration, y: Duration) =>
+    x.compareTo(y) == 0
+
+  implicit val offsetDateTimeEq: Eq[OffsetDateTime] =
+    (x: OffsetDateTime, y: OffsetDateTime) =>
+      x.timestamp.eqv(y.timestamp) && x.offset.eqv(y.offset)
 
 }
 object Smithy4sEqInstances extends Smithy4sEqInstances

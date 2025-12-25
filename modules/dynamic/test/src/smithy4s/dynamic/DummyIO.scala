@@ -16,6 +16,7 @@
 
 package smithy4s.dynamic
 import smithy4s.tests._
+
 import scala.concurrent.Future
 
 object DummyIO {
