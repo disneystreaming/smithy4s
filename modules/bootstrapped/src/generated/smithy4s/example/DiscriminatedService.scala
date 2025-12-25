@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -48,7 +50,17 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = DiscriminatedServiceOperation.toPolyFunction(impl)
 
 
-  final def transform[F[_, _, _, _, _]](alg: DiscriminatedServiceGen[F]): Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[DiscriminatedServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[DiscriminatedServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[DiscriminatedServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[DiscriminatedServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: DiscriminatedServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

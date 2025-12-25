@@ -5,6 +5,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -91,7 +93,17 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
   type ListTablesError = DynamoDBOperation.ListTablesError
   val ListTablesError = DynamoDBOperation.ListTablesError
 
-  final def transform[F[_, _, _, _, _]](alg: DynamoDBGen[F]): Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[DynamoDBGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[DynamoDBGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[DynamoDBGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[DynamoDBGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: DynamoDBGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

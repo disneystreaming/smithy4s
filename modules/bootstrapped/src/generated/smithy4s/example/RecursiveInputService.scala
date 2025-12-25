@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -49,7 +51,17 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
   def toPolyFunction[P[_, _, _, _, _]](impl: RecursiveInputServiceGen[P]): PolyFunction5[RecursiveInputServiceOperation, P] = RecursiveInputServiceOperation.toPolyFunction(impl)
 
 
-  final def transform[F[_, _, _, _, _]](alg: RecursiveInputServiceGen[F]): Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[RecursiveInputServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[RecursiveInputServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[RecursiveInputServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[RecursiveInputServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: RecursiveInputServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[RecursiveInputServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait RecursiveInputServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

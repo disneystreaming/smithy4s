@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -58,7 +60,17 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   type SayHelloError = HelloServiceOperation.SayHelloError
   val SayHelloError = HelloServiceOperation.SayHelloError
 
-  final def transform[F[_, _, _, _, _]](alg: HelloServiceGen[F]): Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[HelloServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[HelloServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[HelloServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[HelloServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: HelloServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

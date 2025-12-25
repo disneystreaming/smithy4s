@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -55,7 +57,17 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
 
 
-  final def transform[F[_, _, _, _, _]](alg: ReservedNameServiceGen[F]): Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[ReservedNameServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[ReservedNameServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[ReservedNameServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[ReservedNameServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: ReservedNameServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

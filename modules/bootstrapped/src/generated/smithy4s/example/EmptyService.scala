@@ -5,6 +5,8 @@ import smithy4s.Hints
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 
@@ -41,7 +43,17 @@ object EmptyServiceGen extends Service.Mixin[EmptyServiceGen, EmptyServiceOperat
   def toPolyFunction[P[_, _, _, _, _]](impl: EmptyServiceGen[P]): PolyFunction5[EmptyServiceOperation, P] = EmptyServiceOperation.toPolyFunction(impl)
 
 
-  final def transform[F[_, _, _, _, _]](alg: EmptyServiceGen[F]): Transformation.PartiallyApplied[EmptyServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[EmptyServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[EmptyServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[EmptyServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[EmptyServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: EmptyServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[EmptyServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait EmptyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

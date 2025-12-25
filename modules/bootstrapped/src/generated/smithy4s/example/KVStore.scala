@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -60,7 +62,17 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
 
-  final def transform[F[_, _, _, _, _]](alg: KVStoreGen[F]): Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[KVStoreGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[KVStoreGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[KVStoreGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[KVStoreGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: KVStoreGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

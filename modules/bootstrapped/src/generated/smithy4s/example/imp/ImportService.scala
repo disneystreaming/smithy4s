@@ -8,6 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -56,7 +58,17 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
 
-  final def transform[F[_, _, _, _, _]](alg: ImportServiceGen[F]): Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of(alg)
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[ImportServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[ImportServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[ImportServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[ImportServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: ImportServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
