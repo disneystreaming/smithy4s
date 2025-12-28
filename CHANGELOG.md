@@ -7,6 +7,10 @@ Thank you!
 
 # 0.19.0
 
+## Move `transform` from algebra traits into extension methods
+
+The `transform` method that used to be generated as a `final def` in the service algebras, is now available as an extension method. For Scala 2.12 compatibility, we generate an additional variant for `F[_]`-shaped instances and `F[_, _]`-shaped instances, in addition to the default one with `F[_, _, _, _, _]`. [#1735](https://github.com/disneystreaming/smithy4s/pull/1735/)
+
 ## Add OptionalTag
 
 Add `OptionalTag` trait and add the tag to `Schema.OptionSchema` to allow Option-like types to be efficiently created.
