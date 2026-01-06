@@ -77,7 +77,7 @@ object DiscriminatedServiceOperation {
     def testDiscriminated(key: String): TestDiscriminated = TestDiscriminated(TestDiscriminatedInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DiscriminatedServiceGen[P], f: PolyFunction5[P, P1]) extends DiscriminatedServiceGen[P1] {
-    def testDiscriminated(key: String): P1[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](alg.testDiscriminated(key))
+    def testDiscriminated(key: String): P1[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](this.alg.testDiscriminated(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = new PolyFunction5[DiscriminatedServiceOperation, P] {

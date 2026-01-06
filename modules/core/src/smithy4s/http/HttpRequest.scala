@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ final case class HttpRequest[+A](
   def withContentType(contentType: String): HttpRequest[A] =
     this.copy(headers =
       this.headers + (CaseInsensitive("Content-Type") -> Seq(contentType))
+    )
+  def withAccept(accept: String): HttpRequest[A] =
+    this.copy(headers =
+      this.headers + (CaseInsensitive("Accept") -> Seq(accept))
     )
 }
 

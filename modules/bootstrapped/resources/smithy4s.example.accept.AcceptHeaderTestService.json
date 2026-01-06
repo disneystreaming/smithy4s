@@ -1,0 +1,189 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "AcceptHeaderTestService",
+        "version": ""
+    },
+    "paths": {
+        "/blob-no-media": {
+            "post": {
+                "description": "Operation with Blob output without media type",
+                "operationId": "BlobOutputNoMediaType",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlobOutputNoMediaTypeInputPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "BlobOutputNoMediaType 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlobOutputNoMediaTypeOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/blob-with-media": {
+            "post": {
+                "description": "Operation with Blob output that has media type",
+                "operationId": "BlobOutputWithMediaType",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlobOutputWithMediaTypeInputPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "BlobOutputWithMediaType 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlobOutputWithMediaTypeOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/default": {
+            "post": {
+                "description": "Operation with no media types - should use default Accept header",
+                "operationId": "DefaultAcceptHeader",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DefaultAcceptHeaderRequestContent"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "DefaultAcceptHeader 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DefaultAcceptHeaderOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/json-xml": {
+            "post": {
+                "description": "Operation with different media types for input and output",
+                "operationId": "JsonInputXmlOutput",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JsonInputXmlOutputInputPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "JsonInputXmlOutput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JsonInputXmlOutputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/xml-output": {
+            "post": {
+                "description": "Operation with XML output media type",
+                "operationId": "XmlOutput",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/XmlOutputInputPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "XmlOutput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/XmlOutputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "BlobOutputNoMediaTypeInputPayload": {
+                "type": "string"
+            },
+            "BlobOutputNoMediaTypeOutputPayload": {
+                "type": "string",
+                "format": "byte"
+            },
+            "BlobOutputWithMediaTypeInputPayload": {
+                "type": "string"
+            },
+            "BlobOutputWithMediaTypeOutputPayload": {
+                "type": "string",
+                "description": "PNG image blob type",
+                "format": "byte"
+            },
+            "DefaultAcceptHeaderOutputPayload": {
+                "type": "string"
+            },
+            "DefaultAcceptHeaderRequestContent": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "string"
+                    }
+                }
+            },
+            "JsonInputXmlOutputInputPayload": {
+                "type": "string",
+                "description": "JSON payload type"
+            },
+            "JsonInputXmlOutputOutputPayload": {
+                "type": "string",
+                "description": "XML payload type"
+            },
+            "XmlOutputInputPayload": {
+                "type": "string"
+            },
+            "XmlOutputOutputPayload": {
+                "type": "string",
+                "description": "XML payload type"
+            }
+        }
+    }
+}

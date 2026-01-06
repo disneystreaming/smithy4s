@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ private[aws] object AwsQueryCodecs {
       .withErrorDiscriminator(AwsErrorTypeDecoder.fromResponse(discriminatorDecoders))
       .withWriteEmptyStructs(_ => true)
       .withRequestMediaType("application/x-www-form-urlencoded")
+      .withAcceptMediaType("application/xml")
       .withSmithyPathEncoding(false)
 
   }

@@ -90,9 +90,9 @@ object KVStoreOperation {
     def delete(key: String): Delete = Delete(Key(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: KVStoreGen[P], f: PolyFunction5[P, P1]) extends KVStoreGen[P1] {
-    def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
-    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
-    def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
+    def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](this.alg.put(key, value))
+    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](this.alg.get(key))
+    def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](this.alg.delete(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = new PolyFunction5[KVStoreOperation, P] {

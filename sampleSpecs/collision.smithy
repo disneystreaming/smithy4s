@@ -12,3 +12,16 @@ union UnionWithCollision {
 structure Struct {
     name: String
 }
+
+service CollisionService {
+    operations: [
+        AlgParameterOperation
+    ]
+}
+
+operation AlgParameterOperation {
+    input := {
+        @required
+        alg: String
+    }
+}

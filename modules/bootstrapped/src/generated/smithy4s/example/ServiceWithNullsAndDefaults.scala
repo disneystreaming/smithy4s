@@ -82,8 +82,8 @@ object ServiceWithNullsAndDefaultsOperation {
     def timestampOperation(input: TimestampOperationInput): TimestampOperation = TimestampOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ServiceWithNullsAndDefaultsGen[P], f: PolyFunction5[P, P1]) extends ServiceWithNullsAndDefaultsGen[P1] {
-    def defaultNullsOperation(input: DefaultNullsOperationInput): P1[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = f[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing](alg.defaultNullsOperation(input))
-    def timestampOperation(input: TimestampOperationInput): P1[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = f[TimestampOperationInput, Nothing, Unit, Nothing, Nothing](alg.timestampOperation(input))
+    def defaultNullsOperation(input: DefaultNullsOperationInput): P1[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = f[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing](this.alg.defaultNullsOperation(input))
+    def timestampOperation(input: TimestampOperationInput): P1[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = f[TimestampOperationInput, Nothing, Unit, Nothing, Nothing](this.alg.timestampOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = new PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] {

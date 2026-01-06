@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -161,8 +161,13 @@ sealed trait Schema[A]{
   /**
     * Turns this schema into an error schema.
     */
-  final def error(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
+  final def asError(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
 
+  /**
+    * Turns this schema into an error schema.
+    */
+  @deprecated("This function can't be called due to having an overload. Use `asError` instead", "0.18.45")
+  private[schema] final def error(unlift: A => Throwable)(lift: Throwable => Option[A]) : ErrorSchema[A] = ErrorSchema(this, lift, unlift)
 }
 
 object Schema {

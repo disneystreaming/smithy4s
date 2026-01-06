@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -521,7 +521,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val opName = op.methodName
             line"def $opName(${op.renderArgs}): P1[${op
               .renderAlgParams(opTraitNameRef.name)}] = f[${op
-              .renderAlgParams(opTraitNameRef.name)}](alg.$opName(${op.renderParams}))"
+              .renderAlgParams(opTraitNameRef.name)}](this.alg.$opName(${op.renderParams}))"
           }
         },
         newline,

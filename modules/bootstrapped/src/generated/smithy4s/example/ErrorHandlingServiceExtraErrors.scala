@@ -80,7 +80,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def extraErrorOperation(in: Option[String] = None): ExtraErrorOperation = ExtraErrorOperation(ExtraErrorOperationInput(in))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ErrorHandlingServiceExtraErrorsGen[P], f: PolyFunction5[P, P1]) extends ErrorHandlingServiceExtraErrorsGen[P1] {
-    def extraErrorOperation(in: Option[String] = None): P1[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](alg.extraErrorOperation(in))
+    def extraErrorOperation(in: Option[String] = None): P1[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](this.alg.extraErrorOperation(in))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[P]): PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] = new PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] {

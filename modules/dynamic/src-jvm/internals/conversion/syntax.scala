@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,27 +16,21 @@
 
 package smithy4s.dynamic.internals.conversion
 
+import smithy4s.{ShapeId, Hints}
 import smithy4s.Document
-import smithy4s.Document._
-import smithy4s.Hints
-import smithy4s.ShapeId
-import software.amazon.smithy.model.node.Node
-import software.amazon.smithy.model.shapes.{ShapeId => SmithyShapeId, _}
-import software.amazon.smithy.model.traits.Trait
+import software.amazon.smithy.model.shapes.{
+  AbstractShapeBuilder,
+  Shape,
+  ShapeId => SmithyShapeId
+}
 import software.amazon.smithy.utils.ToSmithyBuilder
-
+import software.amazon.smithy.model.traits.Trait
+import software.amazon.smithy.model.node.Node
+import smithy4s.dynamic.syntax._
 import scala.jdk.CollectionConverters._
 
 private[dynamic] object syntax {
-  implicit class ShapeIdOps(sid: ShapeId) {
-    def toSmithy: SmithyShapeId =
-      SmithyShapeId.fromParts(sid.namespace, sid.name)
-  }
-
-  implicit class ShapeBuilderOps[A <: AbstractShapeBuilder[
-    A,
-    S
-  ], S <: Shape](
+  implicit class ShapeBuilderOps[A <: AbstractShapeBuilder[A, S], S <: Shape](
       builder: AbstractShapeBuilder[A, S]
   ) {
     def setId(sid: ShapeId): A = {
@@ -45,21 +39,11 @@ private[dynamic] object syntax {
     }
   }
 
-  private def documentToNode(doc: Document): Node = doc match {
-    case DString(value)  => Node.from(value)
-    case DNumber(value)  => Node.from(value)
-    case DBoolean(value) => Node.from(value)
-    case DObject(values) =>
-      Node.objectNode(values.map { case (key, value) =>
-        Node.from(key) -> documentToNode(value)
-      }.asJava)
-    case DArray(values) => Node.fromNodes(values.map(documentToNode): _*)
-    case DNull          => Node.nullNode()
-  }
-
   implicit class ShapeOps[A <: Shape](val a: A) extends AnyVal {
     def captureHints(hints: Hints): A = addTraits(a, hints)
   }
+
+  private def documentToNode(doc: Document): Node = doc.toSmithy
 
   def smithyTrait(id: ShapeId, document: Document): Trait = new Trait {
     def toShapeId() = SmithyShapeId.fromParts(id.namespace, id.name)

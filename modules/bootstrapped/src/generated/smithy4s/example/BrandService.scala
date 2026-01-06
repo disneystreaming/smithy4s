@@ -76,7 +76,7 @@ object BrandServiceOperation {
     def addBrands(brands: Option[List[String]] = None): AddBrands = AddBrands(AddBrandsInput(brands))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BrandServiceGen[P], f: PolyFunction5[P, P1]) extends BrandServiceGen[P1] {
-    def addBrands(brands: Option[List[String]] = None): P1[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
+    def addBrands(brands: Option[List[String]] = None): P1[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](this.alg.addBrands(brands))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.schema
+package smithy4s.schematests
 
 import munit._
 import smithy4s.Enumeration
@@ -25,7 +25,8 @@ import smithy4s.Bijection
 import smithy4s.Refinement
 import smithy4s.ShapeTag
 import cats.syntax.all._
-import Schema._
+import smithy4s.schema.Schema._
+import smithy4s.schema._
 
 class HintsTransformationSpec() extends FunSuite {
 

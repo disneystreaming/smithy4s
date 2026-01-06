@@ -78,7 +78,7 @@ object ReservedNameOverrideServiceOperation {
     def setOp(set: Set): SetOp = SetOp(SetOpInput(set))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameOverrideServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameOverrideServiceGen[P1] {
-    def setOp(set: Set): P1[SetOpInput, Nothing, Unit, Nothing, Nothing] = f[SetOpInput, Nothing, Unit, Nothing, Nothing](alg.setOp(set))
+    def setOp(set: Set): P1[SetOpInput, Nothing, Unit, Nothing, Nothing] = f[SetOpInput, Nothing, Unit, Nothing, Nothing](this.alg.setOp(set))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = new PolyFunction5[ReservedNameOverrideServiceOperation, P] {

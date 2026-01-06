@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.shapes._
 
 import java.util.function.Consumer
+import smithy4s.dynamic.syntax._
 
 /**
   * When encountering a Schema, a recorder is meant to add the shape
