@@ -37,7 +37,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       |""".stripMargin
 
   scalaVersions.foreach { scalaVersion =>
-    test(s"Bincompat-friendly structs (Scala $scalaVersion)".ignore) {
+    test(s"Bincompat-friendly structs (Scala $scalaVersion)") {
       modelChanges(
         "baseline" ->
           s"""$modelPrefix
@@ -567,7 +567,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         extraJars = extraJars
       )
       // 60000 == 60 seconds
-      .call(cwd = os.temp.dir(), stderr = os.Pipe, timeout = 60000)
+      .call(cwd = os.temp.dir(), stderr = os.Pipe, timeout = 90000)
 
     modelName -> out
   }
