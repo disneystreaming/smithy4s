@@ -28,128 +28,133 @@ class CodecTests() extends FunSuite {
   test("Integers") {
     checkFull(
       protobuf.Integers(1, 1, 1, 1, 1),
-      protobuf.protobuf.Integers(1, 1, 1, 1, 1)
+      smithy4s.example.protobuf.protobuf.Integers(1, 1, 1, 1, 1)
     )
   }
 
   test("Integers (zeros)") {
     checkFull(
       protobuf.Integers(0, 0, 0, 0, 0),
-      protobuf.protobuf.Integers(0, 0, 0, 0, 0)
+      smithy4s.example.protobuf.protobuf.Integers(0, 0, 0, 0, 0)
     )
   }
 
   test("Longs") {
     checkFull(
       protobuf.Longs(1, 1, 1, 1, 1),
-      protobuf.protobuf.Longs(1, 1, 1, 1, 1)
+      smithy4s.example.protobuf.protobuf.Longs(1, 1, 1, 1, 1)
     )
   }
 
   test("Longs (zeros)") {
     checkFull(
       protobuf.Longs(0, 0, 0, 0, 0),
-      protobuf.protobuf.Longs(0, 0, 0, 0, 0)
+      smithy4s.example.protobuf.protobuf.Longs(0, 0, 0, 0, 0)
     )
   }
 
   test("Longs (negatives)") {
     checkFull(
       protobuf.Longs(-1, -1, -1, -1, -1),
-      protobuf.protobuf.Longs(-1, -1, -1, -1, -1)
+      smithy4s.example.protobuf.protobuf.Longs(-1, -1, -1, -1, -1)
     )
   }
 
   test("Other scalars") {
     checkFull(
       protobuf.OtherScalars(true, 1, 1, 1, 1),
-      protobuf.protobuf.OtherScalars(true, 1, 1, 1, 1)
+      smithy4s.example.protobuf.protobuf.OtherScalars(true, 1, 1, 1, 1)
     )
   }
 
   test("Other scalars (zeros)") {
     checkFull(
       protobuf.OtherScalars(false, 0, 0, 0, 0),
-      protobuf.protobuf.OtherScalars(false, 0, 0, 0, 0)
+      smithy4s.example.protobuf.protobuf.OtherScalars(false, 0, 0, 0, 0)
     )
   }
 
   test("Optional scalars") {
     checkFull(
       protobuf.WrappedScalars(int = Some(3), bool = Some(true)),
-      protobuf.protobuf.WrappedScalars(int = Some(3), bool = Some(true))
+      smithy4s.example.protobuf.protobuf
+        .WrappedScalars(int = Some(3), bool = Some(true))
     )
   }
 
   test("Optional scalars (zeros)") {
     checkFull(
       protobuf.WrappedScalars(int = Some(0), bool = Some(false)),
-      protobuf.protobuf.WrappedScalars(int = Some(0), bool = Some(false))
+      smithy4s.example.protobuf.protobuf
+        .WrappedScalars(int = Some(0), bool = Some(false))
     )
   }
 
   test("Optional scalars (nones)") {
     checkFull(
       protobuf.WrappedScalars(int = None, bool = None),
-      protobuf.protobuf.WrappedScalars(int = None, bool = None)
+      smithy4s.example.protobuf.protobuf.WrappedScalars(int = None, bool = None)
     )
   }
 
   test("String") {
     checkFull(
       protobuf.StringWrapper("aaa"),
-      protobuf.protobuf.StringWrapper("aaa")
+      smithy4s.example.protobuf.protobuf.StringWrapper("aaa")
     )
   }
 
   test("String (zero)") {
     checkFull(
       protobuf.StringWrapper(""),
-      protobuf.protobuf.StringWrapper("")
+      smithy4s.example.protobuf.protobuf.StringWrapper("")
     )
   }
 
   test("BigDecimal") {
     checkFull(
       protobuf.BigDecimalWrapper(BigDecimal("123")),
-      protobuf.protobuf.BigDecimalWrapper("123")
+      smithy4s.example.protobuf.protobuf.BigDecimalWrapper("123")
     )
   }
 
   test("BigDecimal (zeros)") {
     checkFull(
       protobuf.BigDecimalWrapper(BigDecimal("0")),
-      protobuf.protobuf.BigDecimalWrapper("")
+      smithy4s.example.protobuf.protobuf.BigDecimalWrapper("")
     )
   }
 
   test("UUID empty") {
     checkFull(
       protobuf.UUIDWrapper(None, None),
-      protobuf.protobuf.UUIDWrapper("", None)
+      smithy4s.example.protobuf.protobuf.UUIDWrapper("", None)
     )
   }
 
   test("Scalar list") {
     checkFull(
       protobuf.IntListWrapper(List(1, 2, 3)),
-      protobuf.protobuf.IntListWrapper(List(1, 2, 3))
+      smithy4s.example.protobuf.protobuf.IntListWrapper(List(1, 2, 3))
     )
   }
 
   test("Scalar list (empty)") {
     checkFull(
       protobuf.IntListWrapper(Nil),
-      protobuf.protobuf.IntListWrapper(Nil)
+      smithy4s.example.protobuf.protobuf.IntListWrapper(Nil)
     )
   }
 
   test("Non-scalar list") {
     checkFull(
       protobuf.StringListWrapper(List("1", "2", "3"), List("4", "5", "6")),
-      protobuf.protobuf.StringListWrapper(
+      smithy4s.example.protobuf.protobuf.StringListWrapper(
         List("1", "2", "3"),
-        Some(protobuf.protobuf.WrappedStringList(List("4", "5", "6")))
+        Some(
+          smithy4s.example.protobuf.protobuf
+            .WrappedStringList(List("4", "5", "6"))
+        )
       )
     )
   }
@@ -157,9 +162,9 @@ class CodecTests() extends FunSuite {
   test("Non-scalar list (empty)") {
     checkFull(
       protobuf.StringListWrapper(List.empty, List.empty),
-      protobuf.protobuf.StringListWrapper(
+      smithy4s.example.protobuf.protobuf.StringListWrapper(
         List.empty,
-        Some(protobuf.protobuf.WrappedStringList(List.empty))
+        Some(smithy4s.example.protobuf.protobuf.WrappedStringList(List.empty))
       )
     )
   }
@@ -167,14 +172,15 @@ class CodecTests() extends FunSuite {
   test("Maps") {
     checkFull(
       protobuf.StringMapWrapper(Map("1" -> 1, "2" -> 2, "3" -> 3)),
-      protobuf.protobuf.StringMapWrapper(Map("1" -> 1, "2" -> 2, "3" -> 3))
+      smithy4s.example.protobuf.protobuf
+        .StringMapWrapper(Map("1" -> 1, "2" -> 2, "3" -> 3))
     )
   }
 
   test("Maps (empty)") {
     checkFull(
       protobuf.StringMapWrapper(Map.empty),
-      protobuf.protobuf.StringMapWrapper(Map.empty)
+      smithy4s.example.protobuf.protobuf.StringMapWrapper(Map.empty)
     )
   }
 
@@ -184,15 +190,15 @@ class CodecTests() extends FunSuite {
     // the creation of wrapper types for `MyInt` is likely undesirable.
     checkFull(
       protobuf.MyIntListWrapper(List(1, 2, 3).map(protobuf.MyInt(_))),
-      protobuf.protobuf.IntListWrapper(List(1, 2, 3))
+      smithy4s.example.protobuf.protobuf.IntListWrapper(List(1, 2, 3))
     )
   }
 
   test("MessageWrapper") {
     checkFull(
       protobuf.MessageWrapper(protobuf.Integers(1, 1, 1, 1, 1)),
-      protobuf.protobuf.MessageWrapper(
-        Some(protobuf.protobuf.Integers(1, 1, 1, 1, 1))
+      smithy4s.example.protobuf.protobuf.MessageWrapper(
+        Some(smithy4s.example.protobuf.protobuf.Integers(1, 1, 1, 1, 1))
       )
     )
   }
@@ -200,7 +206,7 @@ class CodecTests() extends FunSuite {
   test(
     "MessageWrapper (required message fields fail from an absence of value)"
   ) {
-    val proto = protobuf.protobuf.MessageWrapper(None)
+    val proto = smithy4s.example.protobuf.protobuf.MessageWrapper(None)
 
     val codec = ProtobufCodec[protobuf.MessageWrapper]
     val protoBytes = Blob(proto.toByteArray)
@@ -218,8 +224,8 @@ class CodecTests() extends FunSuite {
   test("MessageWrapper (zeros)") {
     checkFull(
       protobuf.MessageWrapper(protobuf.Integers(0, 0, 0, 0, 0)),
-      protobuf.protobuf.MessageWrapper(
-        Some(protobuf.protobuf.Integers(0, 0, 0, 0, 0))
+      smithy4s.example.protobuf.protobuf.MessageWrapper(
+        Some(smithy4s.example.protobuf.protobuf.Integers(0, 0, 0, 0, 0))
       )
     )
   }
@@ -227,8 +233,8 @@ class CodecTests() extends FunSuite {
   test("OptionalMessageWrapper") {
     checkFull(
       protobuf.OptionalMessageWrapper(Some(protobuf.Integers(1, 1, 1, 1, 1))),
-      protobuf.protobuf.OptionalMessageWrapper(
-        Some(protobuf.protobuf.Integers(1, 1, 1, 1, 1))
+      smithy4s.example.protobuf.protobuf.OptionalMessageWrapper(
+        Some(smithy4s.example.protobuf.protobuf.Integers(1, 1, 1, 1, 1))
       )
     )
   }
@@ -236,17 +242,17 @@ class CodecTests() extends FunSuite {
   test("OptionalMessageWrapper (none)") {
     checkFull(
       protobuf.OptionalMessageWrapper(None),
-      protobuf.protobuf.OptionalMessageWrapper(None)
+      smithy4s.example.protobuf.protobuf.OptionalMessageWrapper(None)
     )
   }
 
   test("Unions (non-inlined)") {
     checkFull(
       protobuf.UnionWrapper(Some(protobuf.MyUnion.int(1))),
-      protobuf.protobuf.UnionWrapper(
+      smithy4s.example.protobuf.protobuf.UnionWrapper(
         Some(
-          protobuf.protobuf.MyUnion(
-            protobuf.protobuf.MyUnion.Definition.Int(1)
+          smithy4s.example.protobuf.protobuf.MyUnion(
+            smithy4s.example.protobuf.protobuf.MyUnion.Definition.Int(1)
           )
         )
       )
@@ -256,10 +262,10 @@ class CodecTests() extends FunSuite {
   test("Unions (zero)") {
     checkFull(
       protobuf.UnionWrapper(Some(protobuf.MyUnion.int(0))),
-      protobuf.protobuf.UnionWrapper(
+      smithy4s.example.protobuf.protobuf.UnionWrapper(
         Some(
-          protobuf.protobuf.MyUnion(
-            protobuf.protobuf.MyUnion.Definition.Int(0)
+          smithy4s.example.protobuf.protobuf.MyUnion(
+            smithy4s.example.protobuf.protobuf.MyUnion.Definition.Int(0)
           )
         )
       )
@@ -271,11 +277,11 @@ class CodecTests() extends FunSuite {
       protobuf.UnionWrapper(
         Some(protobuf.MyUnion.list(List(1, 2, 3).map(protobuf.MyInt(_))))
       ),
-      protobuf.protobuf.UnionWrapper(
+      smithy4s.example.protobuf.protobuf.UnionWrapper(
         Some(
-          protobuf.protobuf.MyUnion(
-            protobuf.protobuf.MyUnion.Definition
-              .List(protobuf.protobuf.MyIntList(Seq(1, 2, 3)))
+          smithy4s.example.protobuf.protobuf.MyUnion(
+            smithy4s.example.protobuf.protobuf.MyUnion.Definition
+              .List(smithy4s.example.protobuf.protobuf.MyIntList(Seq(1, 2, 3)))
           )
         )
       )
@@ -287,11 +293,14 @@ class CodecTests() extends FunSuite {
       protobuf.UnionWrapper(
         Some(protobuf.MyUnion.map(Map("a" -> 1, "b" -> 2)))
       ),
-      protobuf.protobuf.UnionWrapper(
+      smithy4s.example.protobuf.protobuf.UnionWrapper(
         Some(
-          protobuf.protobuf.MyUnion(
-            protobuf.protobuf.MyUnion.Definition
-              .Map(protobuf.protobuf.StringMap(Map("a" -> 1, "b" -> 2)))
+          smithy4s.example.protobuf.protobuf.MyUnion(
+            smithy4s.example.protobuf.protobuf.MyUnion.Definition
+              .Map(
+                smithy4s.example.protobuf.protobuf
+                  .StringMap(Map("a" -> 1, "b" -> 2))
+              )
           )
         )
       )
@@ -301,8 +310,9 @@ class CodecTests() extends FunSuite {
   test("Unions (inlined)") {
     checkFull(
       protobuf.InlinedUnionWrapper(Some(protobuf.MyInlinedUnion.int(1))),
-      protobuf.protobuf.InlinedUnionWrapper(
-        protobuf.protobuf.InlinedUnionWrapper.MyInlinedUnion.Int(1)
+      smithy4s.example.protobuf.protobuf.InlinedUnionWrapper(
+        smithy4s.example.protobuf.protobuf.InlinedUnionWrapper.MyInlinedUnion
+          .Int(1)
       )
     )
   }
@@ -310,14 +320,15 @@ class CodecTests() extends FunSuite {
   test("Recursive") {
     checkFull(
       protobuf.Recursive(Some(protobuf.Recursive(None))),
-      protobuf.protobuf.Recursive(Some(protobuf.protobuf.Recursive(None)))
+      smithy4s.example.protobuf.protobuf
+        .Recursive(Some(smithy4s.example.protobuf.protobuf.Recursive(None)))
     )
   }
 
   test("Recursive (empty)") {
     checkFull(
       protobuf.Recursive(None),
-      protobuf.protobuf.Recursive(None)
+      smithy4s.example.protobuf.protobuf.Recursive(None)
     )
   }
 
@@ -329,10 +340,10 @@ class CodecTests() extends FunSuite {
         protobuf.ClosedInt.FOO,
         protobuf.OpenInt.FOO
       ),
-      protobuf.protobuf.Enums(
-        protobuf.protobuf.ClosedString.CLOSEDSTRING_FOO,
+      smithy4s.example.protobuf.protobuf.Enums(
+        smithy4s.example.protobuf.protobuf.ClosedString.CLOSEDSTRING_FOO,
         "FOO",
-        protobuf.protobuf.ClosedInt.CLOSEDINT_FOO,
+        smithy4s.example.protobuf.protobuf.ClosedInt.CLOSEDINT_FOO,
         0
       )
     )
@@ -346,10 +357,10 @@ class CodecTests() extends FunSuite {
         protobuf.ClosedInt.BAR,
         protobuf.OpenInt.$Unknown(42)
       ),
-      protobuf.protobuf.Enums(
-        protobuf.protobuf.ClosedString.CLOSEDSTRING_BAR,
+      smithy4s.example.protobuf.protobuf.Enums(
+        smithy4s.example.protobuf.protobuf.ClosedString.CLOSEDSTRING_BAR,
         "BAZ",
-        protobuf.protobuf.ClosedInt.CLOSEDINT_BAR,
+        smithy4s.example.protobuf.protobuf.ClosedInt.CLOSEDINT_BAR,
         42
       )
     )
@@ -360,7 +371,7 @@ class CodecTests() extends FunSuite {
       smithy.api.Range(Some(BigDecimal(1.0)), Some(BigDecimal(10.0)))
     val codec = ProtobufCodec.fromSchema(protobuf.RefinedIntWrapped.schema)
     val parsedRefinedInt = codec.readBlob(
-      Blob(protobuf.protobuf.RefinedIntWrapped(0).toByteArray)
+      Blob(smithy4s.example.protobuf.protobuf.RefinedIntWrapped(0).toByteArray)
     )
 
     parsedRefinedInt match {
@@ -381,11 +392,13 @@ class CodecTests() extends FunSuite {
         a = Some(1),
         d = Some(protobuf.UnionWithCustomIndexes.b(4))
       ),
-      protobuf.protobuf.StructureWithCustomIndexes(
+      smithy4s.example.protobuf.protobuf.StructureWithCustomIndexes(
         a = 1,
         b = 2,
         c = 3,
-        d = Some(protobuf.protobuf.UnionWithCustomIndexes().withB(4))
+        d = Some(
+          smithy4s.example.protobuf.protobuf.UnionWithCustomIndexes().withB(4)
+        )
       )
     )
   }

@@ -1,0 +1,48 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "RecursiveInputService",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/subscriptions": {
+            "put": {
+                "operationId": "RecursiveInputOperation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecursiveInputOperationRequestContent"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "RecursiveInputOperation 200 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RecursiveInput": {
+                "type": "object",
+                "properties": {
+                    "hello": {
+                        "$ref": "#/components/schemas/RecursiveInput"
+                    }
+                }
+            },
+            "RecursiveInputOperationRequestContent": {
+                "type": "object",
+                "properties": {
+                    "hello": {
+                        "$ref": "#/components/schemas/RecursiveInput"
+                    }
+                }
+            }
+        }
+    }
+}

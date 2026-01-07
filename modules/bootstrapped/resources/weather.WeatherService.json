@@ -1,0 +1,51 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "WeatherService",
+        "version": ""
+    },
+    "paths": {
+        "/weather/{city}": {
+            "get": {
+                "operationId": "GetWeather",
+                "parameters": [
+                    {
+                        "name": "city",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetWeather 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetWeatherResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GetWeatherResponseContent": {
+                "type": "object",
+                "properties": {
+                    "weather": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "weather"
+                ]
+            }
+        }
+    }
+}

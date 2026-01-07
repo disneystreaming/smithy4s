@@ -1,0 +1,51 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "HelloWorldService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/{name}": {
+            "post": {
+                "operationId": "Hello",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hello 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HelloResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HelloResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,60 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ReservedNameOverrideService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/set/": {
+            "post": {
+                "operationId": "SetOp",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetOpRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "SetOp 204 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Set": {
+                "type": "object",
+                "properties": {
+                    "someField": {
+                        "type": "string"
+                    },
+                    "otherField": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "required": [
+                    "otherField",
+                    "someField"
+                ]
+            },
+            "SetOpRequestContent": {
+                "type": "object",
+                "properties": {
+                    "set": {
+                        "$ref": "#/components/schemas/Set"
+                    }
+                },
+                "required": [
+                    "set"
+                ]
+            }
+        }
+    }
+}

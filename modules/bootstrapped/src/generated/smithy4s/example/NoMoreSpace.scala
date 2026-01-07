@@ -1,0 +1,35 @@
+package smithy4s.example
+
+import smithy4s.Hints
+import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.Smithy4sThrowable
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
+
+/** @param foo
+  *   Helpful information for Foo
+  *   int, bigInt and bDec are useful number constructs
+  *   The string case is there because.
+  */
+final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Smithy4sThrowable {
+  override def getMessage(): String = message
+}
+
+object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
+  val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
+
+  val hints: Hints = Hints(
+    smithy.api.Error.SERVER.widen,
+    smithy.api.HttpError(507),
+  ).lazily
+
+  // constructor using the original order from the spec
+  private def make(message: String, foo: Option[Foo]): NoMoreSpace = NoMoreSpace(message, foo)
+
+  implicit val schema: Schema[NoMoreSpace] = struct(
+    string.required[NoMoreSpace]("message", _.message),
+    Foo.schema.optional[NoMoreSpace]("foo", _.foo),
+  )(make).withId(id).addHints(hints)
+}

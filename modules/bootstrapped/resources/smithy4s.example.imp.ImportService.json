@@ -1,0 +1,51 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ImportService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "operationId": "ImportOperation",
+                "responses": {
+                    "200": {
+                        "description": "ImportOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportOperationOutputPayload"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ImportOperationOutputPayload": {
+                "type": "string"
+            },
+            "NotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
