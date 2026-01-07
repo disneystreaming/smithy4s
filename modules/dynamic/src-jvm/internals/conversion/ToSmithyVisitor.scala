@@ -16,6 +16,7 @@
 
 package smithy4s.dynamic.internals.conversion
 
+import smithy4s.dynamic.syntax._
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.{Schema => _, _}
@@ -24,7 +25,6 @@ import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.shapes._
 
 import java.util.function.Consumer
-import smithy4s.dynamic.syntax._
 
 /**
   * When encountering a Schema, a recorder is meant to add the shape

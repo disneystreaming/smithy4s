@@ -16,17 +16,17 @@
 
 package smithy4s.dynamic.internals.conversion
 
-import smithy4s.{ShapeId, Hints}
 import smithy4s.Document
-import software.amazon.smithy.model.shapes.{
-  AbstractShapeBuilder,
-  Shape,
-  ShapeId => SmithyShapeId
-}
-import software.amazon.smithy.utils.ToSmithyBuilder
-import software.amazon.smithy.model.traits.Trait
-import software.amazon.smithy.model.node.Node
+import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.dynamic.syntax._
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.shapes.AbstractShapeBuilder
+import software.amazon.smithy.model.shapes.Shape
+import software.amazon.smithy.model.shapes.{ShapeId => SmithyShapeId}
+import software.amazon.smithy.model.traits.Trait
+import software.amazon.smithy.utils.ToSmithyBuilder
+
 import scala.jdk.CollectionConverters._
 
 private[dynamic] object syntax {
