@@ -1,17 +1,24 @@
 package smithy4s
 
 import munit.FunSuite
-
-import smithy4s.example.{Tree, TreeNode, LeafNode, Foo}
+import smithy4s.example.{Foo, LeafNode, Tree, TreeNode}
 import cats.Hash
+import cats.effect.{IO, Sync}
+import smithy4s.capability.{CacheWrite, SyncLike}
+import smithy4s.internals.TreeSchemaVisitor
 import smithy4s.schema._
+
 import scala.annotation.tailrec
 import smithy4s.internals.maps.MMap
-import smithy4s.interopcats.SchemaVisitorHash
+import smithy4s.interopcats.{SchemaVisitorHash, TreeVisitorHash, monadThrowShim}
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema._
 
 class RecursiveSpec extends FunSuite {
+
+  implicit def syncShim[F[_]: Sync]: SyncLike[F] = new SyncLike[F] {
+    override def delay[A](thunk: => A): F[A] = Sync[F].delay(thunk)
+  }
 
   case class Recurse(n: Option[Recurse])
 
@@ -19,7 +26,7 @@ class RecursiveSpec extends FunSuite {
     implicit val schema: Schema[Recurse] = recursive {
       struct(
         schema.optional[Recurse]("n", _.n)
-      )(Recurse.apply)
+      )(Recurse.apply).withId("test","Recurse")
     }
   }
 
@@ -91,13 +98,42 @@ class RecursiveSpec extends FunSuite {
       val sizes = List(10, 100, 256)
       sizes.foreach(i => hashVisitor.hash(value(i)))
       val sizeAfterHashing = store.size
-
+      println(s"$caseString: $sizeAfterInitializing $sizeAfterHashing")
       assertEquals(
         sizeAfterHashing,
         sizeAfterInitializing,
         "cache store size has grown after initialization"
       )
     }
+
+  def runTreeVisitorTest[A](
+      caseString: String,
+      value: Int => A,
+      transformSchema: Schema[A] => Schema[A] = (x: Schema[A]) => x
+  )(implicit schema: Schema[A]): Unit = test(s"treeVisitor - $caseString") {
+    import cats.effect.unsafe.implicits.global
+    val makeHashVisitor: IO[TreeSchemaVisitor[IO, Hash]] =
+      TreeSchemaVisitor.make[IO, Hash](TreeVisitorHash, CacheWrite.make[IO,Hash[_]])
+    val updatedSchema: Schema[A] = transformSchema(schema)
+
+    val testEffect: IO[Unit] = for {
+      hashVisitor <- makeHashVisitor
+      sizeBeforeInitializing <- hashVisitor.cache.size
+      updatedHash <- hashVisitor.visit(updatedSchema)
+      _ <- IO.println(s"Visited $caseString")
+      sizeAfterInitializing <- hashVisitor.cache.size
+      _ = updatedHash.hash(value(2))
+      sizeAfterHashing <- hashVisitor.cache.size
+      _ = List(10, 100, 256).foreach(sz => updatedHash.hash(value(sz)))
+      sizeAfterLargeHashing <- hashVisitor.cache.size
+      _ <- IO.println(s"$caseString: $sizeBeforeInitializing, $sizeAfterInitializing, $sizeAfterHashing, $sizeAfterLargeHashing")
+    } yield {
+      assertEquals(sizeBeforeInitializing, 0)
+      assertEquals(sizeAfterInitializing, sizeAfterHashing)
+      assertEquals(sizeAfterHashing, sizeAfterLargeHashing)
+    }
+    testEffect.unsafeRunSync() // TODO: CatsEffectSuite
+  }
 
   def addHints[A](schema: Schema[A]): Schema[A] = {
     schema.transformHintsTransitively(
@@ -128,6 +164,15 @@ class RecursiveSpec extends FunSuite {
       s"$caseString: updated cache, hints transformed",
       value,
       buildCache = useLazyTestCache,
+      transformSchema = addHints[A]
+    )
+    runTreeVisitorTest(
+      s"$caseString: hints unchanged",
+      value
+    )
+    runTreeVisitorTest(
+      s"$caseString: hintsTransformed",
+      value,
       transformSchema = addHints[A]
     )
   }
