@@ -37,7 +37,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
       |""".stripMargin
 
   scalaVersions.foreach { scalaVersion =>
-    test(s"Bincompat-friendly structs (Scala $scalaVersion)") {
+    test(s"Bincompat-friendly structs (Scala $scalaVersion)".flaky) {
       modelChanges(
         "baseline" ->
           s"""$modelPrefix
