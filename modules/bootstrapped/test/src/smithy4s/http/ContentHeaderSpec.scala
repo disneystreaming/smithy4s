@@ -22,7 +22,6 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.example.content._
 import cats.Id
 import smithy4s.client.UnaryClientCodecs
-import smithy4s.http.Metadata
 
 final class ContentHeaderSpec extends FunSuite {
 
@@ -43,7 +42,6 @@ final class ContentHeaderSpec extends FunSuite {
   ], HttpResponse[Blob]] =
     HttpUnaryClientCodecs
       .builder[Id]
-      .withMetadataEncoders(Metadata.Encoder)
       .withBaseRequest(_ =>
         HttpRequest(
           HttpMethod.POST,
