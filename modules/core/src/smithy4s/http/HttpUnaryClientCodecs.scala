@@ -204,16 +204,21 @@ object HttpUnaryClientCodecs {
 
               maybeMediaType match {
                 case Some(mediaType) =>
-                  Writer.lift((req: HttpRequest[Blob], _: I) => req.withContentType(mediaType.value))
+                  Writer.lift((req: HttpRequest[Blob], _: I) =>
+                    if (req.headers.contains(CaseInsensitive("Content-Type"))) req
+                    else req.withContentType(mediaType.value)
+                  )
                 case None =>
                   Writer.lift((req: HttpRequest[Blob], _: I) =>
-                    if (req.body.isEmpty) req
+                    if (req.headers.contains(CaseInsensitive("Content-Type"))) req
+                    else if (req.body.isEmpty) req
                     else req.withContentType(requestMediaType)
                   )
               }
             } else {
               Writer.lift((req: HttpRequest[Blob], _: I) =>
-                if (req.body.isEmpty) req
+                if (req.headers.contains(CaseInsensitive("Content-Type"))) req
+                else if (req.body.isEmpty) req
                 else req.withContentType(requestMediaType)
               )
             }
