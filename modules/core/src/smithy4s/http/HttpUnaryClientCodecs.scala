@@ -136,33 +136,11 @@ object HttpUnaryClientCodecs {
       val setBody: HttpRequest.Writer[Blob, Blob] = Writer.lift((req, blob) => req.copy(body = blob))
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[HttpRequest[Blob], Blob](setBody)
 
-      val mediaTypeWriters = new CachedSchemaCompiler.Uncached[HttpRequest.Writer[Blob, *]] {
-        def fromSchema[A](schema: Schema[A]): HttpRequest.Writer[Blob, A] = {
-          val maybeRawMediaType = if (rawStringsAndBlobPayloads) HttpMediaType.fromSchema(schema).map(_.value) else None
-          maybeRawMediaType match {
-            case Some(mt) =>
-              new HttpRequest.Writer[Blob, A] {
-                def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
-                  request.withContentType(mt)
-              }
-            case None =>
-              new HttpRequest.Writer[Blob, A] {
-                def write(request: HttpRequest[Blob], value: A): HttpRequest[Blob] =
-                  if (request.body.isEmpty) request
-                  else request.withContentType(requestMediaType)
-              }
-          }
-        }
-      }
-
       val httpBodyWriters: CachedSchemaCompiler[HttpRequest.Writer[Blob, *]] = if (rawStringsAndBlobPayloads) {
         val finalBodyEncoders = CachedSchemaCompiler
           .getOrElse(smithy4s.codecs.StringAndBlobCodecs.encoders, requestBodyEncoders)
         finalBodyEncoders.mapK(setBodyK)
       } else requestBodyEncoders.mapK(setBodyK)
-
-      val httpMediaWriter: CachedSchemaCompiler[HttpRequest.Writer[Blob, *]] =
-        Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
 
       def responseDecoders(blobDecoders: BlobDecoder.Compiler) = {
         val httpBodyDecoders: CachedSchemaCompiler[Decoder[F, Blob, *]] = {
@@ -188,8 +166,8 @@ object HttpUnaryClientCodecs {
 
       val inputEncoders = metadataEncoders match {
         case Some(mEncoders) =>
-          HttpRequest.Writer.restSchemaCompiler(mEncoders, httpMediaWriter, writeEmptyStructs)
-        case None => httpMediaWriter
+          HttpRequest.Writer.restSchemaCompiler(mEncoders, httpBodyWriters, writeEmptyStructs)
+        case None => httpBodyWriters
       }
       val outputDecoders = responseDecoders(successResponseBodyDecoders)
       val errorDecoders = responseDecoders(errorResponseBodyDecoders)
@@ -216,6 +194,31 @@ object HttpUnaryClientCodecs {
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
 
+          val contentTypeHeaderWriter: HttpRequest.Writer[Blob, I] = {
+            if (rawStringsAndBlobPayloads) {
+              val maybeMediaType: Option[HttpMediaType] = HttpRestSchema(endpoint.input) match {
+                case HttpRestSchema.OnlyBody(schema)               => HttpMediaType.fromSchema(schema)
+                case HttpRestSchema.MetadataAndBody(_, bodySchema) => HttpMediaType.fromSchema(bodySchema)
+                case _                                             => None
+              }
+
+              maybeMediaType match {
+                case Some(mediaType) =>
+                  Writer.lift((req: HttpRequest[Blob], _: I) => req.withContentType(mediaType.value))
+                case None =>
+                  Writer.lift((req: HttpRequest[Blob], _: I) =>
+                    if (req.body.isEmpty) req
+                    else req.withContentType(requestMediaType)
+                  )
+              }
+            } else {
+              Writer.lift((req: HttpRequest[Blob], _: I) =>
+                if (req.body.isEmpty) req
+                else req.withContentType(requestMediaType)
+              )
+            }
+          }
+
           val acceptHeaderWriter: HttpRequest.Writer[Blob, I] = {
             if (rawStringsAndBlobPayloads) {
               val maybeMediaType: Option[HttpMediaType] = HttpRestSchema(endpoint.output) match {
@@ -235,7 +238,9 @@ object HttpUnaryClientCodecs {
             }
           }
 
-          val inputWriterWithAccept: HttpRequest.Writer[Blob, I] = inputWriter.combine(acceptHeaderWriter)
+          val inputWriterWithContentType: HttpRequest.Writer[Blob, I] = inputWriter.combine(contentTypeHeaderWriter)
+          val inputWriterWithAccept: HttpRequest.Writer[Blob, I] =
+            inputWriterWithContentType.combine(acceptHeaderWriter)
 
           val prefixedInputWriter: HttpRequest.Writer[Blob, I] =
             if (hostPrefixInjection) inputWriterWithAccept.combine(HttpRequest.Writer.hostPrefix(endpoint))
