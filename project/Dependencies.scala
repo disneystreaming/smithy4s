@@ -55,7 +55,8 @@ object Dependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.14"
+    // we have to stay on 0.14.8 until we move to scala-native 0.5.x
+    val circeVersion = "0.14.8"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
