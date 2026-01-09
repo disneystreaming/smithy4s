@@ -1,6 +1,6 @@
 import smithy4s.codegen.BuildInfo.smithyVersion
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 ThisBuild / version := "0.0.1-SNAPSHOT"
 ThisBuild / organization := "foobar"
 

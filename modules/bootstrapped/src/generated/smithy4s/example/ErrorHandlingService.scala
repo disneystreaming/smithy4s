@@ -91,23 +91,23 @@ object ErrorHandlingServiceOperation {
     object project {
       def eHFallbackClientError: Option[EHFallbackClientError] = ErrorHandlingOperationError.EHFallbackClientErrorCase.alt.project.lift(self).map(_.eHFallbackClientError)
       def eHServiceUnavailable: Option[EHServiceUnavailable] = ErrorHandlingOperationError.EHServiceUnavailableCase.alt.project.lift(self).map(_.eHServiceUnavailable)
-      def eHNotFound: Option[EHNotFound] = ErrorHandlingOperationError.EHNotFoundCase.alt.project.lift(self).map(_.eHNotFound)
       def eHFallbackServerError: Option[EHFallbackServerError] = ErrorHandlingOperationError.EHFallbackServerErrorCase.alt.project.lift(self).map(_.eHFallbackServerError)
+      def eHNotFound: Option[EHNotFound] = ErrorHandlingOperationError.EHNotFoundCase.alt.project.lift(self).map(_.eHNotFound)
     }
 
     def accept[A](visitor: ErrorHandlingOperationError.Visitor[A]): A = this match {
       case value: ErrorHandlingOperationError.EHFallbackClientErrorCase => visitor.eHFallbackClientError(value.eHFallbackClientError)
       case value: ErrorHandlingOperationError.EHServiceUnavailableCase => visitor.eHServiceUnavailable(value.eHServiceUnavailable)
-      case value: ErrorHandlingOperationError.EHNotFoundCase => visitor.eHNotFound(value.eHNotFound)
       case value: ErrorHandlingOperationError.EHFallbackServerErrorCase => visitor.eHFallbackServerError(value.eHFallbackServerError)
+      case value: ErrorHandlingOperationError.EHNotFoundCase => visitor.eHNotFound(value.eHNotFound)
     }
   }
   object ErrorHandlingOperationError extends ErrorSchema.Companion[ErrorHandlingOperationError] {
 
     def eHFallbackClientError(eHFallbackClientError: EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     def eHServiceUnavailable(eHServiceUnavailable: EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
-    def eHNotFound(eHNotFound: EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
     def eHFallbackServerError(eHFallbackServerError: EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
+    def eHNotFound(eHNotFound: EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
 
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
 
@@ -115,8 +115,8 @@ object ErrorHandlingServiceOperation {
 
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def $ordinal: Int = 0 }
     final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError { final def $ordinal: Int = 1 }
-    final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError { final def $ordinal: Int = 2 }
-    final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError { final def $ordinal: Int = 3 }
+    final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError { final def $ordinal: Int = 2 }
+    final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError { final def $ordinal: Int = 3 }
 
     object EHFallbackClientErrorCase {
       val hints: Hints = Hints.empty
@@ -128,22 +128,22 @@ object ErrorHandlingServiceOperation {
       val schema: Schema[ErrorHandlingOperationError.EHServiceUnavailableCase] = bijection(EHServiceUnavailable.schema.addHints(hints), ErrorHandlingOperationError.EHServiceUnavailableCase(_), _.eHServiceUnavailable)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
     }
-    object EHNotFoundCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[ErrorHandlingOperationError.EHNotFoundCase] = bijection(EHNotFound.schema.addHints(hints), ErrorHandlingOperationError.EHNotFoundCase(_), _.eHNotFound)
-      val alt = schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
-    }
     object EHFallbackServerErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[ErrorHandlingOperationError.EHFallbackServerErrorCase] = bijection(EHFallbackServerError.schema.addHints(hints), ErrorHandlingOperationError.EHFallbackServerErrorCase(_), _.eHFallbackServerError)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
     }
+    object EHNotFoundCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[ErrorHandlingOperationError.EHNotFoundCase] = bijection(EHNotFound.schema.addHints(hints), ErrorHandlingOperationError.EHNotFoundCase(_), _.eHNotFound)
+      val alt = schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
+    }
 
     trait Visitor[A] {
       def eHFallbackClientError(value: EHFallbackClientError): A
       def eHServiceUnavailable(value: EHServiceUnavailable): A
-      def eHNotFound(value: EHNotFound): A
       def eHFallbackServerError(value: EHFallbackServerError): A
+      def eHNotFound(value: EHNotFound): A
     }
 
     object Visitor {
@@ -151,31 +151,31 @@ object ErrorHandlingServiceOperation {
         def default: A
         def eHFallbackClientError(value: EHFallbackClientError): A = default
         def eHServiceUnavailable(value: EHServiceUnavailable): A = default
-        def eHNotFound(value: EHNotFound): A = default
         def eHFallbackServerError(value: EHFallbackServerError): A = default
+        def eHNotFound(value: EHNotFound): A = default
       }
     }
 
     implicit val schema: Schema[ErrorHandlingOperationError] = union(
       ErrorHandlingOperationError.EHFallbackClientErrorCase.alt,
       ErrorHandlingOperationError.EHServiceUnavailableCase.alt,
-      ErrorHandlingOperationError.EHNotFoundCase.alt,
       ErrorHandlingOperationError.EHFallbackServerErrorCase.alt,
+      ErrorHandlingOperationError.EHNotFoundCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[ErrorHandlingOperationError] = throwable match {
       case e: EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
       case e: EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
-      case e: EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
       case e: EHFallbackServerError => Some(ErrorHandlingOperationError.EHFallbackServerErrorCase(e))
+      case e: EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
       case _ => None
     }
     def unliftError(e: ErrorHandlingOperationError): Throwable = e match {
       case ErrorHandlingOperationError.EHFallbackClientErrorCase(e) => e
       case ErrorHandlingOperationError.EHServiceUnavailableCase(e) => e
-      case ErrorHandlingOperationError.EHNotFoundCase(e) => e
       case ErrorHandlingOperationError.EHFallbackServerErrorCase(e) => e
+      case ErrorHandlingOperationError.EHNotFoundCase(e) => e
     }
   }
 }

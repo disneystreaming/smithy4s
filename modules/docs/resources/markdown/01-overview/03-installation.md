@@ -59,7 +59,7 @@ import smithy4s.codegen.mill._
 
 import mill._, mill.scalalib._
 object example extends ScalaModule with Smithy4sModule {
-  def scalaVersion = "2.13.16"
+  def scalaVersion = "2.13.18"
   override def ivyDeps = Agg(
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
   )
@@ -86,7 +86,7 @@ import smithy4s.codegen.mill._
 
 import mill._, mill.scalalib._
 object example extends ScalaModule with Smithy4sModule {
-  def scalaVersion = "2.13.16"
+  def scalaVersion = "2.13.18"
   override def ivyDeps = Agg(
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
   )

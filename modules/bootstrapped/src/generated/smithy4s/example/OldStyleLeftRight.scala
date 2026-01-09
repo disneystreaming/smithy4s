@@ -20,7 +20,9 @@ sealed abstract class OldStyleLeftRight(_value: String, _name: String, _intValue
 object OldStyleLeftRight extends Enumeration[OldStyleLeftRight] with ShapeTag.Companion[OldStyleLeftRight] {
   val id: ShapeId = ShapeId("smithy4s.example", "oldStyleLeftRight")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+  ).lazily
 
   case object LEFT extends OldStyleLeftRight("left", "LEFT", 0, Hints.empty)
   case object RIGHT extends OldStyleLeftRight("right", "RIGHT", 1, Hints.empty)

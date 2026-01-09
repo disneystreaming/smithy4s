@@ -1,4 +1,4 @@
-val scala213 = "2.13.16"
+val scala213 = "2.13.18"
 val scala3 = "3.3.0"
 
 val expectedWildcardArgument =

@@ -129,65 +129,65 @@ object HelloServiceOperation {
     def $ordinal: Int
 
     object project {
-      def simpleError: Option[SimpleError] = SayHelloError.SimpleErrorCase.alt.project.lift(self).map(_.simpleError)
       def complexError: Option[ComplexError] = SayHelloError.ComplexErrorCase.alt.project.lift(self).map(_.complexError)
+      def simpleError: Option[SimpleError] = SayHelloError.SimpleErrorCase.alt.project.lift(self).map(_.simpleError)
     }
 
     def accept[A](visitor: SayHelloError.Visitor[A]): A = this match {
-      case value: SayHelloError.SimpleErrorCase => visitor.simpleError(value.simpleError)
       case value: SayHelloError.ComplexErrorCase => visitor.complexError(value.complexError)
+      case value: SayHelloError.SimpleErrorCase => visitor.simpleError(value.simpleError)
     }
   }
   object SayHelloError extends ErrorSchema.Companion[SayHelloError] {
 
-    def simpleError(simpleError: SimpleError): SayHelloError = SimpleErrorCase(simpleError)
     def complexError(complexError: ComplexError): SayHelloError = ComplexErrorCase(complexError)
+    def simpleError(simpleError: SimpleError): SayHelloError = SimpleErrorCase(simpleError)
 
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloError")
 
     val hints: Hints = Hints.empty
 
-    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def $ordinal: Int = 0 }
-    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def $ordinal: Int = 1 }
+    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def $ordinal: Int = 0 }
+    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def $ordinal: Int = 1 }
 
-    object SimpleErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[SayHelloError.SimpleErrorCase] = bijection(SimpleError.schema.addHints(hints), SayHelloError.SimpleErrorCase(_), _.simpleError)
-      val alt = schema.oneOf[SayHelloError]("SimpleError")
-    }
     object ComplexErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[SayHelloError.ComplexErrorCase] = bijection(ComplexError.schema.addHints(hints), SayHelloError.ComplexErrorCase(_), _.complexError)
       val alt = schema.oneOf[SayHelloError]("ComplexError")
     }
+    object SimpleErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[SayHelloError.SimpleErrorCase] = bijection(SimpleError.schema.addHints(hints), SayHelloError.SimpleErrorCase(_), _.simpleError)
+      val alt = schema.oneOf[SayHelloError]("SimpleError")
+    }
 
     trait Visitor[A] {
-      def simpleError(value: SimpleError): A
       def complexError(value: ComplexError): A
+      def simpleError(value: SimpleError): A
     }
 
     object Visitor {
       trait Default[A] extends Visitor[A] {
         def default: A
-        def simpleError(value: SimpleError): A = default
         def complexError(value: ComplexError): A = default
+        def simpleError(value: SimpleError): A = default
       }
     }
 
     implicit val schema: Schema[SayHelloError] = union(
-      SayHelloError.SimpleErrorCase.alt,
       SayHelloError.ComplexErrorCase.alt,
+      SayHelloError.SimpleErrorCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[SayHelloError] = throwable match {
-      case e: SimpleError => Some(SayHelloError.SimpleErrorCase(e))
       case e: ComplexError => Some(SayHelloError.ComplexErrorCase(e))
+      case e: SimpleError => Some(SayHelloError.SimpleErrorCase(e))
       case _ => None
     }
     def unliftError(e: SayHelloError): Throwable = e match {
-      case SayHelloError.SimpleErrorCase(e) => e
       case SayHelloError.ComplexErrorCase(e) => e
+      case SayHelloError.SimpleErrorCase(e) => e
     }
   }
 }

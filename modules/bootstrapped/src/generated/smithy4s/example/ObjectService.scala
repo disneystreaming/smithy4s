@@ -109,65 +109,65 @@ object ObjectServiceOperation {
     def $ordinal: Int
 
     object project {
-      def serverError: Option[ServerError] = GetObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
       def clientError: Option[ClientError] = GetObjectError.ClientErrorCase.alt.project.lift(self).map(_.clientError)
+      def serverError: Option[ServerError] = GetObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
     }
 
     def accept[A](visitor: GetObjectError.Visitor[A]): A = this match {
-      case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
       case value: GetObjectError.ClientErrorCase => visitor.clientError(value.clientError)
+      case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
     }
   }
   object GetObjectError extends ErrorSchema.Companion[GetObjectError] {
 
-    def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
     def clientError(clientError: ClientError): GetObjectError = ClientErrorCase(clientError)
+    def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def $ordinal: Int = 0 }
-    final case class ClientErrorCase(clientError: ClientError) extends GetObjectError { final def $ordinal: Int = 1 }
+    final case class ClientErrorCase(clientError: ClientError) extends GetObjectError { final def $ordinal: Int = 0 }
+    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def $ordinal: Int = 1 }
 
-    object ServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[GetObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), GetObjectError.ServerErrorCase(_), _.serverError)
-      val alt = schema.oneOf[GetObjectError]("ServerError")
-    }
     object ClientErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[GetObjectError.ClientErrorCase] = bijection(ClientError.schema.addHints(hints), GetObjectError.ClientErrorCase(_), _.clientError)
       val alt = schema.oneOf[GetObjectError]("ClientError")
     }
+    object ServerErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[GetObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), GetObjectError.ServerErrorCase(_), _.serverError)
+      val alt = schema.oneOf[GetObjectError]("ServerError")
+    }
 
     trait Visitor[A] {
-      def serverError(value: ServerError): A
       def clientError(value: ClientError): A
+      def serverError(value: ServerError): A
     }
 
     object Visitor {
       trait Default[A] extends Visitor[A] {
         def default: A
-        def serverError(value: ServerError): A = default
         def clientError(value: ClientError): A = default
+        def serverError(value: ServerError): A = default
       }
     }
 
     implicit val schema: Schema[GetObjectError] = union(
-      GetObjectError.ServerErrorCase.alt,
       GetObjectError.ClientErrorCase.alt,
+      GetObjectError.ServerErrorCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
-      case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
       case e: ClientError => Some(GetObjectError.ClientErrorCase(e))
+      case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetObjectError): Throwable = e match {
-      case GetObjectError.ServerErrorCase(e) => e
       case GetObjectError.ClientErrorCase(e) => e
+      case GetObjectError.ServerErrorCase(e) => e
     }
   }
   final case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
@@ -188,40 +188,40 @@ object ObjectServiceOperation {
     def $ordinal: Int
 
     object project {
-      def serverError: Option[ServerError] = PutObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
       def clientError: Option[ClientError] = PutObjectError.ClientErrorCase.alt.project.lift(self).map(_.clientError)
+      def serverError: Option[ServerError] = PutObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
       def noMoreSpace: Option[NoMoreSpace] = PutObjectError.NoMoreSpaceCase.alt.project.lift(self).map(_.noMoreSpace)
     }
 
     def accept[A](visitor: PutObjectError.Visitor[A]): A = this match {
-      case value: PutObjectError.ServerErrorCase => visitor.serverError(value.serverError)
       case value: PutObjectError.ClientErrorCase => visitor.clientError(value.clientError)
+      case value: PutObjectError.ServerErrorCase => visitor.serverError(value.serverError)
       case value: PutObjectError.NoMoreSpaceCase => visitor.noMoreSpace(value.noMoreSpace)
     }
   }
   object PutObjectError extends ErrorSchema.Companion[PutObjectError] {
 
-    def serverError(serverError: ServerError): PutObjectError = ServerErrorCase(serverError)
     def clientError(clientError: ClientError): PutObjectError = ClientErrorCase(clientError)
+    def serverError(serverError: ServerError): PutObjectError = ServerErrorCase(serverError)
     def noMoreSpace(noMoreSpace: NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
 
     val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def $ordinal: Int = 0 }
-    final case class ClientErrorCase(clientError: ClientError) extends PutObjectError { final def $ordinal: Int = 1 }
+    final case class ClientErrorCase(clientError: ClientError) extends PutObjectError { final def $ordinal: Int = 0 }
+    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def $ordinal: Int = 1 }
     final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError { final def $ordinal: Int = 2 }
 
-    object ServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[PutObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), PutObjectError.ServerErrorCase(_), _.serverError)
-      val alt = schema.oneOf[PutObjectError]("ServerError")
-    }
     object ClientErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[PutObjectError.ClientErrorCase] = bijection(ClientError.schema.addHints(hints), PutObjectError.ClientErrorCase(_), _.clientError)
       val alt = schema.oneOf[PutObjectError]("ClientError")
+    }
+    object ServerErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[PutObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), PutObjectError.ServerErrorCase(_), _.serverError)
+      val alt = schema.oneOf[PutObjectError]("ServerError")
     }
     object NoMoreSpaceCase {
       val hints: Hints = Hints.empty
@@ -230,36 +230,36 @@ object ObjectServiceOperation {
     }
 
     trait Visitor[A] {
-      def serverError(value: ServerError): A
       def clientError(value: ClientError): A
+      def serverError(value: ServerError): A
       def noMoreSpace(value: NoMoreSpace): A
     }
 
     object Visitor {
       trait Default[A] extends Visitor[A] {
         def default: A
-        def serverError(value: ServerError): A = default
         def clientError(value: ClientError): A = default
+        def serverError(value: ServerError): A = default
         def noMoreSpace(value: NoMoreSpace): A = default
       }
     }
 
     implicit val schema: Schema[PutObjectError] = union(
-      PutObjectError.ServerErrorCase.alt,
       PutObjectError.ClientErrorCase.alt,
+      PutObjectError.ServerErrorCase.alt,
       PutObjectError.NoMoreSpaceCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[PutObjectError] = throwable match {
-      case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
       case e: ClientError => Some(PutObjectError.ClientErrorCase(e))
+      case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
       case e: NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
       case _ => None
     }
     def unliftError(e: PutObjectError): Throwable = e match {
-      case PutObjectError.ServerErrorCase(e) => e
       case PutObjectError.ClientErrorCase(e) => e
+      case PutObjectError.ServerErrorCase(e) => e
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }

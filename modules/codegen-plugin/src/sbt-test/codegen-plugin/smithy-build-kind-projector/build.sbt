@@ -1,13 +1,16 @@
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
-    scalaVersion := "2.13.16",
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full),
+    scalaVersion := "2.13.18",
+    addCompilerPlugin(
+      "org.typelevel" % "kind-projector" % "0.13.4" cross CrossVersion.full
+    ),
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     ),
     Compile / scalacOptions ++= Seq(
-      "-Xsource:3", "-P:kind-projector:underscore-placeholders"
+      "-Xsource:3",
+      "-P:kind-projector:underscore-placeholders"
     ),
     Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json"),
     TaskKey[Unit]("checkOpenApi") := {

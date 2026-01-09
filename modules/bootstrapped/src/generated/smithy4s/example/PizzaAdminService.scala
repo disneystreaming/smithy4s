@@ -547,79 +547,79 @@ object PizzaAdminServiceOperation {
     def $ordinal: Int
 
     object project {
-      def priceError: Option[PriceError] = AddMenuItemError.PriceErrorCase.alt.project.lift(self).map(_.priceError)
-      def genericServerError: Option[GenericServerError] = AddMenuItemError.GenericServerErrorCase.alt.project.lift(self).map(_.genericServerError)
       def genericClientError: Option[GenericClientError] = AddMenuItemError.GenericClientErrorCase.alt.project.lift(self).map(_.genericClientError)
+      def genericServerError: Option[GenericServerError] = AddMenuItemError.GenericServerErrorCase.alt.project.lift(self).map(_.genericServerError)
+      def priceError: Option[PriceError] = AddMenuItemError.PriceErrorCase.alt.project.lift(self).map(_.priceError)
     }
 
     def accept[A](visitor: AddMenuItemError.Visitor[A]): A = this match {
-      case value: AddMenuItemError.PriceErrorCase => visitor.priceError(value.priceError)
-      case value: AddMenuItemError.GenericServerErrorCase => visitor.genericServerError(value.genericServerError)
       case value: AddMenuItemError.GenericClientErrorCase => visitor.genericClientError(value.genericClientError)
+      case value: AddMenuItemError.GenericServerErrorCase => visitor.genericServerError(value.genericServerError)
+      case value: AddMenuItemError.PriceErrorCase => visitor.priceError(value.priceError)
     }
   }
   object AddMenuItemError extends ErrorSchema.Companion[AddMenuItemError] {
 
-    def priceError(priceError: PriceError): AddMenuItemError = PriceErrorCase(priceError)
-    def genericServerError(genericServerError: GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
     def genericClientError(genericClientError: GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
+    def genericServerError(genericServerError: GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
+    def priceError(priceError: PriceError): AddMenuItemError = PriceErrorCase(priceError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemError")
 
     val hints: Hints = Hints.empty
 
-    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def $ordinal: Int = 0 }
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def $ordinal: Int = 0 }
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def $ordinal: Int = 1 }
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def $ordinal: Int = 2 }
+    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def $ordinal: Int = 2 }
 
-    object PriceErrorCase {
+    object GenericClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[AddMenuItemError.PriceErrorCase] = bijection(PriceError.schema.addHints(hints), AddMenuItemError.PriceErrorCase(_), _.priceError)
-      val alt = schema.oneOf[AddMenuItemError]("PriceError")
+      val schema: Schema[AddMenuItemError.GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), AddMenuItemError.GenericClientErrorCase(_), _.genericClientError)
+      val alt = schema.oneOf[AddMenuItemError]("GenericClientError")
     }
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[AddMenuItemError.GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), AddMenuItemError.GenericServerErrorCase(_), _.genericServerError)
       val alt = schema.oneOf[AddMenuItemError]("GenericServerError")
     }
-    object GenericClientErrorCase {
+    object PriceErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[AddMenuItemError.GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), AddMenuItemError.GenericClientErrorCase(_), _.genericClientError)
-      val alt = schema.oneOf[AddMenuItemError]("GenericClientError")
+      val schema: Schema[AddMenuItemError.PriceErrorCase] = bijection(PriceError.schema.addHints(hints), AddMenuItemError.PriceErrorCase(_), _.priceError)
+      val alt = schema.oneOf[AddMenuItemError]("PriceError")
     }
 
     trait Visitor[A] {
-      def priceError(value: PriceError): A
-      def genericServerError(value: GenericServerError): A
       def genericClientError(value: GenericClientError): A
+      def genericServerError(value: GenericServerError): A
+      def priceError(value: PriceError): A
     }
 
     object Visitor {
       trait Default[A] extends Visitor[A] {
         def default: A
-        def priceError(value: PriceError): A = default
-        def genericServerError(value: GenericServerError): A = default
         def genericClientError(value: GenericClientError): A = default
+        def genericServerError(value: GenericServerError): A = default
+        def priceError(value: PriceError): A = default
       }
     }
 
     implicit val schema: Schema[AddMenuItemError] = union(
-      AddMenuItemError.PriceErrorCase.alt,
-      AddMenuItemError.GenericServerErrorCase.alt,
       AddMenuItemError.GenericClientErrorCase.alt,
+      AddMenuItemError.GenericServerErrorCase.alt,
+      AddMenuItemError.PriceErrorCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[AddMenuItemError] = throwable match {
-      case e: PriceError => Some(AddMenuItemError.PriceErrorCase(e))
-      case e: GenericServerError => Some(AddMenuItemError.GenericServerErrorCase(e))
       case e: GenericClientError => Some(AddMenuItemError.GenericClientErrorCase(e))
+      case e: GenericServerError => Some(AddMenuItemError.GenericServerErrorCase(e))
+      case e: PriceError => Some(AddMenuItemError.PriceErrorCase(e))
       case _ => None
     }
     def unliftError(e: AddMenuItemError): Throwable = e match {
-      case AddMenuItemError.PriceErrorCase(e) => e
-      case AddMenuItemError.GenericServerErrorCase(e) => e
       case AddMenuItemError.GenericClientErrorCase(e) => e
+      case AddMenuItemError.GenericServerErrorCase(e) => e
+      case AddMenuItemError.PriceErrorCase(e) => e
     }
   }
   final case class CheckQueryKindZ(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -729,40 +729,35 @@ object PizzaAdminServiceOperation {
     def $ordinal: Int
 
     object project {
-      def notFoundError: Option[NotFoundError] = GetMenuError.NotFoundErrorCase.alt.project.lift(self).map(_.notFoundError)
       def fallbackError: Option[FallbackError] = GetMenuError.FallbackErrorCase.alt.project.lift(self).map(_.fallbackError)
       def fallbackError2: Option[FallbackError2] = GetMenuError.FallbackError2Case.alt.project.lift(self).map(_.fallbackError2)
       def genericClientError: Option[GenericClientError] = GetMenuError.GenericClientErrorCase.alt.project.lift(self).map(_.genericClientError)
+      def notFoundError: Option[NotFoundError] = GetMenuError.NotFoundErrorCase.alt.project.lift(self).map(_.notFoundError)
     }
 
     def accept[A](visitor: GetMenuError.Visitor[A]): A = this match {
-      case value: GetMenuError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
       case value: GetMenuError.FallbackErrorCase => visitor.fallbackError(value.fallbackError)
       case value: GetMenuError.FallbackError2Case => visitor.fallbackError2(value.fallbackError2)
       case value: GetMenuError.GenericClientErrorCase => visitor.genericClientError(value.genericClientError)
+      case value: GetMenuError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
     }
   }
   object GetMenuError extends ErrorSchema.Companion[GetMenuError] {
 
-    def notFoundError(notFoundError: NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
     def fallbackError(fallbackError: FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
     def fallbackError2(fallbackError2: FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
     def genericClientError(genericClientError: GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
+    def notFoundError(notFoundError: NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
 
     val hints: Hints = Hints.empty
 
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def $ordinal: Int = 0 }
-    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def $ordinal: Int = 1 }
-    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def $ordinal: Int = 2 }
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def $ordinal: Int = 3 }
+    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def $ordinal: Int = 0 }
+    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def $ordinal: Int = 1 }
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def $ordinal: Int = 2 }
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def $ordinal: Int = 3 }
 
-    object NotFoundErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[GetMenuError.NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), GetMenuError.NotFoundErrorCase(_), _.notFoundError)
-      val alt = schema.oneOf[GetMenuError]("NotFoundError")
-    }
     object FallbackErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[GetMenuError.FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), GetMenuError.FallbackErrorCase(_), _.fallbackError)
@@ -778,44 +773,49 @@ object PizzaAdminServiceOperation {
       val schema: Schema[GetMenuError.GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GetMenuError.GenericClientErrorCase(_), _.genericClientError)
       val alt = schema.oneOf[GetMenuError]("GenericClientError")
     }
+    object NotFoundErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[GetMenuError.NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), GetMenuError.NotFoundErrorCase(_), _.notFoundError)
+      val alt = schema.oneOf[GetMenuError]("NotFoundError")
+    }
 
     trait Visitor[A] {
-      def notFoundError(value: NotFoundError): A
       def fallbackError(value: FallbackError): A
       def fallbackError2(value: FallbackError2): A
       def genericClientError(value: GenericClientError): A
+      def notFoundError(value: NotFoundError): A
     }
 
     object Visitor {
       trait Default[A] extends Visitor[A] {
         def default: A
-        def notFoundError(value: NotFoundError): A = default
         def fallbackError(value: FallbackError): A = default
         def fallbackError2(value: FallbackError2): A = default
         def genericClientError(value: GenericClientError): A = default
+        def notFoundError(value: NotFoundError): A = default
       }
     }
 
     implicit val schema: Schema[GetMenuError] = union(
-      GetMenuError.NotFoundErrorCase.alt,
       GetMenuError.FallbackErrorCase.alt,
       GetMenuError.FallbackError2Case.alt,
       GetMenuError.GenericClientErrorCase.alt,
+      GetMenuError.NotFoundErrorCase.alt,
     ){
       _.$ordinal
     }
     def liftError(throwable: Throwable): Option[GetMenuError] = throwable match {
-      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
       case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
       case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
       case e: GenericClientError => Some(GetMenuError.GenericClientErrorCase(e))
+      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetMenuError): Throwable = e match {
-      case GetMenuError.NotFoundErrorCase(e) => e
       case GetMenuError.FallbackErrorCase(e) => e
       case GetMenuError.FallbackError2Case(e) => e
       case GetMenuError.GenericClientErrorCase(e) => e
+      case GetMenuError.NotFoundErrorCase(e) => e
     }
   }
   final case class CheckQueryVariantB(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
