@@ -62,7 +62,7 @@ final class ContentHeaderSpec extends FunSuite {
   }
 
   test(
-    "Content-Type header uses provided requestMediaType when rawStringsAndBlobPayloads is true"
+    "Content-Type header ignores provided requestMediaType when rawStringsAndBlobPayloads is true, rather header is derived from the input schema"
   ) {
     val codecsMake = baseBuilder
       .withRequestMediaType("application/json")
@@ -81,15 +81,14 @@ final class ContentHeaderSpec extends FunSuite {
     val request = codec.inputEncoder(DefaultContentHeaderInput("test data"))
 
     val contentTypeHeader = extractContentTypeHeader(request)
-    // Note: The builder chain doesn't properly override requestMediaType, so it uses the default "text/plain"
-    // In production (http4s), the codec is configured directly with the desired requestMediaType
+
     assertEquals(contentTypeHeader, Some("text/plain"))
   }
 
   test(
     "Content-Type header uses default requestMediaType (text/plain) when no specific media type is set"
   ) {
-    val codecsMake = baseBuilder.withRawStringsAndBlobsPayloads.build()
+    val codecsMake = baseBuilder.build()
 
     val codec = codecsMake.apply[
       DefaultContentHeaderInput,

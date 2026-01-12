@@ -195,8 +195,15 @@ object HttpUnaryClientCodecs {
             }
 
           val contentTypeHeaderWriter: HttpRequest.Writer[Blob, I] = {
+            val restSchema = HttpRestSchema(endpoint.input)
+            val hasBodyInSchema = restSchema match {
+              case HttpRestSchema.OnlyBody(_)           => true
+              case HttpRestSchema.MetadataAndBody(_, _) => true
+              case _                                    => false
+            }
+
             if (rawStringsAndBlobPayloads) {
-              val maybeMediaType: Option[HttpMediaType] = HttpRestSchema(endpoint.input) match {
+              val maybeMediaType: Option[HttpMediaType] = restSchema match {
                 case HttpRestSchema.OnlyBody(schema)               => HttpMediaType.fromSchema(schema)
                 case HttpRestSchema.MetadataAndBody(_, bodySchema) => HttpMediaType.fromSchema(bodySchema)
                 case _                                             => None
@@ -216,10 +223,12 @@ object HttpUnaryClientCodecs {
                   )
               }
             } else {
+              // When rawStringsAndBlobPayloads = false, we're using a structured protocol (e.g., JSON).
+              // Set Content-Type if the schema has a body OR if the body was actually written.
               Writer.lift((req: HttpRequest[Blob], _: I) =>
                 if (req.headers.contains(CaseInsensitive("Content-Type"))) req
-                else if (req.body.isEmpty) req
-                else req.withContentType(requestMediaType)
+                else if (hasBodyInSchema || !req.body.isEmpty) req.withContentType(requestMediaType)
+                else req
               )
             }
           }
