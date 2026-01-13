@@ -46,7 +46,8 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.13.0")
+      // must remain on 2.11 until we update scala-native version
+      Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
   }
 
   val Monocle = new {
