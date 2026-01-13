@@ -16,7 +16,9 @@ service ContentHeaderTestService {
         XmlInputJsonOutput,
         BlobInputWithMediaType,
         BlobInputNoMediaType,
-        NoBodyOperation
+        NoBodyOperation,
+        EmptyStructOperation,
+        ExplicitContentTypeHeader
     ]
 }
 
@@ -116,6 +118,33 @@ operation NoBodyOperation {
     output := {
         @httpPayload
         data: String
+    }
+}
+
+/// Operation with empty struct - should have Content-Type when writeEmptyStructs=true, none when false
+@http(method: "POST", uri: "/empty-struct")
+operation EmptyStructOperation {
+    input := {}
+    output := {
+        @httpPayload
+        data: String
+    }
+}
+
+/// Operation with explicit Content-Type header - should override default behavior
+@http(method: "POST", uri: "/explicit-content-type")
+operation ExplicitContentTypeHeader {
+    input := {
+        @httpHeader("Content-Type")
+        contentType: String
+
+        @httpPayload
+        @required
+        data: Blob
+    }
+    output := {
+        @httpPayload
+        result: String
     }
 }
 

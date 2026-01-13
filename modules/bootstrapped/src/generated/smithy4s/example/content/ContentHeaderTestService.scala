@@ -14,6 +14,11 @@ import smithy4s.schema.OperationSchema
 trait ContentHeaderTestServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** Operation with empty struct - should have Content-Type when writeEmptyStructs=true, none when false
+    * 
+    * HTTP POST /empty-struct
+    */
+  def emptyStructOperation(): F[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing]
   /** Operation with Blob input that has media type
     * 
     * HTTP POST /blob-with-media
@@ -53,6 +58,11 @@ trait ContentHeaderTestServiceGen[F[_, _, _, _, _]] {
     *   XML payload type
     */
   def xmlInput(data: XmlPayload): F[XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing]
+  /** Operation with explicit Content-Type header - should override default behavior
+    * 
+    * HTTP POST /explicit-content-type
+    */
+  def explicitContentTypeHeader(data: Blob, contentType: Option[String] = None): F[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing]
 
   final def transform: Transformation.PartiallyApplied[ContentHeaderTestServiceGen[F]] = Transformation.of[ContentHeaderTestServiceGen[F]](this)
 }
@@ -74,12 +84,14 @@ object ContentHeaderTestServiceGen extends Service.Mixin[ContentHeaderTestServic
   }
 
   val endpoints: Vector[smithy4s.Endpoint[ContentHeaderTestServiceOperation, _, _, _, _, _]] = Vector(
+    ContentHeaderTestServiceOperation.EmptyStructOperation,
     ContentHeaderTestServiceOperation.BlobInputWithMediaType,
     ContentHeaderTestServiceOperation.DefaultContentHeader,
     ContentHeaderTestServiceOperation.BlobInputNoMediaType,
     ContentHeaderTestServiceOperation.NoBodyOperation,
     ContentHeaderTestServiceOperation.XmlInputJsonOutput,
     ContentHeaderTestServiceOperation.XmlInput,
+    ContentHeaderTestServiceOperation.ExplicitContentTypeHeader,
   )
 
   def input[I, E, O, SI, SO](op: ContentHeaderTestServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -104,28 +116,44 @@ sealed trait ContentHeaderTestServiceOperation[Input, Err, Output, StreamedInput
 object ContentHeaderTestServiceOperation {
 
   object reified extends ContentHeaderTestServiceGen[ContentHeaderTestServiceOperation] {
+    def emptyStructOperation(): EmptyStructOperation = EmptyStructOperation(EmptyStructOperationInput())
     def blobInputWithMediaType(image: PngImage): BlobInputWithMediaType = BlobInputWithMediaType(BlobInputWithMediaTypeInput(image))
     def defaultContentHeader(data: String): DefaultContentHeader = DefaultContentHeader(DefaultContentHeaderInput(data))
     def blobInputNoMediaType(image: Blob): BlobInputNoMediaType = BlobInputNoMediaType(BlobInputNoMediaTypeInput(image))
     def noBodyOperation(query: Option[String] = None): NoBodyOperation = NoBodyOperation(NoBodyOperationInput(query))
     def xmlInputJsonOutput(data: XmlPayload): XmlInputJsonOutput = XmlInputJsonOutput(XmlInputJsonOutputInput(data))
     def xmlInput(data: XmlPayload): XmlInput = XmlInput(XmlInputInput(data))
+    def explicitContentTypeHeader(data: Blob, contentType: Option[String] = None): ExplicitContentTypeHeader = ExplicitContentTypeHeader(ExplicitContentTypeHeaderInput(data, contentType))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ContentHeaderTestServiceGen[P], f: PolyFunction5[P, P1]) extends ContentHeaderTestServiceGen[P1] {
+    def emptyStructOperation(): P1[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] = f[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing](this.alg.emptyStructOperation())
     def blobInputWithMediaType(image: PngImage): P1[BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing] = f[BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing](this.alg.blobInputWithMediaType(image))
     def defaultContentHeader(data: String): P1[DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing] = f[DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing](this.alg.defaultContentHeader(data))
     def blobInputNoMediaType(image: Blob): P1[BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing] = f[BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing](this.alg.blobInputNoMediaType(image))
     def noBodyOperation(query: Option[String] = None): P1[NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing] = f[NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing](this.alg.noBodyOperation(query))
     def xmlInputJsonOutput(data: XmlPayload): P1[XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing] = f[XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing](this.alg.xmlInputJsonOutput(data))
     def xmlInput(data: XmlPayload): P1[XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing] = f[XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing](this.alg.xmlInput(data))
+    def explicitContentTypeHeader(data: Blob, contentType: Option[String] = None): P1[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] = f[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing](this.alg.explicitContentTypeHeader(data, contentType))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[P]): PolyFunction5[ContentHeaderTestServiceOperation, P] = new PolyFunction5[ContentHeaderTestServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ContentHeaderTestServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
+  final case class EmptyStructOperation(input: EmptyStructOperationInput) extends ContentHeaderTestServiceOperation[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] = impl.emptyStructOperation()
+    def ordinal: Int = 0
+    def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] = EmptyStructOperation
+  }
+  object EmptyStructOperation extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] {
+    val schema: OperationSchema[EmptyStructOperationInput, Nothing, EmptyStructOperationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.content", "EmptyStructOperation"))
+      .withInput(EmptyStructOperationInput.schema)
+      .withOutput(EmptyStructOperationOutput.schema)
+      .withHints(smithy.api.Documentation("Operation with empty struct - should have Content-Type when writeEmptyStructs=true, none when false"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/empty-struct"), code = 200))
+    def wrap(input: EmptyStructOperationInput): EmptyStructOperation = EmptyStructOperation(input)
+  }
   final case class BlobInputWithMediaType(input: BlobInputWithMediaTypeInput) extends ContentHeaderTestServiceOperation[BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing] = impl.blobInputWithMediaType(input.image)
-    def ordinal: Int = 0
+    def ordinal: Int = 1
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing] = BlobInputWithMediaType
   }
   object BlobInputWithMediaType extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,BlobInputWithMediaTypeInput, Nothing, BlobInputWithMediaTypeOutput, Nothing, Nothing] {
@@ -137,7 +165,7 @@ object ContentHeaderTestServiceOperation {
   }
   final case class DefaultContentHeader(input: DefaultContentHeaderInput) extends ContentHeaderTestServiceOperation[DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing] = impl.defaultContentHeader(input.data)
-    def ordinal: Int = 1
+    def ordinal: Int = 2
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing] = DefaultContentHeader
   }
   object DefaultContentHeader extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,DefaultContentHeaderInput, Nothing, DefaultContentHeaderOutput, Nothing, Nothing] {
@@ -149,7 +177,7 @@ object ContentHeaderTestServiceOperation {
   }
   final case class BlobInputNoMediaType(input: BlobInputNoMediaTypeInput) extends ContentHeaderTestServiceOperation[BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing] = impl.blobInputNoMediaType(input.image)
-    def ordinal: Int = 2
+    def ordinal: Int = 3
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing] = BlobInputNoMediaType
   }
   object BlobInputNoMediaType extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,BlobInputNoMediaTypeInput, Nothing, BlobInputNoMediaTypeOutput, Nothing, Nothing] {
@@ -161,7 +189,7 @@ object ContentHeaderTestServiceOperation {
   }
   final case class NoBodyOperation(input: NoBodyOperationInput) extends ContentHeaderTestServiceOperation[NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing] = impl.noBodyOperation(input.query)
-    def ordinal: Int = 3
+    def ordinal: Int = 4
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing] = NoBodyOperation
   }
   object NoBodyOperation extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,NoBodyOperationInput, Nothing, NoBodyOperationOutput, Nothing, Nothing] {
@@ -173,7 +201,7 @@ object ContentHeaderTestServiceOperation {
   }
   final case class XmlInputJsonOutput(input: XmlInputJsonOutputInput) extends ContentHeaderTestServiceOperation[XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing] = impl.xmlInputJsonOutput(input.data)
-    def ordinal: Int = 4
+    def ordinal: Int = 5
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing] = XmlInputJsonOutput
   }
   object XmlInputJsonOutput extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,XmlInputJsonOutputInput, Nothing, XmlInputJsonOutputOutput, Nothing, Nothing] {
@@ -185,7 +213,7 @@ object ContentHeaderTestServiceOperation {
   }
   final case class XmlInput(input: XmlInputInput) extends ContentHeaderTestServiceOperation[XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing] = impl.xmlInput(input.data)
-    def ordinal: Int = 5
+    def ordinal: Int = 6
     def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing] = XmlInput
   }
   object XmlInput extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,XmlInputInput, Nothing, XmlInputOutput, Nothing, Nothing] {
@@ -194,6 +222,18 @@ object ContentHeaderTestServiceOperation {
       .withOutput(XmlInputOutput.schema)
       .withHints(smithy.api.Documentation("Operation with XML input media type"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/xml-input"), code = 200))
     def wrap(input: XmlInputInput): XmlInput = XmlInput(input)
+  }
+  final case class ExplicitContentTypeHeader(input: ExplicitContentTypeHeaderInput) extends ContentHeaderTestServiceOperation[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ContentHeaderTestServiceGen[F]): F[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] = impl.explicitContentTypeHeader(input.data, input.contentType)
+    def ordinal: Int = 7
+    def endpoint: smithy4s.Endpoint[ContentHeaderTestServiceOperation,ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] = ExplicitContentTypeHeader
+  }
+  object ExplicitContentTypeHeader extends smithy4s.Endpoint[ContentHeaderTestServiceOperation,ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] {
+    val schema: OperationSchema[ExplicitContentTypeHeaderInput, Nothing, ExplicitContentTypeHeaderOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.content", "ExplicitContentTypeHeader"))
+      .withInput(ExplicitContentTypeHeaderInput.schema)
+      .withOutput(ExplicitContentTypeHeaderOutput.schema)
+      .withHints(smithy.api.Documentation("Operation with explicit Content-Type header - should override default behavior"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/explicit-content-type"), code = 200))
+    def wrap(input: ExplicitContentTypeHeaderInput): ExplicitContentTypeHeader = ExplicitContentTypeHeader(input)
   }
 }
 

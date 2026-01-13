@@ -196,41 +196,30 @@ object HttpUnaryClientCodecs {
 
           val contentTypeHeaderWriter: HttpRequest.Writer[Blob, I] = {
             val restSchema = HttpRestSchema(endpoint.input)
-            val hasBodyInSchema = restSchema match {
-              case HttpRestSchema.OnlyBody(_)           => true
-              case HttpRestSchema.MetadataAndBody(_, _) => true
-              case _                                    => false
-            }
 
-            if (rawStringsAndBlobPayloads) {
-              val maybeMediaType: Option[HttpMediaType] = restSchema match {
-                case HttpRestSchema.OnlyBody(schema)               => HttpMediaType.fromSchema(schema)
-                case HttpRestSchema.MetadataAndBody(_, bodySchema) => HttpMediaType.fromSchema(bodySchema)
-                case _                                             => None
+            Writer.lift((req: HttpRequest[Blob], _: I) =>
+              if (req.headers.contains(CaseInsensitive("Content-Type"))) {
+                // Respect explicitly-set Content-Type headers
+                req
+              } else if (req.body.isEmpty) {
+                // No content = no Content-Type header
+                req
+              } else {
+                // Body has content, determine which Content-Type to use
+                if (rawStringsAndBlobPayloads) {
+                  // For raw mode, check if schema has @mediaType annotation
+                  val maybeMediaType: Option[HttpMediaType] = restSchema match {
+                    case HttpRestSchema.OnlyBody(schema)               => HttpMediaType.fromSchema(schema)
+                    case HttpRestSchema.MetadataAndBody(_, bodySchema) => HttpMediaType.fromSchema(bodySchema)
+                    case _                                             => None
+                  }
+                  req.withContentType(maybeMediaType.map(_.value).getOrElse(requestMediaType))
+                } else {
+                  // For structured protocols, use requestMediaType
+                  req.withContentType(requestMediaType)
+                }
               }
-
-              maybeMediaType match {
-                case Some(mediaType) =>
-                  Writer.lift((req: HttpRequest[Blob], _: I) =>
-                    if (req.headers.contains(CaseInsensitive("Content-Type"))) req
-                    else req.withContentType(mediaType.value)
-                  )
-                case None =>
-                  Writer.lift((req: HttpRequest[Blob], _: I) =>
-                    if (req.headers.contains(CaseInsensitive("Content-Type"))) req
-                    else if (req.body.isEmpty) req
-                    else req.withContentType(requestMediaType)
-                  )
-              }
-            } else {
-              // When rawStringsAndBlobPayloads = false, we're using a structured protocol (e.g., JSON).
-              // Set Content-Type if the schema has a body OR if the body was actually written.
-              Writer.lift((req: HttpRequest[Blob], _: I) =>
-                if (req.headers.contains(CaseInsensitive("Content-Type"))) req
-                else if (hasBodyInSchema || !req.body.isEmpty) req.withContentType(requestMediaType)
-                else req
-              )
-            }
+            )
           }
 
           val acceptHeaderWriter: HttpRequest.Writer[Blob, I] = {

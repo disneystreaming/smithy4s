@@ -42,6 +42,7 @@ final class ContentHeaderSpec extends FunSuite {
   ], HttpResponse[Blob]] =
     HttpUnaryClientCodecs
       .builder[Id]
+      .withMetadataEncoders(Metadata.Encoder)
       .withBaseRequest(_ =>
         HttpRequest(
           HttpMethod.POST,
@@ -86,7 +87,7 @@ final class ContentHeaderSpec extends FunSuite {
   }
 
   test(
-    "Content-Type header uses default requestMediaType (text/plain) when no specific media type is set"
+    "Content-Type header is NOT set when body encoders are not configured (body is empty)"
   ) {
     val codecsMake = baseBuilder.build()
 
@@ -102,7 +103,8 @@ final class ContentHeaderSpec extends FunSuite {
     val request = codec.inputEncoder(DefaultContentHeaderInput("hello"))
 
     val contentTypeHeader = extractContentTypeHeader(request)
-    assertEquals(contentTypeHeader, Some("text/plain"))
+    // Without body encoders, the body stays empty, so no Content-Type
+    assertEquals(contentTypeHeader, None)
   }
 
   test(
@@ -133,7 +135,8 @@ final class ContentHeaderSpec extends FunSuite {
     ](
       ContentHeaderTestServiceOperation.BlobInputNoMediaType.schema
     )
-    val request = codec.inputEncoder(BlobInputNoMediaTypeInput(Blob.empty))
+    val request =
+      codec.inputEncoder(BlobInputNoMediaTypeInput(Blob("some data")))
 
     val contentTypeHeader = extractContentTypeHeader(request)
     // Blob without @mediaType defaults to "application/octet-stream"
@@ -173,10 +176,56 @@ final class ContentHeaderSpec extends FunSuite {
       ContentHeaderTestServiceOperation.BlobInputWithMediaType.schema
     )
     val request =
-      codec.inputEncoder(BlobInputWithMediaTypeInput(PngImage(Blob.empty)))
+      codec.inputEncoder(
+        BlobInputWithMediaTypeInput(PngImage(Blob("fake png data")))
+      )
 
     val contentTypeHeader = extractContentTypeHeader(request)
     assertEquals(contentTypeHeader, Some("image/png"))
+  }
+
+  test(
+    "Content-Type header is NOT set for Blob input with @mediaType when body is empty"
+  ) {
+    val codec = codecWithRawStringsAndBlobsPayloads.apply[
+      BlobInputWithMediaTypeInput,
+      Nothing,
+      BlobInputWithMediaTypeOutput,
+      Nothing,
+      Nothing
+    ](
+      ContentHeaderTestServiceOperation.BlobInputWithMediaType.schema
+    )
+    val request =
+      codec.inputEncoder(BlobInputWithMediaTypeInput(PngImage(Blob.empty)))
+
+    val contentTypeHeader = extractContentTypeHeader(request)
+    // Even though schema specifies @mediaType("image/png"), no Content-Type when body is empty
+    assertEquals(contentTypeHeader, None)
+  }
+
+  test(
+    "Content-Type header respects explicit @httpHeader(\"Content-Type\") over defaults"
+  ) {
+    val codec = codecWithRawStringsAndBlobsPayloads.apply[
+      ExplicitContentTypeHeaderInput,
+      Nothing,
+      ExplicitContentTypeHeaderOutput,
+      Nothing,
+      Nothing
+    ](
+      ContentHeaderTestServiceOperation.ExplicitContentTypeHeader.schema
+    )
+    val request = codec.inputEncoder(
+      ExplicitContentTypeHeaderInput(
+        contentType = Some("application/custom-type"),
+        data = Blob("test data")
+      )
+    )
+
+    val contentTypeHeader = extractContentTypeHeader(request)
+    // Explicit Content-Type from @httpHeader should override default behavior
+    assertEquals(contentTypeHeader, Some("application/custom-type"))
   }
 
   test(
@@ -197,6 +246,56 @@ final class ContentHeaderSpec extends FunSuite {
 
     val contentTypeHeader = extractContentTypeHeader(request)
     // No body content, so no Content-Type header should be set
+    assertEquals(contentTypeHeader, None)
+  }
+
+  test(
+    "Content-Type header is NOT set for empty struct with writeEmptyStructs=true but no JSON encoders"
+  ) {
+    val codecsMake =
+      baseBuilder.withRawStringsAndBlobsPayloads // Provides String/Blob encoders, but not struct encoders
+        .withWriteEmptyStructs(_ => true) // Enable writing empty structs
+        .build()
+
+    val codec = codecsMake.apply[
+      EmptyStructOperationInput,
+      Nothing,
+      EmptyStructOperationOutput,
+      Nothing,
+      Nothing
+    ](
+      ContentHeaderTestServiceOperation.EmptyStructOperation.schema
+    )
+    val request = codec.inputEncoder(EmptyStructOperationInput())
+
+    val contentTypeHeader = extractContentTypeHeader(request)
+    // Without JSON encoders, empty struct writes empty Blob (not {}), so Content-Type is NOT set
+    assertEquals(contentTypeHeader, None)
+  }
+
+  test(
+    "Content-Type header is NOT set for empty struct when writeEmptyStructs is false"
+  ) {
+    val codecsMake =
+      baseBuilder.withRawStringsAndBlobsPayloads // Same encoders as the true case
+        .withWriteEmptyStructs(_ =>
+          false
+        ) // Explicitly disable (though this is the default)
+        .build()
+
+    val codec = codecsMake.apply[
+      EmptyStructOperationInput,
+      Nothing,
+      EmptyStructOperationOutput,
+      Nothing,
+      Nothing
+    ](
+      ContentHeaderTestServiceOperation.EmptyStructOperation.schema
+    )
+    val request = codec.inputEncoder(EmptyStructOperationInput())
+
+    val contentTypeHeader = extractContentTypeHeader(request)
+    // Empty struct will NOT be serialized (no body), so Content-Type should NOT be set
     assertEquals(contentTypeHeader, None)
   }
 }

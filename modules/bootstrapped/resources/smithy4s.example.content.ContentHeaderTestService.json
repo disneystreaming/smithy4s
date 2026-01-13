@@ -89,6 +89,61 @@
                 }
             }
         },
+        "/empty-struct": {
+            "post": {
+                "description": "Operation with empty struct - should have Content-Type when writeEmptyStructs=true, none when false",
+                "operationId": "EmptyStructOperation",
+                "responses": {
+                    "200": {
+                        "description": "EmptyStructOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmptyStructOperationOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/explicit-content-type": {
+            "post": {
+                "description": "Operation with explicit Content-Type header - should override default behavior",
+                "operationId": "ExplicitContentTypeHeader",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExplicitContentTypeHeaderInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ExplicitContentTypeHeader 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExplicitContentTypeHeaderOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/no-body": {
             "get": {
                 "description": "Operation with only metadata (no body) - should not have Content-Type header",
@@ -194,6 +249,16 @@
                 "type": "string"
             },
             "DefaultContentHeaderOutputPayload": {
+                "type": "string"
+            },
+            "EmptyStructOperationOutputPayload": {
+                "type": "string"
+            },
+            "ExplicitContentTypeHeaderInputPayload": {
+                "type": "string",
+                "format": "byte"
+            },
+            "ExplicitContentTypeHeaderOutputPayload": {
                 "type": "string"
             },
             "NoBodyOperationOutputPayload": {
