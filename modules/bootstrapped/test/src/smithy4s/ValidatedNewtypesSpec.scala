@@ -54,6 +54,32 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     )
   }
 
+  test("should allow to derive typeclasses in a generic way") {
+    trait MyCodec[A] {
+      def decode(str: String): Either[String, A]
+      def encode(a: A): String
+    }
+
+    object MyCodec {
+      implicit val stringCodec: MyCodec[String] = new MyCodec[String] {
+        def decode(str: String): Either[String, String] = Right(str)
+        def encode(a: String): String = a
+      }
+    }
+
+    def genericCodec[A, B: MyCodec](s: Surjection[B, A]) = new MyCodec[A] {
+      def decode(str: String): Either[String, A] =
+        implicitly[MyCodec[B]].decode(str).flatMap(s.to)
+      def encode(a: A): String = implicitly[MyCodec[B]].encode(s.from(a))
+    }
+
+    val accountIdCodec =
+      genericCodec[AccountId, String](implicitly[Surjection[String, AccountId]])
+
+    expect.same(accountIdCodec.encode(AccountId.unsafeApply(id1)), id1)
+    expect.same(accountIdCodec.decode(id1), Right(AccountId.unsafeApply(id1)))
+  }
+
   type DeviceId = DeviceId.Type
   object DeviceId extends ValidatedNewtype[String] {
 
