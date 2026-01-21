@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.47
+
+* core: Add `asSurjection` method to `ValidatedNewtype` class (see [#1873](https://github.com/disneystreaming/smithy4s/pull/1873))
+
 # 0.18.46
 
 * core: Set the Accept header via the HttpUnaryClientCodecs  (see [#1864](https://github.com/disneystreaming/smithy4s/pull/1864))
