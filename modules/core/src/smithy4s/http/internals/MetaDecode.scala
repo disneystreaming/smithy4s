@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,12 +78,16 @@ private[http] sealed abstract class MetaDecode[+A] {
       case (QueryBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(f(values.head))
+            values.head match {
+              case Some(value) => putField(f(value))
+              // Treat valueless query params as empty strings (AWS protocol behavior)
+              case None => putField(f(""))
+            }
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(f(values.iterator))
+          putField(f(values.iterator.flatMap(opt => opt)))
         }
       // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
       // when targeting Map[String,String] we take the first value encountered
@@ -92,7 +96,11 @@ private[http] sealed abstract class MetaDecode[+A] {
           val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
             .map { case (k, values) =>
               if (values.nonEmpty) {
-                k -> values.head
+                values.head match {
+                  case Some(value) => k -> value
+                  // Treat valueless query params as empty strings (AWS protocol behavior)
+                  case None => k -> ""
+                }
               } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
           if (iter.nonEmpty) putField(f(iter))
@@ -102,7 +110,7 @@ private[http] sealed abstract class MetaDecode[+A] {
         (metadata, putField) =>
           val iter = metadata.query.iterator
             .map { case (k, values) =>
-              k -> values.iterator
+              k -> values.iterator.flatMap(opt => opt)
             }
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)

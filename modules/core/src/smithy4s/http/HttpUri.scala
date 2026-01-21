@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets
 final case class HttpUri private (
     origin: Option[HttpUriOrigin],
     path: IndexedSeq[String],
-    queryParams: Map[String, Seq[String]],
+    queryParams: IndexedSeq[(String, Option[String])],
     pathParams: Option[Map[String, String]]
 ) {
   def toURI: URI = {
@@ -37,10 +37,13 @@ final case class HttpUri private (
     val queryStr = queryParams
       .map { case (k, v) =>
         val encodedKey = HttpUri.uriEncode(k)
-        v.map(vv => {
-          val encodedValue = HttpUri.uriEncode(vv)
-          s"$encodedKey=$encodedValue"
-        }).mkString("&")
+        v match {
+          case Some(vv) =>
+            val encodedValue = HttpUri.uriEncode(vv)
+            s"$encodedKey=$encodedValue"
+          case None =>
+            encodedKey
+        }
       }
       .mkString("&")
 
@@ -132,15 +135,17 @@ final case class HttpUri private (
     copy(path = path)
   }
   def withQueryParams(
-      queryParams: Map[String, Seq[String]]
+      queryParams: IndexedSeq[(String, Option[String])]
   ): HttpUri = {
     copy(queryParams = queryParams)
   }
   def withoutQueryParams: HttpUri = {
-    copy(queryParams = Map.empty)
+    copy(queryParams = IndexedSeq.empty)
   }
   def transformQueryParams(
-      f: Map[String, Seq[String]] => Map[String, Seq[String]]
+      f: IndexedSeq[(String, Option[String])] => IndexedSeq[
+        (String, Option[String])
+      ]
   ): HttpUri = {
     copy(queryParams = f(queryParams))
   }
@@ -161,6 +166,18 @@ final case class HttpUri private (
     }
   }
 
+  /**
+   * Converts query parameters to Map format, grouping multiple values for the same key.
+   * Preserves None values to distinguish between valueless parameters and parameters with empty values.
+   */
+  def queryParamsAsMap: Map[String, Seq[Option[String]]] = {
+    queryParams
+      .groupBy(_._1)
+      .map { case (k, vs) =>
+        k -> vs.map(_._2).toSeq
+      }
+  }
+
 }
 
 object HttpUri {
@@ -174,7 +191,7 @@ object HttpUri {
     (
         Option[HttpUriOrigin],
         IndexedSeq[String],
-        Map[String, Seq[String]],
+        IndexedSeq[(String, Option[String])],
         Option[Map[String, String]]
     )
   ] = {
@@ -184,7 +201,7 @@ object HttpUri {
   def apply(
       origin: Option[HttpUriOrigin],
       path: IndexedSeq[String],
-      queryParams: Map[String, Seq[String]],
+      queryParams: IndexedSeq[(String, Option[String])],
       pathParams: Option[Map[String, String]]
   ): HttpUri = {
     new HttpUri(origin, path, queryParams, pathParams)
@@ -197,22 +214,28 @@ object HttpUri {
     val host = Option(uri.getHost())
     val port = Option(uri.getPort()).filter(_ >= 0)
     val path = uri.getPath.split('/').filter(_.nonEmpty).toIndexedSeq
-    val queryParams: Map[String, Seq[String]] = Option(uri.getRawQuery())
-      .map { query =>
-        query
-          .split("&")
-          .map { pair =>
-            pair.split("=").map(uriDecode) match {
-              case Array(k: String, v: String) => k -> Seq(v)
-              case Array(k: String)            => k -> Seq.empty[String]
-              // cases where you have q1=v1=v2 => q1 -> "v1=v2"
-              case v @ Array(k: String, _*) => k -> Seq(v.tail.mkString("="))
+    val queryParams: IndexedSeq[(String, Option[String])] =
+      Option(uri.getRawQuery())
+        .map { query =>
+          query
+            .split("&")
+            .map { pair =>
+              // Check if the pair contains '=' to distinguish between
+              // valueless params (?foo) and empty-value params (?foo=)
+              if (pair.contains("=")) {
+                pair.split("=", -1).map(uriDecode) match {
+                  case Array(k: String, v: String) => k -> Some(v)
+                  // cases where you have q1=v1=v2 => q1 -> "v1=v2"
+                  case v @ Array(k: String, _*) =>
+                    k -> Some(v.tail.mkString("="))
+                }
+              } else {
+                uriDecode(pair) -> None
+              }
             }
-          }
-          .groupBy(_._1)
-          .map { case (k, vs) => k -> vs.map(_._2).flatten.toSeq }
-      }
-      .getOrElse(Map.empty)
+            .toIndexedSeq
+        }
+        .getOrElse(IndexedSeq.empty)
     val origin = host.map(hn => {
       HttpUriOrigin(
         scheme = scheme,
@@ -232,7 +255,7 @@ object HttpUri {
    */
   def relative(
       path: IndexedSeq[String],
-      queryParams: Map[String, Seq[String]],
+      queryParams: IndexedSeq[(String, Option[String])] = IndexedSeq.empty,
       pathParams: Option[Map[String, String]] = None
   ): HttpUri = {
     HttpUri(
@@ -250,7 +273,7 @@ object HttpUri {
       host: String,
       port: Option[Int],
       path: IndexedSeq[String],
-      queryParams: Map[String, Seq[String]] = Map.empty,
+      queryParams: IndexedSeq[(String, Option[String])] = IndexedSeq.empty,
       pathParams: Option[Map[String, String]] = None
   ): HttpUri = {
     HttpUri(
@@ -269,7 +292,7 @@ object HttpUri {
       host: String,
       port: Option[Int],
       path: IndexedSeq[String],
-      queryParams: Map[String, Seq[String]] = Map.empty,
+      queryParams: IndexedSeq[(String, Option[String])] = IndexedSeq.empty,
       pathParams: Option[Map[String, String]] = None
   ): HttpUri = {
 
@@ -279,6 +302,29 @@ object HttpUri {
       queryParams = queryParams,
       pathParams = pathParams
     )
+  }
+
+  /**
+   * Converts Map format query parameters to IndexedSeq format.
+   * Keys with empty sequences become keys without values.
+   */
+  def queryParamsFromMap(
+      queryParams: Map[String, Seq[Option[String]]]
+  ): IndexedSeq[(String, Option[String])] = {
+    queryParams.toIndexedSeq.flatMap { case (k, vs) =>
+      if (vs.isEmpty) IndexedSeq(k -> None)
+      else vs.map(v => k -> v)
+    }
+  }
+
+  /**
+   * Converts Map format query parameters with String values to IndexedSeq format.
+   * This is a convenience method that wraps String values in Some().
+   */
+  def queryParamsFromStringMap(
+      queryParams: Map[String, Seq[String]]
+  ): IndexedSeq[(String, Option[String])] = {
+    queryParamsFromMap(queryParams.map { case (k, vs) => k -> vs.map(Some(_)) })
   }
 
   private def uriDecode(v: String): String =

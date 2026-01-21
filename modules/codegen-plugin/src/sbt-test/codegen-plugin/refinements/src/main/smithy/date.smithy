@@ -2,6 +2,7 @@ $version: "2.0"
 
 namespace scripted.date
 
+
 use smithy4s.meta#refinement
 
 apply dateFormat @refinement(
@@ -10,8 +11,8 @@ apply dateFormat @refinement(
 )
 
 @trait(selector:"*")
-structure dateFormat{}
-
+structure dateFormat {
+}
 structure StructWithDate {
   @dateFormat
   @required

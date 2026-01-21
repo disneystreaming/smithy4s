@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -566,8 +566,8 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
         extraDeps = List(smithy4sCoreDependency),
         extraJars = extraJars
       )
-      // 60000 == 60 seconds
-      .call(cwd = os.temp.dir(), stderr = os.Pipe, timeout = 60000)
+      // 90000 == 90 seconds
+      .call(cwd = os.temp.dir(), stderr = os.Pipe, timeout = 90000)
 
     modelName -> out
   }

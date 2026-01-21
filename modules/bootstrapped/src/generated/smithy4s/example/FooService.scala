@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -25,7 +27,6 @@ trait FooServiceGen[F[_, _, _, _, _]] {
     */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
 }
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
@@ -58,6 +59,18 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[FooServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[FooServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[FooServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[FooServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: FooServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -73,7 +86,7 @@ object FooServiceOperation {
     def getFoo(): GetFoo = GetFoo()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]) extends FooServiceGen[P1] {
-    def getFoo(): P1[Unit, Nothing, GetFooOutput, Nothing, Nothing] = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo())
+    def getFoo(): P1[Unit, Nothing, GetFooOutput, Nothing, Nothing] = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](this.alg.getFoo())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = new PolyFunction5[FooServiceOperation, P] {

@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -19,7 +21,6 @@ trait ErrorHandlingServiceExtraErrorsGen[F[_, _, _, _, _]] {
 
   def extraErrorOperation(in: Option[String] = None): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](this)
 }
 
 object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingServiceExtraErrorsGen, ErrorHandlingServiceExtraErrorsOperation] {
@@ -52,6 +53,18 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
 
   type ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
   val ExtraErrorOperationError = ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[ErrorHandlingServiceExtraErrorsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: ErrorHandlingServiceExtraErrorsGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait ErrorHandlingServiceExtraErrorsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -67,7 +80,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def extraErrorOperation(in: Option[String] = None): ExtraErrorOperation = ExtraErrorOperation(ExtraErrorOperationInput(in))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ErrorHandlingServiceExtraErrorsGen[P], f: PolyFunction5[P, P1]) extends ErrorHandlingServiceExtraErrorsGen[P1] {
-    def extraErrorOperation(in: Option[String] = None): P1[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](alg.extraErrorOperation(in))
+    def extraErrorOperation(in: Option[String] = None): P1[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](this.alg.extraErrorOperation(in))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[P]): PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] = new PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] {

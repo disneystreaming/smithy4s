@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ package object kernel {
     Smithy4sHttpUri(
       origin,
       uri.path.segments.map(_.decoded()),
-      getQueryParams(uri),
+      uri.query.pairs,
       pathParams
     )
   }
@@ -146,7 +146,7 @@ package object kernel {
         case Smithy4sHttpUriScheme.Https => Uri.Scheme.https
 
       }
-    ).withMultiValueQueryParams(uri.queryParams)
+    ).copy(query = Query.fromVector(uri.queryParams.toVector))
   }
 
   /**
@@ -221,17 +221,6 @@ package object kernel {
     req.headers.headers.groupBy(_.name).map { case (k, v) =>
       (CaseInsensitive(k.toString), v.map(_.value))
     }
-
-  private[smithy4s] def getQueryParams[F[_]](
-      uri: Uri
-  ): Map[String, List[String]] =
-    uri.query.pairs
-      .collect {
-        case (name, None)        => name -> "true"
-        case (name, Some(value)) => name -> value
-      }
-      .groupBy(_._1)
-      .map { case (k, v) => k -> v.map(_._2).toList }
 
   private def collectBytes[F[_]: Concurrent](
       stream: fs2.Stream[F, Byte]

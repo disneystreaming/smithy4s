@@ -5,6 +5,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -19,7 +21,6 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   def myOp(): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
   def endpoint(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
 
 object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] {
@@ -53,6 +54,18 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
   type MyOpError = NameCollisionOperation.MyOpError
   val MyOpError = NameCollisionOperation.MyOpError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[NameCollisionGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[NameCollisionGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[NameCollisionGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[NameCollisionGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: NameCollisionGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -69,8 +82,8 @@ object NameCollisionOperation {
     def endpoint(): Endpoint = Endpoint()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
-    def myOp(): P1[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp())
-    def endpoint(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint())
+    def myOp(): P1[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](this.alg.myOp())
+    def endpoint(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.endpoint())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {

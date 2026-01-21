@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -197,12 +197,12 @@ object HttpUnaryServerRouter {
       val method = getMethod(request)
       val uri = getUri(request)
       val path = uri.path
-      val query = uri.queryParams
+      val queryMap = uri.queryParamsAsMap
       perMethodEndpoint.get(method).flatMap { httpUnaryEndpoints =>
         httpUnaryEndpoints.iterator
           .flatMap(ep => ep.httpEndpoint.matches(path).map(ep -> _))
           .collectFirst {
-            case (ep, pathParams) if isSubset(larger = query, smaller = ep.httpEndpoint.staticQueryParams) =>
+            case (ep, pathParams) if isSubset(larger = queryMap, smaller = ep.httpEndpoint.staticQueryParams) =>
               val amendedRequest = addDecodedPathParams(request, pathParams)
               ep.handler(amendedRequest)
           }
@@ -305,10 +305,28 @@ object HttpUnaryServerRouter {
 
   }
 
-  /** Checks if `larger` multimap is a subset of the `smaller` */
-  private def isSubset[K, V](larger: Map[K, Seq[V]], smaller: Map[K, Seq[V]]): Boolean =
-    smaller.forall { case (k, vRequired) =>
-      larger.get(k).exists(vs => vRequired.forall(vs.contains))
+  /** Checks if `smaller` multimap is a subset of the `larger` */
+  private def isSubset(
+      larger: Map[String, Seq[Option[String]]],
+      smaller: Map[String, Seq[Option[String]]]
+  ): Boolean =
+    smaller.forall { case (key, requiredValues) =>
+      larger.get(key).exists { actualValues =>
+        val normalizedActual = normalizeQueryValues(actualValues)
+        requiredValues.forall(normalizedActual.contains)
+      }
     }
 
+  private def normalizeQueryValues(
+      values: Seq[Option[String]]
+  ): Set[Option[String]] = {
+    val asSet = values.toSet
+
+    // HTTP semantics: treat valueless (?foo) and empty (?foo=) as equivalent
+    if (asSet.contains(None) || asSet.contains(Some("")))
+      // this facilitates O(1) lookups for both None and Some("") when either is present
+      asSet + None + Some("")
+    else
+      asSet
+  }
 }

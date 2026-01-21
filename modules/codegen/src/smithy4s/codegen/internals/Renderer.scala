@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -358,8 +358,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .renderAlgParams(opTraitNameRef.name)}]"
           )
         },
-        newline,
-        line"final def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        newline
       ),
       newline,
       lines(
@@ -422,7 +421,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         lines(
           line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
           line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
-        ).when(generateServiceProduct)
+        ).when(generateServiceProduct),
+        newline,
+        block(
+          line"implicit final class TransformFunctorOps[F[_]](private val alg: $FunctorAlgebra_[$genNameRef, F]) extends AnyVal"
+        )(
+          line"def transform: $Transformation.PartiallyApplied[$FunctorAlgebra_[$genNameRef, F]] = $Transformation.of(alg)"
+        ),
+        newline,
+        block(
+          line"implicit final class TransformBifunctorOps[F[_, _]](private val alg: $BiFunctorAlgebra_[$genNameRef, F]) extends AnyVal"
+        )(
+          line"def transform: $Transformation.PartiallyApplied[$BiFunctorAlgebra_[$genNameRef, F]] = $Transformation.of(alg)"
+        ),
+        newline,
+        block(
+          line"implicit final class TransformOps[F[_, _, _, _, _]](private val alg: $genNameRef[F]) extends AnyVal"
+        )(
+          line"def transform: $Transformation.PartiallyApplied[$genNameRef[F]] = $Transformation.of(alg)"
+        )
       ),
       newline,
       lines(
@@ -504,7 +521,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val opName = op.methodName
             line"def $opName(${op.renderArgs}): P1[${op
               .renderAlgParams(opTraitNameRef.name)}] = f[${op
-              .renderAlgParams(opTraitNameRef.name)}](alg.$opName(${op.renderParams}))"
+              .renderAlgParams(opTraitNameRef.name)}](this.alg.$opName(${op.renderParams}))"
           }
         },
         newline,

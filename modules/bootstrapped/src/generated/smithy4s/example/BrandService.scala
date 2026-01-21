@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -17,7 +19,6 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
   /** HTTP POST /brands */
   def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
 
 object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
@@ -48,6 +49,18 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BrandServiceOperation, P]): BrandServiceGen[P] = new BrandServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[BrandServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[BrandServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[BrandServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[BrandServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: BrandServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -63,7 +76,7 @@ object BrandServiceOperation {
     def addBrands(brands: Option[List[String]] = None): AddBrands = AddBrands(AddBrandsInput(brands))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BrandServiceGen[P], f: PolyFunction5[P, P1]) extends BrandServiceGen[P1] {
-    def addBrands(brands: Option[List[String]] = None): P1[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
+    def addBrands(brands: Option[List[String]] = None): P1[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](this.alg.addBrands(brands))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {

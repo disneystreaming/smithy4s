@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -21,7 +23,6 @@ trait KVStoreGen[F[_, _, _, _, _]] {
   def get(key: String): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing]
   def delete(key: String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
 }
 
 object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
@@ -60,6 +61,18 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   val GetError = KVStoreOperation.GetError
   type DeleteError = KVStoreOperation.DeleteError
   val DeleteError = KVStoreOperation.DeleteError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[KVStoreGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[KVStoreGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[KVStoreGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[KVStoreGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: KVStoreGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -77,9 +90,9 @@ object KVStoreOperation {
     def delete(key: String): Delete = Delete(Key(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: KVStoreGen[P], f: PolyFunction5[P, P1]) extends KVStoreGen[P1] {
-    def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
-    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
-    def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
+    def put(key: String, value: String): P1[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](this.alg.put(key, value))
+    def get(key: String): P1[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](this.alg.get(key))
+    def delete(key: String): P1[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](this.alg.delete(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = new PolyFunction5[KVStoreOperation, P] {

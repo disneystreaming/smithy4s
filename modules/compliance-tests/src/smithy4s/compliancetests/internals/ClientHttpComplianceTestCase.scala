@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import cats.effect.syntax.all._
 import cats.implicits._
 import org.http4s.Headers
 import org.http4s.HttpApp
+import org.http4s.Query
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
@@ -81,9 +82,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 
     val expectedUri = baseUri
       .withPath(Uri.Path.unsafeFromString(testCase.uri))
-      .withMultiValueQueryParams(
-        parseQueryParams(testCase.queryParams)
-      )
+      .copy(query = Query.fromVector(parseQueryParams(testCase.queryParams)))
+
     val pathAssert =
       assert.eql(
         receivedPathSegments,
@@ -92,7 +92,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     val queryAssert = assert.testCase.checkQueryParameters(
       testCase,
-      expectedUri.query.multiParams
+      expectedUri.query.pairs.groupBy(_._1).map { case (k, v) =>
+        k -> v.map(_._2).toList
+      }
     )
     val methodAssert = assert.eql(
       request.method.name.toLowerCase(),

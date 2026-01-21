@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package smithy4s
 package http.internals
 
-import cats.syntax.all._
 import smithy4s.Schema
 import smithy4s.time.Timestamp
 import smithy4s.example.HeadersStruct
@@ -26,7 +25,6 @@ import smithy4s.example.PathParams
 import smithy4s.example.Queries
 import smithy4s.example.QueriesWithDefaults
 import smithy4s.example.ValidationChecks
-import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
@@ -140,8 +138,28 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(str = Some("hello"))
     val finished =
       Queries(str = Some("hello"), slm = Some(Map("str" -> "hello")))
-    val expected = Metadata(query = Map("str" -> List("hello")))
+    val expected = Metadata.empty.addQueryParam("str", "hello")
     checkQueryRoundTrip(queries, expected, finished)
+  }
+
+  test("Valueless query parameter decodes as empty string for required field") {
+    val metadata = Metadata(query = Map("str" -> Seq(None)))
+    val decoded = Metadata.Decoder[Queries].decode(metadata)
+    expect(decoded.isRight)
+    expect(decoded.map(_.str) == Right(Some("")))
+  }
+
+  test("Empty value query parameter decodes as empty string") {
+    val metadata = Metadata(query = Map("str" -> Seq(Some(""))))
+    val decoded = Metadata.Decoder[Queries].decode(metadata)
+    expect(decoded.isRight)
+    expect(decoded.map(_.str) == Right(Some("")))
+  }
+
+  test("Distinguish valueless and empty value in Metadata representation") {
+    val metadataValueless = Metadata(query = Map("param" -> Seq(None)))
+    val metadataEmpty = Metadata(query = Map("param" -> Seq(Some(""))))
+    expect(metadataValueless != metadataEmpty)
   }
 
   // In this test the Metadata Decoder will allow NaN by creating a `Double.NaN` value.
@@ -149,7 +167,7 @@ class MetadataSpec() extends FunSuite {
   // which it uses
   test("Double NaN query parameter - allow NaN in decoder") {
     val queries = Queries(dbl = Some(Double.NaN))
-    val expected = Metadata(query = Map("dbl" -> List("NaN")))
+    val expected = Metadata.empty.addQueryParam("dbl", "NaN")
     val errorMessage =
       "Field dbl, found in Query parameter dbl, failed constraint checks with message: Numeric values must not be NaN or pos/neg infinity. Found NaN"
     checkQueryRoundTripError(queries, expected, errorMessage, allowNaN = true)
@@ -159,7 +177,7 @@ class MetadataSpec() extends FunSuite {
   // As such the RefinementProvider for Range will not be called in this test
   test("Double NaN query parameter - disallow NaN in decoder") {
     val queries = Queries(dbl = Some(Double.NaN))
-    val expected = Metadata(query = Map("dbl" -> List("NaN")))
+    val expected = Metadata.empty.addQueryParam("dbl", "NaN")
     val errorMessage =
       "NaN or pos/neg infinity are not allowed for inputs of type Double"
     checkQueryRoundTripError(queries, expected, errorMessage, allowNaN = false)
@@ -173,7 +191,7 @@ class MetadataSpec() extends FunSuite {
   test("String length constraint violation") {
     val string = "1" * 11
     val queries = ValidationChecks(str = Some(string))
-    val expected = Metadata(query = Map("str" -> List(string)))
+    val expected = Metadata.empty.addQueryParam("str", string)
     checkRoundTripError(
       queries,
       expected,
@@ -184,7 +202,7 @@ class MetadataSpec() extends FunSuite {
   test("List length constraint violation") {
     val list = List.fill(11)("str")
     val queries = ValidationChecks(lst = Some(list))
-    val expected = Metadata(query = Map("lst" -> list))
+    val expected = Metadata.empty.addMultipleQueryParams("lst", list)
     checkRoundTripError(
       queries,
       expected,
@@ -195,7 +213,7 @@ class MetadataSpec() extends FunSuite {
   test("Integer range constraint violation") {
     val i = 11
     val queries = ValidationChecks(int = Some(i))
-    val expected = Metadata(query = Map("int" -> List(i.toString)))
+    val expected = Metadata.empty.addQueryParam("int", i.toString)
     checkRoundTripError(
       queries,
       expected,
@@ -206,14 +224,14 @@ class MetadataSpec() extends FunSuite {
   test("Integer query parameter") {
     val queries = Queries(int = Some(123))
     val finished = Queries(int = Some(123), slm = Some(Map("int" -> "123")))
-    val expected = Metadata(query = Map("int" -> List("123")))
+    val expected = Metadata.empty.addQueryParam("int", "123")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
   test("Boolean query parameter") {
     val queries = Queries(b = Some(true))
     val finished = Queries(b = Some(true), slm = Some(Map("b" -> "true")))
-    val expected = Metadata(query = Map("b" -> List("true")))
+    val expected = Metadata.empty.addQueryParam("b", "true")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -222,7 +240,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts1 = Some(ts))
     val finished =
       Queries(ts1 = Some(ts), slm = Some(Map("ts1" -> epochString)))
-    val expected = Metadata(query = Map("ts1" -> List(epochString)))
+    val expected = Metadata.empty.addQueryParam("ts1", epochString)
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -231,7 +249,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts2 = Some(ts))
     val finished =
       Queries(ts2 = Some(ts), slm = Some(Map("ts2" -> epochString)))
-    val expected = Metadata(query = Map("ts2" -> List(epochString)))
+    val expected = Metadata.empty.addQueryParam("ts2", epochString)
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -240,7 +258,7 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(ts3 = Some(ts))
     val finished =
       Queries(ts3 = Some(ts), slm = Some(Map("ts3" -> "1234567890")))
-    val expected = Metadata(query = Map("ts3" -> List("1234567890")))
+    val expected = Metadata.empty.addQueryParam("ts3", "1234567890")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -252,7 +270,7 @@ class MetadataSpec() extends FunSuite {
       slm = Some(Map("ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"))
     )
     val expected =
-      Metadata(query = Map("ts4" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
+      Metadata.empty.addQueryParam("ts4", "Thu, 01 Jan 1970 00:00:00 GMT")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -260,7 +278,9 @@ class MetadataSpec() extends FunSuite {
     val map =
       Map("hello" -> "a", "world" -> "b")
     val queries = Queries(slm = Some(map))
-    val expected = Metadata(query = map.fmap(Seq(_)))
+    val expected = map.foldLeft(Metadata.empty) { case (md, (k, v)) =>
+      md.addQueryParam(k, v)
+    }
     checkRoundTrip(queries, expected)
   }
 
@@ -268,7 +288,7 @@ class MetadataSpec() extends FunSuite {
     val list = List("hello", "world")
     val queries = Queries(sl = Some(list))
     val finished = Queries(sl = Some(list), slm = Some(Map("sl" -> "hello")))
-    val expected = Metadata(query = Map("sl" -> list))
+    val expected = Metadata.empty.addMultipleQueryParams("sl", list)
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -279,7 +299,7 @@ class MetadataSpec() extends FunSuite {
       ie = Some(smithy4s.example.Numbers.ONE),
       slm = Some(Map("nums" -> "1"))
     )
-    val expected = Metadata(query = Map("nums" -> List("1")))
+    val expected = Metadata.empty.addQueryParam("nums", "1")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -290,7 +310,7 @@ class MetadataSpec() extends FunSuite {
       on = Some(smithy4s.example.OpenNums.$Unknown(101)),
       slm = Some(Map("openNums" -> "101"))
     )
-    val expected = Metadata(query = Map("openNums" -> List("101")))
+    val expected = Metadata.empty.addQueryParam("openNums", "101")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -301,7 +321,7 @@ class MetadataSpec() extends FunSuite {
       on = Some(smithy4s.example.OpenNums.ONE),
       slm = Some(Map("openNums" -> "1"))
     )
-    val expected = Metadata(query = Map("openNums" -> List("1")))
+    val expected = Metadata.empty.addQueryParam("openNums", "1")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -313,7 +333,7 @@ class MetadataSpec() extends FunSuite {
       ons = Some(smithy4s.example.OpenNumsStr.$Unknown("test")),
       slm = Some(Map("openNumsStr" -> "test"))
     )
-    val expected = Metadata(query = Map("openNumsStr" -> List("test")))
+    val expected = Metadata.empty.addQueryParam("openNumsStr", "test")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -324,7 +344,7 @@ class MetadataSpec() extends FunSuite {
       ons = Some(smithy4s.example.OpenNumsStr.ONE),
       slm = Some(Map("openNumsStr" -> "ONE"))
     )
-    val expected = Metadata(query = Map("openNumsStr" -> List("ONE")))
+    val expected = Metadata.empty.addQueryParam("openNumsStr", "ONE")
     checkQueryRoundTrip(queries, expected, finished)
   }
 
@@ -390,12 +410,9 @@ class MetadataSpec() extends FunSuite {
         "hello" -> "a",
         "world" -> "b"
       )
-    val expectedHeaders =
-      Map(
-        CaseInsensitive("foo-hello") -> List("a"),
-        CaseInsensitive("foo-world") -> List("b")
-      )
-    val expected = Metadata(headers = expectedHeaders)
+    val expected = map.foldLeft(Metadata.empty) { case (md, (k, v)) =>
+      md.addHeader(s"foo-$k", v)
+    }
     val headers = HeadersStruct(slm = Some(map))
     checkRoundTrip(headers, expected)
   }
@@ -481,7 +498,7 @@ class MetadataSpec() extends FunSuite {
 
   test("bad data gets caught") {
     val metadata =
-      Metadata(query = Map("ts3" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
+      Metadata.empty.addQueryParam("ts3", "Thu, 01 Jan 1970 00:00:00 GMT")
     val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.WrongType(
       "ts3",
@@ -504,7 +521,7 @@ class MetadataSpec() extends FunSuite {
 
   test("too many parameters get caught") {
     val metadata =
-      Metadata(query = Map("ts3" -> List("1", "2", "3")))
+      Metadata.empty.addMultipleQueryParams("ts3", List("1", "2", "3"))
     val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.ArityError(
       "ts3",

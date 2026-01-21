@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import smithy4s.schema.FieldFilter
   */
 case class Metadata(
     path: Map[String, String] = Map.empty,
-    query: Map[String, Seq[String]] = Map.empty,
+    query: Map[String, Seq[Option[String]]] = Map.empty,
     headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
     statusCode: Option[Int] = None
 ) { self =>
@@ -50,9 +50,10 @@ case class Metadata(
       v.map(k -> _)
     }
 
-  def queryFlattened: Vector[(String, String)] = query.toVector.flatMap {
-    case (k, v) => v.map(k -> _)
-  }
+  def queryFlattened: Vector[(String, Option[String])] =
+    query.toVector.flatMap { case (k, v) =>
+      v.map(k -> _)
+    }
 
   def addHeader(ciKey: CaseInsensitive, value: String): Metadata = {
     headers.get(ciKey) match {
@@ -67,17 +68,28 @@ case class Metadata(
   }
   def addPathParam(key: String, value: String): Metadata =
     copy(path = path + (key -> value))
-  def addQueryParam(key: String, value: String): Metadata =
+
+  def addQueryParamOpt(key: String, value: Option[String]): Metadata =
     query.get(key) match {
       case Some(existing) =>
         copy(query = query + (key -> (existing :+ value)))
       case None => copy(query = query + (key -> List(value)))
     }
+  def addQueryParam(key: String, value: String): Metadata =
+    addQueryParamOpt(key, Some(value))
+
   def addQueryParamsIfNoExist(key: String, values: String*): Metadata =
+    addQueryParamsIfNotExistOpt(key, values.map(Some(_)): _*)
+
+  def addQueryParamsIfNotExistOpt(
+      key: String,
+      values: Option[String]*
+  ): Metadata =
     query.get(key) match {
       case Some(_) => self
       case None    => copy(query = query + (key -> values.toList))
     }
+
   def addMultipleHeaders(
       ciKey: CaseInsensitive,
       value: List[String]
@@ -92,6 +104,12 @@ case class Metadata(
     addMultipleHeaders(CaseInsensitive(key), value)
 
   def addMultipleQueryParams(key: String, value: List[String]): Metadata =
+    addMultipleQueryParamsOpt(key, value.map(Some(_)))
+
+  def addMultipleQueryParamsOpt(
+      key: String,
+      value: List[Option[String]]
+  ): Metadata =
     query.get(key) match {
       case Some(existing) =>
         copy(query = query + (key -> (existing ++ value)))
@@ -120,20 +138,35 @@ case class Metadata(
     )
   }
 
-  def find(location: HttpBinding): Option[(String, List[String])] =
+  /**
+   * Finds metadata values for a given HTTP binding location.
+   *
+   * Returns BindingValues if the binding exists:
+   * - For query parameters: head can be None (valueless param like ?foo) or Some(value) (like ?foo=bar)
+   * - For headers: head is always Some(value) since headers cannot be valueless
+   * - For path parameters: returns a single value with empty tail list
+   *
+   * @param location The HTTP binding location to look up (header, query, or path)
+   * @return None if binding not found, otherwise Some(BindingValues)
+   */
+  def find(
+      location: HttpBinding
+  ): Option[Metadata.BindingValues] =
     location match {
       case HttpBinding.HeaderBinding(httpName) =>
         headers.get(httpName).flatMap {
-          case head :: tl => Some((head, tl))
-          case Nil        => None
+          case head :: tl =>
+            Some(Metadata.BindingValues(Some(head), tl.map(Some(_))))
+          case Nil => None
         }
       case HttpBinding.QueryBinding(httpName) =>
         query.get(httpName).flatMap {
-          case head :: tl => Some((head, tl))
+          case head :: tl => Some(Metadata.BindingValues(head, tl))
           case Nil        => None
         }
-      case HttpBinding.PathBinding(httpName) => path.get(httpName).map(_ -> Nil)
-      case _                                 => None
+      case HttpBinding.PathBinding(httpName) =>
+        path.get(httpName).map(v => Metadata.BindingValues(Some(v), Nil))
+      case _ => None
     }
 }
 
@@ -143,6 +176,32 @@ object Metadata {
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
 
   val empty = Metadata(Map.empty, Map.empty, Map.empty)
+
+  /**
+   * Represents values found for a specific HTTP binding location.
+   *
+   * @param head The first value. Can be None for valueless query parameters (e.g., ?foo),
+   *             or Some(value) for parameters with values (e.g., ?foo=bar).
+   *             Always Some for headers and path parameters.
+   * @param tail Additional values for multi-valued parameters. Each value is wrapped in Option
+   *             to support valueless query parameters in lists.
+   */
+  final class BindingValues(
+      val head: Option[String],
+      val tail: List[Option[String]]
+  )
+
+  object BindingValues {
+    def apply(
+        head: Option[String],
+        tail: List[Option[String]]
+    ): BindingValues = new BindingValues(head, tail)
+
+    def unapply(
+        bv: BindingValues
+    ): Option[(Option[String], List[Option[String]])] =
+      Some((bv.head, bv.tail))
+  }
 
   trait Access {
     def metadata: Metadata

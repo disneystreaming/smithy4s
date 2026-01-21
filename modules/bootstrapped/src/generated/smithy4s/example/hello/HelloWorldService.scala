@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -19,7 +21,6 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   /** HTTP POST /{name} */
   def hello(name: String, town: Option[String] = None): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
 }
 
 object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWorldServiceOperation] {
@@ -55,6 +56,18 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
   type HelloError = HelloWorldServiceOperation.HelloError
   val HelloError = HelloWorldServiceOperation.HelloError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[HelloWorldServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[HelloWorldServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[HelloWorldServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[HelloWorldServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: HelloWorldServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -70,7 +83,7 @@ object HelloWorldServiceOperation {
     def hello(name: String, town: Option[String] = None): Hello = Hello(Person(name, town))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def hello(name: String, town: Option[String] = None): P1[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = f[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing](alg.hello(name, town))
+    def hello(name: String, town: Option[String] = None): P1[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = f[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing](this.alg.hello(name, town))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {

@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -18,7 +20,6 @@ trait LibraryGen[F[_, _, _, _, _]] {
   def getBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
   def buyBook(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of[LibraryGen[F]](this)
 }
 
 object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
@@ -51,6 +52,18 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[LibraryOperation, P]): LibraryGen[P] = new LibraryOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = LibraryOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[LibraryGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[LibraryGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[LibraryGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[LibraryGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: LibraryGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[LibraryGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait LibraryOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -68,9 +81,9 @@ object LibraryOperation {
     def buyBook(): BuyBook = BuyBook()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: LibraryGen[P], f: PolyFunction5[P, P1]) extends LibraryGen[P1] {
-    def listPublishers(): P1[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](alg.listPublishers())
-    def getBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.getBook())
-    def buyBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.buyBook())
+    def listPublishers(): P1[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = f[Unit, Nothing, ListPublishersOutput, Nothing, Nothing](this.alg.listPublishers())
+    def getBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.getBook())
+    def buyBook(): P1[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](this.alg.buyBook())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: LibraryGen[P]): PolyFunction5[LibraryOperation, P] = new PolyFunction5[LibraryOperation, P] {

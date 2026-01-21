@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -15,7 +17,6 @@ trait GreetServiceGen[F[_, _, _, _, _]] {
 
   def greet(name: String): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](this)
 }
 
 object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperation] {
@@ -46,6 +47,18 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[GreetServiceOperation, P]): GreetServiceGen[P] = new GreetServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = GreetServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[GreetServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[GreetServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[GreetServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[GreetServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: GreetServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -61,7 +74,7 @@ object GreetServiceOperation {
     def greet(name: String): Greet = Greet(GreetInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: GreetServiceGen[P], f: PolyFunction5[P, P1]) extends GreetServiceGen[P1] {
-    def greet(name: String): P1[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
+    def greet(name: String): P1[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](this.alg.greet(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = new PolyFunction5[GreetServiceOperation, P] {

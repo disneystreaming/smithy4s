@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package schema
+package schematests
 
 import munit._
 import Schema._
@@ -55,4 +55,22 @@ final class SchemaSpec extends FunSuite {
     assertEquals(field1, field2)
   }
 
+  test("ErrorSchema can be created by users using a partial function") {
+    val s = string
+
+    s.error(E(_)) { case E(s) => s }
+  }
+
+  test("ErrorSchema can be created by users using an optional function") {
+    val s = string
+
+    val f: Throwable => Option[String] = {
+      case E(s) => Some(s)
+      case _    => None
+    }
+
+    s.asError(E(_))(f)
+  }
+
+  case class E(s: String) extends Throwable
 }

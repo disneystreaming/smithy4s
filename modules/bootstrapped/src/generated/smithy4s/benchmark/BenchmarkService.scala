@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -19,7 +21,6 @@ trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   /** HTTP POST /complex/{bucketName}/{key} */
   def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
 }
 
 object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkServiceOperation] {
@@ -53,6 +54,18 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BenchmarkServiceOperation, P]): BenchmarkServiceGen[P] = new BenchmarkServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = BenchmarkServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[BenchmarkServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[BenchmarkServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[BenchmarkServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[BenchmarkServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: BenchmarkServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -69,8 +82,8 @@ object BenchmarkServiceOperation {
     def createObject(key: String, bucketName: String, payload: S3Object): CreateObject = CreateObject(CreateObjectInput(key, bucketName, payload))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BenchmarkServiceGen[P], f: PolyFunction5[P, P1]) extends BenchmarkServiceGen[P1] {
-    def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
-    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String): P1[SendStringInput, Nothing, Unit, Nothing, Nothing] = f[SendStringInput, Nothing, Unit, Nothing, Nothing](this.alg.sendString(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object): P1[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](this.alg.createObject(key, bucketName, payload))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = new PolyFunction5[BenchmarkServiceOperation, P] {

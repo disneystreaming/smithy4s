@@ -8,6 +8,8 @@ import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -22,7 +24,6 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
   /** HTTP GET /test */
   def importOperation(): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](this)
 }
 
 object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
@@ -57,6 +58,18 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[ImportServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[ImportServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[ImportServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[ImportServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: ImportServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -72,7 +85,7 @@ object ImportServiceOperation {
     def importOperation(): ImportOperation = ImportOperation()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]) extends ImportServiceGen[P1] {
-    def importOperation(): P1[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
+    def importOperation(): P1[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](this.alg.importOperation())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = new PolyFunction5[ImportServiceOperation, P] {

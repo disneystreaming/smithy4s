@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -19,7 +21,6 @@ trait ServiceWithNullsAndDefaultsGen[F[_, _, _, _, _]] {
   /** HTTP POST /timestamp-operation */
   def timestampOperation(input: TimestampOperationInput): F[TimestampOperationInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of[ServiceWithNullsAndDefaultsGen[F]](this)
 }
 
 object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndDefaultsGen, ServiceWithNullsAndDefaultsOperation] {
@@ -53,6 +54,18 @@ object ServiceWithNullsAndDefaultsGen extends Service.Mixin[ServiceWithNullsAndD
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ServiceWithNullsAndDefaultsOperation, P]): ServiceWithNullsAndDefaultsGen[P] = new ServiceWithNullsAndDefaultsOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = ServiceWithNullsAndDefaultsOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[ServiceWithNullsAndDefaultsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[ServiceWithNullsAndDefaultsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[ServiceWithNullsAndDefaultsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[ServiceWithNullsAndDefaultsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: ServiceWithNullsAndDefaultsGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[ServiceWithNullsAndDefaultsGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait ServiceWithNullsAndDefaultsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -69,8 +82,8 @@ object ServiceWithNullsAndDefaultsOperation {
     def timestampOperation(input: TimestampOperationInput): TimestampOperation = TimestampOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ServiceWithNullsAndDefaultsGen[P], f: PolyFunction5[P, P1]) extends ServiceWithNullsAndDefaultsGen[P1] {
-    def defaultNullsOperation(input: DefaultNullsOperationInput): P1[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = f[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing](alg.defaultNullsOperation(input))
-    def timestampOperation(input: TimestampOperationInput): P1[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = f[TimestampOperationInput, Nothing, Unit, Nothing, Nothing](alg.timestampOperation(input))
+    def defaultNullsOperation(input: DefaultNullsOperationInput): P1[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing] = f[DefaultNullsOperationInput, Nothing, DefaultNullsOperationOutput, Nothing, Nothing](this.alg.defaultNullsOperation(input))
+    def timestampOperation(input: TimestampOperationInput): P1[TimestampOperationInput, Nothing, Unit, Nothing, Nothing] = f[TimestampOperationInput, Nothing, Unit, Nothing, Nothing](this.alg.timestampOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ServiceWithNullsAndDefaultsGen[P]): PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] = new PolyFunction5[ServiceWithNullsAndDefaultsOperation, P] {

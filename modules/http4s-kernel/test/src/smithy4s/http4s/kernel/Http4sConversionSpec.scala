@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ object Http4sConversionSpec extends SimpleIOSuite {
       host = "example.com",
       port = None,
       path = IndexedSeq.empty,
-      queryParams = Map.empty,
+      queryParams = IndexedSeq.empty,
       pathParams = None
     )
 }

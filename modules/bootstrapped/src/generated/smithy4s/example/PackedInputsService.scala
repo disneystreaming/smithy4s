@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -16,7 +18,6 @@ trait PackedInputsServiceGen[F[_, _, _, _, _]] {
 
   def packedInputOperation(input: PackedInput): F[PackedInput, Nothing, Unit, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of[PackedInputsServiceGen[F]](this)
 }
 
 object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, PackedInputsServiceOperation] {
@@ -47,6 +48,18 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[PackedInputsServiceOperation, P]): PackedInputsServiceGen[P] = new PackedInputsServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = PackedInputsServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[PackedInputsServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[PackedInputsServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[PackedInputsServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[PackedInputsServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: PackedInputsServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[PackedInputsServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait PackedInputsServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -62,7 +75,7 @@ object PackedInputsServiceOperation {
     def packedInputOperation(input: PackedInput): PackedInputOperation = PackedInputOperation(input)
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PackedInputsServiceGen[P], f: PolyFunction5[P, P1]) extends PackedInputsServiceGen[P1] {
-    def packedInputOperation(input: PackedInput): P1[PackedInput, Nothing, Unit, Nothing, Nothing] = f[PackedInput, Nothing, Unit, Nothing, Nothing](alg.packedInputOperation(input))
+    def packedInputOperation(input: PackedInput): P1[PackedInput, Nothing, Unit, Nothing, Nothing] = f[PackedInput, Nothing, Unit, Nothing, Nothing](this.alg.packedInputOperation(input))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PackedInputsServiceGen[P]): PolyFunction5[PackedInputsServiceOperation, P] = new PolyFunction5[PackedInputsServiceOperation, P] {

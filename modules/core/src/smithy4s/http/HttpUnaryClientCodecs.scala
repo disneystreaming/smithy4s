@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ object HttpUnaryClientCodecs {
       requestTransformation = F.pure(_),
       responseTransformation = F.pure(_),
       hostPrefixInjection = true,
-      smithyPathEncoding = false
+      smithyPathEncoding = false,
+      acceptMediaType = "*/*"
     )
 
   trait Builder[F[_], Request, Response] {
@@ -62,6 +63,7 @@ object HttpUnaryClientCodecs {
     def withRawStringsAndBlobsPayloads: Builder[F, Request, Response]
     def withWriteEmptyStructs(cond: Schema[_] => Boolean): Builder[F, Request, Response]
     def withRequestMediaType(mediaType: String): Builder[F, Request, Response]
+    def withAcceptMediaType(mediaType: String): Builder[F, Request, Response]
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response]
@@ -87,7 +89,8 @@ object HttpUnaryClientCodecs {
       requestTransformation: HttpRequest[Blob] => F[Request],
       responseTransformation: Response => F[HttpResponse[Blob]],
       hostPrefixInjection: Boolean,
-      smithyPathEncoding: Boolean
+      smithyPathEncoding: Boolean,
+      acceptMediaType: String
   )(implicit F: MonadThrowLike[F])
       extends Builder[F, Request, Response] {
     def withOperationPreprocessor(fk: PolyFunction5[OperationSchema, OperationSchema]): Builder[F, Request, Response] =
@@ -112,6 +115,9 @@ object HttpUnaryClientCodecs {
       copy(writeEmptyStructs = cond)
     def withRequestMediaType(mediaType: String): Builder[F, Request, Response] =
       copy(requestMediaType = mediaType)
+
+    def withAcceptMediaType(mediaType: String): Builder[F, Request, Response] =
+      copy(acceptMediaType = mediaType)
 
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response] =
       copy(requestTransformation = requestTransformation.andThen(F.flatMap(_)(f)))
@@ -211,8 +217,30 @@ object HttpUnaryClientCodecs {
               case None => inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
             }
 
+          val acceptHeaderWriter: HttpRequest.Writer[Blob, I] = {
+            if (rawStringsAndBlobPayloads) {
+              val maybeMediaType: Option[HttpMediaType] = HttpRestSchema(endpoint.output) match {
+                case HttpRestSchema.OnlyBody(schema)               => HttpMediaType.fromSchema(schema)
+                case HttpRestSchema.MetadataAndBody(_, bodySchema) => HttpMediaType.fromSchema(bodySchema)
+                case _                                             => None
+              }
+
+              maybeMediaType match {
+                case Some(mediaType) =>
+                  Writer.lift((req: HttpRequest[Blob], _: I) => req.withAccept(mediaType.value))
+                case None =>
+                  Writer.lift((req: HttpRequest[Blob], _: I) => req.withAccept(acceptMediaType))
+              }
+            } else {
+              Writer.lift((req: HttpRequest[Blob], _: I) => req.withAccept(acceptMediaType))
+            }
+          }
+
+          val inputWriterWithAccept: HttpRequest.Writer[Blob, I] = inputWriter.combine(acceptHeaderWriter)
+
           val prefixedInputWriter: HttpRequest.Writer[Blob, I] =
-            if (hostPrefixInjection) inputWriter.combine(HttpRequest.Writer.hostPrefix(endpoint)) else inputWriter
+            if (hostPrefixInjection) inputWriterWithAccept.combine(HttpRequest.Writer.hostPrefix(endpoint))
+            else inputWriterWithAccept
 
           val inputEncoder = (i: I) => F.map(baseRequest(endpoint))(prefixedInputWriter.write(_, i))
 

@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.ErrorSchema
@@ -23,7 +25,6 @@ trait WeatherGen[F[_, _, _, _, _]] {
   def getForecast(cityId: CityId): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing]
   def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](this)
 }
 
 object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
@@ -62,6 +63,18 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
 
   type GetCityError = WeatherOperation.GetCityError
   val GetCityError = WeatherOperation.GetCityError
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[WeatherGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[WeatherGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[WeatherGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[WeatherGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: WeatherGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait WeatherOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -80,10 +93,10 @@ object WeatherOperation {
     def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): ListCities = ListCities(ListCitiesInput(nextToken, pageSize))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherGen[P], f: PolyFunction5[P, P1]) extends WeatherGen[P1] {
-    def getCurrentTime(): P1[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](alg.getCurrentTime())
-    def getCity(cityId: CityId): P1[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](alg.getCity(cityId))
-    def getForecast(cityId: CityId): P1[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](alg.getForecast(cityId))
-    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): P1[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
+    def getCurrentTime(): P1[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](this.alg.getCurrentTime())
+    def getCity(cityId: CityId): P1[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](this.alg.getCity(cityId))
+    def getForecast(cityId: CityId): P1[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](this.alg.getForecast(cityId))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): P1[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](this.alg.listCities(nextToken, pageSize))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherGen[P]): PolyFunction5[WeatherOperation, P] = new PolyFunction5[WeatherOperation, P] {

@@ -5,6 +5,8 @@ import smithy4s.Hints
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 
@@ -12,7 +14,6 @@ trait MyThingGen[F[_, _, _, _, _]] {
   self =>
 
 
-  final def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](this)
 }
 
 object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
@@ -43,6 +44,18 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[MyThingOperation, P]): MyThingGen[P] = new MyThingOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: MyThingGen[P]): PolyFunction5[MyThingOperation, P] = MyThingOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[MyThingGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[MyThingGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[MyThingGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[MyThingGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: MyThingGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait MyThingOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

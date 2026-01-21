@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -22,7 +24,6 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
   /** This operation uses {@literal @}streaming on the output (data). */
   def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
-  final def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
 }
 
 object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] {
@@ -55,6 +56,18 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[StreamedObjectsOperation, P]): StreamedObjectsGen[P] = new StreamedObjectsOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[StreamedObjectsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[StreamedObjectsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[StreamedObjectsGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[StreamedObjectsGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: StreamedObjectsGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -72,9 +85,9 @@ object StreamedObjectsOperation {
     def getStreamedObject(key: String): GetStreamedObject = GetStreamedObject(GetStreamedObjectInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: StreamedObjectsGen[P], f: PolyFunction5[P, P1]) extends StreamedObjectsGen[P1] {
-    def putStreamedObject(key: String): P1[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject(key))
-    def putAndGetStreamedObject(key: String): P1[PutStreamedObjectInput, Nothing, GetStreamedObjectOutput, StreamedBlob, StreamedBlob] = f[PutStreamedObjectInput, Nothing, GetStreamedObjectOutput, StreamedBlob, StreamedBlob](alg.putAndGetStreamedObject(key))
-    def getStreamedObject(key: String): P1[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject(key))
+    def putStreamedObject(key: String): P1[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](this.alg.putStreamedObject(key))
+    def putAndGetStreamedObject(key: String): P1[PutStreamedObjectInput, Nothing, GetStreamedObjectOutput, StreamedBlob, StreamedBlob] = f[PutStreamedObjectInput, Nothing, GetStreamedObjectOutput, StreamedBlob, StreamedBlob](this.alg.putAndGetStreamedObject(key))
+    def getStreamedObject(key: String): P1[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](this.alg.getStreamedObject(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = new PolyFunction5[StreamedObjectsOperation, P] {

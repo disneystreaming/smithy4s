@@ -6,6 +6,8 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.OperationSchema
@@ -16,7 +18,6 @@ trait WeatherServiceGen[F[_, _, _, _, _]] {
   /** HTTP GET /weather/{city} */
   def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
-  final def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
 }
 
 object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherServiceOperation] {
@@ -49,6 +50,18 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[WeatherServiceOperation, P]): WeatherServiceGen[P] = new WeatherServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = WeatherServiceOperation.toPolyFunction(impl)
 
+
+  implicit final class TransformFunctorOps[F[_]](private val alg: FunctorAlgebra[WeatherServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[FunctorAlgebra[WeatherServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformBifunctorOps[F[_, _]](private val alg: BiFunctorAlgebra[WeatherServiceGen, F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[BiFunctorAlgebra[WeatherServiceGen, F]] = Transformation.of(alg)
+  }
+
+  implicit final class TransformOps[F[_, _, _, _, _]](private val alg: WeatherServiceGen[F]) extends AnyVal {
+    def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of(alg)
+  }
 }
 
 sealed trait WeatherServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
@@ -64,7 +77,7 @@ object WeatherServiceOperation {
     def getWeather(city: String): GetWeather = GetWeather(GetWeatherInput(city))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherServiceGen[P], f: PolyFunction5[P, P1]) extends WeatherServiceGen[P1] {
-    def getWeather(city: String): P1[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
+    def getWeather(city: String): P1[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](this.alg.getWeather(city))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = new PolyFunction5[WeatherServiceOperation, P] {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
 
 public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBuilder<ScalaImportsTrait> {
 
-
 	public static final ShapeId ID = ShapeId.from("smithy4s.meta#scalaImports");
 
 	private final List<String> imports;
@@ -51,7 +50,7 @@ public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBu
 	@Override
 	protected Node createNode() {
 		ArrayNode.Builder builder = ArrayNode.builder();
-    getImports().forEach(s -> builder.withValue(s));
+		getImports().forEach(s -> builder.withValue(s));
 		return builder.build();
 	}
 
@@ -92,7 +91,8 @@ public final class ScalaImportsTrait extends AbstractTrait implements ToSmithyBu
 		@Override
 		public ScalaImportsTrait createTrait(ShapeId target, Node value) {
 			ArrayNode arrayNode = value.expectArrayNode();
-			List<String> imports = arrayNode.getElements().stream().map(node -> node.expectStringNode().getValue()).collect(Collectors.toList());
+			List<String> imports = arrayNode.getElements().stream().map(node -> node.expectStringNode().getValue())
+					.collect(Collectors.toList());
 			return builder().sourceLocation(value).imports(imports).build();
 		}
 

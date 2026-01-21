@@ -7,6 +7,10 @@ Thank you!
 
 # 0.19.0
 
+## Move `transform` from algebra traits into extension methods
+
+The `transform` method that used to be generated as a `final def` in the service algebras, is now available as an extension method. For Scala 2.12 compatibility, we generate an additional variant for `F[_]`-shaped instances and `F[_, _]`-shaped instances, in addition to the default one with `F[_, _, _, _, _]`. [#1735](https://github.com/disneystreaming/smithy4s/pull/1735/)
+
 ## Add OptionalTag
 
 Add `OptionalTag` trait and add the tag to `Schema.OptionSchema` to allow Option-like types to be efficiently created.
@@ -70,8 +74,17 @@ The behavior of `@default(null)` has changed to better align with Smithy semanti
 ## `Bijection` does no longer extends `Function` in [#1794](https://github.com/disneystreaming/smithy4s/pull/1794)
 Prevents using it as an implicit conversion in Scala 2
 
+# 0.18.46
+
+* core: Set the Accept header via the HttpUnaryClientCodecs  (see [#1864](https://github.com/disneystreaming/smithy4s/pull/1864))
+
+# 0.18.45
+
+* Avoid an overloaded method issue in calls to `Schema#error` in [#1861](https://github.com/disneystreaming/smithy4s/pull/1861)
+
 # 0.18.44
 
+* Avoid a name shadowing issue in which an operation with an `alg` parameter would cause compilation errors in generated code in [#1859](https://github.com/disneystreaming/smithy4s/pull/1859).
 * Avoid an issue in which `SurfaceError` transformations would throw a `MatchError` upon being called for an operation that doesn't declare errors in [#1846](https://github.com/disneystreaming/smithy4s/pull/1846).
 * Add option to configure Dynamic Hint Bindings via Smithy metadata in [#1848](https://github.com/disneystreaming/smithy4s/pull/1848)
 

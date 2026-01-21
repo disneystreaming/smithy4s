@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2025 Disney Streaming
+ *  Copyright 2021-2026 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ final class HttpRequestSpec extends FunSuite {
       "example.com",
       None,
       IndexedSeq.empty,
-      Map.empty,
+      IndexedSeq.empty,
       None
     )
     val request = HttpRequest(HttpMethod.GET, uri, Map.empty, "")
