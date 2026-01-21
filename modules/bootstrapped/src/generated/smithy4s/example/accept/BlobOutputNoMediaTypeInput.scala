@@ -13,13 +13,13 @@ object BlobOutputNoMediaTypeInput extends ShapeTag.Companion[BlobOutputNoMediaTy
   val id: ShapeId = ShapeId("smithy4s.example.accept", "BlobOutputNoMediaTypeInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(data: Option[String]): BlobOutputNoMediaTypeInput = BlobOutputNoMediaTypeInput(data)
 
   implicit val schema: Schema[BlobOutputNoMediaTypeInput] = struct(
-    string.optional[BlobOutputNoMediaTypeInput]("data", _.data).addHints(smithy.api.HttpPayload()),
+    string.optional[BlobOutputNoMediaTypeInput]("data", _.data).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

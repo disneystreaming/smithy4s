@@ -15,13 +15,13 @@ object XmlOutputOutput extends ShapeTag.Companion[XmlOutputOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.accept", "XmlOutputOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(result: Option[XmlPayload]): XmlOutputOutput = XmlOutputOutput(result)
 
   implicit val schema: Schema[XmlOutputOutput] = struct(
-    XmlPayload.schema.optional[XmlOutputOutput]("result", _.result).addHints(smithy.api.HttpPayload()),
+    XmlPayload.schema.optional[XmlOutputOutput]("result", _.result).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

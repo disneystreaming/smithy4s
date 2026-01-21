@@ -13,8 +13,8 @@ object DefaultAcceptHeaderInput extends ShapeTag.Companion[DefaultAcceptHeaderIn
   val id: ShapeId = ShapeId("smithy4s.example.accept", "DefaultAcceptHeaderInput")
 
   val hints: Hints = Hints(
-    smithy.api.Input(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "input"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(data: Option[String]): DefaultAcceptHeaderInput = DefaultAcceptHeaderInput(data)

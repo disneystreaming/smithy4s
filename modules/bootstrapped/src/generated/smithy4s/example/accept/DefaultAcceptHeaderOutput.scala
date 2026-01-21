@@ -13,13 +13,13 @@ object DefaultAcceptHeaderOutput extends ShapeTag.Companion[DefaultAcceptHeaderO
   val id: ShapeId = ShapeId("smithy4s.example.accept", "DefaultAcceptHeaderOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(result: Option[String]): DefaultAcceptHeaderOutput = DefaultAcceptHeaderOutput(result)
 
   implicit val schema: Schema[DefaultAcceptHeaderOutput] = struct(
-    string.optional[DefaultAcceptHeaderOutput]("result", _.result).addHints(smithy.api.HttpPayload()),
+    string.optional[DefaultAcceptHeaderOutput]("result", _.result).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

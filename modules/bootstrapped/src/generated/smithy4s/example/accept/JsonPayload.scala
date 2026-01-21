@@ -11,9 +11,9 @@ import smithy4s.schema.Schema.string
 object JsonPayload extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example.accept", "JsonPayload")
   val hints: Hints = Hints(
-    smithy.api.Documentation("JSON payload type"),
-    smithy.api.MediaType("application/json"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("JSON payload type")),
+    Hints.dynamic(ShapeId("smithy.api", "mediaType"), smithy4s.Document.fromString("application/json")),
+  )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[JsonPayload] = bijection(underlyingSchema, asBijection)
 }

@@ -15,13 +15,13 @@ object JsonInputXmlOutputOutput extends ShapeTag.Companion[JsonInputXmlOutputOut
   val id: ShapeId = ShapeId("smithy4s.example.accept", "JsonInputXmlOutputOutput")
 
   val hints: Hints = Hints(
-    smithy.api.Output(),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "output"), smithy4s.Document.obj()),
+  )
 
   // constructor using the original order from the spec
   private def make(result: Option[XmlPayload]): JsonInputXmlOutputOutput = JsonInputXmlOutputOutput(result)
 
   implicit val schema: Schema[JsonInputXmlOutputOutput] = struct(
-    XmlPayload.schema.optional[JsonInputXmlOutputOutput]("result", _.result).addHints(smithy.api.HttpPayload()),
+    XmlPayload.schema.optional[JsonInputXmlOutputOutput]("result", _.result).addHints(Hints.dynamic(ShapeId("smithy.api", "httpPayload"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

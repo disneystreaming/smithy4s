@@ -11,9 +11,9 @@ import smithy4s.schema.Schema.string
 object XmlPayload extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example.accept", "XmlPayload")
   val hints: Hints = Hints(
-    smithy.api.Documentation("XML payload type"),
-    smithy.api.MediaType("application/xml"),
-  ).lazily
+    Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("XML payload type")),
+    Hints.dynamic(ShapeId("smithy.api", "mediaType"), smithy4s.Document.fromString("application/xml")),
+  )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[XmlPayload] = bijection(underlyingSchema, asBijection)
 }

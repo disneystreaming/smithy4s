@@ -52,8 +52,8 @@ object AcceptHeaderTestServiceGen extends Service.Mixin[AcceptHeaderTestServiceG
   val version: String = ""
 
   val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  ).lazily
+    Hints.dynamic(ShapeId("alloy", "simpleRestJson"), smithy4s.Document.obj()),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -130,7 +130,7 @@ object AcceptHeaderTestServiceOperation {
     val schema: OperationSchema[DefaultAcceptHeaderInput, Nothing, DefaultAcceptHeaderOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.accept", "DefaultAcceptHeader"))
       .withInput(DefaultAcceptHeaderInput.schema)
       .withOutput(DefaultAcceptHeaderOutput.schema)
-      .withHints(smithy.api.Documentation("Operation with no media types - should use default Accept header"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/default"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Operation with no media types - should use default Accept header")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/default"))))
     def wrap(input: DefaultAcceptHeaderInput): DefaultAcceptHeader = DefaultAcceptHeader(input)
   }
   final case class XmlOutput(input: XmlOutputInput) extends AcceptHeaderTestServiceOperation[XmlOutputInput, Nothing, XmlOutputOutput, Nothing, Nothing] {
@@ -142,7 +142,7 @@ object AcceptHeaderTestServiceOperation {
     val schema: OperationSchema[XmlOutputInput, Nothing, XmlOutputOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.accept", "XmlOutput"))
       .withInput(XmlOutputInput.schema)
       .withOutput(XmlOutputOutput.schema)
-      .withHints(smithy.api.Documentation("Operation with XML output media type"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/xml-output"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Operation with XML output media type")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/xml-output"))))
     def wrap(input: XmlOutputInput): XmlOutput = XmlOutput(input)
   }
   final case class BlobOutputNoMediaType(input: BlobOutputNoMediaTypeInput) extends AcceptHeaderTestServiceOperation[BlobOutputNoMediaTypeInput, Nothing, BlobOutputNoMediaTypeOutput, Nothing, Nothing] {
@@ -154,7 +154,7 @@ object AcceptHeaderTestServiceOperation {
     val schema: OperationSchema[BlobOutputNoMediaTypeInput, Nothing, BlobOutputNoMediaTypeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.accept", "BlobOutputNoMediaType"))
       .withInput(BlobOutputNoMediaTypeInput.schema)
       .withOutput(BlobOutputNoMediaTypeOutput.schema)
-      .withHints(smithy.api.Documentation("Operation with Blob output without media type"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/blob-no-media"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Operation with Blob output without media type")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/blob-no-media"))))
     def wrap(input: BlobOutputNoMediaTypeInput): BlobOutputNoMediaType = BlobOutputNoMediaType(input)
   }
   final case class BlobOutputWithMediaType(input: BlobOutputWithMediaTypeInput) extends AcceptHeaderTestServiceOperation[BlobOutputWithMediaTypeInput, Nothing, BlobOutputWithMediaTypeOutput, Nothing, Nothing] {
@@ -166,7 +166,7 @@ object AcceptHeaderTestServiceOperation {
     val schema: OperationSchema[BlobOutputWithMediaTypeInput, Nothing, BlobOutputWithMediaTypeOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.accept", "BlobOutputWithMediaType"))
       .withInput(BlobOutputWithMediaTypeInput.schema)
       .withOutput(BlobOutputWithMediaTypeOutput.schema)
-      .withHints(smithy.api.Documentation("Operation with Blob output that has media type"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/blob-with-media"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Operation with Blob output that has media type")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/blob-with-media"))))
     def wrap(input: BlobOutputWithMediaTypeInput): BlobOutputWithMediaType = BlobOutputWithMediaType(input)
   }
   final case class JsonInputXmlOutput(input: JsonInputXmlOutputInput) extends AcceptHeaderTestServiceOperation[JsonInputXmlOutputInput, Nothing, JsonInputXmlOutputOutput, Nothing, Nothing] {
@@ -178,7 +178,7 @@ object AcceptHeaderTestServiceOperation {
     val schema: OperationSchema[JsonInputXmlOutputInput, Nothing, JsonInputXmlOutputOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.accept", "JsonInputXmlOutput"))
       .withInput(JsonInputXmlOutputInput.schema)
       .withOutput(JsonInputXmlOutputOutput.schema)
-      .withHints(smithy.api.Documentation("Operation with different media types for input and output"), smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/json-xml"), code = 200))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Operation with different media types for input and output")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/json-xml"))))
     def wrap(input: JsonInputXmlOutputInput): JsonInputXmlOutput = JsonInputXmlOutput(input)
   }
 }
