@@ -97,7 +97,9 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
   val jsonDecoders =
     smithy4s.json.Json.payloadCodecs.withJsoniterCodecCompiler {
-      smithy4s.json.Json.jsoniter.withMapOrderPreservation(true)
+      smithy4s.json.Json.jsoniter
+        .withMapOrderPreservation(true)
+        .withMaxArity(Int.MaxValue)
     }.decoders
 
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
