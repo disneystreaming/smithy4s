@@ -205,7 +205,7 @@ object HttpUnaryClientCodecs {
             HttpEndpoint.cast(endpoint).toOption match {
               case Some(httpEndpoint) => {
                 val httpInputEncoder =
-                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint)
+                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint, smithyPathEncoding)
                 val requestEncoder =
                   inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
                 httpInputEncoder.combine(requestEncoder)

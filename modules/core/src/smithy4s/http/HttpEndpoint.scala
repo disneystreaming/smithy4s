@@ -24,6 +24,8 @@ import smithy4s.schema.OperationSchema
 import scala.annotation.tailrec
 
 trait HttpEndpoint[I] {
+  // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
+  def path(input: I): List[String]
 
   def encodedPath(input: I): List[String]
 
@@ -69,8 +71,18 @@ object HttpEndpoint {
       ).toRight(
         HttpEndpointError("Unable to encode operation input in HTTP path")
       )
+      nonLabelEncodingEncoder <- new SchemaVisitorPathEncoder(
+        urlEncodeHttpLabelValues = false
+      )(
+        operation.input.addHints(http)
+      ).toRight(
+        HttpEndpointError("Unable to encode operation input in HTTP path")
+      )
+
     } yield {
       new HttpEndpoint[I] {
+        def path(input: I): List[String] = nonLabelEncodingEncoder.encode(input)
+
         def encodedPath(input: I): List[String] =
           labelEncodingEncoder.encode(input)
         val staticQueryParams: Map[String, Seq[Option[String]]] = queryParams
