@@ -79,14 +79,11 @@ object HttpRequest {
     }
 
     def fromHttpEndpoint[Body, I](
-        httpEndpoint: HttpEndpoint[I],
-        smithyPathEncoding: Boolean
+        httpEndpoint: HttpEndpoint[I]
     ): Writer[Body, I] = new Writer[Body, I] {
       @annotation.nowarn("cat=deprecation")
       def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
-        val path =
-          if (smithyPathEncoding) httpEndpoint.encodedPath(input)
-          else httpEndpoint.path(input)
+        val path = httpEndpoint.encodedPath(input)
         val staticQueries = mapToIndexedSeq(httpEndpoint.staticQueryParams)
         val oldUri = request.uri
         val newUri = oldUri

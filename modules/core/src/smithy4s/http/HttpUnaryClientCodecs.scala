@@ -123,8 +123,6 @@ object HttpUnaryClientCodecs {
       copy(responseTransformation = f.andThen(F.flatMap(_)(responseTransformation)))
 
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response] = copy(hostPrefixInjection = enabled)
-    override def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response] =
-      withSmithyPathEncoding(!enabled)
 
     override def withSmithyPathEncoding(enabled: Boolean): Builder[F, Request, Response] =
       copy(smithyPathEncoding = enabled)
@@ -207,7 +205,7 @@ object HttpUnaryClientCodecs {
             HttpEndpoint.cast(endpoint).toOption match {
               case Some(httpEndpoint) => {
                 val httpInputEncoder =
-                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint, smithyPathEncoding)
+                  HttpRequest.Writer.fromHttpEndpoint[Blob, I](httpEndpoint)
                 val requestEncoder =
                   inputEncoders.fromSchema(endpoint.input, inputEncoderCache)
                 httpInputEncoder.combine(requestEncoder)

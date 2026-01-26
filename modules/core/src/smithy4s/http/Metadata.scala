@@ -283,6 +283,8 @@ object Metadata {
     * by field names.
     */
   type Encoder[A] = smithy4s.codecs.Encoder[Metadata, A]
+
+  trait EncoderCompiler extends CachedSchemaCompiler[Metadata.Encoder] {
     def withFieldFilter(
         fieldFilter: FieldFilter
     ): EncoderCompiler
