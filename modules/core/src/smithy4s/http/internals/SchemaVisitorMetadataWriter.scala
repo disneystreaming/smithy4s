@@ -53,26 +53,6 @@ class SchemaVisitorMetadataWriter(
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
 
-  @deprecated(
-    message = """Use constructor with FieldFilter instead.
-      
-  Mapping:
-   - explicitDefaultsEncoding = false -> FieldFilter.SkipNonRequired
-   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
- """,
-    since = "0.18.30"
-  )
-  def this(
-      cache: CompilationCache[MetaEncode],
-      commaDelimitedEncoding: Boolean,
-      explicitDefaultsEncoding: Boolean
-  ) = this(
-    cache,
-    commaDelimitedEncoding,
-    if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-    else FieldFilter.Default
-  )
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,

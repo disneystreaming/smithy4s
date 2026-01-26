@@ -59,8 +59,6 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { self =>
   final def input: Schema[I] = schema.input
   final def output: Schema[O] = schema.output
   final def error: Option[ErrorSchema[E]] = schema.error
-  @deprecated("Use .error instead", since = "0.18")
-  final def errorschema: Option[ErrorSchema[E]] = schema.error
   final def streamedInput: Option[StreamingSchema[SI]] = schema.streamedInput
   final def streamedOutput: Option[StreamingSchema[SO]] = schema.streamedOutput
 

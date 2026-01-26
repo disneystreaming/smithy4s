@@ -31,9 +31,6 @@ final case class Alt[U, A](
     project: PartialFunction[U, A]
 ) {
 
-  @deprecated("use .schema instead", since = "0.18.0")
-  def instance: Schema[A] = schema
-
   def hints: Hints = schema.hints
   def memberHints: Hints = schema.hints.memberHints
 

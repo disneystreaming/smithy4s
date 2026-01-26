@@ -40,29 +40,6 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
   def withMaxArity(max: Int): JsoniterCodecCompiler
 
   /**
-    * Changes the behaviour of Json encoders so that optional values are encoded as
-    * explicit Json null values.
-    *
-    * Defaults to false.
-    */
-  @deprecated(
-    message = """Use withFieldFilter instead.
-
-  Mapping:
-   - explicitNulls = false -> FieldFilter.Default
-   - explicitNulls = true -> FieldFilter.EncodeAll
- """,
-    since = "0.18.30"
-  )
-  def withExplicitDefaultsEncoding(
-      explicitNulls: Boolean
-  ): JsoniterCodecCompiler =
-    withFieldFilter(
-      if (explicitNulls) FieldFilter.EncodeAll
-      else FieldFilter.Default
-    )
-
-  /**
     * Configures the JSON encoder to use a custom [[smithy4s.schema.FieldFilter]],
     * allowing fine-grained control over which fields should be skipped during encoding.
     *

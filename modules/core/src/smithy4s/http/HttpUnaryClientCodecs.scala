@@ -67,8 +67,6 @@ object HttpUnaryClientCodecs {
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
     def withHostPrefixInjection(enabled: Boolean): Builder[F, Request, Response]
-    @deprecated("use withSmithyPathEncoding instead (opposite meaning)", "0.18.41")
-    def withRawHttpLabelValues(enabled: Boolean): Builder[F, Request, Response]
     def withSmithyPathEncoding(enabled: Boolean): Builder[F, Request, Response]
     def hasSmithyPathEncoding: Boolean
     def build(): UnaryClientCodecs.Make[F, Request, Response]

@@ -116,22 +116,6 @@ object Document {
   }
 
   trait EncoderCompiler extends CachedSchemaCompiler[Encoder] {
-    @deprecated(
-      message = """Use withFieldFilter instead.
-
-  Mapping:
-   - explicitDefaultsEncoding = false -> FieldFilter.Default
-   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
- """,
-      since = "0.18.30"
-    )
-    def withExplicitDefaultsEncoding(
-        explicitDefaultsEncoding: Boolean
-    ): EncoderCompiler = withFieldFilter(
-      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.Default
-    )
-
     def withFieldFilter(
         fieldFilter: FieldFilter
     ): EncoderCompiler

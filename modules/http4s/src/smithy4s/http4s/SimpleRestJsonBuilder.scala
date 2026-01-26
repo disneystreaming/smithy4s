@@ -37,52 +37,11 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
-  @deprecated(message = "Use .withXXX methods instead", since = "0.18.25")
-  def this(
-      maxArity: Int,
-      explicitDefaultsEncoding: Boolean,
-      hostPrefixInjection: Boolean
-  ) = {
-    this {
-      val fieldFilter =
-        if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-        else FieldFilter.Default
-      new internals.SimpleRestJsonCodecs(
-        Json.payloadCodecs
-          .withJsoniterCodecCompiler(
-            Json.jsoniter
-              .withMaxArity(maxArity)
-              .withFieldFilter(fieldFilter)
-          ),
-        fieldFilter,
-        hostPrefixInjection,
-        smithyPathEncoding = false
-      )
-    }
-  }
-
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.transformJsonCodecs(
         _.configureJsoniterCodecCompiler(_.withMaxArity(maxArity))
       )
-    )
-
-  @deprecated(
-    message = """Use withFieldFilter instead.
-
-  Mapping:
-   - explicitDefaultsEncoding = false -> FieldFilter.Default
-   - explicitDefaultsEncoding = true -> FieldFilter.EncodeAll
- """,
-    since = "0.18.30"
-  )
-  def withExplicitDefaultsEncoding(
-      explicitDefaultsEncoding: Boolean
-  ): SimpleRestJsonBuilder =
-    withFieldFilter(
-      if (explicitDefaultsEncoding) FieldFilter.EncodeAll
-      else FieldFilter.Default
     )
 
   def withFieldFilter(
@@ -91,15 +50,6 @@ class SimpleRestJsonBuilder private (
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.withFieldFilter(fieldFilter)
     )
-
-  @deprecated(
-    "Use withSmithyPathEncoding instead (it has the opposite meaning)",
-    "0.18.41"
-  )
-  def withRawHttpLabelValues(
-      enabled: Boolean
-  ): SimpleRestJsonBuilder =
-    withSmithyPathEncoding(!enabled)
 
   def withSmithyPathEncoding(enabled: Boolean): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(

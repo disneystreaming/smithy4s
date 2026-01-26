@@ -84,10 +84,6 @@ class DocumentEncoderSchemaVisitor(
   def this(cache: CompilationCache[DocumentEncoder]) =
     this(cache, explicitDefaultsEncoding = false)
 
-  @deprecated
-  protected val explicitDefaultsEncoding: Boolean =
-    fieldFilter == FieldFilter.EncodeAll
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,

@@ -24,12 +24,6 @@ import smithy4s.schema.OperationSchema
 import scala.annotation.tailrec
 
 trait HttpEndpoint[I] {
-  // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
-  @deprecated(
-    "Path segments should be encoded in a specific way per the Smithy spec, so use encodedPath instead",
-    "0.18.40"
-  )
-  def path(input: I): List[String]
 
   def encodedPath(input: I): List[String]
 

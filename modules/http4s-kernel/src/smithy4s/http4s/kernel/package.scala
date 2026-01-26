@@ -49,11 +49,6 @@ package object kernel {
     }
   }
 
-  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
-  def fromSmithy4sHttpRequest[F[_]: MonadThrow](req: Smithy4sHttpRequest[Blob]): Request[F] = {
-    fromSmithy4sHttpRequest(req, encodePathSegments = true)
-  }
-
   /**
     * Converts a Smithy4sHttpRequest to an http4s Request.
     * This method allows you to specify whether path segments should be encoded.
@@ -122,11 +117,6 @@ package object kernel {
         .toMap
       Smithy4sHttpResponse(res.status.code, headers, blob)
     }
-
-  @deprecated("use the overload with explicit encodePathSegments", "0.18.41")
-  def fromSmithy4sHttpUri(uri: Smithy4sHttpUri): Uri = {
-    fromSmithy4sHttpUri(uri, encodePathSegments = true)
-  }
 
   def fromSmithy4sHttpUri(uri: Smithy4sHttpUri, encodePathSegments: Boolean): Uri = {
     val mkSegment: String => Uri.Path.Segment =

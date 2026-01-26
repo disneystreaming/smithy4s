@@ -47,23 +47,6 @@ private[http4s] class SimpleRestJsonCodecs(
   def transformJsonCodecs(f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler): SimpleRestJsonCodecs =
     new SimpleRestJsonCodecs(f(jsonCodecs), fieldFilter, hostPrefixInjection, smithyPathEncoding)
 
-  @deprecated(
-    message = """Use withFieldFilter instead.
-
-  Mapping:
-   - newExplicitDefaultsEncoding = false -> FieldFilter.Default
-   - newExplicitDefaultsEncoding = true -> FieldFilter.EncodeAll
- """,
-    since = "0.18.30"
-  )
-  protected def withExplicitDefaultEncoding(newExplicitDefaultsEncoding: Boolean): SimpleRestJsonCodecs =
-    withFieldFilter(
-      if (newExplicitDefaultsEncoding) FieldFilter.EncodeAll else FieldFilter.Default
-    )
-
-  @deprecated
-  protected val explicitDefaultsEncoding: Boolean = fieldFilter == FieldFilter.EncodeAll
-
   def withFieldFilter(
       fieldFilter: FieldFilter
   ): SimpleRestJsonCodecs = new SimpleRestJsonCodecs(
@@ -72,10 +55,6 @@ private[http4s] class SimpleRestJsonCodecs(
     hostPrefixInjection,
     smithyPathEncoding
   )
-
-  @deprecated("Use withSmithyPathEncoding instead (it has the opposite meaning to raw http label values)", "0.18.41")
-  def withRawHttpLabelValues(enabled: Boolean): SimpleRestJsonCodecs =
-    withSmithyPathEncoding(!enabled)
 
   def withSmithyPathEncoding(enabled: Boolean): SimpleRestJsonCodecs =
     new SimpleRestJsonCodecs(
