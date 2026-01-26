@@ -666,7 +666,6 @@ class DocumentSpec() extends ScalaCheckSuite {
 
   test("Document encoder - timestamp defaults") {
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
       .fromSchema(TimestampOperationInput.schema)
       .encode(TimestampOperationInput())
     expect.same(
@@ -683,7 +682,6 @@ class DocumentSpec() extends ScalaCheckSuite {
     val timestampWithNanos =
       Timestamp(1716459630L, 500 * 1000 * 1000 /* half a second */ )
     val result = Document.Encoder
-      .withExplicitDefaultsEncoding(false)
       .fromSchema(TimestampOperationInput.schema)
       .encode(
         TimestampOperationInput(
