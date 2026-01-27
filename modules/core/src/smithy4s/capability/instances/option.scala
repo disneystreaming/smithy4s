@@ -31,10 +31,10 @@ object option {
         case (Some(a), Some(b)) => Some(f(a, b))
       }
 
-      override def zipMapAll[A](
-          seq: IndexedSeq[Option[Any]]
-      )(f: IndexedSeq[Any] => A): Option[A] = {
-        val builder = IndexedSeq.newBuilder[Any]
+      override def zipMapAll[A, B](
+          seq: IndexedSeq[Option[A]]
+      )(f: IndexedSeq[A] => B): Option[B] = {
+        val builder = IndexedSeq.newBuilder[A]
         var i = 0
         var error: Boolean = false
         while (!error && i < seq.size) {
