@@ -31,20 +31,20 @@ object either {
         case (Right(a), Right(b)) => Right(f(a, b))
       }
 
-      override def zipMapAll[A](
-          seq: IndexedSeq[Either[E, Any]]
-      )(f: IndexedSeq[Any] => A): Either[E, A] = {
-        val builder = IndexedSeq.newBuilder[Any]
+      override def zipMapAll[A, B](
+          seq: IndexedSeq[Either[E, A]]
+      )(f: IndexedSeq[A] => B): Either[E, B] = {
+        val builder = IndexedSeq.newBuilder[A]
         var i = 0
-        var error: Left[E, Any] = null
+        var error: Left[E, B] = null
         while (error == null && i < seq.size) {
           seq(i) match {
-            case l @ Left(_) => error = l.asInstanceOf[Left[E, Any]]
+            case l @ Left(_) => error = l.asInstanceOf[Left[E, B]]
             case Right(r)    => builder += r
           }
           i += 1
         }
-        if (error != null) error.asInstanceOf[Left[E, A]]
+        if (error != null) error.asInstanceOf[Left[E, B]]
         else Right(f(builder.result()))
       }
     }
