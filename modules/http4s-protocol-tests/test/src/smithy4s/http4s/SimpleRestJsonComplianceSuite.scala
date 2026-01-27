@@ -73,7 +73,9 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson
-    val protocolTag = alloy.SimpleRestJson
+    val protocolTag: smithy4s.ShapeTag[
+      smithy4s.http4s.SimpleRestJsonComplianceSuite.SimpleRestJsonIntegration.Protocol
+    ] = alloy.SimpleRestJson
 
     def expectedResponseType(schema: Schema[_]): HttpMediaType = HttpMediaType(
       "application/json"

@@ -70,7 +70,10 @@ class DynamicHttpProxy(client: Client[IO]) {
 
 object Http4sDynamicPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
 
-  def makeClient = Left { (httpApp: HttpApp[IO]) =>
+  def makeClient: Either[
+    HttpApp[IO] => Resource[IO, PizzaAdminService[IO]],
+    Int => Resource[IO, PizzaAdminService[IO]]
+  ] = Left { (httpApp: HttpApp[IO]) =>
     Resource.eval(
       new DynamicHttpProxy(Client.fromHttpApp(httpApp)).dynamicPizza
     )
