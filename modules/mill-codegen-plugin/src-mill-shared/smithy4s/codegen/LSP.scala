@@ -28,6 +28,7 @@ import smithy4s.codegen.mill.Smithy4sModule
 
 import scala.annotation.nowarn
 import scala.collection.immutable.ListSet
+import mmill.main.TokenReaders.millEvaluatorTokenReader
 
 object LSP extends ExternalModule {
   lazy val millDiscover = mmill.define.Discover[this.type]

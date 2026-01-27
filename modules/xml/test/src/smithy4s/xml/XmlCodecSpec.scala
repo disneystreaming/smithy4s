@@ -434,7 +434,7 @@ object XmlCodecSpec extends SimpleIOSuite {
       val value = stringValue
       val hints = Hints.empty
       type EnumType = FooBar
-      def enumeration = FooBar
+      def enumeration: smithy4s.Enumeration[FooBar.this.EnumType] = FooBar
     }
     object FooBar extends smithy4s.Enumeration[FooBar] {
       case object Foo extends FooBar("foo", 0)
