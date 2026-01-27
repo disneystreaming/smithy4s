@@ -183,7 +183,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     object foo extends TestBaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
-      override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
+      override def smithy4sAllowedNamespaces: T[Option[Set[String]]] = T(Some(Set("aws.iam")))
       override def smithy4sIvyDeps = Agg(
         ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
       )
@@ -211,7 +211,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
 
-      override def smithyBuild =
+      override def smithyBuild: T[Option[PathRef]] =
         Some(PathRef(millSourcePath / "smithy-build.json"))
     }
 
@@ -248,7 +248,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
         override def ivyDeps = Agg(coreDep)
-        override def moduleDeps = Seq(foo)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
       }
     }
 
@@ -304,7 +304,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def moduleDeps = Seq(foo)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
       }
     }
 
@@ -352,7 +352,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def moduleDeps = Seq(foo)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
         override def ivyDeps = Agg(coreDep)
 
         override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
