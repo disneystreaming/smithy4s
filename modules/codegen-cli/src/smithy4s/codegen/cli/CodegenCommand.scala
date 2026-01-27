@@ -143,6 +143,6 @@ object CodegenCommand {
   val command = Command(
     "generate",
     "Generates scala code and openapi-specs from smithy specs"
-  )(options.map(Smithy4sCommand.Generate))
+  )(options.map(Smithy4sCommand.Generate.apply))
 
 }

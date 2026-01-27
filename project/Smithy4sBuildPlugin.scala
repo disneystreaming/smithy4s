@@ -211,7 +211,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "-Wconf:msg=type Enum in package api is deprecated:silent",
       // for Scala 3
       "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
-      "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
+      "-Wconf:msg=type Enum in package smithy.api is deprecated:silent",
+      // silencing -XSource:3 warnings for case class copy methods since they are just informing of
+      // a difference between scala 2.x and 3.x
+      "-Wconf:msg=.*method are copied from the case class constructor under Scala 3.*:silent"
     ),
     ThisScope / bloopEnabled := {
       virtualAxes.?.value match {
@@ -294,11 +297,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       else if (priorTo2_13(scalaVersion))
         filterScala2_12Options(commonCompilerOptions)
       else
-        commonCompilerOptions
-    // ++ Seq(
-    //   "-Xsource:3",
-    //   "-P:kind-projector:underscore-placeholders"
-    // )
+        commonCompilerOptions ++ Seq(
+          "-Xsource:3",
+        )
 
     base ++ targetScalacOptions(scalaVersion) ++ {
       if (priorTo2_13(scalaVersion)) compilerOptions2_12_Only

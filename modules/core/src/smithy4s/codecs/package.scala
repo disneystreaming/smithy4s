@@ -24,7 +24,8 @@ package object codecs {
   object BlobEncoder {
     type Compiler = CachedSchemaCompiler[BlobEncoder]
     val noop: Compiler = new CachedSchemaCompiler.Uncached[BlobEncoder] {
-      def fromSchema[A](schema: Schema[A]) = Encoder.static(Blob.empty)
+      def fromSchema[A](schema: Schema[A]): BlobEncoder[A] =
+        Encoder.static(Blob.empty)
     }
   }
 

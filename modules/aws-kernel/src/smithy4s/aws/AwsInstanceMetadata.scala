@@ -26,7 +26,7 @@ case class AwsInstanceMetadata(
     secretAccessKey: String,
     token: String
 ) extends AwsTemporaryCredentials {
-  def sessionToken = Some(token)
+  def sessionToken: Option[String] = Some(token)
 }
 
 object AwsInstanceMetadata {
