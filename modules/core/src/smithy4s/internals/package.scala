@@ -19,6 +19,9 @@ package smithy4s
 import scala.util.control.NoStackTrace
 
 package object internals {
+  type KeyEncoder[A] = A => String
+  type MaybeKeyEncoder[A] = Option[KeyEncoder[A]]
+
   type SchemaDescription[A] = String
   val SchemaDescriptionDetailed: Schema ~> SchemaDescription =
     SchemaDescriptionDetailedImpl.andThen(
