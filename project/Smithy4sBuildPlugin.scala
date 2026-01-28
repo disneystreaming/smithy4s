@@ -214,7 +214,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "-Wconf:msg=type Enum in package smithy.api is deprecated:silent",
       // silencing -XSource:3 warnings for case class copy methods since they are just informing of
       // a difference between scala 2.x and 3.x
-      "-Wconf:msg=.*method are copied from the case class constructor under Scala 3.*:silent"
+      "-Wconf:msg=access modifiers for `apply` method are copied:silent",
+      "-Wconf:msg=access modifiers for `copy` method are copied:silent"
     ),
     ThisScope / bloopEnabled := {
       virtualAxes.?.value match {

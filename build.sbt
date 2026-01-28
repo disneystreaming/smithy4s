@@ -101,6 +101,8 @@ lazy val docsRendering =
       docs
     )
     .settings(
+      // mdoc is ignoring wconf flags which makes using -Xsource:3 difficult
+      scalacOptions := scalacOptions.value.filterNot(_ == "-Xsource:3"),
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "resources" / "markdown",
       mdocVariables := Map(
         "VERSION" -> {
