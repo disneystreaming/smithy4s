@@ -1445,14 +1445,14 @@ private[smithy4s] class SchemaVisitorJCodec(
     val label = field.label
 
     val decodeFn: (Cursor, JCodec[A], JsonReader) => A = {
-      val allowExplicitNulls = !{
-          // required fields can't accept explicit nulls
-          field.hints.has(Required) ||
-          // if there was no default, we'd allow explicit nulls by virtue of having an OptionSchema
-          default == null ||
-          // nullables have separate handling in OptionSchema
-          field.hints.has(alloy.Nullable)
-        }
+      val allowExplicitNulls = ! {
+        // required fields can't accept explicit nulls
+        field.hints.has(Required) ||
+        // if there was no default, we'd allow explicit nulls by virtue of having an OptionSchema
+        default == null ||
+        // nullables have separate handling in OptionSchema
+        field.hints.has(alloy.Nullable)
+      }
 
       if (allowExplicitNulls)
         (cursor, codec, in) =>

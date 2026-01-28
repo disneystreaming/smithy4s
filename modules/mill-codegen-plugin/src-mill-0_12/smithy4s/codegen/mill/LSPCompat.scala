@@ -18,5 +18,4 @@ package smithy4s.codegen.mill
 
 import _root_.{mill => mmill}
 
-trait LSPCompat extends mmill.main.TokenReaders0 {
-}
+trait LSPCompat extends mmill.main.TokenReaders0 {}
