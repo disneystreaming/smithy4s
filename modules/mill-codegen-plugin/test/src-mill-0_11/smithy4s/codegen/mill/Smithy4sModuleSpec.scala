@@ -155,7 +155,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "basic"
-      override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
+      override def smithy4sAllowedNamespaces: T[Option[Set[String]]] = T(Some(Set("aws.iam")))
       override def smithy4sIvyDeps = Agg(
         ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
       )
@@ -175,7 +175,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "smithy-build"
-      override def smithyBuild =
+      override def smithyBuild: T[Option[PathRef]] =
         Some(PathRef(millSourcePath / "smithy-build.json"))
     }
     val ev =
@@ -201,7 +201,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
-      override def moduleDeps = Seq(foo)
+      override def moduleDeps: Seq[JavaModule] = Seq(foo)
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multi-module" / "bar"
@@ -255,7 +255,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
-      override def moduleDeps = Seq(foo)
+      override def moduleDeps: Seq[JavaModule] = Seq(foo)
       override def scalaVersion = "2.13.18"
       override def millSourcePath = resourcePath / "multi-module-aws" / "bar"
     }
@@ -304,7 +304,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
-      override def moduleDeps = Seq(foo)
+      override def moduleDeps: Seq[JavaModule] = Seq(foo)
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath =

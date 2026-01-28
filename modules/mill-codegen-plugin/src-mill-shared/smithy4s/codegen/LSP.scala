@@ -28,9 +28,9 @@ import smithy4s.codegen.mill.Smithy4sModule
 
 import scala.annotation.nowarn
 import scala.collection.immutable.ListSet
-import mmill.main.TokenReaders.millEvaluatorTokenReader
+import smithy4s.codegen.mill.LSPCompat
 
-object LSP extends ExternalModule {
+object LSP extends ExternalModule with LSPCompat {
   lazy val millDiscover = mmill.define.Discover[this.type]
 
   @nowarn("cat=deprecation")
