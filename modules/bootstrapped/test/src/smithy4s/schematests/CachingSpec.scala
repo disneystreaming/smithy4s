@@ -23,7 +23,7 @@ final class CachingSpec extends FunSuite {
       }
     }
     val treeCompilation = TreeVisitor.compile(Foo.schema)
-    val tree = Compilation.runFull(treeCompilation)
+    val tree = Compilation.expensiveRun(treeCompilation)
     assertEquals(tree.size, 2)
   }
 
@@ -35,9 +35,9 @@ final class CachingSpec extends FunSuite {
         struct(foos)(Foo.apply)
       }
     }
-    val treeCompilation = TreeVisitor.compile(Foo.schema)
-    val tree = Compilation.runFull(treeCompilation)
-    println(tree)
+    val treeCompilation = TreeVisitor.compile(Foo.schema.transformHintsLocally(_.add(smithy.api.Documentation("foo"))))
+    val tree = Compilation.expensiveRun(treeCompilation)
+    assertEquals(tree.size, 3)
   }
 
 }
@@ -55,14 +55,14 @@ object Tree {
   val empty: Tree = Node(IndexedSeq.empty)
   def apply[A](trees: Tree*): Tree = Node(trees.toIndexedSeq)
   def flatten(tree: Tree, acc: Set[Tree]) : Set[Tree] = {
-    tree match {
+    if (acc(tree)) acc
+    else  tree match {
       case n @ Node(children) =>
         children.foldLeft(acc + n){(currentAcc, child) =>
           currentAcc ++ flatten(child, currentAcc)
         }
       case c @ Cycle(lt) =>
-        if (acc(c)) acc
-        else flatten(lt.value, acc + c)
+        flatten(lt.value, acc + c)
     }
   }
 }
@@ -116,7 +116,7 @@ object TreeVisitor extends Compilation.Visitor[Tree.Const] {
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[Alt[U, _]],
-      dispatch: Alt.Dispatcher[U]
+      ordinal: U => Int
   ): Compilation[Tree] = Compilation
     .sequence(
       alternatives
