@@ -5,8 +5,9 @@ import smithy4s.Lazy
 /**
  * A Field pattern functor.
  */
-case class FieldF[S, A, T](
+case class FieldF[S, A, T, I](
     label: String,
     schema: Lazy[T],
-    get: S => A
+    get: S => A,
+    in: I
 )

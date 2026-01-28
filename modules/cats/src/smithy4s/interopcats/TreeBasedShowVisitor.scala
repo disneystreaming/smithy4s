@@ -6,7 +6,7 @@ import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.schema.{AltF, CollectionTag, EnumTag, EnumValue, FieldF, MapTag, OptionalTag, Primitive, VisitorF}
 import smithy4s.interopcats.instances.ShowInstances._
 
-object TreeVisitorShow extends VisitorF[Show] {
+object TreeBasedShowVisitor extends VisitorF[Show] {
   def lazyShow[A](aShow: => Show[A]): Show[A] = new Show[A] {
     lazy val x: Show[A] = aShow
     override def show(t: A): String = x.show(t)
@@ -52,14 +52,14 @@ object TreeVisitorShow extends VisitorF[Show] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[FieldF[S, _, Show[Any]]],
+      fields: Vector[FieldF[S, _, Show[Any], Any]],
       make: IndexedSeq[Any] => S
   ): Show[S] = lazyShow {
-    def compileField[A](field: FieldF[S, A, Show[A]]): S => String = {
+    def compileField[A](field: FieldF[S, A, Show[A], Any]): S => String = {
       val showField = field.schema.value.contramap(field.get)
       s => s"${field.label} = ${showField.show(s)}"
     }
-    val functions = fields.map(f => compileField(f.asInstanceOf[FieldF[S,Any,Show[Any]]]))
+    val functions = fields.map(f => compileField(f.asInstanceOf[FieldF[S,Any,Show[Any], Any]]))
     Show.show { s =>
       val values = functions
         .map(f => f(s))
@@ -71,7 +71,7 @@ object TreeVisitorShow extends VisitorF[Show] {
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[AltF[U, _, Show[Any]]],
+      alternatives: Vector[AltF[U, _, Show[Any], Any]],
       dispatch: U => Int
   ): Show[U] = lazyShow {
     Show.show[U] { u =>

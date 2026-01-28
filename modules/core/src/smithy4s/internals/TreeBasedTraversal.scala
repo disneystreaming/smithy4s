@@ -2,33 +2,42 @@ package smithy4s.internals
 
 import smithy4s.capability.{Cache, CacheWrite, MonadThrowLike}
 import smithy4s.data.Tree
-import smithy4s.schema.{Schema, VisitorF}
+import smithy4s.internals.TreeBasedTraversal.FGLambda
+import smithy4s.schema.{Schema, VisitorF, VisitorRF}
 import smithy4s.~>
 
 /**
- * A schema visitor that that constructs a path of trees.
+ * Unfolds a schema into a rose tree of schema nodes, terminating recursion in the schemas by ending traversal when a
+ * node is already been seen in current path from the root node.
  */
-sealed abstract class TreeSchemaVisitor[F[+_], G[_]] {
+sealed abstract class TreeBasedTraversal[F[+_], G[_]] { self =>
   def cache: CacheWrite[F, G[_]]
   def fromSchema[A](schema: Schema[A], cacheRead: Cache[F, G[_]]): F[G[A]]
   final def visit[A](
       schema: Schema[A]
   )(implicit F: MonadThrowLike[F]): F[G[A]] = {
-    val initTree = TreeSchemaVisitor.unfoldToTree(schema)
-    println(Tree.draw(initTree)(s => s"${s.shapeId.name}: ${s.getClass.getSimpleName}"))
-    TreeSchemaVisitor
+    val initTree = TreeBasedTraversal.unfoldToTree(schema)
+    // println(Tree.draw(initTree)(TreeBasedTraversal.debugShow(_)))
+    TreeBasedTraversal
       .cachedPostOrder(initTree, cache)(fromSchema(_, _))
       .asInstanceOf[F[G[A]]]
   }
+
+  final def visitK(implicit
+      F: MonadThrowLike[F]
+  ): Schema ~> TreeBasedTraversal.FGLambda[F, G, *] =
+    new (Schema ~> TreeBasedTraversal.FGLambda[F, G, *]) {
+      override def apply[A0](schema: Schema[A0]): FGLambda[F, G, A0] = visit(schema)
+    }
 }
-object TreeSchemaVisitor extends TreeSchemaVisitorFunctions {
+object TreeBasedTraversal extends TreeBasedTraversalFunctions {
   type FGLambda[F[_], G[_], A] = F[G[A]]
   def make[F[+_], G[_]](
       f: Schema ~> FGLambda[F, G, *],
       makeCache: F[CacheWrite[F, G[_]]]
-  )(implicit M: MonadThrowLike[F]): F[TreeSchemaVisitor[F, G]] =
+  )(implicit M: MonadThrowLike[F]): F[TreeBasedTraversal[F, G]] =
     M.map(makeCache)(newCache =>
-      new TreeSchemaVisitor[F, G] {
+      new TreeBasedTraversal[F, G] {
         override val cache: CacheWrite[F, G[_]] = newCache
         override def fromSchema[A](
             schema: Schema[A],
@@ -39,18 +48,37 @@ object TreeSchemaVisitor extends TreeSchemaVisitorFunctions {
 
   def make[F[+_], G[_]](
       visitorF: VisitorF[G],
-      makeCache: F[CacheWrite[F,G[_]]]
-  )(implicit M: MonadThrowLike[F]): F[TreeSchemaVisitor[F, G]] =
+      makeCache: F[CacheWrite[F, G[_]]]
+  )(implicit M: MonadThrowLike[F]): F[TreeBasedTraversal[F, G]] =
     M.map(makeCache)(newCache =>
-      new TreeSchemaVisitor[F,G] {
+      new TreeBasedTraversal[F, G] {
         override val cache: CacheWrite[F, G[_]] = newCache
-        override def fromSchema[A](schema: Schema[A], cacheRead: Cache[F, G[_]]): F[G[A]] =
-          visitorF.apply(schema, cacheRead)
+        override def fromSchema[A](
+            schema: Schema[A],
+            cacheRead: Cache[F, G[_]]
+        ): F[G[A]] =
+          visitorF(cacheRead).apply(schema)
+      }
+    )
+
+  def make[F[+_], I[_], G[_]](
+      visitorRF: VisitorRF[I, G],
+      makeCache: F[CacheWrite[F, G[_]]],
+      ask: Schema ~> I
+  )(implicit M: MonadThrowLike[F]): F[TreeBasedTraversal[F, G]] =
+    M.map(makeCache)(newCache =>
+      new TreeBasedTraversal[F, G] {
+        override val cache: CacheWrite[F, G[_]] = newCache
+        override def fromSchema[A](
+            schema: Schema[A],
+            cacheRead: Cache[F, G[_]]
+        ): F[G[A]] =
+          visitorRF(cacheRead, ask).apply(schema)
       }
     )
 }
 
-sealed trait TreeSchemaVisitorFunctions {
+sealed trait TreeBasedTraversalFunctions {
   def unfoldToTree[A](
       schema: Schema[A],
       initCache: Set[Schema[_]] = Set.empty
@@ -58,11 +86,11 @@ sealed trait TreeSchemaVisitorFunctions {
     def children(schema: Schema[_]): Vector[Schema[_]] = schema match {
       case Schema.PrimitiveSchema(_, _, _)          => Vector.empty
       case Schema.CollectionSchema(_, _, _, member) => Vector(member)
-      case Schema.MapSchema(_, _, _, key, value)       => Vector(key, value)
-      case Schema.EnumerationSchema(_, _, _, _)  => Vector.empty
+      case Schema.MapSchema(_, _, _, key, value)    => Vector(key, value)
+      case Schema.EnumerationSchema(_, _, _, _)     => Vector.empty
       case Schema.StructSchema(_, _, fields, _)     => fields.map(f => f.schema)
       case Schema.UnionSchema(_, _, alts, _)      => alts.map(alt => alt.schema)
-      case Schema.OptionSchema(_, underlying)        => Vector(underlying)
+      case Schema.OptionSchema(_, underlying)     => Vector(underlying)
       case Schema.BijectionSchema(underlying, _)  => Vector(underlying)
       case Schema.RefinementSchema(underlying, _) => Vector(underlying)
       case Schema.LazySchema(suspend)             => Vector(suspend.value)
@@ -79,11 +107,7 @@ sealed trait TreeSchemaVisitorFunctions {
           } else {
             Tree.Branch(value, lChildren)
           }
-        case b @ Tree.Branch(value, _) if cache.contains(value) =>
-          println("Branch cache hit!")
-          println(Tree.draw(b)(debugShow(_)))
-          println("======")
-          b
+        case b @ Tree.Branch(value, _) if cache.contains(value) => b
         case Tree.Branch(value, ts) =>
           Tree.Branch(value, ts.map(t => loop(t, cache + value)))
       }
@@ -115,5 +139,6 @@ sealed trait TreeSchemaVisitorFunctions {
     }
   }
 
-  def debugShow[A](s: Schema[A]): String = s"${s.shapeId.name}: ${s.getClass.getSimpleName}"
+  def debugShow[A](s: Schema[A]): String =
+    s"${s.shapeId.name}: ${s.getClass.getSimpleName}"
 }

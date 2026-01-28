@@ -8,7 +8,7 @@ import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 
 import scala.util.hashing.MurmurHash3.productSeed
 
-object TreeVisitorHash extends VisitorF[Hash] {
+object TreeBasedHashVisitor extends VisitorF[Hash] {
 
   def lazyHash[A](underlying: => Hash[A]): Hash[A] = new Hash[A] {
     lazy val z = underlying
@@ -55,13 +55,13 @@ object TreeVisitorHash extends VisitorF[Hash] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[FieldF[S, _, Hash[Any]]],
+      fields: Vector[FieldF[S, _, Hash[Any], Any]],
       make: IndexedSeq[Any] => S
   ): Hash[S] = lazyHash {
-    def forField[A2](field: FieldF[S, A2, Hash[A2]]): Hash[S] = {
+    def forField[A2](field: FieldF[S, A2, Hash[A2], Any]): Hash[S] = {
       field.schema.value.contramap(field.get)
     }
-    val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field.asInstanceOf[FieldF[S,Any,Hash[Any]]]))
+    val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field.asInstanceOf[FieldF[S,Any,Hash[Any], Any]]))
     val nameHash = Hash[String].hash(shapeId.name)
     new Hash[S] {
       override def hash(x: S): Int = {
@@ -76,7 +76,7 @@ object TreeVisitorHash extends VisitorF[Hash] {
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[AltF[U, _, Hash[Any]]],
+      alternatives: Vector[AltF[U, _, Hash[Any], Any]],
       dispatch: U => Int
   ): Hash[U] = {
     lazyHash {

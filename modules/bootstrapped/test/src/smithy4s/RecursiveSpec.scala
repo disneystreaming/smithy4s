@@ -5,12 +5,15 @@ import smithy4s.example.{Foo, LeafNode, Tree, TreeNode}
 import cats.Hash
 import cats.effect.{IO, Sync}
 import smithy4s.capability.{CacheWrite, SyncLike}
-import smithy4s.internals.TreeSchemaVisitor
+import smithy4s.internals.DocumentKeyEncoder.OptDocumentKeyEncoder
+import smithy4s.internals.{DocumentEncoder, DocumentKeyEncoder, EffectfulDocumentEncoderVisitor, TreeBasedTraversal}
 import smithy4s.schema._
 
 import scala.annotation.tailrec
 import smithy4s.internals.maps.MMap
-import smithy4s.interopcats.{SchemaVisitorHash, TreeVisitorHash, monadThrowShim}
+import smithy4s.interopcats.{SchemaVisitorHash, TreeBasedHashVisitor, monadThrowShim}
+import smithy4s.kinds.KleisliK
+import smithy4s.kinds.KleisliK.Unwrapped
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema._
 
@@ -112,11 +115,39 @@ class RecursiveSpec extends FunSuite {
       transformSchema: Schema[A] => Schema[A] = (x: Schema[A]) => x
   )(implicit schema: Schema[A]): Unit = test(s"treeVisitor - $caseString") {
     import cats.effect.unsafe.implicits.global
-    val makeHashVisitor: IO[TreeSchemaVisitor[IO, Hash]] =
-      TreeSchemaVisitor.make[IO, Hash](TreeVisitorHash, CacheWrite.make[IO,Hash[_]])
+    val makeHashVisitor: IO[TreeBasedTraversal[IO, Hash]] =
+      TreeBasedTraversal.make[IO, Hash](TreeBasedHashVisitor, CacheWrite.make[IO,Hash[_]])
     val updatedSchema: Schema[A] = transformSchema(schema)
 
-    val testEffect: IO[Unit] = for {
+    val makeDocKeyVisitor = TreeBasedTraversal.make[IO, DocumentKeyEncoder.OptDocumentKeyEncoder](DocumentKeyEncoder.effectfulVisitor, CacheWrite.make[IO, DocumentKeyEncoder.OptDocumentKeyEncoder[_]])
+
+    def makeDocVisitor(deps: Schema ~> EffectfulDocumentEncoderVisitor.Dependencies) = TreeBasedTraversal.make[IO, EffectfulDocumentEncoderVisitor.Dependencies, DocumentEncoder](EffectfulDocumentEncoderVisitor(FieldFilter.Default), CacheWrite.make[IO,DocumentEncoder[_]], deps)
+
+    def makeDeps(keyVisitor: Schema ~> DocumentKeyEncoder.OptDocumentKeyEncoder): Schema ~> EffectfulDocumentEncoderVisitor.Dependencies = new (Schema ~> EffectfulDocumentEncoderVisitor.Dependencies) {
+      override def apply[A0](fa: Schema[A0]): EffectfulDocumentEncoderVisitor.Dependencies[A0] = EffectfulDocumentEncoderVisitor.Dependencies(keyVisitor(fa),fa)
+    }
+
+    val documentEffect: IO[Unit] = for {
+      keyVisitor <- makeDocKeyVisitor
+      unsafeKeyVisitor = new (Schema ~> DocumentKeyEncoder.OptDocumentKeyEncoder) {
+        override def apply[A0](fa: Schema[A0]): OptDocumentKeyEncoder[A0] = keyVisitor.visit(fa).unsafeRunSync()
+      }
+      docVisitor <- makeDocVisitor(makeDeps(unsafeKeyVisitor))
+      sizeBeforeInitializing <- docVisitor.cache.size
+      //_ <- keyVisitor.visit(updatedSchema)
+      //_ <- IO.println(s"Visited key encoder for $caseString")
+      updatedEncoder <- docVisitor.visit(updatedSchema)
+      _ <- IO.println(s"Visited doc encoder for $caseString")
+      sizeAfterInitializing <- docVisitor.cache.size
+      doc = updatedEncoder(value(2))
+      _ <- IO.println(doc.toString())
+      sizeAfterEncoding <- docVisitor.cache.size
+      _ = List(10, 100, 256).foreach(sz => updatedEncoder(value(sz)))
+      sizeAfterLargeEncoding <- docVisitor.cache.size
+      _ <- IO.println(s"$caseString: $sizeBeforeInitializing, $sizeAfterInitializing, $sizeAfterEncoding, $sizeAfterLargeEncoding")
+    } yield ()
+
+    val hashEffect: IO[Unit] = for {
       hashVisitor <- makeHashVisitor
       sizeBeforeInitializing <- hashVisitor.cache.size
       updatedHash <- hashVisitor.visit(updatedSchema)
@@ -132,7 +163,7 @@ class RecursiveSpec extends FunSuite {
       assertEquals(sizeAfterInitializing, sizeAfterHashing)
       assertEquals(sizeAfterHashing, sizeAfterLargeHashing)
     }
-    testEffect.unsafeRunSync() // TODO: CatsEffectSuite
+    (hashEffect *> documentEffect).unsafeRunSync() // TODO: CatsEffectSuite
   }
 
   def addHints[A](schema: Schema[A]): Schema[A] = {
@@ -167,11 +198,11 @@ class RecursiveSpec extends FunSuite {
       transformSchema = addHints[A]
     )
     runTreeVisitorTest(
-      s"$caseString: hints unchanged",
+      s"tree based $caseString: hints unchanged",
       value
     )
     runTreeVisitorTest(
-      s"$caseString: hintsTransformed",
+      s"tree based $caseString: hintsTransformed",
       value,
       transformSchema = addHints[A]
     )
