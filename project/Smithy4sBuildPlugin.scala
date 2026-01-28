@@ -299,7 +299,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         filterScala2_12Options(commonCompilerOptions)
       else
         commonCompilerOptions ++ Seq(
-          "-Xsource:3",
+          "-Xsource:3"
         )
 
     base ++ targetScalacOptions(scalaVersion) ++ {
