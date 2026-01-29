@@ -4,10 +4,7 @@ import smithy4s.RefinementProvider
 
 object instances {
 
-  implicit val lengthProviderValidatedRefinedPrimitive
-      : RefinementProvider.Simple[
-        smithy.api.Length,
-        Name
-      ] =
+  implicit val lengthProviderName
+      : RefinementProvider.Simple[smithy.api.Length, Name] =
     RefinementProvider.lengthConstraint(_.value.value.length)
 }
