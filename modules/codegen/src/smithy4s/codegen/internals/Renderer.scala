@@ -1548,15 +1548,34 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = {
     val validator = {
-      val tags = hints.collect { case t: Hint.Constraint => t }
-      tags match {
-        case h :: tail =>
-          (
-            line".validating(${renderHint(h.native)})" +:
-              tail.map { tag => line".alsoValidating(${renderHint(tag.native)})" }
-          ).intercalate(Line.empty)
-        case _ => Line.empty
+
+      def validateConstraints(h: List[Hint], validateMethod: Line) = h
+        .collect { case t: Hint.Constraint => t }
+        .foldMap(constraint => line".$validateMethod(${renderHint(constraint.native)})")
+      def validateType(t: Type): (Line, Line) = t match {
+        case Type.Collection(collectionTpe, memberTpe, memberHints) =>
+          val builderMethod = collectionTpe match {
+            case CollectionType.List       => line"list"
+            case CollectionType.Vector     => line"vector"
+            case CollectionType.IndexedSeq => line"indexedSeq"
+            case CollectionType.Set        => line"set"
+          }
+          line"$builderMethod[$memberTpe]" -> validateConstraints(memberHints, line"validatingMember")
+        case Type.Map(keyTpe, keyHints, valueTpe, valueHints) =>
+          val validatingKey = validateConstraints(keyHints, line"validatingKey")
+          val validatingValue = validateConstraints(valueHints, line"validatingValue")
+          line"map[$keyTpe, $valueTpe]" -> (validatingKey + validatingValue)
+        case external: Type.ExternalType =>
+          validateType(external.underlyingTpe)
+        case _ => line"simple[$tpe]" -> Line.empty
       }
+      val (builderType, validatingMembers) = validateType(tpe)
+      val validatingDirect = validateConstraints(hints, line"validating")
+      lines(
+        line"val validator: $Validator_[$tpe, $name] = $Validator_.Builder.$builderType$validatingDirect$validatingMembers${renderRefined(
+          tpe
+        )}.biject($Bijection_[$tpe, $name](_.asInstanceOf[$name], value(_))).build()"
+      )
     }
 
     val definition =
@@ -1568,13 +1587,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
+      renderScalaImports(hints),
       obj(name, line"$ValidatedNewtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
         line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
-        lines(
-          line"val validator: $Validator_[$tpe, $name] = $Validator_.of[$tpe, $name]($Bijection_[$tpe, $name](_.asInstanceOf[$name], value(_)))$validator"
-        ),
+        validator,
         lines(
           line"implicit val schema: $Schema_[$name] = ${definition}validator.toSchema(underlyingSchema)$closing"
         ),
@@ -1645,18 +1663,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
-      case Type.Ref(ns, name) => NameRef(ns, s"$name.schema").toLine
-      case e @ Type.ExternalType(
-            _,
-            _,
-            _,
-            maybeProviderImport,
-            underlyingTpe,
-            hint
-          ) =>
-        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderHint(hint)})${maybeProviderImport
-          .map { providerImport => Import(providerImport).toLine }
-          .getOrElse(Line.empty)}"
+      case Type.Ref(ns, name)   => NameRef(ns, s"$name.schema").toLine
+      case e: Type.ExternalType => line"${e.underlyingTpe.schemaRef}${renderRefined(e)}"
       case Nullable(underlying) => line"${underlying.schemaRef}.option"
     }
 
@@ -1705,6 +1713,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       .cata(renderTypedNode)(hint)
       .run(true)
       ._2
+
+  private def renderRefined(tpe: Type): Line = tpe match {
+    case e @ Type.ExternalType(
+          _,
+          _,
+          _,
+          maybeProviderImport,
+          underlyingTpe,
+          hint
+        ) =>
+      line".refined[${e: Type}](${renderHint(hint)})${maybeProviderImport
+        .map { providerImport => Import(providerImport).toLine }
+        .getOrElse(Line.empty)}"
+    case _ => Line.empty
+  }
 
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
