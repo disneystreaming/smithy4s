@@ -29,6 +29,12 @@ sealed trait Compilation[A] {
 
 object Compilation {
 
+  abstract class Deriving[F[_]](compiler: Visitor[F]) {
+    private val cache = new MCache(scala.collection.concurrent.TrieMap.empty[Any, Any])
+    def fromSchema[A](schema: Schema[A]) = unsafeInterpret(compiler.compile(schema), cache)
+    implicit def derivedInstance[A](implicit schema: Schema[A]): F[A] = fromSchema(schema)
+  }
+
   trait Visitor[F[_]] { self =>
     def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): Compilation[F[P]]
     def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): Compilation[F[C[A]]]
@@ -153,11 +159,11 @@ object Compilation {
     case Cyclic(lschema, compiler, buildRecursive) =>
       val outerSchema = LazySchema(lschema)
       val innerSchema = lschema.value
-      // We're creating an entry that contains a deferred codec, that will inspect the final cache when it's instantiated.
-      val deferredCodec = buildRecursive(Lazy(mutableCache.get(innerSchema, compiler).get))
       mutableCache.get(outerSchema, compiler) match {
         case Some(value) => value
         case None =>
+          // We're creating an entry that contains a deferred codec, that will inspect the final cache when it's instantiated.
+          val deferredCodec = buildRecursive(Lazy(mutableCache.get(innerSchema, compiler).get))
           mutableCache.add(outerSchema, compiler, deferredCodec)
           // At this point, the compilation cache contains the deferred entry. We can recurse safely, as the next traversal of
           // the `LazySchema` layer in the cycle will result in a cache-hit.
