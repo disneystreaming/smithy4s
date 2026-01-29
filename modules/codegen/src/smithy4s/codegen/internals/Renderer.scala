@@ -1773,7 +1773,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           _,
           _,
           maybeProviderImport,
-          underlyingTpe,
+          _,
           hint
         ) =>
       line".refined[${e: Type}](${renderHint(hint)})${maybeProviderImport
