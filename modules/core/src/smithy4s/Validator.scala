@@ -333,9 +333,9 @@ object Validator {
             val main = mainValidator.map(_.toSchema(a)).getOrElse(a)
             main match {
               case collectionSchema @ Schema.CollectionSchema(
-                    shapeId,
-                    hints,
-                    tag,
+                    _,
+                    _,
+                    _,
                     member
                   ) =>
                 val newMember = memberRefinements.foldLeft(member) {
