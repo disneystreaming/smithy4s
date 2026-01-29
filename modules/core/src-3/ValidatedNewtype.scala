@@ -30,6 +30,12 @@ abstract class ValidatedNewtype[A] extends AbstractNewtype[A] { self =>
 
   extension (orig: Type) def value: A = orig
 
+  implicit val asSurjection: Surjection[A, Type] =
+    new ValidatedNewtype.Make[A, Type] {
+      def to(a: A): Either[String, Type] = self.apply(a)
+      def from(t: Type): A = value(t)
+    }
+
   def unapply(orig: Type): Some[A] = Some(orig.value)
 
   object hint {
@@ -38,5 +44,5 @@ abstract class ValidatedNewtype[A] extends AbstractNewtype[A] { self =>
 }
 
 object ValidatedNewtype {
-  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
+  private[smithy4s] trait Make[A, B] extends Surjection[A, B]
 }
