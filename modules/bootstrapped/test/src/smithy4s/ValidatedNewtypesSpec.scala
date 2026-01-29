@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import smithy4s.schema.Schema.string
-import smithy4s.schema.Schema.list
 import smithy4s.refined.NonEmptyList
 import smithy4s.example.Name
 import smithy4s.example.ValidatedConstrainedList
@@ -139,10 +137,6 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
   }
 
   test("Validated constrained list refined member") {
-    def mkName(str: String) = smithy4s.refined.Name(str) match {
-      case Left(msg) => fail(msg)
-      case Right(v)  => v
-    }
     expect(
       ValidatedConstrainedListRefinedMember(
         List(Name(mkName("foo")))
