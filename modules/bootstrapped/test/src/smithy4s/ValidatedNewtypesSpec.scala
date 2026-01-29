@@ -16,7 +16,6 @@
 
 package smithy4s
 
-import smithy4s.refined.NonEmptyList
 import smithy4s.example.Name
 import smithy4s.example.ValidatedConstrainedList
 import smithy4s.example.ValidatedListConstrainedMember
@@ -31,9 +30,6 @@ import smithy4s.example.AccountId
 import smithy4s.example.DeviceId
 
 import munit.Assertions
-import cats.data.Validated.Valid
-import smithy.api.Length
-import smithy4s.example.NonEmptyListFormat
 
 class ValidatedNewtypesSpec() extends munit.FunSuite {
   val id1 = "id1"
