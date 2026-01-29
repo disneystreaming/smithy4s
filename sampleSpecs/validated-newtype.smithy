@@ -3,11 +3,20 @@ $version: "2"
 namespace smithy4s.example
 
 use smithy4s.meta#validateNewtype
+use smithy4s.meta#scalaImports
 
 @length(min: 1)
 @pattern("[a-zA-Z0-9]+")
 @validateNewtype
 string ValidatedString
+
+@pattern("[a-zA-Z0-9]+")
+@validateNewtype
+string AccountId
+
+@validateNewtype
+@length(min: 1)
+string DeviceId
 
 @length(min: 1)
 @pattern("[a-zA-Z0-9]+")
@@ -16,3 +25,83 @@ string NonValidatedString
 structure ValidatedFoo {
     name: ValidatedString = "abc"
 }
+
+@length(max: 1)
+@validateNewtype
+list ValidatedConstrainedList {
+    member: String
+}
+
+@validateNewtype
+list ValidatedListConstrainedMember {
+    @length(max: 2)
+    member: String
+}
+
+@validateNewtype
+@length(max: 1)
+list ValidatedConstrainedListConstrainedMember {
+    @length(max: 2)
+    member: String
+}
+
+@length(max: 1)
+list ConstrainedListConstrainedMember {
+    @length(max: 2)
+    member: String
+}
+
+@validateNewtype
+@length(max: 1)
+list ValidatedConstrainedListRefinedMember {
+    member: Name
+}
+
+@validateNewtype
+@length(max: 1)
+@scalaImports(["smithy4s.example.instances._"])
+list ValidatedConstrainedListRefinedConstrainedMember {
+    @length(max:2)
+    member: Name
+}
+
+@nonEmptyListFormat
+@validateNewtype
+list ValidatedRefinedList {
+    member: String
+}
+
+@nonEmptyListFormat
+@validateNewtype
+list ValidatedRefinedListConstrainedMember {
+    @length(max: 2)
+    member: String
+}
+
+@length(max: 1)
+@validateNewtype
+map ValidatedConstrainedMap {
+    key: String
+    value: Integer
+}
+
+@validateNewtype
+map ValidatedMapConstrainedKey {
+    @length(max: 2)
+    key: String
+    value: Integer
+}
+
+@validateNewtype
+map ValidatedMapConstrainedValue {
+    key: String
+    @range(max: 2)
+    value: Integer
+}
+
+// @nonEmptyMapFormat
+// @validateNewtype
+// map ValidatedRefinedMap {
+//     key: String
+//     value: Integer
+// }

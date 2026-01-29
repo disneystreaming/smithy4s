@@ -17,7 +17,25 @@
 package smithy4s
 
 import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.list
+import smithy4s.refined.NonEmptyList
+import smithy4s.example.Name
+import smithy4s.example.ValidatedConstrainedList
+import smithy4s.example.ValidatedListConstrainedMember
+import smithy4s.example.ValidatedConstrainedListConstrainedMember
+import smithy4s.example.ValidatedConstrainedListRefinedMember
+import smithy4s.example.ValidatedConstrainedListRefinedConstrainedMember
+import smithy4s.example.ValidatedMapConstrainedKey
+import smithy4s.example.ValidatedConstrainedMap
+import smithy4s.example.ValidatedMapConstrainedValue
+import smithy4s.example.ValidatedRefinedListConstrainedMember
+import smithy4s.example.AccountId
+import smithy4s.example.DeviceId
+
 import munit.Assertions
+import cats.data.Validated.Valid
+import smithy.api.Length
+import smithy4s.example.NonEmptyListFormat
 
 class ValidatedNewtypesSpec() extends munit.FunSuite {
   val id1 = "id1"
@@ -103,33 +121,96 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     @inline def apply(a: String): Either[String, DeviceId] =
       validator.validate(a)
 
+  test("Validated constrained list") {
+    expect(ValidatedConstrainedList(List("foo")).isRight)
+    expect(ValidatedConstrainedList(List("foo", "bar")).isLeft)
   }
 
-  type AccountId = AccountId.Type
+  test("Validated list constrained member") {
+    expect(ValidatedListConstrainedMember(List("f")).isRight)
+    expect(ValidatedListConstrainedMember(List("foo")).isLeft)
+  }
 
-  object AccountId extends ValidatedNewtype[String] {
-    def id: smithy4s.ShapeId = ShapeId("foo", "AccountId")
-    val hints: Hints = Hints.empty
+  test("Validated constrained list constrained member") {
+    expect(ValidatedConstrainedListConstrainedMember(List("f")).isRight)
+    expect(ValidatedConstrainedListConstrainedMember(List("foo")).isLeft)
+    expect(ValidatedConstrainedListConstrainedMember(List("f", "g")).isLeft)
+    expect(ValidatedConstrainedListConstrainedMember(List("foo", "h")).isLeft)
+  }
 
-    val underlyingSchema: Schema[String] = string
-      .withId(id)
-      .addHints(hints)
-      .validated(smithy.api.Length(min = Some(1L), max = None))
-      .validated(smithy.api.Pattern("[a-zA-Z0-9]+"))
+  test("Validated constrained list refined member") {
+    def mkName(str: String) = smithy4s.refined.Name(str) match {
+      case Left(msg) => fail(msg)
+      case Right(v)  => v
+    }
+    expect(
+      ValidatedConstrainedListRefinedMember(
+        List(Name(mkName("foo")))
+      ).isRight
+    )
+    expect(
+      ValidatedConstrainedListRefinedMember(
+        List(
+          Name(mkName("foo")),
+          Name(mkName("bar"))
+        )
+      ).isLeft
+    )
+  }
 
-    val validator: Validator[String, AccountId] = Validator
-      .of[String, AccountId](
-        Bijection[String, AccountId](_.asInstanceOf[AccountId], value(_))
-      )
-      .validating(smithy.api.Length(min = Some(1L), max = None))
-      .alsoValidating(smithy.api.Pattern("[a-zA-Z0-9]+"))
+  test("Validated constrained list refined & constrained member") {
 
-    implicit val schema: Schema[AccountId] =
-      validator.toSchema(underlyingSchema)
+    expect(
+      ValidatedConstrainedListRefinedConstrainedMember(
+        List(Name(mkName("fo")))
+      ).isRight
+    )
+    expect(
+      ValidatedConstrainedListRefinedConstrainedMember(
+        List(
+          Name(mkName("fo")),
+          Name(mkName("ba"))
+        )
+      ).isLeft
+    )
+    expect(
+      ValidatedConstrainedListRefinedConstrainedMember(
+        List(
+          Name(mkName("foo"))
+        )
+      ).isLeft
+    )
+  }
 
-    @inline def apply(a: String): Either[String, AccountId] =
-      validator.validate(a)
+  test("Validated refined list constrainer member") {
+    expect(ValidatedRefinedListConstrainedMember(mkNel("fo")).isRight)
+    expect(ValidatedRefinedListConstrainedMember(mkNel("fo", "foo")).isLeft)
+  }
 
+  test("Validated constrained map") {
+    expect(ValidatedConstrainedMap(Map("foo" -> 1)).isRight)
+    expect(ValidatedConstrainedMap(Map("foo" -> 1, "bar" -> 2)).isLeft)
+  }
+
+  test("Validated map constrained key") {
+    expect(ValidatedMapConstrainedKey(Map("a" -> 1, "b" -> 2)).isRight)
+    expect(ValidatedMapConstrainedKey(Map("a" -> 1, "bar" -> 2)).isLeft)
+  }
+
+  test("Validated map constrained value") {
+    expect(ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 2)).isRight)
+    expect(ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 3)).isLeft)
+  }
+
+  private def mkNel[A](elems: A*) =
+    smithy4s.refined.NonEmptyList(elems.toList) match {
+      case Left(msg) => fail(msg)
+      case Right(v)  => v
+    }
+
+  private def mkName(str: String) = smithy4s.refined.Name(str) match {
+    case Left(msg) => fail(msg)
+    case Right(v)  => v
   }
 
 }

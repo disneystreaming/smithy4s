@@ -45,6 +45,7 @@ package object example {
 
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
+  type AccountId = smithy4s.example.AccountId.Type
   type AdditionalProperties = smithy4s.example.AdditionalProperties.Type
   type Age = smithy4s.example.Age.Type
   /** Multiple line doc comment for another string
@@ -59,11 +60,13 @@ package object example {
   type CityId = smithy4s.example.CityId.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
   type ConstrainedList = smithy4s.example.ConstrainedList.Type
+  type ConstrainedListConstrainedMember = smithy4s.example.ConstrainedListConstrainedMember.Type
   type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
   type CustomErrorMessageType = smithy4s.example.CustomErrorMessageType.Type
   type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
+  type DeviceId = smithy4s.example.DeviceId.Type
   type DogName = smithy4s.example.DogName.Type
   type ExtraData = smithy4s.example.ExtraData.Type
   type FancyList = smithy4s.example.FancyList.Type
@@ -140,6 +143,16 @@ package object example {
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
   type Username = smithy4s.example.Username.Type
   type UuidTrait = smithy4s.example.UuidTrait.Type
+  type ValidatedConstrainedList = smithy4s.example.ValidatedConstrainedList.Type
+  type ValidatedConstrainedListConstrainedMember = smithy4s.example.ValidatedConstrainedListConstrainedMember.Type
+  type ValidatedConstrainedListRefinedConstrainedMember = smithy4s.example.ValidatedConstrainedListRefinedConstrainedMember.Type
+  type ValidatedConstrainedListRefinedMember = smithy4s.example.ValidatedConstrainedListRefinedMember.Type
+  type ValidatedConstrainedMap = smithy4s.example.ValidatedConstrainedMap.Type
+  type ValidatedListConstrainedMember = smithy4s.example.ValidatedListConstrainedMember.Type
+  type ValidatedMapConstrainedKey = smithy4s.example.ValidatedMapConstrainedKey.Type
+  type ValidatedMapConstrainedValue = smithy4s.example.ValidatedMapConstrainedValue.Type
+  type ValidatedRefinedList = smithy4s.example.ValidatedRefinedList.Type
+  type ValidatedRefinedListConstrainedMember = smithy4s.example.ValidatedRefinedListConstrainedMember.Type
   type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }
