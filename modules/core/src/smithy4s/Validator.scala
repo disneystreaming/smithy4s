@@ -52,8 +52,10 @@ object Validator {
 
     implicit def toRefinedSyntax[A, B](builder: Builder[A, B])(implicit
         ev: A =:= B
-    ): RefinedSyntax[A] =
+    ): RefinedSyntax[A] = {
+      val _ = ev
       new RefinedSyntax(builder.asInstanceOf[Builder[A, A]])
+    }
 
     private[smithy4s] class PartiallyAppliedRefinedBuilder[A, B](
         base: Builder[A, A]
