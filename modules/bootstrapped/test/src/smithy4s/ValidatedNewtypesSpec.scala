@@ -117,19 +117,34 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
 
   test("Validated constrained list") {
     expect(ValidatedConstrainedList(List("foo")).isRight)
-    expect(ValidatedConstrainedList(List("foo", "bar")).isLeft)
+    expect.same(
+      ValidatedConstrainedList(List("foo", "bar")),
+      Left("length required to be <= 1, but was 2")
+    )
   }
 
   test("Validated list constrained member") {
     expect(ValidatedListConstrainedMember(List("f")).isRight)
-    expect(ValidatedListConstrainedMember(List("foo")).isLeft)
+    expect.same(
+      ValidatedListConstrainedMember(List("foo")),
+      Left("length required to be <= 2, but was 3")
+    )
   }
 
   test("Validated constrained list constrained member") {
     expect(ValidatedConstrainedListConstrainedMember(List("f")).isRight)
-    expect(ValidatedConstrainedListConstrainedMember(List("foo")).isLeft)
-    expect(ValidatedConstrainedListConstrainedMember(List("f", "g")).isLeft)
-    expect(ValidatedConstrainedListConstrainedMember(List("foo", "h")).isLeft)
+    expect.same(
+      ValidatedConstrainedListConstrainedMember(List("foo")),
+      Left("length required to be <= 2, but was 3")
+    )
+    expect.same(
+      ValidatedConstrainedListConstrainedMember(List("f", "g")),
+      Left("length required to be <= 1, but was 2")
+    )
+    expect.same(
+      ValidatedConstrainedListConstrainedMember(List("foo", "h")),
+      Left("length required to be <= 1, but was 2")
+    )
   }
 
   test("Validated constrained list refined member") {
@@ -138,13 +153,14 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
         List(Name(mkName("foo")))
       ).isRight
     )
-    expect(
+    expect.same(
       ValidatedConstrainedListRefinedMember(
         List(
           Name(mkName("foo")),
           Name(mkName("bar"))
         )
-      ).isLeft
+      ),
+      Left("length required to be <= 1, but was 2")
     )
   }
 
@@ -155,41 +171,55 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
         List(Name(mkName("fo")))
       ).isRight
     )
-    expect(
+    expect.same(
       ValidatedConstrainedListRefinedConstrainedMember(
         List(
           Name(mkName("fo")),
           Name(mkName("ba"))
         )
-      ).isLeft
+      ),
+      Left("length required to be <= 1, but was 2")
     )
-    expect(
+    expect.same(
       ValidatedConstrainedListRefinedConstrainedMember(
         List(
           Name(mkName("foo"))
         )
-      ).isLeft
+      ),
+      Left("length required to be <= 2, but was 3")
     )
   }
 
   test("Validated refined list constrainer member") {
     expect(ValidatedRefinedListConstrainedMember(mkNel("fo")).isRight)
-    expect(ValidatedRefinedListConstrainedMember(mkNel("fo", "foo")).isLeft)
+    expect.same(
+      ValidatedRefinedListConstrainedMember(mkNel("fo", "foo")),
+      Left("length required to be <= 2, but was 3")
+    )
   }
 
   test("Validated constrained map") {
     expect(ValidatedConstrainedMap(Map("foo" -> 1)).isRight)
-    expect(ValidatedConstrainedMap(Map("foo" -> 1, "bar" -> 2)).isLeft)
+    expect.same(
+      ValidatedConstrainedMap(Map("foo" -> 1, "bar" -> 2)),
+      Left("length required to be <= 1, but was 2")
+    )
   }
 
   test("Validated map constrained key") {
     expect(ValidatedMapConstrainedKey(Map("a" -> 1, "b" -> 2)).isRight)
-    expect(ValidatedMapConstrainedKey(Map("a" -> 1, "bar" -> 2)).isLeft)
+    expect.same(
+      ValidatedMapConstrainedKey(Map("a" -> 1, "bar" -> 2)),
+      Left("length required to be <= 2, but was 3")
+    )
   }
 
   test("Validated map constrained value") {
     expect(ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 2)).isRight)
-    expect(ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 3)).isLeft)
+    expect.same(
+      ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 3)),
+      Left("Input must be <= 2.0, but was 3.0")
+    )
   }
 
   private def mkNel[A](elems: A*) =
