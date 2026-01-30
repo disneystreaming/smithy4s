@@ -18,10 +18,10 @@ package smithy4s
 
 import smithy4s.example.Name
 import smithy4s.example.ValidatedConstrainedList
-import smithy4s.example.ValidatedListConstrainedMember
-import smithy4s.example.ValidatedConstrainedListConstrainedMember
+import smithy4s.example.ValidatedSetConstrainedMember
+import smithy4s.example.ValidatedConstrainedIndexedSeqConstrainedMember
 import smithy4s.example.ValidatedConstrainedListRefinedMember
-import smithy4s.example.ValidatedConstrainedListRefinedConstrainedMember
+import smithy4s.example.ValidatedConstrainedVectorRefinedConstrainedMember
 import smithy4s.example.ValidatedMapConstrainedKey
 import smithy4s.example.ValidatedConstrainedMap
 import smithy4s.example.ValidatedMapConstrainedValue
@@ -123,26 +123,28 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     )
   }
 
-  test("Validated list constrained member") {
-    expect(ValidatedListConstrainedMember(List("f")).isRight)
+  test("Validated set constrained member") {
+    expect(ValidatedSetConstrainedMember(Set("f")).isRight)
     expect.same(
-      ValidatedListConstrainedMember(List("foo")),
+      ValidatedSetConstrainedMember(Set("foo")),
       Left("length required to be <= 2, but was 3")
     )
   }
 
-  test("Validated constrained list constrained member") {
-    expect(ValidatedConstrainedListConstrainedMember(List("f")).isRight)
+  test("Validated constrained indexed seq constrained member") {
+    expect(
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("f")).isRight
+    )
     expect.same(
-      ValidatedConstrainedListConstrainedMember(List("foo")),
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("foo")),
       Left("length required to be <= 2, but was 3")
     )
     expect.same(
-      ValidatedConstrainedListConstrainedMember(List("f", "g")),
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("f", "g")),
       Left("length required to be <= 1, but was 2")
     )
     expect.same(
-      ValidatedConstrainedListConstrainedMember(List("foo", "h")),
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("foo", "h")),
       Left("length required to be <= 1, but was 2")
     )
   }
@@ -164,16 +166,16 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     )
   }
 
-  test("Validated constrained list refined & constrained member") {
+  test("Validated constrained vector refined & constrained member") {
 
     expect(
-      ValidatedConstrainedListRefinedConstrainedMember(
-        List(Name(mkName("fo")))
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(Name(mkName("fo")))
       ).isRight
     )
     expect.same(
-      ValidatedConstrainedListRefinedConstrainedMember(
-        List(
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(
           Name(mkName("fo")),
           Name(mkName("ba"))
         )
@@ -181,8 +183,8 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
       Left("length required to be <= 1, but was 2")
     )
     expect.same(
-      ValidatedConstrainedListRefinedConstrainedMember(
-        List(
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(
           Name(mkName("foo"))
         )
       ),
@@ -215,10 +217,12 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
   }
 
   test("Validated map constrained value") {
-    expect(ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 2)).isRight)
+    expect(
+      ValidatedMapConstrainedValue(Map("a" -> "123", "b" -> "456")).isRight
+    )
     expect.same(
-      ValidatedMapConstrainedValue(Map("a" -> 1, "b" -> 3)),
-      Left("Input must be <= 2.0, but was 3.0")
+      ValidatedMapConstrainedValue(Map("a" -> "123", "b" -> "4-5-6")),
+      Left("String '4-5-6' does not match pattern '^[a-zA-Z0-9]+$'")
     )
   }
 
