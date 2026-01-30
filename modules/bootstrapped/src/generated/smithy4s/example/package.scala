@@ -58,7 +58,6 @@ package object example {
   type CityId = smithy4s.example.CityId.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
   type ConstrainedList = smithy4s.example.ConstrainedList.Type
-  type ConstrainedListConstrainedMember = smithy4s.example.ConstrainedListConstrainedMember.Type
   type ConstrainedMap = smithy4s.example.ConstrainedMap.Type
   type CustomErrorMessageType = smithy4s.example.CustomErrorMessageType.Type
   type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
@@ -130,16 +129,16 @@ package object example {
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
   type Username = smithy4s.example.Username.Type
   type UuidTrait = smithy4s.example.UuidTrait.Type
+  type ValidatedConstrainedIndexedSeqConstrainedMember = smithy4s.example.ValidatedConstrainedIndexedSeqConstrainedMember.Type
   type ValidatedConstrainedList = smithy4s.example.ValidatedConstrainedList.Type
-  type ValidatedConstrainedListConstrainedMember = smithy4s.example.ValidatedConstrainedListConstrainedMember.Type
-  type ValidatedConstrainedListRefinedConstrainedMember = smithy4s.example.ValidatedConstrainedListRefinedConstrainedMember.Type
   type ValidatedConstrainedListRefinedMember = smithy4s.example.ValidatedConstrainedListRefinedMember.Type
   type ValidatedConstrainedMap = smithy4s.example.ValidatedConstrainedMap.Type
-  type ValidatedListConstrainedMember = smithy4s.example.ValidatedListConstrainedMember.Type
+  type ValidatedConstrainedVectorRefinedConstrainedMember = smithy4s.example.ValidatedConstrainedVectorRefinedConstrainedMember.Type
   type ValidatedMapConstrainedKey = smithy4s.example.ValidatedMapConstrainedKey.Type
   type ValidatedMapConstrainedValue = smithy4s.example.ValidatedMapConstrainedValue.Type
   type ValidatedRefinedList = smithy4s.example.ValidatedRefinedList.Type
   type ValidatedRefinedListConstrainedMember = smithy4s.example.ValidatedRefinedListConstrainedMember.Type
+  type ValidatedSetConstrainedMember = smithy4s.example.ValidatedSetConstrainedMember.Type
   type ValidatedString = smithy4s.example.ValidatedString.Type
 
 }

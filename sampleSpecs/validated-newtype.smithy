@@ -33,20 +33,16 @@ list ValidatedConstrainedList {
 }
 
 @validateNewtype
-list ValidatedListConstrainedMember {
+@uniqueItems
+list ValidatedSetConstrainedMember {
     @length(max: 2)
     member: String
 }
 
 @validateNewtype
 @length(max: 1)
-list ValidatedConstrainedListConstrainedMember {
-    @length(max: 2)
-    member: String
-}
-
-@length(max: 1)
-list ConstrainedListConstrainedMember {
+@smithy4s.meta#indexedSeq
+list ValidatedConstrainedIndexedSeqConstrainedMember {
     @length(max: 2)
     member: String
 }
@@ -60,7 +56,8 @@ list ValidatedConstrainedListRefinedMember {
 @validateNewtype
 @length(max: 1)
 @scalaImports(["smithy4s.example.instances._"])
-list ValidatedConstrainedListRefinedConstrainedMember {
+@smithy4s.meta#vector
+list ValidatedConstrainedVectorRefinedConstrainedMember {
     @length(max:2)
     member: Name
 }
@@ -95,8 +92,8 @@ map ValidatedMapConstrainedKey {
 @validateNewtype
 map ValidatedMapConstrainedValue {
     key: String
-    @range(max: 2)
-    value: Integer
+    @pattern("^[a-zA-Z0-9]+$")
+    value: String
 }
 
 // @nonEmptyMapFormat
