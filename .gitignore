@@ -70,3 +70,6 @@ version
 build/smithy/classpath.json
 
 .sbtopts
+
+.mcp.json
+.claude

@@ -21,6 +21,8 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
 
+ThisBuild / version := "0.18.47-SNAPSHOT"
+
 // for Alloy snapshots
 // as well as any other dependency snapshots.
 ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
@@ -71,6 +73,7 @@ lazy val allModules = Seq(
   codegenPlugin,
   benchmark,
   protobuf,
+  `http4s-grpc`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -900,6 +903,25 @@ lazy val `http4s-swagger` = projectMatrix
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val `http4s-grpc` = projectMatrix
+  .in(file("modules/http4s-grpc"))
+  .dependsOn(
+    core,
+    `http4s-kernel`,
+    http4s,
+    protobuf
+  )
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.core.value,
+      Dependencies.Http4s.dsl.value,
+      Dependencies.Http4s.client.value,
+    ),
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
 
 lazy val cats = projectMatrix
   .in(file("modules/cats"))
