@@ -1,9 +1,4 @@
 import software.amazon.smithy.model.traits.TraitService
-import com.typesafe.tools.mima.core.ProblemFilters
-import com.typesafe.tools.mima.core.MissingClassProblem
-import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
-import com.typesafe.tools.mima.core.IncompatibleMethTypeProblem
-import com.typesafe.tools.mima.core.DirectMissingMethodProblem
 import _root_.java.util.stream.Collectors
 import java.nio.file.Files
 import sbt.internal.IvyConsole
@@ -255,62 +250,7 @@ lazy val core = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
     ),
-    mimaBinaryIssueFilters ++= Seq(
-      // Incompatible change from smithy 1.46.0
-      // Introduced in https://github.com/smithy-lang/smithy/pull/2156
-      // Discussed in https://github.com/smithy-lang/smithy/issues/2243
-      // Brought to smithy4s in https://github.com/disneystreaming/smithy4s/pull/1485
-      ProblemFilters.exclude[MissingClassProblem](
-        "smithy.api.TraitChangeSeverity*"
-      ),
-      ProblemFilters.exclude[IncompatibleMethTypeProblem](
-        "smithy.api.TraitDiffRule.apply"
-      ),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy.api.TraitDiffRule.<init>$default$2"
-      ),
-      ProblemFilters.exclude[IncompatibleMethTypeProblem](
-        "smithy.api.TraitDiffRule.this"
-      ),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy.api.TraitDiffRule.severity"
-      ),
-      ProblemFilters.exclude[IncompatibleMethTypeProblem](
-        "smithy.api.TraitDiffRule.copy"
-      ),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy.api.TraitDiffRule.copy$default$2"
-      ),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy.api.TraitDiffRule._2"
-      ),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy.api.TraitDiffRule.apply$default$2"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.http.HttpUnaryServerRouter#KleisliRouter.this"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.http.HttpUnaryServerRouter#PartialFunctionRouter.this"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        // this is a private case class so any problems are spurious
-        "smithy4s.http.HttpUnaryClientCodecs#HttpUnaryClientCodecsBuilderImpl.*"
-      ),
-      // Breaking bin-compat to walk back ambiguous methods introduced in
-      // https://github.com/disneystreaming/smithy4s/pull/1669
-      ProblemFilters.exclude[IncompatibleMethTypeProblem](
-        "smithy4s.http.HttpUnaryServerRouter.partialFunction"
-      ),
-      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem](
-        "alloy.proto.ProtoCompactOffsetDateTime"
-      ),
-      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem](
-        "alloy.proto.ProtoCompactOffsetDateTime$"
-      )
-    )
+    mimaBinaryIssueFilters ++= Seq.empty
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -907,11 +847,7 @@ lazy val http4s = projectMatrix
         }
         .getOrElse(Map.empty)
     },
-    mimaBinaryIssueFilters ++= Seq(
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy4s.http4s.SimpleProtocolBuilder#RouterBuilder.this"
-      )
-    )
+    mimaBinaryIssueFilters ++= Seq.empty
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
