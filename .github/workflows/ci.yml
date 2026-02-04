@@ -67,7 +67,9 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Run tests
+        # cs fetch is only needed to work around the following issue https://github.com/VirtusLab/scala-cli/issues/4108
         run: |
+          cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
           sbt test_$BUILD_KEY \
               pushRemoteCache_$BUILD_KEY
 
