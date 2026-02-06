@@ -15,14 +15,14 @@ object ShouldHaveDynamicBinding extends ShapeTag.Companion[ShouldHaveDynamicBind
   val hints: Hints = Hints(
     smithy.api.Since("1"),
     Hints.dynamic(ShapeId("smithy4s.example", "testDynamicBinding"), smithy4s.Document.obj("str" -> smithy4s.Document.fromString("test"))),
-    Hints.dynamic(ShapeId("smithy4s.example.dynamic_traits", "thisWillBeDynamic"), smithy4s.Document.obj("test" -> smithy4s.Document.fromDouble(101.0d))),
+    Hints.dynamic(ShapeId("smithy4s.example.dynamic_traits", "thisWillBeDynamic"), smithy4s.Document.obj("test" -> smithy4s.Document.fromLong(101), "test2" -> smithy4s.Document.fromDouble(123.456d))),
   ).lazily
 
   // constructor using the original order from the spec
   private def make(a: Option[String], b: Option[String]): ShouldHaveDynamicBinding = ShouldHaveDynamicBinding(a, b)
 
   implicit val schema: Schema[ShouldHaveDynamicBinding] = struct(
-    string.optional[ShouldHaveDynamicBinding]("a", _.a).addHints(smithy.api.Since("2"), Hints.dynamic(ShapeId("smithy4s.example", "testDynamicBinding"), smithy4s.Document.obj("str" -> smithy4s.Document.fromString("test2"), "int" -> smithy4s.Document.fromDouble(1234.0d)))),
+    string.optional[ShouldHaveDynamicBinding]("a", _.a).addHints(smithy.api.Since("2"), Hints.dynamic(ShapeId("smithy4s.example", "testDynamicBinding"), smithy4s.Document.obj("str" -> smithy4s.Document.fromString("test2"), "int" -> smithy4s.Document.fromLong(1234)))),
     string.validated(smithy.api.Length(min = Some(1L), max = None)).optional[ShouldHaveDynamicBinding]("b", _.b).addHints(Hints.dynamic(ShapeId("smithy4s.example", "testDynamicBinding"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

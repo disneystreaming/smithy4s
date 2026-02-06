@@ -7,4 +7,5 @@ namespace smithy4s.example.dynamic_traits
 @trait
 structure thisWillBeDynamic {
   test: Integer
+  test2: Float
 }

@@ -202,12 +202,41 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
     runTest(smithySpec)()
   }
 
+  test("dynmic hint rendering of numbers") {
+    val smithySpec = """|$version: "2.0"
+                        |
+                        |namespace test
+                        |
+                        |@trait
+                        |@smithy4s.meta#renderAsDynamicBinding
+                        |structure someTrait {
+                        |  @required
+                        |  int: Integer
+                        |  @required
+                        |  double: Double
+                        |}
+                        |
+                        |@someTrait(int: 1, double: 2.0)
+                        |structure Test {}
+                        |""".stripMargin
+
+    val expectedHint =
+      s"""Hints.dynamic(ShapeId("test", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1), "double" -> smithy4s.Document.fromDouble(2.0d)))"""
+
+    val result = TestUtils.generateScalaCode(smithySpec).values.toList
+
+    TestUtils.assertContainsSection(
+      files = result,
+      expectedSections = List(expectedHint)
+    )
+  }
+
   private def runTest(
       smithySpecs: String*
   )(ns: String = "test")(implicit loc: Location): Unit = {
     val expect = List(
-      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(1.0d)))""",
-      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromDouble(2.0d)))"""
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1)))""",
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(2)))"""
     )
 
     val result = TestUtils.generateScalaCode(smithySpecs: _*).values.toList

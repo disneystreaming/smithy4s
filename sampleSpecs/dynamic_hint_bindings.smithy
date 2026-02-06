@@ -13,7 +13,7 @@ structure testDynamicBinding {
 }
 
 @testDynamicBinding(str: "test")
-@thisWillBeDynamic(test: 101)
+@thisWillBeDynamic(test: 101, test2: 123.456)
 @since("1")
 structure ShouldHaveDynamicBinding {
     @testDynamicBinding(str: "test2", int: 1234)
@@ -29,3 +29,4 @@ structure ShouldHaveDynamicBinding {
 // `.lazily`
 @testDynamicBinding(str: "test")
 structure ShouldHaveDynamicBindingTwo {}
+

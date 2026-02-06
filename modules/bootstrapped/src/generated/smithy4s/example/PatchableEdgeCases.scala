@@ -21,9 +21,9 @@ object PatchableEdgeCases extends ShapeTag.Companion[PatchableEdgeCases] {
 
   implicit val schema: Schema[PatchableEdgeCases] = struct(
     int.nullable.required[PatchableEdgeCases]("required", _.required),
-    int.nullable.required[PatchableEdgeCases]("requiredDefaultValue", _.requiredDefaultValue).addHints(smithy.api.Default(smithy4s.Document.fromDouble(3.0d))),
+    int.nullable.required[PatchableEdgeCases]("requiredDefaultValue", _.requiredDefaultValue).addHints(smithy.api.Default(smithy4s.Document.fromLong(3))),
     int.nullable.required[PatchableEdgeCases]("requiredDefaultNull", _.requiredDefaultNull).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
-    int.nullable.field[PatchableEdgeCases]("defaultValue", _.defaultValue).addHints(smithy.api.Default(smithy4s.Document.fromDouble(5.0d))),
+    int.nullable.field[PatchableEdgeCases]("defaultValue", _.defaultValue).addHints(smithy.api.Default(smithy4s.Document.fromLong(5))),
     int.nullable.field[PatchableEdgeCases]("defaultNull", _.defaultNull).addHints(smithy.api.Default(smithy4s.Document.nullDoc)),
   )(make).withId(id).addHints(hints)
 }
