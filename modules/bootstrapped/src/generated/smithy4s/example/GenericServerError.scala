@@ -17,7 +17,7 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
 
   val hints: Hints = Hints(
     Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
-    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(502.0d)),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(502)),
   )
 
   // constructor using the original order from the spec

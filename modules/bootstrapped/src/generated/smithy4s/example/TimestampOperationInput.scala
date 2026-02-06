@@ -22,7 +22,7 @@ object TimestampOperationInput extends ShapeTag.Companion[TimestampOperationInpu
 
   implicit val schema: Schema[TimestampOperationInput] = struct(
     timestamp.required[TimestampOperationInput]("httpDate", _.httpDate).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("Thu, 23 May 2024 10:20:30 GMT")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("http-date"))),
-    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.71645963E9d)), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
+    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1716459630)), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("epoch-seconds"))),
     timestamp.required[TimestampOperationInput]("dateTime", _.dateTime).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("2024-05-23T10:20:30.000Z")), Hints.dynamic(ShapeId("smithy.api", "timestampFormat"), smithy4s.Document.fromString("date-time"))),
   )(make).withId(id).addHints(hints)
 }

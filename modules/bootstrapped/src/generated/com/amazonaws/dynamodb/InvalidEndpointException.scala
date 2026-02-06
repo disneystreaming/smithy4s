@@ -17,7 +17,7 @@ object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointExcept
 
   val hints: Hints = Hints(
     Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
-    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromDouble(421.0d)),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(421)),
   )
 
   // constructor using the original order from the spec

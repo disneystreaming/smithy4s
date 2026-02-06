@@ -22,10 +22,10 @@ object ClosedInt extends Enumeration[ClosedInt] with ShapeTag.Companion[ClosedIn
   val hints: Hints = Hints.empty
 
   case object FOO extends ClosedInt("FOO", "FOO", 0, Hints.empty) {
-    override val hints: Hints = Hints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromDouble(0.0d)))
+    override val hints: Hints = Hints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(0)))
   }
   case object BAR extends ClosedInt("BAR", "BAR", 1, Hints.empty) {
-    override val hints: Hints = Hints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromDouble(1.0d)))
+    override val hints: Hints = Hints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(1)))
   }
 
   val values: List[ClosedInt] = List(

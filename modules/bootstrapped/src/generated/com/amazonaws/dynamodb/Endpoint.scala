@@ -29,6 +29,6 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
 
   implicit val schema: Schema[Endpoint] = struct(
     string.required[Endpoint]("Address", _.address).addHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("<p>IP address of the endpoint.</p>"))),
-    long.required[Endpoint]("CachePeriodInMinutes", _.cachePeriodInMinutes).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(0.0d)), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("<p>Endpoint cache time to live (TTL) value.</p>"))),
+    long.required[Endpoint]("CachePeriodInMinutes", _.cachePeriodInMinutes).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0)), Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("<p>Endpoint cache time to live (TTL) value.</p>"))),
   )(make).withId(id).addHints(hints)
 }

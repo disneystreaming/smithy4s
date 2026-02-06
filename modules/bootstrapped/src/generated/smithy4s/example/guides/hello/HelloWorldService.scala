@@ -95,7 +95,7 @@ object HelloWorldServiceOperation {
     val schema: OperationSchema[Unit, Nothing, World, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.guides.hello", "SayWorld"))
       .withInput(unit)
       .withOutput(World.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/hello"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/hello"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): SayWorld = SayWorld()
   }
 }

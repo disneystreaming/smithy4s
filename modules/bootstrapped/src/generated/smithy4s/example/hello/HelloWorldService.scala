@@ -99,7 +99,7 @@ object HelloWorldServiceOperation {
       .withInput(Person.schema)
       .withError(HelloError.errorSchema)
       .withOutput(Greeting.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/{name}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "tags"), smithy4s.Document.array(smithy4s.Document.fromString("testOperationTag"))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/{name}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "tags"), smithy4s.Document.array(smithy4s.Document.fromString("testOperationTag"))))
     def wrap(input: Person): Hello = Hello(input)
   }
   sealed trait HelloError extends scala.Product with scala.Serializable { self =>

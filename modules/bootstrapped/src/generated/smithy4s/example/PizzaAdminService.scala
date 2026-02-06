@@ -208,7 +208,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "HeaderEndpoint"))
       .withInput(HeaderEndpointData.schema)
       .withOutput(HeaderEndpointData.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/headers/"), "code" -> smithy4s.Document.fromDouble(200.0d))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/headers/"), "code" -> smithy4s.Document.fromLong(200))))
     def wrap(input: HeaderEndpointData): HeaderEndpoint = HeaderEndpoint(input)
   }
   final case class CustomCode(input: CustomCodeInput) extends PizzaAdminServiceOperation[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
@@ -221,7 +221,7 @@ object PizzaAdminServiceOperation {
       .withInput(CustomCodeInput.schema)
       .withError(CustomCodeError.errorSchema)
       .withOutput(CustomCodeOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/custom-code/{code}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/custom-code/{code}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CustomCodeInput): CustomCode = CustomCode(input)
   }
   sealed trait CustomCodeError extends scala.Product with scala.Serializable { self =>
@@ -310,7 +310,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindXVariantD"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=x&variant=d"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=x&variant=d"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryKindXVariantD = CheckQueryKindXVariantD(input)
   }
   final case class GetIntEnum(input: GetIntEnumInput) extends PizzaAdminServiceOperation[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
@@ -323,7 +323,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetIntEnumInput.schema)
       .withError(GetIntEnumError.errorSchema)
       .withOutput(GetIntEnumOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/get-int-enum/{aa}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/get-int-enum/{aa}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetIntEnumInput): GetIntEnum = GetIntEnum(input)
   }
   sealed trait GetIntEnumError extends scala.Product with scala.Serializable { self =>
@@ -387,7 +387,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RoundTrip"))
       .withInput(RoundTripData.schema)
       .withOutput(RoundTripData.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/roundTrip/{label}"), "code" -> smithy4s.Document.fromDouble(200.0d))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/roundTrip/{label}"), "code" -> smithy4s.Document.fromLong(200))))
     def wrap(input: RoundTripData): RoundTrip = RoundTrip(input)
   }
   final case class Version() extends PizzaAdminServiceOperation[Unit, Nothing, VersionOutput, Nothing, Nothing] {
@@ -400,7 +400,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, VersionOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Version"))
       .withInput(unit)
       .withOutput(VersionOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/version"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/version"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): Version = Version()
   }
   final case class CheckQueryVariantA(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -412,7 +412,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryVariantA"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?variant=a"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?variant=a"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryVariantA = CheckQueryVariantA(input)
   }
   final case class CheckQueryKindZVariantA(input: CheckQueryInput) extends PizzaAdminServiceOperation[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] {
@@ -424,7 +424,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindZVariantA"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=z&variant=a"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=z&variant=a"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryKindZVariantA = CheckQueryKindZVariantA(input)
   }
   final case class Reservation(input: ReservationInput) extends PizzaAdminServiceOperation[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
@@ -436,7 +436,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "Reservation"))
       .withInput(ReservationInput.schema)
       .withOutput(ReservationOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/book/{name}"), "code" -> smithy4s.Document.fromDouble(200.0d))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/book/{name}"), "code" -> smithy4s.Document.fromLong(200))))
     def wrap(input: ReservationInput): Reservation = Reservation(input)
   }
   final case class GetEnum(input: GetEnumInput) extends PizzaAdminServiceOperation[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
@@ -449,7 +449,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetEnumInput.schema)
       .withError(GetEnumError.errorSchema)
       .withOutput(GetEnumOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/get-enum/{aa}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/get-enum/{aa}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetEnumInput): GetEnum = GetEnum(input)
   }
   sealed trait GetEnumError extends scala.Product with scala.Serializable { self =>
@@ -513,7 +513,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindYVariant"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=y&variant"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=y&variant"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryKindYVariant = CheckQueryKindYVariant(input)
   }
   final case class HeadRequest() extends PizzaAdminServiceOperation[Unit, Nothing, HeadRequestOutput, Nothing, Nothing] {
@@ -539,7 +539,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[Unit, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "NoContentRequest"))
       .withInput(unit)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/no-content"), "code" -> smithy4s.Document.fromDouble(204.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/no-content"), "code" -> smithy4s.Document.fromLong(204))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): NoContentRequest = NoContentRequest()
   }
   final case class AddMenuItem(input: AddMenuItemRequest) extends PizzaAdminServiceOperation[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
@@ -552,7 +552,7 @@ object PizzaAdminServiceOperation {
       .withInput(AddMenuItemRequest.schema)
       .withError(AddMenuItemError.errorSchema)
       .withOutput(AddMenuItemResult.schema)
-      .withHints(Hints.dynamic(ShapeId("alloy.openapi", "summary"), smithy4s.Document.fromString("Add item to restaurant menu")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/restaurant/{restaurant}/menu/item"), "code" -> smithy4s.Document.fromDouble(201.0d))))
+      .withHints(Hints.dynamic(ShapeId("alloy.openapi", "summary"), smithy4s.Document.fromString("Add item to restaurant menu")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/restaurant/{restaurant}/menu/item"), "code" -> smithy4s.Document.fromLong(201))))
     def wrap(input: AddMenuItemRequest): AddMenuItem = AddMenuItem(input)
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>
@@ -644,7 +644,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindZ"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=z"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=z"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryKindZ = CheckQueryKindZ(input)
   }
   final case class Health(input: HealthRequest) extends PizzaAdminServiceOperation[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
@@ -657,7 +657,7 @@ object PizzaAdminServiceOperation {
       .withInput(HealthRequest.schema)
       .withError(HealthError.errorSchema)
       .withOutput(HealthResponse.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/health"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/health"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: HealthRequest): Health = Health(input)
   }
   sealed trait HealthError extends scala.Product with scala.Serializable { self =>
@@ -721,7 +721,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryKindXVariantC"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=x&variant=c"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?kind=x&variant=c"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryKindXVariantC = CheckQueryKindXVariantC(input)
   }
   final case class GetMenu(input: GetMenuRequest) extends PizzaAdminServiceOperation[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
@@ -734,7 +734,7 @@ object PizzaAdminServiceOperation {
       .withInput(GetMenuRequest.schema)
       .withError(GetMenuError.errorSchema)
       .withOutput(GetMenuResult.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/restaurant/{restaurant}/menu"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/restaurant/{restaurant}/menu"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetMenuRequest): GetMenu = GetMenu(input)
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable { self =>
@@ -840,7 +840,7 @@ object PizzaAdminServiceOperation {
     val schema: OperationSchema[CheckQueryInput, Nothing, CheckQueryOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "CheckQueryVariantB"))
       .withInput(CheckQueryInput.schema)
       .withOutput(CheckQueryOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?variant=b"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/query-check?variant=b"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: CheckQueryInput): CheckQueryVariantB = CheckQueryVariantB(input)
   }
 }

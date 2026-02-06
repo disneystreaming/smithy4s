@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.float
 object ChanceOfRain extends Newtype[Float] {
   val id: ShapeId = ShapeId("smithy4s.example", "ChanceOfRain")
   val hints: Hints = Hints(
-    Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(0.0d)),
+    Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0)),
   )
   val underlyingSchema: Schema[Float] = float.withId(id).addHints(hints)
   implicit val schema: Schema[ChanceOfRain] = bijection(underlyingSchema, asBijection)

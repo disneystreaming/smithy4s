@@ -114,7 +114,7 @@ object ObjectServiceOperation {
       .withInput(GetObjectInput.schema)
       .withError(GetObjectError.errorSchema)
       .withOutput(GetObjectOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/{bucketName}/{key}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: GetObjectInput): GetObject = GetObject(input)
   }
   sealed trait GetObjectError extends scala.Product with scala.Serializable { self =>
@@ -193,7 +193,7 @@ object ObjectServiceOperation {
       .withInput(PutObjectInput.schema)
       .withError(PutObjectError.errorSchema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("PUT"), "uri" -> smithy4s.Document.fromString("/{bucketName}/{key}"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "idempotent"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("PUT"), "uri" -> smithy4s.Document.fromString("/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "idempotent"), smithy4s.Document.obj()))
     def wrap(input: PutObjectInput): PutObject = PutObject(input)
   }
   sealed trait PutObjectError extends scala.Product with scala.Serializable { self =>

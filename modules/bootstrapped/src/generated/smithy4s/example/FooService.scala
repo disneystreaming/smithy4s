@@ -102,7 +102,7 @@ object FooServiceOperation {
     val schema: OperationSchema[Unit, Nothing, GetFooOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetFoo"))
       .withInput(unit)
       .withOutput(GetFooOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\"")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/foo"), "code" -> smithy4s.Document.fromDouble(200.0d))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\"")), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/foo"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): GetFoo = GetFoo()
   }
 }
