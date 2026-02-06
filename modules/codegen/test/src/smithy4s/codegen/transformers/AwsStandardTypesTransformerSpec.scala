@@ -218,7 +218,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |  private def make(i: Int): TestStructure = TestStructure(i)
         |
         |  implicit val schema: Schema[TestStructure] = struct(
-        |    int.field[TestStructure]("i", _.i).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(5.0d))),
+        |    int.field[TestStructure]("i", _.i).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(5))),
         |  )(make).withId(id).addHints(hints)
         |}""".stripMargin
     )
