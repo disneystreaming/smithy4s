@@ -1,28 +1,24 @@
 package smithy4s
-package http4s
 package grpc
+package http4s
 
-import smithy4s.ShapeTag
-import smithy4s.kinds.FunctorAlgebra
-import org.http4s.HttpRoutes
+import org.http4s._
 import org.http4s.client.Client
-import org.http4s.Uri
 import org.http4s.implicits._
+import smithy4s.ShapeTag
 import smithy4s.client.UnaryClientCompiler
-import org.http4s.Response
-import smithy4s.http4s.grpc.internals.SimpleGrpcCodecs
+import smithy4s.http.HttpUnaryServerRouter
+import smithy4s.grpc.http4s.internals.SimpleGrpcCodecs
+import smithy4s.http4s.kernel.{ toSmithy4sHttpUri, toSmithy4sHttpMethod }
+import smithy4s.kinds.{ FunctorAlgebra, PolyFunction5 }
 import smithy4s.interopcats._
-import smithy4s.http4s.internals.Http4sToSmithy4sClient
-import smithy4s.protobuf.internals.GrpcPayloadCodecCompilerImpl
 import smithy4s.protobuf.Protobuf
 import cats.effect._
 import cats.syntax.all._
 import cats.data.OptionT
-import smithy4s.http.HttpUnaryServerRouter
-import org.http4s.Request
-import org.http4s.HttpApp
-import smithy4s.http4s.kernel.{ toSmithy4sHttpUri, toSmithy4sHttpMethod }
-import smithy4s.kinds.PolyFunction5
+import smithy4s.protobuf.internals.GrpcPayloadCodecCompilerImpl
+import smithy4s.http4s.SimpleProtocolCodecs
+import smithy4s.grpc.http4s.GrpcHeaders._
 
 abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit protocolTag: ShapeTag[P]) {
   def apply[Alg[_[_, _, _, _, _]]](
@@ -90,36 +86,51 @@ abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit pro
 
   class ClientBuilder[
     Alg[_[_, _, _, _, _]],
-    F[_]: Concurrent
+    F[_]
   ] private[grpc](
     client: Client[F],
     val service: smithy4s.Service[Alg],
     baseUri: Uri = uri"http://localhost:8080",
-  ) {
+  )(implicit F: Concurrent[F]) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] = new ClientBuilder[Alg, F](this.client, this.service, uri)
 
     def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag).map { _ =>
         val serviceUri = s"${service.id.namespace}.${service.id.name}"
-        service.impl {
-          UnaryClientCompiler(
+        val foo = UnaryClientCompiler.make[Alg, F, Client[F], Request[F], Response[F]](
             service,
             client,
-            (client: Client[F]) => Http4sToSmithy4sClient(client),
+            (client: Client[F]) => Http4sToSmithy4sGrpcClient(client),
             protocolCodecs.makeClientCodecs[F](baseUri / serviceUri),
             Endpoint.Middleware.noop,
-            (response: Response[F]) => response.status.isSuccess
+            isResponseSuccesful
           )
+        service.impl {
+          foo
         }
       }
     }
 
     def resource: Resource[F, service.Impl[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
+
+    private def isResponseSuccesful(response: Response[F]): F[Boolean] = 
+      F.pure(response.status.isSuccess)
+        .flatMap{
+          case false => F.pure(false)
+          case _ => 
+            response
+              .trailerHeaders
+              .flatMap{ trailers => 
+                trailers.get[GrpcStatus] match {
+                  case Some(GrpcStatus.Ok) => F.pure(true)
+                  case None => F.pure(true)
+                  case _ => F.pure(false)
+                }
+              }
+        }
   }
 }
 
-object GrpcBuilder extends GrpcBuilder[alloy.proto.Grpc](
-  new SimpleGrpcCodecs(new GrpcPayloadCodecCompilerImpl(Protobuf.codecs))
-  )
+object GrpcBuilder extends GrpcBuilder[alloy.proto.Grpc](new SimpleGrpcCodecs(new GrpcPayloadCodecCompilerImpl(Protobuf.codecs)))

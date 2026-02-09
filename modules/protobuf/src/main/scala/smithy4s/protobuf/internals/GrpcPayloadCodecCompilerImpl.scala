@@ -1,6 +1,7 @@
-package smithy4s.protobuf.internals
+package smithy4s
+package protobuf
+package internals
 
-import smithy4s.protobuf.GrpcPayloadCodecCompiler
 import smithy4s.codecs.PayloadDecoder
 import smithy4s.codecs.PayloadEncoder
 import smithy4s.schema.CachedSchemaCompiler
