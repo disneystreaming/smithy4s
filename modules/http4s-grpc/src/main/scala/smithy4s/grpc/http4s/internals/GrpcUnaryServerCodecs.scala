@@ -3,20 +3,12 @@ package grpc
 package http4s
 package internals
 
-import smithy4s.capability.MonadThrowLike
-import smithy4s.schema.OperationSchema
-import smithy4s.codecs.BlobDecoder
-import smithy4s.codecs.BlobEncoder
 import smithy4s.Blob
-import smithy4s.server.UnaryServerCodecs
+import smithy4s.capability.MonadThrowLike
+import smithy4s.codecs._
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.codecs.Decoder
-import smithy4s.codecs.PayloadError
-import smithy4s.codecs.Writer
-import smithy4s.grpc.GrpcResponse
-import smithy4s.grpc.GrpcRequest
-import smithy4s.grpc.GrpcStatus
-import smithy4s.grpc.GrpcContractError
+import smithy4s.schema.OperationSchema
+import smithy4s.server.UnaryServerCodecs
 
 object GrpcUnaryServerCodecs {
   def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, GrpcRequest[Blob], GrpcResponse[Blob]] =
@@ -62,30 +54,21 @@ object GrpcUnaryServerCodecs {
       copy(responseTransformation = responseTransformation.andThen(F.flatMap(_)(f)))
 
     def build(): UnaryServerCodecs.Make[F, Request, Response] = {
-      val setBody: Writer[GrpcResponse[Blob], Blob] = Writer.lift((res, blob) => res.copy(body = blob))
-      val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](setBody)
+      val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
+        Writer.lift((res, blob) => {
+          println(s"Writing response body: ${blob.size}")
+          res.copy(body = blob)
+        })
+      )
       
-      // val setGrpcStatus: Writer[GrpcResponse[Blob], GrpcStatus] = Writer.lift((res, status) => res.copy(status = status))
-      // val setGrpcStatusK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], GrpcStatus](setGrpcStatus)
-      val setGrpcStatusDetailsBin: Writer[GrpcResponse[Blob], Blob] = Writer.lift((res, errorDetailsBlob) => {
-        res.withGrpcStatusBin(GrpcHeaders.grpcStatusDetailsBin.value(errorDetailsBlob))
-      })
-      val setGrpcStatusDetailsBinK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](setGrpcStatusDetailsBin)
-
-      def responseEncoders(blobEncoders: BlobEncoder.Compiler) = {
-        // FIXME: how do we write the trailers?
-
-        val httpBodyWriters: CachedSchemaCompiler[Writer[GrpcResponse[Blob], *]] = 
-          blobEncoders.mapK(setBodyK)
-
-        // val httpMediaWriters: CachedSchemaCompiler[Writer[GrpcResponse[Blob], *]] =
-        //   Writer.combineCompilers(httpBodyWriters, mediaTypeWriters)
-
-        httpBodyWriters
-      }
+      val setGrpcStatusDetailsBinK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
+        Writer.lift((res, errorDetailsBlob) => res.withGrpcStatusBin(GrpcHeaders.grpcStatusDetailsBin.value(errorDetailsBlob)))
+      )
 
       val inputDecoders: CachedSchemaCompiler[Decoder[F, GrpcRequest[Blob], *]] =
-        requestBodyDecoders.mapK(
+        requestBodyDecoders
+          .mapK(lengthPrefixDecoder)
+          .mapK(
             Decoder
               .of[Blob]
               .liftPolyFunction(
@@ -96,7 +79,10 @@ object GrpcUnaryServerCodecs {
           )
           .mapK(Decoder.in[F].composeK[Blob, GrpcRequest[Blob]](_.body))
 
-      val outputEncoders = responseEncoders(successResponseBodyEncoders)
+      val outputEncoders = 
+        successResponseBodyEncoders
+          .mapK(lengthPrefixEncoder)
+          .mapK(setBodyK)
 
       val errorEncoders = errorResponseBodyEncoders.mapK(setGrpcStatusDetailsBinK)
 
