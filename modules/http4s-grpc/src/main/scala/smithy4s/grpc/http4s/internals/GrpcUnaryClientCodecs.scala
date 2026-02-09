@@ -10,10 +10,8 @@ import smithy4s.schema.OperationSchema
 import smithy4s.codecs.BlobDecoder
 import smithy4s.codecs.BlobEncoder
 import smithy4s.codecs.Writer
-import java.nio.ByteBuffer
 import smithy4s.codecs.Decoder
 import smithy4s.codecs.PayloadError
-import smithy4s.kinds.PolyFunction
 import smithy4s.grpc.{ GrpcRequest, GrpcResponse }
 import smithy4s.grpc.GrpcContractError
 

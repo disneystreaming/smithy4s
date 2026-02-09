@@ -1,4 +1,7 @@
-package smithy4s.http4s.grpc.internals
+package smithy4s
+package grpc
+package http4s
+package internals
 
 import smithy4s.capability.MonadThrowLike
 import smithy4s.schema.OperationSchema
@@ -14,7 +17,6 @@ import smithy4s.grpc.GrpcResponse
 import smithy4s.grpc.GrpcRequest
 import smithy4s.grpc.GrpcStatus
 import smithy4s.grpc.GrpcContractError
-import smithy4s.kinds.PolyFunction
 
 object GrpcUnaryServerCodecs {
   def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, GrpcRequest[Blob], GrpcResponse[Blob]] =
@@ -62,6 +64,13 @@ object GrpcUnaryServerCodecs {
     def build(): UnaryServerCodecs.Make[F, Request, Response] = {
       val setBody: Writer[GrpcResponse[Blob], Blob] = Writer.lift((res, blob) => res.copy(body = blob))
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](setBody)
+      
+      // val setGrpcStatus: Writer[GrpcResponse[Blob], GrpcStatus] = Writer.lift((res, status) => res.copy(status = status))
+      // val setGrpcStatusK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], GrpcStatus](setGrpcStatus)
+      val setGrpcStatusDetailsBin: Writer[GrpcResponse[Blob], Blob] = Writer.lift((res, errorDetailsBlob) => {
+        res.withGrpcStatusBin(GrpcHeaders.grpcStatusDetailsBin.value(errorDetailsBlob))
+      })
+      val setGrpcStatusDetailsBinK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](setGrpcStatusDetailsBin)
 
       def responseEncoders(blobEncoders: BlobEncoder.Compiler) = {
         // FIXME: how do we write the trailers?
@@ -88,7 +97,9 @@ object GrpcUnaryServerCodecs {
           .mapK(Decoder.in[F].composeK[Blob, GrpcRequest[Blob]](_.body))
 
       val outputEncoders = responseEncoders(successResponseBodyEncoders)
-      val errorEncoders = responseEncoders(errorResponseBodyEncoders)
+
+      val errorEncoders = errorResponseBodyEncoders.mapK(setGrpcStatusDetailsBinK)
+
       val grpcContractErrorWriters = errorEncoders.fromSchema(GrpcContractError.schema)
 
       new UnaryServerCodecs.Make[F, Request, Response] {
@@ -100,6 +111,7 @@ object GrpcUnaryServerCodecs {
             endpoint: OperationSchema[I, E, O, SI, SO]
         ): UnaryServerCodecs[F, Request, Response, I, E, O] = {
           val outputW = outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
+          
           val errorW: Writer[GrpcResponse[smithy4s.Blob],E] = 
             GrpcResponse.Encoder.forError(endpoint.error, errorEncoders)
 

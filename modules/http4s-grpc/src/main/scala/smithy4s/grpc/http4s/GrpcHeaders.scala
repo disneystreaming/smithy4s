@@ -35,13 +35,13 @@ object GrpcHeaders {
   private val statusCodeParser = cats.parse.Numbers.nonNegativeIntString
     .mapFilter(s => GrpcStatus.fromStatusCode(s.toInt))
 
-  val grpcStatusHeader: Header[GrpcStatus, Header.Single] = Header.create(
+  implicit val grpcStatusHeader: Header[GrpcStatus, Header.Single] = Header.create(
     CIString("grpc-status"),
     (t: GrpcStatus) => t.code.toString(),
     (s: String) => statusCodeParser.parseAll(s).leftMap(e => ParseFailure("Invalid gRPC status", e.show))
   )
 
-  val grpcStatusDetailsBin: Header[Blob, Header.Single] = Header.create(
+  implicit val grpcStatusDetailsBin: Header[Blob, Header.Single] = Header.create(
     CIString("grpc-status-details-bin"),
     (blob: Blob) => blob.toBase64String,
     (s: String) => Either.catchNonFatal(Base64.getDecoder().decode(s)).map(Blob(_)).leftMap[ParseFailure](e => ParseFailure("Invalid base64 encoded status details", e.getMessage))

@@ -13,7 +13,6 @@ import smithy4s.interopcats._
 import smithy4s.http4s.kernel._
 import smithy4s.Blob
 import smithy4s.protobuf.GrpcPayloadCodecCompiler
-import smithy4s.http4s.grpc.internals.GrpcUnaryServerCodecs
 import org.http4s.Header
 import smithy4s.http4s.SimpleProtocolCodecs
 import smithy4s.grpc.GrpcResponse

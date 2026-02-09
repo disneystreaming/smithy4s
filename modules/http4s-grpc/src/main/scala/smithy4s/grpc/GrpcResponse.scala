@@ -20,6 +20,7 @@ case class GrpcResponse[A](
     body: A,
   ) {
   def withStatus(status: GrpcStatus) = copy(status = status)
+  def withGrpcStatusBin(details: String) = copy(headers = headers.updated(CaseInsensitive(GrpcHeaders.grpcStatusDetailsBin.name.toString), Seq(details)))
 }
 
 object GrpcResponse {
