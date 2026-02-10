@@ -9,27 +9,56 @@ object GrpcStatus {
 
   sealed abstract class Failed(code: Int) extends GrpcStatus(code)
   case object Ok extends GrpcStatus(code = 0)
-  case class Unknown(override val code: Int) extends GrpcStatus(code)
-  case object InvalidArgument extends GrpcStatus(code = 3)
-  case object DeadlineExceeded extends GrpcStatus(code = 4)
-  case object NotFound extends GrpcStatus(code = 5)
-  case object AlreadyExists extends GrpcStatus(code = 6)
-  case object PermissionDenied extends GrpcStatus(code = 7)
-  case object ResourceExhausted extends GrpcStatus(code = 8)
-  case object FailedPrecondition extends GrpcStatus(code = 9)
-  case object Aborted extends GrpcStatus(code = 10)
-  case object OutOfRange extends GrpcStatus(code = 11)
-  case object Unimplemented extends GrpcStatus(code = 12)
-  case object Internal extends GrpcStatus(code = 13)
-  case object Unavailable extends GrpcStatus(code = 14)
-  case object DataLoss extends GrpcStatus(code = 15)  
-  case object Unauthenticated extends GrpcStatus(code = 16)
+  case object Cancelled extends Failed(code = 1)
+  case object Unknown extends Failed(code = 2)
+  case object InvalidArgument extends Failed(code = 3)
+  case object DeadlineExceeded extends Failed(code = 4)
+  case object NotFound extends Failed(code = 5)
+  case object AlreadyExists extends Failed(code = 6)
+  case object PermissionDenied extends Failed(code = 7)
+  case object ResourceExhausted extends Failed(code = 8)
+  case object FailedPrecondition extends Failed(code = 9)
+  case object Aborted extends Failed(code = 10)
+  case object OutOfRange extends Failed(code = 11)
+  case object Unimplemented extends Failed(code = 12)
+  case object Internal extends Failed(code = 13)
+  case object Unavailable extends Failed(code = 14)
+  case object DataLoss extends Failed(code = 15)  
+  case object Unauthenticated extends Failed(code = 16)
 
-  def fromStatusCode(statusCode: Int): Option[GrpcStatus] = statusValues.find(_.code == statusCode)
-
-  val statusValues: List[GrpcStatus] = List(
+  private lazy val statusByCode: Map[Int, GrpcStatus] = List(
     Ok,
-  )
+    Cancelled,
+    Unknown,
+    InvalidArgument,
+    DeadlineExceeded,
+    NotFound,
+    AlreadyExists,
+    PermissionDenied,
+    ResourceExhausted,
+    FailedPrecondition,
+    Aborted,
+    OutOfRange,
+    Unimplemented,
+    Internal,
+    Unavailable,
+    DataLoss,
+    Unauthenticated
+  ).map(s => (s.code, s))
+  .toMap
+
+  def fromStatusCode(statusCode: Int): GrpcStatus = 
+    statusByCode
+      .get(statusCode)
+      // https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
+      // All RPCs started at a client return a status object composed of an integer
+      // code and a string message.
+      // The server-side can choose the status it returns for a given RPC.
+      // Applications should only use values defined above.
+      // gRPC libraries that encounter values outside this range must either propagate 
+      // them directly or convert them to UNKNOWN.
+      .getOrElse(Unknown) // we chose to default to UNKNOWN
+
 
   trait Status[A] {
     def status(a: A, default: GrpcStatus): GrpcStatus
@@ -91,8 +120,8 @@ object GrpcStatus {
       ): CodeExtractor[S] = default => {
         //FIXME: We probably need some kind of @grpcErrorCode annotation
         hints.get(smithy.api.Error).map{
-          case smithy.api.Error.CLIENT => GrpcStatus.Unknown(400)
-          case smithy.api.Error.SERVER => GrpcStatus.Unknown(500)
+          case smithy.api.Error.CLIENT => GrpcStatus.InvalidArgument
+          case smithy.api.Error.SERVER => GrpcStatus.Internal
         }
       }
     }

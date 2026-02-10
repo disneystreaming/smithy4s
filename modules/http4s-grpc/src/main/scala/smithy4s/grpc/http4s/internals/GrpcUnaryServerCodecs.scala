@@ -55,14 +55,11 @@ object GrpcUnaryServerCodecs {
 
     def build(): UnaryServerCodecs.Make[F, Request, Response] = {
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
-        Writer.lift((res, blob) => {
-          println(s"Writing response body: ${blob.size}")
-          res.copy(body = blob)
-        })
+        Writer.lift((res, blob) => res.copy(body = blob))
       )
       
       val setGrpcStatusDetailsBinK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
-        Writer.lift((res, errorDetailsBlob) => res.withGrpcStatusBin(GrpcHeaders.grpcStatusDetailsBin.value(errorDetailsBlob)))
+        Writer.lift((res, errorDetailsBlob) => res.withErrorPayload(errorDetailsBlob.toBase64String))
       )
 
       val inputDecoders: CachedSchemaCompiler[Decoder[F, GrpcRequest[Blob], *]] =

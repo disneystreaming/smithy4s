@@ -18,7 +18,7 @@ import cats.syntax.all._
 import cats.data.OptionT
 import smithy4s.protobuf.internals.GrpcPayloadCodecCompilerImpl
 import smithy4s.http4s.SimpleProtocolCodecs
-import smithy4s.grpc.http4s.GrpcHeaders._
+import cats.data.NonEmptyList
 
 abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit protocolTag: ShapeTag[P]) {
   def apply[Alg[_[_, _, _, _, _]]](
@@ -123,10 +123,11 @@ abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit pro
             response
               .trailerHeaders
               .flatMap{ trailers => 
-                trailers.get[GrpcStatus] match {
-                  case Some(GrpcStatus.Ok) => F.pure(true)
+                trailers.get(GrpcHeaders.Status.ciName) match {
+                  case Some(NonEmptyList(header, _)) =>
+                    F.fromEither(GrpcHeaders.Status.parse(header.value))
+                      .map(_ == GrpcStatus.Ok)
                   case None => F.pure(true)
-                  case _ => F.pure(false)
                 }
               }
         }

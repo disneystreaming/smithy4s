@@ -24,6 +24,7 @@ package object internals {
 
   private[internals] def lengthPrefixEncoder = new PolyFunction[BlobEncoder, BlobEncoder] {
       override def apply[A0](fa: BlobEncoder[A0]): BlobEncoder[A0] = fa.andThen{ payloadBlob =>
+        // FIXME: move the compression bit to middleware in the codecs
         val compressionFlag: Byte = 0 //if (compressed) 1 else 0
         val messageLength = payloadBlob.size
 

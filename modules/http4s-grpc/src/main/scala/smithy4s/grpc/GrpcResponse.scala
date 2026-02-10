@@ -16,11 +16,11 @@ import java.util.Base64
 // FIXME: Potentially model this as an ADT with separate success/failure cases
 case class GrpcResponse[A](
     status: GrpcStatus,
-    headers: Map[CaseInsensitive, Seq[String]], // FIXME: figure out if this is needed and how to model them
+    metadata: Map[CaseInsensitive, Seq[String]],
     body: A,
   ) {
   def withStatus(status: GrpcStatus) = copy(status = status)
-  def withGrpcStatusBin(details: String) = copy(headers = headers.updated(CaseInsensitive(GrpcHeaders.grpcStatusDetailsBin.name.toString), Seq(details)))
+  def withErrorPayload(details: String) = copy(metadata = metadata.updated(CaseInsensitive(GrpcHeaders.StatusDetailsBin.name.toString), Seq(details)))
 }
 
 object GrpcResponse {
@@ -37,15 +37,14 @@ object GrpcResponse {
       : ResponseDecoder[F, Blob, Blob] =
         new ResponseDecoder[F, Blob, Blob] {
           override def decode(resp: GrpcResponse[Blob]): F[Blob] = {
-            val header = GrpcHeaders.grpcStatusDetailsBin
-            resp.headers.get(CaseInsensitive(header.name.toString))
-              .map{ 
-                case Seq(head) =>
-                  Either.catchNonFatal(Base64.getDecoder().decode(head))
+            val header = GrpcHeaders.StatusDetailsBin.name
+            resp.metadata.get(CaseInsensitive(header.toString))
+              .filter(_.nonEmpty)
+              .map {
+                case error :: _ =>
+                  Either.catchNonFatal(Base64.getDecoder().decode(error))
                     .map(bytes => F.pure(Blob(bytes)))
-                    .valueOr(t => F.raiseError[Blob](new RuntimeException(s"${header.name.toString} is not a base64 encoded string")))
-                case Nil => F.pure(Blob.empty)
-                case _ => F.raiseError[Blob](new RuntimeException(s"${header.name.toString} has multiple values"))
+                    .valueOr(t => F.raiseError[Blob](new RuntimeException(s"${header.toString} is not a base64 encoded string")))
               }.getOrElse(F.pure(Blob.empty))
           }
         }

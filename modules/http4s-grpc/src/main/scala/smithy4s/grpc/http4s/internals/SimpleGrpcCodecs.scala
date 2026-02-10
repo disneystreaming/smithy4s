@@ -13,7 +13,6 @@ import smithy4s.interopcats._
 import smithy4s.http4s.kernel._
 import smithy4s.Blob
 import smithy4s.protobuf.GrpcPayloadCodecCompiler
-import org.http4s.Header
 import smithy4s.http4s.SimpleProtocolCodecs
 import smithy4s.grpc.GrpcResponse
 
@@ -22,12 +21,7 @@ private[grpc] class SimpleGrpcCodecs(
 ) extends SimpleProtocolCodecs {
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F, Request[F], Response[F]] = {
-    val baseHeaders = List[Header.ToRaw](
-      GrpcHeaders.GrpcEncoding,
-      GrpcHeaders.ContentType
-    )
-
-    val baseResponse = GrpcResponse(GrpcStatus.Ok, GrpcHeaders.toSmithy4sHeader(baseHeaders), Blob.empty)
+    val baseResponse = GrpcResponse(GrpcStatus.Ok, Map.empty, Blob.empty)
     GrpcUnaryServerCodecs
       .builder[F]
       .withBodyDecoders(grpcPayloadCodecs.decoders)
@@ -40,14 +34,7 @@ private[grpc] class SimpleGrpcCodecs(
   }
 
   def makeClientCodecs[F[_]: Concurrent](uri: Uri): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
-    val baseHeaders = List[Header.ToRaw](
-      GrpcHeaders.TE,
-      GrpcHeaders.GrpcEncoding,
-      GrpcHeaders.GrpcAcceptEncoding,
-      GrpcHeaders.ContentType,
-    )
-
-    val baseRequest = GrpcRequest(toSmithy4sHttpUri(uri, None), GrpcHeaders.toSmithy4sHeader(baseHeaders), Blob.empty)
+    val baseRequest = GrpcRequest(toSmithy4sHttpUri(uri, None), Map.empty, Blob.empty)
     GrpcUnaryClientCodecs
       .builder[F]
       .withBaseRequest(endpoint => Concurrent[F].pure(baseRequest.copy(uri = toSmithy4sHttpUri(fromSmithy4sHttpUri(baseRequest.uri, false)  / endpoint.id.name))))

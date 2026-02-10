@@ -18,24 +18,25 @@ import org.http4s.Header
 import org.typelevel.ci.CIString
 import org.http4s.Method
 import org.http4s.HttpVersion
+import cats.data.NonEmptyList
 
 package object http4s {
 
   type PathParams = Map[String, String]
 
-  def fromGrpcRequest[F[_]: MonadThrow](
+  def fromGrpcRequest[F[_]](
       req: GrpcRequest[Blob],
       encodePathSegments: Boolean
   ): Request[F] = {
-    val headers = toHeaders(req.headers)
-    val updatedHeaders = req.body.size match {
-      case 0             => headers
-      case contentLength => headers.put("Content-Length" -> contentLength.toString)
-    }
-    Request(
+    val headers = Headers(
+      "Content-Type" -> "application/grpc+proto",
+      "TE" -> "trailers",
+    ) ++ toHeaders(req.metadata)
+
+    Request[F](
       Method.POST,
       fromSmithy4sHttpUri(req.uri, encodePathSegments = encodePathSegments),
-      headers = updatedHeaders,
+      headers = headers,
       body = toStream(req.body),
       httpVersion = HttpVersion.`HTTP/2`
     )
@@ -51,41 +52,39 @@ package object http4s {
       // we probably need it to reject requests other than POST?
 
       // val method = toSmithy4sHttpMethod(req.method)
+      
       collectBytes(req.body).map { blob =>
         GrpcRequest(uri, headers, blob)
       }
     }
 
-  def fromGrpcResponse[F[_]: Concurrent](res: GrpcResponse[Blob]): Response[F] = {
-    val headers = toHeaders(res.headers)
-    val updatedHeaders = {
-      val contentLength = res.body.size
-      if (contentLength <= 0) headers
-      else headers.put("Content-Length" -> contentLength.toString)
+  def fromGrpcResponse[F[_]](res: GrpcResponse[Blob])(implicit F: MonadThrow[F]): Response[F] = {
+    val headers = Headers(
+      "Content-Type" -> "application/grpc+proto",
+      "TE" -> "trailers"
+    )
+
+    val trailers = F.pure{
+      toHeaders(res.metadata)
+        .put(GrpcHeaders.Status.name ->  res.status.code.toString())
     }
 
-    val trailerHeaders = Concurrent[F].pure(
-      Headers(
-        GrpcHeaders.grpcStatusHeader.name.toString ->  GrpcHeaders.grpcStatusHeader.value(res.status)
-      )
-    )
-    Response(Status.Ok, headers = updatedHeaders, body = toStream(res.body), httpVersion = HttpVersion.`HTTP/2`)
-      .withTrailerHeaders(trailerHeaders)
+    Response(Status.Ok, headers = headers, body = toStream(res.body), httpVersion = HttpVersion.`HTTP/2`)
+      .withTrailerHeaders(trailers)
   }
 
   def toGrpcResponse[F[_]](res: Response[F])(implicit F: Concurrent[F]): F[GrpcResponse[Blob]] = {
-    import smithy4s.grpc.http4s.GrpcHeaders.grpcStatusHeader
     // implicit val foo = implicitly[org.http4s.Header.Select[GrpcStatus]]
     for {
       blob <- collectBytes(res.body)
       httpStatus <- F.pure(res.status)
       grpcStatus <- httpStatus match {
         case s if s.isSuccess =>
-          res.trailerHeaders.map(_.get[GrpcStatus]).flatMap{
-            case Some(header) => F.pure(header)
+          res.trailerHeaders.map(_.get(GrpcHeaders.Status.ciName)).flatMap{
+            case Some(NonEmptyList(header, _)) => F.fromEither(GrpcHeaders.Status.parse(header.value))
             case None => F.pure[GrpcStatus](GrpcStatus.Ok) //FIXME: is it ok to default to GrpcStatus.Ok?
           }
-        case s => 
+        case s =>
           F.raiseError[GrpcStatus](new RuntimeException(s"HTTP/2 transport failed with ${s}"))
       }
       headers = res.headers.headers
