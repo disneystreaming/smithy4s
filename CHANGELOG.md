@@ -76,6 +76,10 @@ Prevents using it as an implicit conversion in Scala 2
 
 ## Enable `-Xsource:3` for scala 2.13 in [#1878](https://github.com/disneystreaming/smithy4s/pull/1878)
 
+## Surjection no longer extends `Function` in [#1887](https://github.com/disneystreaming/smithy4s/pull/1887)
+
+Prevents using it as an implicit conversion in Scala 2
+
 # 0.18.47
 
 * core: Add `asSurjection` method to `ValidatedNewtype` class (see [#1873](https://github.com/disneystreaming/smithy4s/pull/1873))

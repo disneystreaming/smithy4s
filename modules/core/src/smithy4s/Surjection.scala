@@ -26,11 +26,13 @@ import scala.util.control.NonFatal
   *
   * surjection(input).map(surjection.from) == Right(input)
   */
-trait Surjection[A, B] extends Function[A, Either[String, B]] { outer =>
+trait Surjection[A, B] { outer =>
   def to(a: A): Either[String, B]
   def from(b: B): A
 
   final def apply(a: A): Either[String, B] = to(a)
+
+  def toFunction: A => Either[String, B] = apply
 
   final def imapFull[A0, B0](
       sourceBijection: Bijection[A, A0],
@@ -61,7 +63,7 @@ object Surjection {
     )
 
   private class Impl[A, B](
-      toFunction: A => Either[String, B],
+      override val toFunction: A => Either[String, B],
       fromFunction: B => A
   ) extends Surjection[A, B] {
     def to(a: A): Either[String, B] = toFunction(a)
