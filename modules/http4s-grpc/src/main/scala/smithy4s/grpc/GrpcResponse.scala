@@ -12,6 +12,7 @@ import smithy4s.capability.MonadThrowLike
 import smithy4s.grpc.http4s.GrpcHeaders
 import smithy4s.Blob
 import java.util.Base64
+import smithy4s.http.CaseInsensitive
 
 // FIXME: Potentially model this as an ADT with separate success/failure cases
 case class GrpcResponse[A](

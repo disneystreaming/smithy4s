@@ -11,6 +11,7 @@ import org.http4s.Uri
 import smithy4s.grpc.GrpcStatus
 import smithy4s.grpc.GrpcResponse
 import org.http4s.Media
+import smithy4s.http.CaseInsensitive
 import smithy4s.http.{HttpUri => Smithy4sHttpUri}
 import smithy4s.http.{HttpUriScheme => Smithy4sHttpUriScheme}
 import cats.MonadThrow

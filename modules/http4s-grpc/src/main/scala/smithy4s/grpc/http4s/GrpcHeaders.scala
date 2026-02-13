@@ -7,9 +7,13 @@ import org.http4s.ParseFailure
 
 object GrpcHeaders {
 
-  object Status {
+  trait Header {
+    def name: String
+    def ciName: CIString = CIString(name)
+  }
+
+  object Status extends Header {
     val name = "grpc-status"
-    val ciName = CIString(name)
 
     def parse(value: String) = 
       cats.parse.Numbers.nonNegativeIntString
@@ -18,9 +22,11 @@ object GrpcHeaders {
         .leftMap(e => ParseFailure("Invalid gRPC status", e.show))
   }
 
-  val message = "grpc-message"
+  object Message extends Header {
+    val name = "grpc-message"
+  }
   
-  object StatusDetailsBin {
+  object StatusDetailsBin extends Header {
     val name = "grpc-status-details-bin"
   }
 
