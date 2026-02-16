@@ -18,6 +18,7 @@ object GrpcUnaryClientCodecs {
       requestBodyEncoders = BlobEncoder.noop,
       successResponseBodyDecoders = BlobDecoder.noop,
       errorResponseBodyDecoders = BlobDecoder.noop,
+      errorDiscriminator = (_: GrpcResponse[Blob]) => F.pure(GrpcDiscriminator.Undetermined),
       requestTransformation = F.pure(_),
       responseTransformation = F.pure(_),
     )
@@ -27,6 +28,7 @@ object GrpcUnaryClientCodecs {
     def withBodyEncoders(encoders: BlobEncoder.Compiler): Builder[F, Request, Response]
     def withSuccessBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
     def withErrorBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F, Request, Response]
+    def withErrorDiscriminator(discriminator: GrpcResponse[Blob] => F[GrpcDiscriminator]): Builder[F, Request, Response]
     def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response]
     def withResponseTransformation[Response0](f: Response0 => F[Response]): Builder[F, Request, Response0]
     def build(): UnaryClientCodecs.Make[F, Request, Response]
@@ -37,6 +39,7 @@ object GrpcUnaryClientCodecs {
     requestBodyEncoders: BlobEncoder.Compiler,
     successResponseBodyDecoders: BlobDecoder.Compiler,
     errorResponseBodyDecoders: BlobDecoder.Compiler,
+    errorDiscriminator: GrpcResponse[Blob] => F[GrpcDiscriminator],
     requestTransformation: GrpcRequest[Blob] => F[Request],
     responseTransformation: Response => F[GrpcResponse[Blob]],
   ) (implicit F: MonadThrowLike[F])
@@ -53,6 +56,9 @@ object GrpcUnaryClientCodecs {
 
         def withErrorBodyDecoders(decoders: BlobDecoder.Compiler): Builder[F,Request,Response] =
           copy(errorResponseBodyDecoders = decoders)
+
+        def withErrorDiscriminator(discriminator: GrpcResponse[Blob] => F[GrpcDiscriminator]): Builder[F,Request,Response] =
+          copy(errorDiscriminator = discriminator)
 
         def withRequestTransformation[Request1](f: Request => F[Request1]): Builder[F, Request1, Response] =
           copy(requestTransformation = requestTransformation.andThen(F.flatMap(_)(f)))
@@ -104,7 +110,7 @@ object GrpcUnaryClientCodecs {
               def errorDecoder = GrpcResponse.Decoder.forErrorAsThrowable[F, Blob, E](
                 endpoint.error,
                 errorDecoders,
-                (resp: GrpcResponse[Blob]) => F.pure(GrpcDiscriminator.StatusCode(resp.status.code))
+                errorDiscriminator,
               )
 
               def outputDecoder = grpcBodyDecoder.fromSchema(endpoint.output, grpcBodyDecoderCache)

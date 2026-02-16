@@ -3,6 +3,7 @@ package smithy4s.grpc
 import smithy4s.schema._
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
+import smithy4s.ShapeId
 
 object GrpcErrorSelector {
   def asThrowable[F[_]: Covariant, E](
@@ -51,67 +52,25 @@ private[grpc] final class GrpcErrorSelector[F[_]: Covariant, E](
     alt.map(cachedDecoders(_))
   }
 
+  private val byShapeId: ShapeId => Option[Alt[E, _]] = {
+    val perShapeId: Map[ShapeId, Alt[E, _]] = 
+      alts
+        .map(alt => alt.schema.shapeId -> alt)
+        .toMap
+
+    val errorForShapeId: ShapeId => Option[Alt[E, _]] = perShapeId.get
+
+    shapeId =>
+      errorForShapeId(shapeId)
+  }
+
   private[grpc] def getPreciseAlternative(
       discriminator: GrpcDiscriminator
   ): Option[Alt[E, _]] = {
     import GrpcDiscriminator._
     discriminator match {
-      // case FullId(shapeId) => byShapeId.get(shapeId)
-      // case NameOnly(name)  => byName.get(name)
-      case StatusCode(int) => byStatusCode(int)
-      // case Undetermined    => None
+      case ByShapeId(shapeId) => byShapeId(shapeId)
+      case Undetermined => None
     }
-  }
-
-
-  // exclude all status code that are used on multiple alternative
-  // in essence, it gives a `Map[Int, Alt[E, _]]` that's used
-  // for the lookup
-  private val byStatusCode: Int => Option[Alt[E, _]] = {
-    //FIXME: we need a way to specify gRPC error codes in smithy
-    // Something similar to how the smithy.api.httpError trait works.
-    //
-    val perStatusCode: Map[Int, Alt[E, _]] = alts
-      .flatMap { alt =>
-        alt.hints.get(smithy.api.HttpError).map { he => he.value -> alt }
-      }
-      .groupBy(_._1)
-      .collect {
-        // Discard alternative where another alternative has the same http status code
-        case (status, allAlts) if allAlts.size == 1 => status -> allAlts.head._2
-      }
-      .toMap
-    val errorForStatus: Int => Option[Alt[E, _]] = perStatusCode.get
-
-    // lazy val fallbackError: Int => Option[Alt[E, _]] = {
-    //   // grab the alt that's annotated with the expected `Error` hint
-    //   // only if there is only one
-    //   def forErrorType(expected: Error): Option[Alt[E, _]] = {
-    //     val matchingAlts = alts
-    //       .flatMap { alt =>
-    //         val foo = alt.hints
-    //           .get(smithy.api.HttpError)
-    //         foo
-    //           .fold(
-    //             alt.hints.get(Error).collect {
-    //               case e if e == expected => alt
-    //             }
-    //           )(_ => None)
-
-    //       }
-    //     if (matchingAlts.size == 1) matchingAlts.headOption else None
-    //   }
-    //   val clientAlt: Option[Alt[E, _]] = forErrorType(Error.CLIENT)
-    //   val serverAlt: Option[Alt[E, _]] = forErrorType(Error.SERVER)
-
-    //   { intStatus =>
-    //     if (intStatus >= 400 && intStatus < 500) clientAlt
-    //     else if (intStatus >= 500 && intStatus < 600) serverAlt
-    //     else None
-    //   }
-    // }
-
-    inputStatus =>
-      errorForStatus(inputStatus)
   }
 }

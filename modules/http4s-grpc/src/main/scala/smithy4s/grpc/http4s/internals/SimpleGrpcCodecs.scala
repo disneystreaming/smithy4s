@@ -21,7 +21,7 @@ private[grpc] class SimpleGrpcCodecs(
 ) extends SimpleProtocolCodecs {
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F, Request[F], Response[F]] = {
-    val baseResponse = GrpcResponse(GrpcStatus.Ok, Map.empty, Blob.empty)
+    val baseResponse = GrpcResponse(Status.ok, Map.empty, Blob.empty)
     GrpcUnaryServerCodecs
       .builder[F]
       .withBodyDecoders(grpcPayloadCodecs.decoders)
@@ -29,20 +29,34 @@ private[grpc] class SimpleGrpcCodecs(
       .withErrorBodyEncoders(grpcPayloadCodecs.encoders)
       .withBaseResponse(_ => Concurrent[F].pure(baseResponse))
       .withRequestTransformation[Request[F]](toGrpcRequest[F](_))
-      .withResponseTransformation(r => Concurrent[F].pure(fromGrpcResponse[F](r)))
+      .withResponseTransformation(r => Concurrent[F].pure(fromGrpcResponse[F](r, grpcPayloadCodecs.encoders)))
       .build()
   }
 
-  def makeClientCodecs[F[_]: Concurrent](uri: Uri): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
+  def makeClientCodecs[F[_]](uri: Uri)(implicit F: Concurrent[F]): UnaryClientCodecs.Make[F, Request[F], Response[F]] = {
     val baseRequest = GrpcRequest(toSmithy4sHttpUri(uri, None), Map.empty, Blob.empty)
     GrpcUnaryClientCodecs
       .builder[F]
-      .withBaseRequest(endpoint => Concurrent[F].pure(baseRequest.copy(uri = toSmithy4sHttpUri(fromSmithy4sHttpUri(baseRequest.uri, false)  / endpoint.id.name))))
+      .withBaseRequest(endpoint => F.pure(baseRequest.copy(uri = toSmithy4sHttpUri(fromSmithy4sHttpUri(baseRequest.uri, false)  / endpoint.id.name))))
       .withBodyEncoders(grpcPayloadCodecs.encoders)
       .withSuccessBodyDecoders(grpcPayloadCodecs.decoders)
       .withErrorBodyDecoders(grpcPayloadCodecs.decoders)
-      .withRequestTransformation(r => Concurrent[F].pure(fromGrpcRequest[F](r, encodePathSegments = false)))
-      .withResponseTransformation[Response[F]](toGrpcResponse[F](_))
+      .withErrorDiscriminator(fromTypeUrl[F])
+      .withRequestTransformation(r => F.pure(fromGrpcRequest[F](r, encodePathSegments = false)))
+      .withResponseTransformation[Response[F]](toGrpcResponse[F](_, grpcPayloadCodecs.decoders))
       .build()
   }
+
+  def fromTypeUrl[F[_]](response: GrpcResponse[Blob])(implicit F: Concurrent[F]): F[GrpcDiscriminator] = {
+      val discriminator =
+        response
+          .status
+          .details
+          .value
+          .headOption
+          .flatMap(details => TypeUrl.extractShapeId(details.typeUrl))
+          .map(GrpcDiscriminator.ByShapeId(_))
+          .getOrElse(GrpcDiscriminator.Undetermined)
+      F.pure(discriminator)
+    }
 }

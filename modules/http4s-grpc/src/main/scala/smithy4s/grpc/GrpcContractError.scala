@@ -9,6 +9,7 @@ import smithy4s.schema.Schema
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema._
+import smithy4s.schema.ErrorSchema
 
 sealed trait GrpcContractError
     extends Throwable
@@ -35,6 +36,16 @@ object GrpcContractError {
       // case _: MetadataError    => 1
     }
   }
+
+  private[grpc] def liftFromThrowable: Throwable => Option[GrpcContractError] = t => Option.when(t.isInstanceOf[GrpcContractError])(t.asInstanceOf[GrpcContractError])
+
+  private[grpc] def unliftError: GrpcContractError => Throwable = identity
+
+  val errorSchema: ErrorSchema[GrpcContractError] = ErrorSchema(
+    schema,
+    liftFromThrowable,
+    unliftError
+  )
 }
 
 case class GrpcPayloadError(

@@ -2,8 +2,7 @@ package smithy4s.grpc
 
 import cats.implicits._
 import smithy4s.kinds.PolyFunction
-import smithy4s.codecs.{ Decoder => GenericDecoder, Writer }
-import smithy4s.grpc.GrpcStatus
+import smithy4s.codecs.{ Decoder => GenericDecoder, Encoder => CodecEncoder, Writer }
 import smithy4s.schema.ErrorSchema
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Alt
@@ -13,20 +12,22 @@ import smithy4s.grpc.http4s.GrpcHeaders
 import smithy4s.Blob
 import java.util.Base64
 import smithy4s.http.CaseInsensitive
+import alloy.proto.GrpcError
+import alloy.proto.StatusDetails
+import alloy.proto.StatusDetailsEntry
 
 // FIXME: Potentially model this as an ADT with separate success/failure cases
 case class GrpcResponse[A](
-    status: GrpcStatus,
-    metadata: Map[CaseInsensitive, Seq[String]],
-    body: A,
-  ) {
-  def withStatus(status: GrpcStatus) = copy(status = status)
-  def withErrorPayload(details: String) = copy(metadata = metadata.updated(CaseInsensitive(GrpcHeaders.StatusDetailsBin.name.toString), Seq(details)))
+  status: Status,
+  metadata: Map[CaseInsensitive, Seq[String]],
+  body: A
+) {
+  def withStatus(status: Status) = copy(status = status)
 }
 
 object GrpcResponse {
 
-  private[grpc] type Writer[Body, A] = smithy4s.codecs.Writer[GrpcResponse[Body], A]
+  private[grpc] type ResponseWriter[Body, A] = smithy4s.codecs.Writer[GrpcResponse[Body], A]
 
   private[grpc] type ResponseDecoder[F[_], Body, A] = smithy4s.codecs.Decoder[F, GrpcResponse[Body], A]
 
@@ -51,25 +52,35 @@ object GrpcResponse {
         }
 
   object Encoder {
-    private[grpc] def forError[Body, E](maybeErrorSchema: Option[ErrorSchema[E]], encoderCompiler: CachedSchemaCompiler[Writer[Body, *]]): Writer[Body, E] = maybeErrorSchema match {
-      case Some(errorSchema) => 
+    private[grpc] def forError[E](
+      maybeErrorSchema: Option[ErrorSchema[E]],
+      encoderCompiler: CachedSchemaCompiler[CodecEncoder[Blob, *]],
+      defaultStatusCode: StatusCode
+    ): ResponseWriter[Blob, E] = maybeErrorSchema match {
+      case Some(errorSchema) =>
         val dispatcher =
           Alt.Dispatcher(errorSchema.alternatives, errorSchema.ordinal)
-        val precompiler = new Alt.Precompiler[Writer[Body, *]] {
+        val precompiler = new Alt.Precompiler[ResponseWriter[Blob, *]] {
+
           def apply[Err](
               label: String,
               errorSchema: Schema[Err]
-          ): Writer[Body, Err] = new Writer[Body, Err] {
-            val errorEncoder = encoderCompiler.fromSchema(
-              errorSchema,
-              encoderCompiler.createCache()
-            )
+          ): ResponseWriter[Blob, Err] = new ResponseWriter[Blob, Err] {
+            val errorEncoder = encoderCompiler.fromSchema(errorSchema, encoderCompiler.createCache())
 
-            override def write(message: GrpcResponse[Body], error: Err): GrpcResponse[Body] = {
-              val errorStatus = GrpcStatus.Decoder.fromSchema(errorSchema).status(error, GrpcStatus.Internal)
+            override def write(response: GrpcResponse[Blob], error: Err): GrpcResponse[Blob] = {
+              val (code, message) = errorSchema.hints.get(GrpcError) match {
+                case Some(hint) =>
+                  StatusCode.fromStatusCode(hint.errorCode.intValue) -> hint.message
+                case None =>
+                  defaultStatusCode -> Option.empty
+              }
 
-              errorEncoder.write(message, error)
-                .withStatus(errorStatus)
+              val errorPayload = StatusDetailsEntry(
+                typeUrl = TypeUrl.fromShapeId(errorSchema.shapeId),
+                bytes = errorEncoder.encode(error)
+              )
+              response.withStatus(Status(code = code, message = message, details = StatusDetails(List(errorPayload))))
             }
           }
         }
@@ -95,12 +106,8 @@ object GrpcResponse {
             GrpcErrorSelector.asThrowable(maybeErrorSchema, decoderCompiler).apply(discriminator) match {
               case Some(decoder) =>
                 decoder.decode(response)
-              case None => 
-                // FIXME: We need a generic error to denote that we got an unknown error (i.e. can't decode it).
-                // either use smithy4s.http.UnknownErrorResponse or make one specifically for gRPC
-                F.raiseError(
-                  new RuntimeException("Unknown error.")
-                )
+              case None =>
+                F.raiseError(UnknownGrpcError.fromGrpcStatus(response.status))
             }
           }
         }

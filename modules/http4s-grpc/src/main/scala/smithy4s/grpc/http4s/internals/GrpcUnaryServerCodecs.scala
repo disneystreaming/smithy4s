@@ -9,6 +9,7 @@ import smithy4s.codecs._
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.OperationSchema
 import smithy4s.server.UnaryServerCodecs
+import alloy.proto.StatusDetails
 
 object GrpcUnaryServerCodecs {
   def builder[F[_]](implicit F: MonadThrowLike[F]): Builder[F, GrpcRequest[Blob], GrpcResponse[Blob]] =
@@ -57,10 +58,6 @@ object GrpcUnaryServerCodecs {
       val setBodyK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
         Writer.lift((res, blob) => res.copy(body = blob))
       )
-      
-      val setGrpcStatusDetailsBinK = smithy4s.codecs.Encoder.pipeToWriterK[GrpcResponse[Blob], Blob](
-        Writer.lift((res, errorDetailsBlob) => res.withErrorPayload(errorDetailsBlob.toBase64String))
-      )
 
       val inputDecoders: CachedSchemaCompiler[Decoder[F, GrpcRequest[Blob], *]] =
         requestBodyDecoders
@@ -81,10 +78,6 @@ object GrpcUnaryServerCodecs {
           .mapK(lengthPrefixEncoder)
           .mapK(setBodyK)
 
-      val errorEncoders = errorResponseBodyEncoders.mapK(setGrpcStatusDetailsBinK)
-
-      val grpcContractErrorWriters = errorEncoders.fromSchema(GrpcContractError.schema)
-
       new UnaryServerCodecs.Make[F, Request, Response] {
 
         private val inputDecoderCache: inputDecoders.Cache = inputDecoders.createCache()
@@ -96,23 +89,30 @@ object GrpcUnaryServerCodecs {
           val outputW = outputEncoders.fromSchema(endpoint.output, outputEncoderCache)
           
           val errorW: Writer[GrpcResponse[smithy4s.Blob],E] = 
-            GrpcResponse.Encoder.forError(endpoint.error, errorEncoders)
+            GrpcResponse.Encoder.forError(endpoint.error, errorResponseBodyEncoders, StatusCode.Internal)
+
+          val grpcContractErrorWriters =
+            GrpcResponse.Encoder.forError(Some(GrpcContractError.errorSchema), errorResponseBodyEncoders, StatusCode.InvalidArgument)
 
           val base = baseResponse(endpoint)
-          def encodeOutput(o: O) = 
+          def encodeOutput(o: O) =
               F.map(base)(outputW.write(_, o))
             
           def encodeError(e: E) = F.map(base)(errorW.write(_, e))
-          def grpcContractErrorEncoder(e: GrpcContractError) =
-            F.map(base)(grpcContractErrorWriters.write(_, e).withStatus(GrpcStatus.InvalidArgument))
+
+          def encodeGrpcContractError(e: GrpcContractError) =
+            F.map(base)(grpcContractErrorWriters.write(_, e))
+
+          def encodeThrowable(e: Throwable) =
+            F.map(base)(_.withStatus(Status(code = StatusCode.Internal, message = Some(e.getMessage()), details = StatusDetails(List.empty))))
 
           val inputDecoder: Decoder[F, GrpcRequest[Blob], I] =
             inputDecoders.fromSchema(endpoint.input, inputDecoderCache)
 
           def throwableEncoders(throwable: Throwable): F[GrpcResponse[Blob]] =
             throwable match {
-              case e: GrpcContractError => grpcContractErrorEncoder(e)
-              case e                    => F.raiseError(e)
+              case e: GrpcContractError => encodeGrpcContractError(e)
+              case e                    => encodeThrowable(e)
             }
 
           new UnaryServerCodecs(inputDecoder.decode, encodeError, throwableEncoders, encodeOutput)
