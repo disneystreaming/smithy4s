@@ -97,7 +97,8 @@ abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit pro
     def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag).map { _ =>
         val serviceUri = s"${service.id.namespace}.${service.id.name}"
-        val foo = UnaryClientCompiler.make[Alg, F, Client[F], Request[F], Response[F]](
+        service.impl {
+          UnaryClientCompiler.make[Alg, F, Client[F], Request[F], Response[F]](
             service,
             client,
             (client: Client[F]) => Http4sToSmithy4sGrpcClient(client),
@@ -105,8 +106,6 @@ abstract class GrpcBuilder[P](protocolCodecs: SimpleProtocolCodecs)(implicit pro
             Endpoint.Middleware.noop,
             isResponseSuccesful
           )
-        service.impl {
-          foo
         }
       }
     }
