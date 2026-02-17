@@ -21,8 +21,6 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
 
-ThisBuild / version := "0.18.47-SNAPSHOT"
-
 // for Alloy snapshots
 // as well as any other dependency snapshots.
 ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
