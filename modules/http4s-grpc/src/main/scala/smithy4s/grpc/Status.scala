@@ -9,4 +9,6 @@ object Status {
 
   val ok: Status = Status(StatusCode.Ok, Option.empty, StatusDetails(List.empty))
 
+  def noDetails(code: StatusCode, message: Option[String]) = Status(code, message, StatusDetails(List.empty))
+
 }

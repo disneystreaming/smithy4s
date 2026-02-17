@@ -12,9 +12,10 @@ import smithy4s.grpc.http4s.GrpcHeaders
 import smithy4s.Blob
 import java.util.Base64
 import smithy4s.http.CaseInsensitive
-import alloy.proto.GrpcError
+import alloy.proto.{GrpcError => GrpcErrorTrait}
 import alloy.proto.StatusDetails
 import alloy.proto.StatusDetailsEntry
+import smithy4s.grpc.GrpcError
 
 // FIXME: Potentially model this as an ADT with separate success/failure cases
 case class GrpcResponse[A](
@@ -69,7 +70,7 @@ object GrpcResponse {
             val errorEncoder = encoderCompiler.fromSchema(errorSchema, encoderCompiler.createCache())
 
             override def write(response: GrpcResponse[Blob], error: Err): GrpcResponse[Blob] = {
-              val (code, message) = errorSchema.hints.get(GrpcError) match {
+              val (code, message) = errorSchema.hints.get(GrpcErrorTrait) match {
                 case Some(hint) =>
                   StatusCode.fromStatusCode(hint.errorCode.intValue) -> hint.message
                 case None =>
@@ -107,7 +108,7 @@ object GrpcResponse {
               case Some(decoder) =>
                 decoder.decode(response)
               case None =>
-                F.raiseError(UnknownGrpcError.fromGrpcStatus(response.status))
+                F.raiseError(GrpcError.unknownError(response.status))
             }
           }
         }

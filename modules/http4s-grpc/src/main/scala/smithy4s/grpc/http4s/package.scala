@@ -16,8 +16,8 @@ import alloy.proto.StatusDetails
 import smithy4s.schema.CachedSchemaCompiler
 import java.util.Base64
 import smithy4s.codecs.PayloadDecoder
-import scala.util.Try
 import smithy4s.codecs.PayloadEncoder
+import smithy4s.grpc.GrpcError
 
 package object http4s {
 
@@ -87,17 +87,21 @@ package object http4s {
     def extractStatus(headers: Headers): F[Status] = {
       val defaultSuccess = Status(StatusCode.Ok, Option.empty, StatusDetails(List.empty))
 
-      GrpcHeaders.getSingle(headers, GrpcHeaders.Status).map { statusHeaderValue =>
+      GrpcHeaders.getSingle(headers, GrpcHeaders.Status)
+        .fold(F.pure(defaultSuccess)) { statusHeaderValue =>
           GrpcHeaders.Status.parse(statusHeaderValue).getOrElse(StatusCode.Unknown) match {
             case StatusCode.Ok => F.pure(defaultSuccess)
             case statusCode =>
-              GrpcHeaders.getSingle(headers, GrpcHeaders.StatusDetailsBin).fold(F.pure(StatusDetails(List.empty))){detailsString =>
-                F.fromTry(Try(Base64.getDecoder().decode(detailsString)))  //FIXME: handle the case when the value of the header is not base64 encoded
-                  .flatMap(bytes => F.fromEither(decoder.decode(Blob(bytes)))) //FIXME: handle the case when error payload can't be decoded
+              val statusMessage = GrpcHeaders.getSingle(headers, GrpcHeaders.Message)
+              GrpcHeaders.getSingle(headers, GrpcHeaders.StatusDetailsBin)
+                .fold(F.pure(Status.noDetails(statusCode, statusMessage))){ detailsString =>
+                  F.catchNonFatal(Base64.getDecoder().decode(detailsString))
+                    .handleErrorWith(_ => F.raiseError(GrpcError.base64DecodingFailed(statusCode, statusMessage, detailsString)))
+                    .flatMap{bytes => F.fromEither(decoder.decode(Blob(bytes)).leftMap(_ => GrpcError.protobufDecodingFailed(statusCode, statusMessage, detailsString)))}
+                    .map(statusDetails => Status(statusCode, statusMessage, statusDetails))
               }
-              .map(details => Status(statusCode, GrpcHeaders.getSingle(headers, GrpcHeaders.Message), details))
           }
-      }.getOrElse(F.pure(defaultSuccess))
+      }
     }
 
     for {

@@ -1,7 +1,6 @@
 package smithy4s.grpc
 
 import smithy4s.ShapeId
-import alloy.proto.{StatusDetailsEntry => errorSchema}
 
 // Identifies the type of the serialized Protobuf message with a URI reference
 // consisting of a prefix ending in a slash and the fully-qualified type name.
