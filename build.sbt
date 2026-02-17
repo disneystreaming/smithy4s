@@ -990,8 +990,10 @@ lazy val complianceTests = projectMatrix
         Dependencies.Pprint.core.value,
         Dependencies.Fs2Data.xml.value
       ) ++ weaverDeps.value
-    },
-    isMimaEnabled := true
+    }
+    // TODO: add in 0.19?
+    // add now with a high baseline?
+    // isMimaEnabled := true
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
