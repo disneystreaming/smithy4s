@@ -88,15 +88,42 @@ object Dependencies {
   }
 
   object Mill {
-    def scalalib(v: String) = "com.lihaoyi" %% "mill-scalalib" % v % Provided
-    def main(v: String) = "com.lihaoyi" %% "mill-main" % v % Provided
-    def mainApi(v: String) = "com.lihaoyi" %% "mill-main-api" % v % Provided
     def mainTestkit(v: String) =
       if (v.startsWith("0.11")) {
         "com.lihaoyi" %% "mill-main-testkit" % v % Test
       } else {
         "com.lihaoyi" %% "mill-testkit" % v % Test
       }
+
+    def allDeps(v: String) =
+      if (v.startsWith("0."))
+        Seq(
+          "com.lihaoyi" %% "mill-scalalib" % v % Provided,
+          "com.lihaoyi" %% "mill-main" % v % Provided,
+          "com.lihaoyi" %% "mill-main-api" % v % Provided,
+          mainTestkit(v)
+        )
+      else
+        Seq(
+          "com.lihaoyi" %% "mill-libs-scalalib" % v % Provided excludeAll (
+            ExclusionRule(
+              "org.scala-lang.modules",
+              "scala-collection-compat_3"
+            ),
+            ExclusionRule(
+              "com.lihaoyi",
+              "geny_3"
+            ),
+            ExclusionRule(
+              "com.lihaoyi",
+              "os-lib_3"
+            ),
+            ExclusionRule("org.scala-lang.modules", "scala-xml_3"),
+            ExclusionRule("org.scala-lang", "scala-library"),
+            ExclusionRule("org.scala-lang", "scala-reflect_3")
+          )
+          // mainTestkit(v)
+        )
   }
 
   object Pprint {

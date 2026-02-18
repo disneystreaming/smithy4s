@@ -307,4 +307,6 @@ private[internals] object NamespacePattern {
   val wildcardSegment = "([a-zA-Z][\\w]*)\\*".r
   val validSegment = "([a-zA-Z][\\w]*)".r
   def fromString(str: String): NamespacePattern = new NamespacePattern(str)
+
+  def apply(str: String): NamespacePattern = fromString(str)
 }

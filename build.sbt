@@ -28,7 +28,6 @@ val allJvmScalaVersions = List(Scala212, Scala213, Scala3)
 val allJsScalaVersions = latest2ScalaVersions
 val allNativeScalaVersions = List(Scala3)
 val jvmScala2Versions = List(Scala212, Scala213)
-val buildtimejvmScala2Versions = List(Scala212, Scala213)
 
 Global / organizationName := "Disney Streaming"
 Global / startYear := Some(2021)
@@ -180,6 +179,32 @@ val munitDeps = Def.setting {
       Dependencies.Munit.scalacheck.value % Test
     )
   }
+}
+
+val scalaReflectDep = Def.setting {
+  if (scalaVersion.value.startsWith("3.")) Seq.empty
+  else
+    Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+    )
+}
+
+val coursierExclusionRules = Seq(
+  ExclusionRule("org.scala-lang.modules", "scala-collection-compat_2.13"),
+  ExclusionRule("org.scala-lang.modules", "scala-xml_2.13")
+  // Note: jsoniter-scala-core_2.13 is NOT excluded here because coursier_2.13 needs it
+)
+
+val coursierDep = Def.setting {
+  val version = "2.1.24"
+  if (scalaVersion.value.startsWith("3"))
+    Seq(
+      "io.get-coursier" % "coursier_2.13" % version excludeAll (coursierExclusionRules: _*)
+    )
+  else
+    Seq(
+      "io.get-coursier" %% "coursier" % version
+    )
 }
 
 /**
@@ -388,7 +413,7 @@ lazy val codegen = projectMatrix
   .in(file("modules/codegen"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(protocol)
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](
       version,
@@ -412,10 +437,10 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
-      Dependencies.collectionsCompat.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.24"
+      Dependencies.collectionsCompat.value
     ),
+    libraryDependencies ++= scalaReflectDep.value,
+    libraryDependencies ++= coursierDep.value,
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
@@ -433,7 +458,7 @@ lazy val codegen = projectMatrix
 lazy val `codegen-integration` = projectMatrix
   .in(file("modules/codegen-integration"))
   .dependsOn(codegen)
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
     libraryDependencies ++= Seq(
@@ -536,6 +561,8 @@ lazy val millCodegenPlugin = projectMatrix
         (core.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
+        (dynamic.jvm(Scala3) / publishLocal).value,
+        (codegen.jvm(Scala3) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
 
         // for mill
@@ -544,9 +571,12 @@ lazy val millCodegenPlugin = projectMatrix
       publishLocal.value
     },
     Test / test := (Test / test).dependsOn(publishLocal).value,
-    libraryDependencies ++= munitDeps.value
+    libraryDependencies ++= munitDeps.value,
+    excludeDependencies ++= Seq(
+      ExclusionRule("org.scala-lang", "scala-reflect")
+    )
   )
-  .millPlatforms(Scala213, millVersions)
+  .millPlatforms(millVersions)
   .dependsOn(codegen)
 
 lazy val decline = (projectMatrix in file("modules/decline"))

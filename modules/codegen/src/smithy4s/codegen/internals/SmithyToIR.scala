@@ -746,6 +746,7 @@ private[codegen] class SmithyToIR(
       }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
+      @nowarn("msg=class SetShape in package software.amazon.smithy.model.shapes is deprecated")
       override def setShape(x: SetShape): Option[Type] = {
         x.getMember()
           .accept(this)
@@ -897,7 +898,7 @@ private[codegen] class SmithyToIR(
             .addTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
 
           builder
-            .build()
+            .build().asInstanceOf[Shape]
             .accept(this)
         }
 
@@ -1521,7 +1522,7 @@ private[codegen] class SmithyToIR(
       case (node, IdRefCase()) =>
         val ref = Type.Ref("smithy4s", "ShapeId")
         val namespace :: name :: _ =
-          node.asStringNode.get.getValue.split("#").toList
+          node.asStringNode.get.getValue.split("#").toList: @unchecked
         def toField(value: String) = TypedNode.FieldTN.RequiredTN(
           NodeAndType(
             Node.from(value),

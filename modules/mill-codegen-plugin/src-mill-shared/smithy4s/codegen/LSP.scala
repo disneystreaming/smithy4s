@@ -19,10 +19,10 @@ package smithy4s.codegen
 import _root_.{mill => mmill}
 import coursier.maven.MavenRepository
 import mmill.api.PathRef
-import mmill.define.Command
-import mmill.define.ExternalModule
-import mmill.define.Target
-import mmill.eval.Evaluator
+import mmill.Command
+import mmill.Task
+import mmill.api.ExternalModule
+import mmill.api.Evaluator
 import smithy4s.codegen.SmithyBuildJson
 import smithy4s.codegen.mill.LSPCompat
 import smithy4s.codegen.mill.Smithy4sModule
@@ -31,7 +31,7 @@ import scala.annotation.nowarn
 import scala.collection.immutable.ListSet
 
 object LSP extends ExternalModule with LSPCompat {
-  lazy val millDiscover = mmill.define.Discover[this.type]
+  lazy val millDiscover = mmill.api.Discover[this.type]
 
   @nowarn("cat=deprecation")
   def updateConfig(ev: Evaluator): Command[PathRef] = {
@@ -39,12 +39,12 @@ object LSP extends ExternalModule with LSPCompat {
     val s4sModules = ev.rootModule.millInternal.modules
       .collect { case s: Smithy4sModule => s }
 
-    val depsTask = Target
+    val depsTask = Task
       .traverse(s4sModules)(_.smithy4sAllDeps)
       .map(_.flatten.flatMap(Smithy4sModule.depIdEncode(_)))
       .map(s => ListSet(s: _*))
 
-    val reposTask = Target
+    val reposTask = Task
       .traverse(s4sModules)(_.repositoriesTask)
       .map {
         _.flatten
@@ -55,7 +55,7 @@ object LSP extends ExternalModule with LSPCompat {
       }
       .map(s => ListSet(s: _*))
 
-    val importsTask = Target
+    val importsTask = Task
       .traverse(s4sModules)(_.smithy4sInputDirs)
       .map(
         _.flatten
@@ -64,7 +64,7 @@ object LSP extends ExternalModule with LSPCompat {
       )
       .map(s => ListSet(s: _*))
 
-    Target.command {
+    Task.Command {
       val json = SmithyBuildJson.toJson(importsTask(), depsTask(), reposTask())
       val target = rootPath / "smithy-build.json"
       val content = if (os.exists(target)) {

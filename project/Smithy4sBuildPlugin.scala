@@ -47,12 +47,7 @@ case class MillCustomRow(mv: String) extends CustomRow {
     p.settings(
       crossVersion := CrossVersion
         .binaryWith(s"mill${Smithy4sBuildPlugin.millPlatform(mv)}_", ""),
-      libraryDependencies ++= Seq(
-        Dependencies.Mill.main(mv),
-        Dependencies.Mill.mainApi(mv),
-        Dependencies.Mill.scalalib(mv),
-        Dependencies.Mill.mainTestkit(mv)
-      ),
+      libraryDependencies ++= Dependencies.Mill.allDeps(mv),
       Compile / unmanagedSourceDirectories ++=
         Seq(
           (Compile / sourceDirectory).value.getParentFile.getParentFile / s"src-mill-shared",
@@ -73,6 +68,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   val Scala212 = "2.12.20"
   val Scala213 = "2.13.18"
   val Scala3 = "3.3.6"
+  val MillScala3 = "3.8.1"
 
   object autoImport {
     // format: off
@@ -122,24 +118,23 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     }
 
     def millPlatforms(
-        scalaVersion: String,
         millVersions: Seq[String]
     ): ProjectMatrix = {
       millVersions
         .map { mv =>
-          MillCustomRow(mv)
+          mv -> MillCustomRow(mv)
         }
-        .foldLeft(pm) { (m, row) =>
+        .foldLeft(pm) { case (m, (millVersion, row)) =>
           m
             .jvmPlatform(
-              scalaVersions = List(scalaVersion),
+              scalaVersions = List(if (millVersion.startsWith("1.")) MillScala3 else Scala213),
               axisValues = row.axisValues,
               configure = row.process
             )
         }
         .defaultAxes(
           VirtualAxis.jvm,
-          VirtualAxis.scalaPartialVersion(scalaVersion)
+          VirtualAxis.scalaPartialVersion(Scala213)
         )
     }
   }
@@ -212,6 +207,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       // for Scala 3
       "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
       "-Wconf:msg=type Enum in package smithy.api is deprecated:silent",
+      "-Wconf:msg=class EnumTrait in package software.amazon.smithy.model.traits is deprecated:silent",
       // silencing -XSource:3 warnings for case class copy methods since they are just informing of
       // a difference between scala 2.x and 3.x
       "-Wconf:msg=access modifiers for `apply` method are copied:silent",
@@ -311,6 +307,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   def targetScalacOptions(scalaVersion: String) =
     if (scalaVersion.startsWith("2.12")) Seq("-target:jvm-1.8", "-release", "8")
     else if (scalaVersion.startsWith("2.13")) Seq("-release", "8")
+    else if (scalaVersion.startsWith("3.8")) Seq("-release", "17")
     else if (scalaVersion.startsWith("3.")) Seq("-release", "8")
     else Seq.empty // when we get Scala 4...
 
@@ -632,11 +629,12 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
-  val millVersions = List("0.11.13", "0.12.11")
+  val millVersions = List("0.11.13", "0.12.11", "1.1.2")
 
   def millPlatform(millVersion: String): String = millVersion match {
     case mv if mv.startsWith("0.12") => "0.12"
     case mv if mv.startsWith("0.11") => "0.11"
+    case mv if mv.startsWith("1.") => "1"
     case _                           => sys.error("Unsupported mill platform.")
   }
 

@@ -39,15 +39,15 @@ trait Smithy4sModuleCommon extends ScalaModule {
   /** Input directory for .smithy files */
   def smithy4sInputDirs: Target[Seq[PathRef]]
 
-  def smithy4sOutputDir: T[PathRef] = T {
+  def smithy4sOutputDir: T[PathRef] = Task {
     PathRef(T.ctx().dest / "scala")
   }
 
-  def smithy4sResourceOutputDir: T[PathRef] = T {
+  def smithy4sResourceOutputDir: T[PathRef] = Task {
     PathRef(T.ctx().dest / "resources")
   }
 
-  def smithy4sGeneratedSmithyMetadataFile: T[PathRef] = T {
+  def smithy4sGeneratedSmithyMetadataFile: T[PathRef] = Task {
     PathRef(T.ctx().dest / "smithy" / "generated-metadata.smithy")
   }
 
@@ -63,14 +63,14 @@ trait Smithy4sModuleCommon extends ScalaModule {
     ivy"${BuildInfo.alloyOrg}:alloy-core:${BuildInfo.alloyVersion}"
   )
 
-  def smithy4sIvyDeps: T[Agg[Dep]] = T { Agg.empty[Dep] }
+  def smithy4sIvyDeps: T[Agg[Dep]] = Task { Agg.empty[Dep] }
 
-  def smithy4sAllDeps: T[Agg[Dep]] = T {
+  def smithy4sAllDeps: T[Agg[Dep]] = Task {
     smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
   }
 
   @nowarn("cat=deprecation")
-  override def manifest: T[JarManifest] = T {
+  override def manifest: T[JarManifest] = Task {
     val m = super.manifest()
     val deps = smithy4sIvyDeps().iterator.toList.flatMap {
       Smithy4sModule.depIdEncode
@@ -80,7 +80,7 @@ trait Smithy4sModuleCommon extends ScalaModule {
     } else m
   }
 
-  def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = T {
+  def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = Task {
     T.traverse(moduleDeps)(_.jar)
       .map(_.toList.map(_.path).map(PathRef(_)))
   }
@@ -95,34 +95,34 @@ trait Smithy4sModuleCommon extends ScalaModule {
   def smithy4sVersion: T[String] = BuildInfo.version
   def smithy4sSmithyLibrary: T[Boolean] = true
 
-  def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
+  def smithy4sTransitiveIvyDeps: Task[Seq[Dep]] = Task {
     smithy4sAllDeps() ++ T
       .traverse(moduleDeps) {
         case m if m.isInstanceOf[Smithy4sModule] =>
           m.asInstanceOf[Smithy4sModule].smithy4sTransitiveIvyDeps
-        case _ => T.task(mill.api.Result.create(Agg.empty))
+        case _ => T.task(mill.api.Result.create(Seq.empty))
       }()
       .flatten
   }
 
-  def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]]
+  def smithy4sExternallyTrackedIvyDeps: Task[Seq[Dep]]
 
-  def smithy4sAwsSpecs: T[Seq[String]] = T {
+  def smithy4sAwsSpecs: T[Seq[String]] = Task {
     Seq.empty[String]
   }
 
-  def smithy4sAwsSpecsVersion: T[String] = T {
+  def smithy4sAwsSpecsVersion: T[String] = Task {
     AWS.knownVersion
   }
 
-  def smithy4sAwsSpecDependencies: T[Agg[Dep]] = T {
+  def smithy4sAwsSpecDependencies: T[Agg[Dep]] = Task {
     val org = AWS.org
     val version = smithy4sAwsSpecsVersion()
     smithy4sAwsSpecs().map { artifactName => ivy"$org:$artifactName:$version" }
   }
 
   @nowarn("cat=deprecation")
-  def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
+  def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = Task {
     val bind = bindDependency()
     transitiveIvyDeps() ++
       smithy4sTransitiveIvyDeps().map(bind) ++
@@ -130,18 +130,18 @@ trait Smithy4sModuleCommon extends ScalaModule {
       smithy4sAwsSpecDependencies().map(bind)
   }
 
-  def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {
+  def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = Task {
     resolveDeps(T.task {
       smithy4sAllExternalDependencies()
     })()
   }
 
-  def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
+  def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = Task {
     smithy4sInternalDependenciesAsJars() ++
       smithy4sResolvedAllExternalDependencies()
   }
 
-  def smithy4sWildcardArgument: T[String] = T {
+  def smithy4sWildcardArgument: T[String] = Task {
     // This logic configures the default wildcard argument based on the scala version and scalac options
     // In the following scenarios we use "?" instead of "_"
     // 1. Scala version >= 3.1 ("_" is deprecated in 3.1 and becomes an error in 3.2)
@@ -182,7 +182,7 @@ trait Smithy4sModuleCommon extends ScalaModule {
     }
   }
 
-  def smithy4sGeneratedSmithyFiles: Sources = T.sources {
+  def smithy4sGeneratedSmithyFiles: Task.Sources = Task.Sources {
     val file = smithy4sGeneratedSmithyMetadataFile().path
     val wildcardArg = smithy4sWildcardArgument()
     os.remove(file)
@@ -196,7 +196,7 @@ trait Smithy4sModuleCommon extends ScalaModule {
     Seq(PathRef(file))
   }
 
-  def smithy4sCodegen: T[(PathRef, PathRef)] = T {
+  def smithy4sCodegen: T[(PathRef, PathRef)] = Task {
 
     val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())
       .map(_.path)
@@ -243,12 +243,12 @@ trait Smithy4sModuleCommon extends ScalaModule {
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
 
-  override def generatedSources: T[Seq[PathRef]] = T {
+  override def generatedSources: T[Seq[PathRef]] = Task {
     val (scalaOutput, _) = smithy4sCodegen()
     scalaOutput +: super.generatedSources()
   }
 
-  def generatedResources: T[PathRef] = T {
+  def generatedResources: T[PathRef] = Task {
     smithy4sCodegen()
     smithy4sResourceOutputDir()
   }

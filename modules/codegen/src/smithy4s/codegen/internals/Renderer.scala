@@ -1880,12 +1880,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       none.toLine.write
   }
 
+  private def refineT[T, TT](f: TT => Line): T => Line = t => f(t.asInstanceOf[TT])
+
+  // For some reason scala 3 does not recognize the types for `T` without a cast
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
     // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with gADTs)
     prim match {
       case Primitive.BigDecimal =>
-        (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
+        refineT((bd: BigDecimal) => line"scala.math.BigDecimal($bd)")
+      case Primitive.BigInteger => refineT((bi: BigInt) => line"scala.math.BigInt($bi)")
       case Primitive.Unit       => _ => line"()"
       case Primitive.Double     => t => line"${t.toString}d"
       case Primitive.Float      => t => line"${t.toString}f"
@@ -1894,28 +1897,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
       case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
-      case Primitive.String     => renderStringLiteral
+      case Primitive.String     => refineT(renderStringLiteral(_))
       case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.Blob =>
-        ba =>
+        refineT { (ba: Primitive.Blob.T) =>
           val blob = NameRef("smithy4s", "Blob")
           if (ba.isEmpty) line"$blob.empty"
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
+        }
       case Primitive.Timestamp =>
-        ts => line"$timestamp_(${ts.getEpochSecond()}L, ${ts.getNano()})"
+        refineT[T, Primitive.Timestamp.T](ts => line"$timestamp_(${ts.getEpochSecond()}L, ${ts.getNano()})")
       case Primitive.LocalDate =>
-        date => line"$localdate_(${date.toEpochDay()})"
+        refineT[T, Primitive.LocalDate.T](date => line"$localdate_(${date.toEpochDay()})")
       case Primitive.LocalTime =>
-        time => line"$localtime_(${time.toSecondOfDay()}, ${time.getNano()})"
+        refineT[T, Primitive.LocalTime.T](time => line"$localtime_(${time.toSecondOfDay()}, ${time.getNano()})")
       case Primitive.OffsetDateTime =>
-        time =>
+        refineT[T, Primitive.OffsetDateTime.T](time =>
           line"""$offsetdatetime_(${time.toEpochSecond()}, ${time
             .getNano()}, scala.concurrent.duration.Duration(${time.getOffset().getTotalSeconds()}, "seconds"))"""
+        )
       case Primitive.Duration =>
-        duration => line"$duration_(${renderStringLiteral(duration.toString)})"
-      case Primitive.Document => renderNodeToLine(_)
-      case Primitive.Nothing  => v => (v: Nothing) // this case can't happen
+        refineT[T, Primitive.Duration.T](duration => line"$duration_(${renderStringLiteral(duration.toString)})")
+      case Primitive.Document => refineT[T, Primitive.Document.T](renderNodeToLine(_))
+      case Primitive.Nothing =>
+        throw new IllegalStateException("Found Nothing in renderPrimitive") // this case can't happen
     }
 
   private def renderNodeToLine(node: Node): Line = {
@@ -1949,21 +1955,5 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     })
   }
 
-  private def renderStringLiteral(raw: String): Line = {
-    import scala.reflect.runtime.universe._
-    val str = Literal(Constant(raw))
-      .toString()
-      // Replace sequences like "\\uD83D" (how Smithy specs refer to unicode characters)
-      // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
-      // See https://github.com/disneystreaming/smithy4s/pull/499
-      .replace("\\\\u", "\\u")
-    // If the string contains "$", the use of -Xlint:missing-interpolator when
-    // compiling the generated code will result in warnings. To prevent that we
-    // render any such strings as interpolated strings (even though that would
-    // otherwise be unecessary) so that we can render "$" as "$$", which get
-    // converted back to "$" during interpolation.
-    val escaped = if (str.contains('$')) s"s${str.replace("$", "$$")}" else str
-
-    line"$escaped"
-  }
+  private def renderStringLiteral(raw: String): Line = RenderStringLiteral.render(raw)
 }

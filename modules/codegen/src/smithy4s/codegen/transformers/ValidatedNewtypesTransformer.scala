@@ -72,9 +72,11 @@ class ValidatedNewtypesTransformer extends ProjectionTransformer {
     else
       shape
 
+  // TODO: Improve
   private def addTrait[S <: Shape, B <: AbstractShapeBuilder[B, S]](
-      builder: AbstractShapeBuilder[B, S]
+      builderA: Any
   ): S = {
+    val builder = builderA.asInstanceOf[AbstractShapeBuilder[B, S]]
     builder.addTrait(new ValidateNewtypeTrait())
     builder.build()
   }
