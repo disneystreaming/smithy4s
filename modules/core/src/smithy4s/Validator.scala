@@ -32,7 +32,7 @@ sealed trait Validator[A, B] { self =>
 
 object Validator {
 
-  trait Builder[A, B] { self =>
+  private[smithy4s] trait Builder[A, B] { self =>
     def validating[C](constraint: C)(implicit
         ev: RefinementProvider.Simple[C, A]
     ): Builder[A, B]
@@ -65,7 +65,8 @@ object Validator {
       ): Builder[B, B] = new Builder.Refined(base, ev.make(c), Vector.empty)
     }
 
-    trait Collection[Col[_], E] extends Builder[Col[E], Col[E]] {
+    private[smithy4s] trait Collection[Col[_], E]
+        extends Builder[Col[E], Col[E]] {
       override def validating[C](constraint: C)(implicit
           ev: RefinementProvider.Simple[C, Col[E]]
       ): Builder.Collection[Col, E]
@@ -76,7 +77,8 @@ object Validator {
 
     }
 
-    trait KeyValue[K, V] extends Builder[Map[K, V], Map[K, V]] {
+    private[smithy4s] trait KeyValue[K, V]
+        extends Builder[Map[K, V], Map[K, V]] {
       override def validating[C](constraint: C)(implicit
           ev: RefinementProvider.Simple[C, Map[K, V]]
       ): KeyValue[K, V]
