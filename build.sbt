@@ -303,6 +303,8 @@ lazy val core = projectMatrix
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
+      // private class that got removed
+      ProblemFilters.exclude[MissingClassProblem]("smithy4s.Validator$ValidatorImpl")
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)

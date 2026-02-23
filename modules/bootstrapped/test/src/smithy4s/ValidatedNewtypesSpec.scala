@@ -16,7 +16,19 @@
 
 package smithy4s
 
-import smithy4s.schema.Schema.string
+import smithy4s.example.Name
+import smithy4s.example.ValidatedConstrainedList
+import smithy4s.example.ValidatedSetConstrainedMember
+import smithy4s.example.ValidatedConstrainedIndexedSeqConstrainedMember
+import smithy4s.example.ValidatedConstrainedListRefinedMember
+import smithy4s.example.ValidatedConstrainedVectorRefinedConstrainedMember
+import smithy4s.example.ValidatedMapConstrainedKey
+import smithy4s.example.ValidatedConstrainedMap
+import smithy4s.example.ValidatedMapConstrainedValue
+import smithy4s.example.ValidatedRefinedListConstrainedMember
+import smithy4s.example.AccountId
+import smithy4s.example.DeviceId
+
 import munit.Assertions
 
 class ValidatedNewtypesSpec() extends munit.FunSuite {
@@ -80,56 +92,126 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     expect.same(accountIdCodec.decode(id1), Right(AccountId.unsafeApply(id1)))
   }
 
-  type DeviceId = DeviceId.Type
-  object DeviceId extends ValidatedNewtype[String] {
-
-    val id: ShapeId = ShapeId("foo", "DeviceId")
-    val hints: Hints = Hints.empty
-
-    val underlyingSchema: Schema[String] = string
-      .withId(id)
-      .addHints(hints)
-      .validated(smithy.api.Length(min = Some(1L), max = None))
-
-    val validator: Validator[String, DeviceId] = Validator
-      .of[String, DeviceId](
-        Bijection[String, DeviceId](_.asInstanceOf[DeviceId], value(_))
-      )
-      .validating(smithy.api.Length(min = Some(1L), max = None))
-
-    implicit val schema: Schema[DeviceId] =
-      validator.toSchema(underlyingSchema)
-
-    @inline def apply(a: String): Either[String, DeviceId] =
-      validator.validate(a)
-
+  test("Validated constrained list") {
+    expect(ValidatedConstrainedList(List("foo")).isRight)
+    expect.same(
+      ValidatedConstrainedList(List("foo", "bar")),
+      Left("length required to be <= 1, but was 2")
+    )
   }
 
-  type AccountId = AccountId.Type
+  test("Validated set constrained member") {
+    expect(ValidatedSetConstrainedMember(Set("f")).isRight)
+    expect.same(
+      ValidatedSetConstrainedMember(Set("foo")),
+      Left("length required to be <= 2, but was 3")
+    )
+  }
 
-  object AccountId extends ValidatedNewtype[String] {
-    def id: smithy4s.ShapeId = ShapeId("foo", "AccountId")
-    val hints: Hints = Hints.empty
+  test("Validated constrained indexed seq constrained member") {
+    expect(
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("f")).isRight
+    )
+    expect.same(
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("foo")),
+      Left("length required to be <= 2, but was 3")
+    )
+    expect.same(
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("f", "g")),
+      Left("length required to be <= 1, but was 2")
+    )
+    expect.same(
+      ValidatedConstrainedIndexedSeqConstrainedMember(IndexedSeq("foo", "h")),
+      Left("length required to be <= 1, but was 2")
+    )
+  }
 
-    val underlyingSchema: Schema[String] = string
-      .withId(id)
-      .addHints(hints)
-      .validated(smithy.api.Length(min = Some(1L), max = None))
-      .validated(smithy.api.Pattern("[a-zA-Z0-9]+"))
+  test("Validated constrained list refined member") {
+    expect(
+      ValidatedConstrainedListRefinedMember(
+        List(Name(mkName("foo")))
+      ).isRight
+    )
+    expect.same(
+      ValidatedConstrainedListRefinedMember(
+        List(
+          Name(mkName("foo")),
+          Name(mkName("bar"))
+        )
+      ),
+      Left("length required to be <= 1, but was 2")
+    )
+  }
 
-    val validator: Validator[String, AccountId] = Validator
-      .of[String, AccountId](
-        Bijection[String, AccountId](_.asInstanceOf[AccountId], value(_))
-      )
-      .validating(smithy.api.Length(min = Some(1L), max = None))
-      .alsoValidating(smithy.api.Pattern("[a-zA-Z0-9]+"))
+  test("Validated constrained vector refined & constrained member") {
 
-    implicit val schema: Schema[AccountId] =
-      validator.toSchema(underlyingSchema)
+    expect(
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(Name(mkName("fo")))
+      ).isRight
+    )
+    expect.same(
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(
+          Name(mkName("fo")),
+          Name(mkName("ba"))
+        )
+      ),
+      Left("length required to be <= 1, but was 2")
+    )
+    expect.same(
+      ValidatedConstrainedVectorRefinedConstrainedMember(
+        Vector(
+          Name(mkName("foo"))
+        )
+      ),
+      Left("length required to be <= 2, but was 3")
+    )
+  }
 
-    @inline def apply(a: String): Either[String, AccountId] =
-      validator.validate(a)
+  test("Validated refined list constrainer member") {
+    expect(ValidatedRefinedListConstrainedMember(mkNel("fo")).isRight)
+    expect.same(
+      ValidatedRefinedListConstrainedMember(mkNel("fo", "foo")),
+      Left("length required to be <= 2, but was 3")
+    )
+  }
 
+  test("Validated constrained map") {
+    expect(ValidatedConstrainedMap(Map("foo" -> 1)).isRight)
+    expect.same(
+      ValidatedConstrainedMap(Map("foo" -> 1, "bar" -> 2)),
+      Left("length required to be <= 1, but was 2")
+    )
+  }
+
+  test("Validated map constrained key") {
+    expect(ValidatedMapConstrainedKey(Map("a" -> 1, "b" -> 2)).isRight)
+    expect.same(
+      ValidatedMapConstrainedKey(Map("a" -> 1, "bar" -> 2)),
+      Left("length required to be <= 2, but was 3")
+    )
+  }
+
+  test("Validated map constrained value") {
+    expect(
+      ValidatedMapConstrainedValue(Map("a" -> "123", "b" -> "456")).isRight
+    )
+    expect.same(
+      ValidatedMapConstrainedValue(Map("a" -> "123", "b" -> "4-5-6")),
+      Left("String '4-5-6' does not match pattern '^[a-zA-Z0-9]+$'")
+    )
+  }
+
+  private def mkNel[A](elems: A*) =
+    smithy4s.refined.NonEmptyList(elems.toList) match {
+      case Left(msg) => fail(msg)
+      case Right(v)  => v
+    }
+
+  private def mkName(str: String) = smithy4s.refined.Name(str) match {
+    case Left(msg) => fail(msg)
+    case Right(v)  => v
   }
 
 }
