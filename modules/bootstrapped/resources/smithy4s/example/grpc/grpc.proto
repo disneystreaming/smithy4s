@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package smithy4s.example.grpc;
+
+message GreetInput {
+  string name = 1;
+}
+
+message GreetOutput {
+  string greeting = 1;
+}
+
+message NotFoundError {
+  string message = 1;
+}
+
+message PermissionDeniedError {
+  string message = 1;
+}

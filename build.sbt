@@ -20,6 +20,7 @@ ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.18.0"
+ThisBuild / version := "0.18.47-SNAPSHOT"
 
 // for Alloy snapshots
 // as well as any other dependency snapshots.
@@ -64,6 +65,8 @@ lazy val allModules = Seq(
   bootstrapped,
   tests,
   http4s,
+  grpc,
+  `grpc-http4s`,
   cats,
   `http4s-kernel`,
   `http4s-swagger`,
@@ -886,6 +889,52 @@ lazy val http4s = projectMatrix
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
+ * Module that contains gRPC runtime support (backend-agnostic).
+ */
+lazy val grpc = projectMatrix
+  .in(file("modules/grpc"))
+  .dependsOn(
+    core,
+    protobuf,
+    cats
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Cats.core.value,
+      Dependencies.CatsEffect3.value,
+      Dependencies.Fs2.core.value
+    ) ++ munitDeps.value ++ weaverDeps.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains http4s integration for gRPC.
+ */
+lazy val `grpc-http4s` = projectMatrix
+  .in(file("modules/grpc-http4s"))
+  .dependsOn(
+    grpc,
+    `http4s-kernel`,
+    bootstrapped % "test->compile"
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= {
+      Seq(
+        Dependencies.Http4s.core.value,
+        Dependencies.Http4s.dsl.value,
+        Dependencies.Http4s.client.value,
+        Dependencies.Http4s.emberClient.value % Test,
+        Dependencies.Http4s.emberServer.value % Test
+      ) ++ weaverDeps.value
+    }
+  )
+  .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
+
+/**
  * Module that contains a function to derive a documentation endpoint
  */
 lazy val `http4s-swagger` = projectMatrix
@@ -1052,7 +1101,8 @@ lazy val bootstrapped = projectMatrix
       "weather",
       "smithy4s.example.product",
       "smithy4s.example.reservedNameOverride",
-      "smithy4s.example.bincompat"
+      "smithy4s.example.bincompat",
+      "smithy4s.example.grpc"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"
