@@ -88,6 +88,10 @@ object Dependencies {
   }
 
   object Mill {
+    def libs(v: String) = ("com.lihaoyi" %% "mill-libs" % v % Provided)
+      .exclude("org.scala-lang", "scala-reflect")
+      .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
+      .exclude("org.scala-lang.modules", "scala-xml_2.13")
     def scalalib(v: String) = "com.lihaoyi" %% "mill-scalalib" % v % Provided
     def main(v: String) = "com.lihaoyi" %% "mill-main" % v % Provided
     def mainApi(v: String) = "com.lihaoyi" %% "mill-main-api" % v % Provided

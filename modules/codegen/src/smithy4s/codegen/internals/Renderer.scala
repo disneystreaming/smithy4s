@@ -1852,32 +1852,34 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
-    // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with gADTs)
-    prim match {
+    // NOTE: this match doesn't have exhaustivity checking on Scala 2! (due to the Aux pattern's weird interaction with GADTs)
+    // The asInstanceOf is needed for Scala 3 compatibility since it doesn't refine T through the Aux type alias.
+    (prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
       case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
-      case Primitive.Unit       => _ => line"()"
-      case Primitive.Double     => t => line"${t.toString}d"
-      case Primitive.Float      => t => line"${t.toString}f"
-      case Primitive.Long       => t => line"${t.toString}L"
-      case Primitive.Int        => t => line"${t.toString}"
-      case Primitive.Short      => t => line"${t.toString}"
-      case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
-      case Primitive.String     => renderStringLiteral
-      case Primitive.Byte       => b => line"${b.toString}"
+      case Primitive.Unit       => (_: Unit) => line"()"
+      case Primitive.Double     => (t: Double) => line"${t.toString}d"
+      case Primitive.Float      => (t: Float) => line"${t.toString}f"
+      case Primitive.Long       => (t: Long) => line"${t.toString}L"
+      case Primitive.Int        => (t: Int) => line"${t.toString}"
+      case Primitive.Short      => (t: Short) => line"${t.toString}"
+      case Primitive.Bool       => (t: Boolean) => line"${t.toString}"
+      case Primitive.Uuid =>
+        (uuid: java.util.UUID) => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
+      case Primitive.String => (s: String) => renderStringLiteral(s)
+      case Primitive.Byte   => (b: Byte) => line"${b.toString}"
       case Primitive.Blob =>
-        ba =>
+        (ba: Array[Byte]) =>
           val blob = NameRef("smithy4s", "Blob")
           if (ba.isEmpty) line"$blob.empty"
           else
             line"$blob(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
-        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
-      case Primitive.Document => renderNodeToLine(_)
-      case Primitive.Nothing  => v => (v: Nothing) // this case can't happen
-    }
+        (ts: java.time.Instant) => line"${NameRef("smithy4s", "Timestamp")}(${ts.getEpochSecond()}L, ${ts.getNano()})"
+      case Primitive.Document => (node: Node) => renderNodeToLine(node)
+      case Primitive.Nothing  => (_: Any) => sys.error("unreachable") // this case can't happen
+    }).asInstanceOf[T => Line]
 
   private def renderNodeToLine(node: Node): Line = {
     node.accept(new NodeVisitor[Line] {
@@ -1910,10 +1912,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     })
   }
 
+  private def escapeForStringLiteral(raw: String): String = {
+    val sb = new StringBuilder("\"")
+    raw.foreach {
+      case '\b'                      => sb.append("\\b")
+      case '\t'                      => sb.append("\\t")
+      case '\n'                      => sb.append("\\n")
+      case '\f'                      => sb.append("\\f")
+      case '\r'                      => sb.append("\\r")
+      case '"'                       => sb.append("\\\"")
+      case '\\'                      => sb.append("\\\\")
+      case c if c >= ' ' && c <= '~' => sb.append(c)
+      case c                         => sb.append("\\u%04x".format(c.toInt))
+    }
+    sb.append('"')
+    sb.toString()
+  }
+
   private def renderStringLiteral(raw: String): Line = {
-    import scala.reflect.runtime.universe._
-    val str = Literal(Constant(raw))
-      .toString()
+    val str = escapeForStringLiteral(raw)
       // Replace sequences like "\\uD83D" (how Smithy specs refer to unicode characters)
       // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
       // See https://github.com/disneystreaming/smithy4s/pull/499

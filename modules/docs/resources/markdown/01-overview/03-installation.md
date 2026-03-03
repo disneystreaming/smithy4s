@@ -51,6 +51,8 @@ val myModule = project
 
 `smithy4s-mill-codegen-plugin` is a plugin to enable Smithy4s code generation on a `mill` module.
 
+### Mill 0.11.x / 0.12.x
+
 For example, here, we enabled it on the `example` module:
 
 ```scala
@@ -76,7 +78,7 @@ For mill 0.12.x it is necessary to force manually correct mill binary version fo
 import $ivy`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin_mill0.12:@VERSION@`
 ```
 
-By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` tasks.
+By default, the plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically before you `compile` the module. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` tasks.
 
 For example, here we'll read Smithy files from `smithy_input` and write to `smithy_output`.
 
@@ -101,3 +103,41 @@ object example extends ScalaModule with Smithy4sModule {
 ```
 
 [^1]: https://github.com/com-lihaoyi/mill/issues/4390
+
+### Mill 1.x
+
+In your `build.mill`:
+
+```scala
+//| mvnDeps:
+//| - com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSION@
+
+package build
+
+import mill.*, mill.scalalib.*
+import smithy4s.codegen.mill.*
+
+object example extends ScalaModule with Smithy4sModule {
+  def scalaVersion = "2.13.18"
+  override def mvnDeps = Seq(
+    mvn"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
+  )
+}
+```
+
+By default, the plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. Code generation happens automatically before you `compile` the module.
+
+To customize input and output directories:
+
+```scala
+object example extends ScalaModule with Smithy4sModule {
+  def scalaVersion = "2.13.18"
+  override def mvnDeps = Seq(
+    mvn"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
+  )
+
+  override def smithy4sInputDirs = Task.Sources("smithy_input")
+  override def smithy4sOutputDir = Task {
+    PathRef(moduleDir / "smithy_output")
+  }
+}

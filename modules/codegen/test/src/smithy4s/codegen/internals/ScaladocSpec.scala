@@ -45,7 +45,6 @@ final class ScaladocSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    ()
     val generatedCode = generateScalaCode(smithy)
     val documentedStructCode = generatedCode("smithy4s.DocumentedStruct")
     val undocumentedStructCode = generatedCode("smithy4s.UndocumentedStruct")

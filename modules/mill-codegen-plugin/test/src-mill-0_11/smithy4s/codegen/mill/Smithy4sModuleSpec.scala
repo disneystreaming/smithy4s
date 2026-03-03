@@ -37,8 +37,6 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
-  ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
-
   test("basic codegen runs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.18"

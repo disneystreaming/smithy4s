@@ -5,6 +5,15 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+
+## Add Mill 1.x support
+
+The Mill codegen plugin now supports Mill 1.x (tested with 1.1.2), in addition to the existing Mill 0.11.x and 0.12.x support.
+
+## Cross-compile codegen module against Scala 3
+
+The codegen module is now cross-compiled against Scala 3 (3.3.x LTS), in addition to Scala 2.12 and 2.13.
+
 # 0.18.47
 
 * core: Add `asSurjection` method to `ValidatedNewtype` class (see [#1873](https://github.com/disneystreaming/smithy4s/pull/1873))

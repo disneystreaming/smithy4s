@@ -37,8 +37,8 @@ package object internals {
 
   val uuidShapeId = ShapeId.from("alloy#UUID")
 
-  private[internals] type LinesWithValue = WithValue.ToLinesWithValue[_]
-  private[internals] type LineWithValue = WithValue.ToLineWithValue[_]
+  private[internals] type LinesWithValue = WithValue.ToLinesWithValue[?]
+  private[internals] type LineWithValue = WithValue.ToLineWithValue[?]
   private[internals] implicit class LinesSyntaxWithValue[A](
       val value: WithValue.ToLinesWithValue[A]
   ) extends AnyVal {

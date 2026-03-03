@@ -16,27 +16,31 @@
 
 package smithy4s.codegen.mill
 
-import mill.testkit.{TestBaseModule, UnitTester}
-import mill.scalalib._
-import mill._
-import munit.Location
-import java.nio.file.Paths
-import mill.scalalib.publish.PomSettings
-import mill.scalalib.publish.VersionControl
 import coursier.Repository
 import coursier.ivy.IvyRepository
+import mill._
+import mill.api.Discover
+import mill.scalalib._
+import mill.scalalib.publish.PomSettings
+import mill.scalalib.publish.VersionControl
+import mill.testkit.TestRootModule
+import mill.testkit.UnitTester
+import munit.Location
+
+import java.nio.file.Paths
 
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
 
   private val coreDep =
-    ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
+    mvn"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
   test("basic codegen runs") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
-      override def ivyDeps = Agg(coreDep)
+      override def mvnDeps = Seq(coreDep)
     }
 
     val resourceFolder = resourcePath / "basic"
@@ -76,8 +80,9 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("wildcard settings") {
     class Test(version: String, options: Seq[String])
-        extends TestBaseModule
+        extends TestRootModule
         with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = version
       override def scalacOptions = options
     }
@@ -114,15 +119,17 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("codegen with wildcards") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "3.3.0"
-      override def ivyDeps = Agg(coreDep)
+      override def mvnDeps = Seq(coreDep)
       override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
     }
 
     val resourceFolder = resourcePath / "service"
     UnitTester(foo, resourceFolder).scoped { eval =>
       val compileResult = eval(foo.compile)
+      println(compileResult)
       assertEquals(
         compileResult.isRight,
         true,
@@ -143,11 +150,12 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("2.13 codegen with placeholder wildcards") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
-      override def ivyDeps = Agg(coreDep)
-      override def scalacPluginIvyDeps =
-        Agg(ivy"org.typelevel:::kind-projector:0.13.4")
+      override def mvnDeps = Seq(coreDep)
+      override def scalacPluginMvnDeps =
+        Seq(mvn"org.typelevel:::kind-projector:0.13.4")
       override def scalacOptions =
         Seq("-Xsource:3", "-P:kind-projector:underscore-placeholders")
 
@@ -176,13 +184,17 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("codegen with dependencies") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
-      override def ivyDeps = Agg(coreDep)
-      override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
-      override def smithy4sIvyDeps = Agg(
-        ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
-      )
+      override def mvnDeps = Seq(coreDep)
+      override def smithy4sAllowedNamespaces: T[Option[Set[String]]] =
+        Task(Some(Set("aws.iam")))
+      override def smithy4sIvyDeps = Task {
+        Seq(
+          mvn"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+        )
+      }
     }
 
     val resourceFolder = resourcePath / "basic"
@@ -203,12 +215,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("codegen with custom smithy-build.json works") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
-      override def ivyDeps = Agg(coreDep)
+      override def mvnDeps = Seq(coreDep)
 
-      override def smithyBuild =
-        Some(PathRef(millSourcePath / "smithy-build.json"))
+      override def smithyBuild: T[Option[PathRef]] = Task.Input {
+        Some(PathRef(moduleDir / "smithy-build.json"))
+      }
     }
 
     val resourceFolder = resourcePath / "smithy-build"
@@ -235,16 +249,17 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
   }
   test("multi-module codegen works") {
-    object base extends TestBaseModule {
+    object base extends TestRootModule {
+      lazy val millDiscover = Discover[this.type]
       object foo extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def ivyDeps = Agg(coreDep)
+        override def mvnDeps = Seq(coreDep)
       }
 
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def ivyDeps = Agg(coreDep)
-        override def moduleDeps = Seq(foo)
+        override def mvnDeps = Seq(coreDep)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
       }
     }
 
@@ -287,20 +302,23 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("multi-module codegen works with AWS specs upstream") {
-    object base extends TestBaseModule {
+    object base extends TestRootModule {
+      lazy val millDiscover = Discover[this.type]
       object foo extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def ivyDeps = Agg(
-          ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+        override def mvnDeps = Seq(
+          mvn"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
         )
-        override def smithy4sIvyDeps: T[Agg[Dep]] = Agg(
-          ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
-        )
+        override def smithy4sIvyDeps: T[Seq[Dep]] = Task {
+          Seq(
+            mvn"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+          )
+        }
       }
 
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def moduleDeps = Seq(foo)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
       }
     }
 
@@ -341,17 +359,20 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test(
     "multi-module codegen doesn't trigger upstream compilation when opted out"
   ) {
-    object base extends TestBaseModule {
+    object base extends TestRootModule {
+      lazy val millDiscover = Discover[this.type]
       object foo extends ScalaModule {
         override def scalaVersion = "2.13.18"
       }
 
       object bar extends Smithy4sModule {
         override def scalaVersion = "2.13.18"
-        override def moduleDeps = Seq(foo)
-        override def ivyDeps = Agg(coreDep)
+        override def moduleDeps: Seq[JavaModule] = Seq(foo)
+        override def mvnDeps = Seq(coreDep)
 
-        override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
+        override def smithy4sInternalDependenciesAsJars = Task {
+          List.empty[PathRef]
+        }
       }
     }
 
@@ -372,13 +393,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
     trait Common extends SbtModule with Smithy4sModule with PublishModule {
       override def scalaVersion = "2.13.18"
-      override def repositoriesTask: Task[Seq[Repository]] = T.task {
-        val ivy2Local = IvyRepository.fromPattern(
-          (localIvyRepo.toNIO.toUri.toString + "/") +: coursier.ivy.Pattern.default,
-          dropInfoAttributes = true
-        )
-        Seq(ivy2Local) ++ super.repositoriesTask()
-      }
+      override def repositoriesTask: mill.api.Task[Seq[Repository]] =
+        Task.Anon {
+          val ivy2Local = IvyRepository.fromPattern(
+            (localIvyRepo.toNIO.toUri.toString + "/") +: coursier.ivy.Pattern.default,
+            dropInfoAttributes = true
+          )
+          Seq(ivy2Local) ++ super.repositoriesTask()
+        }
       def pomSettings: T[PomSettings] = PomSettings(
         "foo",
         "foobar",
@@ -391,20 +413,23 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
     }
 
-    object base extends TestBaseModule {
+    object base extends TestRootModule {
+      lazy val millDiscover = Discover[this.type]
       object foo extends Common {
         override def artifactName: T[String] = "foo-mill"
         override def scalaVersion = "2.13.18"
-        override def ivyDeps = Agg(coreDep)
+        override def mvnDeps = Seq(coreDep)
         override def smithy4sAllowedNamespaces: T[Option[Set[String]]] =
           Some(Set("aws.api", "foo"))
-        override def millSourcePath =
+        override def moduleDir =
           resourcePath / "multimodule-staged" / "foo"
         // foo refers to smithy-aws-traits explicitly as a code-gen only dep, and upon publishing,
         // this information is stored in the manifest of bar's jar, for downstream consumption
-        override def smithy4sIvyDeps = Agg(
-          ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
-        )
+        override def smithy4sIvyDeps = Task {
+          Seq(
+            mvn"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+          )
+        }
       }
 
       object bar extends Common {
@@ -413,12 +438,12 @@ class Smithy4sModuleSpec extends munit.FunSuite {
         // bar depend on foo as a library, and an assumption is made that bar may depend on the same smithy models
         // that foo depended on for its own codegen. Therefore, these are retrieved from foo's manifest,
         // resolved and added to the list of jars to seek smithy models from during code generation
-        override def ivyDeps = T {
-          super.ivyDeps() ++ Agg(
-            ivy"${pomSettings().organization}::foo-mill:${publishVersion()}"
+        override def mvnDeps = Task {
+          super.mvnDeps() ++ Seq(
+            mvn"${pomSettings().organization}::foo-mill:${publishVersion()}"
           )
         }
-        override def millSourcePath =
+        override def moduleDir =
           resourcePath / "multimodule-staged" / "bar"
       }
     }
@@ -452,10 +477,11 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("codegen with aws specs") {
-    object foo extends TestBaseModule with Smithy4sModule {
+    object foo extends TestRootModule with Smithy4sModule {
+      lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
-      override def ivyDeps = Agg(coreDep)
-      override def smithy4sAwsSpecs: T[Seq[String]] = T(Seq(AWS.dynamodb))
+      override def mvnDeps = Seq(coreDep)
+      override def smithy4sAwsSpecs: T[Seq[String]] = Task(Seq(AWS.dynamodb))
     }
 
     UnitTester(foo, resourcePath).scoped { eval =>
@@ -473,24 +499,6 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       checkFileExist(file, shouldExist = true)
     }
   }
-
-  // private def compileWorks(
-  //     sm: ScalaModule,
-  //     testEvaluator: testKit.TestEvaluator
-  // )(implicit loc: Location) =
-  //   taskWorks(sm.compile, testEvaluator)
-  //
-  // private def taskWorks[A](
-  //     task: mill.define.Task[A],
-  //     testEvaluator: testKit.TestEvaluator
-  // )(implicit loc: Location) = {
-  //   val result = testEvaluator(task).map(_._1)
-  //   assertEquals(
-  //     result.isRight,
-  //     true,
-  //     s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
-  //   )
-  // }
 
   private def checkFileExist(path: os.Path, shouldExist: Boolean)(implicit
       loc: Location

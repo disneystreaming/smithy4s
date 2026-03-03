@@ -62,22 +62,19 @@ class ValidatedNewtypesTransformer extends ProjectionTransformer {
     )
   }
 
+  @SuppressWarnings(Array("all"))
   private def processShape(shape: Shape, lookup: String => Boolean) =
     if (lookup(shape.getId().getNamespace()))
       shape match {
         case ValidatedNewtypesTransformer.SupportedShape(s) =>
-          addTrait(Shape.shapeToBuilder(s): AbstractShapeBuilder[_, _])
+          val builder = (Shape.shapeToBuilder(s: Shape): Any)
+            .asInstanceOf[AbstractShapeBuilder[?, ?]]
+          builder.addTrait(new ValidateNewtypeTrait())
+          builder.build().asInstanceOf[Shape]
         case _ => shape
       }
     else
       shape
-
-  private def addTrait[S <: Shape, B <: AbstractShapeBuilder[B, S]](
-      builder: AbstractShapeBuilder[B, S]
-  ): S = {
-    builder.addTrait(new ValidateNewtypeTrait())
-    builder.build()
-  }
 
 }
 

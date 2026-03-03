@@ -45,7 +45,7 @@ private[internals] object recursion {
       fold: F[B] => M[B]
   )(a: A): M[B] = {
     type MF[T] = M[F[T]] // composition of M and F
-    implicit val MF: Functor[MF] = Functor[M].compose(Functor[F])
+    implicit val MF: Functor[MF] = Functor[M].compose[F]
     val F = Traverse[F]
     def foldM(mfmb: M[F[M[B]]]): M[B] = for {
       fmb <- mfmb

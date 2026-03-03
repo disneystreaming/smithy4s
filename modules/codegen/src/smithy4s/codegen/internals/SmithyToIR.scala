@@ -132,7 +132,11 @@ private[codegen] class SmithyToIR(
       .toSet
       .flatMap((n: Node) => n.asArrayNode().asScala)
       .flatMap(_.getElements().asScala)
-      .flatMap(_.asStringNode().asScala.map(n => NamespacePattern(n.getValue)))
+      .flatMap(
+        _.asStringNode().asScala.map(n =>
+          NamespacePattern.fromString(n.getValue)
+        )
+      )
 
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
@@ -173,7 +177,8 @@ private[codegen] class SmithyToIR(
 
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
-            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
+            val newHints =
+              hints.filterNot(_.sameNativeTrait(tpe.refinementHint))
             TypeAlias(
               shape.getId(),
               name,
@@ -701,7 +706,7 @@ private[codegen] class SmithyToIR(
         val h = hints(shape)
         tpe match {
           case e: Type.ExternalType =>
-            h.filterNot(_ sameNativeTrait e.refinementHint)
+            h.filterNot(_.sameNativeTrait(e.refinementHint))
           case _ => h
         }
       }
@@ -838,16 +843,18 @@ private[codegen] class SmithyToIR(
       def unionShape(x: UnionShape): Option[Type] =
         Type.Ref(x.namespace, x.name).some
 
+      @SuppressWarnings(Array("all"))
       def memberShape(x: MemberShape): Option[Type] =
         model.getShape(x.getTarget()).asScala.flatMap { shape =>
-          val builder =
-            (Shape.shapeToBuilder(shape: Shape): AbstractShapeBuilder[_, _])
+          val builder = (Shape.shapeToBuilder(shape: Shape): Any)
+            .asInstanceOf[AbstractShapeBuilder[?, ?]]
 
           builder
             .addTraits(x.getAllTraits().asScala.map(_._2).asJavaCollection)
 
           builder
             .build()
+            .asInstanceOf[Shape]
             .accept(this)
         }
 
@@ -1123,7 +1130,8 @@ private[codegen] class SmithyToIR(
         .zipWithIndex
         .collect {
           case ((name, Some(tpe: Type.ExternalType), modifier, hints), index) =>
-            val newHints = hints.filterNot(_ sameNativeTrait tpe.refinementHint)
+            val newHints =
+              hints.filterNot(_.sameNativeTrait(tpe.refinementHint))
             Field(name, tpe, modifier, index, newHints)
           case ((name, Some(tpe), modifier, hints), index) =>
             Field(name, tpe, modifier, index, hints)
@@ -1164,7 +1172,7 @@ private[codegen] class SmithyToIR(
             Alt(
               name,
               UnionMember.TypeCase(tpe),
-              h.filterNot(_ sameNativeTrait tpe.refinementHint)
+              h.filterNot(_.sameNativeTrait(tpe.refinementHint))
             )
           case (name, Some(Right(tpe)), h) =>
             Alt(name, UnionMember.TypeCase(tpe), h)
@@ -1429,7 +1437,7 @@ private[codegen] class SmithyToIR(
       case (node, IdRefCase()) =>
         val ref = Type.Ref("smithy4s", "ShapeId")
         val namespace :: name :: _ =
-          node.asStringNode.get.getValue.split("#").toList
+          (node.asStringNode.get.getValue.split("#").toList: @unchecked)
         def toField(value: String) = TypedNode.FieldTN.RequiredTN(
           NodeAndType(
             Node.from(value),

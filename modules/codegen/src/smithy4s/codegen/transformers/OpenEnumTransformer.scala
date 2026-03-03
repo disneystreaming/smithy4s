@@ -42,7 +42,7 @@ private[codegen] final class OpenEnumTransformer extends ProjectionTransformer {
           e.toBuilder.addTrait(new OpenEnumTrait()).build()
         case t: Shape if t.hasTrait(classOf[EnumTrait]) =>
           (Shape
-            .shapeToBuilder(t): AbstractShapeBuilder[_, _])
+            .shapeToBuilder(t): AbstractShapeBuilder[?, ?])
             .addTrait(new OpenEnumTrait())
             .build()
         case other => other

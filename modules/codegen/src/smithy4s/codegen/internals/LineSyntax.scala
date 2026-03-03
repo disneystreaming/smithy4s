@@ -22,12 +22,12 @@ import WithValue.ToLineWithValue
 
 private[codegen] object LineSyntax {
   implicit class LineInterpolator(val sc: StringContext) extends AnyVal {
-    def line(renderables: ToLineWithValue[_]*): Line = {
+    def line(renderables: ToLineWithValue[?]*): Line = {
       renderAndCombine(renderables.toList)
     }
 
     private def renderAndCombine(
-        renderables: List[ToLineWithValue[_]]
+        renderables: List[ToLineWithValue[?]]
     ): Line = {
       def aux[A](binding: ToLineWithValue[A]): Line = {
         binding.render
