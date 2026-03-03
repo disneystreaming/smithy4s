@@ -221,7 +221,7 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
                         |""".stripMargin
 
     val expectedHint =
-      s"""Hints.dynamic(ShapeId("test", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1), "double" -> smithy4s.Document.fromDouble(2.0d)))"""
+      s"""Hints.dynamic(ShapeId("test", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1L), "double" -> smithy4s.Document.fromDouble(2.0d)))"""
 
     val result = TestUtils.generateScalaCode(smithySpec).values.toList
 
@@ -235,8 +235,8 @@ final class DynamicHintRenderingSpec extends munit.FunSuite {
       smithySpecs: String*
   )(ns: String = "test")(implicit loc: Location): Unit = {
     val expect = List(
-      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1)))""",
-      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(2)))"""
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(1L)))""",
+      s"""Hints.dynamic(ShapeId("$ns", "someTrait"), smithy4s.Document.obj("int" -> smithy4s.Document.fromLong(2L)))"""
     )
 
     val result = TestUtils.generateScalaCode(smithySpecs: _*).values.toList

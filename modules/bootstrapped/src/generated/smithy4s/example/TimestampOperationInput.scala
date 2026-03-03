@@ -22,7 +22,7 @@ object TimestampOperationInput extends ShapeTag.Companion[TimestampOperationInpu
 
   implicit val schema: Schema[TimestampOperationInput] = struct[TimestampOperationInput](
     timestamp.required[TimestampOperationInput]("httpDate", _.httpDate).addHints(smithy.api.Default(smithy4s.Document.fromString("Thu, 23 May 2024 10:20:30 GMT")), smithy.api.TimestampFormat.HTTP_DATE.widen),
-    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(smithy.api.Default(smithy4s.Document.fromLong(1716459630)), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
+    timestamp.required[TimestampOperationInput]("epochSeconds", _.epochSeconds).addHints(smithy.api.Default(smithy4s.Document.fromLong(1716459630L)), smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
     timestamp.required[TimestampOperationInput]("dateTime", _.dateTime).addHints(smithy.api.Default(smithy4s.Document.fromString("2024-05-23T10:20:30.000Z")), smithy.api.TimestampFormat.DATE_TIME.widen),
   )(make).withId(id).addHints(hints)
 }

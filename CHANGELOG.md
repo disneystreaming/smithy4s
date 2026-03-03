@@ -6,13 +6,16 @@ When adding entries, please treat them as if they could end up in a release any 
 Thank you!
 
 
-## Add Mill 1.x support
+# 0.18.49
 
-The Mill codegen plugin now supports Mill 1.x (tested with 1.1.2), in addition to the existing Mill 0.11.x and 0.12.x support.
+* mill codegen plugin: now supports Mill 1.x (tested with 1.1.1), in addition to the existing Mill 0.11.x and 0.12.x support
+* codegen: Cross comple codegen module against Scala 3
+* codegen: Fix `Long` literal rendering to add `L` suffix, preventing `integer number too large` compilation errors for values exceeding `Int.MaxValue` in [#1898](https://github.com/disneystreaming/smithy4s/pull/1898)
 
-## Cross-compile codegen module against Scala 3
+# 0.18.48
 
-The codegen module is now cross-compiled against Scala 3 (3.3.x LTS), in addition to Scala 2.12 and 2.13.
+* codegen: Update codegen of numbers when using dynamic bindings in [#1886](https://github.com/disneystreaming/smithy4s/pull/1886)
+* codegen: Add type params to `struct` and `union` in codegen schemas in [#1893](https://github.com/disneystreaming/smithy4s/pull/1893)
 
 # 0.18.47
 

@@ -21,7 +21,7 @@ object StructureWithCustomIndexes extends ShapeTag.Companion[StructureWithCustom
 
   implicit val schema: Schema[StructureWithCustomIndexes] = struct[StructureWithCustomIndexes](
     int.optional[StructureWithCustomIndexes]("a", _.a).addHints(alloy.proto.ProtoIndex(4)),
-    int.field[StructureWithCustomIndexes]("b", _.b).addHints(alloy.proto.ProtoIndex(3), smithy.api.Default(smithy4s.Document.fromLong(0))),
+    int.field[StructureWithCustomIndexes]("b", _.b).addHints(alloy.proto.ProtoIndex(3), smithy.api.Default(smithy4s.Document.fromLong(0L))),
     int.required[StructureWithCustomIndexes]("c", _.c).addHints(alloy.proto.ProtoIndex(2)),
     UnionWithCustomIndexes.schema.optional[StructureWithCustomIndexes]("d", _.d).addHints(alloy.proto.ProtoIndex(1)),
   )(make).withId(id).addHints(hints)
