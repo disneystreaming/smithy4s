@@ -656,8 +656,9 @@ lazy val protocol = projectMatrix
       "8"
     ),
     doc / javacOptions ++= Seq(
-      // skip "no comment" warnings in Javadoc, these Java files are just boilerplate
-      "-Xdoclint:all,-missing",
+      // skip "no comment" warnings in Javadoc, these Java files are just boilerplate.
+      // Also turns "unknown tag. Unregistered custom tag?" in generated Smithy traits into warnings.
+      "-Xdoclint:none",
       // skip "Loading source file", "Generating" logs from Javadoc
       "-quiet"
     )
@@ -668,6 +669,7 @@ lazy val protocol = projectMatrix
     smithyTraitCodegenNamespace := "smithy4s.meta",
     smithyTraitCodegenJavaPackage := "smithy4s.meta",
     smithyTraitCodegenSourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "protocol" / "resources" / "META-INF" / "smithy",
+    // Combine generated and handwritten trait service providers for the final classpath resource
     smithyTraitCodegenExternalProviders ++=
     // format: off
       IO

@@ -633,7 +633,7 @@ private[codegen] class SmithyToIR(
               Type.ExternalType(
                 shape.name,
                 refined.getTargetType(),
-                if (refined.isParameterised) baseTypeParams else List.empty,
+                if (refined.getParameterised()) baseTypeParams else List.empty,
                 refined.getProviderImport().asScala,
                 base,
                 unfoldTrait(trt)
@@ -1017,7 +1017,7 @@ private[codegen] class SmithyToIR(
     case _: GenerateOpticsTrait =>
       Hint.GenerateOptics
     case s: ScalaImportsTrait =>
-      Hint.ScalaImports(s.getImports().asScala.toList)
+      Hint.ScalaImports(s.getValues().asScala.toList)
     case _: ValidateNewtypeTrait =>
       Hint.ValidateNewtype
     case _: TraitDefinition =>

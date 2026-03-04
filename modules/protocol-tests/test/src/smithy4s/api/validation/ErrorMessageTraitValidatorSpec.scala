@@ -43,7 +43,7 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
     .build()
 
   test("return no error annotation is correctly used") {
-    val theTrait = new ErrorMessageTrait()
+    val theTrait = ErrorMessageTrait.builder().build()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -73,7 +73,7 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
   }
 
   test("fail when used on a member that's not a string") {
-    val theTrait = new ErrorMessageTrait()
+    val theTrait = ErrorMessageTrait.builder().build()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -110,7 +110,7 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
   }
 
   test("fails when parent structure has no `error` trait") {
-    val theTrait = new ErrorMessageTrait()
+    val theTrait = ErrorMessageTrait.builder().build()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -136,7 +136,7 @@ object ErrorMessageTraitValidatorSpec extends FunSuite {
   }
 
   test("fails when used on non struct member") {
-    val theTrait = new ErrorMessageTrait()
+    val theTrait = ErrorMessageTrait.builder().build()
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
     val unionMember = MemberShape
       .builder()
