@@ -259,6 +259,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
         .message(
           "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z`][\\w]*\\.?)*\\.(?:_|given)$"
         )
+        .sourceLocation(new SourceLocation("test.smithy", 8, 53))
         .build()
     )
 
