@@ -17,16 +17,36 @@
 package smithy4s
 package schema
 
-case class EnumValue[E](
-    stringValue: String,
-    intValue: Int,
-    value: E,
-    name: String,
-    hints: Hints
+final class EnumValue[E](
+    val stringValue: String,
+    val intValue: Int,
+    val value: E,
+    val name: String,
+    val hints: Hints
 ) {
   def map[A](f: E => A): EnumValue[A] =
-    copy(value = f(value))
+    new EnumValue(stringValue, intValue, f(value), name, hints)
 
   def transformHints(f: Hints => Hints): EnumValue[E] =
-    copy(hints = f(hints))
+    new EnumValue(stringValue, intValue, value, name, f(hints))
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: EnumValue[_] => this.stringValue == that.stringValue && this.intValue == that.intValue && this.value == that.value && this.name == that.name && this.hints == that.hints
+    case _ => false
+  }
+  override def hashCode(): Int = {
+    var result = stringValue.##
+    result = 31 * result + intValue.##
+    result = 31 * result + value.##
+    result = 31 * result + name.##
+    result = 31 * result + hints.##
+    result
+  }
+  override def toString: String = s"EnumValue($stringValue, $intValue, $value, $name, $hints)"
+}
+object EnumValue {
+  def apply[E](stringValue: String, intValue: Int, value: E, name: String, hints: Hints): EnumValue[E] =
+    new EnumValue(stringValue, intValue, value, name, hints)
+  def unapply[E](x: EnumValue[E]): Some[(String, Int, E, String, Hints)] =
+    Some((x.stringValue, x.intValue, x.value, x.name, x.hints))
 }

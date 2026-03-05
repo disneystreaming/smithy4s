@@ -122,15 +122,15 @@ object SchemaPartition {
               }
             }
 
-          case BijectionSchema(underlying, bijection) =>
-            apply(underlying) match {
+          case s: BijectionSchema[_, _] =>
+            apply(s.underlying) match {
               case SchemaPartition.SplittingMatch(matching, notMatching) =>
                 SchemaPartition.SplittingMatch(
-                  matching.biject(_.map(bijection.to))(_.map(bijection.from)),
-                  notMatching.biject(_.map(bijection.to))(_.map(bijection.from))
+                  matching.biject(_.map(s.bijection.to))(_.map(s.bijection.from)),
+                  notMatching.biject(_.map(s.bijection.to))(_.map(s.bijection.from))
                 )
               case SchemaPartition.TotalMatch(total) =>
-                SchemaPartition.TotalMatch(total.biject(bijection))
+                SchemaPartition.TotalMatch(total.biject(s.bijection))
               case SchemaPartition.NoMatch() => SchemaPartition.NoMatch()
             }
           case LazySchema(s) => apply(s.value)

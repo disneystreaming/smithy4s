@@ -37,7 +37,7 @@ case class ErrorSchema[E] private[smithy4s] (
   def transformHintsLocally(f: Hints => Hints): ErrorSchema[E] = {
     val newSchema = schema match {
       case u: Schema.UnionSchema[E] =>
-        u.copy(alternatives = u.alternatives.map(_.transformHintsLocally(f)))
+        u.withAlternatives(u.alternatives.map(_.transformHintsLocally(f)))
       case other => other.transformHintsLocally(f)
     }
     copy(schema = newSchema)
@@ -46,7 +46,7 @@ case class ErrorSchema[E] private[smithy4s] (
   def transformHintsTransitively(f: Hints => Hints): ErrorSchema[E] = {
     val newSchema = schema match {
       case u: Schema.UnionSchema[E] =>
-        u.copy(alternatives = u.alternatives.map(_.transformHintsLocally(f)))
+        u.withAlternatives(u.alternatives.map(_.transformHintsLocally(f)))
       case other => other.transformHintsLocally(f)
     }
     copy(schema = newSchema)

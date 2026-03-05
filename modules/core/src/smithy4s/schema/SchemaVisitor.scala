@@ -41,8 +41,8 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case EnumerationSchema(shapeId, hints, tag, values) => enumeration(shapeId, hints, tag, values)
     case StructSchema(shapeId, hints, fields, make) => struct(shapeId, hints, fields, make)
     case u@UnionSchema(shapeId, hints, alts, _) => union(shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
-    case BijectionSchema(schema, bijection) => biject(schema, bijection)
-    case RefinementSchema(schema, refinement) => refine(schema, refinement)
+    case s: BijectionSchema[_, _] => biject(s.underlying, s.bijection)
+    case s: RefinementSchema[_, _] => refine(s.underlying, s.refinement)
     case LazySchema(make) => lazily(make)
     case o: OptionSchema[c, a] => option[c,a](o.tag, o.underlying)
   }

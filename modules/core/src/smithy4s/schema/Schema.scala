@@ -46,8 +46,8 @@ sealed trait Schema[A]{
     case EnumerationSchema(_, hints, values, tag) => EnumerationSchema(newId, hints, values, tag)
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
-    case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
-    case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
+    case s: BijectionSchema[_, _] => BijectionSchema(s.underlying.withId(newId), s.bijection)
+    case s: RefinementSchema[_, _] => RefinementSchema(s.underlying.withId(newId), s.refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
     case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.withId(newId)).asInstanceOf[Schema[A]]
   }
@@ -61,8 +61,8 @@ sealed trait Schema[A]{
     case EnumerationSchema(shapeId, hints, values, tag) => EnumerationSchema(shapeId, f(hints), values, tag)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
-    case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
-    case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
+    case s: BijectionSchema[_, _] => BijectionSchema(s.underlying.transformHintsLocally(f), s.bijection)
+    case s: RefinementSchema[_, _] => RefinementSchema(s.underlying.transformHintsLocally(f), s.refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
     case s: OptionSchema[c, a] => OptionSchema(s.tag, s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
@@ -169,27 +169,225 @@ object Schema {
 
   def apply[A](implicit ev: Schema[A]): ev.type = ev
 
-  final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
-  final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
-  final case class MapSchema[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]) extends Schema[C[K, V]]
-  final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]) extends Schema[E]
-  final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
-  final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
-  final case class OptionSchema[C[_], A](tag: OptionalTag[C], underlying: Schema[A]) extends Schema[C[A]]{
+  final class PrimitiveSchema[P](val shapeId: ShapeId, val hints: Hints, val tag: Primitive[P]) extends Schema[P] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: PrimitiveSchema[_] => this.shapeId == that.shapeId && this.hints == that.hints && this.tag == that.tag
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + tag.##
+      result
+    }
+    override def toString: String = s"PrimitiveSchema($shapeId, $hints, $tag)"
+  }
+  object PrimitiveSchema {
+    def apply[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): PrimitiveSchema[P] =
+      new PrimitiveSchema(shapeId, hints, tag)
+    def unapply[P](x: PrimitiveSchema[P]): Some[(ShapeId, Hints, Primitive[P])] =
+      Some((x.shapeId, x.hints, x.tag))
+  }
+
+  final class CollectionSchema[C[_], A](val shapeId: ShapeId, val hints: Hints, val tag: CollectionTag[C], val member: Schema[A]) extends Schema[C[A]] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: CollectionSchema[_, _] => this.shapeId == that.shapeId && this.hints == that.hints && this.tag == that.tag && this.member == that.member
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + tag.##
+      result = 31 * result + member.##
+      result
+    }
+    override def toString: String = s"CollectionSchema($shapeId, $hints, $tag, $member)"
+
+    def withMember(member: Schema[A]): CollectionSchema[C, A] =
+      new CollectionSchema(shapeId, hints, tag, member)
+  }
+  object CollectionSchema {
+    def apply[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): CollectionSchema[C, A] =
+      new CollectionSchema(shapeId, hints, tag, member)
+    def unapply[C[_], A](x: CollectionSchema[C, A]): Some[(ShapeId, Hints, CollectionTag[C], Schema[A])] =
+      Some((x.shapeId, x.hints, x.tag, x.member))
+  }
+
+  final class MapSchema[C[_, _], K, V](val shapeId: ShapeId, val hints: Hints, val tag: MapTag[C], val key: Schema[K], val value: Schema[V]) extends Schema[C[K, V]] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: MapSchema[_, _, _] => this.shapeId == that.shapeId && this.hints == that.hints && this.tag == that.tag && this.key == that.key && this.value == that.value
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + tag.##
+      result = 31 * result + key.##
+      result = 31 * result + value.##
+      result
+    }
+    override def toString: String = s"MapSchema($shapeId, $hints, $tag, $key, $value)"
+
+    def withKeyAndValue(key: Schema[K], value: Schema[V]): MapSchema[C, K, V] =
+      new MapSchema(shapeId, hints, tag, key, value)
+  }
+  object MapSchema {
+    def apply[C[_, _], K, V](shapeId: ShapeId, hints: Hints, tag: MapTag[C], key: Schema[K], value: Schema[V]): MapSchema[C, K, V] =
+      new MapSchema(shapeId, hints, tag, key, value)
+    def unapply[C[_, _], K, V](x: MapSchema[C, K, V]): Some[(ShapeId, Hints, MapTag[C], Schema[K], Schema[V])] =
+      Some((x.shapeId, x.hints, x.tag, x.key, x.value))
+  }
+
+  final class EnumerationSchema[E](val shapeId: ShapeId, val hints: Hints, val tag: EnumTag[E], val values: List[EnumValue[E]]) extends Schema[E] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: EnumerationSchema[_] => this.shapeId == that.shapeId && this.hints == that.hints && this.tag == that.tag && this.values == that.values
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + tag.##
+      result = 31 * result + values.##
+      result
+    }
+    override def toString: String = s"EnumerationSchema($shapeId, $hints, $tag, $values)"
+  }
+  object EnumerationSchema {
+    def apply[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]]): EnumerationSchema[E] =
+      new EnumerationSchema(shapeId, hints, tag, values)
+    def unapply[E](x: EnumerationSchema[E]): Some[(ShapeId, Hints, EnumTag[E], List[EnumValue[E]])] =
+      Some((x.shapeId, x.hints, x.tag, x.values))
+  }
+
+  final class StructSchema[S](val shapeId: ShapeId, val hints: Hints, val fields: Vector[Field[S, _]], val make: IndexedSeq[Any] => S) extends Schema[S] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: StructSchema[_] => this.shapeId == that.shapeId && this.hints == that.hints && this.fields == that.fields && this.make == that.make
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + fields.##
+      result = 31 * result + make.##
+      result
+    }
+    override def toString: String = s"StructSchema($shapeId, $hints, $fields, $make)"
+
+    def withFields(fields: Vector[Field[S, _]]): StructSchema[S] =
+      new StructSchema(shapeId, hints, fields, make)
+  }
+  object StructSchema {
+    def apply[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): StructSchema[S] =
+      new StructSchema(shapeId, hints, fields, make)
+    def unapply[S](x: StructSchema[S]): Some[(ShapeId, Hints, Vector[Field[S, _]], IndexedSeq[Any] => S)] =
+      Some((x.shapeId, x.hints, x.fields, x.make))
+  }
+
+  final class UnionSchema[U](val shapeId: ShapeId, val hints: Hints, val alternatives: Vector[Alt[U, _]], val ordinal: U => Int) extends Schema[U] {
+    override def equals(obj: Any): Boolean = obj match {
+      case that: UnionSchema[_] => this.shapeId == that.shapeId && this.hints == that.hints && this.alternatives == that.alternatives && this.ordinal == that.ordinal
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = shapeId.##
+      result = 31 * result + hints.##
+      result = 31 * result + alternatives.##
+      result = 31 * result + ordinal.##
+      result
+    }
+    override def toString: String = s"UnionSchema($shapeId, $hints, $alternatives, $ordinal)"
+
+    def withAlternatives(alternatives: Vector[Alt[U, _]]): UnionSchema[U] =
+      new UnionSchema(shapeId, hints, alternatives, ordinal)
+  }
+  object UnionSchema {
+    def apply[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int): UnionSchema[U] =
+      new UnionSchema(shapeId, hints, alternatives, ordinal)
+    def unapply[U](x: UnionSchema[U]): Some[(ShapeId, Hints, Vector[Alt[U, _]], U => Int)] =
+      Some((x.shapeId, x.hints, x.alternatives, x.ordinal))
+  }
+
+  final class OptionSchema[C[_], A](val tag: OptionalTag[C], val underlying: Schema[A]) extends Schema[C[A]] {
     def hints: Hints = underlying.hints
     def shapeId: ShapeId = underlying.shapeId
+    override def equals(obj: Any): Boolean = obj match {
+      case that: OptionSchema[_, _] => this.tag == that.tag && this.underlying == that.underlying
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = tag.##
+      result = 31 * result + underlying.##
+      result
+    }
+    override def toString: String = s"OptionSchema($tag, $underlying)"
+
+    def withUnderlying(underlying: Schema[A]): OptionSchema[C, A] =
+      new OptionSchema(tag, underlying)
   }
-  final case class BijectionSchema[A, B](underlying: Schema[A], bijection: Bijection[A, B]) extends Schema[B]{
+  object OptionSchema {
+    def apply[C[_], A](tag: OptionalTag[C], underlying: Schema[A]): OptionSchema[C, A] =
+      new OptionSchema(tag, underlying)
+    def unapply[C[_], A](x: OptionSchema[C, A]): Some[(OptionalTag[C], Schema[A])] =
+      Some((x.tag, x.underlying))
+  }
+
+  final class BijectionSchema[A, B](val underlying: Schema[A], val bijection: Bijection[A, B]) extends Schema[B] {
     def shapeId = underlying.shapeId
     def hints = underlying.hints
+    override def equals(obj: Any): Boolean = obj match {
+      case that: BijectionSchema[_, _] => this.underlying == that.underlying && this.bijection == that.bijection
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = underlying.##
+      result = 31 * result + bijection.##
+      result
+    }
+    override def toString: String = s"BijectionSchema($underlying, $bijection)"
   }
-  final case class RefinementSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B]) extends Schema[B]{
+  object BijectionSchema {
+    def apply[A, B](underlying: Schema[A], bijection: Bijection[A, B]): BijectionSchema[A, B] =
+      new BijectionSchema(underlying, bijection)
+    def unapply[A, B](x: BijectionSchema[A, B]): Some[(Schema[A], Bijection[A, B])] =
+      Some((x.underlying, x.bijection))
+  }
+
+  final class RefinementSchema[A, B](val underlying: Schema[A], val refinement: Refinement[A, B]) extends Schema[B] {
     def shapeId = underlying.shapeId
     def hints = underlying.hints
+    override def equals(obj: Any): Boolean = obj match {
+      case that: RefinementSchema[_, _] => this.underlying == that.underlying && this.refinement == that.refinement
+      case _ => false
+    }
+    override def hashCode(): Int = {
+      var result = underlying.##
+      result = 31 * result + refinement.##
+      result
+    }
+    override def toString: String = s"RefinementSchema($underlying, $refinement)"
   }
-  final case class LazySchema[A](suspend: Lazy[Schema[A]]) extends Schema[A]{
+  object RefinementSchema {
+    def apply[A, B](underlying: Schema[A], refinement: Refinement[A, B]): RefinementSchema[A, B] =
+      new RefinementSchema(underlying, refinement)
+    def unapply[A, B](x: RefinementSchema[A, B]): Some[(Schema[A], Refinement[A, B])] =
+      Some((x.underlying, x.refinement))
+  }
+
+  final class LazySchema[A](val suspend: Lazy[Schema[A]]) extends Schema[A] {
     def shapeId: ShapeId = suspend.value.shapeId
     def hints: Hints = suspend.value.hints
+    override def equals(obj: Any): Boolean = obj match {
+      case that: LazySchema[_] => this.suspend == that.suspend
+      case _ => false
+    }
+    override def hashCode(): Int = suspend.##
+    override def toString: String = s"LazySchema($suspend)"
+  }
+  object LazySchema {
+    def apply[A](suspend: Lazy[Schema[A]]): LazySchema[A] =
+      new LazySchema(suspend)
+    def unapply[A](x: LazySchema[A]): Some[Lazy[Schema[A]]] =
+      Some(x.suspend)
   }
 
   def transformHintsLocallyK(f: Hints => Hints): Schema ~> Schema = new (Schema ~> Schema){
@@ -218,30 +416,30 @@ object Schema {
       case e @ EnumerationSchema(_, _, _, _) => underlying(e)
       case p @ PrimitiveSchema(_, _, _)      => underlying(p)
       case u @ UnionSchema(_, _, _, _) =>
-        underlying(u.copy(alternatives = u.alternatives.map(handleAlt(_))))
-      case BijectionSchema(s, bijection) =>
-        underlying(BijectionSchema(this(s), bijection))
+        underlying(u.withAlternatives(u.alternatives.map(handleAlt(_))))
+      case s: BijectionSchema[_, _] =>
+        underlying(BijectionSchema(this(s.underlying), s.bijection))
       case LazySchema(suspend) =>
         underlying(LazySchema(suspend.map(this.apply)))
-      case RefinementSchema(s, refinement) =>
-        underlying(RefinementSchema(this(s), refinement))
-      case c: CollectionSchema[c, a] =>
-        underlying(c.copy(member = this(c.member)))
+      case s: RefinementSchema[_, _] =>
+        underlying(RefinementSchema(this(s.underlying), s.refinement))
+      case s: CollectionSchema[c, a] =>
+        underlying(s.withMember(this(s.member))): Schema[c[a]]
       case m: MapSchema[c, k, v] =>
-        underlying(m.copy(key = this(m.key), value = this(m.value)))
+        underlying(m.withKeyAndValue(key = this(m.key), value = this(m.value))): Schema[c[k, v]]
       case s @ StructSchema(_, _, _, _) =>
-        underlying(s.copy(fields = s.fields.map(handleField(_))))
+        underlying(s.withFields(s.fields.map(handleField(_))))
       case o: OptionSchema[c, a] =>
-        underlying(o.copy(underlying = this(o.underlying)))
+        underlying(o.withUnderlying(this(o.underlying))): Schema[c[a]]
     }
 
     private def handleField[S, A](
         field: Field[S, A]
-    ): Field[S, A] = field.copy(schema = this(field.schema))
+    ): Field[S, A] = field.withSchema(this(field.schema))
 
     private def handleAlt[S, A](
         alt: Alt[S, A]
-    ): Alt[S, A] = alt.copy(schema = this(alt.schema))
+    ): Alt[S, A] = alt.withSchema(this(alt.schema))
   }
 
   // format: off

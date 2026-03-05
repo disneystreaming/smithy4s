@@ -1152,31 +1152,31 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val `aws-sandbox` = projectMatrix
-  .in(file("modules/aws-sandbox"))
-  .dependsOn(`aws-http4s`)
-  .settings(
-    Compile / allowedNamespaces := Seq(
-      "com.amazonaws.cloudwatch",
-      "com.amazonaws.ec2"
-    ),
-    genSmithy(Compile),
-    // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions ++= Seq(
-      "-Wconf:cat=deprecation:silent"
-    ),
-    smithy4sDependencies ++= Seq(
-      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.04.08",
-      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.04.08"
-    ),
-    libraryDependencies ++= Seq(
-      Dependencies.Http4s.emberClient.value,
-      Dependencies.Slf4jSimple % Runtime
-    ),
-    run / fork := true
-  )
-  .jvmPlatform(List(Scala213), jvmDimSettings)
-  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+//lazy val `aws-sandbox` = projectMatrix
+//  .in(file("modules/aws-sandbox"))
+//  .dependsOn(`aws-http4s`)
+//  .settings(
+//    Compile / allowedNamespaces := Seq(
+//      "com.amazonaws.cloudwatch",
+//      "com.amazonaws.ec2"
+//    ),
+//    genSmithy(Compile),
+//    // Ignore deprecation warnings here - it's all generated code, anyway.
+//    scalacOptions ++= Seq(
+//      "-Wconf:cat=deprecation:silent"
+//    ),
+//    smithy4sDependencies ++= Seq(
+//      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.04.08",
+//      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.04.08"
+//    ),
+//    libraryDependencies ++= Seq(
+//      Dependencies.Http4s.emberClient.value,
+//      Dependencies.Slf4jSimple % Runtime
+//    ),
+//    run / fork := true
+//  )
+//  .jvmPlatform(List(Scala213), jvmDimSettings)
+//  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 def genSmithy(config: Configuration) = Def.settings(
   Seq(

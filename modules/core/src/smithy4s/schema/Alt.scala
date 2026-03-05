@@ -24,35 +24,56 @@ import kinds._
 /**
   * Represents a member of coproduct type (sealed trait)
   */
-final case class Alt[U, A](
-    label: String,
-    schema: Schema[A],
-    inject: A => U,
-    project: PartialFunction[U, A]
+final class Alt[U, A](
+    val label: String,
+    val schema: Schema[A],
+    val inject: A => U,
+    val project: PartialFunction[U, A]
 ) {
 
   def hints: Hints = schema.hints
   def memberHints: Hints = schema.hints.memberHints
 
   def addHints(newHints: Hints): Alt[U, A] =
-    copy(schema = schema.addMemberHints(newHints))
+    new Alt(label, schema.addMemberHints(newHints), inject, project)
 
   def addHints(newHints: Hint*): Alt[U, A] =
     addHints(Hints(newHints: _*))
 
   def transformHintsLocally(f: Hints => Hints): Alt[U, A] =
-    copy(schema = schema.transformHintsLocally(f))
+    new Alt(label, schema.transformHintsLocally(f), inject, project)
 
   def transformHintsTransitively(f: Hints => Hints): Alt[U, A] =
-    copy(schema = schema.transformHintsTransitively(f))
+    new Alt(label, schema.transformHintsTransitively(f), inject, project)
 
   def validated[C](c: C)(implicit
       constraint: RefinementProvider.Simple[C, A]
   ): Alt[U, A] =
-    copy(schema = schema.validated(c)(constraint))
+    new Alt(label, schema.validated(c)(constraint), inject, project)
 
+  def withSchema(schema: Schema[A]): Alt[U, A] =
+    new Alt(label, schema, inject, project)
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Alt[_, _] => this.label == that.label && this.schema == that.schema && this.inject == that.inject && this.project == that.project
+    case _ => false
+  }
+  override def hashCode(): Int = {
+    var result = label.##
+    result = 31 * result + schema.##
+    result = 31 * result + inject.##
+    result = 31 * result + project.##
+    result
+  }
+  override def toString: String = s"Alt($label, $schema, $inject, $project)"
 }
 object Alt {
+
+  def apply[U, A](label: String, schema: Schema[A], inject: A => U, project: PartialFunction[U, A]): Alt[U, A] =
+    new Alt(label, schema, inject, project)
+
+  def unapply[U, A](x: Alt[U, A]): Some[(String, Schema[A], A => U, PartialFunction[U, A])] =
+    Some((x.label, x.schema, x.inject, x.project))
 
   /**
     * Precompiles an Alt to produce an instance of `G`

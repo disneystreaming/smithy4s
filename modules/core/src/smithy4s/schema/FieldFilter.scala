@@ -175,11 +175,11 @@ object FieldFilter {
         else
           (v: f[inner]) => o.tag.isNone(v)
 
-      case BijectionSchema(underlying, bijection) =>
-        this(underlying).compose(bijection.from)
+      case s: BijectionSchema[_, _] =>
+        this(s.underlying).compose(s.bijection.from)
 
-      case RefinementSchema(underlying, refinement) =>
-        this(underlying).compose(refinement.from)
+      case s: RefinementSchema[_, _] =>
+        this(s.underlying).compose(s.refinement.from)
 
       // technically, realistically this case is probably not reachable
       // because a recursive schema be wrapped in an option first, and wouldn't be traversed by this visitor.

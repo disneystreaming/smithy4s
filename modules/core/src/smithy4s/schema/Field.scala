@@ -20,10 +20,10 @@ package schema
 /**
   * Represents a member of product type (case class)
   */
-final case class Field[S, A](
-    label: String,
-    schema: Schema[A],
-    get: S => A
+final class Field[S, A](
+    val label: String,
+    val schema: Schema[A],
+    val get: S => A
 ) {
 
   /**
@@ -72,35 +72,56 @@ final case class Field[S, A](
   def isRequired: Boolean = hints.has(smithy.api.Required)
 
   def transformHintsLocally(f: Hints => Hints): Field[S, A] =
-    copy(schema = schema.transformHintsLocally(f))
+    new Field(label, schema.transformHintsLocally(f), get)
 
   def transformHintsTransitively(f: Hints => Hints) =
-    copy(schema = schema.transformHintsTransitively(f))
+    new Field(label, schema.transformHintsTransitively(f), get)
 
   def contramap[S0](f: S0 => S): Field[S0, A] =
-    Field(label, schema, get.compose(f))
+    new Field(label, schema, get.compose(f))
 
   def addHints(newHints: Hint*): Field[S, A] =
-    copy(schema = schema.addMemberHints(newHints: _*))
+    new Field(label, schema.addMemberHints(newHints: _*), get)
 
   def addHints(newHints: Hints): Field[S, A] =
-    copy(schema = schema.addMemberHints(newHints))
+    new Field(label, schema.addMemberHints(newHints), get)
+
+  def withSchema(schema: Schema[A]): Field[S, A] =
+    new Field(label, schema, get)
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Field[_, _] => this.label == that.label && this.schema == that.schema && this.get == that.get
+    case _ => false
+  }
+  override def hashCode(): Int = {
+    var result = label.##
+    result = 31 * result + schema.##
+    result = 31 * result + get.##
+    result
+  }
+  override def toString: String = s"Field($label, $schema, $get)"
 }
 
 object Field {
+
+  def apply[S, A](label: String, schema: Schema[A], get: S => A): Field[S, A] =
+    new Field(label, schema, get)
+
+  def unapply[S, A](x: Field[S, A]): Some[(String, Schema[A], S => A)] =
+    Some((x.label, x.schema, x.get))
 
   def required[S, A](
       label: String,
       schema: Schema[A],
       get: S => A
   ): Field[S, A] =
-    Field(label, schema, get).addHints(smithy.api.Required())
+    new Field(label, schema, get).addHints(smithy.api.Required())
 
   def optional[S, A](
       label: String,
       schema: Schema[A],
       get: S => Option[A]
   ): Field[S, Option[A]] =
-    Field(label, schema.option, get)
+    new Field(label, schema.option, get)
 
 }

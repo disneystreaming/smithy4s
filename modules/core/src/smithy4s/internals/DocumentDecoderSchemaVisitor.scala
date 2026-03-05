@@ -565,10 +565,10 @@ class DocumentDecoderSchemaVisitor(
     val handleUnknownTag: (String, List[PayloadPath.Segment], Document) => U =
       alternatives
         .find(hasUnknown(_))
-        .map { case Alt(_, instance, inject, _) =>
-          val compiled = apply(instance)
+        .map { case s: Alt[a, b] =>
+          val compiled = apply(s.schema)
           (_: String, pp: List[PayloadPath.Segment], doc: Document) =>
-            inject(compiled(pp, doc))
+            s.inject(compiled(pp, doc))
         }
         .getOrElse { (key, pp, _) =>
           throw new PayloadError(
@@ -581,11 +581,11 @@ class DocumentDecoderSchemaVisitor(
     val decoders: DecoderMap[U] =
       alternatives
         .filterNot(hasUnknown(_))
-        .map { case alt @ Alt(_, instance, inject, _) =>
+        .map { case alt: Alt[_, _] =>
           val label = jsonLabel(alt)
-          val compiled = apply(instance)
+          val compiled = apply(alt.schema)
           val decoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-            inject(compiled(label :: pp, doc))
+            alt.inject(compiled(label :: pp, doc))
           }
           label -> decoder
         }
