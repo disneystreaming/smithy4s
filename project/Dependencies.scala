@@ -109,7 +109,7 @@ object Dependencies {
   }
 
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.6.0")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.7.0")
 
   object Http4s {
     val http4sVersion = "0.23.33"
