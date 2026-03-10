@@ -108,7 +108,7 @@ object ReservedNameServiceOperation {
     val schema: OperationSchema[SetInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Set"))
       .withInput(SetInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/set/"), "code" -> smithy4s.Document.fromLong(204))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/set/"), "code" -> smithy4s.Document.fromLong(204L))))
     def wrap(input: SetInput): Set = Set(input)
   }
   final case class Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
@@ -120,7 +120,7 @@ object ReservedNameServiceOperation {
     val schema: OperationSchema[OptionInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Option"))
       .withInput(OptionInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/option/"), "code" -> smithy4s.Document.fromLong(204))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/option/"), "code" -> smithy4s.Document.fromLong(204L))))
     def wrap(input: OptionInput): Option = Option(input)
   }
   final case class Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
@@ -132,7 +132,7 @@ object ReservedNameServiceOperation {
     val schema: OperationSchema[MapInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "Map"))
       .withInput(MapInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/map/"), "code" -> smithy4s.Document.fromLong(204))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/map/"), "code" -> smithy4s.Document.fromLong(204L))))
     def wrap(input: MapInput): Map = Map(input)
   }
   final case class List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
@@ -144,7 +144,7 @@ object ReservedNameServiceOperation {
     val schema: OperationSchema[ListInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.collision", "List"))
       .withInput(ListInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/list/"), "code" -> smithy4s.Document.fromLong(204))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/list/"), "code" -> smithy4s.Document.fromLong(204L))))
     def wrap(input: ListInput): List = List(input)
   }
 }

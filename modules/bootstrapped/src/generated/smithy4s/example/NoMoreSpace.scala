@@ -22,7 +22,7 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
 
   val hints: Hints = Hints(
     Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("server")),
-    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(507)),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(507L)),
   )
 
   // constructor using the original order from the spec

@@ -20,9 +20,9 @@ object StructureWithCustomIndexes extends ShapeTag.Companion[StructureWithCustom
   private def make(a: Option[Int], b: Int, c: Int, d: Option[UnionWithCustomIndexes]): StructureWithCustomIndexes = StructureWithCustomIndexes(c, b, a, d)
 
   implicit val schema: Schema[StructureWithCustomIndexes] = struct[StructureWithCustomIndexes](
-    int.optional[StructureWithCustomIndexes]("a", _.a).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(4))),
-    int.field[StructureWithCustomIndexes]("b", _.b).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(3)), Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0))),
-    int.required[StructureWithCustomIndexes]("c", _.c).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(2))),
-    UnionWithCustomIndexes.schema.optional[StructureWithCustomIndexes]("d", _.d).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(1))),
+    int.optional[StructureWithCustomIndexes]("a", _.a).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(4L))),
+    int.field[StructureWithCustomIndexes]("b", _.b).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(3L)), Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0L))),
+    int.required[StructureWithCustomIndexes]("c", _.c).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(2L))),
+    UnionWithCustomIndexes.schema.optional[StructureWithCustomIndexes]("d", _.d).addHints(Hints.dynamic(ShapeId("alloy.proto", "protoIndex"), smithy4s.Document.fromLong(1L))),
   )(make).withId(id).addHints(hints)
 }

@@ -108,7 +108,7 @@ object HelloWorldAuthServiceOperation {
       .withInput(unit)
       .withError(SayWorldError.errorSchema)
       .withOutput(World.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/hello"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/hello"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): SayWorld = SayWorld()
   }
   sealed trait SayWorldError extends scala.Product with scala.Serializable { self =>
@@ -174,7 +174,7 @@ object HelloWorldAuthServiceOperation {
       .withInput(unit)
       .withError(HealthCheckError.errorSchema)
       .withOutput(HealthCheckOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "auth"), smithy4s.Document.array()), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/health"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "auth"), smithy4s.Document.array()), Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/health"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): HealthCheck = HealthCheck()
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>

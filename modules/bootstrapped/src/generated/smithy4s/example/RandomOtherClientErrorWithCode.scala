@@ -17,7 +17,7 @@ object RandomOtherClientErrorWithCode extends ShapeTag.Companion[RandomOtherClie
 
   val hints: Hints = Hints(
     Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
-    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(404)),
+    Hints.dynamic(ShapeId("smithy.api", "httpError"), smithy4s.Document.fromLong(404L)),
   )
 
   // constructor using the original order from the spec

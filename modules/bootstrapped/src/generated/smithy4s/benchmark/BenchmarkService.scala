@@ -98,7 +98,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[SendStringInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "SendString"))
       .withInput(SendStringInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/simple/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/simple/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200L))))
     def wrap(input: SendStringInput): SendString = SendString(input)
   }
   final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
@@ -110,7 +110,7 @@ object BenchmarkServiceOperation {
     val schema: OperationSchema[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.benchmark", "CreateObject"))
       .withInput(CreateObjectInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/complex/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/complex/{bucketName}/{key}"), "code" -> smithy4s.Document.fromLong(200L))))
     def wrap(input: CreateObjectInput): CreateObject = CreateObject(input)
   }
 }

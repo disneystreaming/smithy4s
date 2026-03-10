@@ -13,7 +13,7 @@ import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.short
 import smithy4s.schema.Schema.struct
 
-final case class Numeric(i: Int = 1, f: Float = 1.0f, d: Double = 1.0d, s: Short = 1, l: Long = 1L, bi: BigInt = scala.math.BigInt(1), bd: BigDecimal = scala.math.BigDecimal(1.0))
+final case class Numeric(i: Int = 1, f: Float = 1.0f, d: Double = 1.0d, s: Short = 1, l: Long = 9999999999L, bi: BigInt = scala.math.BigInt(1), bd: BigDecimal = scala.math.BigDecimal(1.0))
 
 object Numeric extends ShapeTag.Companion[Numeric] {
   val id: ShapeId = ShapeId("smithy4s.example", "Numeric")
@@ -24,12 +24,12 @@ object Numeric extends ShapeTag.Companion[Numeric] {
   private def make(i: Int, f: Float, d: Double, s: Short, l: Long, bi: BigInt, bd: BigDecimal): Numeric = Numeric(i, f, d, s, l, bi, bd)
 
   implicit val schema: Schema[Numeric] = struct[Numeric](
-    int.field[Numeric]("i", _.i).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
+    int.field[Numeric]("i", _.i).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1L))),
     float.field[Numeric]("f", _.f).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.0d))),
     double.field[Numeric]("d", _.d).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromDouble(1.0d))),
-    short.field[Numeric]("s", _.s).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
-    long.field[Numeric]("l", _.l).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
-    bigint.field[Numeric]("bi", _.bi).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
-    bigdecimal.field[Numeric]("bd", _.bd).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
+    short.field[Numeric]("s", _.s).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1L))),
+    long.field[Numeric]("l", _.l).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(9999999999L))),
+    bigint.field[Numeric]("bi", _.bi).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1L))),
+    bigdecimal.field[Numeric]("bd", _.bd).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1L))),
   )(make).withId(id).addHints(hints)
 }

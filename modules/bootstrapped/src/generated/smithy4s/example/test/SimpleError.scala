@@ -15,7 +15,7 @@ object SimpleError extends ShapeTag.Companion[SimpleError] {
 
   val hints: Hints = Hints(
     Hints.dynamic(ShapeId("smithy.api", "error"), smithy4s.Document.fromString("client")),
-    smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(code = 400, id = "simple_error", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"expected\":-1}"), bodyMediaType = Some("application/json"), authScheme = None, params = Some(smithy4s.Document.obj("expected" -> smithy4s.Document.fromLong(-1))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+    smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(code = 400, id = "simple_error", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"expected\":-1}"), bodyMediaType = Some("application/json"), authScheme = None, params = Some(smithy4s.Document.obj("expected" -> smithy4s.Document.fromLong(-1L))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
   ).lazily
 
   // constructor using the original order from the spec

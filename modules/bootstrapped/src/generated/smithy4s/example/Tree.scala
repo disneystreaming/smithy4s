@@ -58,7 +58,7 @@ object Tree extends ShapeTag.Companion[Tree] {
     }
   }
 
-  implicit val schema: Schema[Tree] = recursive(union(
+  implicit val schema: Schema[Tree] = recursive(union[Tree](
     Tree.TreeCase.alt,
     Tree.LeafCase.alt,
   ){

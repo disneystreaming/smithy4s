@@ -92,7 +92,7 @@ object DiscriminatedServiceOperation {
     val schema: OperationSchema[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "TestDiscriminated"))
       .withInput(TestDiscriminatedInput.schema)
       .withOutput(TestDiscriminatedOutput.schema)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/test/{key}"), "code" -> smithy4s.Document.fromLong(200))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/test/{key}"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: TestDiscriminatedInput): TestDiscriminated = TestDiscriminated(input)
   }
 }

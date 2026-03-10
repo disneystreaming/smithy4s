@@ -17,7 +17,7 @@ object LeafNode extends ShapeTag.Companion[LeafNode] {
   // constructor using the original order from the spec
   private def make(value: Int): LeafNode = LeafNode(value)
 
-  implicit val schema: Schema[LeafNode] = struct(
+  implicit val schema: Schema[LeafNode] = struct[LeafNode](
     int.required[LeafNode]("value", _.value),
   )(make).withId(id).addHints(hints)
 }

@@ -33,7 +33,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   private def make(one: Int, two: String, three: List[String], four: Option[List[String]], five: Option[String], six: Option[Int], seven: Option[Document], eight: Option[Map[String, String]], nine: Option[Short], ten: Option[Double], eleven: Option[Float], twelve: Option[Long], thirteen: Option[Timestamp], fourteen: Option[Timestamp], fifteen: Option[Timestamp], sixteen: Option[Byte], seventeen: Option[Blob], eighteen: Option[Boolean], nineteen: Nullable[Int], twenty: Nullable[Int]): DefaultTest = DefaultTest(one, two, three, nineteen, twenty, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen)
 
   implicit val schema: Schema[DefaultTest] = struct[DefaultTest](
-    int.field[DefaultTest]("one", _.one).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1))),
+    int.field[DefaultTest]("one", _.one).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(1L))),
     string.field[DefaultTest]("two", _.two).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromString("test"))),
     StringList.underlyingSchema.field[DefaultTest]("three", _.three).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.array())),
     StringList.underlyingSchema.optional[DefaultTest]("four", _.four).addHints(Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.nullDoc)),

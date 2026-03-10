@@ -93,7 +93,7 @@ object ReservedNameOverrideServiceOperation {
     val schema: OperationSchema[SetOpInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example.reservedNameOverride", "SetOp"))
       .withInput(SetOpInput.schema)
       .withOutput(unit)
-      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/set/"), "code" -> smithy4s.Document.fromLong(204))))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("POST"), "uri" -> smithy4s.Document.fromString("/api/set/"), "code" -> smithy4s.Document.fromLong(204L))))
     def wrap(input: SetOpInput): SetOp = SetOp(input)
   }
 }

@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.int
 object SomeInt extends Newtype[Int] {
   val id: ShapeId = ShapeId("smithy4s.example", "SomeInt")
   val hints: Hints = Hints(
-    Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0)),
+    Hints.dynamic(ShapeId("smithy.api", "default"), smithy4s.Document.fromLong(0L)),
     smithy4s.example.SomeCollections(someList = List("a"), someSet = Set("b"), someMap = Map("a" -> "b")),
   ).lazily
   val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)

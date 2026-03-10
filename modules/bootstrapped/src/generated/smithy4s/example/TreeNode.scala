@@ -17,7 +17,7 @@ object TreeNode extends ShapeTag.Companion[TreeNode] {
   // constructor using the original order from the spec
   private def make(left: Tree, right: Tree): TreeNode = TreeNode(left, right)
 
-  implicit val schema: Schema[TreeNode] = recursive(struct(
+  implicit val schema: Schema[TreeNode] = recursive(struct[TreeNode](
     Tree.schema.required[TreeNode]("left", _.left),
     Tree.schema.required[TreeNode]("right", _.right),
   )(make).withId(id).addHints(hints))
