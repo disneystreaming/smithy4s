@@ -1934,7 +1934,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         if (x.isFloatingPointNumber()) {
           line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
         } else {
-          line"smithy4s.Document.fromLong(${x.getValue.longValue()})"
+          line"smithy4s.Document.fromLong(${x.getValue.longValue()}L)"
         }
       def objectNode(x: ObjectNode): Line = {
         val members = x.getMembers.asScala.map { member =>

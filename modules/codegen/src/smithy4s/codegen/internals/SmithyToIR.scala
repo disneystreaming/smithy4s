@@ -132,33 +132,14 @@ private[codegen] class SmithyToIR(
 
   private val smithy4sRenderDynamicHintNamespacePatterns
       : Set[NamespacePattern] =
-    smithy4sDefaultDynamicHintNamespacePatterns ++
-      model
-        .getMetadata()
-        .asScala
-        .get("smithy4sRenderDynamicHintNamespacePatterns")
-        .toSet
-        .flatMap((n: Node) => n.asArrayNode().asScala)
-        .flatMap(_.getElements().asScala)
-        .flatMap(
-          _.asStringNode().asScala.map(n =>
-            NamespacePattern.fromString(n.getValue)
-          )
-        )
-
-  private val smithy4sDefaultBinCompatHintNamespacePatterns
-      : Set[NamespacePattern] = Set(
-    NamespacePattern.fromString("smithy"),
-    NamespacePattern.fromString("smithy.*"),
-    NamespacePattern.fromString("alloy"),
-    NamespacePattern.fromString("alloy.*")
-  )
-
-  // for now if you want to add more namespaces, you'll need to use a ModelTransformer
-  // we don't allow metadata configuration since that would bypass model validation
-  // such as not allowing bincompat trait in conjunction with ADT trait.
-  private val smithy4sBinCompatHintNamespacePatterns: Set[NamespacePattern] =
-    smithy4sDefaultBinCompatHintNamespacePatterns
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sRenderDynamicHintNamespacePatterns")
+      .toSet
+      .flatMap((n: Node) => n.asArrayNode().asScala)
+      .flatMap(_.getElements().asScala)
+      .flatMap(_.asStringNode().asScala.map(n => NamespacePattern(n.getValue)))
 
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])

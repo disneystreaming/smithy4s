@@ -7,7 +7,7 @@ structure Numeric {
     f: Float = 1.0
     d: Double = 1.0
     s: Short = 1
-    l: Long = 1
+    l: Long = 9999999999
     bi: BigInteger = 1
     bd: BigDecimal = 1
 }

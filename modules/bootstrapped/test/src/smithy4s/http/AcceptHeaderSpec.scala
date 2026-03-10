@@ -33,7 +33,7 @@ final class AcceptHeaderSpec extends FunSuite {
       try fa
       catch { case e: Throwable => f(e) }
     def pure[A](a: A): Id[A] = a
-    def zipMapAll[A](seq: IndexedSeq[Id[Any]])(f: IndexedSeq[Any] => A): Id[A] =
+    def zipMapAll[A,B](seq: IndexedSeq[Id[A]])(f: IndexedSeq[A] => B): Id[B] =
       f(seq)
   }
 

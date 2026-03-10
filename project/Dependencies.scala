@@ -176,7 +176,7 @@ object Dependencies {
   }
 
   object Mima {
-    val core = "com.typesafe" %% "mima-core" % "1.1.4"
+    val core = "com.typesafe" %% "mima-core" % "1.1.5"
   }
 
 }

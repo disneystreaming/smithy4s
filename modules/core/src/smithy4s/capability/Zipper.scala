@@ -26,7 +26,7 @@ package smithy4s.capability
 trait Zipper[F[_]] extends Covariant[F] {
   def pure[A](a: A): F[A]
 
-  def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A]
+  def zipMapAll[A, B](seq: IndexedSeq[F[A]])(f: IndexedSeq[A] => B): F[B]
 
   def zipMap[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] =
     zipMapAll(IndexedSeq(fa, fb).asInstanceOf[IndexedSeq[F[Any]]])(seq =>

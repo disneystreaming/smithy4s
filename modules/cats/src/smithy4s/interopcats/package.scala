@@ -28,8 +28,8 @@ package object interopcats {
   implicit def monadThrowShim[F[_]: MonadThrow]: MonadThrowLike[F] =
     new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = MonadThrow[F].pure(a)
-      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
-        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+      def zipMapAll[A, B](seq: IndexedSeq[F[A]])(f: IndexedSeq[A] => B): F[B] =
+        seq.toVector.sequence.map(f)
       def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
         MonadThrow[F].flatMap(fa)(f)
       def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)

@@ -127,9 +127,14 @@ class HintsTransformationSpec() extends FunSuite {
         struct(foos)(Foo.apply)
       }
     }
+
+    def buildFoo(size: Int): Foo =
+      (1 until size).foldLeft(Foo(None))((foo, _) => Foo(Some(foo)))
+
     checkSchema(Foo(None), 1)
     checkSchema(Foo(Some(Foo(None))), 2)
     checkSchema(Foo(Some(Foo(Some(Foo(None))))), 3)
+    checkSchema(buildFoo(256), 256)
   }
 
   test(header("nullable")) {

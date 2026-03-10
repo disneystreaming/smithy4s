@@ -222,7 +222,7 @@ object Schema {
       case BijectionSchema(s, bijection) =>
         underlying(BijectionSchema(this(s), bijection))
       case LazySchema(suspend) =>
-        underlying(LazySchema(suspend.map(this.apply)))
+        LazySchema(Lazy(underlying(suspend.value)))
       case RefinementSchema(s, refinement) =>
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>

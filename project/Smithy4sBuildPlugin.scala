@@ -101,8 +101,7 @@ case class MillCustomRow(mv: String) extends CustomRow {
           .binaryWith(s"mill${millPlatformStr}_", ""),
         libraryDependencies ++= config.millDeps(mv),
         Compile / unmanagedSourceDirectories ++= {
-          val base =
-            (Compile / sourceDirectory).value.getParentFile.getParentFile
+          val base = (Compile / sourceDirectory).value.getParentFile.getParentFile
           val versionDir = base / s"src-mill-${suffix}"
           if (config.includesSharedSources)
             Seq(base / "src-mill-shared", versionDir)
@@ -389,7 +388,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .filterNot(_ == "-Xcheckinit")
       .map {
         case "-Xfatal-warnings" if !scalaVersion.startsWith("3.3.") => "-Werror"
-        case other                                                  => other
+        case other => other
       }
   }
 

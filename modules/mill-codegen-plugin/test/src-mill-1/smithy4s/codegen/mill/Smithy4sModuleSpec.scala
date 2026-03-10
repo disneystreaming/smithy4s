@@ -129,6 +129,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     val resourceFolder = resourcePath / "service"
     UnitTester(foo, resourceFolder).scoped { eval =>
       val compileResult = eval(foo.compile)
+      println(compileResult)
       assertEquals(
         compileResult.isRight,
         true,

@@ -417,7 +417,8 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
       ("io.get-coursier" %% "coursier" % "2.1.24")
-        .cross(CrossVersion.for3Use2_13)
+        .cross(CrossVersion.for3Use2_13),
+      Dependencies.Mima.core % Test
     ),
     libraryDependencies ++= {
       if (scalaVersion.value.startsWith("2."))

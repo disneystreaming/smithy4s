@@ -13,7 +13,7 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
   val id: ShapeId = ShapeId("smithy4s.example", "HealthResponse")
 
   val hints: Hints = Hints(
-    smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromLong(1), "a" -> smithy4s.Document.fromLong(2))),
+    smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromLong(1L), "a" -> smithy4s.Document.fromLong(2L))),
   ).lazily
 
   // constructor using the original order from the spec

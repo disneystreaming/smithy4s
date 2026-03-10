@@ -109,11 +109,13 @@ object example extends ScalaModule with Smithy4sModule {
 In your `build.mill`:
 
 ```scala
+//| mvnDeps:
+//| - com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSION@
+
 package build
 
-import mill._, mill.scalalib._
-import $ivy.`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSION@`
-import smithy4s.codegen.mill._
+import mill.*, mill.scalalib.*
+import smithy4s.codegen.mill.*
 
 object example extends ScalaModule with Smithy4sModule {
   def scalaVersion = "2.13.18"
