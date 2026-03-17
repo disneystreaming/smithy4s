@@ -5,6 +5,9 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.50
+
+* Add effectful `make` overloads to `UnaryClientCompiler` and `UnaryClientEndpoint` accepting `Response => F[Boolean]`
 
 # 0.18.49
 
