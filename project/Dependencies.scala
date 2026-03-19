@@ -51,6 +51,11 @@ object Dependencies {
       Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
   }
 
+  val Chimney = new {
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("io.scalaland" %% "chimney" % "1.9.0")
+  }
+
   val Monocle = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("dev.optics" %% "monocle-core" % "3.3.0")

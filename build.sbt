@@ -300,9 +300,13 @@ lazy val core = projectMatrix
         "smithy4s.http.HttpUnaryServerRouter.partialFunction"
       ),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime"
+      ),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime$"
+      )
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -939,6 +943,19 @@ lazy val cats = projectMatrix
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value
+    ) ++ weaverDeps.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+lazy val chimney = projectMatrix
+  .in(file("modules/chimney"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Chimney.core.value
     ) ++ weaverDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
