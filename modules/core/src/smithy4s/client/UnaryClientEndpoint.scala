@@ -26,15 +26,25 @@ object UnaryClientEndpoint {
       clientCodecs: UnaryClientCodecs[F, Request, Response, I, E, O],
       isSuccessful: Response => Boolean
   )(implicit F: MonadThrowLike[F]): (I => F[O]) = {
+    make(lowLevelClient, clientCodecs, (response: Response) => F.pure(isSuccessful(response)))
+  }
+
+  def make[F[_], Request, Response, I, E, O, SI, SO](
+      lowLevelClient: UnaryLowLevelClient[F, Request, Response],
+      clientCodecs: UnaryClientCodecs[F, Request, Response, I, E, O],
+      isSuccessfulF: Response => F[Boolean]
+  )(implicit F: MonadThrowLike[F]): (I => F[O]) = {
 
     import clientCodecs._
     def inputToRequest(input: I): F[Request] =
       inputEncoder(input)
 
     def outputFromResponse(response: Response): F[O] =
-      if (isSuccessful(response)) outputDecoder(response)
-      else
-        F.flatMap(errorDecoder(response))(F.raiseError[O](_))
+      F.flatMap(isSuccessfulF(response)) {
+        case true => outputDecoder(response)
+        case false =>
+          F.flatMap(errorDecoder(response))(F.raiseError[O](_))
+      }
 
     (input: I) =>
       F.flatMap(inputToRequest(input)) { request =>

@@ -29,6 +29,23 @@ object UnaryClientCompiler {
       middleware: Endpoint.Middleware[Client],
       isSuccessful: Response => Boolean
   )(implicit F: MonadThrowLike[F]): service.FunctorEndpointCompiler[F] =
+    make(
+      service,
+      client,
+      toSmithy4sClient,
+      makeClientCodecs,
+      middleware,
+      (response: Response) => F.pure(isSuccessful(response))
+    )
+
+  def make[Alg[_[_, _, _, _, _]], F[_], Client, Request, Response](
+      service: smithy4s.Service[Alg],
+      client: Client,
+      toSmithy4sClient: Client => UnaryLowLevelClient[F, Request, Response],
+      makeClientCodecs: UnaryClientCodecs.Make[F, Request, Response],
+      middleware: Endpoint.Middleware[Client],
+      isSuccessfulF: Response => F[Boolean]
+  )(implicit F: MonadThrowLike[F]): service.FunctorEndpointCompiler[F] =
     new service.FunctorEndpointCompiler[F] {
       def apply[I, E, O, SI, SO](
           endpoint: service.Endpoint[I, E, O, SI, SO]
@@ -39,10 +56,10 @@ object UnaryClientCompiler {
 
         val adaptedClient = toSmithy4sClient(transformedClient)
 
-        UnaryClientEndpoint(
+        UnaryClientEndpoint.make(
           adaptedClient,
           makeClientCodecs(endpoint.schema),
-          isSuccessful
+          isSuccessfulF
         )
       }
     }
