@@ -7,10 +7,6 @@ Thank you!
 
 # 0.19.0
 
-## Add effectful `make` overloads to `UnaryClientCompiler` and `UnaryClientEndpoint` in [#1910](https://github.com/disneystreaming/smithy4s/pull/1910)
-
-Add `make` methods to `UnaryClientEndpoint` and `UnaryClientCompiler` that accept an effectful success predicate (`Response => F[Boolean]`) in addition to the existing pure overloads (`Response => Boolean`). This enables protocols where determining success requires inspecting effectful response properties (e.g. HTTP/2 trailers).
-
 ## Binary-Compatible-Friendly Codegen Enabled in Core Module in [#1900](https://github.com/disneystreaming/smithy4s/pull/1900)
 
 Now `alloy` and `smithy` namespaces and sub-namespaces are generated in core with binary-compatible-friendly mode enabled.
