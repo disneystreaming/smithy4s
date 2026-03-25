@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.8.1">
 <title data-rh="true">Sharing specifications | smithy4s</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://disneystreaming.github.io/smithy4s/docs/overview/sharing-specs"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Sharing specifications | smithy4s"><meta data-rh="true" name="description" content="The core Smithy tooling built by AWS makes it easy to load Smithy files that are packaged in jars. Smithy4s makes use of this feature to allow users"><meta data-rh="true" property="og:description" content="The core Smithy tooling built by AWS makes it easy to load Smithy files that are packaged in jars. Smithy4s makes use of this feature to allow users"><link data-rh="true" rel="icon" href="/smithy4s/img/favicon-32x32.png"><link data-rh="true" rel="canonical" href="https://disneystreaming.github.io/smithy4s/docs/overview/sharing-specs"><link data-rh="true" rel="alternate" href="https://disneystreaming.github.io/smithy4s/docs/overview/sharing-specs" hreflang="en"><link data-rh="true" rel="alternate" href="https://disneystreaming.github.io/smithy4s/docs/overview/sharing-specs" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Sharing specifications","item":"https://disneystreaming.github.io/smithy4s/docs/overview/sharing-specs"}]}</script><link rel="stylesheet" href="/smithy4s/assets/css/styles.a7205f05.css">
-<script src="/smithy4s/assets/js/runtime~main.4cb97bb4.js" defer="defer"></script>
-<script src="/smithy4s/assets/js/main.af8a42a4.js" defer="defer"></script>
+<script src="/smithy4s/assets/js/runtime~main.7b357c39.js" defer="defer"></script>
+<script src="/smithy4s/assets/js/main.4a15ebca.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
@@ -29,7 +29,7 @@ have awareness of Scala. The best practice would likely be to have jars that wou
 <p>A couple examples:</p>
 <ul>
 <li><a href="https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy" target="_blank" rel="noopener noreferrer">smithy-aws-apigateway-traits</a></li>
-<li><a href="https://github.com/disneystreaming/smithy4s/blob/57a442e93217f2dc39701e3f8b98d4f588b0f849/modules/protocol/resources/META-INF/smithy" target="_blank" rel="noopener noreferrer">smithy4s-protocols</a></li>
+<li><a href="https://github.com/disneystreaming/smithy4s/blob/2f84d73195be295f8ea46aea522c21a87ad7db9c/modules/protocol/resources/META-INF/smithy" target="_blank" rel="noopener noreferrer">smithy4s-protocols</a></li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="smithy4s-context">Smithy4s-context<a href="#smithy4s-context" class="hash-link" aria-label="Direct link to Smithy4s-context" title="Direct link to Smithy4s-context">​</a></h2>
 <p>The Smithy4s build-plugins we provide out of the box automatically package the local specifications (used for code-generations) in the resulting jars so that downstream projects (internal and external) can use them. When doing so, Smithy4s abides by the same structure described above.</p>
