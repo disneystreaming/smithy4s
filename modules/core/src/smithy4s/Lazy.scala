@@ -16,17 +16,24 @@
 
 package smithy4s
 
-final class Lazy[A](make: () => A) {
-  private[this] var thunk: () => A = make
-  lazy val value: A = {
-    val result = thunk()
-    thunk = null
-    result
-  }
-
-  def map[B](f: A => B): Lazy[B] = new Lazy(() => f(make()))
+sealed trait Lazy[A] {
+  def value: A
+  final def map[B](f: A => B): Lazy[B] = Lazy.Mapped(this, f)
 }
 
 object Lazy {
-  def apply[A](a: => A): Lazy[A] = new Lazy(() => a)
+  def apply[A](a: => A): Lazy[A] = new Root(() => a)
+
+  final class Root[A](make: () => A) extends Lazy[A] {
+    protected var thunk: () => A = make
+    lazy val value: A = {
+      val result = thunk()
+      thunk = null
+      result
+    }
+  }
+
+  final case class Mapped[A, B](left: Lazy[A], f: A => B) extends Lazy[B] {
+    lazy val value = f(left.value)
+  }
 }

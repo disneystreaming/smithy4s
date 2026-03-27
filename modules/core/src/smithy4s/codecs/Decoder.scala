@@ -108,15 +108,11 @@ object Decoder {
         def decode(in: In): F[A] = Zipper[F].pure(a)
       }
 
-      def zipMapAll[A](seq: IndexedSeq[Decoder[F, In, Any]])(
-          f: IndexedSeq[Any] => A
-      ): Decoder[F, In, A] = new Decoder[F, In, A] {
-        def decode(in: In): F[A] = {
-          Zipper[F].zipMapAll(
-            seq
-              .asInstanceOf[IndexedSeq[Decoder[F, In, Any]]]
-              .map(_.decode(in))
-          )(f)
+      def zipMapAll[A, B](seq: IndexedSeq[Decoder[F, In, A]])(
+          f: IndexedSeq[A] => B
+      ): Decoder[F, In, B] = new Decoder[F, In, B] {
+        def decode(in: In): F[B] = {
+          Zipper[F].zipMapAll[A, B](seq.map(_.decode(in)))(f)
         }
       }
     }

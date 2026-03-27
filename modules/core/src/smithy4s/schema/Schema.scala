@@ -17,6 +17,7 @@
 package smithy4s
 package schema
 
+import smithy4s.internals.maps.MMap
 import Schema._
 import scala.reflect.ClassTag
 
@@ -214,6 +215,7 @@ object Schema {
   private final class TransitiveCompiler(
       underlying: Schema ~> Schema
   ) extends (Schema ~> Schema) {
+    val lazyCompileCache: MMap[Any, Any] = MMap.empty
 
     def apply[A](
         fa: Schema[A]
@@ -224,8 +226,14 @@ object Schema {
         underlying(u.copy(alternatives = u.alternatives.map(handleAlt(_))))
       case BijectionSchema(s, bijection) =>
         underlying(BijectionSchema(this(s), bijection))
-      case LazySchema(suspend) =>
-        underlying(LazySchema(suspend.map(this.apply)))
+      case l @ LazySchema(suspend) => {
+        lazyCompileCache
+          .getOrElseUpdate(
+            l,
+            LazySchema(suspend.map(this.apply))
+          )
+          .asInstanceOf[Schema[A]]
+      }
       case RefinementSchema(s, refinement) =>
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>
