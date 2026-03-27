@@ -29,6 +29,9 @@ trait MonadThrowLike[F[_]] extends Zipper[F] {
     }
   }
 
+  def map2[A,B,C](fa: F[A], fb: F[B])(f: (A,B) => C): F[C] =
+    flatMap(fa)(a => map(fb)(b => f(a,b)))
+
   final def liftEither[E <: Throwable, A](either: Either[E, A]): F[A] =
     either match {
       case Left(error)  => raiseError(error)

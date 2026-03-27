@@ -19,12 +19,20 @@ package smithy4s.internals
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
 import smithy4s._
-import smithy4s.schema.EnumTag
-import smithy4s.schema.EnumValue
-import smithy4s.schema.Primitive
+import smithy4s.schema.{
+  AltF,
+  CollectionTag,
+  EnumTag,
+  EnumValue,
+  FieldF,
+  MapTag,
+  OptionalTag,
+  Primitive,
+  Schema,
+  SchemaVisitor,
+  VisitorF
+}
 import smithy4s.schema.Primitive._
-import smithy4s.schema.Schema
-import smithy4s.schema.SchemaVisitor
 import smithy4s.time.DurationOps._
 
 trait DocumentKeyEncoder[A] { self =>
@@ -122,5 +130,66 @@ object DocumentKeyEncoder {
           refinement: Refinement[A, B]
       ): OptDocumentKeyEncoder[B] =
         apply(schema).map(_.contramap(refinement.from))
+    }
+
+  val effectfulVisitor: VisitorF[OptDocumentKeyEncoder] =
+    new VisitorF[OptDocumentKeyEncoder] {
+      override def primitive[P](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: Primitive[P]
+      ): OptDocumentKeyEncoder[P] =
+        trySchemaVisitor.primitive(shapeId, hints, tag)
+      override def collection[C[_], A](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: CollectionTag[C],
+          member: Lazy[OptDocumentKeyEncoder[A]]
+      ): OptDocumentKeyEncoder[C[A]] =
+        None
+      override def map[C[_, _], K, V](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: MapTag[C],
+          key: Lazy[OptDocumentKeyEncoder[K]],
+          value: Lazy[OptDocumentKeyEncoder[V]]
+      ): OptDocumentKeyEncoder[C[K, V]] =
+        None
+      override def enumeration[E](
+          shapeId: ShapeId,
+          hints: Hints,
+          tag: EnumTag[E],
+          values: List[EnumValue[E]]
+      ): OptDocumentKeyEncoder[E] =
+        trySchemaVisitor.enumeration(shapeId, hints, tag, values)
+      override def struct[S](
+          shapeId: ShapeId,
+          hints: Hints,
+          fields: Vector[FieldF[S, _, OptDocumentKeyEncoder[Any], Any]],
+          make: IndexedSeq[Any] => S
+      ): OptDocumentKeyEncoder[S] = None
+      override def union[U](
+          shapeId: ShapeId,
+          hints: Hints,
+          alternatives: Vector[AltF[U, _, OptDocumentKeyEncoder[Any], Any]],
+          dispatch: U => Int
+      ): OptDocumentKeyEncoder[U] = None
+      override def biject[A, B](
+          underlying: Lazy[OptDocumentKeyEncoder[A]],
+          bijection: Bijection[A, B]
+      ): OptDocumentKeyEncoder[B] =
+        underlying.value.map(_.contramap(bijection.from))
+      override def refine[A, B](
+          underlying: Lazy[OptDocumentKeyEncoder[A]],
+          refinement: Refinement[A, B]
+      ): OptDocumentKeyEncoder[B] =
+        underlying.value.map(_.contramap(refinement.from))
+      override def lazily[A](
+          suspend: Lazy[OptDocumentKeyEncoder[A]]
+      ): OptDocumentKeyEncoder[A] = None
+      override def option[C[_], A](
+          tag: OptionalTag[C],
+          member: Lazy[OptDocumentKeyEncoder[A]]
+      ): OptDocumentKeyEncoder[C[A]] = None
     }
 }

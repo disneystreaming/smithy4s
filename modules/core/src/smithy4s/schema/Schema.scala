@@ -18,7 +18,6 @@ package smithy4s
 package schema
 
 import scala.reflect.ClassTag
-
 import Schema._
 
 // format: off
@@ -222,7 +221,7 @@ object Schema {
       case BijectionSchema(s, bijection) =>
         underlying(BijectionSchema(this(s), bijection))
       case LazySchema(suspend) =>
-        underlying(LazySchema(suspend.map(this.apply)))
+        LazySchema(Lazy(underlying(suspend.value)))
       case RefinementSchema(s, refinement) =>
         underlying(RefinementSchema(this(s), refinement))
       case c: CollectionSchema[c, a] =>
@@ -385,13 +384,13 @@ object Schema {
     override def biject[A, B](
         schema: Schema[A],
         bijection: Bijection[A, B]
-    ): Option[B] = 
+    ): Option[B] =
       if(schema.hints.has(alloy.Nullable)) {
         schema.compile(this).map(bijection.to)
       } else {
         None
       }
-    
+
     override def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Option[C[A]] = Some(tag.none)
   }
 
