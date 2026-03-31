@@ -24,6 +24,7 @@ import smithy4s.Lazy
 import smithy4s.Bijection
 import smithy4s.Refinement
 import smithy4s.ShapeTag
+import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.Schema._
 import smithy4s.schema._
@@ -134,7 +135,7 @@ class HintsTransformationSpec() extends FunSuite {
     checkSchema(Foo(None), 1)
     checkSchema(Foo(Some(Foo(None))), 2)
     checkSchema(Foo(Some(Foo(Some(Foo(None))))), 3)
-    checkSchema(buildFoo(100), 100)
+    checkSchema(buildFoo(10000), 10000)
   }
 
   test(header("nullable")) {
@@ -171,16 +172,18 @@ class HintsTransformationSpec() extends FunSuite {
       .compile(CountVisitor)
 
     val localMsg = "Unexpected count of marks after local transformation"
-    assertEquals(countLocal(value), expectedLocal, localMsg)
+    assertEquals(countLocal(value).value, expectedLocal, localMsg)
     val transitiveMsg =
       "Unexpected count of marks after transitive transformation"
-    assertEquals(countTransitive(value), expectedTransitive, transitiveMsg)
+    assertEquals(countTransitive(value).value, expectedTransitive, transitiveMsg)
   }
 
-  private def count(hints: Hints): Int = if (hints.has[Mark]) 1 else 0
+  private def count(hints: Hints): Eval[Int] =
+    Eval.now(if (hints.has[Mark]) 1 else 0)
 
-  // Counts how much time an instance traverses "marked" datatypes
-  type Count[A] = A => Int
+  // Counts how many times an instance traverses "marked" datatypes.
+  // Uses Eval for stack safety when processing deeply recursive structures.
+  type Count[A] = A => Eval[Int]
   object CountVisitor extends SchemaVisitor[Count] { compile =>
     def primitive[P](
         shapeId: ShapeId,
@@ -195,9 +198,12 @@ class HintsTransformationSpec() extends FunSuite {
         member: Schema[A]
     ): Count[C[A]] = {
       val cMember = compile(member)
-      ca => {
-        count(hints) + tag.iterator(ca).toList.foldMap(cMember(_))
-      }
+      ca =>
+        tag
+          .iterator(ca)
+          .toList
+          .foldM(0)((acc, a) => cMember(a).map(acc + _))
+          .flatMap(memberCount => count(hints).map(_ + memberCount))
     }
 
     def map[C[_, _], K, V](
@@ -209,11 +215,14 @@ class HintsTransformationSpec() extends FunSuite {
     ): Count[C[K, V]] = {
       val ck = compile(key)
       val cv = compile(value)
-      mkv => {
-        count(hints) + tag.iterator(mkv).toList.foldMap { case (k, v) =>
-          ck(k) + cv(v)
-        }
-      }
+      mkv =>
+        tag
+          .iterator(mkv)
+          .toList
+          .foldM(0) { case (acc, (k, v)) =>
+            for { kc <- ck(k); vc <- cv(v) } yield acc + kc + vc
+          }
+          .flatMap(memberCount => count(hints).map(_ + memberCount))
     }
 
     def enumeration[E](
@@ -222,11 +231,13 @@ class HintsTransformationSpec() extends FunSuite {
         tag: EnumTag[E],
         values: List[EnumValue[E]]
     ): Count[E] = { e =>
-      count(hints) + count(
-        values
-          .find(_.value == e)
-          .getOrElse(sys.error("Unknown enum value"))
-          .hints
+      count(hints).map(
+        _ + (if (values
+               .find(_.value == e)
+               .getOrElse(sys.error("Unknown enum value"))
+               .hints
+               .has[Mark]) 1
+             else 0)
       )
     }
 
@@ -236,9 +247,12 @@ class HintsTransformationSpec() extends FunSuite {
         fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): Count[S] = {
-      def countField[AA](field: smithy4s.schema.Field[S, AA]) =
-        compile(field.schema).compose(field.get)
-      s => count(hints) + fields.foldMap(countField(_)(s))
+      def countField[AA](field: smithy4s.schema.Field[S, AA]): S => Eval[Int] =
+        s => Eval.defer(compile(field.schema)(field.get(s)))
+      s =>
+        fields
+          .foldM(0)((acc, field) => countField(field)(s).map(acc + _))
+          .flatMap(fieldCount => count(hints).map(_ + fieldCount))
     }
 
     def union[U](
@@ -251,25 +265,25 @@ class HintsTransformationSpec() extends FunSuite {
         def apply[A](label: String, instance: Schema[A]): Count[A] =
           compile(instance)
       })
-      u => countU(u) + count(hints)
+      u => countU(u).flatMap(uc => count(hints).map(_ + uc))
     }
 
     def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Count[B] =
-      compile(schema).compose(bijection.from)
+      b => compile(schema)(bijection.from(b))
 
     def refine[A, B](
         schema: Schema[A],
         refinement: Refinement[A, B]
-    ): Count[B] = compile(schema).compose(refinement.from)
+    ): Count[B] = b => compile(schema)(refinement.from(b))
 
     def lazily[A](suspend: Lazy[Schema[A]]): Count[A] = {
       lazy val underlying = compile(suspend.value)
-      a => underlying(a)
+      a => Eval.defer(underlying(a))
     }
 
     def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Count[C[A]] = {
-      val count = compile(schema)
-      a => tag.fold(a, count(_), 0)
+      val countInner = compile(schema)
+      a => tag.fold[A, Eval[Int]](a, (a0: A) => Eval.defer(countInner(a0)), Eval.now(0))
     }
 
   }
