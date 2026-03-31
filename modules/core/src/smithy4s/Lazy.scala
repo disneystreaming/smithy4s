@@ -24,7 +24,7 @@ final class Lazy[A](make: () => A) {
     result
   }
 
-  def map[B](f: A => B): Lazy[B] = new Lazy(() => f(make()))
+  def map[B](f: A => B): Lazy[B] = new Lazy(() => f(value))
 }
 
 object Lazy {
