@@ -18,9 +18,11 @@ package smithy4s
 
 import scala.util.hashing.MurmurHash3
 import smithy4s.capability.MonadThrowLike
-import cats.MonadThrow
+import cats.{instances => _, _}
 import cats.syntax.all._
 import cats.kernel.Monoid
+import smithy4s.interopcats.internal._
+import smithy4s.schema.CollectionTag
 
 package object interopcats {
 
@@ -60,4 +62,19 @@ package object interopcats {
     MurmurHash3.finalizeHash(hashResult, hashes.length)
   }
 
+  implicit def catsInstancesGivenCollectionTagForSet[C[_]](implicit
+      CT: CollectionTag[C],
+      @annotation.unused IsSet: C[Any] =:= Set[Any]
+  ): Traverse[C] with Monad[C] =
+    new instances.CatsInstancesForCollectionTag[C]
+
+  implicit def catsInstancesGivenCollectionTag[C[_]](implicit
+      CT: CollectionTag[C],
+      @annotation.unused NotSet: NotGiven[C[Any] =:= Set[Any]]
+  ): Traverse[C]
+    with Alternative[C]
+    with Monad[C]
+    with CoflatMap[C]
+    with Align[C] =
+    new instances.CatsInstancesForCollectionTag[C]
 }
