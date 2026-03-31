@@ -175,7 +175,11 @@ class HintsTransformationSpec() extends FunSuite {
     assertEquals(countLocal(value).value, expectedLocal, localMsg)
     val transitiveMsg =
       "Unexpected count of marks after transitive transformation"
-    assertEquals(countTransitive(value).value, expectedTransitive, transitiveMsg)
+    assertEquals(
+      countTransitive(value).value,
+      expectedTransitive,
+      transitiveMsg
+    )
   }
 
   private def count(hints: Hints): Eval[Int] =
@@ -232,11 +236,13 @@ class HintsTransformationSpec() extends FunSuite {
         values: List[EnumValue[E]]
     ): Count[E] = { e =>
       count(hints).map(
-        _ + (if (values
-               .find(_.value == e)
-               .getOrElse(sys.error("Unknown enum value"))
-               .hints
-               .has[Mark]) 1
+        _ + (if (
+               values
+                 .find(_.value == e)
+                 .getOrElse(sys.error("Unknown enum value"))
+                 .hints
+                 .has[Mark]
+             ) 1
              else 0)
       )
     }
@@ -283,7 +289,12 @@ class HintsTransformationSpec() extends FunSuite {
 
     def option[C[_], A](tag: OptionalTag[C], schema: Schema[A]): Count[C[A]] = {
       val countInner = compile(schema)
-      a => tag.fold[A, Eval[Int]](a, (a0: A) => Eval.defer(countInner(a0)), Eval.now(0))
+      a =>
+        tag.fold[A, Eval[Int]](
+          a,
+          (a0: A) => Eval.defer(countInner(a0)),
+          Eval.now(0)
+        )
     }
 
   }
