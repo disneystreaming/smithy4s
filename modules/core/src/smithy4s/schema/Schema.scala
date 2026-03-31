@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.internals.maps.MMap
+
 import scala.reflect.ClassTag
 
 import Schema._
