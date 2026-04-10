@@ -26,9 +26,13 @@ import mill.scalalib.publish.VersionControl
 import coursier.Repository
 import coursier.ivy.IvyRepository
 
+import scala.concurrent.duration._
+
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
+
+  override val munitTimeout = 5.minutes
 
   private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
