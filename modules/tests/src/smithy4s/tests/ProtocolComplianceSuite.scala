@@ -190,7 +190,7 @@ abstract class ProtocolComplianceSuite
   def unsureWhetherShouldSucceed(
       test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
-  ): Expectations = 
+  ): Expectations =
     ignore
 
   private val ignore = cats.Monoid[Expectations].empty

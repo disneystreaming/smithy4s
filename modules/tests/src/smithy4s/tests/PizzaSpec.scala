@@ -670,9 +670,9 @@ abstract class PizzaSpec
       }
   }
 
-  private case class DeserializationFailure (
-    reason: String,
-    location: SourceLocation)
-    extends RuntimeException(reason)
+  private case class DeserializationFailure(
+      reason: String,
+      location: SourceLocation
+  ) extends RuntimeException(reason)
 
 }
