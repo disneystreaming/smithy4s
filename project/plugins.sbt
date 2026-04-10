@@ -23,7 +23,7 @@ addSbtPlugin("org.polyvariant" % "smithy-trait-codegen-sbt" % "0.2.3")
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.10.7",
   "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.30.15",
-  "com.thesamet.scalapb" %% "compilerplugin" % "1.0.0-alpha.3"
+  "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
 )
 
 addDependencyTreePlugin

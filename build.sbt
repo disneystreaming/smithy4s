@@ -176,17 +176,10 @@ val weaverDeps = Def.setting {
 }
 
 val munitDeps = Def.setting {
-  if (virtualAxes.value.contains(VirtualAxis.native)) {
-    Seq(
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
-    )
-  } else {
-    Seq(
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
-    )
-  }
+  Seq(
+    Dependencies.Munit.core.value % Test,
+    Dependencies.Munit.scalacheck.value % Test
+  )
 }
 
 /**
