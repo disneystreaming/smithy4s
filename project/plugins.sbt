@@ -11,7 +11,7 @@ addSbtPlugin("com.eed3si9n"         % "sbt-buildinfo"                 % "0.13.1"
 addSbtPlugin("com.eed3si9n"         % "sbt-projectmatrix"             % "0.11.0")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.7")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.10.0")
-addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.5.8")
+addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.5.11")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.1.0")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.5")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "2.0.13")
@@ -23,7 +23,7 @@ addSbtPlugin("org.polyvariant" % "smithy-trait-codegen-sbt" % "0.2.3")
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.10.7",
   "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.30.15",
-  "com.thesamet.scalapb" %% "compilerplugin" % "1.0.0-alpha.2"
+  "com.thesamet.scalapb" %% "compilerplugin" % "1.0.0-alpha.3"
 )
 
 addDependencyTreePlugin

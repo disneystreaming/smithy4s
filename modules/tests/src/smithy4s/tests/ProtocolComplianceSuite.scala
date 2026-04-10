@@ -193,18 +193,23 @@ abstract class ProtocolComplianceSuite
   ): Expectations = {
     res.toEither match {
       case Left(failures) =>
-        throw new weaver.CanceledException(
+        throw new ProtocolComplianceSuite.CanceledException(
           Some(failures.head),
           weaver.SourceLocation.fromContext
         )
       case Right(_) =>
-        throw new weaver.IgnoredException(
+        throw new ProtocolComplianceSuite.IgnoredException(
           Some("Passing unknown spec"),
           weaver.SourceLocation.fromContext
         )
     }
   }
 
+}
+
+object ProtocolComplianceSuite {
+  private[smithy4s] class CanceledException(message: Option[String], location: SourceLocation) extends RuntimeException(message.getOrElse("cancelled"))
+  private[smithy4s] class IgnoredException(message: Option[String], location: SourceLocation) extends RuntimeException(message.getOrElse("ignored"))
 }
 
 // brought over from weaver https://github.com/disneystreaming/weaver-test/blob/d5489c994ecbe84f267550fb84c25c9fba473d70/modules/core/src/weaver/Filters.scala#L5

@@ -69,7 +69,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.13.0-M6"
+    val fs2Version = "3.13.0"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -80,7 +80,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.2")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.13.0")
   }
 
   object Mill {
@@ -105,10 +105,10 @@ object Dependencies {
   }
 
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.7.0-RC1")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.7.0")
 
   object Http4s {
-    val http4sVersion = "0.23.30-161-f5b9629-SNAPSHOT"
+    val http4sVersion = "0.23.34"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -126,7 +126,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.11-b0644b4-SNAPSHOT"
+    val weaverVersion = "0.12.0"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)

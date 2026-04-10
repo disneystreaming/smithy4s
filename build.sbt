@@ -65,7 +65,7 @@ lazy val allModules = Seq(
   docs,
   millCodegenPlugin,
   json,
-  // xml,
+  xml,
   bootstrapped,
   tests,
   http4s,
@@ -384,7 +384,7 @@ lazy val `aws-http4s` = projectMatrix
     `aws-kernel`,
     `http4s-kernel`,
     json,
-    // xml,
+    xml,
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
@@ -798,24 +798,24 @@ lazy val json = projectMatrix
  * Module that contains fs2-data-based XML encoders/decoders for the generated
  * types.
  */
-// lazy val xml = projectMatrix
-//   .in(file("modules/xml"))
-//   .dependsOn(
-//     core,
-//     bootstrapped % "test->test",
-//     scalacheck % "test -> compile"
-//   )
-//   .settings(
-//     isMimaEnabled := false,
-//     libraryDependencies ++= Seq(
-//       Dependencies.Fs2Data.xml.value
-//     ) ++ weaverDeps.value,
-//     libraryDependencies ++= munitDeps.value,
-//     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
-//   )
-//   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-//   .jsPlatform(allJsScalaVersions, jsDimSettings)
-//   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+lazy val xml = projectMatrix
+  .in(file("modules/xml"))
+  .dependsOn(
+    core,
+    bootstrapped % "test->test",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2Data.xml.value
+    ) ++ weaverDeps.value,
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains protobuf encoders/decoders for the generated
@@ -839,7 +839,7 @@ lazy val protobuf = projectMatrix
         )
       else
         Seq(
-          "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "1.0.0-alpha.2"
+          "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
         )
     },
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
@@ -1015,7 +1015,7 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Pprint.core.value,
-        // Dependencies.Fs2Data.xml.value
+        Dependencies.Fs2Data.xml.value
       ) ++ weaverDeps.value
     }
   )
