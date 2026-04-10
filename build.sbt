@@ -171,20 +171,20 @@ val weaverDeps = Def.setting {
     // workaround for a linking issue on Native. Appears to be related to Weaver's shading of the munit-diff dependency
     // (the linker issue mentions weaver's own sources bringing in a missing definition in munit.diff).
     // Hopefully this can be removed once we've moved to Scala Native 0.5 and there's only a single Munit version in the build.
-    Dependencies.MunitV1.diff.value % Test
+    Dependencies.Munit.diff.value % Test
   )
 }
 
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
     Seq(
-      Dependencies.MunitV1.core.value % Test,
-      Dependencies.MunitV1.scalacheck.value % Test
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     )
   } else {
     Seq(
-      Dependencies.MunitV1.core.value % Test,
-      Dependencies.MunitV1.scalacheck.value % Test
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     )
   }
 }
@@ -556,7 +556,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
     },
-    libraryDependencies += Dependencies.MunitV1.diff.value,
+    libraryDependencies += Dependencies.Munit.diff.value,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
