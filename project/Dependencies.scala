@@ -5,13 +5,12 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.13.0"
     )
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    // must keep 2.30.2 until upgrade to scala native 0.5
-    val jsoniterScalaVersion = "2.30.2"
+    val jsoniterScalaVersion = "2.37.10"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -47,8 +46,7 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      // must remain on 2.11 until we update scala-native version
-      Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.13.0")
   }
 
   val Monocle = new {
@@ -57,23 +55,21 @@ object Dependencies {
   }
 
   object Circe {
-    // we have to stay on 0.14.8 until we move to scala-native 0.5.x
-    val circeVersion = "0.14.8"
+    val circeVersion = "0.14.14"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }
 
   object Decline {
-    // must be kept at 2.4.1 until upgrade to scala-native 0.5
-    val declineVersion = "2.4.1"
+    val declineVersion = "2.5.0"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.12.2"
+    val fs2Version = "3.13.0"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -84,7 +80,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.2")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.13.0")
   }
 
   object Mill {
@@ -104,15 +100,15 @@ object Dependencies {
   }
 
   object Pprint {
-    val pprintVersion = "0.8.1"
+    val pprintVersion = "0.9.3"
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
 
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.6.0")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.7.0")
 
   object Http4s {
-    val http4sVersion = "0.23.33"
+    val http4sVersion = "0.23.34"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -130,7 +126,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.10.0"
+    val weaverVersion = "0.12.0"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
@@ -147,15 +143,13 @@ object Dependencies {
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
-  object Munit extends MunitCross("0.7.29")
-  object MunitMilestone extends MunitCross("1.0.0-M6")
-  object MunitV1 extends MunitCross("1.0.0") {
+  object Munit extends MunitCross("1.1.0") {
     val diff: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-diff" % munitVersion)
   }
 
   val Scalacheck = new {
-    val scalacheckVersion = "1.17.1"
+    val scalacheckVersion = "1.18.1"
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }

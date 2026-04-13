@@ -21,6 +21,11 @@ ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+// Silence binary compatibility warnings for test-interface in Scala Native 0.5.x series
+// has to include _native suffix due to https://github.com/sbt/sbt/issues/7140
+ThisBuild / libraryDependencySchemes +=
+  "org.scala-native" %% "test-interface_native0.5" % VersionScheme.Always
+
 import Smithy4sBuildPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -164,22 +169,15 @@ val weaverDeps = Def.setting {
     // workaround for a linking issue on Native. Appears to be related to Weaver's shading of the munit-diff dependency
     // (the linker issue mentions weaver's own sources bringing in a missing definition in munit.diff).
     // Hopefully this can be removed once we've moved to Scala Native 0.5 and there's only a single Munit version in the build.
-    Dependencies.MunitV1.diff.value % Test
+    Dependencies.Munit.diff.value % Test
   )
 }
 
 val munitDeps = Def.setting {
-  if (virtualAxes.value.contains(VirtualAxis.native)) {
-    Seq(
-      Dependencies.MunitMilestone.core.value % Test,
-      Dependencies.MunitMilestone.scalacheck.value % Test
-    )
-  } else {
-    Seq(
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
-    )
-  }
+  Seq(
+    Dependencies.Munit.core.value % Test,
+    Dependencies.Munit.scalacheck.value % Test
+  )
 }
 
 /**
@@ -565,7 +563,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
     },
-    libraryDependencies += Dependencies.MunitV1.diff.value,
+    libraryDependencies += Dependencies.Munit.diff.value,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
@@ -851,7 +849,7 @@ lazy val protobuf = projectMatrix
         )
       else
         Seq(
-          "com.thesamet.scalapb" %%% "protobuf-runtime-scala" % "0.8.14"
+          "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
         )
     },
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)

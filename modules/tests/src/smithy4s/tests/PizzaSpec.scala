@@ -17,7 +17,6 @@
 package smithy4s.tests
 
 import cats.Show
-import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
 import io.circe._
@@ -783,9 +782,14 @@ abstract class PizzaSpec
     def expect[A: Decoder](implicit loc: SourceLocation): IO[A] =
       json.as[A] match {
         case Left(value) =>
-          IO.raiseError(AssertionException(value.message, NonEmptyList.of(loc)))
+          IO.raiseError(DeserializationFailure(value.message, loc))
         case Right(value) => IO.pure(value)
       }
   }
+
+  private case class DeserializationFailure(
+      reason: String,
+      location: SourceLocation
+  ) extends RuntimeException(reason)
 
 }

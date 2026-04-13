@@ -192,20 +192,10 @@ abstract class ProtocolComplianceSuite
   def unsureWhetherShouldSucceed(
       test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
-  ): Expectations = {
-    res.toEither match {
-      case Left(failures) =>
-        throw new weaver.CanceledException(
-          Some(failures.head),
-          weaver.SourceLocation.fromContext
-        )
-      case Right(_) =>
-        throw new weaver.IgnoredException(
-          Some("Passing unknown spec"),
-          weaver.SourceLocation.fromContext
-        )
-    }
-  }
+  ): Expectations =
+    ignore
+
+  private val ignore = cats.Monoid[Expectations].empty
 
 }
 

@@ -17,7 +17,6 @@
 package smithy4s.aws.kernel
 
 import scala.scalanative.unsafe._
-import scala.scalanative.unsigned._
 
 import crypto._
 
@@ -38,7 +37,7 @@ trait CryptoPlatformCompat {
     if (
       EVP_Digest(
         message.atUnsafe(0),
-        message.length.toULong,
+        message.length.toSize.toCSize,
         md.atUnsafe(0),
         size,
         EvpMdSha256,
@@ -64,7 +63,7 @@ trait CryptoPlatformCompat {
         key.atUnsafe(0),
         key.size.toInt,
         d.atUnsafe(0),
-        d.length.toULong,
+        d.length.toSize.toCSize,
         md.atUnsafe(0),
         mdLen
       ) == null

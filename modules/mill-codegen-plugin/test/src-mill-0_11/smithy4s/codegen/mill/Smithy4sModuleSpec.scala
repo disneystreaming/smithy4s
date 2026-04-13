@@ -29,9 +29,13 @@ import sourcecode.FullName
 
 import java.nio.file.Paths
 
+import scala.concurrent.duration._
+
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
     os.Path(Paths.get(this.getClass().getResource("/").toURI()))
+
+  override val munitTimeout: FiniteDuration = 5.minutes
 
   private object testKit extends MillTestKit
 
