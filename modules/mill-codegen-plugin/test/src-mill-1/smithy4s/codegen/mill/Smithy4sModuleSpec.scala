@@ -28,7 +28,6 @@ import mill.testkit.UnitTester
 import munit.Location
 
 import java.nio.file.Paths
-
 import scala.concurrent.duration._
 
 class Smithy4sModuleSpec extends munit.FunSuite {

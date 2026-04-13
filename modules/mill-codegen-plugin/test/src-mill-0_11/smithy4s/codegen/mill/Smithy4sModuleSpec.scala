@@ -28,7 +28,6 @@ import munit.Location
 import sourcecode.FullName
 
 import java.nio.file.Paths
-
 import scala.concurrent.duration._
 
 class Smithy4sModuleSpec extends munit.FunSuite {

@@ -20,6 +20,7 @@ import cats.syntax.all._
 import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 import com.typesafe.tools.mima.lib.MiMaLib
 import munit.FunSuite
+
 import scala.concurrent.duration._
 
 class BincompatCodegenIntegrationSpec extends FunSuite {
