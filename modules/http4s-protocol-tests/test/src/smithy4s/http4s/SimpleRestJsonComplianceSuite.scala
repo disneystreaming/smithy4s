@@ -118,6 +118,11 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
       simpleRestJsonSpec,
       pizzaSpec,
       routingSpec
+    )(dsi) ++ genMalformedRequestTests(
+      SimpleRestJsonIntegration,
+      simpleRestJsonSpec,
+      pizzaSpec,
+      routingSpec
     )(dsi)
 
   private val modelDump = fileFromEnv("MODEL_DUMP")

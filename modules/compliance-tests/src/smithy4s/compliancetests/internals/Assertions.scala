@@ -61,6 +61,28 @@ private[internals] object assert {
     }
   }
 
+  def regexEql(
+      expectedRegex: String,
+      actual: String,
+      prefix: String = ""
+  ): ComplianceResult = {
+    if (actual.matches(expectedRegex)) {
+      success
+    } else {
+      fail(
+        s"$prefix actual value: ${pprint.apply(actual)} did not match regex ${pprint
+          .apply(expectedRegex)}."
+      )
+    }
+  }
+
+  def headersCheck(
+      actualHeaders: Headers,
+      expectedHeaders: Option[Map[String, String]]
+  ): ComplianceResult = {
+    headerKeyValueCheck(collapseHeaders(actualHeaders), expectedHeaders)
+  }
+
   def contains(
       result: String,
       expected: String,
