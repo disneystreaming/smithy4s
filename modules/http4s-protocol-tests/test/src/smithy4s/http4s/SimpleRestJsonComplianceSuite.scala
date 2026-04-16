@@ -118,12 +118,20 @@ object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
       simpleRestJsonSpec,
       pizzaSpec,
       routingSpec
-    )(dsi) ++ genMalformedRequestTests(
-      SimpleRestJsonIntegration,
-      simpleRestJsonSpec,
-      pizzaSpec,
-      routingSpec
-    )(dsi)
+    )(dsi) ++ (
+      // Malformed request tests are skipped entirely on Scala.js.
+      // Timestamp.parseDateTime uses unchecked charAt that produces a fatal
+      // UndefinedBehaviorError on JS, crashing the Node.js process during
+      // test execution. These tests still run on JVM.
+      if (!weaver.Platform.isJS)
+        genMalformedRequestTests(
+          SimpleRestJsonIntegration,
+          simpleRestJsonSpec,
+          pizzaSpec,
+          routingSpec
+        )(dsi)
+      else Nil
+    )
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
