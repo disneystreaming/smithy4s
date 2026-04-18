@@ -34,15 +34,17 @@ libraryDependencies ++= Seq(
 smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
 ```
 
-Alternatively, the following is also valid :
+Alternatively, you can depend on the official AWS model artifacts directly :
 
 ```scala
 libraryDependencies ++= Seq(
   // version sourced from the plugin
-  "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
-  "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "@AWS_SPEC_VERSION@" % Smithy4s
+  "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value,
+  "software.amazon.api.models" % "dynamodb" % AWS.dynamodb._2 % Smithy4s
 )
 ```
+
+Note: each AWS service has its own independent version. The `AWS` object in the plugin provides per-service coordinates as `(name, version)` tuples.
 
 ### Mill
 
@@ -57,7 +59,7 @@ object foo extends Smithy4sModule {
   override def ivyDeps = Agg(
     ivy"com.disneystreaming.smithy4s::smithy4s-aws-http4s:${smithy4sVersion()}",
   )
-  override def smithy4sAwsSpecs: T[Seq[String]] = T(Seq(AWS.dynamodb))
+  override def smithy4sAwsSpecs = T(Seq(AWS.dynamodb))
 }
 ```
 
@@ -94,19 +96,18 @@ object Main extends IOApp.Simple {
 
 ## Note on where to find the AWS specifications
 
-* SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
-* Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
+AWS publishes official Smithy model artifacts to Maven Central under the `software.amazon.api.models` group. Each service has its own artifact and independent version:
 
-The version corresponds to the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
+* SBT : `"software.amazon.api.models" % s"${service_name}" % version`
+* Mill : `ivy"software.amazon.api.models:$service_name:$version"`
 
-AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
+The artifacts are sourced from the [aws/api-models-aws](https://github.com/aws/api-models-aws) GitHub repository, which is updated daily.
 
-The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them to maven central to lower the barrier of entry.
+The `AWS` object provided by the smithy4s plugin contains per-service coordinates as `(name, version)` tuples, so you can write `smithy4sAwsSpecs ++= Seq(AWS.dynamodb)` and the plugin resolves the correct Maven coordinates automatically.
 
 ## Service summary
 
-Below you'll find a generated summary of the maven coordinates for the AWS specifications. Note
-that the version of the spec might not be the latest one. Refer yourself to [this repo](https://github.com/disneystreaming/aws-sdk-smithy-specs) to get the latest version of the specs.
+Below you'll find a generated summary of the AWS services and their supported protocols.
 
 ```scala mdoc:passthrough
 smithy4s.aws.docs.AwsServiceList.renderServiceList()

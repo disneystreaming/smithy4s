@@ -122,10 +122,13 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
+  // Broadened from smithy.api to cover all smithy standard namespaces
+  // (smithy.synthetic, smithy.rules, smithy.waiters, etc.)
+  // This prevents standard smithy traits from leaking into generated code as hints.
   private val smithy4sDefaultDynamicHintNamespacePatterns
       : Set[NamespacePattern] = Set(
-    NamespacePattern.fromString("smithy.api"),
-    NamespacePattern.fromString("smithy.api.*"),
+    NamespacePattern.fromString("smithy"),
+    NamespacePattern.fromString("smithy.*"),
     NamespacePattern.fromString("alloy"),
     NamespacePattern.fromString("alloy.*")
   )
@@ -1169,6 +1172,8 @@ private[codegen] class SmithyToIR(
         // traits from the synthetic namespace, e.g. smithy.synthetic.enum
         // don't have shapes in the model - so we can't generate hints for them.
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
+        // smithy.rules traits contain massive endpoint routing JSON and aren't used at runtime
+        .filterNot(_.toShapeId().getNamespace() == "smithy.rules")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
         // remove box trait

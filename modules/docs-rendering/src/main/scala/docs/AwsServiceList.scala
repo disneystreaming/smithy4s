@@ -8,33 +8,28 @@ import scala.io.Source
 object AwsServiceList {
 
   def renderServiceList(): Unit = {
-    val summary = getSummary()
+    val metadata = getMetadata()
     val supportedProtocols =
       smithy4s.aws.AwsProtocol.supportedProtocols.map(_.id.name).toSet
     val (supported, unsupported) =
-      summary.artifacts.partition(a => supportedProtocols(a.protocol))
+      metadata.services.partition(s => supportedProtocols(s.protocol))
 
-    def render(artifactList: Vector[Artifact]): Unit = {
-      artifactList.groupBy(_.protocol).foreach { case (protocol, artifacts) =>
+    def render(services: Vector[ServiceEntry]): Unit = {
+      services.groupBy(_.protocol).foreach { case (protocol, entries) =>
         println(s"\n### $protocol\n")
-        artifacts.foreach { artifact =>
+        entries.foreach { entry =>
           val emoji =
-            if (!supportedProtocols(artifact.protocol)) "❌"
-            else if (artifact.streamingOperations.nonEmpty) "⚠️"
+            if (!supportedProtocols(entry.protocol)) "❌"
             else "✅"
 
-          println(s"\n#### $emoji ${artifact.service}\n")
+          println(s"\n#### $emoji ${entry.name}\n")
+          val org = smithy4s.codegen.AwsSpecs.org
           val sbt =
-            s"""`"${artifact.organization}" % "${artifact.name}" % "${summary.version}"`"""
+            s"""`"$org" % "${entry.name}" % "${entry.version}"`"""
           val mill =
-            s"""`ivy"${artifact.organization}:${artifact.name}:${summary.version}"`"""
+            s"""`ivy"$org:${entry.name}:${entry.version}"`"""
           println(s"* sbt: $sbt")
           println(s"* mill: $mill")
-          if (artifact.streamingOperations.nonEmpty) {
-            println("")
-            println(s"**Unsupported streaming operations**")
-            artifact.streamingOperations.foreach(op => println(s"* `$op`"))
-          }
         }
       }
     }
@@ -47,29 +42,23 @@ object AwsServiceList {
     }
   }
 
-  case class Artifact(
-      service: String,
-      organization: String,
-      name: String,
-      protocol: String,
-      streamingOperations: Vector[String]
-  )
-  case class Summary(version: String, artifacts: Vector[Artifact])
+  case class ServiceEntry(name: String, version: String, protocol: String)
 
-  object Summary {
-    implicit val jsoncodec: JsonValueCodec[Summary] = JsonCodecMaker.make
+  case class Metadata(services: Vector[ServiceEntry])
+
+  object Metadata {
+    implicit val jsonCodec: JsonValueCodec[Metadata] = JsonCodecMaker.make
   }
 
-  def getSummary(): Summary = {
+  def getMetadata(): Metadata = {
     val jsonString = Source
       .fromResource(
-        "summary.json",
+        "aws-service-metadata.json",
         this.getClass().getClassLoader()
       )
       .getLines()
       .mkString(System.lineSeparator())
-    com.github.plokhotnyuk.jsoniter_scala.core
-      .readFromString[Summary](jsonString)
+    readFromString[Metadata](jsonString)
   }
 
 }

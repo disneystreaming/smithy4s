@@ -160,11 +160,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val smithy4sAwsSpecsVersion =
       settingKey[String](
-        "Known version of the AWS specifications, produced by https://github.com/disneystreaming/aws-sdk-smithy-specs"
+        "Version of the AWS models BOM (software.amazon.api.models:all) used to discover service versions"
       )
 
     val smithy4sAwsSpecs =
-      settingKey[Seq[String]]("Aws modules to load")
+      settingKey[Seq[(String, String)]]("Aws modules to load")
 
     val smithy4sAwsSpecDependencies =
       taskKey[Seq[ModuleID]](
@@ -193,12 +193,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    // Retained for backward compatibility — versions now come from per-service tuples in smithy4sAwsSpecs
+    smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.bomVersion,
     smithy4sAwsSpecs := Seq.empty,
-    smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
     Compile / smithy4sAwsSpecDependencies := Def.uncached {
-      val version = (smithy4sAwsSpecsVersion).value
-      (smithy4sAwsSpecs).value.map { case artifactName =>
-        smithy4s.codegen.AwsSpecs.org % artifactName % version
+      (smithy4sAwsSpecs).value.map { case (name, version) =>
+        smithy4s.codegen.AwsSpecs.org % name % version
       }
     },
     config / smithy4sInternalDependenciesAsJars := Def.uncached {

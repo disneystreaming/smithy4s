@@ -458,7 +458,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     object foo extends TestBaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.18"
       override def ivyDeps = Agg(coreDep)
-      override def smithy4sAwsSpecs: T[Seq[String]] = T(Seq(AWS.dynamodb))
+      override def smithy4sAwsSpecs = T(Seq(AWS.dynamodb))
     }
 
     UnitTester(foo, resourcePath).scoped { eval =>

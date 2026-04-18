@@ -131,8 +131,7 @@ lazy val docsRendering =
           sha <- sys.env.get("GITHUB_SHA")
         } yield s"$serverUrl/$repo/blob/$sha/").getOrElse(
           "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
-        ),
-        "AWS_SPEC_VERSION" -> Dependencies.AwsSpecSummary.awsSpecSummaryVersion
+        )
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
       libraryDependencies ++= Seq(
@@ -140,7 +139,6 @@ lazy val docsRendering =
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
         Dependencies.Decline.effect.value,
-        Dependencies.AwsSpecSummary.value,
         Dependencies.Monocle.core.value
       )
     )
@@ -453,10 +451,11 @@ lazy val codegen = projectMatrix
       else Seq.empty
     },
     bloopEnabled := true,
-    Compile / sourceGenerators += {
-      sourceManaged
-        .map(AwsBoilerplate.generate(_))
-        .taskValue,
+    Compile / sourceGenerators += Def.task {
+      Seq(AwsBoilerplate.generateSources(sourceManaged.value))
+    },
+    Compile / resourceGenerators += Def.task {
+      Seq(AwsBoilerplate.generateResources((Compile / resourceManaged).value))
     },
     (Compile / compile) := (Compile / compile)
       .dependsOn((protocol.jvm(autoScalaLibrary = false) / cachedPublishLocal))
@@ -1208,9 +1207,10 @@ lazy val `aws-sandbox` = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
     ),
+    libraryDependencies += Dependencies.AwsModels.bom,
     smithy4sDependencies ++= Seq(
-      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2025.04.08",
-      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2025.04.08"
+      "software.amazon.api.models" % "cloudwatch" % "1.0.9",
+      "software.amazon.api.models" % "ec2" % "1.0.76"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,

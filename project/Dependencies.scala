@@ -20,7 +20,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.66.0"
+    val smithyVersion = "1.69.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -168,15 +168,14 @@ object Dependencies {
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.52"
   }
 
-  object AwsSpecSummary {
-    val org = "com.disneystreaming.smithy"
-    val name = "aws-spec-summary"
-    val awsSpecSummaryVersion = "2025.04.08"
-    val value = org % name % awsSpecSummaryVersion
-  }
-
   object Mima {
     val core = "com.typesafe" %% "mima-core" % "1.1.5"
+  }
+
+  object AwsModels {
+    val org = "software.amazon.api.models"
+    val bomVersion = "1.0.215"
+    val bom = org % "all" % bomVersion
   }
 
 }
