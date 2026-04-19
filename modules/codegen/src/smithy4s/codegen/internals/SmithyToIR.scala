@@ -160,6 +160,28 @@ private[codegen] class SmithyToIR(
   private val smithy4sBinCompatHintNamespacePatterns: Set[NamespacePattern] =
     smithy4sDefaultBinCompatHintNamespacePatterns
 
+  private val stdlibBincompatAddedShapes
+      : Map[ShapeId, Hint.BincompatAdded] =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sBincompatPreludeAdditions")
+      .toSet
+      .flatMap((n: Node) => n.asArrayNode().asScala)
+      .flatMap(_.getElements().asScala)
+      .flatMap { (n: Node) =>
+        n.asObjectNode().asScala.flatMap { obj =>
+          for {
+            shapeIdStr <- obj.getStringMember("shape").asScala
+            versionStr <- obj.getStringMember("version").asScala
+          } yield (
+            ShapeId.from(shapeIdStr.getValue),
+            Hint.BincompatAdded(VersionNumber.parse(versionStr.getValue))
+          )
+        }
+      }
+      .toMap
+
   private def fieldModifier(member: MemberShape): Field.Modifier = {
     val hasRequired = member.hasTrait(classOf[RequiredTrait])
     val hasNullable = member.hasTrait(classOf[alloy.NullableTrait])
@@ -1192,8 +1214,13 @@ private[codegen] class SmithyToIR(
       } else None
     }
 
+    val stdlibBincompatAddedHint = stdlibBincompatAddedShapes.get(
+      shape.getId()
+    )
+
     allTraits.collect(traitToHint(shape)) ++
       stdlibBincompatFriendlyTrait ++
+      stdlibBincompatAddedHint ++
       documentationHint(shape) ++
       nonConstraintNonMetaTraits
         .filter(tr =>

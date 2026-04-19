@@ -8,6 +8,13 @@ metadata suppressions = [
     }
 ]
 
+metadata smithy4sBincompatPreludeAdditions = [
+    {
+        shape: "smithy.api#cors$origins"
+        version: "0.19.1"
+    }
+]
+
 namespace smithy4s.meta
 
 @trait(selector: ":is(operation)")
