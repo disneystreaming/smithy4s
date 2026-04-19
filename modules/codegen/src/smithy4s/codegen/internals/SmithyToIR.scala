@@ -160,8 +160,7 @@ private[codegen] class SmithyToIR(
   private val smithy4sBinCompatHintNamespacePatterns: Set[NamespacePattern] =
     smithy4sDefaultBinCompatHintNamespacePatterns
 
-  private val stdlibBincompatAddedShapes
-      : Map[ShapeId, Hint.BincompatAdded] =
+  private val stdlibBincompatAddedShapes: Map[ShapeId, Hint.BincompatAdded] =
     model
       .getMetadata()
       .asScala

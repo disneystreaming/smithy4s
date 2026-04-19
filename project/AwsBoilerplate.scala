@@ -75,7 +75,9 @@ object AwsBoilerplate {
   ): File = {
     val entries = sortedServices.map { case (name, version) =>
       val protocol = protocols.getOrElse(name, "unknown")
-      s"""  {"name": "${jsonEscape(name)}", "version": "${jsonEscape(version)}", "protocol": "${jsonEscape(protocol)}"}"""
+      s"""  {"name": "${jsonEscape(name)}", "version": "${jsonEscape(
+        version
+      )}", "protocol": "${jsonEscape(protocol)}"}"""
     }
 
     val content =
@@ -152,12 +154,12 @@ object AwsBoilerplate {
       services: List[(String, String)]
   ): Map[String, String] = {
     val protocolKeys = List(
-      "aws.protocols#restJson1"  -> "restJson1",
-      "aws.protocols#restXml"    -> "restXml",
+      "aws.protocols#restJson1" -> "restJson1",
+      "aws.protocols#restXml" -> "restXml",
       "aws.protocols#awsJson1_0" -> "awsJson1_0",
       "aws.protocols#awsJson1_1" -> "awsJson1_1",
-      "aws.protocols#awsQuery"   -> "awsQuery",
-      "aws.protocols#ec2Query"   -> "ec2Query"
+      "aws.protocols#awsQuery" -> "awsQuery",
+      "aws.protocols#ec2Query" -> "ec2Query"
     )
 
     services.map { case (name, version) =>
@@ -204,7 +206,9 @@ object AwsBoilerplate {
     }
   }
 
-  private def readProtocolCache(cacheFile: java.io.File): Option[Map[String, String]] = {
+  private def readProtocolCache(
+      cacheFile: java.io.File
+  ): Option[Map[String, String]] = {
     if (!cacheFile.exists()) None
     else
       Using(Source.fromFile(cacheFile)) { source =>
