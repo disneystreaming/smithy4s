@@ -122,13 +122,10 @@ private[codegen] class SmithyToIR(
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)
 
-  // Broadened from smithy.api to cover all smithy standard namespaces
-  // (smithy.synthetic, smithy.rules, smithy.waiters, etc.)
-  // This prevents standard smithy traits from leaking into generated code as hints.
   private val smithy4sDefaultDynamicHintNamespacePatterns
       : Set[NamespacePattern] = Set(
-    NamespacePattern.fromString("smithy"),
-    NamespacePattern.fromString("smithy.*"),
+    NamespacePattern.fromString("smithy.api"),
+    NamespacePattern.fromString("smithy.api.*"),
     NamespacePattern.fromString("alloy"),
     NamespacePattern.fromString("alloy.*")
   )
