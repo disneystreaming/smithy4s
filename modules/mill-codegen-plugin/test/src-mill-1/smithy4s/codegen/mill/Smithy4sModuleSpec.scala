@@ -481,7 +481,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       lazy val millDiscover = Discover[this.type]
       override def scalaVersion = "2.13.18"
       override def mvnDeps = Seq(coreDep)
-      override def smithy4sAwsSpecs = Task(Seq(AWS.dynamodb))
+      override def smithy4sAwsSpecEntries = Task(Seq(AWS.dynamodb))
     }
 
     UnitTester(foo, resourcePath).scoped { eval =>

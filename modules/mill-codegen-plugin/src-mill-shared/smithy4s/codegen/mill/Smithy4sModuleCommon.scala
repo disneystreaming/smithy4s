@@ -110,13 +110,20 @@ trait Smithy4sModuleCommon extends ScalaModule {
     AWS.bomVersion
   }
 
-  def smithy4sAwsSpecs: T[Seq[(String, String)]] = T {
+  def smithy4sAwsSpecs: T[Seq[String]] = T {
+    Seq.empty[String]
+  }
+
+  def smithy4sAwsSpecEntries: T[Seq[(String, String)]] = T {
     Seq.empty[(String, String)]
   }
 
   def smithy4sAwsSpecDependencies: T[Agg[Dep]] = T {
     val org = AWS.org
-    smithy4sAwsSpecs().map { case (name, version) => ivy"$org:$name:$version" }
+    val version = smithy4sAwsSpecsVersion()
+    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) => ivy"$org:$name:$v" }
+    val fromLegacy = smithy4sAwsSpecs().map { name => ivy"$org:$name:$version" }
+    fromEntries ++ fromLegacy
   }
 
   @nowarn("cat=deprecation")

@@ -52,7 +52,9 @@ object AwsBoilerplate {
           |// Versions sourced from: software.amazon.api.models:all BOM (Maven Central)
           |//
           |// Each value is a (artifactName, version) tuple for use with:
-          |//   smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
+          |//   smithy4sAwsSpecEntries ++= Seq(AWS.dynamodb)
+          |// For backward compat, use:
+          |//   smithy4sAwsSpecs ++= Seq("dynamodb")
           |// which resolves to: "software.amazon.api.models" % "dynamodb" % "1.0.11"
           |
           |package smithy4s.codegen
@@ -185,7 +187,7 @@ object AwsBoilerplate {
       val jars = coursierapi.Fetch
         .create()
         .addDependencies(
-          coursierapi.Dependency.of("software.amazon.api.models", name, version)
+          coursierapi.Dependency.of(Dependencies.AwsModels.org, name, version)
         )
         .fetch()
         .asScala

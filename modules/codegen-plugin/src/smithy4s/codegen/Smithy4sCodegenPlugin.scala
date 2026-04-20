@@ -164,7 +164,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
 
     val smithy4sAwsSpecs =
-      settingKey[Seq[(String, String)]]("Aws modules to load")
+      settingKey[Seq[String]]("Aws modules to load (legacy, uses smithy4sAwsSpecsVersion)")
+
+    val smithy4sAwsSpecEntries =
+      settingKey[Seq[(String, String)]]("AWS spec modules with per-service versions: Seq((artifactName, version))")
 
     val smithy4sAwsSpecDependencies =
       taskKey[Seq[ModuleID]](
@@ -194,12 +197,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
     smithy4sAwsSpecs := Seq.empty,
-    // Retained for backward compatibility — versions now come from per-service tuples in smithy4sAwsSpecs
+    smithy4sAwsSpecEntries := Seq.empty,
     smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.bomVersion,
     Compile / smithy4sAwsSpecDependencies := Def.uncached {
-      (smithy4sAwsSpecs).value.map { case (name, version) =>
-        smithy4s.codegen.AwsSpecs.org % name % version
-      }
+      val entries = (smithy4sAwsSpecEntries).value
+      val legacySpecs = (smithy4sAwsSpecs).value
+      val version = (smithy4sAwsSpecsVersion).value
+      val org = smithy4s.codegen.AwsSpecs.org
+      val fromEntries = entries.map { case (name, v) => org % name % v }
+      val fromLegacy = legacySpecs.map { name => org % name % version }
+      fromEntries ++ fromLegacy
     },
     config / smithy4sInternalDependenciesAsJars := Def.uncached {
       implicit val fc: xsbti.FileConverter = fileConverter.value

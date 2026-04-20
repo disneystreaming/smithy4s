@@ -122,13 +122,20 @@ trait Smithy4sModule extends ScalaModule {
     AWS.bomVersion
   }
 
-  def smithy4sAwsSpecs: T[Seq[(String, String)]] = Task {
+  def smithy4sAwsSpecs: T[Seq[String]] = Task {
+    Seq.empty[String]
+  }
+
+  def smithy4sAwsSpecEntries: T[Seq[(String, String)]] = Task {
     Seq.empty[(String, String)]
   }
 
   def smithy4sAwsSpecDependencies: T[Seq[Dep]] = Task {
     val org = AWS.org
-    smithy4sAwsSpecs().map { case (name, version) => mvn"$org:$name:$version" }
+    val version = smithy4sAwsSpecsVersion()
+    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) => mvn"$org:$name:$v" }
+    val fromLegacy = smithy4sAwsSpecs().map { name => mvn"$org:$name:$version" }
+    fromEntries ++ fromLegacy
   }
 
   def smithy4sResolvedAllExternalDependencies: T[Seq[PathRef]] = Task {
