@@ -121,7 +121,9 @@ trait Smithy4sModuleCommon extends ScalaModule {
   def smithy4sAwsSpecDependencies: T[Agg[Dep]] = T {
     val org = AWS.org
     val version = smithy4sAwsSpecsVersion()
-    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) => ivy"$org:$name:$v" }
+    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) =>
+      ivy"$org:$name:$v"
+    }
     val fromLegacy = smithy4sAwsSpecs().map { name => ivy"$org:$name:$version" }
     fromEntries ++ fromLegacy
   }

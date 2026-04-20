@@ -2,6 +2,7 @@ import sbt._
 import scala.jdk.CollectionConverters._
 import scala.io.Source
 import scala.util.Using
+import software.amazon.smithy.model.node.{Node, ObjectNode}
 
 object AwsBoilerplate {
 
@@ -79,18 +80,21 @@ object AwsBoilerplate {
   ): File = {
     val entries = sortedServices.map { case (name, version) =>
       val protocol = protocols.getOrElse(name, "unknown")
-      s"""  {"name": "${jsonEscape(name)}", "version": "${jsonEscape(
-        version
-      )}", "protocol": "${jsonEscape(protocol)}"}"""
+      ObjectNode
+        .builder()
+        .withMember("name", name)
+        .withMember("version", version)
+        .withMember("protocol", protocol)
+        .build()
     }
 
-    val content =
-      s"""|{
-          |  "services": [
-          |${entries.mkString("," + System.lineSeparator())}
-          |  ]
-          |}
-          |""".stripMargin
+    val servicesArray = Node.arrayNode(entries: _*)
+    val root = ObjectNode
+      .builder()
+      .withMember("services", servicesArray)
+      .build()
+
+    val content = Node.prettyPrintJson(root)
 
     val target = resourceDir / "aws-service-metadata.json"
     sbt.IO.write(target, content)
@@ -276,12 +280,5 @@ object AwsBoilerplate {
       case Nil        => ""
     }
   }
-
-  private def jsonEscape(s: String): String =
-    s.replace("\\", "\\\\")
-      .replace("\"", "\\\"")
-      .replace("\n", "\\n")
-      .replace("\r", "\\r")
-      .replace("\t", "\\t")
 
 }

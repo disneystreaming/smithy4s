@@ -133,7 +133,9 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sAwsSpecDependencies: T[Seq[Dep]] = Task {
     val org = AWS.org
     val version = smithy4sAwsSpecsVersion()
-    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) => mvn"$org:$name:$v" }
+    val fromEntries = smithy4sAwsSpecEntries().map { case (name, v) =>
+      mvn"$org:$name:$v"
+    }
     val fromLegacy = smithy4sAwsSpecs().map { name => mvn"$org:$name:$version" }
     fromEntries ++ fromLegacy
   }

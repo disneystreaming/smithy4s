@@ -164,10 +164,14 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
 
     val smithy4sAwsSpecs =
-      settingKey[Seq[String]]("Aws modules to load (legacy, uses smithy4sAwsSpecsVersion)")
+      settingKey[Seq[String]](
+        "Aws modules to load (legacy, uses smithy4sAwsSpecsVersion)"
+      )
 
     val smithy4sAwsSpecEntries =
-      settingKey[Seq[(String, String)]]("AWS spec modules with per-service versions: Seq((artifactName, version))")
+      settingKey[Seq[(String, String)]](
+        "AWS spec modules with per-service versions: Seq((artifactName, version))"
+      )
 
     val smithy4sAwsSpecDependencies =
       taskKey[Seq[ModuleID]](
