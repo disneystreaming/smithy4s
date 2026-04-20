@@ -193,9 +193,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    smithy4sAwsSpecs := Seq.empty,
     // Retained for backward compatibility — versions now come from per-service tuples in smithy4sAwsSpecs
     smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.bomVersion,
-    smithy4sAwsSpecs := Seq.empty,
     Compile / smithy4sAwsSpecDependencies := Def.uncached {
       (smithy4sAwsSpecs).value.map { case (name, version) =>
         smithy4s.codegen.AwsSpecs.org % name % version

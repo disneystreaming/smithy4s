@@ -168,14 +168,14 @@ object Dependencies {
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.52"
   }
 
-  object Mima {
-    val core = "com.typesafe" %% "mima-core" % "1.1.5"
-  }
-
   object AwsModels {
     val org = "software.amazon.api.models"
     val bomVersion = "1.0.215"
     val bom = org % "all" % bomVersion
+  }
+
+  object Mima {
+    val core = "com.typesafe" %% "mima-core" % "1.1.5"
   }
 
 }
