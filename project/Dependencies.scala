@@ -170,7 +170,7 @@ object Dependencies {
 
   object AwsModels {
     val org = "software.amazon.api.models"
-    val bomVersion = "1.0.215"
+    val bomVersion = "1.0.206"
     val bom = org % "all" % bomVersion
   }
 
