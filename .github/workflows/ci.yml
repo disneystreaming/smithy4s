@@ -7,6 +7,10 @@ on:
         required: false
         default: false
         type: boolean
+      publishSnapshotPr:
+        description: "PR number to publish snapshot from"
+        required: false
+        type: number
       publishMicrosite:
         description: "Publish Microsite"
         required: false
@@ -22,6 +26,7 @@ on:
     - cron: '0 0 * * 1,4'
 
 env:
+  CHECKOUT_REF: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publishSnapshotPr != '' && format('refs/pull/{0}/head', github.event.inputs.publishSnapshotPr) || github.ref }}
   SBT_OPTS: "-XX:MaxMetaspaceSize=4G -XX:MaxInlineLevel=20 -Xss2m -Xms512M -Xmx6G -XX:ReservedCodeCacheSize=256M"
 
 concurrency:
@@ -51,6 +56,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
         uses: coursier/cache-action@v6
@@ -123,6 +129,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
@@ -166,6 +173,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
         uses: coursier/setup-action@v1
