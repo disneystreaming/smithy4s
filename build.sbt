@@ -832,7 +832,7 @@ lazy val protobuf = projectMatrix
         )
       else
         Seq(
-          "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
+          "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
         )
     },
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
