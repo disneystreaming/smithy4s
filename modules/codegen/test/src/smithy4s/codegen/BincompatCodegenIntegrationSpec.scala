@@ -749,7 +749,7 @@ class BincompatCodegenIntegrationSpec extends FunSuite {
   private val smithy4sCoreDependency =
     // We're using a mutable version instead of BuildInfo
     // because we don't want a circular dependency - these tests support the codegen module, which core itself is generated with.
-    s"${BuildInfo.smithy4sOrg}::smithy4s-core:latest.stable"
+    s"${BuildInfo.smithy4sOrg}::smithy4s-core:0.18.+"
 
 // polyfill for Scala 2.12
   private implicit class PipeOps[A](private val self: A) {
