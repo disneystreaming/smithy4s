@@ -1151,7 +1151,7 @@ lazy val bootstrapped = projectMatrix
     libraryDependencies ++=
       munitDeps.value ++ Seq(
         Dependencies.Cats.core.value % Test,
-        "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+        "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
         Dependencies.Alloy.protobuf % "protobuf-src"
       ) ++ weaverDeps.value
   )
