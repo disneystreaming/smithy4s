@@ -8,6 +8,7 @@ Thank you!
 # Unreleased / next patch
 
 - Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
+- smithy4s-cats: provide transformations for EitherT in [#1932](https://github.com/disneystreaming/smithy4s/pull/1932)
 
 # 0.19.3
 
