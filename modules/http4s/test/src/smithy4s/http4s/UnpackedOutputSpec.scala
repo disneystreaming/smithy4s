@@ -44,7 +44,8 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
         .flatMap(_.as[Json])
         .map { body =>
           expect.same(
-            Json.obj("item" -> Json.obj("id" -> Json.fromString("required-id"))),
+            Json
+              .obj("item" -> Json.obj("id" -> Json.fromString("required-id"))),
             body
           )
         }
@@ -58,7 +59,8 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
         .flatMap(_.as[Json])
         .map { body =>
           expect.same(
-            Json.obj("item" -> Json.obj("id" -> Json.fromString("optional-id"))),
+            Json
+              .obj("item" -> Json.obj("id" -> Json.fromString("optional-id"))),
             body
           )
         }
