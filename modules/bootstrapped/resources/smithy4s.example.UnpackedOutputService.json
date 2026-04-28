@@ -1,0 +1,77 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "UnpackedOutputService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/optional": {
+            "get": {
+                "operationId": "GetOptionalItem",
+                "responses": {
+                    "200": {
+                        "description": "GetOptionalItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetOptionalItemResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/required": {
+            "get": {
+                "operationId": "GetRequiredItem",
+                "responses": {
+                    "200": {
+                        "description": "GetRequiredItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetRequiredItemResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GetOptionalItemResponseContent": {
+                "type": "object",
+                "properties": {
+                    "item": {
+                        "$ref": "#/components/schemas/UnpackedItem"
+                    }
+                }
+            },
+            "GetRequiredItemResponseContent": {
+                "type": "object",
+                "properties": {
+                    "item": {
+                        "$ref": "#/components/schemas/UnpackedItem"
+                    }
+                },
+                "required": [
+                    "item"
+                ]
+            },
+            "UnpackedItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            }
+        }
+    }
+}

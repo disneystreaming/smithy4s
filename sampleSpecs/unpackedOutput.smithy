@@ -2,8 +2,10 @@ $version: "2.0"
 
 namespace smithy4s.example
 
+use alloy#simpleRestJson
 use smithy4s.meta#unpackedOutput
 
+@simpleRestJson
 service UnpackedOutputService {
     version: "1.0.0"
     operations: [
@@ -13,8 +15,9 @@ service UnpackedOutputService {
 }
 
 @unpackedOutput
+@readonly
+@http(method: "GET", uri: "/required", code: 200)
 operation GetRequiredItem {
-    input := {}
     output := {
         @required
         item: UnpackedItem
@@ -22,8 +25,9 @@ operation GetRequiredItem {
 }
 
 @unpackedOutput
+@readonly
+@http(method: "GET", uri: "/optional", code: 200)
 operation GetOptionalItem {
-    input := {}
     output := {
         item: UnpackedItem
     }

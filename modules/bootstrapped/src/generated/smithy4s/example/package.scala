@@ -6,6 +6,8 @@ package object example {
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
   val DeprecatedService = DeprecatedServiceGen
+  type UnpackedOutputService[F[_]] = smithy4s.kinds.FunctorAlgebra[UnpackedOutputServiceGen, F]
+  val UnpackedOutputService = UnpackedOutputServiceGen
   type PizzaAdminService[F[_]] = smithy4s.kinds.FunctorAlgebra[PizzaAdminServiceGen, F]
   val PizzaAdminService = PizzaAdminServiceGen
   type FooService[F[_]] = smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
