@@ -81,7 +81,7 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
         .flatMap(resp => resp.as[Json].tupleLeft(resp.status))
         .map { case (status, body) =>
           expect.same(Status.Ok, status) &&
-          expect.same(Json.obj("id" -> Json.fromString("payload-id")), body)
+            expect.same(Json.obj("id" -> Json.fromString("payload-id")), body)
         }
     }
   }
