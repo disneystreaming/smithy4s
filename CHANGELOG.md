@@ -5,6 +5,24 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# Unreleased / next patch
+
+- Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
+
+# 0.19.3
+
+- Fix codegen bug when structure member had format trait applied in [#1949](https://github.com/disneystreaming/smithy4s/pull/1949)
+
+# 0.19.2
+
+- Update Scala Native to 0.5.x in [#1914](https://github.com/disneystreaming/smithy4s/pull/1914)
+- Support AWS's official Smithy models distribution in [#1920](https://github.com/disneystreaming/smithy4s/pull/1920)
+- Add an input to allow publishing any PR's snapshot in [#1921](https://github.com/disneystreaming/smithy4s/pull/1921)
+
+# 0.19.1
+
+- Bump Alloy to 0.3.38 in [#1919](https://github.com/disneystreaming/smithy4s/pull/1919)
+
 # 0.19.0
 
 ## Binary-Compatible-Friendly Codegen Enabled in Core Module in [#1900](https://github.com/disneystreaming/smithy4s/pull/1900)
