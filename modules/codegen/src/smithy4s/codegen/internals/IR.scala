@@ -407,6 +407,11 @@ private[internals] object Hint {
   case class BincompatAdded(version: VersionNumber) extends Hint
   case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
+  case class UnpackedOutput(
+      fieldName: String,
+      fieldType: Type,
+      modifier: Field.Modifier
+  ) extends Hint
   case object NoDefault extends Hint
   case object ErrorMessage extends Hint
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
