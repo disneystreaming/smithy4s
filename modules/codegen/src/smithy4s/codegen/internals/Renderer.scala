@@ -618,7 +618,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
           op.unpackedOutput match {
             case Some(uo) =>
-              line".withOutput($Schema_.bijection(${op.output.schemaRef}, (_: ${op.output}).${uo.fieldName}, (x: ${op.renderEffectiveOutput}) => ${op.output}(${uo.fieldName} = x)))"
+              line".withOutput($Schema_.bijection(${op.output.schemaRef}, (_: ${op.output}).${uo.fieldName}, ${op.output}(_)))"
             case None =>
               line".withOutput(${op.output.schemaRef})"
           },

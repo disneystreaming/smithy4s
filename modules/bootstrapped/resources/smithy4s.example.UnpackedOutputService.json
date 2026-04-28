@@ -5,6 +5,24 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/header": {
+            "get": {
+                "operationId": "GetHeaderItem",
+                "responses": {
+                    "200": {
+                        "description": "GetHeaderItem 200 response",
+                        "headers": {
+                            "X-Item-Id": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "required": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/optional": {
             "get": {
                 "operationId": "GetOptionalItem",
@@ -15,6 +33,23 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/GetOptionalItemResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payload": {
+            "get": {
+                "operationId": "GetPayloadItem",
+                "responses": {
+                    "200": {
+                        "description": "GetPayloadItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnpackedItem"
                                 }
                             }
                         }
@@ -35,6 +70,16 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/status": {
+            "get": {
+                "operationId": "GetStatusCode",
+                "responses": {
+                    "200": {
+                        "description": "GetStatusCode 200 response"
                     }
                 }
             }

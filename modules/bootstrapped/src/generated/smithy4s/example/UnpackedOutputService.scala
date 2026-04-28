@@ -18,8 +18,14 @@ trait UnpackedOutputServiceGen[F[_, _, _, _, _]] {
 
   /** HTTP GET /optional */
   def getOptionalItem(): F[Unit, Nothing, Option[UnpackedItem], Nothing, Nothing]
+  /** HTTP GET /payload */
+  def getPayloadItem(): F[Unit, Nothing, UnpackedItem, Nothing, Nothing]
   /** HTTP GET /required */
   def getRequiredItem(): F[Unit, Nothing, UnpackedItem, Nothing, Nothing]
+  /** HTTP GET /header */
+  def getHeaderItem(): F[Unit, Nothing, String, Nothing, Nothing]
+  /** HTTP GET /status */
+  def getStatusCode(): F[Unit, Nothing, Int, Nothing, Nothing]
 
 }
 
@@ -41,7 +47,10 @@ object UnpackedOutputServiceGen extends Service.Mixin[UnpackedOutputServiceGen, 
 
   val endpoints: Vector[smithy4s.Endpoint[UnpackedOutputServiceOperation, _, _, _, _, _]] = Vector(
     UnpackedOutputServiceOperation.GetOptionalItem,
+    UnpackedOutputServiceOperation.GetPayloadItem,
     UnpackedOutputServiceOperation.GetRequiredItem,
+    UnpackedOutputServiceOperation.GetHeaderItem,
+    UnpackedOutputServiceOperation.GetStatusCode,
   )
 
   def input[I, E, O, SI, SO](op: UnpackedOutputServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -79,11 +88,17 @@ object UnpackedOutputServiceOperation {
 
   object reified extends UnpackedOutputServiceGen[UnpackedOutputServiceOperation] {
     def getOptionalItem(): GetOptionalItem = GetOptionalItem()
+    def getPayloadItem(): GetPayloadItem = GetPayloadItem()
     def getRequiredItem(): GetRequiredItem = GetRequiredItem()
+    def getHeaderItem(): GetHeaderItem = GetHeaderItem()
+    def getStatusCode(): GetStatusCode = GetStatusCode()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: UnpackedOutputServiceGen[P], f: PolyFunction5[P, P1]) extends UnpackedOutputServiceGen[P1] {
     def getOptionalItem(): P1[Unit, Nothing, Option[UnpackedItem], Nothing, Nothing] = f[Unit, Nothing, Option[UnpackedItem], Nothing, Nothing](this.alg.getOptionalItem())
+    def getPayloadItem(): P1[Unit, Nothing, UnpackedItem, Nothing, Nothing] = f[Unit, Nothing, UnpackedItem, Nothing, Nothing](this.alg.getPayloadItem())
     def getRequiredItem(): P1[Unit, Nothing, UnpackedItem, Nothing, Nothing] = f[Unit, Nothing, UnpackedItem, Nothing, Nothing](this.alg.getRequiredItem())
+    def getHeaderItem(): P1[Unit, Nothing, String, Nothing, Nothing] = f[Unit, Nothing, String, Nothing, Nothing](this.alg.getHeaderItem())
+    def getStatusCode(): P1[Unit, Nothing, Int, Nothing, Nothing] = f[Unit, Nothing, Int, Nothing, Nothing](this.alg.getStatusCode())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: UnpackedOutputServiceGen[P]): PolyFunction5[UnpackedOutputServiceOperation, P] = new PolyFunction5[UnpackedOutputServiceOperation, P] {
@@ -98,22 +113,61 @@ object UnpackedOutputServiceOperation {
   object GetOptionalItem extends smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, Option[UnpackedItem], Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, Option[UnpackedItem], Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetOptionalItem"))
       .withInput(unit)
-      .withOutput(Schema.bijection(GetOptionalItemOutput.schema, (_: GetOptionalItemOutput).item, (x: Option[UnpackedItem]) => GetOptionalItemOutput(item = x)))
+      .withOutput(Schema.bijection(GetOptionalItemOutput.schema, (_: GetOptionalItemOutput).item, GetOptionalItemOutput(_)))
       .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/optional"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): GetOptionalItem = GetOptionalItem()
   }
+  final case class GetPayloadItem() extends UnpackedOutputServiceOperation[Unit, Nothing, UnpackedItem, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: UnpackedOutputServiceGen[F]): F[Unit, Nothing, UnpackedItem, Nothing, Nothing] = impl.getPayloadItem()
+    def ordinal: Int = 1
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, UnpackedItem, Nothing, Nothing] = GetPayloadItem
+  }
+  object GetPayloadItem extends smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, UnpackedItem, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, UnpackedItem, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetPayloadItem"))
+      .withInput(unit)
+      .withOutput(Schema.bijection(GetPayloadItemOutput.schema, (_: GetPayloadItemOutput).item, GetPayloadItemOutput(_)))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/payload"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+    def wrap(input: Unit): GetPayloadItem = GetPayloadItem()
+  }
   final case class GetRequiredItem() extends UnpackedOutputServiceOperation[Unit, Nothing, UnpackedItem, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: UnpackedOutputServiceGen[F]): F[Unit, Nothing, UnpackedItem, Nothing, Nothing] = impl.getRequiredItem()
-    def ordinal: Int = 1
+    def ordinal: Int = 2
     def input: Unit = ()
     def endpoint: smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, UnpackedItem, Nothing, Nothing] = GetRequiredItem
   }
   object GetRequiredItem extends smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, UnpackedItem, Nothing, Nothing] {
     val schema: OperationSchema[Unit, Nothing, UnpackedItem, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetRequiredItem"))
       .withInput(unit)
-      .withOutput(Schema.bijection(GetRequiredItemOutput.schema, (_: GetRequiredItemOutput).item, (x: UnpackedItem) => GetRequiredItemOutput(item = x)))
+      .withOutput(Schema.bijection(GetRequiredItemOutput.schema, (_: GetRequiredItemOutput).item, GetRequiredItemOutput(_)))
       .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/required"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
     def wrap(input: Unit): GetRequiredItem = GetRequiredItem()
+  }
+  final case class GetHeaderItem() extends UnpackedOutputServiceOperation[Unit, Nothing, String, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: UnpackedOutputServiceGen[F]): F[Unit, Nothing, String, Nothing, Nothing] = impl.getHeaderItem()
+    def ordinal: Int = 3
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, String, Nothing, Nothing] = GetHeaderItem
+  }
+  object GetHeaderItem extends smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, String, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, String, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetHeaderItem"))
+      .withInput(unit)
+      .withOutput(Schema.bijection(GetHeaderItemOutput.schema, (_: GetHeaderItemOutput).itemId, GetHeaderItemOutput(_)))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/header"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+    def wrap(input: Unit): GetHeaderItem = GetHeaderItem()
+  }
+  final case class GetStatusCode() extends UnpackedOutputServiceOperation[Unit, Nothing, Int, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: UnpackedOutputServiceGen[F]): F[Unit, Nothing, Int, Nothing, Nothing] = impl.getStatusCode()
+    def ordinal: Int = 4
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, Int, Nothing, Nothing] = GetStatusCode
+  }
+  object GetStatusCode extends smithy4s.Endpoint[UnpackedOutputServiceOperation,Unit, Nothing, Int, Nothing, Nothing] {
+    val schema: OperationSchema[Unit, Nothing, Int, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "GetStatusCode"))
+      .withInput(unit)
+      .withOutput(Schema.bijection(GetStatusCodeOutput.schema, (_: GetStatusCodeOutput).code, GetStatusCodeOutput(_)))
+      .withHints(Hints.dynamic(ShapeId("smithy.api", "http"), smithy4s.Document.obj("method" -> smithy4s.Document.fromString("GET"), "uri" -> smithy4s.Document.fromString("/status"), "code" -> smithy4s.Document.fromLong(200L))), Hints.dynamic(ShapeId("smithy.api", "readonly"), smithy4s.Document.obj()))
+    def wrap(input: Unit): GetStatusCode = GetStatusCode()
   }
 }
 

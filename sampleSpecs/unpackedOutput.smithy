@@ -11,6 +11,9 @@ service UnpackedOutputService {
     operations: [
         GetRequiredItem
         GetOptionalItem
+        GetPayloadItem
+        GetHeaderItem
+        GetStatusCode
     ]
 }
 
@@ -30,6 +33,39 @@ operation GetRequiredItem {
 operation GetOptionalItem {
     output := {
         item: UnpackedItem
+    }
+}
+
+@unpackedOutput
+@readonly
+@http(method: "GET", uri: "/payload", code: 200)
+operation GetPayloadItem {
+    output := {
+        @required
+        @httpPayload
+        item: UnpackedItem
+    }
+}
+
+@unpackedOutput
+@readonly
+@http(method: "GET", uri: "/header", code: 200)
+operation GetHeaderItem {
+    output := {
+        @required
+        @httpHeader("X-Item-Id")
+        itemId: String
+    }
+}
+
+@unpackedOutput
+@readonly
+@http(method: "GET", uri: "/status", code: 200)
+operation GetStatusCode {
+    output := {
+        @required
+        @httpResponseCode
+        code: Integer
     }
 }
 

@@ -17,6 +17,7 @@
 package smithy4s.http4s
 
 import cats.effect.IO
+import cats.syntax.all._
 import io.circe.Json
 import org.http4s._
 import org.http4s.circe.CirceInstances
@@ -32,6 +33,12 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
       IO.pure(UnpackedItem("required-id"))
     override def getOptionalItem(): IO[Option[UnpackedItem]] =
       IO.pure(Some(UnpackedItem("optional-id")))
+    override def getPayloadItem(): IO[UnpackedItem] =
+      IO.pure(UnpackedItem("payload-id"))
+    override def getHeaderItem(): IO[String] =
+      IO.pure("header-id")
+    override def getStatusCode(): IO[Int] =
+      IO.pure(201)
   }
 
   private val routesResource =
@@ -67,6 +74,46 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
     }
   }
 
+  test("server: @httpPayload field is wire-encoded as the bare payload") {
+    routesResource.use { routes =>
+      routes.orNotFound
+        .run(Request[IO](method = Method.GET, uri = uri"/payload"))
+        .flatMap(resp => resp.as[Json].tupleLeft(resp.status))
+        .map { case (status, body) =>
+          expect.same(Status.Ok, status) &&
+          expect.same(Json.obj("id" -> Json.fromString("payload-id")), body)
+        }
+    }
+  }
+
+  test("server: @httpHeader field is wire-encoded in a response header") {
+    routesResource.use { routes =>
+      routes.orNotFound
+        .run(Request[IO](method = Method.GET, uri = uri"/header"))
+        .flatMap(resp =>
+          resp.as[String].map { body =>
+            val headerValue =
+              resp.headers
+                .get(org.typelevel.ci.CIString("X-Item-Id"))
+                .map(_.head.value)
+            expect.same(Status.Ok, resp.status) &&
+            expect.same(Some("header-id"), headerValue) &&
+            expect.same("{}", body)
+          }
+        )
+    }
+  }
+
+  test("server: @httpResponseCode field is wire-encoded as the status code") {
+    routesResource.use { routes =>
+      routes.orNotFound
+        .run(Request[IO](method = Method.GET, uri = uri"/status"))
+        .map { resp =>
+          expect.same(Status.Created, resp.status)
+        }
+    }
+  }
+
   test("client/server roundtrip preserves the unpacked output values") {
     routesResource.use { routes =>
       val client = org.http4s.client.Client.fromHttpApp(routes.orNotFound)
@@ -77,8 +124,14 @@ object UnpackedOutputSpec extends SimpleIOSuite with CirceInstances {
           for {
             required <- service.getRequiredItem()
             optional <- service.getOptionalItem()
+            payload <- service.getPayloadItem()
+            header <- service.getHeaderItem()
+            status <- service.getStatusCode()
           } yield expect.same(UnpackedItem("required-id"), required) &&
-            expect.same(Some(UnpackedItem("optional-id")), optional)
+            expect.same(Some(UnpackedItem("optional-id")), optional) &&
+            expect.same(UnpackedItem("payload-id"), payload) &&
+            expect.same("header-id", header) &&
+            expect.same(201, status)
         }
     }
   }
