@@ -29,10 +29,10 @@ import smithy4s.meta.GenerateServiceProductTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
-import smithy4s.meta.UnpackedOutputTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
 import smithy4s.meta.TypeclassTrait
+import smithy4s.meta.UnpackedOutputTrait
 import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
