@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# Unreleased / next patch release
+
+- Render Maven Central in smithy-build.json when present in resolvers in [#1933](https://github.com/disneystreaming/smithy4s/pull/1933)
+
 # 0.19.0
 
 ## Binary-Compatible-Friendly Codegen Enabled in Core Module in [#1900](https://github.com/disneystreaming/smithy4s/pull/1900)
