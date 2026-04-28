@@ -64,10 +64,7 @@ object LSP extends ExternalModule with LSPCompat {
     val reposTask = Task
       .traverse(effectiveModules)(_.repositoriesTask)
       .map {
-        _.flatten.collect {
-          case r: MavenRepository if !r.root.contains("repo1.maven.org") =>
-            r.root
-        }
+        _.flatten.collect { case r: MavenRepository => r.root }
       }
       .map(s => ListSet(s*))
 

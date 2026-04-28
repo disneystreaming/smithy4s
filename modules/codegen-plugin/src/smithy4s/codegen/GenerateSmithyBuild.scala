@@ -123,7 +123,7 @@ private[codegen] object GenerateSmithyBuild {
       .foldLeft(ListSet.empty[String])(_ + _)
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
-    case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root
+    case mr: MavenRepository => mr.root
   }
 
   private def prepareInputDirs(
