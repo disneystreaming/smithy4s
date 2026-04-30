@@ -3,12 +3,27 @@ sidebar_label: Protobuf
 title: Protobuf serialisation
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 The `smithy4s-protobuf` module provides [protocol-buffers](https://protobuf.dev/) codecs that can read/write generated data-types from protobuf-encoded bytes.
 
+<Tabs groupId="build-tool">
+  <TabItem value="sbt" label="sbt">
+
+```scala
+"com.disneystreaming.smithy4s" %% "smithy4s-protobuf" % "@VERSION@"
 ```
-sbt : "com.disneystreaming.smithy4s" %% "smithy4s-protobuf" % "@VERSION@"
-mill : "com.disneystreaming.smithy4s::smithy4s-protobuf:@VERSION@"
+
+  </TabItem>
+  <TabItem value="mill" label="mill">
+
+```scala
+"com.disneystreaming.smithy4s::smithy4s-protobuf:@VERSION@"
 ```
+
+  </TabItem>
+</Tabs>
 
 The entrypoint for Protobuf parsing/writing is `smithy4s.protobuf.Protobuf`. See below for example usage.
 
