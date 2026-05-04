@@ -11,7 +11,7 @@ object Dependencies {
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
     // must keep 2.30.2 until upgrade to scala native 0.5
-    val jsoniterScalaVersion = "2.30.2"
+    val jsoniterScalaVersion = "2.38.1"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -66,7 +66,7 @@ object Dependencies {
 
   object Decline {
     // must be kept at 2.4.1 until upgrade to scala-native 0.5
-    val declineVersion = "2.4.1"
+    val declineVersion = "2.6.2"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
@@ -104,15 +104,15 @@ object Dependencies {
   }
 
   object Pprint {
-    val pprintVersion = "0.8.1"
+    val pprintVersion = "0.9.6"
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
 
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.6.0")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.7.0")
 
   object Http4s {
-    val http4sVersion = "0.23.33"
+    val http4sVersion = "0.23.34"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -147,9 +147,9 @@ object Dependencies {
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
-  object Munit extends MunitCross("1.2.4")
-  object MunitMilestone extends MunitCross("1.2.4")
-  object MunitV1 extends MunitCross("1.2.4") {
+  object Munit extends MunitCross("1.3.0")
+  object MunitMilestone extends MunitCross("1.3.0")
+  object MunitV1 extends MunitCross("1.3.0") {
     val diff: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-diff" % munitVersion)
   }
