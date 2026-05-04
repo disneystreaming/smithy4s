@@ -16,7 +16,8 @@
 
 package smithy4s.schematests
 
-import munit._
+import cats.instances.int
+import munit.*
 import smithy4s.Enumeration
 import smithy4s.ShapeId
 import smithy4s.Hints
@@ -24,9 +25,13 @@ import smithy4s.Lazy
 import smithy4s.Bijection
 import smithy4s.Refinement
 import smithy4s.ShapeTag
-import cats.syntax.all._
-import smithy4s.schema.Schema._
-import smithy4s.schema._
+import cats.syntax.all.*
+import org.http4s.Header.ToRaw.Primitive
+import pprint.Tree.Lazy
+import smithy4s.schema.Schema.*
+import smithy4s.schema.*
+
+import javax.xml.validation.Schema
 
 class HintsTransformationSpec() extends FunSuite {
 

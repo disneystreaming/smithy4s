@@ -5,7 +5,7 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.14.0"
     )
 
   val Jsoniter = new {
@@ -48,7 +48,7 @@ object Dependencies {
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       // must remain on 2.11 until we update scala-native version
-      Def.setting("org.typelevel" %%% "cats-core" % "2.11.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.13.0")
   }
 
   val Monocle = new {
@@ -58,7 +58,7 @@ object Dependencies {
 
   object Circe {
     // we have to stay on 0.14.8 until we move to scala-native 0.5.x
-    val circeVersion = "0.14.8"
+    val circeVersion = "0.14.15"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -84,7 +84,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.11.2")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.13.0")
   }
 
   object Mill {
@@ -130,7 +130,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.10.0"
+    val weaverVersion = "0.12.0"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "weaver-cats" % weaverVersion)
@@ -147,15 +147,15 @@ object Dependencies {
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
-  object Munit extends MunitCross("0.7.29")
-  object MunitMilestone extends MunitCross("1.0.0-M6")
-  object MunitV1 extends MunitCross("1.0.0") {
+  object Munit extends MunitCross("1.2.4")
+  object MunitMilestone extends MunitCross("1.2.4")
+  object MunitV1 extends MunitCross("1.2.4") {
     val diff: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-diff" % munitVersion)
   }
 
   val Scalacheck = new {
-    val scalacheckVersion = "1.17.1"
+    val scalacheckVersion = "1.19.0"
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
