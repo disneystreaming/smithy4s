@@ -38,7 +38,7 @@ The module exposes `CachedSchemaCompiler`s that produce `cats.Show` and `cats.Ha
 - `smithy4s.interopcats.SchemaVisitorShow`
 - `smithy4s.interopcats.SchemaVisitorHash`
 
-The recommended way to use them is to let smithy4s place the resulting instances directly in the generated companion objects via the [`smithy4s.meta#typeclass` trait](../04-codegen/01-customisation/09-typeclass) - that page walks through the `cats.Hash` case end-to-end.
+The recommended way to use them is to let smithy4s place the resulting instances directly in the generated companion objects via the [`smithy4s.meta#typeclass` trait](../04-codegen/01-customisation/09-typeclass.md) - that page walks through the `cats.Hash` case end-to-end.
 
 If you need an instance for a specific type on an ad-hoc basis, you can also invoke the visitor directly:
 
