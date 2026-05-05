@@ -10,6 +10,17 @@ Thank you!
 - Add an `@smithy4s.meta#unpackedOutput` trait that can be used to avoid packing an operation's output up in an additional case class in user code in [#1934](https://github.com/disneystreaming/smithy4s/pull/1934)
 - smithy4s-cats: provide transformations for EitherT in [#1932](https://github.com/disneystreaming/smithy4s/pull/1932)
 - Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
+- Fix `scalapb-runtime` dependency in [#1945](https://github.com/disneystreaming/smithy4s/pull/1945)
+
+# 0.19.2
+
+- Update Scala Native to 0.5.x in [#1914](https://github.com/disneystreaming/smithy4s/pull/1914)
+- Support AWS's official Smithy models distribution in [#1920](https://github.com/disneystreaming/smithy4s/pull/1920)
+- Add an input to allow publishing any PR's snapshot in [#1921](https://github.com/disneystreaming/smithy4s/pull/1921)
+
+# 0.19.1
+
+- Bump Alloy to 0.3.38 in [#1919](https://github.com/disneystreaming/smithy4s/pull/1919)
 
 # 0.19.0
 
