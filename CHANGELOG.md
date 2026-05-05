@@ -10,6 +10,7 @@ Thank you!
 - Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
 - smithy4s-cats: provide transformations for EitherT in [#1932](https://github.com/disneystreaming/smithy4s/pull/1932)
 - Fix `scalapb-runtime` dependency in [#1945](https://github.com/disneystreaming/smithy4s/pull/1945)
+- Fix link to alloy protobuf traits documentation in [#1947](https://github.com/disneystreaming/smithy4s/pull/1947)
 
 # 0.19.3
 
