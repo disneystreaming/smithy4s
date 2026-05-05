@@ -1,0 +1,122 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "UnpackedOutputService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/header": {
+            "get": {
+                "operationId": "GetHeaderItem",
+                "responses": {
+                    "200": {
+                        "description": "GetHeaderItem 200 response",
+                        "headers": {
+                            "X-Item-Id": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "required": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/optional": {
+            "get": {
+                "operationId": "GetOptionalItem",
+                "responses": {
+                    "200": {
+                        "description": "GetOptionalItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetOptionalItemResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payload": {
+            "get": {
+                "operationId": "GetPayloadItem",
+                "responses": {
+                    "200": {
+                        "description": "GetPayloadItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnpackedItem"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/required": {
+            "get": {
+                "operationId": "GetRequiredItem",
+                "responses": {
+                    "200": {
+                        "description": "GetRequiredItem 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetRequiredItemResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/status": {
+            "get": {
+                "operationId": "GetStatusCode",
+                "responses": {
+                    "200": {
+                        "description": "GetStatusCode 200 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GetOptionalItemResponseContent": {
+                "type": "object",
+                "properties": {
+                    "item": {
+                        "$ref": "#/components/schemas/UnpackedItem"
+                    }
+                }
+            },
+            "GetRequiredItemResponseContent": {
+                "type": "object",
+                "properties": {
+                    "item": {
+                        "$ref": "#/components/schemas/UnpackedItem"
+                    }
+                },
+                "required": [
+                    "item"
+                ]
+            },
+            "UnpackedItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            }
+        }
+    }
+}

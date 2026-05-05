@@ -23,6 +23,15 @@ structure only {}
 @trait(selector: ":is(service, operation)")
 structure packedInputs {}
 
+/// the unpackedOutput trait can be added to operations whose output structure
+/// contains exactly a single member. This trait tells smithy4s to generate
+/// the operation's method so that it returns the inner member's type directly,
+/// rather than the wrapping output structure.
+/// On the wire, the operation's output is unchanged: it is still serialized
+/// as the wrapping structure.
+@trait(selector: "operation")
+structure unpackedOutput {}
+
 /// the adtMember trait can be added to structures that are targeted by
 /// a single union. This trait tells smithy4s to generate the code
 /// such that the structure directly extends the union's sealed trait.

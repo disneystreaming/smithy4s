@@ -616,7 +616,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         indent(
           line".withInput(${op.input.schemaRef})",
           Option(op.errors).filter(_.nonEmpty).as(line".withError(${opErrorDef}.errorSchema)"),
-          line".withOutput(${op.output.schemaRef})",
+          op.unpackedOutput match {
+            case Some(uo) =>
+              line".withOutput($Schema_.bijection(${op.output.schemaRef}, (_: ${op.output}).${uo.fieldName}, ${op.output}(_)))"
+            case None =>
+              line".withOutput(${op.output.schemaRef})"
+          },
           op.streamedInput.map(si => line".withStreamedInput(${renderStreamingSchema(si)})"),
           op.streamedOutput.map(si => line".withStreamedOutput(${renderStreamingSchema(si)})"),
           memberHints(op.hints).surroundIfNotEmpty(line".withHints(", line")")
@@ -1631,9 +1636,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"input"
       } else op.params.map(f => line"input.${f.name}").intercalate(Line.comma)
 
+    def unpackedOutput: Option[Hint.UnpackedOutput] =
+      op.hints.collectFirst { case h: Hint.UnpackedOutput => h }
+
+    def renderEffectiveOutput: Line = unpackedOutput match {
+      case Some(uo) =>
+        Line.fieldType(
+          Field(uo.fieldName, uo.fieldType, uo.modifier, 0, Nil)
+        )
+      case None => line"${op.output}"
+    }
+
     def renderAlgParams(serviceName: String) = {
       line"${op.input}, ${if (op.errors.isEmpty) line"Nothing"
-      else NameRef(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput
+      else NameRef(s"$serviceName.${op.name}Error")}, $renderEffectiveOutput, ${op.streamedInput
         .map(_.tpe)
         .getOrElse(Type.PrimitiveType(Nothing))}, ${op.streamedOutput
         .map(_.tpe)

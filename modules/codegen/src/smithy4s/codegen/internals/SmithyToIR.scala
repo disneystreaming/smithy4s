@@ -32,6 +32,7 @@ import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.ScalaImportsTrait
 import smithy4s.meta.TypeclassTrait
+import smithy4s.meta.UnpackedOutputTrait
 import smithy4s.meta.ValidateNewtypeTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
@@ -560,6 +561,18 @@ private[codegen] class SmithyToIR(
             val outputType =
               op.getOutputShape().tpe.getOrElse(Type.unit)
 
+            val unpackedOutputHint: Option[Hint] =
+              if (op.hasTrait(classOf[UnpackedOutputTrait])) {
+                op.getOutputShape()
+                  .shape
+                  .toList
+                  .flatMap(_.fields)
+                  .headOption
+                  .map { field =>
+                    Hint.UnpackedOutput(field.name, field.tpe, field.modifier)
+                  }
+              } else None
+
             Operation(
               op.getId(),
               op.name,
@@ -570,7 +583,7 @@ private[codegen] class SmithyToIR(
               outputType,
               streamedInput,
               streamedOutput,
-              hints(op)
+              hints(op) ++ unpackedOutputHint.toList
             )
           }
 
