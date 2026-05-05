@@ -3,12 +3,27 @@ sidebar_label: XML
 title: XML serialisation
 ---
 
-The `smithy4s-xml` module provides [fs2-data](https://fs2-data.gnieh.org/documentation/xml/) encoders/decoders that can read/write generated data-types from/to XML bytes/strings. It is provided at the following coordinates :
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
+The `smithy4s-xml` module provides [fs2-data](https://fs2-data.gnieh.org/documentation/xml/) encoders/decoders that can read/write generated data-types from/to XML bytes/strings. It is provided at the following coordinates:
+
+<Tabs groupId="build-tool">
+  <TabItem value="sbt" label="sbt">
+
+```scala
+"com.disneystreaming.smithy4s" %% "smithy4s-xml" % "@VERSION@"
 ```
-sbt : "com.disneystreaming.smithy4s" %% "smithy4s-xml" % "@VERSION@"
-mill : "com.disneystreaming.smithy4s::smithy4s-xml:@VERSION@"
+
+  </TabItem>
+  <TabItem value="mill" label="mill">
+
+```scala
+"com.disneystreaming.smithy4s::smithy4s-xml:@VERSION@"
 ```
+
+  </TabItem>
+</Tabs>
 
 The entrypoint for  `smithy4s.xml.Xml`. See below for example usage.
 

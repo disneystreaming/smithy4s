@@ -1,0 +1,120 @@
+---
+sidebar_label: Cats integration
+title: Cats integration
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The `smithy4s-cats` module provides [cats](https://typelevel.org/cats/)-based integrations for Smithy4s. It contains instances of cats typeclasses for types defined in Smithy4s, schema-driven derivations of `Show` and `Hash`, and utilities to bridge generated service algebras with `cats.data.EitherT`.
+
+This module is provided at the following coordinates:
+
+<Tabs groupId="build-tool">
+  <TabItem value="sbt" label="sbt">
+
+```scala
+"com.disneystreaming.smithy4s" %% "smithy4s-cats" % "@VERSION@"
+```
+
+  </TabItem>
+  <TabItem value="mill" label="mill">
+
+```scala
+"com.disneystreaming.smithy4s::smithy4s-cats:@VERSION@"
+```
+
+  </TabItem>
+</Tabs>
+
+## Typeclass instances
+
+Instances of cats typeclasses for primitive types used by Smithy4s (e.g. `Blob`, `Document`, `ShapeId`, `Timestamp`) are available under `smithy4s.interopcats.instances`. Instances for `Nullable[A]` (`Monoid`, `Hash`, `Show`) are also provided whenever the underlying `A` has the corresponding instance.
+
+## Deriving `Show` and `Hash` from schemas
+
+The module exposes `CachedSchemaCompiler`s that produce `cats.Show` and `cats.Hash` instances for any type that has a Smithy4s `Schema`:
+
+- `smithy4s.interopcats.SchemaVisitorShow`
+- `smithy4s.interopcats.SchemaVisitorHash`
+
+The recommended way to use them is to let smithy4s place the resulting instances directly in the generated companion objects via the [`smithy4s.meta#typeclass` trait](../04-codegen/01-customisation/09-typeclass.md) - that page walks through the `cats.Hash` case end-to-end.
+
+If you need an instance for a specific type on an ad-hoc basis, you can also invoke the visitor directly:
+
+```scala mdoc:silent
+import cats.Show
+import smithy4s.example.hello.Person
+import smithy4s.interopcats.SchemaVisitorShow
+
+implicit val personShow: Show[Person] =
+  SchemaVisitorShow.fromSchema(Person.schema)
+```
+
+```scala mdoc
+Show[Person].show(Person(name = "John Doe"))
+```
+
+## `MonadThrow` interoperability
+
+Smithy4s defines an internal `MonadThrowLike` capability that is used by some of its interpreters. Importing `smithy4s.interopcats._` brings in an implicit bridge that derives a `MonadThrowLike[F]` from any `cats.MonadThrow[F]`, making it easy to use effect types like `cats.effect.IO` wherever `MonadThrowLike` is required.
+
+## Monoid for endpoint middleware
+
+A `cats.Monoid` instance is provided for `smithy4s.Endpoint.Middleware`, with `combine` defined as `andThen` and `empty` as the no-op middleware. This makes it convenient to compose middlewares using cats syntax.
+
+## `EitherT` transformations
+
+The `smithy4s.interopcats.EitherTTransformations` object provides ready-made [error-related transformations](smithy4s-transformations.md#error-related-transformations) for `cats.data.EitherT`. This lets you switch between a mono-functor view of a service (errors as `Throwable` in `F`) and a bi-functor view (errors surfaced as the left side of `EitherT[F, E, A]`) without writing the transformation by hand.
+
+<details>
+  <summary>`kvstore.smithy` spec used in the examples below</summary>
+
+```scala mdoc:passthrough
+docs.InlineSmithyFile.fromSample("kvstore.smithy")
+```
+
+</details>
+
+### Surfacing errors into `EitherT`
+
+```scala mdoc:reset
+import cats.effect.IO
+import cats.data.EitherT
+import smithy4s.example._
+import smithy4s.example.KVStore
+import smithy4s.interopcats.EitherTTransformations
+
+val kvStoreIO: KVStore[IO] = new KVStore[IO] {
+  def delete(key: String): IO[Unit] = IO.unit
+  def put(key: String, value: String): IO[Unit] = IO.unit
+  def get(key: String): IO[Value] =
+    IO.raiseError(KeyNotFoundError(s"Key $key wasn't found"))
+}
+
+val kvStoreEitherT: KVStore.ErrorAware[EitherT[IO, *, *]] =
+  kvStoreIO.transform(EitherTTransformations.surfaceError[IO])
+```
+
+### Absorbing errors from `EitherT`
+
+```scala mdoc
+val kvStoreEitherTImpl: KVStore.ErrorAware[EitherT[IO, *, *]] =
+  new KVStore.ErrorAware[EitherT[IO, *, *]] {
+    def delete(key: String): EitherT[IO, KVStore.DeleteError, Unit] =
+      EitherT.rightT(())
+    def put(key: String, value: String): EitherT[IO, KVStore.PutError, Unit] =
+      EitherT.rightT(())
+    def get(key: String): EitherT[IO, KVStore.GetError, Value] =
+      EitherT.leftT(
+        KVStore.GetError.KeyNotFoundErrorCase(
+          KeyNotFoundError(s"Key $key wasn't found")
+        )
+      )
+  }
+
+val kvStoreIOAgain: KVStore[IO] =
+  kvStoreEitherTImpl.transform(EitherTTransformations.absorbError[IO])
+```
+
+See the [Smithy4s Transformations guide](smithy4s-transformations.md) for more on the underlying `SurfaceError` / `AbsorbError` abstractions.

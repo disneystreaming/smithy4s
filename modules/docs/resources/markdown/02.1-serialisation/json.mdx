@@ -3,14 +3,29 @@ sidebar_label: JSON
 title: JSON serialisation
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 The `smithy4s-json` module provides [jsoniter-based](https://github.com/plokhotnyuk/jsoniter-scala) encoders/decoders that can read/write generated data-types from/to JSON bytes/strings, without an intermediate JSON ADT. The performance of this module is [very competitive](https://plokhotnyuk.github.io/jsoniter-scala/) in the Scala ecosystem.
 
-This module is provided at the following coordinates :
+This module is provided at the following coordinates:
 
+<Tabs groupId="build-tool">
+  <TabItem value="sbt" label="sbt">
+
+```scala
+"com.disneystreaming.smithy4s" %% "smithy4s-json" % "@VERSION@"
 ```
-sbt : "com.disneystreaming.smithy4s" %% "smithy4s-json" % "@VERSION@"
-mill : "com.disneystreaming.smithy4s::smithy4s-json:@VERSION@"
+
+  </TabItem>
+  <TabItem value="mill" label="mill">
+
+```scala
+"com.disneystreaming.smithy4s::smithy4s-json:@VERSION@"
 ```
+
+  </TabItem>
+</Tabs>
 
 The entrypoint for JSON parsing/writing is `smithy4s.json.Json`. See below for example usage.
 

@@ -8,6 +8,7 @@ Thank you!
 # Unreleased / next patch
 
 - Add an `@smithy4s.meta#unpackedOutput` trait that can be used to avoid packing an operation's output up in an additional case class in user code in [#1934](https://github.com/disneystreaming/smithy4s/pull/1934)
+- smithy4s-cats: provide transformations for EitherT in [#1932](https://github.com/disneystreaming/smithy4s/pull/1932)
 
 # 0.19.0
 

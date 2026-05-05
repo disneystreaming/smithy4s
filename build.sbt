@@ -138,7 +138,13 @@ lazy val docsRendering =
           "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
         )
       ),
-      mdocExtraArguments := Seq("--check-link-hygiene"),
+      mdocExtraArguments := Seq(
+        "--check-link-hygiene",
+        "--markdown-extensions",
+        "md",
+        "--markdown-extensions",
+        "mdx"
+      ),
       libraryDependencies ++= Seq(
         Dependencies.Jsoniter.macros.value,
         Dependencies.Http4s.emberClient.value,
