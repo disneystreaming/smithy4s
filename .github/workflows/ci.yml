@@ -211,7 +211,8 @@ jobs:
         run: |
           sbt scalafmtCheckAll \
               headerCheck \
-              "scalafixAll --check"
+              scalafix_2_13_jvm \
+              scalafixTests_2_13_jvm
 
   docs:
     name: Docs (mdoc + website)
