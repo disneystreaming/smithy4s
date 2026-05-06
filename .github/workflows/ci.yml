@@ -34,8 +34,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pre-compile:
+    name: Pre-compile (codegen)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: pre-compile
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Compile codegen chain
+        run: |
+          sbt protocol/compile \
+              codegen/compile \
+              codegen-cli/compile \
+              protocol/Test/compile \
+              codegen/Test/compile \
+              codegen-cli/Test/compile \
+              protocol/pushRemoteCache \
+              codegen/pushRemoteCache \
+              codegen-cli/pushRemoteCache
+
+      - name: Upload pre-compile cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilation-pre.zip
+          path: /tmp/remote-cache
+          retention-days: 3
+
   compile:
     name: Compile ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
+    needs: pre-compile
     strategy:
       fail-fast: true
       matrix:
@@ -72,13 +116,28 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Download pre-compile cache
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-pre.zip
+          path: /tmp/remote-cache
+
       - name: Compile
         # cs fetch is only needed to work around the following issue https://github.com/VirtusLab/scala-cli/issues/4108
+        # The codegen chain is pulled from the pre-compile artifact and re-pushed
+        # so it ends up in this cell's uploaded cache too. This way downstream
+        # jobs (test, mima) get codegen-cli for `genSmithy` invocations.
         run: |
           cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
-          sbt compile_$BUILD_KEY \
+          sbt protocol/pullRemoteCache \
+              codegen/pullRemoteCache \
+              codegen-cli/pullRemoteCache \
+              compile_$BUILD_KEY \
               testCompile_$BUILD_KEY \
-              pushRemoteCache_$BUILD_KEY
+              pushRemoteCache_$BUILD_KEY \
+              protocol/pushRemoteCache \
+              codegen/pushRemoteCache \
+              codegen-cli/pushRemoteCache
 
       - name: Check for untracked changes
         run: |
@@ -140,7 +199,10 @@ jobs:
       - name: Run tests
         run: |
           cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
-          sbt pullRemoteCache_$BUILD_KEY \
+          sbt protocol/pullRemoteCache \
+              codegen/pullRemoteCache \
+              codegen-cli/pullRemoteCache \
+              pullRemoteCache_$BUILD_KEY \
               test_$BUILD_KEY
 
   mima:
@@ -181,7 +243,7 @@ jobs:
           path: /tmp/remote-cache
 
       - name: Check for Binary Compatibility
-        run: sbt pullRemoteCache_$BUILD_KEY mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
+        run: sbt protocol/pullRemoteCache codegen/pullRemoteCache codegen-cli/pullRemoteCache pullRemoteCache_$BUILD_KEY mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
   checks:
     name: Checks (scalafmt, scalafix, headers)
