@@ -215,6 +215,7 @@ jobs:
 
   docs:
     name: Docs (mdoc + website)
+    needs: compile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
@@ -237,14 +238,21 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Download compilation cache (2_13_jvm)
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-2_13_jvm.zip
+          path: /tmp/remote-cache
+
       - name: Render mdoc
-        run: sbt "docsRendering/mdoc"
+        run: sbt pullRemoteCache_2_13_jvm "docsRendering/mdoc"
 
       - name: Build website
         run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
 
   sbt-plugin:
     name: sbt plugin (scripted)
+    needs: compile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
@@ -267,11 +275,21 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Download compilation cache (jvm)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: compilation-*_jvm.zip
+          path: /tmp/remote-cache
+
+      - name: Merge compilation caches
+        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
+
       - name: Run scripted
-        run: sbt scripted
+        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm scripted
 
   mill-plugin:
     name: mill plugin tests
+    needs: compile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
@@ -294,8 +312,23 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Download compilation cache (2_13_jvm)
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-2_13_jvm.zip
+          path: /tmp/remote-cache/2_13_jvm
+
+      - name: Download compilation cache (3_0_jvm)
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-3_0_jvm.zip
+          path: /tmp/remote-cache/3_0_jvm
+
+      - name: Merge compilation caches
+        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
+
       - name: Run mill plugin tests
-        run: sbt millCodegenPlugin/test
+        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm millCodegenPlugin/test
 
   build-success-checkpoint:
     runs-on: ubuntu-latest
