@@ -137,6 +137,13 @@ jobs:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
 
+      - name: Link tests (js/native only)
+        if: matrix.scalaPlatform != 'jvm'
+        run: |
+          cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
+          sbt pullRemoteCache_$BUILD_KEY \
+              testLink_$BUILD_KEY
+
       - name: Run tests
         run: |
           cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17

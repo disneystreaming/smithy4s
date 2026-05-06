@@ -707,7 +707,26 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       }
     }
 
-    cmds
+    // testLink_<scala>_<platform>: link tests without running them, so the
+    // js/native test job can isolate linking (memory-heavy) from running.
+    val linkCmds = all.flatMap { case (doublet, projects) =>
+      val taskOpt = doublet.platform match {
+        case "js"     => Some("Test/fastLinkJS")
+        case "native" => Some("Test/nativeLink")
+        case _        => None
+      }
+      taskOpt.map { task =>
+        Command.command(
+          s"testLink_${doublet.scala}_${doublet.platform}"
+        ) { state =>
+          projects.foldLeft(state) { case (st, proj) =>
+            s"$proj/$task" :: st
+          }
+        }
+      }
+    }
+
+    cmds ++ linkCmds
   }
 
   def configureScalaJSProject(proj: Project): Project = {
