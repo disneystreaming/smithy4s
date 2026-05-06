@@ -5,7 +5,7 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.18.51
+# 0.18.53
 
 * codegen: Add `smithy4sCodegen` metadata key for render-time package remapping. Supports `packagePrefix` (prepend a prefix to all generated packages), `packageMappings` (per-namespace overrides), and `excludedNamespaces` (skip namespaces from codegen). See [Package Remapping](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/package-remapping) for details.
 
