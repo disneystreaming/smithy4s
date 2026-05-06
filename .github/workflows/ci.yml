@@ -328,7 +328,7 @@ jobs:
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
       - name: Run mill plugin tests
-        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm millCodegenPlugin/test
+        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm millCodegenPlugin0_11/test millCodegenPlugin0_12/test millCodegenPlugin13/test
 
   build-success-checkpoint:
     runs-on: ubuntu-latest
@@ -379,14 +379,6 @@ jobs:
 
       - name: Cache
         uses: coursier/cache-action@v6
-
-      - name: Download compilation cache
-        uses: actions/download-artifact@v4
-        with:
-          path: /tmp/remote-cache
-
-      - name: Unpack compilation cache
-        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
       - name: Publish ${{ github.ref }}
         run: sbt 'show version; ci-release'
