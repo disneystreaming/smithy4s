@@ -5,7 +5,7 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# Unreleased / next patch
+# 0.19.4
 
 - Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
 - smithy4s-cats: provide transformations for EitherT in [#1932](https://github.com/disneystreaming/smithy4s/pull/1932)
