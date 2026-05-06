@@ -123,6 +123,22 @@ case class MillCustomRow(mv: String) extends CustomRow {
 
 }
 
+// Companion plugin that only attaches where ScalafixPlugin is loaded. Defines
+// scalafixCheck so it can be invoked per-project without sbt parsing `--check`
+// as a separate command.
+object ScalafixCheckPlugin extends AutoPlugin {
+  override def requires = _root_.scalafix.sbt.ScalafixPlugin
+  override def trigger = allRequirements
+
+  val scalafixCheck =
+    taskKey[Unit]("Runs scalafix --check (no-arg wrapper).")
+
+  override val projectSettings = Seq(
+    Compile / scalafixCheck := (Compile / scalafix).toTask(" --check").value,
+    Test / scalafixCheck := (Test / scalafix).toTask(" --check").value
+  )
+}
+
 object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.21"
@@ -682,28 +698,35 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     val jvm = (t: Doublet) => t.platform == "jvm"
 
-    val desiredCommands: Map[String, (String, Doublet => Boolean)] = Map(
-      "test" -> ("test", any),
-      "compile" -> ("compile", any),
-      "testCompile" -> ("Test/compile", any),
-      "publishLocal" -> ("publishLocal", any),
-      "pushRemoteCache" -> ("pushRemoteCache", any),
-      "pullRemoteCache" -> ("pullRemoteCache", any),
-      "scalafix" -> ("scalafix --check", jvm2_13),
-      "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
+    // Projects that disable ScalafixPlugin and so don't have scalafixCheck
+    // defined. Skip them when generating per-project scalafix aliases so the
+    // alias doesn't push commands for missing keys.
+    val scalafixDisabled: String => Boolean = _ == "bootstrapped"
+
+    val desiredCommands
+        : Map[String, (String, Doublet => Boolean, String => Boolean)] = Map(
+      "test"             -> ("test", any, _ => true),
+      "compile"          -> ("compile", any, _ => true),
+      "testCompile"      -> ("Test/compile", any, _ => true),
+      "publishLocal"     -> ("publishLocal", any, _ => true),
+      "pushRemoteCache"  -> ("pushRemoteCache", any, _ => true),
+      "pullRemoteCache"  -> ("pullRemoteCache", any, _ => true),
+      "scalafix"         -> ("scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
+      "scalafixTests"    -> ("Test/scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
+      "scalafmt"         -> ("scalafmtCheckAll", jvm2_13, _ => true),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm, _ => true)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
-      desiredCommands.filter(_._2._2(doublet)).map { case (name, (cmd, _)) =>
-        Command.command(
-          s"${name}_${doublet.scala}_${doublet.platform}"
-        ) { state =>
-          projects.foldLeft(state) { case (st, proj) =>
-            s"$proj/$cmd" :: st
+      desiredCommands.filter(_._2._2(doublet)).map {
+        case (name, (cmd, _, projectFilter)) =>
+          Command.command(
+            s"${name}_${doublet.scala}_${doublet.platform}"
+          ) { state =>
+            projects.filter(projectFilter).foldLeft(state) { case (st, proj) =>
+              s"$proj/$cmd" :: st
+            }
           }
-        }
       }
     }
 
