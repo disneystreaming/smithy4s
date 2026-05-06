@@ -65,9 +65,14 @@ private[codegen] object SmithyToIR {
       namespace: String
   ): CompilationUnit = {
     val smithyToIR = new SmithyToIR(model, namespace)
-    PostProcessor(
-      CompilationUnit(namespace, smithyToIR.allDecls, smithyToIR.rendererConfig)
+    val packageConfig = PackageConfig.load(model.getMetadata().asScala.toMap)
+    val raw = CompilationUnit(
+      namespace,
+      smithyToIR.allDecls,
+      smithyToIR.rendererConfig,
+      packageConfig
     )
+    PackageRemapper(PostProcessor(raw))
   }
 
   private[codegen] def prettifyName(

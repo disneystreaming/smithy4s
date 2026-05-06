@@ -47,23 +47,29 @@ private[codegen] object CodegenImpl { self =>
     )
 
     val (scalaFiles, smithyResources) = if (!args.skipScala) {
-      val codegenResult =
-        CodegenImpl.generate(model, args.allowedNS, args.excludedNS)
+      val originalNamespaces =
+        CodegenImpl.filteredNamespaces(model, args.allowedNS, args.excludedNS)
+      val codegenResult = CodegenImpl.generate(model, originalNamespaces)
       val scalaFiles = codegenResult.map { case (relPath, result) =>
         val fileName = result.name + ".scala"
         val scalaFile = (args.output / relPath / fileName)
         CodegenEntry.FromMemory(scalaFile, result.content)
       }
-      val generatedNamespaces = codegenResult.map(_._2.namespace).distinct
-      // when args.specs and generatedNamespaces are empty
+      val packageConfig = PackageConfig.load(model.getMetadata().asScala.toMap)
+      val renderedPackages: Map[String, String] = originalNamespaces
+        .map(ns => ns -> packageConfig.remap(ns))
+        .filter { case (k, v) => k != v }
+        .toMap
+      // when args.specs and originalNamespaces are empty
       // we produce two files that are essentially empty
       val skipResource =
-        args.skipResources || (args.specs.isEmpty && generatedNamespaces.isEmpty)
+        args.skipResources || (args.specs.isEmpty && originalNamespaces.isEmpty)
       val resources = if (!skipResource) {
         SmithyResources.produce(
           args.resourceOutput,
           args.specs,
-          generatedNamespaces
+          originalNamespaces,
+          renderedPackages
         )
       } else List.empty[CodegenEntry]
       (scalaFiles, resources)
@@ -142,11 +148,11 @@ private[codegen] object CodegenImpl { self =>
     (sourcesPaths ++ resourcesPaths).toSet
   }
 
-  private[internals] def generate(
+  private[internals] def filteredNamespaces(
       model: Model,
       allowedNS: Option[Set[String]],
       excludedNS: Option[Set[String]]
-  ): List[(os.RelPath, Renderer.Result)] = {
+  ): List[String] = {
     val namespaces = model
       .shapes()
       .iterator()
@@ -195,11 +201,16 @@ private[codegen] object CodegenImpl { self =>
       allGeneratedSet
     }
 
+    // Combine excludedNS from CodegenArgs with any excludedNamespaces from smithy4sCodegen metadata
+    val metadataExcluded =
+      PackageConfig.load(model.getMetadata().asScala.toMap).excludedNamespaces
     val excluded =
-      excludedNS.getOrElse(Set.empty).map(NamespacePattern.fromString)
+      excludedNS
+        .getOrElse(Set.empty)
+        .map(NamespacePattern.fromString) ++ metadataExcluded
     val allowed = allowedNS.map(_.map(NamespacePattern.fromString))
 
-    val filteredNamespaces = allowed match {
+    val filtered = allowed match {
       case Some(allowedNamespaces) =>
         namespaces
           .filter(namespace =>
@@ -217,19 +228,22 @@ private[codegen] object CodegenImpl { self =>
           .filterNot(alreadyGenerated)
     }
 
-    filteredNamespaces.toList
-      .map { ns => SmithyToIR(model, ns) }
-      .flatMap { cu =>
-        val amended = CollisionAvoidance(cu)
-        Renderer(amended)
-      }
-      .map { result =>
+    filtered.toList
+  }
+
+  private[internals] def generate(
+      model: Model,
+      namespaces: List[String]
+  ): List[(os.RelPath, Renderer.Result)] =
+    namespaces.flatMap { ns =>
+      val cu = SmithyToIR(model, ns)
+      val amended = CollisionAvoidance(cu)
+      Renderer(amended).map { result =>
         val relPath =
           os.RelPath(result.namespace.split('.').toIndexedSeq, ups = 0)
         (relPath, result)
       }
-
-  }
+    }
 
   def dumpModel(args: DumpModelArgs): String = {
     val (_, model) = ModelLoader.load(

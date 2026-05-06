@@ -212,6 +212,152 @@ final class RendererConfigSpec extends munit.FunSuite {
     )
   }
 
+  test("smithy4sCodegen.packagePrefix remaps generated package statement") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = { packagePrefix: "internal.generated" }
+        |
+        |namespace com.example
+        |
+        |structure Foo {
+        |  bar: String
+        |}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy)
+    val fooFile = files("internal.generated.com.example.Foo")
+    assert(fooFile.contains("package internal.generated.com.example"))
+  }
+
+  test("smithy4sCodegen.packageMappings remaps with explicit override") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = {
+        |  packageMappings: { "com.example": "custom.pkg" }
+        |}
+        |
+        |namespace com.example
+        |
+        |structure Bar {
+        |  x: String
+        |}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy)
+    val barFile = files("custom.pkg.Bar")
+    assert(barFile.contains("package custom.pkg"))
+  }
+
+  test(
+    "smithy4sCodegen.packageMappings overrides packagePrefix for matched namespace"
+  ) {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = {
+        |  packagePrefix: "prefix",
+        |  packageMappings: { "com.example.special": "explicit.pkg" }
+        |}
+        |
+        |namespace com.example.special
+        |
+        |structure Thing {}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy)
+    val thingFile = files("explicit.pkg.Thing")
+    assert(thingFile.contains("package explicit.pkg"))
+    assert(!thingFile.contains("prefix.com.example.special"))
+  }
+
+  test("smithy4sCodegen.packagePrefix applied when no mapping matches") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = {
+        |  packagePrefix: "prefix",
+        |  packageMappings: { "other.ns": "explicit.pkg" }
+        |}
+        |
+        |namespace com.example
+        |
+        |structure Baz {}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithy)
+    val bazFile = files("prefix.com.example.Baz")
+    assert(bazFile.contains("package prefix.com.example"))
+  }
+
+  test("smithy4sCodegen.excludedNamespaces skips listed namespaces") {
+    val smithyConfig =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = {
+        |  excludedNamespaces: ["excluded.ns"]
+        |}
+        |
+        |namespace excluded.ns
+        |
+        |structure Excluded {}
+        |""".stripMargin
+
+    val smithyAllowed =
+      """
+        |$version: "2.0"
+        |
+        |namespace allowed.ns
+        |
+        |structure Allowed {}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithyConfig, smithyAllowed)
+    assert(files.keys.exists(_.startsWith("allowed.ns")))
+    assert(!files.keys.exists(_.startsWith("excluded.ns")))
+  }
+
+  test(
+    "smithy4sCodegen.packagePrefix remaps cross-namespace Type.Ref imports"
+  ) {
+    val smithyA =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = { packagePrefix: "gen" }
+        |
+        |namespace com.a
+        |
+        |string MyString
+        |""".stripMargin
+
+    val smithyB =
+      """
+        |$version: "2.0"
+        |
+        |namespace com.b
+        |
+        |use com.a#MyString
+        |
+        |structure Outer {
+        |  value: MyString
+        |}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithyA, smithyB)
+    // com.a is remapped to gen.com.a; com.b is remapped to gen.com.b
+    val outerFile = files("gen.com.b.Outer")
+    assert(outerFile.contains("package gen.com.b"))
+    // The cross-reference should use the remapped package gen.com.a, not com.a
+    assert(outerFile.contains("gen.com.a"))
+  }
+
   private def testErrorsAsUnionsDisabled(smithy: String) = {
     val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
