@@ -345,7 +345,17 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     Compile / packageCache / moduleName := artifactName(
       moduleName.value,
       virtualAxes.value
-    )
+    ),
+    Test / packageCache / moduleName := artifactName(
+      moduleName.value + "-test",
+      virtualAxes.value
+    ),
+    pushRemoteCache := Def
+      .sequential(Compile / pushRemoteCache, Test / pushRemoteCache)
+      .value,
+    pullRemoteCache := Def
+      .sequential(Compile / pullRemoteCache, Test / pullRemoteCache)
+      .value
   )
 
   def scala3MigrationOption(scalaVersion: String) =
@@ -675,8 +685,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val desiredCommands: Map[String, (String, Doublet => Boolean)] = Map(
       "test" -> ("test", any),
       "compile" -> ("compile", any),
+      "testCompile" -> ("Test/compile", any),
       "publishLocal" -> ("publishLocal", any),
       "pushRemoteCache" -> ("pushRemoteCache", any),
+      "pullRemoteCache" -> ("pullRemoteCache", any),
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
       "scalafmt" -> ("scalafmtCheckAll", jvm2_13),

@@ -34,8 +34,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Test ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
+  compile:
+    name: Compile ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
     strategy:
       fail-fast: true
       matrix:
@@ -72,26 +72,13 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Run tests
+      - name: Compile
         # cs fetch is only needed to work around the following issue https://github.com/VirtusLab/scala-cli/issues/4108
         run: |
           cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
-          sbt test_$BUILD_KEY \
+          sbt compile_$BUILD_KEY \
+              testCompile_$BUILD_KEY \
               pushRemoteCache_$BUILD_KEY
-
-      - name: Run plugin tests
-        if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
-        run: |
-          sbt scripted
-
-      - name: Run checks
-        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm'
-        run: |
-          sbt scalafmtCheckAll \
-              headerCheck \
-              "docsRendering/mdoc" \
-              "scalafixAll --check"
-          (cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build)
 
       - name: Check for untracked changes
         run: |
@@ -99,26 +86,243 @@ jobs:
           ./scripts/check-dirty.sh
           echo "Built $(cat version)"
 
-      - name: Check for Binary Compatibility
-        if: matrix.scalaPlatform == 'jvm'
-        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
-
       - name: Upload compilation cache
         uses: actions/upload-artifact@v4
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
+          retention-days: 3
+
+  test:
+    name: Test ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
+    needs: compile
+    strategy:
+      fail-fast: true
+      matrix:
+        scalaVersion: ["2_12", "2_13", "3_0"]
+        scalaPlatform: ["jvm", "js"]
+        exclude:
+          - scalaVersion: "2_12"
+            scalaPlatform: "js"
+        include:
+          - scalaVersion: "3_0"
+            scalaPlatform: "native"
+    runs-on: ubuntu-latest
+    env:
+      BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: ${{ env.BUILD_KEY }}
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt scala-cli
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Download compilation cache
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-${{env.BUILD_KEY}}.zip
+          path: /tmp/remote-cache
+
+      - name: Run tests
+        run: |
+          cs fetch --no-default -r central ch.epfl.scala::bloop-frontend:2.0.17
+          sbt pullRemoteCache_$BUILD_KEY \
+              test_$BUILD_KEY
+
+  mima:
+    name: MiMa ${{matrix.scalaVersion}} (jvm)
+    needs: compile
+    strategy:
+      fail-fast: true
+      matrix:
+        scalaVersion: ["2_12", "2_13", "3_0"]
+    runs-on: ubuntu-latest
+    env:
+      BUILD_KEY: ${{matrix.scalaVersion}}_jvm
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: ${{ env.BUILD_KEY }}
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Download compilation cache
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-${{env.BUILD_KEY}}.zip
+          path: /tmp/remote-cache
+
+      - name: Check for Binary Compatibility
+        run: sbt pullRemoteCache_$BUILD_KEY mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
+
+  checks:
+    name: Checks (scalafmt, scalafix, headers)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: checks
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Run formatter and linters
+        run: |
+          sbt scalafmtCheckAll \
+              headerCheck \
+              "scalafixAll --check"
+
+  docs:
+    name: Docs (mdoc + website)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: docs
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Render mdoc
+        run: sbt "docsRendering/mdoc"
+
+      - name: Build website
+        run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
+
+  sbt-plugin:
+    name: sbt plugin (scripted)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: sbt-plugin
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Run scripted
+        run: sbt scripted
+
+  mill-plugin:
+    name: mill plugin tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: mill-plugin
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Run mill plugin tests
+        run: sbt millCodegenPlugin/test
 
   build-success-checkpoint:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [compile, test, mima, checks, docs, sbt-plugin, mill-plugin]
     steps:
       - name: Build matrix completed
-        run: echo "Build result is a ${{ needs.build.result }}"
+        run: |
+          echo "compile     = ${{ needs.compile.result }}"
+          echo "test        = ${{ needs.test.result }}"
+          echo "mima        = ${{ needs.mima.result }}"
+          echo "checks      = ${{ needs.checks.result }}"
+          echo "docs        = ${{ needs.docs.result }}"
+          echo "sbt-plugin  = ${{ needs.sbt-plugin.result }}"
+          echo "mill-plugin = ${{ needs.mill-plugin.result }}"
+          if [[ "${{ needs.compile.result }}" != "success" \
+             || "${{ needs.test.result }}" != "success" \
+             || "${{ needs.mima.result }}" != "success" \
+             || "${{ needs.checks.result }}" != "success" \
+             || "${{ needs.docs.result }}" != "success" \
+             || "${{ needs.sbt-plugin.result }}" != "success" \
+             || "${{ needs.mill-plugin.result }}" != "success" ]]; then
+            exit 1
+          fi
 
   release:
     name: Release
-    needs: build
+    needs: compile
     if:
       startsWith(github.ref, 'refs/tags/v') ||
       github.event.inputs.publishSnapshot == 'true' ||
