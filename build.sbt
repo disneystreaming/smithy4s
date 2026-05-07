@@ -849,7 +849,7 @@ lazy val protobuf = projectMatrix
     libraryDependencies ++= {
       if (virtualAxes.value.contains(VirtualAxis.jvm))
         Seq(
-          "com.google.protobuf" % "protobuf-java" % "3.24.4",
+          "com.google.protobuf" % "protobuf-java" % "3.25.9",
           "com.google.protobuf" % "protobuf-java-util" % "3.24.4" % Test
         )
       else
