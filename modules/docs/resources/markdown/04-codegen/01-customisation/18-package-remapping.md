@@ -70,6 +70,23 @@ When package remapping is active, cross-namespace `Type.Ref` nodes inside declar
 
 For example, if `com.a` is remapped to `gen.com.a`, a structure in `com.b` that references a type from `com.a` will import it as `gen.com.a.MyType`.
 
+### Cross-module remapping
+
+This also works across module boundaries. When Smithy4s generates code for Module A with a `packagePrefix`, it writes the namespace-to-package mapping into the `smithy4sGenerated` tracking manifest:
+
+```smithy
+metadata smithy4sGenerated = [{
+  namespaces: ["com.example.api"],
+  renderedPackages: { "com.example.api": "gen.com.example.api" }
+}]
+```
+
+When Module B depends on Module A's jar and runs codegen, the `ModelLoader` discovers Module A's Smithy model (and its manifest) from the classpath. Smithy4s reads the `renderedPackages` entries and applies them as additional package mappings before rendering Module B's code. Any `Type.Ref` pointing at `com.example.api` in Module B's generated code will be resolved to `gen.com.example.api` — matching the actual location of Module A's compiled classes.
+
+Module B's own `smithy4sCodegen` mappings take precedence over any upstream manifest entries.
+
+Note: `smithy4sCodegen` metadata itself **is** stripped from upstream jars (it starts with `smithy4s`), so each module defines only its own remapping. The manifest-based propagation described above is what carries remapping information downstream.
+
 ## Smithy namespace vs. Scala package
 
 Package remapping is purely a render-time transformation. The underlying Smithy ShapeIds remain unchanged, so:
@@ -77,7 +94,3 @@ Package remapping is purely a render-time transformation. The underlying Smithy 
 - The `smithy4sGenerated` manifest records original Smithy namespaces, preserving correct duplicate detection across multi-module builds.
 - The generated `val id: ShapeId` values in Scala code still reflect the original Smithy namespace.
 - Downstream tools that read the Smithy model (validators, OpenAPI generators, etc.) are unaffected.
-
-## Scope
-
-`smithy4sCodegen` metadata is stripped from upstream jars by `ModelLoader` (it starts with `smithy4s`), so each project applies its own remapping independently. This makes it safe to use different package structures in different modules of the same multi-module build.
