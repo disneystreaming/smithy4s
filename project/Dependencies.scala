@@ -5,7 +5,7 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.13.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.14.0"
     )
 
   val Jsoniter = new {
