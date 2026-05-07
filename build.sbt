@@ -850,7 +850,7 @@ lazy val protobuf = projectMatrix
       if (virtualAxes.value.contains(VirtualAxis.jvm))
         Seq(
           "com.google.protobuf" % "protobuf-java" % "3.25.9",
-          "com.google.protobuf" % "protobuf-java-util" % "3.24.4" % Test
+          "com.google.protobuf" % "protobuf-java-util" % "3.25.9" % Test
         )
       else
         Seq(
