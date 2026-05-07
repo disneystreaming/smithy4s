@@ -698,6 +698,14 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     val jvm = (t: Doublet) => t.platform == "jvm"
 
+    val anyProject: String => Boolean = _ => true
+    // The sbt and mill plugins have their own dedicated CI jobs that invoke
+    // their tests directly (scripted, millCodegenPlugin*/test). Including them
+    // in the per-cell test_<scala>_<platform> aggregate runs the same work
+    // twice — and worse, mill plugin tests are slow.
+    val isPluginProject: String => Boolean = p =>
+      p.startsWith("codegenPlugin") || p.startsWith("millCodegenPlugin")
+    val notPluginProject: String => Boolean = p => !isPluginProject(p)
     // Projects that disable ScalafixPlugin and so don't have scalafixCheck
     // defined. Skip them when generating per-project scalafix aliases so the
     // alias doesn't push commands for missing keys.
@@ -705,16 +713,16 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     val desiredCommands
         : Map[String, (String, Doublet => Boolean, String => Boolean)] = Map(
-      "test"             -> ("test", any, _ => true),
-      "compile"          -> ("compile", any, _ => true),
-      "testCompile"      -> ("Test/compile", any, _ => true),
-      "publishLocal"     -> ("publishLocal", any, _ => true),
-      "pushRemoteCache"  -> ("pushRemoteCache", any, _ => true),
-      "pullRemoteCache"  -> ("pullRemoteCache", any, _ => true),
+      "test"             -> ("test", any, notPluginProject),
+      "compile"          -> ("compile", any, anyProject),
+      "testCompile"      -> ("Test/compile", any, anyProject),
+      "publishLocal"     -> ("publishLocal", any, anyProject),
+      "pushRemoteCache"  -> ("pushRemoteCache", any, anyProject),
+      "pullRemoteCache"  -> ("pullRemoteCache", any, anyProject),
       "scalafix"         -> ("scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
       "scalafixTests"    -> ("Test/scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
-      "scalafmt"         -> ("scalafmtCheckAll", jvm2_13, _ => true),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm, _ => true)
+      "scalafmt"         -> ("scalafmtCheckAll", jvm2_13, anyProject),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm, anyProject)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
