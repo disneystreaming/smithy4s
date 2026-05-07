@@ -128,7 +128,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   val Scala212 = "2.12.21"
   val Scala213 = "2.13.18"
   val Scala3 = "3.3.7"
-  val Scala38 = "3.8.2"
+  val Scala38 = "3.8.3"
 
   object autoImport {
     // format: off
