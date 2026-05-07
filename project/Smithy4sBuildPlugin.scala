@@ -717,6 +717,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "compile"          -> ("compile", any, anyProject),
       "testCompile"      -> ("Test/compile", any, anyProject),
       "publishLocal"     -> ("publishLocal", any, anyProject),
+      "publish"          -> ("publish", any, anyProject),
+      "publishSigned"    -> ("publishSigned", any, anyProject),
       "pushRemoteCache"  -> ("pushRemoteCache", any, anyProject),
       "pullRemoteCache"  -> ("pullRemoteCache", any, anyProject),
       "scalafix"         -> ("scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),

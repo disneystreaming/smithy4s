@@ -384,12 +384,90 @@ jobs:
           fi
 
   release:
-    name: Release
+    name: Release ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
     needs: compile
     if:
       startsWith(github.ref, 'refs/tags/v') ||
       github.event.inputs.publishSnapshot == 'true' ||
       github.event_name == 'schedule'
+    strategy:
+      # don't cancel the matrix on first failure: for snapshots we want every
+      # shard to land independently, and for stable releases we'd rather the
+      # aggregator skip than half the bundle silently disappear
+      fail-fast: false
+      matrix:
+        scalaVersion: ["2_12", "2_13", "3_0"]
+        scalaPlatform: ["jvm", "js"]
+        exclude:
+          - scalaVersion: "2_12"
+            scalaPlatform: "js"
+        include:
+          - scalaVersion: "3_0"
+            scalaPlatform: "native"
+    runs-on: ubuntu-latest
+    env:
+      BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Java and Scala
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:1.17
+          apps: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: ${{ env.BUILD_KEY }}
+
+      - name: Download compilation cache
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-${{env.BUILD_KEY}}.zip
+          path: /tmp/remote-cache
+
+      - name: Publish ${{ github.ref }} (${{env.BUILD_KEY}})
+        run: sbt "show version; pullRemoteCache_$BUILD_KEY; ci-release"
+        env:
+          # cleaning will removed generated code from bootstrapped module which will
+          # cause the repo to be dirty and change the version to a -SNAPSHOT version
+          CI_CLEAN: ""
+          # Override what ci-release runs so each shard only publishes its own
+          # (scala, platform) slice. CI_RELEASE replaces "+publishSigned" for
+          # stable releases; CI_SNAPSHOT_RELEASE replaces "+publish" for snapshots.
+          # For snapshots, that publishes straight to central-snapshots — done.
+          # For stable releases, publishSigned_<shard> writes signed artifacts
+          # into target/sona-staging/, which the aggregator job collects and
+          # releases as one bundle via sonaRelease. Skip the per-shard release.
+          CI_RELEASE: publishSigned_${{env.BUILD_KEY}}
+          CI_SNAPSHOT_RELEASE: publish_${{env.BUILD_KEY}}
+          CI_SONATYPE_RELEASE: version
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.CENTRAL_SONATYPE_USERNAME }}
+
+      - name: Upload signed staging slice
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sona-staging-${{env.BUILD_KEY}}
+          path: target/sona-staging
+          retention-days: 1
+          if-no-files-found: error
+
+  release-bundle:
+    name: Release bundle (aggregate)
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
@@ -409,24 +487,29 @@ jobs:
 
       - name: Cache
         uses: coursier/cache-action@v6
+        with:
+          extraKey: release-bundle
 
-      - name: Download compilation caches
+      - name: Download per-shard staging slices
         uses: actions/download-artifact@v4
         with:
-          pattern: compilation-*.zip
-          path: /tmp/remote-cache
+          pattern: sona-staging-*
+          path: /tmp/staging
 
-      - name: Merge compilation caches
-        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
+      - name: Merge into one staging tree
+        # Each shard's artifact unpacks to /tmp/staging/sona-staging-<key>/<contents>.
+        # Merge them into a single tree at target/sona-staging/.
+        run: |
+          mkdir -p target/sona-staging
+          for d in /tmp/staging/sona-staging-*; do
+            cp -r "$d"/. target/sona-staging/
+          done
+          echo "Merged staging tree:"
+          find target/sona-staging -maxdepth 4 -type d
 
-      - name: Publish ${{ github.ref }}
-        run: sbt 'show version; pullRemoteCache_2_12_jvm; pullRemoteCache_2_13_jvm; pullRemoteCache_3_0_jvm; pullRemoteCache_2_13_js; pullRemoteCache_3_0_js; pullRemoteCache_3_0_native; ci-release'
+      - name: Release bundle
+        run: sbt "show version; sonaRelease"
         env:
-          # cleaning will removed generated code from bootstrapped module which will
-          # cause the repo to be dirty and change the version to a -SNAPSHOT version
-          CI_CLEAN: ""
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-          PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.CENTRAL_SONATYPE_USERNAME }}
 
