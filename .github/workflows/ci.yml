@@ -410,8 +410,17 @@ jobs:
       - name: Cache
         uses: coursier/cache-action@v6
 
+      - name: Download compilation caches
+        uses: actions/download-artifact@v4
+        with:
+          pattern: compilation-*.zip
+          path: /tmp/remote-cache
+
+      - name: Merge compilation caches
+        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
+
       - name: Publish ${{ github.ref }}
-        run: sbt 'show version; ci-release'
+        run: sbt 'show version; pullRemoteCache_2_12_jvm; pullRemoteCache_2_13_jvm; pullRemoteCache_3_0_jvm; pullRemoteCache_2_13_js; pullRemoteCache_3_0_js; pullRemoteCache_3_0_native; ci-release'
         env:
           # cleaning will removed generated code from bootstrapped module which will
           # cause the repo to be dirty and change the version to a -SNAPSHOT version
