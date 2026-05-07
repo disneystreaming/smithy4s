@@ -704,7 +704,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
-  val millVersions = List("0.11.13", "0.12.11", "1.1.2")
+  val millVersions = List("0.11.13", "0.12.11", "1.1.6")
 
   def millPlatform(millVersion: String): String = millVersion match {
     case mv if mv.startsWith("1.")   => "1"
