@@ -312,9 +312,13 @@ jobs:
         run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "scripted codegen-plugin/${{ matrix.test }}"
 
   mill-plugin:
-    name: mill plugin tests
+    name: mill plugin (${{ matrix.project }})
     needs: compile
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ["millCodegenPlugin0_11", "millCodegenPlugin0_12", "millCodegenPlugin13"]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v4
@@ -351,8 +355,8 @@ jobs:
       - name: Merge compilation caches
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
-      - name: Run mill plugin tests
-        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm millCodegenPlugin0_11/test millCodegenPlugin0_12/test millCodegenPlugin13/test
+      - name: Run mill plugin tests (${{ matrix.project }})
+        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm ${{ matrix.project }}/test
 
   build-success-checkpoint:
     runs-on: ubuntu-latest
