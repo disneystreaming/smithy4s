@@ -100,7 +100,7 @@ object Dependencies {
   }
 
   object Pprint {
-    val pprintVersion = "0.9.3"
+    val pprintVersion = "0.9.6"
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
 
