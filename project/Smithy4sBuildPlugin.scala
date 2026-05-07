@@ -682,28 +682,39 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     val jvm = (t: Doublet) => t.platform == "jvm"
 
-    val desiredCommands: Map[String, (String, Doublet => Boolean)] = Map(
-      "test" -> ("test", any),
-      "compile" -> ("compile", any),
-      "testCompile" -> ("Test/compile", any),
-      "publishLocal" -> ("publishLocal", any),
-      "pushRemoteCache" -> ("pushRemoteCache", any),
-      "pullRemoteCache" -> ("pullRemoteCache", any),
-      "scalafix" -> ("scalafix --check", jvm2_13),
-      "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
+    val anyProject: String => Boolean = _ => true
+    // The sbt and mill plugins have their own dedicated CI jobs that invoke
+    // their tests directly (scripted, millCodegenPlugin*/test). Including them
+    // in the per-cell test_<scala>_<platform> aggregate runs the same work
+    // twice — and worse, mill plugin tests are slow.
+    val isPluginProject: String => Boolean = p =>
+      p.startsWith("codegenPlugin") || p.startsWith("millCodegenPlugin")
+    val notPluginProject: String => Boolean = p => !isPluginProject(p)
+
+    val desiredCommands
+        : Map[String, (String, Doublet => Boolean, String => Boolean)] = Map(
+      "test"             -> ("test", any, notPluginProject),
+      "compile"          -> ("compile", any, anyProject),
+      "testCompile"      -> ("Test/compile", any, anyProject),
+      "publishLocal"     -> ("publishLocal", any, anyProject),
+      "pushRemoteCache"  -> ("pushRemoteCache", any, anyProject),
+      "pullRemoteCache"  -> ("pullRemoteCache", any, anyProject),
+      "scalafix"         -> ("scalafix --check", jvm2_13, anyProject),
+      "scalafixTests"    -> ("Test/scalafix --check", jvm2_13, anyProject),
+      "scalafmt"         -> ("scalafmtCheckAll", jvm2_13, anyProject),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm, anyProject)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
-      desiredCommands.filter(_._2._2(doublet)).map { case (name, (cmd, _)) =>
-        Command.command(
-          s"${name}_${doublet.scala}_${doublet.platform}"
-        ) { state =>
-          projects.foldLeft(state) { case (st, proj) =>
-            s"$proj/$cmd" :: st
+      desiredCommands.filter(_._2._2(doublet)).map {
+        case (name, (cmd, _, projectFilter)) =>
+          Command.command(
+            s"${name}_${doublet.scala}_${doublet.platform}"
+          ) { state =>
+            projects.filter(projectFilter).foldLeft(state) { case (st, proj) =>
+              s"$proj/$cmd" :: st
+            }
           }
-        }
       }
     }
 
