@@ -251,10 +251,33 @@ jobs:
       - name: Build website
         run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build
 
-  sbt-plugin:
-    name: sbt plugin (scripted)
-    needs: compile
+  sbt-plugin-discover:
+    name: sbt plugin (discover scripted tests)
     runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.list.outputs.tests }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: List scripted test folders
+        id: list
+        run: |
+          tests=$(ls modules/codegen-plugin/src/sbt-test/codegen-plugin | jq -R . | jq -sc .)
+          echo "tests=$tests" >> "$GITHUB_OUTPUT"
+          echo "Discovered: $tests"
+
+  sbt-plugin:
+    name: sbt plugin (${{ matrix.test }})
+    needs: [compile, sbt-plugin-discover]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{ fromJSON(needs.sbt-plugin-discover.outputs.tests) }}
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v4
@@ -285,8 +308,8 @@ jobs:
       - name: Merge compilation caches
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
-      - name: Run scripted
-        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm scripted
+      - name: Run scripted (${{ matrix.test }})
+        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "scripted codegen-plugin/${{ matrix.test }}"
 
   mill-plugin:
     name: mill plugin tests
@@ -333,22 +356,24 @@ jobs:
 
   build-success-checkpoint:
     runs-on: ubuntu-latest
-    needs: [compile, test, mima, checks, docs, sbt-plugin, mill-plugin]
+    needs: [compile, test, mima, checks, docs, sbt-plugin-discover, sbt-plugin, mill-plugin]
     steps:
       - name: Build matrix completed
         run: |
-          echo "compile     = ${{ needs.compile.result }}"
-          echo "test        = ${{ needs.test.result }}"
-          echo "mima        = ${{ needs.mima.result }}"
-          echo "checks      = ${{ needs.checks.result }}"
-          echo "docs        = ${{ needs.docs.result }}"
-          echo "sbt-plugin  = ${{ needs.sbt-plugin.result }}"
-          echo "mill-plugin = ${{ needs.mill-plugin.result }}"
+          echo "compile             = ${{ needs.compile.result }}"
+          echo "test                = ${{ needs.test.result }}"
+          echo "mima                = ${{ needs.mima.result }}"
+          echo "checks              = ${{ needs.checks.result }}"
+          echo "docs                = ${{ needs.docs.result }}"
+          echo "sbt-plugin-discover = ${{ needs.sbt-plugin-discover.result }}"
+          echo "sbt-plugin          = ${{ needs.sbt-plugin.result }}"
+          echo "mill-plugin         = ${{ needs.mill-plugin.result }}"
           if [[ "${{ needs.compile.result }}" != "success" \
              || "${{ needs.test.result }}" != "success" \
              || "${{ needs.mima.result }}" != "success" \
              || "${{ needs.checks.result }}" != "success" \
              || "${{ needs.docs.result }}" != "success" \
+             || "${{ needs.sbt-plugin-discover.result }}" != "success" \
              || "${{ needs.sbt-plugin.result }}" != "success" \
              || "${{ needs.mill-plugin.result }}" != "success" ]]; then
             exit 1
