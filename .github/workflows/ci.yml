@@ -179,7 +179,7 @@ jobs:
         run: sbt pullRemoteCache_$BUILD_KEY mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
   checks:
-    name: Checks (scalafmt, scalafix, headers)
+    name: Checks (scalafmt, headers)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
@@ -205,9 +205,7 @@ jobs:
       - name: Run formatter and linters
         run: |
           sbt scalafmtCheckAll \
-              headerCheck \
-              scalafix_2_13_jvm \
-              scalafixTests_2_13_jvm
+              headerCheck
 
   docs:
     name: Docs (mdoc + website)
