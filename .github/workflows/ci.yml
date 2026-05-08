@@ -59,7 +59,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
@@ -118,7 +118,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
@@ -161,7 +161,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
@@ -194,7 +194,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: checks
 
@@ -226,7 +226,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: docs
 
@@ -286,7 +286,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: sbt-plugin
 
@@ -327,7 +327,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: mill-plugin
 
@@ -424,7 +424,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
@@ -486,7 +486,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: release-bundle
 
@@ -536,7 +536,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
 
       - name: Resolve latest smithy4s-core version
         # export the version only when we trigger publish manually
