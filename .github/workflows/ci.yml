@@ -87,7 +87,7 @@ jobs:
           echo "Built $(cat version)"
 
       - name: Upload compilation cache
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -457,7 +457,7 @@ jobs:
 
       - name: Upload signed staging slice
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sona-staging-${{env.BUILD_KEY}}
           path: target/sona-staging
