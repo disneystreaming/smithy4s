@@ -48,17 +48,17 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt scala-cli
@@ -82,7 +82,7 @@ jobs:
           echo "Built $(cat version)"
 
       - name: Upload compilation cache
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -107,18 +107,18 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt scala-cli
@@ -127,7 +127,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download compilation cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -150,18 +150,18 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_jvm
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -170,7 +170,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download compilation cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -183,18 +183,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: checks
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -213,18 +213,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: docs
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -233,7 +233,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download compilation cache (2_13_jvm)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-2_13_jvm.zip
           path: /tmp/remote-cache
@@ -251,7 +251,7 @@ jobs:
       tests: ${{ steps.list.outputs.tests }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -273,18 +273,18 @@ jobs:
         test: ${{ fromJSON(needs.sbt-plugin-discover.outputs.tests) }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: sbt-plugin
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -293,7 +293,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download compilation cache (jvm)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: compilation-*_jvm.zip
           path: /tmp/remote-cache
@@ -314,18 +314,18 @@ jobs:
         project: ["millCodegenPlugin0_11", "millCodegenPlugin0_12", "millCodegenPlugin13"]
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: mill-plugin
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -334,13 +334,13 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download compilation cache (2_13_jvm)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-2_13_jvm.zip
           path: /tmp/remote-cache/2_13_jvm
 
       - name: Download compilation cache (3_0_jvm)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-3_0_jvm.zip
           path: /tmp/remote-cache/3_0_jvm
@@ -402,13 +402,13 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -417,12 +417,12 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Download compilation cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -450,7 +450,7 @@ jobs:
 
       - name: Upload signed staging slice
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sona-staging-${{env.BUILD_KEY}}
           path: target/sona-staging
@@ -464,23 +464,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
         with:
           extraKey: release-bundle
 
       - name: Download per-shard staging slices
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sona-staging-*
           path: /tmp/staging
@@ -510,18 +510,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
 
       - name: Cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
 
       - name: Resolve latest smithy4s-core version
         # export the version only when we trigger publish manually
