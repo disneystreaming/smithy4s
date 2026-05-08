@@ -64,7 +64,7 @@ jobs:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt scala-cli
@@ -123,7 +123,7 @@ jobs:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt scala-cli
@@ -166,7 +166,7 @@ jobs:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -199,7 +199,7 @@ jobs:
           extraKey: checks
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -231,7 +231,7 @@ jobs:
           extraKey: docs
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -291,7 +291,7 @@ jobs:
           extraKey: sbt-plugin
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -332,7 +332,7 @@ jobs:
           extraKey: mill-plugin
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -415,7 +415,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -477,7 +477,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
@@ -527,7 +527,7 @@ jobs:
           ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Java and Scala
-        uses: coursier/setup-action@v1
+        uses: coursier/setup-action@v3
         with:
           jvm: temurin:1.17
           apps: sbt
