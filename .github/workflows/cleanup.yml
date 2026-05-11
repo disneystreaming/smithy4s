@@ -1,0 +1,56 @@
+name: Cleanup CI artifacts
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+jobs:
+  delete-pr-artifacts:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete compilation artifacts from this PR's CI runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # Find CI runs for the PR head and delete their compilation-* artifacts.
+          run_ids=$(gh api --paginate \
+            "repos/$REPO/actions/runs?head_sha=$PR_HEAD_SHA" \
+            --jq '.workflow_runs[].id')
+          for run_id in $run_ids; do
+            gh api --paginate "repos/$REPO/actions/runs/$run_id/artifacts" \
+              --jq '.artifacts[] | select(.name | startswith("compilation-")) | .id' \
+              | while read -r artifact_id; do
+                  echo "Deleting artifact $artifact_id from run $run_id"
+                  gh api -X DELETE "repos/$REPO/actions/artifacts/$artifact_id" || true
+                done
+          done
+
+  delete-old-compilation-artifacts:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete compilation-* artifacts older than 1 day
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cutoff=$(date -u -d '1 day ago' +%s 2>/dev/null || date -u -v-1d +%s)
+          gh api --paginate "repos/$REPO/actions/artifacts" \
+            --jq '.artifacts[] | select(.name | startswith("compilation-")) | "\(.id) \(.created_at)"' \
+            | while read -r id created; do
+                created_ts=$(date -u -d "$created" +%s 2>/dev/null || date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s)
+                if [ "$created_ts" -lt "$cutoff" ]; then
+                  echo "Deleting artifact $id (created $created)"
+                  gh api -X DELETE "repos/$REPO/actions/artifacts/$id" || true
+                fi
+              done

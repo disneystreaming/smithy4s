@@ -122,6 +122,22 @@ case class MillCustomRow(mv: String) extends CustomRow {
 
 }
 
+// Companion plugin that only attaches where ScalafixPlugin is loaded. Defines
+// scalafixCheck so it can be invoked per-project without sbt parsing `--check`
+// as a separate command.
+object ScalafixCheckPlugin extends AutoPlugin {
+  override def requires = _root_.scalafix.sbt.ScalafixPlugin
+  override def trigger = allRequirements
+
+  val scalafixCheck =
+    taskKey[Unit]("Runs scalafix --check (no-arg wrapper).")
+
+  override val projectSettings = Seq(
+    Compile / scalafixCheck := (Compile / scalafix).toTask(" --check").value,
+    Test / scalafixCheck := (Test / scalafix).toTask(" --check").value
+  )
+}
+
 object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.21"
@@ -340,7 +356,17 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     Compile / packageCache / moduleName := artifactName(
       moduleName.value,
       virtualAxes.value
-    )
+    ),
+    Test / packageCache / moduleName := artifactName(
+      moduleName.value + "-test",
+      virtualAxes.value
+    ),
+    pushRemoteCache := Def
+      .sequential(Compile / pushRemoteCache, Test / pushRemoteCache)
+      .value,
+    pullRemoteCache := Def
+      .sequential(Compile / pullRemoteCache, Test / pullRemoteCache)
+      .value
   )
 
   def scala3MigrationOption(scalaVersion: String) =
@@ -666,26 +692,45 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
     val jvm = (t: Doublet) => t.platform == "jvm"
 
-    val desiredCommands: Map[String, (String, Doublet => Boolean)] = Map(
-      "test" -> ("test", any),
-      "compile" -> ("compile", any),
-      "publishLocal" -> ("publishLocal", any),
-      "pushRemoteCache" -> ("pushRemoteCache", any),
-      "scalafix" -> ("scalafix --check", jvm2_13),
-      "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
+    val anyProject: String => Boolean = _ => true
+    // The sbt and mill plugins have their own dedicated CI jobs that invoke
+    // their tests directly (scripted, millCodegenPlugin*/test). Including them
+    // in the per-cell test_<scala>_<platform> aggregate runs the same work
+    // twice — and worse, mill plugin tests are slow.
+    val isPluginProject: String => Boolean = p =>
+      p.startsWith("codegenPlugin") || p.startsWith("millCodegenPlugin")
+    val notPluginProject: String => Boolean = p => !isPluginProject(p)
+    // Projects that disable ScalafixPlugin and so don't have scalafixCheck
+    // defined. Skip them when generating per-project scalafix aliases so the
+    // alias doesn't push commands for missing keys.
+    val scalafixDisabled: String => Boolean = _ == "bootstrapped"
+
+    val desiredCommands
+        : Map[String, (String, Doublet => Boolean, String => Boolean)] = Map(
+      "test"             -> ("test", any, notPluginProject),
+      "compile"          -> ("compile", any, anyProject),
+      "testCompile"      -> ("Test/compile", any, anyProject),
+      "publishLocal"     -> ("publishLocal", any, anyProject),
+      "publish"          -> ("publish", any, anyProject),
+      "publishSigned"    -> ("publishSigned", any, anyProject),
+      "pushRemoteCache"  -> ("pushRemoteCache", any, anyProject),
+      "pullRemoteCache"  -> ("pullRemoteCache", any, anyProject),
+      "scalafix"         -> ("scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
+      "scalafixTests"    -> ("Test/scalafixCheck", jvm2_13, p => !scalafixDisabled(p)),
+      "scalafmt"         -> ("scalafmtCheckAll", jvm2_13, anyProject),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm, anyProject)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
-      desiredCommands.filter(_._2._2(doublet)).map { case (name, (cmd, _)) =>
-        Command.command(
-          s"${name}_${doublet.scala}_${doublet.platform}"
-        ) { state =>
-          projects.foldLeft(state) { case (st, proj) =>
-            s"$proj/$cmd" :: st
+      desiredCommands.filter(_._2._2(doublet)).map {
+        case (name, (cmd, _, projectFilter)) =>
+          Command.command(
+            s"${name}_${doublet.scala}_${doublet.platform}"
+          ) { state =>
+            projects.filter(projectFilter).foldLeft(state) { case (st, proj) =>
+              s"$proj/$cmd" :: st
+            }
           }
-        }
       }
     }
 
