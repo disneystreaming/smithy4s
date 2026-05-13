@@ -1,5 +1,5 @@
 {
-  inputs.nixpkgs.url = "github:nixos/nixpkgs";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = { nixpkgs, flake-utils, ... }:
@@ -8,11 +8,11 @@
         pkgs = import nixpkgs { inherit system; };
         shellPackages = with pkgs; [
           temurin-bin-17
-          nodejs-18_x
+          nodejs_24
           yarn
           (pkgs.sbt.override { jre = pkgs.temurin-bin-17; })
         ];
-        protobuf = pkgs.protobuf3_21;
+        protobuf = pkgs.protobuf_21;
       in
       {
         devShells.default = pkgs.mkShell {
