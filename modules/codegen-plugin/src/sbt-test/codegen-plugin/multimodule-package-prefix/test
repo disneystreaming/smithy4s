@@ -1,0 +1,19 @@
+# Verify cross-module propagation of smithy4sGenerated metadata when the
+# upstream module uses a packagePrefix.
+> compile
+
+# Module A renders `com.example.first` under the `gen` package prefix.
+$ exists a/target/scala-2.13/src_managed/main/smithy4s/gen/com/example/first/MyString.scala
+$ absent a/target/scala-2.13/src_managed/main/smithy4s/com/example/first/MyString.scala
+
+# Module B generates its own namespace ...
+$ exists b/target/scala-2.13/src_managed/main/smithy4s/com/example/second/Second.scala
+
+# ... and must NOT regenerate the upstream namespace under any package.
+$ absent b/target/scala-2.13/src_managed/main/smithy4s/com/example/first/MyString.scala
+$ absent b/target/scala-2.13/src_managed/main/smithy4s/gen/com/example/first/MyString.scala
+
+# Compiling + running B exercises the cross-namespace reference: B's generated
+# `Second` must import `gen.com.example.first.MyString` for the import in
+# BTest.scala (and the generated Second.scala) to resolve.
+> b/run
