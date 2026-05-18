@@ -66,7 +66,7 @@ metadata smithy4sCodegen = {
 
 ## Cross-namespace references
 
-When package remapping is active, cross-namespace `Type.Ref` nodes inside declarations are remapped automatically. Generated import statements will use the remapped package name, so the compiled Scala code remains self-consistent.
+When package remapping is active, references to types from other namespaces are remapped automatically. Generated import statements will use the remapped package name, so the compiled Scala code remains self-consistent.
 
 For example, if `com.a` is remapped to `gen.com.a`, a structure in `com.b` that references a type from `com.a` will import it as `gen.com.a.MyType`.
 
@@ -81,7 +81,7 @@ metadata smithy4sGenerated = [{
 }]
 ```
 
-When Module B depends on Module A's jar and runs codegen, the `ModelLoader` discovers Module A's Smithy model (and its manifest) from the classpath. Smithy4s reads the `renderedPackages` entries and applies them as additional package mappings before rendering Module B's code. Any `Type.Ref` pointing at `com.example.api` in Module B's generated code will be resolved to `gen.com.example.api` — matching the actual location of Module A's compiled classes.
+When Module B depends on Module A's jar and runs codegen, Smithy4s picks up Module A's manifest from the classpath and applies its `renderedPackages` entries as additional package mappings before rendering Module B's code. Any reference to a type from `com.example.api` in Module B's generated code will be resolved to `gen.com.example.api` - matching the actual location of Module A's compiled classes.
 
 Module B's own `smithy4sCodegen` mappings take precedence over any upstream manifest entries.
 
