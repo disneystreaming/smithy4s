@@ -505,7 +505,6 @@ jobs:
   microsite:
     name: Publish Docs Microsite
     if:
-      startsWith(github.ref, 'refs/tags/v') ||
       github.event.inputs.publishMicrosite == 'true'
     runs-on: ubuntu-latest
     steps:
