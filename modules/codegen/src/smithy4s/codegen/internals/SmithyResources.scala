@@ -33,7 +33,8 @@ private[smithy4s] object SmithyResources {
   def produce(
       resourceOutputFolder: os.Path,
       specs: List[os.Path],
-      namespaces: List[String]
+      namespaces: List[String],
+      renderedPackages: Map[String, String] = Map.empty
   ): List[CodegenEntry] = {
 
     val localSmithyFiles = specs.flatMap { spec =>
@@ -48,9 +49,17 @@ private[smithy4s] object SmithyResources {
 
     val smithy4sVersion = BuildInfo.version
     val nsString = namespaces.map(ns => s""""$ns"""").mkString(", ")
+    val renderedPackagesStr =
+      if (renderedPackages.isEmpty) ""
+      else {
+        val entries = renderedPackages
+          .map { case (k, v) => s""""$k": "$v"""" }
+          .mkString(", ")
+        s", renderedPackages: {$entries}"
+      }
     val content = s"""|$$version: "2.0"
                       |
-                      |metadata ${CodegenRecord.METADATA_KEY} = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
+                      |metadata ${CodegenRecord.METADATA_KEY} = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]$renderedPackagesStr}]
                       |""".stripMargin
     val trackingFileEntry = CodegenEntry.FromMemory(trackingFile, content)
 

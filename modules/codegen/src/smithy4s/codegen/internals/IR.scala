@@ -38,10 +38,12 @@ import LineSegment.{NameDef, NameRef}
 private[internals] case class CompilationUnit(
     rawNamespace: String,
     declarations: List[Decl],
-    rendererConfig: Renderer.Config
+    rendererConfig: Renderer.Config,
+    packageConfig: PackageConfig
 ) {
   val namespace: String =
-    rawNamespace
+    packageConfig
+      .remap(rawNamespace)
       .split('.')
       .map(CollisionAvoidance.protectKeyword(_))
       .mkString(".")

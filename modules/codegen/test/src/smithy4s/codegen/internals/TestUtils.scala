@@ -37,8 +37,9 @@ object TestUtils {
   }
 
   def generateScalaCode(model: Model): Map[String, String] = {
+    val namespaces = CodegenImpl.filteredNamespaces(model, None, None)
     CodegenImpl
-      .generate(model, None, None)
+      .generate(model, namespaces)
       .map { case (_, result) =>
         s"${result.namespace}.${result.name}" -> result.content
       }

@@ -1138,7 +1138,9 @@ lazy val bootstrapped = projectMatrix
       "weather",
       "smithy4s.example.product",
       "smithy4s.example.reservedNameOverride",
-      "smithy4s.example.bincompat"
+      "smithy4s.example.bincompat",
+      "pkg.remapping",
+      "pkg.remapping.nested"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"
