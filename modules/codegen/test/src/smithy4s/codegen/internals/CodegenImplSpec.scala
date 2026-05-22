@@ -78,8 +78,9 @@ final class CodegenImplSpec extends munit.FunSuite {
       .unwrap()
 
     def generateScalaCode(model: Model): Map[String, String] = {
+      val namespaces = CodegenImpl.filteredNamespaces(model, None, None)
       CodegenImpl
-        .generate(model, None, None)
+        .generate(model, namespaces)
         .map { case (_, result) =>
           s"${result.namespace}.${result.name}" -> result.content
         }
@@ -192,15 +193,14 @@ final class CodegenImplSpec extends munit.FunSuite {
         .unwrap()
     }
     val model = mkModel(inputNamespaces.map(mkSpec))
+    val allowedNS = Option(allowedNamespaces.toSet).filter(_.nonEmpty)
+    val excludedNS = Option(forbiddenNamespaces.toSet).filter(_.nonEmpty)
     val generatedNamespaces = CodegenImpl
       .generate(
         model,
-        Option(allowedNamespaces.toSet).filter(_.nonEmpty),
-        Option(forbiddenNamespaces.toSet).filter(_.nonEmpty)
+        CodegenImpl.filteredNamespaces(model, allowedNS, excludedNS)
       )
-      .map { case (_, result) =>
-        result.namespace
-      }
+      .map { case (_, result) => result.namespace }
       .toSet
     assertEquals(generatedNamespaces, expectedCodegenNamespaces)
 

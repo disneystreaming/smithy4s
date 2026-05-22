@@ -25,6 +25,7 @@ import scala.jdk.OptionConverters._
 
 private[codegen] final case class CodegenRecord(
     namespaces: List[String],
+    renderedPackages: Map[String, String],
     validatedNewtypes: Option[Boolean],
     source: SourceLocation
 )
@@ -52,6 +53,25 @@ private[codegen] object CodegenRecord {
       .asScala
       .map(_.expectStringNode().getValue())
       .toList
-    CodegenRecord(namespaces, validatedNewtypes, node.getSourceLocation())
+    val renderedPackages =
+      obj
+        .getObjectMember("renderedPackages")
+        .toScala
+        .map { mapNode =>
+          mapNode
+            .getMembers()
+            .asScala
+            .map { case (k, v) =>
+              k.getValue() -> v.expectStringNode().getValue()
+            }
+            .toMap
+        }
+        .getOrElse(Map.empty[String, String])
+    CodegenRecord(
+      namespaces,
+      renderedPackages,
+      validatedNewtypes,
+      node.getSourceLocation()
+    )
   }
 }
