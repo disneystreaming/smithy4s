@@ -5,6 +5,11 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.19.5 
+
+- Port of [#1950](https://github.com/disneystreaming/smithy4s/pull/1950) to 0.19 series
+  codegen: Add `smithy4sCodegen` metadata key for render-time package remapping. Supports `packagePrefix` (prepend a prefix to all generated packages), `packageMappings` (per-namespace overrides), and `excludedNamespaces` (skip namespaces from codegen). See [Package Remapping](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/package-remapping) for details.
+
 # 0.19.4
 
 - Add documentation for `UrlForm` serialization in [#1929](https://github.com/disneystreaming/smithy4s/pull/1929)
