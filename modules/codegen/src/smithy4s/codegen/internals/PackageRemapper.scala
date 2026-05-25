@@ -148,8 +148,9 @@ private class PackageRemapper(config: PackageConfig) {
       ValidatedAlias(config.remap(namespace), name, modType(tpe))
     case Type.Collection(collectionType, member, memberHints) =>
       Type.Collection(collectionType, modType(member), memberHints.map(modHint))
-    case Type.Map(key, keyHints, value, valueHints) =>
+    case Type.Map(mapTpe, key, keyHints, value, valueHints) =>
       Type.Map(
+        mapTpe,
         modType(key),
         keyHints.map(modHint),
         modType(value),
@@ -203,7 +204,7 @@ private class PackageRemapper(config: PackageConfig) {
           ValidatedNewTypeTN(modRef(ref), target)
         case AltTN(ref, altName, alt) =>
           AltTN(modRef(ref), altName, alt)
-        case MapTN(values)            => MapTN(values)
+        case MapTN(mapTpe, values)    => MapTN(mapTpe, values)
         case CollectionTN(ct, values) => CollectionTN(ct, values)
         case PrimitiveTN(prim, value) => PrimitiveTN(prim, value)
       }

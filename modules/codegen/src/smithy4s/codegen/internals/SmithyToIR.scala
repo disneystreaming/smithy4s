@@ -21,8 +21,6 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.AdtTrait
-import smithy4s.meta.BincompatAddedTrait
-import smithy4s.meta.BincompatFriendlyTrait
 import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.GenerateOpticsTrait
 import smithy4s.meta.GenerateServiceProductTrait
