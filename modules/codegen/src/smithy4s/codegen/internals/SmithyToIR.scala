@@ -16,11 +16,15 @@
 
 package smithy4s.codegen.internals
 
+import Type.Alias
 import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
+import smithy4s.codegen.CodegenRecord
 import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.AdtTrait
+import smithy4s.meta.BincompatAddedTrait
+import smithy4s.meta.BincompatFriendlyTrait
 import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.GenerateOpticsTrait
 import smithy4s.meta.GenerateServiceProductTrait
@@ -44,20 +48,16 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
 import java.time.Instant
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.Locale
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-import Type.Alias
-import smithy4s.codegen.CodegenRecord
-import smithy4s.meta.BincompatFriendlyTrait
-import smithy4s.meta.BincompatAddedTrait
+import java.time.ZonedDateTime
+import java.util.concurrent.ConcurrentHashMap
 
 private[codegen] object SmithyToIR {
 
