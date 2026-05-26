@@ -24,6 +24,7 @@ import scala.jdk.OptionConverters._
 private[internals] case class PackageConfig(
     prefix: Option[String],
     mappings: Map[String, String],
+    allowedNamespaces: Set[NamespacePattern],
     excludedNamespaces: Set[NamespacePattern]
 ) {
 
@@ -37,7 +38,8 @@ private[internals] case class PackageConfig(
 
 private[internals] object PackageConfig {
 
-  val empty: PackageConfig = PackageConfig(None, Map.empty, Set.empty)
+  val empty: PackageConfig =
+    PackageConfig(None, Map.empty, Set.empty, Set.empty)
 
   def load(metadata: Map[String, Node]): PackageConfig =
     metadata
@@ -61,21 +63,27 @@ private[internals] object PackageConfig {
           }
           .getOrElse(Map.empty)
 
-        val excluded = obj
-          .getArrayMember("excludedNamespaces")
-          .toScala
-          .map { arr =>
-            arr
-              .getElements()
-              .asScala
-              .map(n =>
-                NamespacePattern.fromString(n.expectStringNode().getValue)
-              )
-              .toSet
-          }
-          .getOrElse(Set.empty)
+        def loadPatterns(field: String): Set[NamespacePattern] =
+          obj
+            .getArrayMember(field)
+            .toScala
+            .map { arr =>
+              arr
+                .getElements()
+                .asScala
+                .map(n =>
+                  NamespacePattern.fromString(n.expectStringNode().getValue)
+                )
+                .toSet
+            }
+            .getOrElse(Set.empty)
 
-        PackageConfig(prefix, mappings, excluded)
+        PackageConfig(
+          prefix,
+          mappings,
+          loadPatterns("allowedNamespaces"),
+          loadPatterns("excludedNamespaces")
+        )
       }
       .getOrElse(PackageConfig.empty)
 }

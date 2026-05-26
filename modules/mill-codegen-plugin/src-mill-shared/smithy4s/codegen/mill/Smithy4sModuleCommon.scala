@@ -55,8 +55,16 @@ trait Smithy4sModuleCommon extends ScalaModule {
 
   def smithyBuild: T[Option[PathRef]] = None
 
+  @deprecated(
+    "Use the `smithy4sCodegen` Smithy metadata key with `allowedNamespaces` instead. See the Package Remapping documentation.",
+    "0.19.5"
+  )
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
+  @deprecated(
+    "Use the `smithy4sCodegen` Smithy metadata key with `excludedNamespaces` instead. See the Package Remapping documentation.",
+    "0.19.5"
+  )
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
   def smithy4sDefaultIvyDeps: T[Agg[Dep]] = Agg(
@@ -203,6 +211,7 @@ trait Smithy4sModuleCommon extends ScalaModule {
     Seq(PathRef(file))
   }
 
+  @nowarn("cat=deprecation")
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
     val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())

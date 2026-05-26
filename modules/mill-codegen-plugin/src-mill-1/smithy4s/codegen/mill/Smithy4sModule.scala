@@ -29,6 +29,7 @@ import smithy4s.codegen.JarUtils
 import smithy4s.codegen.SMITHY4S_DEPENDENCIES
 import smithy4s.codegen.{Codegen => Smithy4s}
 
+import scala.annotation.nowarn
 import scala.util.Success
 import scala.util.Try
 
@@ -58,8 +59,16 @@ trait Smithy4sModule extends ScalaModule {
   /** In Mill 1.x, tasks can only read files tracked by Task.Source/Task.Sources/Task.Input. */
   def smithyBuild: T[Option[PathRef]] = Task.Input { None }
 
+  @deprecated(
+    "Use the `smithy4sCodegen` Smithy metadata key with `allowedNamespaces` instead. See the Package Remapping documentation.",
+    "0.19.5"
+  )
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
 
+  @deprecated(
+    "Use the `smithy4sCodegen` Smithy metadata key with `excludedNamespaces` instead. See the Package Remapping documentation.",
+    "0.19.5"
+  )
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
   def smithy4sDefaultIvyDeps: T[Seq[Dep]] = Task {
@@ -204,6 +213,7 @@ trait Smithy4sModule extends ScalaModule {
     Seq(PathRef(file))
   }
 
+  @nowarn("cat=deprecation")
   def smithy4sCodegen: T[(PathRef, PathRef)] = Task {
 
     val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())

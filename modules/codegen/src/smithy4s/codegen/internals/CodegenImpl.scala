@@ -82,15 +82,26 @@ private[codegen] object CodegenImpl { self =>
           .map(_.config)
           .getOrElse(new OpenApiConfig())
 
-      val allowedNS = args.allowedNS.map(_.map(NamespacePattern.fromString))
-      val excludedNS = args.excludedNS.map(_.map(NamespacePattern.fromString))
+      val packageConfig =
+        PackageConfig.load(model.getMetadata().asScala.toMap)
+      val argsAllowedNS =
+        args.allowedNS.map(_.map(NamespacePattern.fromString))
+      val allowedNS: Option[Set[NamespacePattern]] =
+        (argsAllowedNS, packageConfig.allowedNamespaces) match {
+          case (None, m) if m.isEmpty => None
+          case (a, m)                 => Some(a.getOrElse(Set.empty) ++ m)
+        }
+      val excludedNS =
+        args.excludedNS
+          .getOrElse(Set.empty)
+          .map(NamespacePattern.fromString) ++ packageConfig.excludedNamespaces
 
       val allNamespaces =
         model.getShapeIds().asScala.map(_.getNamespace()).toSet
       val isAllowed: String => Boolean = str =>
         allowedNS.map(_.exists(_.matches(str))).getOrElse(true)
       val notExcluded: String => Boolean = str =>
-        !excludedNS.getOrElse(Set.empty).exists(_.matches(str))
+        !excludedNS.exists(_.matches(str))
       val openApiNamespaces = allNamespaces.filter(namespace =>
         isAllowed(namespace) && notExcluded(namespace)
       )
@@ -201,14 +212,20 @@ private[codegen] object CodegenImpl { self =>
       allGeneratedSet
     }
 
-    // Combine excludedNS from CodegenArgs with any excludedNamespaces from smithy4sCodegen metadata
-    val metadataExcluded =
-      PackageConfig.load(model.getMetadata().asScala.toMap).excludedNamespaces
+    // Combine allowed/excluded namespaces from CodegenArgs with any
+    // allowed/excludedNamespaces from smithy4sCodegen metadata (union semantics)
+    val packageConfig =
+      PackageConfig.load(model.getMetadata().asScala.toMap)
     val excluded =
       excludedNS
         .getOrElse(Set.empty)
-        .map(NamespacePattern.fromString) ++ metadataExcluded
-    val allowed = allowedNS.map(_.map(NamespacePattern.fromString))
+        .map(NamespacePattern.fromString) ++ packageConfig.excludedNamespaces
+    val argsAllowed = allowedNS.map(_.map(NamespacePattern.fromString))
+    val allowed: Option[Set[NamespacePattern]] =
+      (argsAllowed, packageConfig.allowedNamespaces) match {
+        case (None, m) if m.isEmpty => None
+        case (a, m)                 => Some(a.getOrElse(Set.empty) ++ m)
+      }
 
     val filtered = allowed match {
       case Some(allowedNamespaces) =>

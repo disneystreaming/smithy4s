@@ -18,13 +18,16 @@ metadata smithy4sCodegen = {
     packageMappings: {
         "com.example.special": "explicit.pkg"
     },
+    allowedNamespaces: [
+        "com.example.*"
+    ],
     excludedNamespaces: [
         "com.example.ignored"
     ]
 }
 ```
 
-All three fields are optional and can be combined freely.
+All four fields are optional and can be combined freely.
 
 ### `packagePrefix`
 
@@ -50,9 +53,21 @@ A shape in namespace `com.example.special` will be placed in package `explicit.p
 
 When both `packagePrefix` and `packageMappings` are present, an explicit mapping entry takes precedence over the prefix for any namespace it matches.
 
+### `allowedNamespaces`
+
+Restricts code generation to the listed namespaces. When set, only namespaces matching at least one of the patterns are processed. Accepts the same wildcard patterns as `excludedNamespaces` (see below).
+
+```kotlin
+metadata smithy4sCodegen = {
+    allowedNamespaces: ["com.example.*"]
+}
+```
+
+When combined with the build-tool `allowedNamespaces` setting (sbt/mill) or `--allowed-ns` (CLI), the two are unioned: a namespace is allowed if it matches *either* source. Use this Smithy-metadata-based form going forward — the build-tool settings are deprecated in favor of it.
+
 ### `excludedNamespaces`
 
-Prevents code generation for the listed namespaces. Accepts the same wildcard patterns as the `allowedNamespace` / `excludedNamespace` codegen arguments:
+Prevents code generation for the listed namespaces. Accepts the following wildcard patterns:
 
 - `com.example.ignored` - exact match
 - `com.example.*` - matches `com.example` followed by any additional segments
@@ -63,6 +78,8 @@ metadata smithy4sCodegen = {
     excludedNamespaces: ["com.example.ignored", "com.internal.*"]
 }
 ```
+
+When combined with the build-tool `excludedNamespaces` setting (sbt/mill) or `--excluded-ns` (CLI), the two are unioned. The build-tool settings are deprecated in favor of this Smithy-metadata-based form.
 
 ## Cross-namespace references
 

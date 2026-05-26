@@ -170,6 +170,86 @@ final class CodegenImplSpec extends munit.FunSuite {
     )
   }
 
+  test(
+    "metadata smithy4sCodegen.allowedNamespaces unions with CodegenArgs.allowedNS"
+  ) {
+    val metadataSpec =
+      """|$version: "2.0"
+         |
+         |metadata smithy4sCodegen = {
+         |  allowedNamespaces: ["from.metadata*"]
+         |}
+         |
+         |namespace from.metadata
+         |
+         |string Dummy
+         |""".stripMargin
+    val argsSpec =
+      """|$version: "2.0"
+         |
+         |namespace from.args
+         |
+         |string Dummy
+         |""".stripMargin
+    val ignoredSpec =
+      """|$version: "2.0"
+         |
+         |namespace ignored.ns
+         |
+         |string Dummy
+         |""".stripMargin
+
+    val model = Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("metadata.smithy", metadataSpec)
+      .addUnparsedModel("args.smithy", argsSpec)
+      .addUnparsedModel("ignored.smithy", ignoredSpec)
+      .assemble()
+      .unwrap()
+
+    val filtered =
+      CodegenImpl
+        .filteredNamespaces(model, Some(Set("from.args")), None)
+        .toSet
+    assertEquals(filtered, Set("from.metadata", "from.args"))
+  }
+
+  test(
+    "metadata smithy4sCodegen.allowedNamespaces alone restricts when CodegenArgs.allowedNS is None"
+  ) {
+    val metadataSpec =
+      """|$version: "2.0"
+         |
+         |metadata smithy4sCodegen = {
+         |  allowedNamespaces: ["only.this"]
+         |}
+         |
+         |namespace only.this
+         |
+         |string Dummy
+         |""".stripMargin
+    val otherSpec =
+      """|$version: "2.0"
+         |
+         |namespace other.ns
+         |
+         |string Dummy
+         |""".stripMargin
+
+    val model = Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("only.smithy", metadataSpec)
+      .addUnparsedModel("other.smithy", otherSpec)
+      .assemble()
+      .unwrap()
+
+    val filtered =
+      CodegenImpl.filteredNamespaces(model, None, None).toSet
+    assertEquals(filtered, Set("only.this"))
+  }
+
   private def namespaceFilterTest(
       inputNamespaces: List[String],
       allowedNamespaces: List[String] = Nil,

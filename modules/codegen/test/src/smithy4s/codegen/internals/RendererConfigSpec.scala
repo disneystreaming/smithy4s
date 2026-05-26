@@ -324,6 +324,46 @@ final class RendererConfigSpec extends munit.FunSuite {
   }
 
   test(
+    "smithy4sCodegen.allowedNamespaces restricts codegen to listed namespaces"
+  ) {
+    val smithyConfig =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sCodegen = {
+        |  allowedNamespaces: ["allowed.ns*"]
+        |}
+        |
+        |namespace allowed.ns
+        |
+        |structure Allowed {}
+        |""".stripMargin
+
+    val smithyNested =
+      """
+        |$version: "2.0"
+        |
+        |namespace allowed.ns.nested
+        |
+        |structure Nested {}
+        |""".stripMargin
+
+    val smithyOther =
+      """
+        |$version: "2.0"
+        |
+        |namespace other.ns
+        |
+        |structure Other {}
+        |""".stripMargin
+
+    val files = generateScalaCode(smithyConfig, smithyNested, smithyOther)
+    assert(files.keys.exists(_.startsWith("allowed.ns.Allowed")))
+    assert(files.keys.exists(_.startsWith("allowed.ns.nested.Nested")))
+    assert(!files.keys.exists(_.startsWith("other.ns")))
+  }
+
+  test(
     "smithy4sCodegen.packagePrefix remaps cross-namespace Type.Ref imports"
   ) {
     val smithyA =

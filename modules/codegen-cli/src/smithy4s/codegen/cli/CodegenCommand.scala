@@ -79,7 +79,7 @@ object CodegenCommand {
     Opts
       .option[List[String]](
         "allowed-ns",
-        "Comma-delimited list of namespaces that should not be processed. If unset, all namespaces are processed (except stdlib ones)"
+        "Comma-delimited list of namespaces that should not be processed. If unset, all namespaces are processed (except stdlib ones). DEPRECATED: use the `smithy4sCodegen` Smithy metadata key with `allowedNamespaces` instead."
       )
       .map(_.toSet)
       .orNone
@@ -88,7 +88,7 @@ object CodegenCommand {
     Opts
       .option[List[String]](
         "excluded-ns",
-        "Comma-delimited list of namespaces that should not be processed. If unset, all namespaces are processed (except stdlib ones)"
+        "Comma-delimited list of namespaces that should not be processed. If unset, all namespaces are processed (except stdlib ones). DEPRECATED: use the `smithy4sCodegen` Smithy metadata key with `excludedNamespaces` instead."
       )
       .map(_.toSet)
       .orNone
