@@ -16,7 +16,6 @@
 
 package smithy4s.codegen.internals
 
-import Type.Alias
 import alloy.StructurePatternTrait
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -48,16 +47,17 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
 import java.time.Instant
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-import java.time.ZonedDateTime
-import java.util.concurrent.ConcurrentHashMap
+import Type.Alias
 
 private[codegen] object SmithyToIR {
 
