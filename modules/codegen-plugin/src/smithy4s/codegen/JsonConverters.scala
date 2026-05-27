@@ -68,7 +68,7 @@ private[smithy4s] object JsonConverters {
     )
 
   // format: off
-  type GenTarget = List[PathRef] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[PathRef] :*: Option[PathRef] :*: LNil
+  type GenTarget = List[PathRef] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[PathRef] :*: Option[PathRef] :*: Boolean :*: LNil
   // format: on
 
   // `output` and `resourceOutput` are intentionally serialized as paths
@@ -88,6 +88,7 @@ private[smithy4s] object JsonConverters {
         ("transformers", ca.transformers) :*:
         ("localJars", ca.localJars.map(PathRef(_))) :*:
         ("smithyBuild", ca.smithyBuild.map(PathRef(_))) :*:
+        ("allowDefaultRepositories", ca.allowDefaultRepositories) :*:
         LNil
     },
     {
@@ -102,7 +103,8 @@ private[smithy4s] object JsonConverters {
           (_, dependencies) :*:
           (_, transformers) :*:
           (_, localJars) :*:
-          (_, smithyBuild) :*: LNil =>
+          (_, smithyBuild) :*:
+          (_, allowDefaultRepositories) :*: LNil =>
         CodegenArgs(
           specs.map(_.underlying),
           output,
@@ -115,7 +117,8 @@ private[smithy4s] object JsonConverters {
           dependencies,
           transformers,
           localJars.map(_.underlying),
-          smithyBuild.map(_.underlying)
+          smithyBuild.map(_.underlying),
+          allowDefaultRepositories
         )
     }
   )

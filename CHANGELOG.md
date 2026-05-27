@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.54
+
+* codegen: Add a way to opt out of coursier's default repositories (e.g. Maven Central, ivy2Local) when resolving codegen dependencies. Sbt: set `smithy4sAllowDefaultRepositories := false`. Mill: override `def smithy4sAllowDefaultRepositories = false`. CLI: pass `--no-default-repositories` to `generate`/`dump-model`. Useful for users behind an internal repository proxy that mirrors Maven Central. Defaults to `true` for backwards compatibility. See [#1969](https://github.com/disneystreaming/smithy4s/issues/1969).
+
 # 0.18.53
 
 * codegen: Add `smithy4sCodegen` metadata key for render-time package remapping. Supports `packagePrefix` (prepend a prefix to all generated packages), `packageMappings` (per-namespace overrides), and `excludedNamespaces` (skip namespaces from codegen). See [Package Remapping](https://disneystreaming.github.io/smithy4s/docs/codegen/customisation/package-remapping) for details.

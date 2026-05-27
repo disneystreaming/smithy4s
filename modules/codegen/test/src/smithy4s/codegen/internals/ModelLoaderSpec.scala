@@ -31,7 +31,8 @@ class ModelLoaderSpec extends FunSuite {
         repositories,
         transformers = Nil,
         discoverModels = false,
-        localJars = Nil
+        localJars = Nil,
+        allowDefaultRepositories = true
       )
       ._2
 

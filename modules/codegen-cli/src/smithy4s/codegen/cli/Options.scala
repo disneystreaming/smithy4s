@@ -96,4 +96,13 @@ object Options {
         "Comma-delimited list of local JAR files containing smithy files"
       )
       .orNone
+
+  val noDefaultRepositoriesOpt: Opts[Boolean] =
+    Opts
+      .flag(
+        "no-default-repositories",
+        "Disable coursier's default repositories (e.g. Maven Central, ivy2Local) when resolving codegen dependencies. When set, only the repositories passed via --repositories are used."
+      )
+      .orFalse
+      .map(disabled => !disabled)
 }

@@ -174,6 +174,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           "List of modules containing AWS specifications that should be added to the classpath used by Smithy4s during code-generation"
         ).mkString(" ")
       )
+
+    val smithy4sAllowDefaultRepositories =
+      settingKey[Boolean](
+        List(
+          "Whether coursier's default repositories (e.g. Maven Central, ivy2Local) should be queried when resolving codegen dependencies",
+          "in addition to those declared via sbt's `resolvers`. Defaults to `true` for backwards compatibility.",
+          "Set to `false` if you want code-generation to only query the repositories declared via sbt's `resolvers`",
+          "(equivalent of coursier CLI's `--no-default`)."
+        ).mkString(" ")
+      )
   }
 
   import autoImport._
@@ -195,6 +205,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    config / smithy4sAllowDefaultRepositories := true,
     smithy4sAwsSpecs := Seq.empty,
     smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
     Compile / smithy4sAwsSpecDependencies := {
@@ -445,6 +456,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
       }
+    val allowDefaultRepos = (conf / smithy4sAllowDefaultRepositories).value
     val transforms = (conf / smithy4sModelTransformers).value
     val s = (conf / streams).value
     val skipResources: Set[FileType] =
@@ -471,7 +483,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       dependencies = List.empty,
       transformers = transforms,
       localJars = localJars,
-      smithyBuild = smithyBuildValue
+      smithyBuild = smithyBuildValue,
+      allowDefaultRepositories = allowDefaultRepos
     )
 
     val cacheStoreFactory = s.cacheStoreFactory.sub(scalaVersion.value)
