@@ -21,5 +21,6 @@ final case class DumpModelArgs(
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
-    localJars: List[os.Path]
+    localJars: List[os.Path],
+    allowDefaultRepositories: Boolean = true
 )

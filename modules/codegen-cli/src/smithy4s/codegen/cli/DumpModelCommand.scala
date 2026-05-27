@@ -29,7 +29,8 @@ object DumpModelCommand {
     repositoriesOpt.map(_.getOrElse(Nil)),
     dependenciesOpt.map(_.getOrElse(Nil)),
     transformersOpt.map(_.getOrElse(Nil)),
-    localJarsOpt.map(_.getOrElse(Nil))
+    localJarsOpt.map(_.getOrElse(Nil)),
+    noDefaultRepositoriesOpt
   ).mapN(DumpModelArgs.apply)
 
   val command: Command[Smithy4sCommand.DumpModel] =

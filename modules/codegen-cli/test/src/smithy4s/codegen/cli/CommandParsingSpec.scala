@@ -41,7 +41,8 @@ object CommandParsingSpec extends FunSuite {
               dependencies = defaultDependencies,
               transformers = Nil,
               localJars = Nil,
-              smithyBuild = None
+              smithyBuild = None,
+              allowDefaultRepositories = true
             )
           )
         )
@@ -72,7 +73,8 @@ object CommandParsingSpec extends FunSuite {
         "--transformers",
         "t1,t2",
         "--local-jars",
-        "lib1.jar,lib2.jar"
+        "lib1.jar,lib2.jar",
+        "--no-default-repositories"
       )
     )
 
@@ -98,7 +100,8 @@ object CommandParsingSpec extends FunSuite {
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
               ),
-              smithyBuild = Some(os.pwd / "smithy-build.json")
+              smithyBuild = Some(os.pwd / "smithy-build.json"),
+              allowDefaultRepositories = false
             )
           )
         )
@@ -115,7 +118,8 @@ object CommandParsingSpec extends FunSuite {
               repositories = Nil,
               dependencies = Nil,
               transformers = Nil,
-              localJars = Nil
+              localJars = Nil,
+              allowDefaultRepositories = true
             )
           )
         )
@@ -134,7 +138,8 @@ object CommandParsingSpec extends FunSuite {
         "--transformers",
         "t1,t2",
         "--local-jars",
-        "lib1.jar,lib2.jar"
+        "lib1.jar,lib2.jar",
+        "--no-default-repositories"
       )
     )
     expect(
@@ -152,7 +157,8 @@ object CommandParsingSpec extends FunSuite {
               localJars = List(
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
-              )
+              ),
+              allowDefaultRepositories = false
             )
           )
         )
