@@ -43,13 +43,15 @@ private[codegen] object ModelLoader {
       repositories: List[String],
       transformers: List[String],
       discoverModels: Boolean,
-      localJars: List[os.Path]
+      localJars: List[os.Path],
+      allowDefaultRepositories: Boolean
   ): (ClassLoader, Model) = {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(
       dependencies :+ protocolDependency,
       localJars,
-      repositories
+      repositories,
+      allowDefaultRepositories
     )
 
     val modelsInJars = deps.flatMap { file =>
@@ -138,7 +140,8 @@ private[codegen] object ModelLoader {
   private def resolveDependencies(
       dependencies: List[String],
       localJars: List[os.Path],
-      repositories: List[String]
+      repositories: List[String],
+      allowDefaultRepositories: Boolean
   ): Seq[File] = {
     val maybeRepos = RepositoryParser.repositories(repositories).either
     val maybeDeps = DependencyParser
@@ -163,10 +166,11 @@ private[codegen] object ModelLoader {
     }
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
-        val fetch = Fetch(FileCache())
-          .addRepositories(repos: _*)
-          .addDependencies(deps: _*)
-        fetch.run()
+        val baseFetch = Fetch(FileCache())
+        val withRepos =
+          if (allowDefaultRepositories) baseFetch.addRepositories(repos: _*)
+          else baseFetch.withRepositories(repos)
+        withRepos.addDependencies(deps: _*).run()
       } else {
         Seq.empty
       }

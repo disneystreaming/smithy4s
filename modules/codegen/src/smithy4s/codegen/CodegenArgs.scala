@@ -31,7 +31,8 @@ final case class CodegenArgs(
     dependencies: List[String],
     transformers: List[String],
     localJars: List[os.Path],
-    smithyBuild: Option[os.Path]
+    smithyBuild: Option[os.Path],
+    allowDefaultRepositories: Boolean = true
 ) {
   def skipScala: Boolean = skip(FileType.Scala)
   def skipOpenapi: Boolean = skip(FileType.Openapi)

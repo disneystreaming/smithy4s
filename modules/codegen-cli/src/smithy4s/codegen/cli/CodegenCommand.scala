@@ -114,11 +114,12 @@ object CodegenCommand {
       transformersOpt,
       localJarsOpt,
       specsArgs,
-      smithyBuildOpt
+      smithyBuildOpt,
+      noDefaultRepositoriesOpt
     )
       .mapN {
         // format: off
-        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs, smithyBuild) =>
+        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs, smithyBuild, allowDefaultRepositories) =>
         // format: on
           val dependenciesWithDefaults = {
             import Defaults._
@@ -136,7 +137,8 @@ object CodegenCommand {
             dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
             localJars.getOrElse(List.empty),
-            smithyBuild
+            smithyBuild,
+            allowDefaultRepositories
           )
       }
 

@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.19.7
+
+- codegen: Add a way to opt out of coursier's default repositories (e.g. Maven Central, ivy2Local) when resolving codegen dependencies. Sbt: set `smithy4sAllowDefaultRepositories := false`. Mill: override `def smithy4sAllowDefaultRepositories = false`. CLI: pass `--no-default-repositories` to `generate`/`dump-model`. Useful for users behind an internal repository proxy that mirrors Maven Central. Defaults to `true` for backwards compatibility. See [#1969](https://github.com/disneystreaming/smithy4s/issues/1969).
+
 # 0.19.6
 
 - Relax default filter in codegen module to allow generating namespaces that start with `smithy.` as long as they are not `smithy.api` in [#1968](https://github.com/disneystreaming/smithy4s/pull/1968)

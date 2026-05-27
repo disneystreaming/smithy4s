@@ -43,7 +43,8 @@ private[codegen] object CodegenImpl { self =>
       args.repositories,
       withBuiltinTransformers(args.transformers),
       args.discoverModels,
-      args.localJars
+      args.localJars,
+      args.allowDefaultRepositories
     )
 
     val (scalaFiles, smithyResources) = if (!args.skipScala) {
@@ -269,7 +270,8 @@ private[codegen] object CodegenImpl { self =>
       args.repositories,
       withBuiltinTransformers(args.transformers),
       discoverModels = false,
-      args.localJars
+      args.localJars,
+      args.allowDefaultRepositories
     )
     val flattenedModel =
       ModelTransformer.create().flattenAndRemoveMixins(model)

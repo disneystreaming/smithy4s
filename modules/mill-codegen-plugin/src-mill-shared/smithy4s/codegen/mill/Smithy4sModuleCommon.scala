@@ -100,6 +100,12 @@ trait Smithy4sModuleCommon extends ScalaModule {
       repository.root
     }
 
+  /** Whether coursier's default repositories (e.g. Maven Central, ivy2Local) should
+   *  be queried when resolving codegen dependencies, in addition to those declared
+   *  via Mill's `repositoriesTask`. Defaults to `true` for backwards compatibility.
+   */
+  def smithy4sAllowDefaultRepositories: T[Boolean] = true
+
   def smithy4sVersion: T[String] = BuildInfo.version
   def smithy4sSmithyLibrary: T[Boolean] = true
 
@@ -252,7 +258,8 @@ trait Smithy4sModuleCommon extends ScalaModule {
       dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars,
-      smithyBuild = smithyBuildFile
+      smithyBuild = smithyBuildFile,
+      allowDefaultRepositories = smithy4sAllowDefaultRepositories()
     )
 
     Smithy4s.generateToDisk(args)
