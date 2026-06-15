@@ -550,7 +550,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     (pluginCrossBuild / sbtVersion) := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.12.4"
-        case _      => "2.0.0-RC9"
+        case _      => "2.0.0"
       }
     },
     libraryDependencies += {
