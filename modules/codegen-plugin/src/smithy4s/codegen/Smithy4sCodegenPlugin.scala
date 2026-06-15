@@ -19,10 +19,13 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
+import sbtcompat.{PluginCompat => SbtCompat}
+import SbtCompat.{toFiles, parseModuleIDStrAttribute}
 
 import scala.util.Success
 import scala.util.Try
 
+import Compat._
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
@@ -208,16 +211,17 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sAllowDefaultRepositories := true,
     smithy4sAwsSpecs := Seq.empty,
     smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
-    Compile / smithy4sAwsSpecDependencies := {
+    Compile / smithy4sAwsSpecDependencies := Def.uncached {
       val version = (smithy4sAwsSpecsVersion).value
       (smithy4sAwsSpecs).value.map { case artifactName =>
         smithy4s.codegen.AwsSpecs.org % artifactName % version
       }
     },
-    config / smithy4sInternalDependenciesAsJars := {
-      (config / internalDependencyAsJars).value.map(_.data)
+    config / smithy4sInternalDependenciesAsJars := Def.uncached {
+      implicit val fc: xsbti.FileConverter = fileConverter.value
+      toFiles((config / internalDependencyAsJars).value)
     },
-    config / smithy4sExplicitCodegenOnlyDependencies := {
+    config / smithy4sExplicitCodegenOnlyDependencies := Def.uncached {
       transitiveLibraryDependencies.value
         .filter(
           _.configurations.exists(_.contains(Smithy4s.name))
@@ -225,19 +229,21 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         .map(_.withConfigurations(None))
         .distinct
     },
-    config / smithy4sExternallyTrackedDependencies := {
-      (config / externalDependencyClasspath).value
-        .map(_.data)
+    config / smithy4sExternallyTrackedDependencies := Def.uncached {
+      implicit val fc: xsbti.FileConverter = fileConverter.value
+      toFiles((config / externalDependencyClasspath).value)
         .filter(_.ext == "jar")
         .flatMap(extractJar)
         .distinct
     },
-    config / smithy4sNormalExternalDependencies := {
+    config / smithy4sNormalExternalDependencies := Def.uncached {
       (config / externalDependencyClasspath).value
-        .flatMap(_.metadata.get(moduleID.key))
+        .flatMap(a =>
+          a.get(SbtCompat.moduleIDStr).map(parseModuleIDStrAttribute)
+        )
         .distinct
     },
-    config / smithy4sAllExternalDependencies := {
+    config / smithy4sAllExternalDependencies := Def.uncached {
       val all = (config / smithy4sNormalExternalDependencies).value ++
         (config / smithy4sExplicitCodegenOnlyDependencies).value ++
         (config / smithy4sExternallyTrackedDependencies).value ++
@@ -332,7 +338,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / cleanFiles += (config / smithy4sOutputDir).value,
     config / cleanFiles += (config / smithy4sResourceDir).value,
     config / smithy4sModelTransformers := List.empty,
-    config / packageBin / packageOptions += {
+    config / packageBin / packageOptions += Def.uncached {
       // This piece of logic aims at tracking the dependencies that Smithy4s used to generate
       // code at build time, in the manifest of the jar. This helps automatically pulling
       // the corresponding jars and prevents the users from having to search
@@ -358,7 +364,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       )
     )
 
-  override lazy val globalSettings: Seq[Def.Setting[_]] = List(
+  override lazy val globalSettings: Seq[Def.Setting[?]] = List(
     commands += GenerateSmithyBuild.command
   )
 
