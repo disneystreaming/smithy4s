@@ -26,6 +26,10 @@ lazy val upstream = (project in file("upstream"))
 lazy val bar = (project in file("bar"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
+    TaskKey[Unit]("checkNoLeakedSources") := {
+      val srcDir = (Compile / sourceManaged).value / "smithy4s"
+      assert(!(srcDir / "foo" / "Foo.scala").exists, "foo/Foo.scala should not be in bar")
+    },
     // bar depend on foo as a library, and an assumption is made that bar may depend on the same smithy models
     // that foo depended on for its own codegen. Therefore, these are retrieved from foo's manifest,
     // resolved and added to the list of jars to seek smithy models from during code generation

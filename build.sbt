@@ -534,14 +534,54 @@ lazy val `codegen-cli` = projectMatrix
  */
 lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
   .enablePlugins(SbtPlugin)
-  .dependsOn(codegen)
   .jvmPlatform(
-    scalaVersions = List(Scala212),
-    jvmDimSettings
+    List(Scala212),
+    Seq.empty[VirtualAxis],
+    (p: Project) => p.settings(jvmDimSettings).dependsOn(codegen.jvm(Scala212))
+  )
+  .jvmPlatform(
+    List(Scala38),
+    Seq.empty[VirtualAxis],
+    (p: Project) => p.settings(jvmDimSettings).dependsOn(codegen.jvm(Scala3))
   )
   .settings(
     name := "sbt-codegen",
     sbtPlugin := true,
+    (pluginCrossBuild / sbtVersion) := {
+      scalaBinaryVersion.value match {
+        case "2.12" => "1.12.4"
+        case _      => "2.0.0-RC9"
+      }
+    },
+    libraryDependencies += {
+      scalaBinaryVersion.value match {
+        case "2.12" => "com.github.sbt" % "sbt2-compat_2.12_1.0" % "0.1.0"
+        case _      => "com.github.sbt" % "sbt2-compat_sbt2_3" % "0.1.0"
+      }
+    },
+    // When cross-building for Scala 3 / sbt 2, the codegen dependency brings in
+    // coursier with Scala 2.13 variants that conflict with Scala 3 variants.
+    excludeDependencies ++= {
+      if (scalaBinaryVersion.value == "3")
+        Seq(
+          ExclusionRule(
+            "org.scala-lang.modules",
+            "scala-collection-compat_2.13"
+          ),
+          ExclusionRule("org.scala-lang.modules", "scala-xml_2.13")
+        )
+      else Seq.empty
+    },
+    conflictWarning := {
+      if (scalaBinaryVersion.value == "3") ConflictWarning.disable
+      else conflictWarning.value
+    },
+    Compile / scalacOptions ++= {
+      scalaBinaryVersion.value match {
+        case "2.12" => Seq("-Xsource:3")
+        case _      => Seq("-Wconf:msg=unused import:s")
+      }
+    },
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq("-Xmx1G", "-Dplugin.version=" + version.value)
@@ -561,10 +601,11 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-        (core.jvm(Scala3) / publishLocal).value,
 
-        // for sbt
+        // for sbt 1.x
         (codegen.jvm(Scala212) / publishLocal).value,
+        // for sbt 2.x
+        (codegen.jvm(Scala3) / publishLocal).value,
         (protocolJvm / publishLocal).value
       )
       publishLocal.value

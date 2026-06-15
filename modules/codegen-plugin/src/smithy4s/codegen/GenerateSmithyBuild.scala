@@ -85,7 +85,7 @@ private[codegen] object GenerateSmithyBuild {
 
   private def extractDeps(
       pr: ProjectRef,
-      settings: Settings[Scope]
+      settings: Compat.SettingsMap
   ): ListSet[String] = {
     val scalaBin = (pr / scalaBinaryVersion).get(settings)
 
@@ -95,24 +95,24 @@ private[codegen] object GenerateSmithyBuild {
       .flatten
       .filter(_.configurations.exists(_.contains(Smithy4s.name)))
       .flatMap(Smithy4sCodegenPlugin.moduleIdEncode(_, scalaBin))
-      .to[ListSet]
+      .foldLeft(ListSet.empty[String])(_ + _)
   }
 
   private def extractRepos(
       pr: ProjectRef,
-      settings: Settings[Scope]
+      settings: Compat.SettingsMap
   ): ListSet[String] = {
     (pr / resolvers)
       .get(settings)
       .toList
       .flatten
       .collect(prepareResolvers)
-      .to[ListSet]
+      .foldLeft(ListSet.empty[String])(_ + _)
   }
 
   private def extractSources(
       pr: ProjectRef,
-      settings: Settings[Scope],
+      settings: Compat.SettingsMap,
       rootDir: File
   ): ListSet[String] =
     (pr / Compile / smithy4sInputDirs)
@@ -120,7 +120,7 @@ private[codegen] object GenerateSmithyBuild {
       .toList
       .flatten
       .collect(prepareInputDirs(rootDir))
-      .to[ListSet]
+      .foldLeft(ListSet.empty[String])(_ + _)
 
   private val prepareResolvers: PartialFunction[Resolver, String] = {
     case mr: MavenRepository if !mr.root.contains("repo1.maven.org") => mr.root

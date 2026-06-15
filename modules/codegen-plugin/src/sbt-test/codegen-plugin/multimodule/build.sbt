@@ -48,3 +48,10 @@ lazy val inBetween = (project in file("inBetween"))
 lazy val bar = (project in file("bar"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .dependsOn(inBetween)
+  .settings(
+    TaskKey[Unit]("checkNoLeakedSources") := {
+      val srcDir = (Compile / sourceManaged).value / "smithy4s"
+      assert(!(srcDir / "foo" / "Foo.scala").exists, "foo/Foo.scala should not be in bar")
+      assert(!(srcDir / "foodir" / "FooDir.scala").exists, "foodir/FooDir.scala should not be in bar")
+    }
+  )

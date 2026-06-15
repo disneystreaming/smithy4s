@@ -8,6 +8,8 @@ val root = project
   .aggregate(subproj, subproj2)
   .settings(
     TaskKey[Unit]("checkSmithyBuild") := {
+      val srcManaged = (subproj2 / Compile / sourceManaged).value
+      val srcManagedPath = srcManaged.relativeTo(file(".").getAbsoluteFile).get
       val generated =
         IO.readLines(file(".") / "smithy-build.json").mkString("\n")
       val expected = IO
@@ -15,6 +17,7 @@ val root = project
         .mkString("\n")
         .replace("${SMITHY4S_VERSION}", smithy4sVersion.value)
         .replace("${ALLOY_VERSION}", smithy4s.codegen.BuildInfo.alloyVersion)
+        .replace("${SRC_MANAGED}", (srcManagedPath / "smithy").toString)
       val compare = s"""|generated:
                         |$generated
                         |===================================
