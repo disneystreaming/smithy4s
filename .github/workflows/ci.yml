@@ -302,7 +302,7 @@ jobs:
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
       - name: Run scripted (${{ matrix.test }}) — sbt 1.x
-        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "codegenPlugin/scripted codegen-plugin/${{ matrix.test }}"
+        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "codegenPlugin212/scripted codegen-plugin/${{ matrix.test }}"
 
       - name: Run scripted (${{ matrix.test }}) — sbt 2.x
         run: sbt "codegenPlugin3/scripted codegen-plugin/${{ matrix.test }}"
