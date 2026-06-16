@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.55
+
+* sbt plugin: add sbt 2.x support (backport from the 0.19 series) in https://github.com/disneystreaming/smithy4s/pull/1973/
+
 # 0.18.54
 
 * codegen: Add a way to opt out of coursier's default repositories (e.g. Maven Central, ivy2Local) when resolving codegen dependencies. Sbt: set `smithy4sAllowDefaultRepositories := false`. Mill: override `def smithy4sAllowDefaultRepositories = false`. CLI: pass `--no-default-repositories` to `generate`/`dump-model`. Useful for users behind an internal repository proxy that mirrors Maven Central. Defaults to `true` for backwards compatibility. See [#1969](https://github.com/disneystreaming/smithy4s/issues/1969).
