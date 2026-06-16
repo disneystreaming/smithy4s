@@ -34,6 +34,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   object autoImport {
     val AWS = smithy4s.codegen.AwsSpecs
 
+    @transient
     val smithy4sCodegen =
       taskKey[Seq[File]](
         "Generate .scala and other files from smithy specs (.smithy or .json files)"
@@ -115,6 +116,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
+    @transient
     val smithy4sInternalDependenciesAsJars =
       taskKey[Seq[File]](
         List(
@@ -126,6 +128,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
+    @transient
     val smithy4sAllDependenciesAsJars =
       taskKey[Seq[File]](
         List(
@@ -134,6 +137,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
+    @transient
     val smithyBuild = taskKey[Option[File]](
       "smithy-build.json to use for reading build configuration"
     )
@@ -148,6 +152,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Boolean value to indicate whether or not to generate optics"
       )
 
+    @transient
     val smithy4sGeneratedSmithyFiles =
       taskKey[Seq[File]](
         "Generated smithy files"
