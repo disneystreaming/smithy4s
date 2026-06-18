@@ -298,9 +298,13 @@ lazy val core = projectMatrix
         "smithy4s.http.HttpUnaryServerRouter.partialFunction"
       ),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime"
+      ),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
+      ProblemFilters.exclude[MissingClassProblem](
+        "alloy.proto.ProtoCompactOffsetDateTime$"
+      )
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -350,7 +354,8 @@ lazy val `aws-kernel` = projectMatrix
       "-Wconf:msg=class Ec2Query in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
-    )
+    ),
+    isMimaEnabled := true
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(
@@ -398,6 +403,7 @@ lazy val `aws-http4s` = projectMatrix
       "-Wconf:msg=class RestXml in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
     ),
+    isMimaEnabled := true,
     Test / complianceTestDependencies := Seq(
       Dependencies.Smithy.`aws-protocol-tests`
     ),
@@ -791,7 +797,8 @@ lazy val dynamic = projectMatrix
       files
         .map(f => (f, f.relativeTo(base)))
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
-    }
+    },
+    isMimaEnabled := true
   )
   .jvmPlatform(
     allJvmScalaVersions,
@@ -840,7 +847,7 @@ lazy val xml = projectMatrix
     scalacheck % "test -> compile"
   )
   .settings(
-    isMimaEnabled := false,
+    isMimaEnabled := true,
     libraryDependencies ++= Seq(
       Dependencies.Fs2Data.xml.value
     ) ++ weaverDeps.value,
@@ -863,7 +870,7 @@ lazy val protobuf = projectMatrix
     scalacheck % "test -> compile"
   )
   .settings(
-    isMimaEnabled := false,
+    isMimaEnabled := true,
     libraryDependencies ++= munitDeps.value,
     libraryDependencies ++= {
       if (virtualAxes.value.contains(VirtualAxis.jvm))
@@ -962,6 +969,7 @@ lazy val `http4s-swagger` = projectMatrix
   .in(file("modules/http4s-swagger"))
   .dependsOn(http4s)
   .settings(
+    isMimaEnabled := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Webjars.swaggerUi,
@@ -1015,7 +1023,8 @@ lazy val tests = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy"
     ),
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    isMimaEnabled := true
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -1052,6 +1061,9 @@ lazy val complianceTests = projectMatrix
         Dependencies.Fs2Data.xml.value
       ) ++ weaverDeps.value
     }
+    // TODO: add in 0.19?
+    // add now with a high baseline?
+    // isMimaEnabled := true
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
