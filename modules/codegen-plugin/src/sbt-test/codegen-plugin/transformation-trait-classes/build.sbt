@@ -20,5 +20,12 @@ lazy val root = project
       "my-transformation"
     ),
     Compile / smithy4sAllowedNamespaces := List("my.input"),
-    Compile / smithy4sAllDependenciesAsJars += (transformation / Compile / packageBin).value
+    Compile / smithy4sAllDependenciesAsJars += {
+      val ref: Any = (transformation / Compile / packageBin).value
+      ref match {
+        case f: java.io.File => f
+        case other: xsbti.VirtualFileRef =>
+          fileConverter.value.toPath(other).toFile
+      }
+    }
   )

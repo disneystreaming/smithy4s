@@ -264,13 +264,14 @@ jobs:
           echo "Discovered: $tests"
 
   sbt-plugin:
-    name: sbt plugin (${{ matrix.test }})
+    name: sbt plugin (${{ matrix.test }}) — sbt ${{ matrix.sbtVersion }}.x
     needs: [compile, sbt-plugin-discover]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         test: ${{ fromJSON(needs.sbt-plugin-discover.outputs.tests) }}
+        sbtVersion: ["1", "2"]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v6
@@ -301,8 +302,13 @@ jobs:
       - name: Merge compilation caches
         run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
 
-      - name: Run scripted (${{ matrix.test }})
-        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "scripted codegen-plugin/${{ matrix.test }}"
+      - name: Run scripted (${{ matrix.test }}) — sbt 1.x
+        if: matrix.sbtVersion == '1'
+        run: sbt pullRemoteCache_2_12_jvm pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "codegenPlugin2_12/scripted codegen-plugin/${{ matrix.test }}"
+
+      - name: Run scripted (${{ matrix.test }}) — sbt 2.x
+        if: matrix.sbtVersion == '2'
+        run: sbt pullRemoteCache_2_13_jvm pullRemoteCache_3_0_jvm "codegenPlugin3/scripted codegen-plugin/${{ matrix.test }}"
 
   mill-plugin:
     name: mill plugin (${{ matrix.project }})

@@ -2,7 +2,7 @@
     "version" : "1.0",
     "sources" : [
         "subproj2/src/main/smithy",
-        "subproj2/target/scala-2.12/src_managed/main/smithy"
+        "${SRC_MANAGED}"
     ],
     "maven" : {
         "dependencies" : [
