@@ -6,7 +6,7 @@ title: Throwable Usage
 
 By default, smithy4s generates error data types that extend `java.lang.Throwable` , For example the following spec:
 
-```kotlin
+```smithy
 @error("client")
 structure BadRequest {
   @required
@@ -23,7 +23,7 @@ case class BadRequest(reason: String) extends Throwable
 
 It is however possible to annotate the error  definition with the `smithy4s.meta#noStackTrace` trait
 
-```kotlin
+```smithy
 @error("client")
 @noStackTrace
 structure BadRequest {

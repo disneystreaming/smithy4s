@@ -13,7 +13,7 @@ To generate a service product, annotate the service definition with
 
 `@generateServiceProduct`:
 
-```kotlin
+```smithy
 @SERVICE_PRODUCT_SPEC@
 ```
 

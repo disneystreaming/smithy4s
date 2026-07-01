@@ -8,7 +8,7 @@ Smithy4s has the ability to render optics (Lens/Prism) instances in the code it 
 The way to enable this feature is through your Smithy specifications.
 The simplest approach is to add a file with the following content to your CLI invocation:
 
-```kotlin
+```smithy
 $version: "2"
 
 metadata smithy4sRenderOptics = true
@@ -17,7 +17,7 @@ metadata smithy4sRenderOptics = true
 Alternatively, if you want to generate optics for only select shapes in your model, you can accomplish this using
 the `smithy4s.meta#generateOptics` trait. This trait can be used on enum, intEnum, union, and structure shapes.
 
-```kotlin
+```smithy
 use smithy4s.meta#generateOptics
 
 @generateOptics

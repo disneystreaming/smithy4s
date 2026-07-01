@@ -7,7 +7,7 @@ By default, Smithy4s generates methods whose return type is the output structure
 
 For instance:
 
-```kotlin
+```smithy
 service ItemService {
   version: "1.0.0"
   operations: [GetItem]
@@ -42,7 +42,7 @@ It is however possible to annotate an operation with the `smithy4s.meta#unpacked
 
 For instance:
 
-```kotlin
+```smithy
 use smithy4s.meta#unpackedOutput
 
 @unpackedOutput

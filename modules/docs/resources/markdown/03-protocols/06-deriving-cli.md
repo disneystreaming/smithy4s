@@ -8,7 +8,7 @@ title: Deriving CLIs
 - This module is written in [Tagless Final](https://okmij.org/ftp/tagless-final/) style and requires an `F[_]` for which there is an instance of [cats.MonadThrow](https://typelevel.org/cats/api/cats/package$$MonadThrow$.html)
 - Let's revisit our HelloWorld smithy definition from the [Quickstart](../01-overview/02-quickstart.md)
 
-```kotlin
+```smithy
 namespace smithy4s.hello
 
 use alloy#simpleRestJson

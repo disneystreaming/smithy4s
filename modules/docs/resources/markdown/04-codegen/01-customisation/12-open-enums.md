@@ -7,7 +7,7 @@ By default, `enum` and `intEnum` shapes are considered to be closed and they are
 
 Open enumerations can be specified using the `alloy#openEnum` trait ([docs here](https://github.com/disneystreaming/alloy/blob/main/modules/docs/misc/constraints.md#alloyopenenum)).
 
-```kotlin
+```smithy
 use alloy#openEnum
 
 @openEnum

@@ -7,7 +7,7 @@ title: Add Scala imports to generated code
 
 Lets say We have a smithy specification and it's accommodated Scala code as below:
 
-```kotlin
+```smithy
 $version: "2.0"
 namespace test
 
@@ -81,7 +81,7 @@ Note that the implicit `RefinementProvider` is not in the companion object of `P
 
 What We have here is `PageSize` will be generated as a `PositiveInt`. Which is really nice, but what if you need another validator like `@range` to limit how big a `pageSize` can be? So, just let try:
 
-```kotlin
+```smithy
 structure Input {
   // highlight-start
   @range(max: 100)
@@ -120,7 +120,7 @@ Note that the `PageSize.Type` is `PositiveInt`
 
 And for the second step, We need to apply `scalaImports` trait with an appropriate import to `Input` structure:
 
-```kotlin
+```smithy
 namespace test
 // highlight-start
 use smithy4s.meta#scalaImports

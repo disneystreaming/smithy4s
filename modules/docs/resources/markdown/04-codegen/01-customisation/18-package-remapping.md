@@ -10,7 +10,7 @@ Package remapping lets you override this at render time (without modifying Smith
 
 Add a `smithy4sCodegen` metadata entry to any Smithy file in your model:
 
-```kotlin
+```smithy
 $version: "2.0"
 
 metadata smithy4sCodegen = {
@@ -33,7 +33,7 @@ All four fields are optional and can be combined freely.
 
 Prepends a prefix to every generated package name:
 
-```kotlin
+```smithy
 metadata smithy4sCodegen = { packagePrefix: "internal.generated" }
 ```
 
@@ -43,7 +43,7 @@ A shape in namespace `com.example.api` will be placed in package `internal.gener
 
 Maps individual namespaces to explicit package names, overriding any `packagePrefix` for the matched namespace:
 
-```kotlin
+```smithy
 metadata smithy4sCodegen = {
     packageMappings: { "com.example.special": "explicit.pkg" }
 }
@@ -57,7 +57,7 @@ When both `packagePrefix` and `packageMappings` are present, an explicit mapping
 
 Restricts code generation to the listed namespaces. When set, only namespaces matching at least one of the patterns are processed. Accepts the same wildcard patterns as `excludedNamespaces` (see below).
 
-```kotlin
+```smithy
 metadata smithy4sCodegen = {
     allowedNamespaces: ["com.example.*"]
 }
@@ -73,7 +73,7 @@ Prevents code generation for the listed namespaces. Accepts the following wildca
 - `com.example.*` - matches `com.example` followed by any additional segments
 - `com.example*` - like above, but also matches `com.example` itself
 
-```kotlin
+```smithy
 metadata smithy4sCodegen = {
     excludedNamespaces: ["com.example.ignored", "com.internal.*"]
 }

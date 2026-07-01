@@ -10,7 +10,7 @@ As of version `0.18.23` and above, Smithy4s has the ability to render constraine
 The way to utilize this feature is through your Smithy specifications by adding a file with the following 
 content to your Smithy sources:
 
-```kotlin
+```smithy
 $version: "2"
 
 metadata smithy4sRenderValidatedNewtypes = true
@@ -20,7 +20,7 @@ Alternatively, if you want to generate validated newtypes only for select shapes
 this using the `smithy4s.meta#validateNewtype` trait. This trait can only be used on number shapes with a range
 constraint or string shapes with pattern and/or length constraints.
 
-```kotlin
+```smithy
 use smithy4s.meta#validateNewtype
 
 @validateNewtype

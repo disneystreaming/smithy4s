@@ -12,7 +12,7 @@ Smithy4s now has a way for you to control that, and the good thing is that you p
 
 If you are using Smithy4s via the CLI, then they way to utilize this feature is through your Smithy specifications. The simplest approach is to add a file with the following content to your CLI invocation:
 
-```kotlin
+```smithy
 $version: "2"
 
 metadata smithy4sWildcardArgument = "?" // can also be `_`
