@@ -17,10 +17,10 @@
 package smithy4s.codegen
 package internals
 
-import coursier._
-import coursier.cache.FileCache
-import coursier.parse.DependencyParser
-import coursier.parse.RepositoryParser
+import coursierapi.Dependency
+import coursierapi.Fetch
+import coursierapi.MavenRepository
+import coursierapi.ScalaVersion
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
@@ -33,6 +33,9 @@ import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.util.Using
 
 private[codegen] object ModelLoader {
@@ -143,34 +146,32 @@ private[codegen] object ModelLoader {
       repositories: List[String],
       allowDefaultRepositories: Boolean
   ): Seq[File] = {
-    val maybeRepos = RepositoryParser.repositories(repositories).either
-    val maybeDeps = DependencyParser
-      .dependencies(
-        dependencies,
-        defaultScalaVersion = smithy4s.codegen.BuildInfo.scalaBinaryVersion
+    val scalaVersion =
+      ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
+
+    val (depErrors, deps) = dependencies.foldLeft(
+      (List.empty[String], List.empty[Dependency])
+    ) { case ((errors, acc), depString) =>
+      Try(Dependency.parse(depString, scalaVersion)) match {
+        case Success(dep) => (errors, acc :+ dep)
+        case Failure(e)   => (errors :+ s"$depString: ${e.getMessage}", acc)
+      }
+    }
+    if (depErrors.nonEmpty) {
+      throw new IllegalArgumentException(
+        s"Failed to parse dependencies with errors: $depErrors"
       )
-      .either
-    val repos = maybeRepos match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse repositories with error: $errorMessages"
-        )
-      case Right(r) => r
     }
-    val deps = maybeDeps match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse dependencies with errors: $errorMessages"
-        )
-      case Right(d) => d
-    }
+
+    val repos = repositories.map(MavenRepository.of)
+
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
-        val baseFetch = Fetch(FileCache())
+        val baseFetch = Fetch.create()
         val withRepos =
           if (allowDefaultRepositories) baseFetch.addRepositories(repos: _*)
-          else baseFetch.withRepositories(repos)
-        withRepos.addDependencies(deps: _*).run()
+          else baseFetch.withRepositories(repos: _*)
+        withRepos.addDependencies(deps: _*).fetch().asScala.toSeq
       } else {
         Seq.empty
       }

@@ -418,8 +418,7 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
-      ("io.get-coursier" %% "coursier" % "2.1.24")
-        .cross(CrossVersion.for3Use2_13),
+      "io.get-coursier" % "interface" % "1.0.29-M4",
       Dependencies.Mima.core % Test
     ),
     libraryDependencies ++= {
@@ -427,18 +426,6 @@ lazy val codegen = projectMatrix
         Seq(
           "org.scala-lang" % "scala-reflect" % scalaVersion.value,
           Dependencies.collectionsCompat.value
-        )
-      else Seq.empty
-    },
-    // For Scala 3, exclude transitive Scala 2.13 deps from coursier that conflict with Scala 3 cross versions.
-    // Note: scala-xml_2.13 is NOT excluded because coursier needs it at runtime.
-    excludeDependencies ++= {
-      if (scalaVersion.value.startsWith("3."))
-        Seq(
-          ExclusionRule(
-            "org.scala-lang.modules",
-            "scala-collection-compat_2.13"
-          )
         )
       else Seq.empty
     },
@@ -523,18 +510,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     List(Scala38),
     Seq.empty[VirtualAxis],
     (p: Project) =>
-      p.settings(
-        jvmDimSettings,
-        // When cross-building for Scala 3 / sbt 2, the codegen dependency brings in
-        // coursier with Scala 2.13 variants that conflict with Scala 3 variants.
-        excludeDependencies ++= Seq(
-          ExclusionRule(
-            "org.scala-lang.modules",
-            "scala-collection-compat_2.13"
-          ),
-          ExclusionRule("org.scala-lang.modules", "scala-xml_2.13")
-        )
-      ).dependsOn(codegen.jvm(Scala3))
+      p.settings(jvmDimSettings).dependsOn(codegen.jvm(Scala3))
   )
   .settings(
     name := "sbt-codegen",
