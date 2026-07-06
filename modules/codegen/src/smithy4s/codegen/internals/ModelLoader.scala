@@ -140,6 +140,40 @@ private[codegen] object ModelLoader {
     (validatorClassLoader, postTransformationModel)
   }
 
+  private[internals] def parseDependencies(
+      dependencies: List[String],
+      scalaVersion: ScalaVersion
+  ): List[Dependency] = {
+    val (errors, deps) = dependencies.foldLeft(
+      (List.empty[String], List.empty[Dependency])
+    ) { case ((errors, acc), depString) =>
+      Try(Dependency.parse(depString, scalaVersion)) match {
+        case Success(dep) => (errors, acc :+ dep)
+        case Failure(e)   => (errors :+ s"$depString: ${e.getMessage}", acc)
+      }
+    }
+    if (errors.nonEmpty) {
+      throw new IllegalArgumentException(
+        s"Failed to parse dependencies with errors: $errors"
+      )
+    }
+    deps
+  }
+
+  // Builds the Fetch request without running it, so the repository/dependency
+  // wiring can be unit-tested without performing any network resolution.
+  private[internals] def buildFetch(
+      dependencies: List[Dependency],
+      repositories: List[MavenRepository],
+      allowDefaultRepositories: Boolean
+  ): Fetch = {
+    val baseFetch = Fetch.create()
+    val withRepos =
+      if (allowDefaultRepositories) baseFetch.addRepositories(repositories: _*)
+      else baseFetch.withRepositories(repositories: _*)
+    withRepos.addDependencies(dependencies: _*)
+  }
+
   private def resolveDependencies(
       dependencies: List[String],
       localJars: List[os.Path],
@@ -149,29 +183,12 @@ private[codegen] object ModelLoader {
     val scalaVersion =
       ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
 
-    val (depErrors, deps) = dependencies.foldLeft(
-      (List.empty[String], List.empty[Dependency])
-    ) { case ((errors, acc), depString) =>
-      Try(Dependency.parse(depString, scalaVersion)) match {
-        case Success(dep) => (errors, acc :+ dep)
-        case Failure(e)   => (errors :+ s"$depString: ${e.getMessage}", acc)
-      }
-    }
-    if (depErrors.nonEmpty) {
-      throw new IllegalArgumentException(
-        s"Failed to parse dependencies with errors: $depErrors"
-      )
-    }
-
+    val deps = parseDependencies(dependencies, scalaVersion)
     val repos = repositories.map(MavenRepository.of)
 
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
-        val baseFetch = Fetch.create()
-        val withRepos =
-          if (allowDefaultRepositories) baseFetch.addRepositories(repos: _*)
-          else baseFetch.withRepositories(repos: _*)
-        withRepos.addDependencies(deps: _*).fetch().asScala.toSeq
+        buildFetch(deps, repos, allowDefaultRepositories).fetch().asScala.toSeq
       } else {
         Seq.empty
       }
