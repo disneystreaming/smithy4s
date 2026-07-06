@@ -1,3 +1,4 @@
+import com.typesafe.tools.mima.core._
 import software.amazon.smithy.model.traits.TraitService
 import _root_.java.util.stream.Collectors
 import java.nio.file.Files
@@ -253,7 +254,15 @@ lazy val core = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:msg=value noInlineDocumentSupport in class ProtocolDefinition is deprecated:silent"
     ),
-    mimaBinaryIssueFilters ++= Seq.empty
+    // smithy-waiters 1.72.0 added a new `message` field to the `Acceptor` structure
+    // (see waiters.smithy upstream), which shifted the arity of the generated
+    // `smithy.waiters.Acceptor.apply` case class constructor. This is generated
+    // prelude code for the built-in waiters trait, not hand-authored API.
+    mimaBinaryIssueFilters ++= Seq(
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.waiters.Acceptor.apply"
+      )
+    )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
