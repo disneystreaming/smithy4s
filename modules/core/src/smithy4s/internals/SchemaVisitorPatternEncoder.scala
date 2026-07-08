@@ -105,9 +105,7 @@ private[internals] final class SchemaVisitorPatternEncoder(
 
     val altEncoders: Option[Map[Int, Any => List[String]]] = {
       val entries = alternatives.zipWithIndex.map { case (alt, idx) =>
-        compileAlt(alt).map(enc =>
-          idx -> enc.asInstanceOf[Any => List[String]]
-        )
+        compileAlt(alt).map(enc => idx -> enc.asInstanceOf[Any => List[String]])
       }
       entries.traverse(identity).map(_.toMap)
     }

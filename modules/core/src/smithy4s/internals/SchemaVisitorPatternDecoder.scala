@@ -128,7 +128,11 @@ private[internals] final class SchemaVisitorPatternDecoder(
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
   ): MaybePatternDecode[U] = {
-    val altsByLabel = alternatives.map(a => a.label -> a).toMap
+    val altsByLabel: Map[String, Alt[U, _]] = {
+      val builder = Map.newBuilder[String, Alt[U, _]]
+      alternatives.foreach(a => builder += (a.label -> a))
+      builder.result()
+    }
     PatternDecode.from { input =>
       val fieldStrings = extractMemberStrings(input)
       val label = fieldStrings.getOrElse(
