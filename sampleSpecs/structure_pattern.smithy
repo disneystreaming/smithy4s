@@ -14,3 +14,11 @@ structure TestStructurePatternTarget {
     @required
     two: Integer
 }
+
+@structurePattern(pattern: "{label}:{value}", target: TestUnionPatternTarget)
+string TestUnionPattern
+
+union TestUnionPatternTarget {
+    one: String
+    two: Integer
+}

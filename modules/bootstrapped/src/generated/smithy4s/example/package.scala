@@ -129,6 +129,7 @@ package object example {
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
   type TestString = smithy4s.example.TestString.Type
   type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
+  type TestUnionPattern = smithy4s.example.TestUnionPattern.Type
   type UVIndex = smithy4s.example.UVIndex.Type
   type UnicodeRegexString = smithy4s.example.UnicodeRegexString.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type

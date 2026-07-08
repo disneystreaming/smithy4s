@@ -18,6 +18,7 @@ package smithy4s.internals
 
 import munit._
 import smithy4s._
+import smithy4s.schema.Alt
 import smithy4s.schema.Schema._
 import java.util.UUID
 import smithy4s.example.OpenEnumTest
@@ -154,6 +155,46 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
       else
         "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE_test"
     runEncode(pattern, in, expect)
+  }
+
+  sealed trait TestUnion extends Product with Serializable {
+    def $ordinal: Int
+  }
+  object TestUnion {
+    case class OneCase(value: String) extends TestUnion {
+      def $ordinal: Int = 0
+    }
+    case class TwoCase(value: Int) extends TestUnion {
+      def $ordinal: Int = 1
+    }
+
+    val oneAlt: Alt[TestUnion, String] =
+      string.oneOf[TestUnion]("one", OneCase(_)) { case OneCase(v) => v }
+    val twoAlt: Alt[TestUnion, Int] =
+      int.oneOf[TestUnion]("two", TwoCase(_)) { case TwoCase(v) => v }
+
+    implicit val schema: Schema[TestUnion] =
+      union(oneAlt, twoAlt) { _.$ordinal }
+  }
+
+  test("union encoding") {
+    val one: TestUnion = TestUnion.OneCase("hello")
+    val two: TestUnion = TestUnion.TwoCase(42)
+    runEncode("{label}:{value}", one, "one:hello")
+    runEncode("{label}:{value}", two, "two:42")
+    runEncode("[{label}]={value}", one, "[one]=hello")
+    runEncode("{label}/{value}!", two, "two/42!")
+  }
+
+  test("union decoding") {
+    val one: TestUnion = TestUnion.OneCase("hello")
+    val two: TestUnion = TestUnion.TwoCase(42)
+    runDecode("{label}:{value}", "one:hello", one)
+    runDecode("{label}:{value}", "two:42", two)
+    runDecode("[{label}]={value}", "[one]=hello", one)
+    runDecode("{label}/{value}!", "two/42!", two)
+    runDecode("{label}:{value}", "unknown:foo", one, shouldFail = true)
+    runDecode("{label}:{value}", "one:", one, shouldFail = true)
   }
 
   private def runEncode[A](pattern: String, input: A, expect: String)(implicit

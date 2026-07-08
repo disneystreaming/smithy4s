@@ -91,6 +91,57 @@ private[internals] final class SchemaVisitorPatternEncoder(
     }
   }
 
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
+  ): MaybePathEncode[U] = {
+    type Writer = U => List[String]
+
+    def compileAlt[A](alt: Alt[U, A]): Option[A => List[String]] = {
+      self(alt.schema).map(_.encode)
+    }
+
+    val altEncoders: Option[Map[Int, Any => List[String]]] = {
+      val entries = alternatives.zipWithIndex.map { case (alt, idx) =>
+        compileAlt(alt).map(enc =>
+          idx -> enc.asInstanceOf[Any => List[String]]
+        )
+      }
+      entries.traverse(identity).map(_.toMap)
+    }
+
+    def compile1(path: PatternSegment): Option[Writer] = path match {
+      case PatternSegment.StaticSegment(value) =>
+        Some(Function.const(List(value)))
+      case PatternSegment.ParameterSegment("label", _) =>
+        Some { (u: U) =>
+          val ord = dispatch.ordinal(u)
+          List(alternatives(ord).label)
+        }
+      case PatternSegment.ParameterSegment("value", _) =>
+        altEncoders.map { encoders => (u: U) =>
+          val ord = dispatch.ordinal(u)
+          val projected = alternatives(ord).project(u)
+          encoders(ord)(projected)
+        }
+      case PatternSegment.ParameterSegment(_, _) =>
+        None
+    }
+
+    def compilePath(path: Vector[PatternSegment]): Option[Vector[Writer]] =
+      path.traverse(compile1(_))
+
+    for {
+      writers <- compilePath(segments.toVector)
+    } yield new PathEncode[U] {
+      override def encode(u: U): List[String] =
+        writers.flatMap(_.apply(u)).toList
+      override def encodeGreedy(u: U): List[String] = Nil
+    }
+  }
+
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]

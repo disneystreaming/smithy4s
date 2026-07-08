@@ -108,39 +108,7 @@ private[internals] final class SchemaVisitorPatternDecoder(
         )
     }
     PatternDecode.from { input =>
-      val (fieldStrings, leftOverInput) =
-        segments.foldLeft((Map.empty[String, String], input)) {
-          case ((acc, remainingInput), segment) =>
-            segment match {
-              case PatternSegment.StaticSegment(value) =>
-                val length = value.length
-                val taken = remainingInput.take(length)
-                if (taken != value)
-                  throw StructurePatternError(
-                    s"Incorrect pattern, expected '$value' but found '$taken'"
-                  )
-                else (acc, remainingInput.drop(length))
-              case PatternSegment.ParameterSegment(
-                    paramName,
-                    terminationChar
-                  ) =>
-                val paramValue =
-                  remainingInput.takeWhile(i => !terminationChar.contains(i))
-                if (paramValue.isEmpty)
-                  throw StructurePatternError(
-                    "Empty parameter value encountered"
-                  )
-                (
-                  acc + (paramName -> paramValue),
-                  remainingInput.drop(paramValue.length)
-                )
-            }
-        }
-
-      if (leftOverInput.nonEmpty)
-        throw StructurePatternError(
-          s"Extra characters found in input string '$leftOverInput'"
-        )
+      val fieldStrings = extractMemberStrings(input)
 
       val decodedFields = fieldDecoders.map { case (fieldLabel, fieldDecoder) =>
         fieldStrings.get(fieldLabel) match {
@@ -152,6 +120,84 @@ private[internals] final class SchemaVisitorPatternDecoder(
 
       make(decodedFields)
     }
+  }
+
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
+  ): MaybePatternDecode[U] = {
+    val altsByLabel = alternatives.map(a => a.label -> a).toMap
+    PatternDecode.from { input =>
+      val fieldStrings = extractMemberStrings(input)
+      val label = fieldStrings.getOrElse(
+        "label",
+        throw StructurePatternError(
+          "Union pattern must contain a {label} parameter"
+        )
+      )
+      val value = fieldStrings.getOrElse(
+        "value",
+        throw StructurePatternError(
+          "Union pattern must contain a {value} parameter"
+        )
+      )
+      val alt = altsByLabel.getOrElse(
+        label,
+        throw StructurePatternError(
+          s"Unknown union alternative '$label'"
+        )
+      )
+      decodeAlt(alt, value)
+    }
+  }
+
+  private def decodeAlt[U, A](alt: Alt[U, A], value: String): U = {
+    val decoder = self(alt.schema).getOrElse(
+      throw StructurePatternError(
+        s"Unable to create decoder for alternative '${alt.label}'"
+      )
+    )
+    alt.inject(decoder.decode(value))
+  }
+
+  private def extractMemberStrings(input: String): Map[String, String] = {
+    val (fieldStrings, leftOverInput) =
+      segments.foldLeft((Map.empty[String, String], input)) {
+        case ((acc, remainingInput), segment) =>
+          segment match {
+            case PatternSegment.StaticSegment(value) =>
+              val length = value.length
+              val taken = remainingInput.take(length)
+              if (taken != value)
+                throw StructurePatternError(
+                  s"Incorrect pattern, expected '$value' but found '$taken'"
+                )
+              else (acc, remainingInput.drop(length))
+            case PatternSegment.ParameterSegment(
+                  paramName,
+                  terminationChar
+                ) =>
+              val paramValue =
+                remainingInput.takeWhile(i => !terminationChar.contains(i))
+              if (paramValue.isEmpty)
+                throw StructurePatternError(
+                  "Empty parameter value encountered"
+                )
+              (
+                acc + (paramName -> paramValue),
+                remainingInput.drop(paramValue.length)
+              )
+          }
+      }
+
+    if (leftOverInput.nonEmpty)
+      throw StructurePatternError(
+        s"Extra characters found in input string '$leftOverInput'"
+      )
+
+    fieldStrings
   }
 
   override def biject[A, B](
