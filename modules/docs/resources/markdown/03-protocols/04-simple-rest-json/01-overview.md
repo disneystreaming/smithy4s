@@ -140,4 +140,22 @@ structure FooBar {
 }
 ```
 
-Now wherever `FooBarString` is used, it will really be parsing the string into the structure `FooBar`. As such, the generated code will replace instances of `FooBarString` with `FooBar` such that the parsing logic is abstracted away from your implementation. See the [alloy documentation](https://github.com/disneystreaming/alloy#alloystructurepattern) for more information.
+Now wherever `FooBarString` is used, it will really be parsing the string into the structure `FooBar`. As such, the generated code will replace instances of `FooBarString` with `FooBar` such that the parsing logic is abstracted away from your implementation.
+
+### Union targets
+
+As of smithy4s version `0.19.8`, `@structurePattern` also supports targeting unions. When the target is a union, the pattern must use the magic identifiers `{label}` (for the discriminator) and `{value}` (for the payload). For example:
+
+```smithy
+@structurePattern(pattern: "{label}:{value}", target: MyUnion)
+string MyUnionString
+
+union MyUnion {
+  name: String
+  age: Integer
+}
+```
+
+A string like `"name:John"` will be parsed into the `name` alternative of `MyUnion` with value `"John"`, and `"age:30"` into the `age` alternative with value `30`.
+
+See the [alloy documentation](https://github.com/disneystreaming/alloy#alloystructurepattern) for more information.
