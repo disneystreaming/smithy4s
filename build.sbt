@@ -427,7 +427,7 @@ lazy val codegen = projectMatrix
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
       Dependencies.Circe.generic.value,
-      "io.get-coursier" % "interface" % "1.0.29-M4",
+      Dependencies.CoursierInterface.core,
       Dependencies.Mima.core % Test
     ),
     libraryDependencies ++= {
