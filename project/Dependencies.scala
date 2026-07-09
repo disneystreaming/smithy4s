@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.66.0"
+    val smithyVersion = "1.72.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -171,6 +171,10 @@ object Dependencies {
 
   object Mima {
     val core = "com.typesafe" %% "mima-core" % "1.1.5"
+  }
+
+  object CoursierInterface {
+    val core = "io.get-coursier" % "interface" % "1.0.29-M4"
   }
 
 }
