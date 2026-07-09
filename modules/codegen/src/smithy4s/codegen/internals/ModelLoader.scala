@@ -17,10 +17,10 @@
 package smithy4s.codegen
 package internals
 
-import coursier._
-import coursier.cache.FileCache
-import coursier.parse.DependencyParser
-import coursier.parse.RepositoryParser
+import coursierapi.Dependency
+import coursierapi.Fetch
+import coursierapi.MavenRepository
+import coursierapi.ScalaVersion
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
@@ -33,6 +33,9 @@ import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.util.Using
 
 private[codegen] object ModelLoader {
@@ -137,40 +140,55 @@ private[codegen] object ModelLoader {
     (validatorClassLoader, postTransformationModel)
   }
 
+  private[internals] def parseDependencies(
+      dependencies: List[String],
+      scalaVersion: ScalaVersion
+  ): List[Dependency] = {
+    val (errors, deps) = dependencies.foldLeft(
+      (List.empty[String], List.empty[Dependency])
+    ) { case ((errors, acc), depString) =>
+      Try(Dependency.parse(depString, scalaVersion)) match {
+        case Success(dep) => (errors, acc :+ dep)
+        case Failure(e)   => (errors :+ s"$depString: ${e.getMessage}", acc)
+      }
+    }
+    if (errors.nonEmpty) {
+      throw new IllegalArgumentException(
+        s"Failed to parse dependencies with errors: $errors"
+      )
+    }
+    deps
+  }
+
+  // Builds the Fetch request without running it, so the repository/dependency
+  // wiring can be unit-tested without performing any network resolution.
+  private[internals] def buildFetch(
+      dependencies: List[Dependency],
+      repositories: List[MavenRepository],
+      allowDefaultRepositories: Boolean
+  ): Fetch = {
+    val baseFetch = Fetch.create()
+    val withRepos =
+      if (allowDefaultRepositories) baseFetch.addRepositories(repositories: _*)
+      else baseFetch.withRepositories(repositories: _*)
+    withRepos.addDependencies(dependencies: _*)
+  }
+
   private def resolveDependencies(
       dependencies: List[String],
       localJars: List[os.Path],
       repositories: List[String],
       allowDefaultRepositories: Boolean
   ): Seq[File] = {
-    val maybeRepos = RepositoryParser.repositories(repositories).either
-    val maybeDeps = DependencyParser
-      .dependencies(
-        dependencies,
-        defaultScalaVersion = smithy4s.codegen.BuildInfo.scalaBinaryVersion
-      )
-      .either
-    val repos = maybeRepos match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse repositories with error: $errorMessages"
-        )
-      case Right(r) => r
-    }
-    val deps = maybeDeps match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse dependencies with errors: $errorMessages"
-        )
-      case Right(d) => d
-    }
+    val scalaVersion =
+      ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
+
+    val deps = parseDependencies(dependencies, scalaVersion)
+    val repos = repositories.map(MavenRepository.of)
+
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
-        val baseFetch = Fetch(FileCache())
-        val withRepos =
-          if (allowDefaultRepositories) baseFetch.addRepositories(repos: _*)
-          else baseFetch.withRepositories(repos)
-        withRepos.addDependencies(deps: _*).run()
+        buildFetch(deps, repos, allowDefaultRepositories).fetch().asScala.toSeq
       } else {
         Seq.empty
       }

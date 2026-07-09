@@ -5,9 +5,9 @@ title: Known Issues
 
 Here is a list of known issues in upstream libraries, documented in case you encounter them.
 
-## HttpUriConflict Validation - Open
+## HttpUriConflict Validation - Closed
 
-Currently, the validator that checks for `HttpUriConflict` is overly constraining. This means that it currently reports conflicts between URIs where there is actually no conflict. For example, operations with the following two `http` traits currently report a conflict:
+Historically, the validator that checks for `HttpUriConflict` was overly constraining. It may have reported conflicts between URIs where there is actually no conflict in older versions of Smithy. For example, operations with the following two `http` traits:
 
 ```smithy
 @http(method: "GET", uri: "/hello")
@@ -15,4 +15,4 @@ Currently, the validator that checks for `HttpUriConflict` is overly constrainin
 @http(method: "GET", uri: "/{name}/greet")
 ```
 
-There is an [issue open](https://github.com/awslabs/smithy/issues/1029) on the Smithy repository where you can track progress on this being resolved.
+There is an [closed issue](https://github.com/awslabs/smithy/issues/1029) on the Smithy which was merged as of July 2024.
