@@ -521,7 +521,8 @@ private[smithy4s] class SchemaVisitorJCodec(
               // DArray values built via Iterator.map(...).toIndexedSeq (e.g. in DocumentEncoderSchemaVisitor)
               // produce ArraySeq backed by Object[], making an unchecked cast crash at runtime.
               // See https://github.com/disneystreaming/smithy4s/issues/1158
-              case x: ArraySeq[_] if x.unsafeArray.isInstanceOf[Array[Document]] =>
+              case x: ArraySeq[_]
+                  if x.unsafeArray.isInstanceOf[Array[Document]] =>
                 val xs = x.unsafeArray.asInstanceOf[Array[Document]]
                 var i = 0
                 while (i < xs.length) {
