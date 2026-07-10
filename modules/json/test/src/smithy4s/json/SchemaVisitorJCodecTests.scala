@@ -44,7 +44,7 @@ import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.time._
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration._
 import scala.util.Try
