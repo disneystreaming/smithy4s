@@ -44,6 +44,7 @@ import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.time._
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration._
 import scala.util.Try
@@ -628,6 +629,19 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val documentJson = writeToString(doc)
     val expected =
       """[]"""
+
+    val decoded = readFromString[Document](documentJson)
+
+    expect.same(documentJson, expected)
+    expect.same(decoded, doc)
+  }
+
+  test("document arrays backed by Object[] can be encoded") {
+    val objectArray: Array[Any] = Array(Document.fromString("hello"), Document.fromInt(42))
+    val doc: Document = Document.DArray(ArraySeq.unsafeWrapArray(objectArray).asInstanceOf[IndexedSeq[Document]])
+    val documentJson = writeToString(doc)
+    val expected =
+      """["hello",42]"""
 
     val decoded = readFromString[Document](documentJson)
 
