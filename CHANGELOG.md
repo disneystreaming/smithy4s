@@ -5,10 +5,14 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
-# 0.19.8
+# 0.19.9
 
 - Support `@structurePattern` targeting unions using `{label}` and `{value}` magic identifiers in [#1978](https://github.com/disneystreaming/smithy4s/pull/1978)
 - Fix `ClassCastException` when encoding non-empty `Document` arrays in [#1981](https://github.com/disneystreaming/smithy4s/pull/1981). The `decodeValue` method's final `Arrays.copyOf(arr, i)` call compiles to the erased `Arrays.copyOf(Object[], int)` overload, and since its result flows directly into `ArraySeq.unsafeWrapArray(Object)`, the compiler omits the checkcast back to `Document[]`. Bytecode rewriters (shading/proguard) can expose this, resulting in an `ArraySeq` backed by `Object[]` at runtime. Extends the fix for [#1158](https://github.com/disneystreaming/smithy4s/issues/1158).
+
+# 0.19.8
+
+- Support SBT 2.0 in [#1974](https://github.com/disneystreaming/smithy4s/pull/1974)
 
 # 0.19.7
 
