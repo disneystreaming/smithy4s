@@ -8,6 +8,7 @@ Thank you!
 # 0.19.8
 
 - Support `@structurePattern` targeting unions using `{label}` and `{value}` magic identifiers in [#1978](https://github.com/disneystreaming/smithy4s/pull/1978)
+- Fix `ClassCastException` when encoding non-empty `Document` arrays backed by `Object[]` in [#1981](https://github.com/disneystreaming/smithy4s/pull/1981). This completes the fix for [#1158](https://github.com/disneystreaming/smithy4s/issues/1158), which only handled empty arrays.
 
 # 0.19.7
 
