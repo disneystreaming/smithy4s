@@ -637,8 +637,11 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("document arrays backed by Object[] can be encoded") {
-    val objectArray: Array[Any] = Array(Document.fromString("hello"), Document.fromInt(42))
-    val doc: Document = Document.DArray(ArraySeq.unsafeWrapArray(objectArray).asInstanceOf[IndexedSeq[Document]])
+    val objectArray: Array[Any] =
+      Array(Document.fromString("hello"), Document.fromInt(42))
+    val doc: Document = Document.DArray(
+      ArraySeq.unsafeWrapArray(objectArray).asInstanceOf[IndexedSeq[Document]]
+    )
     val documentJson = writeToString(doc)
     val expected =
       """["hello",42]"""
