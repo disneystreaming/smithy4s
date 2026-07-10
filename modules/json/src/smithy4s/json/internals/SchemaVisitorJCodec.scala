@@ -518,8 +518,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             out.writeArrayStart()
             a.value match {
               // Fast path: only safe when the backing array is actually Array[Document].
-              // DArray values built via Iterator.map(...).toIndexedSeq (e.g. in DocumentEncoderSchemaVisitor)
-              // produce ArraySeq backed by Object[], making an unchecked cast crash at runtime.
+              // DArray values built in some edge use-cases produce ArraySeq backed by Object[], making an unchecked cast crash at runtime.
               // See https://github.com/disneystreaming/smithy4s/issues/1158
               case x: ArraySeq[_]
                   if x.unsafeArray.isInstanceOf[Array[Document]] =>
