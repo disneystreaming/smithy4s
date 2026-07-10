@@ -518,7 +518,11 @@ private[smithy4s] class SchemaVisitorJCodec(
             out.writeArrayStart()
             a.value match {
               // Fast path: only safe when the backing array is actually Array[Document].
-              // DArray values built in some edge use-cases produce ArraySeq backed by Object[], making an unchecked cast crash at runtime.
+              // The `else java.util.Arrays.copyOf(arr, i)` in `decodeValue` compiles to
+              // `Arrays.copyOf(Object[], int)` whose return type is Object[]. Since the
+              // result flows directly into `ArraySeq.unsafeWrapArray(Object)`, the compiler
+              // elides the checkcast back to Document[]. Bytecode rewriters (shading/proguard)
+              // can expose this: the ArraySeq ends up backed by Object[] at runtime.
               // See https://github.com/disneystreaming/smithy4s/issues/1158
               case x: ArraySeq[_]
                   if x.unsafeArray.isInstanceOf[Array[Document]] =>
