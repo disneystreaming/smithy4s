@@ -301,17 +301,28 @@ lazy val core = projectMatrix
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
-      // smithy-waiters 1.72.0 added a new `message` field to the `Acceptor` structure
-      // (see waiters.smithy upstream), which shifted the arity of the generated
-      // `smithy.waiters.Acceptor.apply` case class constructor. This is generated
-      // prelude code for the built-in waiters trait, not hand-authored API.
+      // smithy-waiters 1.72.0 added a `message` field to the generated `Acceptor`
+      // case class. This changes the arity of its constructor, companion `apply`,
+      // and `copy` methods. This is built-in generated prelude code, not hand-authored API.
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy.waiters.Acceptor.apply"
       ),
-      // smithy-api 1.69.0 added an `origins` field to the generated `Cors`
-      // structure, changing its case class companion `apply` arity.
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.waiters.Acceptor.copy"
+      ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.waiters.Acceptor.this"
+      ),
+      // smithy-api 1.69.0 added an `origins` field to the generated `Cors` case class.
+      // This changes the arity of its constructor, companion `apply`, and `copy` methods.
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy.api.Cors.apply"
+      ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.api.Cors.copy"
+      ),
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.api.Cors.this"
       )
     )
   )
