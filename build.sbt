@@ -307,6 +307,11 @@ lazy val core = projectMatrix
       // prelude code for the built-in waiters trait, not hand-authored API.
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy.waiters.Acceptor.apply"
+      ),
+      // smithy-api 1.69.0 added an `origins` field to the generated `Cors`
+      // structure, changing its case class companion `apply` arity.
+      ProblemFilters.exclude[DirectMissingMethodProblem](
+        "smithy.api.Cors.apply"
       )
     )
   )
