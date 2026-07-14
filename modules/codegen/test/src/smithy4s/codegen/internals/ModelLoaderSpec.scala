@@ -15,6 +15,8 @@
  */
 
 package smithy4s.codegen.internals
+import coursierapi.MavenRepository
+import coursierapi.ScalaVersion
 import munit._
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes.ShapeId
@@ -98,5 +100,39 @@ class ModelLoaderSpec extends FunSuite {
     )
 
     model.expectShape(ShapeId.from("testlibrary#MyString"))
+  }
+
+  test("parseDependencies rejects a malformed dependency string") {
+    val ex = intercept[IllegalArgumentException] {
+      ModelLoader.parseDependencies(
+        List("not-a-valid-dependency-string"),
+        ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
+      )
+    }
+    assert(ex.getMessage.contains("not-a-valid-dependency-string"))
+  }
+
+  test("buildFetch keeps coursier's default repositories when allowed") {
+    val repos = List(MavenRepository.of("https://internal.example.com/repo"))
+    val fetch = ModelLoader.buildFetch(
+      dependencies = Nil,
+      repositories = repos,
+      allowDefaultRepositories = true
+    )
+    val bases = fetch.getRepositories().asScala.collect {
+      case m: MavenRepository => m.getBase()
+    }
+    assert(bases.contains("https://repo1.maven.org/maven2"))
+    assert(bases.contains("https://internal.example.com/repo"))
+  }
+
+  test("buildFetch excludes coursier's default repositories when disallowed") {
+    val repos = List(MavenRepository.of("https://internal.example.com/repo"))
+    val fetch = ModelLoader.buildFetch(
+      dependencies = Nil,
+      repositories = repos,
+      allowDefaultRepositories = false
+    )
+    assertEquals(fetch.getRepositories().asScala.toList, repos)
   }
 }

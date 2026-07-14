@@ -173,4 +173,8 @@ object Dependencies {
     val core = "com.typesafe" %% "mima-core" % "1.1.5"
   }
 
+  object CoursierInterface {
+    val core = "io.get-coursier" % "interface" % "1.0.29-M4"
+  }
+
 }
