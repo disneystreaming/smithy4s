@@ -29,6 +29,7 @@ import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.shapes.ShapeId
 
 import scala.jdk.CollectionConverters._
+import scala.annotation.nowarn
 
 import Line._
 import LineSyntax.LineInterpolator
@@ -1998,6 +1999,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // However when using interpolated strings, we cannot use normal escaping
     // for double quotes as it is not supported by scala 2.12.
     val escaped = if (str.contains('$')) {
+      @nowarn("msg=possible missing interpolator")
       val replaced = str.replace("$", "$$").replace("\\\"", "${'\\\"'}")
       s"""s"$replaced""""
     } else s""""$str""""
