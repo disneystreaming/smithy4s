@@ -28,8 +28,8 @@ import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.shapes.ShapeId
 
-import scala.jdk.CollectionConverters._
 import scala.annotation.nowarn
+import scala.jdk.CollectionConverters._
 
 import Line._
 import LineSyntax.LineInterpolator
