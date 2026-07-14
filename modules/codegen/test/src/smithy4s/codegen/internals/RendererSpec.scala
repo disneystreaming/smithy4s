@@ -473,7 +473,8 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     val contents = generateScalaCode(smithy).values
 
     @nowarn("msg=possible missing interpolator")
-    val expected = """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"foo $$ ${'\"'}"))"""
+    val expected =
+      """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"foo $$ ${'\"'}"))"""
     assert(
       contents.exists(
         _.contains(
