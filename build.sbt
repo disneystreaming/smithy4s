@@ -299,9 +299,6 @@ lazy val core = projectMatrix
       ),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
-      // originating in an Alloy update that removed ProtoCompactOffsetDateTime
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
-      ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$")
       // smithy update changed the shape of the generated smithy.api.Cors trait
       ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.api.Cors.apply"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.api.Cors.copy"),
