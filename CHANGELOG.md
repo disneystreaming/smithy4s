@@ -7,7 +7,7 @@ Thank you!
 
 # 0.19.10
 
-- Fixed an issue with translating smithy comments into scalaDoc / hints for the symbols '$' and '"'
+-  Fix codegen bug where string literals containing both `$` and `"` generated code that failed to compile on Scala 2.12 
 
 # 0.19.9
 
