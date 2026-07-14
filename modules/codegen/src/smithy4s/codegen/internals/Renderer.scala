@@ -1968,7 +1968,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def escapeForStringLiteral(raw: String): String = {
-    val sb = new StringBuilder("\"")
+    val sb = new StringBuilder("")
     raw.foreach {
       case '\b'                      => sb.append("\\b")
       case '\t'                      => sb.append("\\t")
@@ -1980,7 +1980,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case c if c >= ' ' && c <= '~' => sb.append(c)
       case c                         => sb.append("\\u%04x".format(c.toInt))
     }
-    sb.append('"')
     sb.toString()
   }
 
@@ -1995,7 +1994,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // render any such strings as interpolated strings (even though that would
     // otherwise be unecessary) so that we can render "$" as "$$", which get
     // converted back to "$" during interpolation.
-    val escaped = if (str.contains('$')) s"s${str.replace("$", "$$")}" else str
+
+    // However when using interpolated strings, we cannot use normal escaping
+    // for double quotes as it is not supported by scala 2.12.
+    val escaped = if (str.contains('$')) {
+      val replaced = str.replace("$", "$$").replace("\\\"", "${'\\\"'}")
+      s"""s"$replaced""""
+    } else s""""$str""""
 
     line"$escaped"
   }

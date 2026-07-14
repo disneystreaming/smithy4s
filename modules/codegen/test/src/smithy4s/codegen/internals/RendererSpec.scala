@@ -457,6 +457,30 @@ final class RendererSpec extends munit.ScalaCheckSuite {
   }
 
   test(
+    "string literal containing $ and \" is rendered correctly"
+  ) {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |/// foo $ "
+                   |string MyString
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(
+      contents.exists(
+        _.contains(
+          """Hints.dynamic(ShapeId("smithy.api", "documentation"), smithy4s.Document.fromString(s"foo $$ ${'\"'}"))"""
+        )
+      )
+    )
+    assert(s"foo $$ ${'\"'}" == "foo $ \"")
+  }
+
+  test(
     "string literal containing /* is rendered as a string with * escaped as &ast;"
   ) {
     val smithy = """
