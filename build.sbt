@@ -301,6 +301,14 @@ lazy val core = projectMatrix
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime"),
       // originating in an Alloy update that removed ProtoCompactOffsetDateTime
       ProblemFilters.exclude[MissingClassProblem]("alloy.proto.ProtoCompactOffsetDateTime$"),
+      // smithy update changed the shape of the generated smithy.api.Cors trait
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.api.Cors.apply"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.api.Cors.copy"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.api.Cors.this"),
+      // smithy update changed the shape of the generated smithy.waiters.Acceptor trait
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.waiters.Acceptor.apply"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.waiters.Acceptor.copy"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("smithy.waiters.Acceptor.this"),
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
