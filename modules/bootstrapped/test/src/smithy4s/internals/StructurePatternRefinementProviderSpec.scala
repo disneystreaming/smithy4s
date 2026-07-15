@@ -197,6 +197,117 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
     runDecode("{label}:{value}", "one:", one, shouldFail = true)
   }
 
+  // Nested structure patterns using generated types from structure_pattern.smithy
+
+  test("nested structure pattern - encoding (structure in structure)") {
+    import smithy4s.example._
+    val inner = TestStructurePattern(TestStructurePatternTarget("foo", 42))
+    val target = NestedStructurePatternTarget("hello", inner)
+    runEncode("{name}/{inner}", target, "hello/foo-42")
+  }
+
+  test("nested structure pattern - decoding (structure in structure)") {
+    import smithy4s.example._
+    val inner = TestStructurePattern(TestStructurePatternTarget("foo", 42))
+    val target = NestedStructurePatternTarget("hello", inner)
+    runDecode("{name}/{inner}", "hello/foo-42", target)
+    runDecode("{name}/{inner}", "hello/foo-", target, shouldFail = true)
+    runDecode("{name}/{inner}", "hello/", target, shouldFail = true)
+  }
+
+  test("nested structure pattern - encoding (union in structure)") {
+    import smithy4s.example._
+    val strVal = NestedUnionPatternTarget(
+      "abc",
+      TestUnionPattern(TestUnionPatternTarget.one("hi"))
+    )
+    val numVal = NestedUnionPatternTarget(
+      "abc",
+      TestUnionPattern(TestUnionPatternTarget.two(99))
+    )
+    runEncode("{prefix}/{tagged}", strVal, "abc/one:hi")
+    runEncode("{prefix}/{tagged}", numVal, "abc/two:99")
+  }
+
+  test("nested structure pattern - decoding (union in structure)") {
+    import smithy4s.example._
+    val strVal = NestedUnionPatternTarget(
+      "abc",
+      TestUnionPattern(TestUnionPatternTarget.one("hi"))
+    )
+    val numVal = NestedUnionPatternTarget(
+      "abc",
+      TestUnionPattern(TestUnionPatternTarget.two(99))
+    )
+    runDecode("{prefix}/{tagged}", "abc/one:hi", strVal)
+    runDecode("{prefix}/{tagged}", "abc/two:99", numVal)
+    runDecode("{prefix}/{tagged}", "abc/unknown:x", strVal, shouldFail = true)
+    runDecode("{prefix}/{tagged}", "abc/one:", strVal, shouldFail = true)
+  }
+
+  test(
+    "nested structure pattern - encoding (structure wrapping structure wrapping union)"
+  ) {
+    import smithy4s.example._
+    val value = NestedTopPatternTarget(
+      "acme",
+      NestedMiddlePattern(
+        NestedMiddlePatternTarget(
+          7,
+          NestedInnerUnionPattern(NestedInnerUnionTarget.str("hello"))
+        )
+      )
+    )
+    runEncode("{tenant}/{resource}", value, "acme/7|str:hello")
+
+    val value2 = NestedTopPatternTarget(
+      "acme",
+      NestedMiddlePattern(
+        NestedMiddlePatternTarget(
+          7,
+          NestedInnerUnionPattern(NestedInnerUnionTarget.num(42))
+        )
+      )
+    )
+    runEncode("{tenant}/{resource}", value2, "acme/7|num:42")
+  }
+
+  test(
+    "nested structure pattern - decoding (structure wrapping structure wrapping union)"
+  ) {
+    import smithy4s.example._
+    val value = NestedTopPatternTarget(
+      "acme",
+      NestedMiddlePattern(
+        NestedMiddlePatternTarget(
+          7,
+          NestedInnerUnionPattern(NestedInnerUnionTarget.str("hello"))
+        )
+      )
+    )
+    runDecode("{tenant}/{resource}", "acme/7|str:hello", value)
+
+    val value2 = NestedTopPatternTarget(
+      "acme",
+      NestedMiddlePattern(
+        NestedMiddlePatternTarget(
+          7,
+          NestedInnerUnionPattern(NestedInnerUnionTarget.num(42))
+        )
+      )
+    )
+    runDecode("{tenant}/{resource}", "acme/7|num:42", value2)
+
+    runDecode(
+      "{tenant}/{resource}",
+      "acme/7|unknown:x",
+      value,
+      shouldFail = true
+    )
+    runDecode("{tenant}/{resource}", "acme/7|str:", value, shouldFail = true)
+    runDecode("{tenant}/{resource}", "acme/", value, shouldFail = true)
+  }
+
   private def runEncode[A](pattern: String, input: A, expect: String)(implicit
       sch: Schema[A],
       loc: Location

@@ -86,6 +86,11 @@ package object example {
   type MyLocalTime = smithy4s.example.MyLocalTime.Type
   type MyOffsetDateTime = smithy4s.example.MyOffsetDateTime.Type
   type Name = smithy4s.example.Name.Type
+  type NestedInnerUnionPattern = smithy4s.example.NestedInnerUnionPattern.Type
+  type NestedMiddlePattern = smithy4s.example.NestedMiddlePattern.Type
+  type NestedStructurePattern = smithy4s.example.NestedStructurePattern.Type
+  type NestedTopPattern = smithy4s.example.NestedTopPattern.Type
+  type NestedUnionPattern = smithy4s.example.NestedUnionPattern.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
