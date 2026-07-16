@@ -80,7 +80,17 @@ private[codegen] object ModelLoader {
     }
 
     val validatorClassLoader = locally {
-      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      // Only jars that are NOT already provided by the parent classloader go onto
+      // the child. Keeping a second copy of a parent-provided module here would put
+      // the same package on two different loaders; if a class on one loader extends
+      // a package-private class of the same package on the other loader, the JVM
+      // denies the access with an IllegalAccessError (two distinct runtime packages).
+      // Model *files* are unaffected: `modelsInJars` above is still computed from the
+      // full `deps`, so shapes contributed by these jars are still imported.
+      val jarUrls =
+        dropParentProvidedJars(deps, BuildInfo.codegenDependencies)
+          .map(_.toURI().toURL())
+          .toArray
       new URLClassLoader(jarUrls, currentClassLoader)
     }
 
@@ -139,6 +149,45 @@ private[codegen] object ModelLoader {
 
     (validatorClassLoader, postTransformationModel)
   }
+
+  /** Drops from `jars` any artifact whose module is already present on the parent
+    * classloader, identified by the `org:name` coordinates baked into
+    * `BuildInfo.codegenDependencies`.
+    *
+    * Matching is done on the resolved jar's path rather than its module metadata,
+    * because by the time dependencies reach the codegen core (via the sbt/mill
+    * plugins) the `ModuleID` metadata has been dropped and only files remain. Both
+    * the Coursier cache (Maven layout, `org` split on `.`) and the Ivy cache (dotted
+    * `org` as a single segment) encode the coordinates as a `/<org>/<name>/` path
+    * segment, so anchoring on that segment matches reliably while avoiding
+    * false positives between similarly named modules (e.g. `smithy-build` must not
+    * match `smithy-build-tools`).
+    */
+  private[internals] def dropParentProvidedJars(
+      jars: Seq[File],
+      parentModules: Seq[String]
+  ): Seq[File] = {
+    val fragments = parentModules.flatMap(moduleCoordinatePathFragments)
+    jars.filterNot { jar =>
+      val path = jar.getAbsolutePath.replace('\\', '/')
+      fragments.exists(path.contains)
+    }
+  }
+
+  /** The `/<org>/<name>/` path fragments under which an artifact for the given
+    * `org:name` coordinate is stored, for both the Maven (Coursier) and Ivy layouts.
+    */
+  private[internals] def moduleCoordinatePathFragments(
+      coordinate: String
+  ): List[String] =
+    coordinate.split(":") match {
+      case Array(org, name) if org.nonEmpty && name.nonEmpty =>
+        List(
+          "/" + org.replace('.', '/') + "/" + name + "/",
+          "/" + org + "/" + name + "/"
+        ).distinct
+      case _ => Nil
+    }
 
   private[internals] def parseDependencies(
       dependencies: List[String],

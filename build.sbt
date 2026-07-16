@@ -413,7 +413,21 @@ lazy val codegen = projectMatrix
       "alloyOrg" -> Dependencies.Alloy.org,
       "alloyVersion" -> Dependencies.Alloy.alloyVersion,
       "smithy4sOrg" -> organization.value,
-      "protocolArtifactName" -> "smithy4s-protocol"
+      "protocolArtifactName" -> "smithy4s-protocol",
+      // The transitive module coordinates ("org:name") present on the codegen
+      // classpath. At runtime these are what the sbt/mill plugin classloader (the
+      // parent of the model-loading URLClassLoader) already provides. ModelLoader
+      // uses this list to drop duplicate copies of these modules from the child
+      // classloader, which would otherwise split a package across two loaders and
+      // break package-private access (e.g. smithy's IncludeClosures extending the
+      // package-private BackwardCompatHelper). See ModelLoader.dropParentProvidedJars.
+      BuildInfoKey.map(Runtime / managedClasspath) { case (_, cp) =>
+        "codegenDependencies" -> cp
+          .flatMap(_.get(sbt.Keys.moduleID.key))
+          .map(m => s"${m.organization}:${m.name}")
+          .distinct
+          .toList
+      }
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
