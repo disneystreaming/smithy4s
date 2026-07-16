@@ -152,7 +152,9 @@ class ModelLoaderSpec extends FunSuite {
     assertEquals(kept.map(_.getName), List("smithy-build-tools-1.72.0.jar"))
   }
 
-  test("dropParentProvidedJars keeps everything when the parent list is empty") {
+  test(
+    "dropParentProvidedJars keeps everything when the parent list is empty"
+  ) {
     val jars = List(
       new File(
         "/cache/software/amazon/smithy/smithy-build/1.72.0/smithy-build-1.72.0.jar"
