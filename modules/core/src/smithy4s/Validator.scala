@@ -269,7 +269,7 @@ object Validator {
           override def toSchema(a: Schema[Map[K, V]]): Schema[Map[K, V]] = {
             val main = mainValidator.map(_.toSchema(a)).getOrElse(a)
             main match {
-              case mapSchema @ Schema.MapSchema(_, _, key, value) =>
+              case mapSchema @ Schema.MapSchema(_, _, _, key, value) =>
                 val newKey = keyRefinements.foldLeft(key) {
                   case (acc, refinement) => acc.refined(refinement)
                 }

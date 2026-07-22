@@ -27,7 +27,6 @@ import smithy4s.example.ValidatedConstrainedMap
 import smithy4s.example.ValidatedMapConstrainedValue
 import smithy4s.example.ValidatedRefinedListConstrainedMember
 import smithy4s.example.AccountId
-import smithy4s.example.DeviceId
 
 import munit.Assertions
 
@@ -98,7 +97,7 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     val id: ShapeId = ShapeId("foo", "DeviceId")
     val hints: Hints = Hints.empty
 
-    val underlyingSchema: Schema[String] = string
+    val underlyingSchema: Schema[String] = Schema.string
       .withId(id)
       .addHints(hints)
       .validated(smithy.api.Length(min = Some(1L), max = None))
@@ -114,6 +113,7 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
 
     @inline def apply(a: String): Either[String, DeviceId] =
       validator.validate(a)
+  }
 
   test("Validated constrained list") {
     expect(ValidatedConstrainedList(List("foo")).isRight)
@@ -236,5 +236,4 @@ class ValidatedNewtypesSpec() extends munit.FunSuite {
     case Left(msg) => fail(msg)
     case Right(v)  => v
   }
-
 }

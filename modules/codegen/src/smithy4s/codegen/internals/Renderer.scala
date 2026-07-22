@@ -1595,7 +1595,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             case CollectionType.Set        => line"set"
           }
           line"$builderMethod[$memberTpe]" -> validateConstraints(memberHints, line"validatingMember")
-        case Type.Map(keyTpe, keyHints, valueTpe, valueHints) =>
+        case Type.Map(_, keyTpe, keyHints, valueTpe, valueHints) =>
           val validatingKey = validateConstraints(keyHints, line"validatingKey")
           val validatingValue = validateConstraints(valueHints, line"validatingValue")
           line"map[$keyTpe, $valueTpe]" -> (validatingKey + validatingValue)
@@ -1714,7 +1714,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         NameRef(ns, s"$name.underlyingSchema").toLine
       case Type.Ref(ns, name)   => NameRef(ns, s"$name.schema").toLine
       case e: Type.ExternalType => line"${e.underlyingTpe.schemaRef}${renderRefined(e)}"
-      case Nullable(underlying) => line"${underlying.schemaRef}.option"
+      case Nullable(underlying) => line"${underlying.schemaRef}.nullable"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
