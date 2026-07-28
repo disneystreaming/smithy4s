@@ -141,12 +141,7 @@ private[dynamic] object DynamicSchemaValidation {
           m.reifyHint(
             RefinementProvider.lengthConstraint[c[k, v]](m.tag.iterator(_).size)
           )
-        case b: BijectionSchema[?, ?]  => b
-        case r: RefinementSchema[?, ?] => r
-        case s: StructSchema[?]        => s
-        case l: LazySchema[?]          => l
-        case u: UnionSchema[?]         => u
-        case n: OptionSchema[?, ?]     => n
+        case other => other
       }
   }
 
