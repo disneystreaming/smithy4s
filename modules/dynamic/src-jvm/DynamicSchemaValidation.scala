@@ -19,8 +19,8 @@ package smithy4s.dynamic
 import smithy4s.Document
 import smithy4s.Refinement
 import smithy4s.RefinementProvider
-import smithy4s.Surjection
 import smithy4s.ShapeId
+import smithy4s.Surjection
 import smithy4s.schema.CollectionTag._
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
