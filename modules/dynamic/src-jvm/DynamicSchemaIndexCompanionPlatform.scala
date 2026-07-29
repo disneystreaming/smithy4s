@@ -48,12 +48,9 @@ private[dynamic] trait DynamicSchemaIndexCompanionPlatform {
     val document = NodeToDocument(node)
     smithy4s.Document
       .decode[smithy4s.dynamic.model.Model](document)
-      .map(load(_)) match {
-      case Left(error) => throw error
-      case Right(value) =>
-        if (applySchemaRefinements)
-          DynamicSchemaValidation.reifyConstraints(value)
-        else value
+      .map(load(_, applySchemaRefinements)) match {
+      case Left(error)  => throw error
+      case Right(value) => value
     }
   }
 
