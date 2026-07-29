@@ -23,16 +23,16 @@ import software.amazon.smithy.model.Model
 class DynamicValidationSpec extends DummyIO.Suite {
 
   test("loadModel does not enforce constraint traits by default") {
-    val decoded = decodeInvalidDocument(performValidation = false)
+    val decoded = decodeInvalidDocument(applySchemaRefinements = false)
     assert(decoded.isRight, s"Expected decoding to succeed, got: $decoded")
   }
 
-  test("loadModel(performValidation = true) enforces constraint traits") {
-    val decoded = decodeInvalidDocument(performValidation = true)
+  test("loadModel(applySchemaRefinements = true) enforces constraint traits") {
+    val decoded = decodeInvalidDocument(applySchemaRefinements = true)
     assert(decoded.isLeft, s"Expected decoding to fail, got: $decoded")
   }
 
-  private def decodeInvalidDocument(performValidation: Boolean) = {
+  private def decodeInvalidDocument(applySchemaRefinements: Boolean) = {
 
     val smithy = """
       $version: "2"
@@ -55,7 +55,10 @@ class DynamicValidationSpec extends DummyIO.Suite {
         .unwrap()
 
     val index =
-      DynamicSchemaIndex.loadModel(model, performValidation = performValidation)
+      DynamicSchemaIndex.loadModel(
+        model,
+        applySchemaRefinements = applySchemaRefinements
+      )
 
     val fooShapeId = ShapeId("example", "Foo")
 

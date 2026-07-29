@@ -17,11 +17,8 @@
 package smithy4s.dynamic
 
 import smithy4s.Document
-import smithy4s.Refinement
 import smithy4s.RefinementProvider
 import smithy4s.ShapeId
-import smithy4s.Surjection
-import smithy4s.schema.CollectionTag._
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -40,12 +37,14 @@ private[dynamic] object DynamicSchemaValidation {
 
   def reifyConstraints(index: DynamicSchemaIndex): DynamicSchemaIndex =
     new DynamicSchemaIndex {
+      private val schemaMap: Map[ShapeId, Schema[_]] =
+        index.allSchemas.map(s => s.shapeId -> reifySchema(s)).toMap
       def allServices: Iterable[DynamicSchemaIndex.ServiceWrapper] =
         index.allServices
       def allSchemas: Iterable[Schema[_]] =
-        index.allSchemas.map(reifySchema(_))
+        schemaMap.values
       def getSchema(shapeId: ShapeId): Option[Schema[_]] =
-        index.getSchema(shapeId).map(reifySchema(_))
+        schemaMap.get(shapeId)
       def metadata: Map[String, Document] = index.metadata
     }
 
@@ -54,37 +53,19 @@ private[dynamic] object DynamicSchemaValidation {
 
   private object ReifyConstraints extends (Schema ~> Schema) {
 
-    private def void[C, A](
-        underlying: RefinementProvider[C, A, ?]
-    ): RefinementProvider.Simple[C, A] =
-      Refinement
-        .drivenBy[C]
-        .contextual[A, A](c =>
-          Surjection(v => underlying.make(c).apply(v).map(_ => v), identity)
-        )(underlying.tag)
-
     private implicit class SchemaOps[A](schema: Schema[A]) {
       def reifyHint[B](rp: RefinementProvider[B, A, ?]): Schema[A] =
-        schema.hints.get(rp.tag).fold(schema)(schema.validated(_)(void(rp)))
+        schema.hints
+          .get(rp.tag)
+          .fold(schema)(schema.validated(_)(RefinementProvider.void(rp)))
     }
 
     private def collection[C[_], B](
         schema: Schema.CollectionSchema[C, B]
     ): Schema[C[B]] =
-      schema.tag match {
-        case ListTag =>
-          schema.reifyHint(RefinementProvider.iterableLengthConstraint[List, B])
-        case VectorTag =>
-          schema.reifyHint(
-            RefinementProvider.iterableLengthConstraint[Vector, B]
-          )
-        case SetTag =>
-          schema.reifyHint(RefinementProvider.iterableLengthConstraint[Set, B])
-        case IndexedSeqTag =>
-          schema.reifyHint(
-            RefinementProvider.iterableLengthConstraint[IndexedSeq, B]
-          )
-      }
+      schema.reifyHint(
+        RefinementProvider.lengthConstraint[C[B]](schema.tag.iterator(_).size)
+      )
 
     private def enumSchema[B <: Enum[?]](
         schema: Schema.EnumerationSchema[B]
@@ -101,6 +82,7 @@ private[dynamic] object DynamicSchemaValidation {
             case PString =>
               t.reifyHint(RefinementProvider.stringLengthConstraint)
                 .reifyHint(RefinementProvider.stringPatternConstraints)
+                .reifyHint(RefinementProvider.idRefRefinement)
             case PByte =>
               schema.reifyHint(RefinementProvider.numericRangeConstraints[Byte])
             case PShort =>
@@ -141,7 +123,13 @@ private[dynamic] object DynamicSchemaValidation {
           m.reifyHint(
             RefinementProvider.lengthConstraint[c[k, v]](m.tag.iterator(_).size)
           )
-        case other => other
+        // explicitly handling each remaining case, in order to get a "missing match" warning if the schema model changes
+        case b: BijectionSchema[_, _]  => b
+        case r: RefinementSchema[_, _] => r
+        case s: StructSchema[_]        => s
+        case l: LazySchema[_]          => l
+        case u: UnionSchema[_]         => u
+        case n: OptionSchema[_, _]     => n
       }
   }
 

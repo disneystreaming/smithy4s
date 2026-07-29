@@ -53,6 +53,15 @@ object RefinementProvider extends LowPriorityImplicits {
   def patternConstraint[A](getValue: A => String): Simple[Pattern, A] =
     new PatternConstraint[A](getValue)
 
+  def void[C, A](
+      underlying: RefinementProvider[C, A, ?]
+  ): RefinementProvider.Simple[C, A] =
+    Refinement
+      .drivenBy[C]
+      .contextual[A, A](c =>
+        Surjection(v => underlying.make(c).apply(v).map(_ => v), identity)
+      )(underlying.tag)
+
   implicit val stringLengthConstraint: Simple[Length, String] =
     lengthConstraint[String](_.length)
 
