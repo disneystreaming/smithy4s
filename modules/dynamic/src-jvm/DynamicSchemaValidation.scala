@@ -19,6 +19,7 @@ package smithy4s.dynamic
 import smithy4s.Document
 import smithy4s.RefinementProvider
 import smithy4s.ShapeId
+import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -67,13 +68,22 @@ private[dynamic] object DynamicSchemaValidation {
         RefinementProvider.lengthConstraint[C[B]](schema.tag.iterator(_).size)
       )
 
-    private def enumSchema[B <: Enum[?]](
+    private def enumSchema[B](
         schema: Schema.EnumerationSchema[B]
-    ): Schema[B] =
+    ): Schema[B] = {
+      val byValue: Map[B, EnumValue[B]] =
+        schema.values.map(v => v.value -> v).toMap
       schema
-        .reifyHint(RefinementProvider.lengthConstraint[B](_.toString.length))
-        .reifyHint(RefinementProvider.rangeConstraint[B, Int](_.ordinal()))
-        .reifyHint(RefinementProvider.patternConstraint[B](e => e.toString))
+        .reifyHint(
+          RefinementProvider.lengthConstraint[B](byValue(_).stringValue.length)
+        )
+        .reifyHint(
+          RefinementProvider.rangeConstraint[B, Int](byValue(_).intValue)
+        )
+        .reifyHint(
+          RefinementProvider.patternConstraint[B](byValue(_).stringValue)
+        )
+    }
 
     def apply[A](schema: Schema[A]): Schema[A] =
       schema match {
@@ -115,9 +125,8 @@ private[dynamic] object DynamicSchemaValidation {
                 PLocalTime | PDuration | POffsetDateTime =>
               schema
           }
-        case e: EnumerationSchema[?] =>
-          enumSchema(e.asInstanceOf[EnumerationSchema[Enum[?]]])
-            .asInstanceOf[Schema[A]]
+        case e: EnumerationSchema[a] =>
+          enumSchema(e).asInstanceOf[Schema[A]]
         case c @ CollectionSchema(_, _, _, _) => collection(c)
         case m: MapSchema[c, k, v] =>
           m.reifyHint(
