@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.19.12
+
+- http4s: Fix the configured `FieldFilter` not being applied when a server encodes response metadata (e.g. HTTP headers) in [#1992](https://github.com/disneystreaming/smithy4s/pull/1992). `SimpleRestJsonBuilder.withFieldFilter(...)` now affects response header/metadata encoding on the server, matching the behavior already present on the client request side.
+
 # 0.19.11
 
 - codegen: Fix an `IllegalAccessError` (e.g. `class ...IncludeClosures cannot access its abstract superclass ...BackwardCompatHelper`) that could occur during `smithy4sCodegen` when a project dependency pulled a different version of a Smithy library (`smithy-build`, `smithy-model`, etc.) than the one bundled with the codegen plugin. The model-loading `URLClassLoader` used the plugin classloader as its parent, so a duplicate copy of a plugin-provided module on the child loader could split a package across two classloaders and break package-private access. The codegen now drops any dependency already provided by the parent classloader (tracked via the new `BuildInfo.codegenDependencies`) from the child classloader, so Smithy versions no longer need to be aligned between the plugin and the project's dependencies.

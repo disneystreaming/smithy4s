@@ -55,7 +55,10 @@ object NullsAndDefaultEncodingSuite extends SimpleIOSuite with CirceInstances {
   test("routes - FieldFilter.EncodeAll") {
     runServerTest(fieldFilter = FieldFilter.EncodeAll).map { response =>
       expect.same(
-        Map(ci"required-header-with-default" -> "required-header-with-default"),
+        Map(
+          ci"optional-header-with-default" -> "optional-header-with-default",
+          ci"required-header-with-default" -> "required-header-with-default"
+        ),
         response.headers
       ) &&
       expect.same(
