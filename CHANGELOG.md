@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.57
+
+* codegen: Accept ivy-style repositories (e.g. `ivy:` URLs) when resolving codegen dependencies in [#1994](https://github.com/disneystreaming/smithy4s/pull/1994).
+
 # 0.18.56
 
 * codegen: Use Coursier's Java interface for dependency resolution, avoiding Scala 2.13 dependency conflicts when cross-building the sbt plugin for Scala 3 / sbt 2.x in [#1983](https://github.com/disneystreaming/smithy4s/pull/1983).
