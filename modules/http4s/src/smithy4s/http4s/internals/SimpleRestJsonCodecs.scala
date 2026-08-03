@@ -93,7 +93,7 @@ private[http4s] class SimpleRestJsonCodecs(
       .withErrorBodyEncoders(payloadEncoders)
       .withErrorTypeHeaders(errorHeaders: _*)
       .withMetadataDecoders(Metadata.Decoder)
-      .withMetadataEncoders(Metadata.Encoder)
+      .withMetadataEncoders(Metadata.Encoder.withFieldFilter(fieldFilter))
       .withBaseResponse(_ => baseResponse.pure[F])
       .withResponseMediaType("application/json")
       .withWriteEmptyStructs(!_.isUnit)

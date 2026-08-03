@@ -6,6 +6,7 @@ When adding entries, please treat them as if they could end up in a release any 
 Thank you!
 
 # 0.19.12
+- http4s: Fix the configured `FieldFilter` not being applied when a server encodes response metadata (e.g. HTTP headers) in [#1992](https://github.com/disneystreaming/smithy4s/pull/1992). `SimpleRestJsonBuilder.withFieldFilter(...)` now affects response header/metadata encoding on the server, matching the behavior already present on the client request side.
 - dynamic: Add `DynamicSchemaIndex.loadModel(model, applySchemaRefinements: Boolean)` overload. When `applySchemaRefinements = true`, constraint traits (`@length`, `@range`, `@pattern`, ...) are reified into schema refinements instead of being kept just as hints, matching the behaviour of codegen-produced schemas.
 
 # 0.19.11
