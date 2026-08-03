@@ -19,7 +19,7 @@ package internals
 
 import coursierapi.Dependency
 import coursierapi.Fetch
-import coursierapi.MavenRepository
+import coursierapi.Repository
 import coursierapi.ScalaVersion
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
@@ -163,7 +163,7 @@ private[codegen] object ModelLoader {
   // wiring can be unit-tested without performing any network resolution.
   private[internals] def buildFetch(
       dependencies: List[Dependency],
-      repositories: List[MavenRepository],
+      repositories: List[Repository],
       allowDefaultRepositories: Boolean
   ): Fetch = {
     val baseFetch = Fetch.create()
@@ -183,7 +183,13 @@ private[codegen] object ModelLoader {
       ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
 
     val deps = parseDependencies(dependencies, scalaVersion)
-    val repos = repositories.map(MavenRepository.of)
+    val repos = RepositoryParser.repositories(repositories).toEither match {
+      case Left(errorMessages) =>
+        throw new IllegalArgumentException(
+          s"Failed to parse repositories with errors: ${errorMessages.toList}"
+        )
+      case Right(r) => r.toList
+    }
 
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
