@@ -16,8 +16,8 @@
 
 package smithy4s.codegen.internals
 
-import coursierapi.MavenRepository
 import coursierapi.IvyRepository
+import coursierapi.MavenRepository
 
 // Adapted from coursier's own `Repositories` object, Copyright the coursier
 // contributors, licensed under the Apache License, Version 2.0
