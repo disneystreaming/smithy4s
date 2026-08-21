@@ -8,6 +8,7 @@ Thank you!
 # 0.19.12
 
 - http4s: Fix the configured `FieldFilter` not being applied when a server encodes response metadata (e.g. HTTP headers) in [#1992](https://github.com/disneystreaming/smithy4s/pull/1992). `SimpleRestJsonBuilder.withFieldFilter(...)` now affects response header/metadata encoding on the server, matching the behavior already present on the client request side.
+- Fix `@http` routes never matching when a greedy label (`{foo+}`) is followed by a static segment (e.g. `/base/{foo+}/end`) in [#1998](https://github.com/disneystreaming/smithy4s/pull/1998). `matchPath` only accumulated greedy segments when the greedy label was the last path segment, so such routes always 404'd.
 
 # 0.19.11
 
