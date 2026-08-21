@@ -101,6 +101,19 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     expect.eql(result, Some(expected))
   }
 
+  test("Rejects a mismatched static segment after a greedy label") {
+    // /base/{foo*}/end
+    val path: List[PathSegment] =
+      List(
+        PathSegment.static("base"),
+        PathSegment.greedy("foo"),
+        PathSegment.static("end")
+      )
+    val result = doMatch(path)("base", "a", "b", "not-end")
+
+    expect.eql(result, None)
+  }
+
   test(
     "Greedy labels capture segments equal to the trailing static segment"
   ) {
