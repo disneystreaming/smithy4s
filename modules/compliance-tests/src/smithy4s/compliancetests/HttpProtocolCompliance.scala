@@ -47,10 +47,28 @@ object HttpProtocolCompliance {
       service
     ).allServerTests()
 
+  def malformedRequestTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F],
+      service: Service[Alg]
+  )(implicit ce: Async[F]): List[ComplianceTest[F]] =
+    new internals.MalformedRequestComplianceTestCase[F, Alg](
+      router,
+      service
+    ).malformedRequestTests()
+
   def clientAndServerTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F] with ReverseRouter[F],
       service: Service[Alg]
   )(implicit ce: Async[F]): List[ComplianceTest[F]] =
     clientTests(router, service) ++ serverTests(router, service)
+
+  def allTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F] with ReverseRouter[F],
+      service: Service[Alg]
+  )(implicit ce: Async[F]): List[ComplianceTest[F]] =
+    clientAndServerTests(router, service) ++ malformedRequestTests(
+      router,
+      service
+    )
 
 }
