@@ -656,8 +656,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = """{"qty":0}"""
     val result = util.Try(readFromString[RangeCheck](json))
     expect(
-      result.failed.get.getMessage == "Input must be >= 1, but was 0.0 (path: .qty)" ||
-        result.failed.get.getMessage == "Input must be >= 1, but was 0 (path: .qty)" // js
+      result.failed.get.getMessage == "Input must be >= 1, but was 0 (path: .qty)"
     )
   }
 
@@ -710,9 +709,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      (if (!Platform.isJS)
-         "Input must be <= 10, but was 11.0 (path: .int)"
-       else "Input must be <= 10, but was 11 (path: .int)")
+      "Input must be <= 10, but was 11 (path: .int)"
     )
   }
 

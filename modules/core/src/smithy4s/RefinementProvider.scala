@@ -158,16 +158,10 @@ object RefinementProvider extends LowPriorityImplicits {
     def get(
         range: smithy.api.Range
     ): A => Either[String, Unit] = {
-      val N = implicitly[Numeric[N]]
+      val toBigDecimal = converter
 
       (a: A) =>
-        val doubleValue = N.toDouble(getValue(a))
-        if (doubleValue.isNaN || doubleValue.isInfinite) {
-          Left(
-            s"Numeric values must not be NaN or pos/neg infinity. Found $doubleValue"
-          )
-        } else {
-          val value = BigDecimal.apply(d = doubleValue)
+        toBigDecimal(getValue(a)).flatMap { value =>
           (range.min, range.max) match {
             case (Some(min), Some(max)) =>
               if (value >= min && value <= max) Right(())
@@ -191,6 +185,34 @@ object RefinementProvider extends LowPriorityImplicits {
           }
         }
     }
+
+    private def converter: N => Either[String, BigDecimal] =
+      implicitly[Numeric[N]] match {
+        case _: Numeric.BigDecimalIsFractional |
+            _: Numeric.BigDecimalAsIfIntegral =>
+          n => Right(n.asInstanceOf[BigDecimal])
+        case _: Numeric.BigIntIsIntegral =>
+          n => Right(BigDecimal(n.asInstanceOf[BigInt]))
+        case integral: Integral[N @unchecked] =>
+          n => Right(BigDecimal(integral.toLong(n)))
+        case _: Numeric.FloatIsFractional =>
+          n => {
+            val f = n.asInstanceOf[Float]
+            if (f.isNaN || f.isInfinite) notFinite(f)
+            else Right(BigDecimal.decimal(f))
+          }
+        case numeric =>
+          n => {
+            val d = numeric.toDouble(n)
+            if (d.isNaN || d.isInfinite) notFinite(d)
+            else Right(BigDecimal(d))
+          }
+      }
+
+    private def notFinite(value: Any): Either[String, BigDecimal] =
+      Left(
+        s"Numeric values must not be NaN or pos/neg infinity. Found $value"
+      )
   }
 
 }
