@@ -96,17 +96,6 @@ class RangeConstraintSpec extends FunSuite {
     )
   }
 
-  test("floats are compared using their decimal representation") {
-    val range =
-      Range(min = Some(BigDecimal("0.1")), max = Some(BigDecimal("0.3")))
-    assertEquals(check(range, 0.1f), Right(0.1f))
-    assertEquals(check(range, 0.3f), Right(0.3f))
-    assertEquals(
-      check(range, 0.4f),
-      Left("Input must be >= 0.1 and <= 0.3, but was 0.4")
-    )
-  }
-
   test("NaN and infinities are rejected") {
     val range = Range(min = Some(BigDecimal(1)), max = None)
     assert(check(range, Double.NaN).isLeft)

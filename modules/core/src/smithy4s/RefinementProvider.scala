@@ -195,12 +195,6 @@ object RefinementProvider extends LowPriorityImplicits {
           n => Right(BigDecimal(n.asInstanceOf[BigInt]))
         case integral: Integral[N @unchecked] =>
           n => Right(BigDecimal(integral.toLong(n)))
-        case _: Numeric.FloatIsFractional =>
-          n => {
-            val f = n.asInstanceOf[Float]
-            if (f.isNaN || f.isInfinite) notFinite(f)
-            else Right(BigDecimal.decimal(f))
-          }
         case numeric =>
           n => {
             val d = numeric.toDouble(n)
@@ -209,7 +203,7 @@ object RefinementProvider extends LowPriorityImplicits {
           }
       }
 
-    private def notFinite(value: Any): Either[String, BigDecimal] =
+    private def notFinite(value: Double): Either[String, BigDecimal] =
       Left(
         s"Numeric values must not be NaN or pos/neg infinity. Found $value"
       )
