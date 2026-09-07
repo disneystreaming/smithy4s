@@ -822,4 +822,65 @@ final class RendererSpec extends munit.ScalaCheckSuite {
       "val underlyingSchema: Schema[Map[String, Nullable[String]]] = map(string, string.nullable)"
     assert(mapDefinition.contains(sparseMapSchema))
   }
+
+  test("large numeric defaults and range bounds are rendered exactly") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |structure BigNumbers {
+        |  bigInt: BigInteger = 4294967296
+        |  bigDec: BigDecimal = 9007199254740993
+        |  @range(max: 9007199254740993)
+        |  long: Long
+        |  doc: Document = 18446744073709551616
+        |  fracDoc: Document = 1.5e400
+        |  frac: BigDecimal = 0.1000000000000000055511151231257827
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(_.contains("object BigNumbers")).getOrElse {
+        fail("No BigNumbers definition")
+      }
+
+    assert(
+      definition.contains(
+        """bigInt: BigInt = scala.math.BigInt("4294967296")"""
+      )
+    )
+    assert(
+      definition.contains(
+        """bigDec: BigDecimal = scala.math.BigDecimal("9007199254740993")"""
+      )
+    )
+    assert(
+      definition.contains(
+        """max = Some(scala.math.BigDecimal("9007199254740993"))"""
+      )
+    )
+    assert(
+      definition.contains(
+        """smithy4s.Document.fromBigDecimal(scala.math.BigDecimal("18446744073709551616"))"""
+      )
+    )
+    assert(
+      definition.contains(
+        """smithy4s.Document.fromBigDecimal(scala.math.BigDecimal("1.5E+400"))"""
+      )
+    )
+    assert(
+      definition.contains(
+        """smithy4s.Document.fromBigDecimal(scala.math.BigDecimal("0.1000000000000000055511151231257827"))"""
+      )
+    )
+    assert(
+      !definition.contains(
+        """scala.math.BigDecimal("9007199254740992")"""
+      )
+    )
+  }
 }

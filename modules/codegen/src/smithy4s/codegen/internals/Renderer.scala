@@ -1902,15 +1902,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // The asInstanceOf is needed for Scala 3 compatibility since it doesn't refine T through the Aux type alias.
     (prim match {
       case Primitive.BigDecimal =>
-        (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
-      case Primitive.Unit       => (_: Unit) => line"()"
-      case Primitive.Double     => (t: Double) => line"${t.toString}d"
-      case Primitive.Float      => (t: Float) => line"${t.toString}f"
-      case Primitive.Long       => (t: Long) => line"${t.toString}L"
-      case Primitive.Int        => (t: Int) => line"${t.toString}"
-      case Primitive.Short      => (t: Short) => line"${t.toString}"
-      case Primitive.Bool       => (t: Boolean) => line"${t.toString}"
+        (bd: BigDecimal) => line"scala.math.BigDecimal(${renderStringLiteral(bd.toString)})"
+      case Primitive.BigInteger =>
+        (bi: BigInt) => line"scala.math.BigInt(${renderStringLiteral(bi.toString)})"
+      case Primitive.Unit   => (_: Unit) => line"()"
+      case Primitive.Double => (t: Double) => line"${t.toString}d"
+      case Primitive.Float  => (t: Float) => line"${t.toString}f"
+      case Primitive.Long   => (t: Long) => line"${t.toString}L"
+      case Primitive.Int    => (t: Int) => line"${t.toString}"
+      case Primitive.Short  => (t: Short) => line"${t.toString}"
+      case Primitive.Bool   => (t: Boolean) => line"${t.toString}"
       case Primitive.Uuid =>
         (uuid: java.util.UUID) => line"java.util.UUID.fromString(${renderStringLiteral(uuid.toString)})"
       case Primitive.String => (s: String) => renderStringLiteral(s)
@@ -1948,10 +1949,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       def nullNode(x: NullNode): Line =
         line"smithy4s.Document.nullDoc"
       def numberNode(x: NumberNode): Line =
-        if (x.isFloatingPointNumber()) {
-          line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
-        } else {
-          line"smithy4s.Document.fromLong(${x.getValue.longValue()}L)"
+        x.getValue match {
+          case n @ (_: java.math.BigInteger | _: java.math.BigDecimal) =>
+            line"smithy4s.Document.fromBigDecimal(${renderPrimitive(Primitive.BigDecimal)(BigDecimal(n.toString))})"
+          case n if x.isFloatingPointNumber() =>
+            line"smithy4s.Document.fromDouble(${n.doubleValue()}d)"
+          case n => line"smithy4s.Document.fromLong(${n.longValue()}L)"
         }
       def objectNode(x: ObjectNode): Line = {
         val members = x.getMembers.asScala.map { member =>

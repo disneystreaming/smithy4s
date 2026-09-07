@@ -19,7 +19,7 @@ object HasConstrainedNewtypes extends ShapeTag.Companion[HasConstrainedNewtypes]
   implicit val schema: Schema[HasConstrainedNewtypes] = struct[HasConstrainedNewtypes](
     BucketName.schema.validated(smithy.api.Length(min = Some(1L), max = None)).required[HasConstrainedNewtypes]("a", _.a),
     CityId.schema.validated(smithy.api.Length(min = Some(1L), max = None)).required[HasConstrainedNewtypes]("b", _.b),
-    ObjectSize.schema.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).optional[HasConstrainedNewtypes]("c", _.c),
+    ObjectSize.schema.validated(smithy.api.Range(min = Some(scala.math.BigDecimal("1")), max = None)).optional[HasConstrainedNewtypes]("c", _.c),
     SomeIndexSeq.underlyingSchema.validated(smithy.api.Length(min = Some(1L), max = None)).optional[HasConstrainedNewtypes]("d", _.d),
     PNG.schema.validated(smithy.api.Length(min = Some(1L), max = None)).optional[HasConstrainedNewtypes]("e", _.e),
   )(make).withId(id).addHints(hints)

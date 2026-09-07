@@ -1678,15 +1678,12 @@ private[codegen] class SmithyToIR(
         TypedNode.PrimitiveTN(Primitive.Float, Some(num.floatValue()))
       case (N.NumberNode(num), Primitive.Short) =>
         TypedNode.PrimitiveTN(Primitive.Short, Some(num.shortValue()))
-      case (N.NumberNode(num), Primitive.BigDecimal) =>
-        TypedNode.PrimitiveTN(
-          Primitive.BigDecimal,
-          Some(BigDecimal(num.doubleValue()))
-        )
-      case (N.NumberNode(num), Primitive.BigInteger) =>
+      case (N.BigDecimalNode(bd), Primitive.BigDecimal) =>
+        TypedNode.PrimitiveTN(Primitive.BigDecimal, Some(bd))
+      case (N.BigDecimalNode(bd), Primitive.BigInteger) =>
         TypedNode.PrimitiveTN(
           Primitive.BigInteger,
-          Some(BigInt(num.intValue()))
+          Some(bd.toBigIntExact.getOrElse(notSupported((node, p))))
         )
       // Boolean
       case (N.BooleanNode(bool), Primitive.Bool) =>
