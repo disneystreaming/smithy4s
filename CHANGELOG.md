@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.58
+
+* codegen: Fix an `IllegalAccessError` (e.g. `class ...IncludeClosures cannot access its abstract superclass ...BackwardCompatHelper`) that could occur during `smithy4sCodegen` when a project dependency pulled a different version of a Smithy library (`smithy-build`, `smithy-model`, etc.) than the one bundled with the codegen plugin. The model-loading `URLClassLoader` used the plugin classloader as its parent, so a duplicate copy of a plugin-provided module on the child loader could split a package across two classloaders and break package-private access. The codegen now drops any dependency already provided by the parent classloader (tracked via the new `BuildInfo.codegenDependencies`) from the child classloader, so Smithy versions no longer need to be aligned between the plugin and the project's dependencies.
+
 # 0.18.57
 
 * codegen: Accept ivy-style repositories (e.g. `ivy:` URLs) when resolving codegen dependencies in [#1994](https://github.com/disneystreaming/smithy4s/pull/1994).
