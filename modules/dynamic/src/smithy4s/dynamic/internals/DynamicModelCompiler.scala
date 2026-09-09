@@ -83,14 +83,6 @@ private[dynamic] object Compiler {
     Hints.Binding.DynamicBinding(id, tr)
 
   /**
-     * @param knownHints hints supported by the caller.
-     */
-  protected[dynamic] def compile(
-      model: Model
-  ): DynamicSchemaIndex = compile(model, applySchemaRefinements = false)
-
-  /**
-     * @param knownHints hints supported by the caller.
      * @param applySchemaRefinements when true, constraint traits (`@length`, `@range`,
      * `@pattern` etc) are reified into `Schema` objects that get enforced upon
      * decoding, instead of being kept as inert hints.

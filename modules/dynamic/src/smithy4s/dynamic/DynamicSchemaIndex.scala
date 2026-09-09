@@ -45,7 +45,7 @@ object DynamicSchemaIndex extends DynamicSchemaIndexCompanionPlatform {
   def load(
       model: dynamic.model.Model
   ): DynamicSchemaIndex =
-    internals.Compiler.compile(model)
+    load(model, applySchemaRefinements = false)
 
   /**
     * Loads the model from a dynamic representation of smithy models
