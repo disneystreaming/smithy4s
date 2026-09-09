@@ -128,8 +128,7 @@ class MetadataSpec() extends FunSuite {
     "length required to be >= 1 and <= 10, but was 11"
 
   val constraintMessage2 =
-    if (!Platform.isJS) "Input must be >= 1.0 and <= 10.0, but was 11.0"
-    else "Input must be >= 1 and <= 10, but was 11"
+    "Input must be >= 1 and <= 10, but was 11"
 
   // ///////////////////////////////////////////////////////////
   // QUERY PARAMETERS

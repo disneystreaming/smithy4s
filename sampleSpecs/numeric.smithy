@@ -11,3 +11,11 @@ structure Numeric {
     bi: BigInteger = 1
     bd: BigDecimal = 1
 }
+
+structure BigNumeric {
+    bi: BigInteger = 4294967296
+    bd: BigDecimal = 9007199254740993
+    @range(min: -9007199254740993, max: 9007199254740993)
+    l: Long
+    doc: Document = 18446744073709551616
+}

@@ -34,7 +34,7 @@ object Queries extends ShapeTag.Companion[Queries] {
     Numbers.schema.optional[Queries]("ie", _.ie).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("nums"))),
     OpenNums.schema.optional[Queries]("on", _.on).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("openNums"))),
     OpenNumsStr.schema.optional[Queries]("ons", _.ons).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("openNumsStr"))),
-    double.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(0.0)), max = Some(scala.math.BigDecimal(100.0)))).optional[Queries]("dbl", _.dbl).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("dbl"))),
+    double.validated(smithy.api.Range(min = Some(scala.math.BigDecimal("0")), max = Some(scala.math.BigDecimal("100")))).optional[Queries]("dbl", _.dbl).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQuery"), smithy4s.Document.fromString("dbl"))),
     StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(Hints.dynamic(ShapeId("smithy.api", "httpQueryParams"), smithy4s.Document.obj())),
   )(make).withId(id).addHints(hints)
 }

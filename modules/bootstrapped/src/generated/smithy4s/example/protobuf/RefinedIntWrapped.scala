@@ -20,6 +20,6 @@ object RefinedIntWrapped extends ShapeTag.Companion[RefinedIntWrapped] {
   private def make(int: Int): RefinedIntWrapped = RefinedIntWrapped(int)
 
   implicit val schema: Schema[RefinedIntWrapped] = struct[RefinedIntWrapped](
-    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = Some(scala.math.BigDecimal(10.0)))).required[RefinedIntWrapped]("int", _.int),
+    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal("1")), max = Some(scala.math.BigDecimal("10")))).required[RefinedIntWrapped]("int", _.int),
   )(make).withId(id).addHints(hints)
 }

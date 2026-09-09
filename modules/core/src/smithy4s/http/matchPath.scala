@@ -30,31 +30,24 @@ object matchPath extends smithy4s.ScalaCompat {
     def matchPathAux(
         path: List[PathSegment],
         i: Int,
-        acc: Map[String, String],
-        greedyAcc: List[String]
+        acc: Map[String, String]
     ): Option[Map[String, String]] =
       path match {
         case Nil if i >= size => Some(acc)
         case StaticSegment(value) :: lt
             if i < size && compareStrings(value, received(i)) =>
-          matchPathAux(lt, i + 1, acc, Nil)
+          matchPathAux(lt, i + 1, acc)
         case (LabelSegment(name) :: lt) if i < size =>
-          matchPathAux(lt, i + 1, acc + (name -> received(i)), Nil)
-        case (GreedySegment(name) :: StaticSegment(value) :: lt)
-            if i < size && compareStrings(
-              value,
-              received(i)
-            ) && greedyAcc.nonEmpty =>
-          val value = greedyAcc.reverse.mkString("/")
-          matchPathAux(lt, i + 1, acc + (name -> value), Nil)
-        case p @ (GreedySegment(_) :: Nil) if i < size =>
-          matchPathAux(p, i + 1, acc, received(i) :: greedyAcc)
-        case GreedySegment(name) :: Nil if greedyAcc.nonEmpty =>
-          val value = greedyAcc.reverse.mkString("/")
-          Some(acc + (name -> value))
+          matchPathAux(lt, i + 1, acc + (name -> received(i)))
+        case GreedySegment(name) :: lt =>
+          val end = size - lt.length
+          if (end > i) {
+            val value = received.slice(i, end).mkString("/")
+            matchPathAux(lt, end, acc + (name -> value))
+          } else None
         case _ => None
       }
-    matchPathAux(path, 0, Map.empty, List.empty)
+    matchPathAux(path, 0, Map.empty)
   }
 
   private[http] def make(str: String): IndexedSeq[String] =

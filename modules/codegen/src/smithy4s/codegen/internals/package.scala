@@ -160,6 +160,14 @@ package object internals {
         extends NodeExtractor(node =>
           node.asNumberNode().asScala.map(_.getValue())
         )
+    private[internals] object BigDecimalNode
+        extends NodeExtractor(node =>
+          node
+            .asNumberNode()
+            .asScala
+            .flatMap(_.asBigDecimal().asScala)
+            .map(scala.math.BigDecimal(_))
+        )
     private[internals] object NullNode {
       def unapply(node: Node): Boolean = node.isNullNode()
     }
