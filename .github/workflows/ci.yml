@@ -53,7 +53,7 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -112,7 +112,7 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -155,7 +155,7 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_jvm
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -188,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -220,7 +220,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -258,7 +258,7 @@ jobs:
       tests: ${{ steps.list.outputs.tests }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -280,7 +280,7 @@ jobs:
         test: ${{ fromJSON(needs.sbt-plugin-discover.outputs.tests) }}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -321,7 +321,7 @@ jobs:
         project: ["millCodegenPlugin0_11", "millCodegenPlugin0_12", "millCodegenPlugin13"]
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -409,7 +409,7 @@ jobs:
       BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -471,7 +471,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
@@ -521,7 +521,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.CHECKOUT_REF }}
