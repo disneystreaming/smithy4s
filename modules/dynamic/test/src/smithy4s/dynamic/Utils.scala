@@ -21,6 +21,6 @@ import model.Model
 object Utils extends PlatformUtils {
 
   def compile(model: Model): DynamicSchemaIndex =
-    internals.Compiler.compile(model)
+    internals.Compiler.compile(model, applySchemaRefinements = false)
 
 }

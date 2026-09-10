@@ -83,10 +83,13 @@ private[dynamic] object Compiler {
     Hints.Binding.DynamicBinding(id, tr)
 
   /**
-     * @param knownHints hints supported by the caller.
+     * @param applySchemaRefinements when true, constraint traits (`@length`, `@range`,
+     * `@pattern` etc) are reified into `Schema` objects that get enforced upon
+     * decoding, instead of being kept as inert hints.
      */
   protected[dynamic] def compile(
-      model: Model
+      model: Model,
+      applySchemaRefinements: Boolean
   ): DynamicSchemaIndex = {
     val schemaMap = MMap.empty[ShapeId, Eval[Schema[DynData]]]
     // val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
@@ -97,7 +100,8 @@ private[dynamic] object Compiler {
         model,
         schemaMap,
         // endpointMap,
-        serviceMap
+        serviceMap,
+        applySchemaRefinements
       )
 
     // Loosely inspired by
@@ -132,15 +136,16 @@ private[dynamic] object Compiler {
     }
     new DynamicSchemaIndexImpl(
       model.metadata,
-      serviceMap.toMap.fmap(_.value),
-      schemaMap.toMap.fmap(_.value)
+      visitor.exportServices,
+      visitor.exportSchemas
     )
   }
 
   private class CompileVisitor(
       model: Model,
       schemaMap: MMap[ShapeId, Eval[Schema[DynData]]],
-      serviceMap: MMap[ShapeId, Eval[DynamicService]]
+      serviceMap: MMap[ShapeId, Eval[DynamicService]],
+      applySchemaRefinements: Boolean
   ) extends ShapeVisitor.Default[Unit] {
 
     private val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
@@ -160,8 +165,19 @@ private[dynamic] object Compiler {
       )
     }
 
+    private def resolve(schema: Schema[DynData]): Schema[DynData] =
+      if (applySchemaRefinements) ConstraintReification(schema) else schema
+
+    def exportSchemas: Map[ShapeId, Schema[DynData]] =
+      schemaMap.toMap.fmap(_.value)
+
+    def exportServices: Map[ShapeId, DynamicService] =
+      serviceMap.toMap.fmap(_.value)
+
     private def memberSchema(member: MemberShape): Eval[Schema[DynData]] =
-      schema(member.target).map(_.addMemberHints(allHints(member.traits)))
+      schema(member.target)
+        .map(_.addMemberHints(allHints(member.traits)))
+        .map(resolve)
 
     private def allHints(traits: Map[IdRef, Document]): Hints = {
       val ignoredHints = List(IdRef("smithy.api#enumValue"))
@@ -179,10 +195,12 @@ private[dynamic] object Compiler {
         lSchema: Eval[Schema[A]]
     ): Unit = {
       schemaMap += (shapeId -> lSchema.map { sch =>
-        sch
-          .withId(shapeId)
-          .addHints(allHints(traits))
-          .asInstanceOf[Schema[DynData]]
+        resolve(
+          sch
+            .withId(shapeId)
+            .addHints(allHints(traits))
+            .asInstanceOf[Schema[DynData]]
+        )
       })
     }
 
@@ -352,7 +370,7 @@ private[dynamic] object Compiler {
     }
 
     override def setShape(id: ShapeId, shape: SetShape): Unit =
-      update(id, shape.traits, schema(shape.member.target).map(s => set(s)))
+      update(id, shape.traits, memberSchema(shape.member).map(s => set(s)))
 
     override def mapShape(id: ShapeId, shape: MapShape): Unit =
       update(
@@ -376,7 +394,7 @@ private[dynamic] object Compiler {
         shape: OperationShape
     ): Eval[DynamicEndpoint] = {
       def getSchemaFromId(shapeId: ShapeId): Eval[Schema[DynData]] =
-        Eval.defer(schemaMap(shapeId))
+        Eval.defer(schemaMap(shapeId)).map(resolve)
 
       def getSchema(maybeShapeId: Option[IdRef]): Eval[Schema[DynData]] =
         maybeShapeId
@@ -497,7 +515,9 @@ private[dynamic] object Compiler {
           index: Int
       ): Eval[Field[DynStruct, DynData]] = {
         val (label, mShape) = labelledShape
-        val field = schema(mShape.target)
+        schema(mShape.target)
+          .map(_.addMemberHints(allHints(mShape.traits)))
+          .map(resolve)
           .map { sch =>
             if (mShape.traits.contains(IdRef("alloy#nullable")))
               sch.nullable.asInstanceOf[Schema[DynData]]
@@ -512,8 +532,6 @@ private[dynamic] object Compiler {
                 .optional[DynStruct](label, OptionalAccessor(index))
                 .asInstanceOf[Field[DynStruct, DynData]]
           }
-        val memberHints = allHints(mShape.traits)
-        field.map(_.addHints(memberHints.all.toSeq: _*))
       }
       update(
         id,
