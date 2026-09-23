@@ -66,22 +66,47 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
+    /**
+      * The host prefix of the standard-partition endpoint, which is not
+      * necessarily the name used when signing (see `AwsSigning.signingName`):
+      * SES v2 is hosted at `email.<region>.amazonaws.com` but signs as `ses`.
+      *
+      * `endpointPrefix` is the field meant for this: it "identifies which
+      * endpoint in a given region should be used to connect to the service",
+      * resolving as `{endpointPrefix}.{region}.{dnsSuffix}`. See
+      * https://smithy.io/2.0/aws/aws-core.html#endpointprefix
+      *
+      * It is optional, though, and some services (the Account API, for one) omit
+      * it. We then fall back to `arnNamespace`, which is constrained to
+      * `^[a-z0-9.\-]{1,63}$` and defaults to the lowercased service shape name,
+      * making it a DNS-safe stand-in. See
+      * https://smithy.io/2.0/aws/aws-core.html#arnnamespace
+      *
+      * This only covers the `{prefix}.{region}.amazonaws.com` pattern; FIPS,
+      * dual-stack, non-standard partitions (`amazonaws.com.cn`, GovCloud) and
+      * operation-level endpoints all require evaluating
+      * `smithy.rules#endpointRuleSet`, which we do not do.
+      */
+    private val hostPrefix: String =
+      awsService.endpointPrefix
+        .orElse(awsService.arnNamespace.map(_.value))
+        .getOrElse(service.id.name)
+        .toLowerCase()
+
     private def compiler[F[_]: Async: Compression: Hashing](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorEndpointCompiler[F] = {
 
-      def baseRequest(endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
+      def baseRequest(@annotation.unused endpoint: OperationSchema[_, _, _, _, _]): F[HttpRequest[Blob]] = {
         awsEnv.region.map { region =>
-          val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
           val baseUri = HttpUri.absolute(
             scheme = HttpUriScheme.Https,
-            host = s"$endpointPrefix.$region.amazonaws.com",
+            host = s"$hostPrefix.$region.amazonaws.com",
             port = None,
             path = IndexedSeq.empty,
             queryParams = IndexedSeq.empty,
             pathParams = None
           )
-          // Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
           HttpRequest(HttpMethod.POST, baseUri, Map.empty, Blob.empty)
         }
       }

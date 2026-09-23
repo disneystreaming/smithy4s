@@ -9,6 +9,8 @@ Thank you!
 
 - http4s: Fix the configured `FieldFilter` not being applied when a server encodes response metadata (e.g. HTTP headers) in [#1992](https://github.com/disneystreaming/smithy4s/pull/1992). `SimpleRestJsonBuilder.withFieldFilter(...)` now affects response header/metadata encoding on the server, matching the behavior already present on the client request side.
 - Fix `@http` routes never matching when a greedy label (`{foo+}`) is followed by a static segment (e.g. `/base/{foo+}/end`) in [#1998](https://github.com/disneystreaming/smithy4s/pull/1998). `matchPath` only accumulated greedy segments when the greedy label was the last path segment, so such routes always 404'd.
+- aws: Resolve the SigV4 signing name and the endpoint host independently in [#1596](https://github.com/disneystreaming/smithy4s/pull/1596). The signing name now comes from `aws.auth#sigv4`'s `name`, while the host keeps using `endpointPrefix`, falling back to `arnNamespace` when it is absent. Both previously used `endpointPrefix`, so services where the two differ were rejected with "Credential should be scoped to correct service" ([#1568](https://github.com/disneystreaming/smithy4s/issues/1568)), and services without an `endpointPrefix` derived the host from the *operation* name, e.g. `ListRegions.us-east-1.amazonaws.com` ([#1532](https://github.com/disneystreaming/smithy4s/issues/1532)).
+- codegen: Skip traits from the `aws.endpoints` namespace when generating hints. They have no published Scala bindings, so services carrying them (e.g. the AWS Account API, via `aws.endpoints#standardPartitionalEndpoints`) generated code that did not compile. This mirrors the existing treatment of `smithy.rules`.
 
 # 0.19.11
 

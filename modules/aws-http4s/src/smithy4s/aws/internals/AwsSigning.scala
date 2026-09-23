@@ -67,16 +67,10 @@ private[aws] object AwsSigning {
       endpointHints: Hints,
       awsEnvironment: AwsEnvironment[F]
   ): Client[F] => Client[F] = {
-    val endpointPrefix = serviceHints
-      .get(_root_.aws.api.Service)
-      .flatMap(_.endpointPrefix)
-      .getOrElse(serviceId.name)
-      .toLowerCase()
-
     val sign = signingFunction(
       serviceId.name,
       endpointId.name,
-      endpointPrefix,
+      signingName(serviceId, serviceHints),
       awsEnvironment.timestamp,
       awsEnvironment.credentials,
       awsEnvironment.region
@@ -89,10 +83,44 @@ private[aws] object AwsSigning {
       }
   }
 
+  /**
+    * The name used in the credential scope when signing requests, which is not
+    * necessarily the same as the host prefix (see `AwsClient`): SES v2, for
+    * instance, is hosted at `email.<region>.amazonaws.com` but signs as `ses`.
+    *
+    * `aws.auth#sigv4`'s `name` is, per its own definition, "the signature
+    * version 4 service signing name to use in the credential scope when signing
+    * requests", so it wins. It also states that the value SHOULD match
+    * `arnNamespace`, which is why that is preferred over `endpointPrefix` --
+    * the latter is documented as being unstable and non-unique, and MUST NOT be
+    * used for anything other than resolving endpoints. See
+    * https://smithy.io/2.0/aws/aws-auth.html#aws-auth-sigv4-trait and
+    * https://smithy.io/2.0/aws/aws-core.html#endpointprefix
+    */
+  private[internals] def signingName(
+      serviceId: ShapeId,
+      serviceHints: Hints
+  ): String = {
+    val fromSigv4 = serviceHints.get(_root_.aws.auth.Sigv4).map(_.name)
+
+    val fromAwsService = serviceHints
+      .get(_root_.aws.api.Service)
+      .flatMap { awsService =>
+        awsService.arnNamespace
+          .map(_.value)
+          .orElse(awsService.endpointPrefix)
+      }
+
+    fromSigv4
+      .orElse(fromAwsService)
+      .getOrElse(serviceId.name)
+      .toLowerCase()
+  }
+
   private[internals] def signingFunction[F[_]: Concurrent](
       serviceName: String,
       operationName: String,
-      endpointPrefix: String,
+      signingName: String,
       timestamp: F[Timestamp],
       credentials: F[AwsCredentials],
       region: F[AwsRegion]
@@ -153,7 +181,7 @@ private[aws] object AwsSigning {
         }
         .flatMap { case ((payloadHash, preparedRequest), pathString) =>
           val awsHeadersF = (timestamp, credentials, region).mapN { case (timestamp, credentials, region) =>
-            val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
+            val credentialsScope = s"${timestamp.conciseDate}/$region/$signingName/aws4_request"
             val queryParams: Vector[(String, String)] =
               request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
             val canonicalQueryString =
@@ -202,7 +230,7 @@ private[aws] object AwsSigning {
               credentials.secretAccessKey,
               timestamp.conciseDate,
               region.value,
-              endpointPrefix
+              signingName
             )
             val stringToSign = List[String](
               algorithm,
