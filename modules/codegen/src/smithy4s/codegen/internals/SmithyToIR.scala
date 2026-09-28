@@ -1237,6 +1237,10 @@ private[codegen] class SmithyToIR(
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // smithy.rules traits contain massive endpoint routing JSON and aren't used at runtime
         .filterNot(_.toShapeId().getNamespace() == "smithy.rules")
+        // aws.endpoints traits describe endpoint resolution, which we don't
+        // implement, and have no published Scala bindings - so referencing them
+        // in hints produces code that doesn't compile.
+        .filterNot(_.toShapeId().getNamespace() == "aws.endpoints")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
         // remove box trait
