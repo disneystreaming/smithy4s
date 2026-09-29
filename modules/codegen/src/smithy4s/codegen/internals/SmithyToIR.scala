@@ -724,7 +724,7 @@ private[codegen] class SmithyToIR(
         shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
       }
 
-      def primitive(
+      private def primitive(
           shape: Shape,
           primitiveId: String,
           primitive: Primitive
@@ -784,7 +784,7 @@ private[codegen] class SmithyToIR(
         }
       }
 
-      def listShape(x: ListShape): Option[Type] = {
+      def listShape(x: ListShape): Option[Type] =
         x.getMember()
           .accept(this)
           .map { tpe =>
@@ -806,12 +806,16 @@ private[codegen] class SmithyToIR(
             }
           }
           .map { tpe =>
-            val externalOrBase =
-              getExternalOrBase(x, tpe)
-            val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+            val externalOrBase = getExternalOrBase(x, tpe)
+            val shouldValidate = x.hasTrait(classOf[ValidateNewtypeTrait])
+            if (shouldValidate)
+              Type.ValidatedAlias(x.namespace, x.name, externalOrBase)
+            else {
+              val isUnwrapped =
+                !isExternal(externalOrBase) || isUnwrappedShape(x)
+              Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+            }
           }
-      }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
       override def setShape(x: SetShape): Option[Type] = {
@@ -852,8 +856,13 @@ private[codegen] class SmithyToIR(
       )).map { tpe =>
         val externalOrBase =
           getExternalOrBase(x, tpe)
-        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+        val shouldValidate = x.hasTrait(classOf[ValidateNewtypeTrait])
+        if (shouldValidate)
+          Type.ValidatedAlias(x.namespace, x.name, externalOrBase)
+        else {
+          val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+          Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+        }
       }
 
       def byteShape(x: ByteShape): Option[Type] =
@@ -981,6 +990,7 @@ private[codegen] class SmithyToIR(
             .build()
             .asInstanceOf[Shape]
             .accept(this)
+
         }
 
       def timestampShape(x: TimestampShape): Option[Type] = x match {
