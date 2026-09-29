@@ -69,7 +69,7 @@ private[aws] object AwsSigning {
   ): Client[F] => Client[F] = {
     val sign = signingFunction(
       serviceId.name,
-      endpointId.name,
+      amzTarget(serviceId, endpointId, serviceHints),
       signingName(serviceId, serviceHints),
       awsEnvironment.timestamp,
       awsEnvironment.credentials,
@@ -117,9 +117,28 @@ private[aws] object AwsSigning {
       .toLowerCase()
   }
 
+  /**
+    * `X-Amz-Target` is how the awsJson protocols name the operation: every
+    * request goes to `POST /`, so the header is the only thing that says which
+    * operation it is. No other protocol uses it -- restJson1 and restXml route
+    * on the method and path, the query protocols on the `Action` parameter -- and
+    * sending it anyway is not harmless: a server that routes on the header
+    * first (fakecloud, for one) rejects a restJson1 request that carries it. See
+    * https://smithy.io/2.0/aws/protocols/aws-json-1_0-protocol.html#protocol-behaviors
+    */
+  private[internals] def amzTarget(
+      serviceId: ShapeId,
+      endpointId: ShapeId,
+      serviceHints: Hints
+  ): Option[String] =
+    AwsProtocol(serviceHints).collect {
+      case AwsProtocol.AWS_JSON_1_0(_) | AwsProtocol.AWS_JSON_1_1(_) =>
+        serviceId.name + "." + endpointId.name
+    }
+
   private[internals] def signingFunction[F[_]: Concurrent](
       serviceName: String,
-      operationName: String,
+      amzTarget: Option[String],
       signingName: String,
       timestamp: F[Timestamp],
       credentials: F[AwsCredentials],
@@ -200,7 +219,7 @@ private[aws] object AwsSigning {
               `X-Amz-Content-SHA256` -> preparedRequest.headers.get(`X-Amz-Content-SHA256`).map(_.head.value).orNull,
               `X-Amz-Date` -> timestamp.conciseDateTime,
               `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
-              `X-Amz-Target` -> (serviceName + "." + operationName)
+              `X-Amz-Target` -> amzTarget.orNull
             ).filterNot(_._2 == null)
 
             val canonicalHeadersString = baseHeadersList

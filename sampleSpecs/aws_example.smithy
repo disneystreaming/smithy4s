@@ -55,6 +55,26 @@ service NoSigv4 {
     operations: [DoThing]
 }
 
+/// Mirrors the shape of AWS SES v2 in full, protocol included: restJson1 routes
+/// on the method and path, so a request must not carry the awsJson
+/// `X-Amz-Target` header.
+@aws.auth#sigv4(name: "ses")
+@aws.protocols#restJson1
+@aws.api#service(
+    sdkId: "RestJsonSes"
+    arnNamespace: "ses"
+    endpointPrefix: "email"
+)
+service RestJsonSes {
+    operations: [DoRestThing]
+}
+
+@http(method: "POST", uri: "/v2/email/outbound-emails")
+operation DoRestThing {
+    input := {}
+    output := {}
+}
+
 operation DoThing {
     input := {}
     output := {}

@@ -73,6 +73,19 @@ object AwsEndpointAndSigningNameTest extends SimpleIOSuite with Compat {
         )
     }
 
+  private def amzTarget(request: Request[IO]): Option[String] =
+    request.headers
+      .get(org.typelevel.ci.CIString("X-Amz-Target"))
+      .map(_.head.value)
+
+  private def signedHeaders(request: Request[IO]): List[String] =
+    request.headers
+      .get(org.typelevel.ci.CIString("Authorization"))
+      .map(_.head.value)
+      .flatMap("SignedHeaders=([^,]+)".r.findFirstMatchIn(_))
+      .toList
+      .flatMap(_.group(1).split(';').toList)
+
   private def host(request: Request[IO]): Option[String] =
     request.uri.host.map(_.renderString)
 
@@ -147,6 +160,26 @@ object AwsEndpointAndSigningNameTest extends SimpleIOSuite with Compat {
     }.map { request =>
       expect.same(host(request), Some("dynamodb.us-east-1.amazonaws.com")) &&
       expect.same(signingName(request), Some("dynamodb"))
+    }
+  }
+
+  test("restJson1: no X-Amz-Target, sent or signed (SES v2)") {
+    capture { awsEnv =>
+      AwsClient(smithy4s.example.aws.RestJsonSes, awsEnv)
+        .evalMap(_.doRestThing())
+    }.map { request =>
+      expect.same(amzTarget(request), None) &&
+      expect(!signedHeaders(request).contains("x-amz-target")) &&
+      expect.same(signingName(request), Some("ses"))
+    }
+  }
+
+  test("awsJson: X-Amz-Target names the operation, and is signed (DynamoDB)") {
+    capture { awsEnv =>
+      AwsClient(DynamoDB, awsEnv).evalMap(_.listTables())
+    }.map { request =>
+      expect.same(amzTarget(request), Some("DynamoDB_20120810.ListTables")) &&
+      expect(signedHeaders(request).contains("x-amz-target"))
     }
   }
 

@@ -1,0 +1,36 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "RestJsonSes",
+        "version": "",
+        "description": "Mirrors the shape of AWS SES v2 in full, protocol included: restJson1 routes\non the method and path, so a request must not carry the awsJson\n`X-Amz-Target` header."
+    },
+    "paths": {
+        "/v2/email/outbound-emails": {
+            "post": {
+                "operationId": "DoRestThing",
+                "responses": {
+                    "200": {
+                        "description": "DoRestThing 200 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "aws.auth.sigv4": {
+                "type": "apiKey",
+                "description": "AWS Signature Version 4 authentication",
+                "name": "Authorization",
+                "in": "header",
+                "x-amazon-apigateway-authtype": "awsSigv4"
+            }
+        }
+    },
+    "security": [
+        {
+            "aws.auth.sigv4": []
+        }
+    ]
+}
