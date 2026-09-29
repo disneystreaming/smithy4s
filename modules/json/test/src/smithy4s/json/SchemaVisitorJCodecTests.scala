@@ -283,6 +283,17 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   }
 
+  test("throw PayloadError for invalid local date") {
+    try {
+      implicit val schema: Schema[LocalDate] = localdate
+
+      readFromString[LocalDate]("\"2026-33-12\"")
+      fail("Unexpected success")
+    } catch {
+      case PayloadError(_, expected, _) => expect.same(expected, "localDate")
+    }
+  }
+
   test("Optional encode from present value") {
     val foo = Foo(1, Some(2))
     val json = """{"a":1,"_b":2}"""

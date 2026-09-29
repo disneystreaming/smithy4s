@@ -445,7 +445,9 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "localDate"
 
       def decodeValue(cursor: Cursor, in: JsonReader): LocalDate =
-        LocalDate.parseUnsafe(in.readString(null))
+        LocalDate
+          .parse(in.readString(null))
+          .getOrElse(in.decodeError("expected " + expecting))
 
       def encodeValue(x: LocalDate, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
