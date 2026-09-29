@@ -7,6 +7,8 @@ package object aws {
   val MyThing = MyThingGen
   type PrefixDiffersFromSigningName[F[_]] = smithy4s.kinds.FunctorAlgebra[PrefixDiffersFromSigningNameGen, F]
   val PrefixDiffersFromSigningName = PrefixDiffersFromSigningNameGen
+  type RestJsonSes[F[_]] = smithy4s.kinds.FunctorAlgebra[RestJsonSesGen, F]
+  val RestJsonSes = RestJsonSesGen
   type NoEndpointPrefix[F[_]] = smithy4s.kinds.FunctorAlgebra[NoEndpointPrefixGen, F]
   val NoEndpointPrefix = NoEndpointPrefixGen
   type NoSigv4[F[_]] = smithy4s.kinds.FunctorAlgebra[NoSigv4Gen, F]

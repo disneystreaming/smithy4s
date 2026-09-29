@@ -5,6 +5,9 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.19.14
+- aws: Only send `X-Amz-Target` for the awsJson protocols, in [#2009](https://github.com/disneystreaming/smithy4s/pull/2009). The signer added it to every request, restJson1, restXml and the query protocols included, although only awsJson routes on it. The others route on the method and path or the `Action` parameter, so a server that routes on the header first (fakecloud, for one) rejected, for instance, every SES v2 call with `UnknownOperationException`.
+
 # 0.19.13
 - dynamic: Add `DynamicSchemaIndex.loadModel(model, applySchemaRefinements: Boolean)` overload. When `applySchemaRefinements = true`, constraint traits (`@length`, `@range`, `@pattern`, ...) are reified into schema refinements instead of being kept just as hints, matching the behaviour of codegen-produced schemas.
 

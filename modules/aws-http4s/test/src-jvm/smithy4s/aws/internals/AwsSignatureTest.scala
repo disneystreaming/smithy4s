@@ -284,7 +284,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
 
     val smithy4sSigner = AwsSigning.signingFunction[IO](
       serviceName,
-      operationName,
+      Some(serviceName + "." + operationName),
       serviceName,
       IO(smithy4sTimestamp),
       IO(smithy4sCredentials),
