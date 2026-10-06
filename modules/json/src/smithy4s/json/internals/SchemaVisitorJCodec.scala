@@ -445,13 +445,19 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "localDate"
 
       def decodeValue(cursor: Cursor, in: JsonReader): LocalDate =
-        LocalDate.parseUnsafe(in.readString(null))
+        LocalDate.parse(in.readString(null)) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeValue(x: LocalDate, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
 
       def decodeKey(in: JsonReader): LocalDate =
-        LocalDate.parseUnsafe(in.readKeyAsString())
+        LocalDate.parse(in.readKeyAsString()) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeKey(x: LocalDate, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiKey(x.toString)
@@ -461,13 +467,19 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "localTime"
 
       def decodeValue(cursor: Cursor, in: JsonReader): LocalTime =
-        LocalTime.parseUnsafe(in.readString(null))
+        LocalTime.parse(in.readString(null)) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeValue(x: LocalTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
 
       def decodeKey(in: JsonReader): LocalTime =
-        LocalTime.parseUnsafe(in.readKeyAsString())
+        LocalTime.parse(in.readKeyAsString()) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeKey(x: LocalTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiKey(x.toString)
@@ -493,13 +505,19 @@ private[smithy4s] class SchemaVisitorJCodec(
       def expecting: String = "offsetDateTime"
 
       def decodeValue(cursor: Cursor, in: JsonReader): OffsetDateTime =
-        OffsetDateTime.parseUnsafe(in.readString(null))
+        OffsetDateTime.parse(in.readString(null)) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeValue(x: OffsetDateTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiVal(x.toString())
 
       def decodeKey(in: JsonReader): OffsetDateTime =
-        OffsetDateTime.parseUnsafe(in.readKeyAsString())
+        OffsetDateTime.parse(in.readKeyAsString()) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeKey(x: OffsetDateTime, out: JsonWriter): Unit =
         out.writeNonEscapedAsciiKey(x.toString)
