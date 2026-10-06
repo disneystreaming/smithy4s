@@ -1254,4 +1254,38 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   }
 
+  test("throw PayloadError for invalid LocalDate") {
+    implicit val schema: Schema[LocalDate] = localdate
+
+    try {
+      readFromString[LocalDate]("\"2025-33-15\"")
+      fail("Unexpected success")
+    } catch {
+      case PayloadError(_, expected, _) => expect.same(expected, "localDate")
+    }
+  }
+
+  test("throw PayloadError for invalid LocalTime") {
+    implicit val schema: Schema[LocalTime] = localtime
+
+    try {
+      readFromString[LocalTime]("\"25:09:56\"")
+      fail("Unexpected success")
+    } catch {
+      case PayloadError(_, expected, _) => expect.same(expected, "localTime")
+    }
+  }
+
+  test("throw PayloadError for invalid OffsetDateTime") {
+    implicit val schema: Schema[OffsetDateTime] = offsetdatetime
+
+    try {
+      readFromString[OffsetDateTime]("\"2025-08-15T25:09:56-07:00\"")
+      fail("Unexpected success")
+    } catch {
+      case PayloadError(_, expected, _) =>
+        expect.same(expected, "offsetDateTime")
+    }
+  }
+
 }
