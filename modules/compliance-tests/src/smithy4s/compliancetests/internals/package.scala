@@ -17,6 +17,7 @@
 package smithy4s
 package compliancetests
 
+import cats.implicits._
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Uri
@@ -60,9 +61,27 @@ package object internals {
   }
 
   /**
-   * If there's a single value for a given key, injects in the map without changes.
-   * If there a multiple values for a given key, escape each value, escape quotes, then add quotes.
+   * Pure Scala replacement for Smithy's SimpleCodeWriter.format().
+   * Handles `$key:L` (literal formatter) patterns used in httpMalformedRequestTests
+   * parameter templates. Keys are sorted longest-first to prevent partial replacement
+   * when one key is a prefix of another (e.g., "val" vs "value").
    */
+  private[compliancetests] def interpolateCodeTemplate(
+      template: String,
+      context: Map[String, String]
+  ): String = {
+    val sortedByKeyLength = context.toList.sortBy(-_._1.length)
+    sortedByKeyLength.foldLeft(template) { case (result, (key, value)) =>
+      result.replace(s"$$$key:L", value)
+    }
+  }
+
+  private[compliancetests] def parseHeaders(
+      headers: Option[Map[String, String]]
+  ): Headers = {
+    headers.foldMap[Headers](h => Headers(h.toList))
+  }
+
   private[compliancetests] def collapseHeaders(
       headers: Headers
   ): Map[CIString, String] = {

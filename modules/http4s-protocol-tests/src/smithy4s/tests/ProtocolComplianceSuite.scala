@@ -95,6 +95,23 @@ abstract class ProtocolComplianceSuite
         })
     )
 
+  def genMalformedRequestTests(
+      impl: Router[IO],
+      shapeIds: ShapeId*
+  )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
+    shapeIds.toList.flatMap(shapeId =>
+      dsi
+        .getService(shapeId)
+        .toList
+        .flatMap(wrapper => {
+          HttpProtocolCompliance
+            .malformedRequestTests(
+              impl,
+              wrapper.service
+            )
+        })
+    )
+
   def genClientAndServerTests(
       impl: ReverseRouter[IO] with Router[IO],
       shapeIds: ShapeId*
