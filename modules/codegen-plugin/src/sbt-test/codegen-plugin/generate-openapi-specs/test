@@ -1,0 +1,9 @@
+# OpenAPI specs are not generated, Scala code still is
+> compile
+$ exists target/**/smithy4s/foo/HelloService.scala
+-$ exists target/**/resource_managed/main/foo.HelloService.json
+
+# turning the setting back on generates them
+> set Compile / smithy4sGenerateOpenApiSpecs := true
+> compile
+$ exists target/**/resource_managed/main/foo.HelloService.json

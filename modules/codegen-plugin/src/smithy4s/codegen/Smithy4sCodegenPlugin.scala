@@ -85,6 +85,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Sets whether this project should be used as a Smithy library by packaging the Smithy specs in the resulting jar"
       )
 
+    val smithy4sGenerateOpenApiSpecs =
+      settingKey[Boolean](
+        "Sets whether OpenAPI specs should be generated for the services of this project"
+      )
+
     val smithy4sExplicitCodegenOnlyDependencies =
       taskKey[Seq[ModuleID]](
         List(
@@ -223,6 +228,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    config / smithy4sGenerateOpenApiSpecs := true,
     config / smithy4sAllowDefaultRepositories := true,
     smithy4sAwsSpecs := Seq.empty,
     smithy4sAwsSpecEntries := Seq.empty,
@@ -486,7 +492,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)
 
-    val skipSet = skipResources
+    val skipOpenApi: Set[FileType] =
+      if ((conf / smithy4sGenerateOpenApiSpecs).value) Set.empty
+      else Set(FileType.Openapi)
+
+    val skipSet = skipResources ++ skipOpenApi
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
 

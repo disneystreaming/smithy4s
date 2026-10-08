@@ -105,3 +105,19 @@ When you visit your documentation page, you'll be served with a Swagger UI appli
 If your documentation route supports multiple service, the dropdown in the top bar (top right) should allow you to select other specifications:
 
 ![Swagger UI specification dropdown selection](swagger-ui-dropdown.png)
+
+## Skipping generation
+
+A project that doesn't need the openapi view, for instance because it only uses the generated code as a client, can turn its generation off.
+
+In `build.sbt`
+
+```scala
+Compile / smithy4sGenerateOpenApiSpecs := false
+```
+
+In Mill
+
+```scala
+override def generateOpenApiSpecs = T(false)
+```
