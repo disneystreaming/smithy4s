@@ -6,6 +6,7 @@ When adding entries, please treat them as if they could end up in a release any 
 Thank you!
 
 # 0.19.14
+- codegen: OpenAPI specs are no longer generated for namespaces that an upstream module already generated code for, like the Scala code for them, in [#2013](https://github.com/disneystreaming/smithy4s/pull/2013). The upstream jar already contains these specs, so downstream modules shipped copies of specs they don't own ([#2011](https://github.com/disneystreaming/smithy4s/issues/2011)). This changes what downstream modules generate: one that relied on getting an upstream service's spec can depend on the upstream jar instead.
 - sbt: Add a `smithy4sGenerateOpenApiSpecs` setting to turn off OpenAPI spec generation, e.g. for a project that only needs a client, mirroring the Mill plugin's `generateOpenApiSpecs` ([#1853](https://github.com/disneystreaming/smithy4s/issues/1853)), in [#2012](https://github.com/disneystreaming/smithy4s/pull/2012).
 - aws: Only send `X-Amz-Target` for the awsJson protocols, in [#2009](https://github.com/disneystreaming/smithy4s/pull/2009). The signer added it to every request, restJson1, restXml and the query protocols included, although only awsJson routes on it. The others route on the method and path or the `Action` parameter, so a server that routes on the header first (fakecloud, for one) rejected, for instance, every SES v2 call with `UnknownOperationException`.
 - Fix errors thrown for invalid json for new primitive types in [#2010](https://github.com/disneystreaming/smithy4s/pull/2010).

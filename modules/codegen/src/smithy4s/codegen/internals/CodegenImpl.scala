@@ -103,8 +103,12 @@ private[codegen] object CodegenImpl { self =>
         allowedNS.map(_.exists(_.matches(str))).getOrElse(true)
       val notExcluded: String => Boolean = str =>
         !excludedNS.exists(_.matches(str))
+      // Upstream jars already contain the specs of the namespaces they generated
+      val alreadyGenerated =
+        CodegenRecord.recordsFromModel(model).flatMap(_.namespaces).toSet
       val openApiNamespaces = allNamespaces.filter(namespace =>
-        isAllowed(namespace) && notExcluded(namespace)
+        isAllowed(namespace) && notExcluded(namespace) &&
+          !alreadyGenerated(namespace)
       )
       alloy.openapi
         .convertWithConfig(
