@@ -29,7 +29,7 @@ A couple examples:
 
 The Smithy4s build-plugins we provide out of the box automatically package the local specifications (used for code-generations) in the resulting jars so that downstream projects (internal and external) can use them. When doing so, Smithy4s abides by the same structure described above.
 
-Additionally, Smithy4s will also produce a smithy file containing a piece of metadata listing the namespaces for which code was generated. This way, downstream Smithy4s calls can automatically skip the already-generated namespaces.
+Additionally, Smithy4s will also produce a smithy file containing a piece of metadata listing the namespaces for which code was generated. This way, downstream Smithy4s calls can automatically skip the already-generated namespaces, both when generating Scala code and OpenAPI specs.
 
 This does mean two things:
 
