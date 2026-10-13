@@ -7,7 +7,7 @@ Thank you!
 
 # 0.18.59
 
-* Update Smithy to 1.74.0.
+* Update Smithy to 1.74.0. Smithy 1.74.0 added members to two prelude traits that smithy4s generates — `@idempotent` gained `exists`/`notFound` and `@unstable` gained `featureId`. To preserve binary compatibility of the already-published `smithy.api.Idempotent` and `smithy.api.Unstable` types, smithy4s intentionally does not surface these new (niche) fields.
 
 # 0.18.58
 

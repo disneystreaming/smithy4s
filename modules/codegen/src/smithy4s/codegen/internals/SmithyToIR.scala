@@ -61,6 +61,26 @@ import smithy4s.meta.BincompatAddedTrait
 
 private[codegen] object SmithyToIR {
 
+  /** Members that Smithy added to prelude (`smithy.api`) structures that smithy4s
+    * generates, which we deliberately skip during codegen.
+    *
+    * These structures were published by smithy4s as case classes before the
+    * member existed; rendering the new member would change the generated class's
+    * shape (constructor, `apply`, schema) and break binary compatibility. Since
+    * Smithy's prelude shapes are immutable we can't annotate them in the model,
+    * so we drop the members here instead — both when generating the class itself
+    * and when generating typed hints that reference it (both go through
+    * [[SmithyToIR.ShapeExt.fields]]). The trade-off is that smithy4s does not
+    * surface these (niche) prelude-trait fields.
+    */
+  private val skippedPreludeMembers: Set[ShapeId] = Set(
+    // `@idempotent` became a structure (gained `exists`/`notFound`) in Smithy 1.74.0.
+    ShapeId.from("smithy.api#idempotent$exists"),
+    ShapeId.from("smithy.api#idempotent$notFound"),
+    // `@unstable` gained `featureId` in Smithy 1.74.0.
+    ShapeId.from("smithy.api#unstable$featureId")
+  )
+
   def apply(
       model: Model,
       namespace: String
@@ -1131,6 +1151,7 @@ private[codegen] class SmithyToIR(
         .members()
         .asScala
         .filterNot(isStreaming)
+        .filterNot(member => SmithyToIR.skippedPreludeMembers(member.getId()))
         .map { member =>
           val default =
             if (defaultRenderMode == DefaultRenderMode.Full)

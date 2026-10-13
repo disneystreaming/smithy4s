@@ -80,7 +80,7 @@ object RecursiveInputServiceOperation {
     val schema: OperationSchema[RecursiveInput, Nothing, Unit, Nothing, Nothing] = Schema.operation(ShapeId("smithy4s.example", "RecursiveInputOperation"))
       .withInput(RecursiveInput.schema)
       .withOutput(unit)
-      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200), smithy.api.Idempotent(exists = None, notFound = None))
+      .withHints(smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/subscriptions"), code = 200), smithy.api.Idempotent())
     def wrap(input: RecursiveInput): RecursiveInputOperation = RecursiveInputOperation(input)
   }
 }
