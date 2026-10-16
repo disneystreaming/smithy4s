@@ -176,7 +176,7 @@ object Dependencies {
   }
 
   object CoursierInterface {
-    val core = "io.get-coursier" % "interface" % "1.0.29-M4"
+    val core = "io.get-coursier" % "interface" % "1.0.30"
   }
 
 }
