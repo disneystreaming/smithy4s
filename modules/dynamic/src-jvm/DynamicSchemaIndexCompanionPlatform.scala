@@ -27,6 +27,20 @@ private[dynamic] trait DynamicSchemaIndexCompanionPlatform {
     */
   def loadModel(
       model: software.amazon.smithy.model.Model
+  ): DynamicSchemaIndex = loadModel(model, applySchemaRefinements = false)
+
+  /**
+    * Loads a dynamic schema index model from a smithy model.
+    *
+    * @param applySchemaRefinements when true, constraint traits (`@length`, `@range`,
+    * `@pattern` etc) are reified into Schema objects that get enforced upon
+    * decoding, instead of being kept as inert hints (which is the default dynamic
+    * behaviour), mirroring the fact that codegen-produced schemas enforce these
+    * constraints but dynamically-loaded do not).
+    */
+  def loadModel(
+      model: software.amazon.smithy.model.Model,
+      applySchemaRefinements: Boolean
   ): DynamicSchemaIndex = {
     val flattenedModel =
       ModelTransformer.create().flattenAndRemoveMixins(model);
@@ -34,7 +48,7 @@ private[dynamic] trait DynamicSchemaIndexCompanionPlatform {
     val document = NodeToDocument(node)
     smithy4s.Document
       .decode[smithy4s.dynamic.model.Model](document)
-      .map(load(_)) match {
+      .map(load(_, applySchemaRefinements)) match {
       case Left(error)  => throw error
       case Right(value) => value
     }
