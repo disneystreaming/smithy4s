@@ -5,6 +5,10 @@ When adding entries, please treat them as if they could end up in a release any 
 
 Thank you!
 
+# 0.18.60
+
+* dynamic: Add `DynamicSchemaIndex.loadModel(model, applySchemaRefinements: Boolean)` overload. When `applySchemaRefinements = true`, constraint traits (`@length`, `@range`, `@pattern`, ...) are reified into schema refinements instead of being kept just as hints, matching the behaviour of codegen-produced schemas. Backport of [#1991](https://github.com/disneystreaming/smithy4s/pull/1991).
+
 # 0.18.59
 
 * Update Smithy to 1.74.0. Smithy 1.74.0 added members to two prelude traits that smithy4s generates — `@idempotent` gained `exists`/`notFound` and `@unstable` gained `featureId`. To preserve binary compatibility of the already-published `smithy.api.Idempotent` and `smithy.api.Unstable` types, smithy4s intentionally does not surface these new (niche) fields.
