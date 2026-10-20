@@ -100,7 +100,7 @@ private[dynamic] object ConstraintReification extends (Schema ~> Schema) {
           .reifyHint(
             RefinementProvider.patternConstraint[A](byValue(_).stringValue)
           )
-      case c @ CollectionSchema(_, _, _, _) => collection(c)
+      case c: CollectionSchema[c, b] => collection[c, b](c)
       case m: MapSchema[k, v] =>
         m.reifyHint(
           RefinementProvider.lengthConstraint[Map[k, v]](_.size)
