@@ -9,6 +9,8 @@ Thank you!
 
 * Update Smithy to 1.74.0. Smithy 1.74.0 added members to two prelude traits that smithy4s generates — `@idempotent` gained `exists`/`notFound` and `@unstable` gained `featureId`. To preserve binary compatibility of the already-published `smithy.api.Idempotent` and `smithy.api.Unstable` types, smithy4s intentionally does not surface these new (niche) fields.
 
+* codegen: Bump coursier-interface to 1.0.30 and drop the inlined repository parsing code (added in [#1994](https://github.com/disneystreaming/smithy4s/pull/1994)) in favour of `coursierapi.RepositoryParser`.
+
 # 0.18.58
 
 * codegen: Fix an `IllegalAccessError` (e.g. `class ...IncludeClosures cannot access its abstract superclass ...BackwardCompatHelper`) that could occur during `smithy4sCodegen` when a project dependency pulled a different version of a Smithy library (`smithy-build`, `smithy-model`, etc.) than the one bundled with the codegen plugin. The model-loading `URLClassLoader` used the plugin classloader as its parent, so a duplicate copy of a plugin-provided module on the child loader could split a package across two classloaders and break package-private access. The codegen now drops any dependency already provided by the parent classloader (tracked via the new `BuildInfo.codegenDependencies`) from the child classloader, so Smithy versions no longer need to be aligned between the plugin and the project's dependencies.
