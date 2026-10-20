@@ -206,6 +206,21 @@ object Timestamp extends TimestampCompanionPlatform {
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
 
+  /**
+    * Builds a timestamp from a number of seconds since the epoch, which may have
+    * a fractional part. Returns `None` when the value is out of the supported range.
+    */
+  private[smithy4s] def fromEpochSecondsDecimal(
+      value: BigDecimal
+  ): Option[Timestamp] = {
+    val epochSecond = value.setScale(0, BigDecimal.RoundingMode.FLOOR)
+    if (epochSecond < -62167219200L || epochSecond > 253402300799L) None
+    else {
+      val es = epochSecond.toLong
+      Some(new Timestamp(es, ((value - es) * 1000000000).toInt))
+    }
+  }
+
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     format match {
       case TimestampFormat.DATE_TIME     => new Some(parseDateTime(string))

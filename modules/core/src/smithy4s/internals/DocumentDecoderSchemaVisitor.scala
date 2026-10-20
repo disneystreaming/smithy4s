@@ -201,10 +201,16 @@ class DocumentDecoderSchemaVisitor(
 
       case EPOCH_SECONDS =>
         DocumentDecoder.instance("Timestamp", "Number") {
-          case (_, DNumber(value)) =>
-            val epochSeconds =
-              value.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
-            Timestamp(epochSeconds, ((value - epochSeconds) * 1000000000).toInt)
+          case (pp, DNumber(value)) =>
+            Timestamp
+              .fromEpochSecondsDecimal(value)
+              .getOrElse(
+                throw new PayloadError(
+                  PayloadPath(pp.reverse),
+                  formatRepr,
+                  "Timestamp out of range"
+                )
+              )
         }
       case fmt =>
         // At least this case will be encountered during compilation rather than actual decoding
