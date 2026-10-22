@@ -127,8 +127,16 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 
   def formatEpochSeconds: String = {
     val s = new java.lang.StringBuilder(32)
-    s.append(epochSecond)
-    TimeUtil.appendNano(nano, s)
+    if (epochSecond < 0 && nano != 0) {
+      // `nano` counts forward from `epochSecond`, so for instants before the
+      // epoch the fraction has to be taken from the next whole second:
+      // (-2, 500000000) is -1.5 seconds, not -2.5
+      s.append('-').append(-(epochSecond + 1))
+      TimeUtil.appendNano(1000000000 - nano, s)
+    } else {
+      s.append(epochSecond)
+      TimeUtil.appendNano(nano, s)
+    }
     s.toString
   }
 
@@ -415,6 +423,13 @@ object Timestamp extends TimestampCompanionPlatform {
       }
     }
     if (pos != len) error()
+    if (isNeg && nano != 0) {
+      // the fraction of a negative value moves it further away from the epoch:
+      // -1.5 is (-2, 500000000), not (-1, 500000000)
+      epochSecond -= 1
+      nano = 1000000000 - nano
+    }
+    if (epochSecond < -62167219200L) error()
     new Timestamp(epochSecond, nano)
 
   }
