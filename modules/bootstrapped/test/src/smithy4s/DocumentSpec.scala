@@ -35,6 +35,7 @@ import smithy4s.example.DefaultNullsOperationOutput
 import alloy.Untagged
 import alloy.PreserveKeyOrder
 import smithy4s.example.TimestampOperationInput
+import smithy4s.codecs.PayloadPath
 import smithy4s.time._
 import scala.util.Try
 import smithy4s.schema.FieldFilter
@@ -732,6 +733,19 @@ class DocumentSpec() extends ScalaCheckSuite {
       Right(TimestampOperationInput(epochSeconds = Timestamp(-1, 123)))
     )
 
+  }
+
+  test("Document decoder - out of range epoch seconds timestamp") {
+    val decoder = Document.Decoder.fromSchema(TimestampOperationInput.schema)
+    List(BigDecimal("253402300800"), BigDecimal("18446744073709551621"))
+      .foreach { epochSeconds =>
+        val doc =
+          Document.obj("epochSeconds" -> Document.fromBigDecimal(epochSeconds))
+        expect.same(
+          decoder.decode(doc).left.map(_.path),
+          Left(PayloadPath("epochSeconds"))
+        )
+      }
   }
 
   test("Document decoder - timestamp defaults") {

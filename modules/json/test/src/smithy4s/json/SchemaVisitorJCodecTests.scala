@@ -1288,4 +1288,30 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  test("throw PayloadError for out of range EPOCH_SECONDS timestamp") {
+    implicit val schema: Schema[Timestamp] =
+      timestamp.addHints(TimestampFormat.EPOCH_SECONDS.widen)
+
+    List("253402300800", "-62167219201", "1e20", "18446744073709551621")
+      .foreach { input =>
+        try {
+          val result = readFromString[Timestamp](input)
+          fail(s"Unexpected success for $input: $result")
+        } catch {
+          case PayloadError(_, expected, _) =>
+            expect.same(expected, "epoch-second timestamp")
+        }
+      }
+  }
+
+  test("EPOCH_SECONDS timestamp map keys before the epoch round trip") {
+    implicit val schema: Schema[Map[Timestamp, Int]] =
+      map(timestamp.addHints(TimestampFormat.EPOCH_SECONDS.widen), int)
+
+    val value = Map(Timestamp(-2, 500000000) -> 1)
+    val json = writeToString(value)
+    expect.same(json, """{"-1.5":1}""")
+    expect.same(readFromString[Map[Timestamp, Int]](json), value)
+  }
+
 }

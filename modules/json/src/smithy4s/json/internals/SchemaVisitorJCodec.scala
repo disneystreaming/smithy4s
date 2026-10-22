@@ -390,12 +390,11 @@ private[smithy4s] class SchemaVisitorJCodec(
       val expecting: String =
         Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS)
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = {
-        val timestamp = in.readBigDecimal(null)
-        val epochSeconds =
-          timestamp.setScale(0, BigDecimal.RoundingMode.FLOOR).toLong
-        Timestamp(epochSeconds, ((timestamp - epochSeconds) * 1000000000).toInt)
-      }
+      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+        Timestamp.fromEpochSecondsDecimal(in.readBigDecimal(null)) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeValue(x: Timestamp, out: JsonWriter): Unit = {
         // TODO: can be improved with out.writeTimestampVal(x.epochSecond, x.nano) when https://github.com/plokhotnyuk/jsoniter-scala/releases/tag/v2.32.0 is used
@@ -409,11 +408,11 @@ private[smithy4s] class SchemaVisitorJCodec(
         }))
       }
 
-      def decodeKey(in: JsonReader): Timestamp = {
-        val timestamp = in.readKeyAsBigDecimal()
-        val epochSecond = timestamp.toLong
-        Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
-      }
+      def decodeKey(in: JsonReader): Timestamp =
+        Timestamp.fromEpochSecondsDecimal(in.readKeyAsBigDecimal()) match {
+          case Some(x) => x
+          case None    => in.decodeError("expected " + expecting)
+        }
 
       def encodeKey(x: Timestamp, out: JsonWriter): Unit =
         out.writeKey(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
