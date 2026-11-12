@@ -1,0 +1,19 @@
+// Loaded on sbt 2 only: observe native cache events without production counters
+// or introducing an observation dependency into the metadata generation action.
+TaskKey[Unit]("checkMetadataHit") := Def.taskDyn {
+  val events = Def.cacheConfiguration.value.cacheEventLog
+  def counts: (Long, Long, Long) = events.summary match {
+    case sbt.internal.util.CacheEventSummary.Empty => (0L, 0L, 0L)
+    case sbt.internal.util.CacheEventSummary.Data(_, hits, _, _, onsite, errors, _) =>
+      (hits, onsite.getOrElse(0L), errors.getOrElse(0L))
+  }
+  val before = counts
+  Def.uncachedTask {
+    val files = (Compile / smithy4sGeneratedSmithyFiles).value
+    val after = counts
+    assert(files.size == 1 && files.head.isFile)
+    assert(after._1 > before._1, s"No native cache hit: $before -> $after")
+    assert(after._2 == before._2, s"Generation ran on a hit: $before -> $after")
+    assert(after._3 == before._3, s"Native cache error: $before -> $after")
+  }
+}.value

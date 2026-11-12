@@ -1,0 +1,32 @@
+> installNativeChecks
+> reload
+> checkMetadata
+> checkMetadataHit
+> checkMetadata
+> deleteMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata
+> set Compile / smithy4sWildcardArgument := "?"
+> checkMetadata
+> set Compile / smithy4sWildcardArgument := "_"
+> checkMetadataHit
+> checkMetadata
+> deleteMetadataOnSbt2
+> checkMetadata
+> set Compile / smithy4sGeneratedSmithyMetadataFile := baseDirectory.value / "custom-metadata.smithy"
+> checkMetadata
+> checkMetadataHit
+> rememberMetadata
+> checkMetadataUnchanged
+> damageMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata
+> deleteMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata
+> set Compile / smithy4sWildcardArgument := "?"
+> checkMetadata
+> checkMetadataHit
+> set Compile / smithy4sWildcardArgument := "_"
+> checkMetadataHit
+> checkMetadata

@@ -1,3 +1,5 @@
+import BuildCompat._
+
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
@@ -5,7 +7,9 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     ),
-    Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json"),
+    Compile / smithyBuild := Def.uncached {
+      Some(baseDirectory.value / "smithy-build.json")
+    },
     TaskKey[Unit]("checkOpenApi") := {
       val resourceDir = (Compile / smithy4sResourceDir).value
       val content =

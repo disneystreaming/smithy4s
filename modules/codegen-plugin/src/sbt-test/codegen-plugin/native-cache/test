@@ -1,0 +1,27 @@
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> checkOutputs
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs
+> reload
+> checkOutputs
+$ copy-file model-b.smithy src/main/smithy/model.smithy
+> set expectedModel := "second"
+> set expectedRuns := 2
+> checkOutputs
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> set expectedModel := "first"
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 2 else 3)
+> checkOutputs
+> set Compile / smithy4sOutputDir := baseDirectory.value / "outside-src"
+> set Compile / smithy4sResourceDir := baseDirectory.value / "outside-resources"
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 3 else 4)
+> checkOutputs
+> rememberExternal
+> checkExternalUnchanged
+> damageExternalOnSbt2
+> checkOutputs
+> corruptExternalSameSizeOnSbt2
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs

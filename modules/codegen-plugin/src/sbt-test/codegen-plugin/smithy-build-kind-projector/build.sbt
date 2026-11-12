@@ -1,3 +1,5 @@
+import BuildCompat._
+
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
@@ -12,7 +14,9 @@ lazy val root = (project in file("."))
       "-Xsource:3",
       "-P:kind-projector:underscore-placeholders"
     ),
-    Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json"),
+    Compile / smithyBuild := Def.uncached {
+      Some(baseDirectory.value / "smithy-build.json")
+    },
     TaskKey[Unit]("checkOpenApi") := {
       val resourceDir = (Compile / smithy4sResourceDir).value
       val content =
