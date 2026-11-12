@@ -541,7 +541,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     (pluginCrossBuild / sbtVersion) := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.12.4"
-        case _      => "2.0.0"
+        // 2.0.4 fixes Def.declareOutput inside loops over dynamic outputs:
+        // https://github.com/sbt/sbt/pull/9492
+        case _ => "2.0.4"
       }
     },
     libraryDependencies += {
