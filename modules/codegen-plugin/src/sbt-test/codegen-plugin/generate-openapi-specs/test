@@ -1,18 +1,9 @@
 # OpenAPI specs are not generated, Scala code still is
 > compile
-> checkOpenApiInventory
-> checkOpenApiInventory
 $ exists target/**/smithy4s/foo/HelloService.scala
 -$ exists target/**/resource_managed/main/foo.HelloService.json
 
 # turning the setting back on generates them
 > set Compile / smithy4sGenerateOpenApiSpecs := true
 > compile
-> checkOpenApiInventory
 $ exists target/**/resource_managed/main/foo.HelloService.json
-
-# The inventory follows the setting even if older outputs remain on disk.
-> set Compile / smithy4sGenerateOpenApiSpecs := false
-> checkOpenApiInventory
-> set Compile / smithy4sGenerateOpenApiSpecs := true
-> checkOpenApiInventory

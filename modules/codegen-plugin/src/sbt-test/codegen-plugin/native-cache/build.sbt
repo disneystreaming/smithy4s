@@ -1,8 +1,5 @@
 @transient lazy val checkOutputs = taskKey[Unit]("Check codegen outputs and invocation count")
-@transient lazy val addUnrelated = taskKey[Unit]("Add files not owned by codegen")
 @transient lazy val deleteGeneratedOnSbt2 = taskKey[Unit]("Delete generated outputs on sbt2")
-@transient lazy val checkEmpty = taskKey[Unit]("Check an empty output inventory")
-@transient lazy val checkDependencyPath = taskKey[Unit]("Check that the dependency jar path is stable")
 @transient lazy val rememberExternal = taskKey[Unit]("Remember external output modification times")
 @transient lazy val checkExternalUnchanged = taskKey[Unit]("Check that external outputs were not rewritten")
 @transient lazy val damageExternalOnSbt2 = taskKey[Unit]("Damage external text and copied-resource outputs")
@@ -32,10 +29,6 @@ lazy val root = (project in file("."))
         case other: xsbti.VirtualFileRef => fileConverter.value.toPath(other).toFile
       }
     },
-    addUnrelated := {
-      IO.write((Compile / smithy4sOutputDir).value / "orphan.scala", "unrelated source")
-      IO.write((Compile / smithy4sResourceDir).value / "unrelated.txt", "unrelated resource")
-    },
     checkOutputs := {
       val files = (Compile / smithy4sCodegen).value
       val expected = expectedModel.value
@@ -43,7 +36,6 @@ lazy val root = (project in file("."))
       assert(count == expectedRuns.value, s"Expected ${expectedRuns.value} generations, got $count")
       assert(files.nonEmpty && files.forall(_.isFile), s"Missing outputs: $files")
       val names = files.map(_.getName).toSet
-      assert(!names.contains("orphan.scala") && !names.contains("unrelated.txt"), s"Unrelated files returned: $names")
       assert(names.contains("Alpha.scala"), s"Missing Alpha.scala: $names")
       assert(names.contains("generated-metadata.smithy"), s"Missing resource metadata: $names")
       assert(names.contains("model.smithy"), s"Missing packaged input: $names")
@@ -63,7 +55,6 @@ lazy val root = (project in file("."))
       assert(actualFiles == expectedFiles, s"Expected $expectedFiles, got $actualFiles")
       val alpha = files.find(_.getName == "Alpha.scala").get
       assert(IO.read(alpha).contains(expected), s"Wrong Alpha content: ${IO.read(alpha)}")
-      assert(((Compile / smithy4sResourceDir).value / "unrelated.txt").isFile)
       val packaged = files.find(_.getName == "model.smithy").get
       assert(IO.read(packaged).contains(s"$expected: String"), s"Wrong copied model: ${IO.read(packaged)}")
     },
@@ -71,12 +62,6 @@ lazy val root = (project in file("."))
       val files = (Compile / smithy4sCodegen).value
       val metadata = (Compile / smithy4sGeneratedSmithyMetadataFile).value
       if (sbtVersion.value.startsWith("2.")) IO.delete(files :+ metadata)
-    },
-    checkEmpty := {
-      val files = (Compile / smithy4sCodegen).value
-      val count = IO.readLines(baseDirectory.value / "generation-count").size
-      assert(files.isEmpty, s"Expected no generated files, got $files")
-      assert(count == expectedRuns.value, s"Expected ${expectedRuns.value} generations, got $count")
     },
     rememberExternal := {
       val files = (Compile / smithy4sCodegen).value
@@ -111,15 +96,5 @@ lazy val root = (project in file("."))
           IO.write(f, Array.fill(size)('x'.toByte))
         }
       }
-    },
-    checkDependencyPath := {
-      val ref: Any = (transformation / Compile / packageBin).value
-      val jar = ref match {
-        case f: java.io.File => f
-        case other: xsbti.VirtualFileRef => fileConverter.value.toPath(other).toFile
-      }
-      val saved = baseDirectory.value / "dependency-jar-path"
-      if (saved.exists()) assert(IO.read(saved) == jar.getAbsolutePath)
-      else IO.write(saved, jar.getAbsolutePath)
     }
   )

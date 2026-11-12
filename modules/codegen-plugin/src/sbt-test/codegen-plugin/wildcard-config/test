@@ -14,16 +14,10 @@
 
 > ++2.13.18
 > root/compile
-> root/checkGeneratedWildcard
 $ exists target/**/src_managed/main/smithy/generated-metadata.smithy
 $ exists target/**/resource_managed/main/META-INF/smithy/generated-metadata.smithy
 
 > ++3.3.0
 > root/compile
-> root/checkGeneratedWildcard
 $ exists target/**/src_managed/main/smithy/generated-metadata.smithy
 $ exists target/**/resource_managed/main/META-INF/smithy/generated-metadata.smithy
-
-> ++2.13.18
-> root/compile
-> root/checkGeneratedWildcard

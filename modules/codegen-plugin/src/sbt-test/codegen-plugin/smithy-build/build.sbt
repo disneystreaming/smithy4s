@@ -1,8 +1,5 @@
 import BuildCompat._
 
-@transient lazy val checkOpenApi = taskKey[Unit]("Check generated OpenAPI")
-lazy val expectedOpenApiVersion = settingKey[String]("Expected OpenAPI version")
-
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
@@ -13,8 +10,7 @@ lazy val root = (project in file("."))
     Compile / smithyBuild := Def.uncached {
       Some(baseDirectory.value / "smithy-build.json")
     },
-    expectedOpenApiVersion := "3.1.0",
-    checkOpenApi := {
+    TaskKey[Unit]("checkOpenApi") := {
       val resourceDir = (Compile / smithy4sResourceDir).value
       val content =
         IO.readLines(
@@ -22,7 +18,7 @@ lazy val root = (project in file("."))
         ).filter(_.trim().nonEmpty)
           .mkString("")
           .trim()
-      if (!content.contains("X-Bar") || !content.contains(expectedOpenApiVersion.value))
+      if (!content.contains("X-Bar") || !content.contains("3.1.0"))
         sys.error("OpenAPI transformation was not applied")
     }
   )
