@@ -5,3 +5,17 @@ $ exists target/**/smithy4s/example/ExampleStruct.scala
 # check if test sources are generated
 > Test/compile
 $ exists target/**/smithy4s/testexample/TestStruct.scala
+
+$ copy-file test-added.smithy src/test/smithy/added.smithy
+> checkIsolation
+> checkIsolation
+
+# External destinations must remain isolated by configuration too.
+> set Compile / smithy4sOutputDir := baseDirectory.value / "external-main/src"
+> set Compile / smithy4sResourceDir := baseDirectory.value / "external-main/resources"
+> set Compile / smithy4sGeneratedSmithyMetadataFile := baseDirectory.value / "external-main/metadata.smithy"
+> set Test / smithy4sOutputDir := baseDirectory.value / "external-test/src"
+> set Test / smithy4sResourceDir := baseDirectory.value / "external-test/resources"
+> set Test / smithy4sGeneratedSmithyMetadataFile := baseDirectory.value / "external-test/metadata.smithy"
+> checkIsolation
+> checkIsolation

@@ -1,3 +1,8 @@
+import BuildCompat._
+
+@transient lazy val checkOpenApi = taskKey[Unit]("Check generated OpenAPI")
+lazy val expectedOpenApiVersion = settingKey[String]("Expected OpenAPI version")
+
 lazy val root = (project in file("."))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
@@ -5,8 +10,11 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
     ),
-    Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json"),
-    TaskKey[Unit]("checkOpenApi") := {
+    Compile / smithyBuild := Def.uncached {
+      Some(baseDirectory.value / "smithy-build.json")
+    },
+    expectedOpenApiVersion := "3.1.0",
+    checkOpenApi := {
       val resourceDir = (Compile / smithy4sResourceDir).value
       val content =
         IO.readLines(
@@ -14,7 +22,7 @@ lazy val root = (project in file("."))
         ).filter(_.trim().nonEmpty)
           .mkString("")
           .trim()
-      if (!content.contains("X-Bar") || !content.contains("3.1.0"))
+      if (!content.contains("X-Bar") || !content.contains(expectedOpenApiVersion.value))
         sys.error("OpenAPI transformation was not applied")
     }
   )

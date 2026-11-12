@@ -10,6 +10,7 @@ Smithy4s generates Scala code from a Smithy model. The generated code includes t
 _For mill support, see [Mill](#mill) below._
 
 `smithy4s-sbt-codegen` is a code generating sbt plugin that creates `.scala` files corresponding to the provided `.smithy` specs.
+When using sbt 2, version 2.0.4 or later is required.
 
 In `project/plugins.sbt`:
 
@@ -46,6 +47,31 @@ val myModule = project
     libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 ```
+
+### sbt 2 caching and custom tasks
+
+On sbt 2, generation uses the native task cache. Custom destinations outside
+`rootOutputDirectory`, including `smithy_output` in the example above, remain
+supported: the plugin caches an exact inventory in an internal staging directory
+and materializes those files at the configured destinations. Unchanged files are
+not rewritten; missing or modified files are restored without rerunning generation.
+The public tasks still return the configured files, never internal staging files.
+Obsolete generated files are not removed automatically.
+
+If you replace a File-returning task definition on sbt 2, wrap your replacement in
+`Def.uncached`, for example:
+
+```scala
+Compile / smithyBuild := Def.uncached {
+  Some(baseDirectory.value / "smithy-build.json")
+}
+```
+
+This also applies to custom overrides of `smithy4sCodegen` and
+`smithy4sGeneratedSmithyFiles`, whose result type remains `Seq[File]`. The plugin's
+own uncached facade does not wrap replacement definitions. For cross-built sbt
+1/2 builds, provide a build-local no-op `Def.uncached` compatibility extension on
+sbt 1; the plugin's internal extension is not exported to build definitions.
 
 ## Mill
 

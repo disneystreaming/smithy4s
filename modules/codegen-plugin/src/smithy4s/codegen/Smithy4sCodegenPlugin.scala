@@ -17,7 +17,6 @@
 package smithy4s.codegen
 
 import sbt.Keys._
-import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
 import sbtcompat.{PluginCompat => SbtCompat}
 
@@ -26,7 +25,6 @@ import scala.util.Try
 
 import SbtCompat.{toFiles, parseModuleIDStrAttribute}
 import Compat._
-import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
@@ -34,7 +32,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   object autoImport {
     val AWS = smithy4s.codegen.AwsSpecs
 
-    @transient
     val smithy4sCodegen =
       taskKey[Seq[File]](
         "Generate .scala and other files from smithy specs (.smithy or .json files)"
@@ -150,7 +147,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         ).mkString(" ")
       )
 
-    @transient
     val smithyBuild = taskKey[Option[File]](
       "smithy-build.json to use for reading build configuration"
     )
@@ -160,7 +156,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "String value to use as wildcard argument in types in generated code"
       )
 
-    @transient
     val smithy4sGeneratedSmithyFiles =
       taskKey[Seq[File]](
         "Generated smithy files"
@@ -226,7 +221,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / unmanagedSourceDirectories ++= (config / smithy4sInputDirs).value,
     config / smithy4sOutputDir := (config / sourceManaged).value / "smithy4s",
     config / smithy4sResourceDir := (config / resourceManaged).value,
-    config / smithy4sCodegen := cachedSmithyCodegen(config).value,
+    config / smithy4sCodegen := Def.uncached {
+      cachedSmithyCodegen(config).value
+    },
     config / smithy4sSmithyLibrary := true,
     config / smithy4sGenerateOpenApiSpecs := true,
     config / smithy4sAllowDefaultRepositories := true,
@@ -279,7 +276,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / smithy4sInternalDependenciesAsJars).value ++
         fetch(config / smithy4sAllExternalDependencies).value
     },
-    config / smithyBuild := None,
+    config / smithyBuild := Def.uncached { None },
     config / smithy4sWildcardArgument := {
       // This logic configures the default wildcard argument based on the scala version and scalac options
       // In the following scenarios we use "?" instead of "_"
@@ -323,33 +320,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sGeneratedSmithyMetadataFile := {
       (config / sourceManaged).value / "smithy" / "generated-metadata.smithy"
     },
-    config / smithy4sGeneratedSmithyFiles := {
-      val cacheFactory =
-        (config / streams).value.cacheStoreFactory.sub(scalaVersion.value)
-      val cached = Tracked.inputChanged[String, Seq[File]](
-        cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
-      ) { case (changed, (wildcardArg)) =>
-        val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
-          cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
-        ) { case (changed, prevResult) =>
-          if (changed || prevResult.isEmpty) {
-            val file =
-              (config / smithy4sGeneratedSmithyMetadataFile).value
-            IO.write(
-              file,
-              s"""$$version: "2"
-                 |metadata smithy4sWildcardArgument = "$wildcardArg"
-                 |""".stripMargin
-            )
-            Seq(file)
-          } else {
-            prevResult.get
-          }
-        }
-        lastOutput(changed)
-      }
-      val wildcardArg = (config / smithy4sWildcardArgument).value
-      cached(wildcardArg)
+    config / smithy4sGeneratedSmithyFiles := Def.uncached {
+      CodegenTask.generatedSmithyFiles(config).value
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
@@ -464,89 +436,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
   }
 
-  @scala.annotation.nowarn("cat=deprecation")
-  def cachedSmithyCodegen(conf: Configuration) = Def.task {
-    val inputDirs = Option((conf / smithy4sInputDirs).value).getOrElse(Seq())
-    val generatedFiles = (conf / smithy4sGeneratedSmithyFiles).value
-    val inputFiles =
-      (inputDirs ++ generatedFiles)
-        .filter(_.exists())
-        .toList
-    val outputPath = (conf / smithy4sOutputDir).value
-    val resourceOutputPath = (conf / smithy4sResourceDir).value
-    val allowedNamespaces =
-      (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
-    val excludedNamespaces =
-      (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val localJars =
-      (conf / smithy4sAllDependenciesAsJars).value.toList.sorted
-        .map(p => os.Path(p))
-    val res =
-      (conf / resolvers).value.toList.collect { case m: MavenRepository =>
-        m.root
-      }
-    val allowDefaultRepos = (conf / smithy4sAllowDefaultRepositories).value
-    val transforms = (conf / smithy4sModelTransformers).value
-    val s = (conf / streams).value
-    val skipResources: Set[FileType] =
-      if ((conf / smithy4sSmithyLibrary).value) Set.empty
-      else Set(FileType.Resource)
-
-    val skipOpenApi: Set[FileType] =
-      if ((conf / smithy4sGenerateOpenApiSpecs).value) Set.empty
-      else Set(FileType.Openapi)
-
-    val skipSet = skipResources ++ skipOpenApi
-
-    val filePaths = inputFiles.map(_.getAbsolutePath())
-
-    val specs = filePaths.sorted.map(p => os.Path(p)).toList
-
-    val smithyBuildValue = (conf / smithyBuild).value.map(os.Path(_))
-
-    val codegenArgs = CodegenArgs(
-      specs,
-      output = os.Path(outputPath),
-      resourceOutput = os.Path(resourceOutputPath),
-      skip = skipSet,
-      discoverModels = false,
-      allowedNS = allowedNamespaces,
-      excludedNS = excludedNamespaces,
-      repositories = res,
-      dependencies = List.empty,
-      transformers = transforms,
-      localJars = localJars,
-      smithyBuild = smithyBuildValue,
-      allowDefaultRepositories = allowDefaultRepos
-    )
-
-    val cacheStoreFactory = s.cacheStoreFactory.sub(scalaVersion.value)
-    val cached =
-      CachedTask.inputChanged[CodegenArgs, Seq[File]](
-        cacheStoreFactory.make("input"),
-        s.log
-      ) {
-        Function.untupled {
-          Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
-            cacheStoreFactory.make("output")
-          ) { case ((inputChanged, args), outputs) =>
-            if (inputChanged || outputs.isEmpty) {
-              s.log.debug(s"[smithy4s] Input changed: $inputChanged")
-              s.log.debug(s"[smithy4s] Outputs empty: ${outputs.isEmpty}")
-              s.log.debug("[smithy4s] Sources will be regenerated")
-              val resPaths = smithy4s.codegen.Codegen
-                .generateToDisk(args)
-                .toList
-              resPaths.map(path => new File(path.toString))
-            } else {
-              s.log.debug("[smithy4s] Using cached version of outputs")
-              outputs.getOrElse(Seq.empty)
-            }
-          }
-        }
-      }
-
-    cached(codegenArgs)
-  }
+  def cachedSmithyCodegen(conf: Configuration) = CodegenTask.codegen(conf)
 
 }

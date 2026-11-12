@@ -4,6 +4,8 @@ val scala3 = "3.3.0"
 val expectedWildcardArgument =
   settingKey[String]("The expected value of smithy4sWildcardArgument")
 
+@transient lazy val checkGeneratedWildcard = taskKey[Unit]("Check generated wildcard syntax")
+
 val checkProject = project
   .in(file("check"))
   .enablePlugins(Smithy4sCodegenPlugin)
@@ -36,7 +38,15 @@ val root = project
     },
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
-    )
+    ),
+    checkGeneratedWildcard := {
+      val wildcard = (Compile / smithy4sWildcardArgument).value
+      val metadata = (Compile / smithy4sGeneratedSmithyFiles).value.head
+      val files = (Compile / smithy4sCodegen).value
+      val service = files.find(_.getName == "Foo.scala").get
+      assert(IO.read(metadata).contains(s"""smithy4sWildcardArgument = "$wildcard""""))
+      assert(IO.read(service).contains(s", $wildcard, $wildcard, $wildcard, $wildcard, $wildcard]"))
+    }
   )
 
 // usage: [expected wildcard] [scala version] [...scalac options]

@@ -1,0 +1,56 @@
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> addUnrelated
+> checkOutputs
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs
+> reload
+> checkOutputs
+> checkDependencyPath
+$ copy-file model-b.smithy src/main/smithy/model.smithy
+> set expectedModel := "second"
+> set expectedRuns := 2
+> checkOutputs
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> set expectedModel := "first"
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 2 else 3)
+> checkOutputs
+$ copy-file marker-updated.txt transformation/src/main/resources/cache-marker.txt
+> checkDependencyPath
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 3 else 4)
+> checkOutputs
+> checkOutputs
+> set Compile / smithy4sAllowedNamespaces := List("does.not.exist")
+> set Compile / smithy4sSmithyLibrary := false
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 4 else 5)
+> checkEmpty
+> checkEmpty
+> set Compile / smithy4sAllowedNamespaces := List("cache.test")
+> set Compile / smithy4sSmithyLibrary := true
+> set Compile / smithy4sOutputDir := target.value / "custom-src"
+> set Compile / smithy4sResourceDir := target.value / "custom-resources"
+> addUnrelated
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 5 else 6)
+> checkOutputs
+> checkOutputs
+> set Compile / smithy4sOutputDir := baseDirectory.value / "outside-src"
+> set Compile / smithy4sResourceDir := baseDirectory.value / "outside-resources"
+> addUnrelated
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 6 else 7)
+> checkOutputs
+> rememberExternal
+> checkExternalUnchanged
+> damageExternalOnSbt2
+> checkOutputs
+> corruptExternalSameSizeOnSbt2
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs
+> set Compile / smithy4sResourceDir := target.value / "mixed-resources"
+> addUnrelated
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 7 else 8)
+> checkOutputs
+> rememberExternal
+> checkExternalUnchanged
+> damageExternalOnSbt2
+> checkOutputs

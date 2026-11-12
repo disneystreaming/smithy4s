@@ -3,3 +3,12 @@
 $ exists target/**/smithy4s/smithy4s/example/ObjectService.scala
 $ exists target/**/resource_managed/main/smithy4s.example.ObjectService.json
 > checkOpenApi
+$ copy-file smithy-build.json smithy-build-original.json
+$ copy-file smithy-build-updated.json smithy-build.json
+> set expectedOpenApiVersion := "3.0.2"
+> compile
+> checkOpenApi
+$ copy-file smithy-build-original.json smithy-build.json
+> set expectedOpenApiVersion := "3.1.0"
+> compile
+> checkOpenApi
