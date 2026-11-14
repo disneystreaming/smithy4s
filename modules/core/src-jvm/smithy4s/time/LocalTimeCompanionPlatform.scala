@@ -22,7 +22,7 @@ private[time] trait LocalTimeCompanionPlatform {
 
   /** JVM platform only method */
   def fromJava(x: JLocalTime): LocalTime =
-    LocalTime(x.getSecond(), x.getNano())
+    LocalTime.apply(x.getHour, x.getMinute, x.getSecond, x.getNano)
 
   def now(): LocalTime = fromJava(JLocalTime.now())
 }

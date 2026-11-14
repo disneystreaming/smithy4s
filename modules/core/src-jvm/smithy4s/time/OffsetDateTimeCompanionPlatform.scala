@@ -36,10 +36,16 @@ private[time] trait OffsetDateTimeCompanionPlatform {
 
   /** JVM platform only method */
   def toJava(x: OffsetDateTime): JOffsetDateTime = {
-    val instant = java.time.Instant
-      .ofEpochSecond(x.timestamp.epochSecond, x.timestamp.nano.toLong)
-    val offset = java.time.ZoneOffset.ofTotalSeconds(x.offset.seconds)
-    java.time.OffsetDateTime.ofInstant(instant, offset)
+    val offsetSeconds = x.offset.seconds
+    val timestamp = x.timestamp
+    val instant = java.time.Instant.ofEpochSecond(
+      timestamp.epochSecond - offsetSeconds,
+      timestamp.nano.toLong
+    )
+    JOffsetDateTime.ofInstant(
+      instant,
+      java.time.ZoneOffset.ofTotalSeconds(offsetSeconds)
+    )
   }
 
   def now(): OffsetDateTime = fromJava(JOffsetDateTime.now())
