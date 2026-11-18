@@ -1,0 +1,25 @@
+> installNativeChecks
+> reload
+
+# A deleted metadata file is restored from the cache without regenerating (sbt 2)
+> checkMetadata
+> deleteMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata
+
+# The same holds for a destination outside the native output root
+> set Compile / smithy4sGeneratedSmithyMetadataFile := baseDirectory.value / "custom-metadata.smithy"
+> checkMetadata
+> checkMetadataHit
+> deleteMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata
+
+# An unchanged external file is not rewritten
+> rememberMetadata
+> checkMetadataUnchanged
+
+# A damaged external file is repaired without regenerating (sbt 2)
+> damageMetadataOnSbt2
+> checkMetadataHit
+> checkMetadata

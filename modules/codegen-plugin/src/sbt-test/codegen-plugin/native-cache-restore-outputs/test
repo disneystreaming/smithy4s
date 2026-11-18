@@ -1,0 +1,6 @@
+# Deleted outputs are restored from the cache without regenerating (sbt 2)
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs
+> checkOutputs

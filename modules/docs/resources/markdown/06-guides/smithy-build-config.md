@@ -36,6 +36,14 @@ This file can then used to configure codegen via the appropriate SBT setting:
 Compile / smithyBuild := Some(baseDirectory.value / "smithy-build.json")
 ```
 
+On sbt 2, wrap the definition in `Def.uncached`, as described in the [installation guide](../01-overview/03-installation.md#sbt-2-caching-and-custom-tasks):
+
+```scala
+Compile / smithyBuild := Def.uncached {
+  Some(baseDirectory.value / "smithy-build.json")
+}
+```
+
 It can also be configured in Mill:
 
 ```scala

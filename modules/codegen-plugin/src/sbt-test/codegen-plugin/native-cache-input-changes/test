@@ -1,0 +1,18 @@
+# A repeated call and a reload are cache hits
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> checkOutputs
+> checkOutputs
+> reload
+> checkOutputs
+
+# Changing the model regenerates
+$ copy-file model-b.smithy src/main/smithy/model.smithy
+> set expectedModel := "second"
+> set expectedRuns := 2
+> checkOutputs
+
+# Going back to the first model reuses its cache entry on sbt 2
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> set expectedModel := "first"
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.")) 2 else 3)
+> checkOutputs

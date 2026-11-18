@@ -1,0 +1,18 @@
+# Outputs outside rootOutputDirectory are generated once and are not rewritten when unchanged
+$ copy-file model-a.smithy src/main/smithy/model.smithy
+> checkOutputs
+> rememberExternal
+> checkExternalUnchanged
+
+# Damaged, deleted and same-size-but-different outputs are repaired without regenerating (sbt 2)
+> damageExternalOnSbt2
+> checkOutputs
+> corruptExternalSameSizeOnSbt2
+> checkOutputs
+> deleteGeneratedOnSbt2
+> checkOutputs
+
+# After clean, the outputs are restored from the cache on sbt 2.0.x; sbt 1 and sbt 2.1+ (where clean invalidates cached tasks) generate again
+> set expectedRuns := (if (sbtVersion.value.startsWith("2.0.")) 1 else 2)
+> clean
+> checkOutputs
