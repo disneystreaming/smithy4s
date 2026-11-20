@@ -135,15 +135,56 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val parsed = Timestamp.parse(formatted, TimestampFormat.EPOCH_SECONDS)
       val expected =
         if (i.getNano != 0) {
+          val (sign, seconds, nano) =
+            if (i.getEpochSecond < 0)
+              ("-", -(i.getEpochSecond + 1), 1000000000 - i.getNano)
+            else ("", i.getEpochSecond, i.getNano)
           var s =
-            s"${i.getEpochSecond}.${i.getNano + 1000000000}".replace(".1", ".")
+            s"$sign$seconds.${nano + 1000000000}".replace(".1", ".")
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           s
         } else i.getEpochSecond.toString
       expect.same(formatted, expected)
+      expect.same(
+        BigDecimal(formatted),
+        BigDecimal(i.getEpochSecond) + BigDecimal(i.getNano.toLong, 9)
+      )
       expect.same(parsed, Some(ts))
     }
+  }
+
+  test(
+    "Converts to/from EPOCH_SECONDS format before the epoch with a fraction"
+  ) {
+    // 1969-12-31T23:59:58.5Z is 1.5 seconds before the epoch
+    val ts = Timestamp(-2, 500000000)
+    expect.same(ts.toInstant, Instant.parse("1969-12-31T23:59:58.5Z"))
+    expect.same(ts.formatEpochSeconds, "-1.500")
+    expect.same(
+      Timestamp.parse("-1.5", TimestampFormat.EPOCH_SECONDS),
+      Some(ts)
+    )
+    expect.same(
+      Timestamp.parse("-0.25", TimestampFormat.EPOCH_SECONDS),
+      Some(Timestamp(-1, 750000000))
+    )
+    expect.same(Timestamp(-1, 750000000).formatEpochSeconds, "-0.250")
+  }
+
+  test("Parse EPOCH_SECONDS format below the supported range") {
+    expect.same(
+      Timestamp.parse("-62167219201", TimestampFormat.EPOCH_SECONDS),
+      None
+    )
+    expect.same(
+      Timestamp.parse("-62167219200.5", TimestampFormat.EPOCH_SECONDS),
+      None
+    )
+    expect.same(
+      Timestamp.parse("-62167219200", TimestampFormat.EPOCH_SECONDS),
+      Some(Timestamp(-62167219200L, 0))
+    )
   }
 
   property("Parse EPOCH_SECONDS format with invalid input") {
