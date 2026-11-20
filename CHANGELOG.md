@@ -8,6 +8,7 @@ Thank you!
 # 0.18.60
 
 * dynamic: Add `DynamicSchemaIndex.loadModel(model, applySchemaRefinements: Boolean)` overload. When `applySchemaRefinements = true`, constraint traits (`@length`, `@range`, `@pattern`, ...) are reified into schema refinements instead of being kept just as hints, matching the behaviour of codegen-produced schemas. Backport of [#1991](https://github.com/disneystreaming/smithy4s/pull/1991).
+* dynamic: Fix `DynamicSchemaIndex.load` taking exponential time on models where shapes are referenced from several places. Schemas weren't cached, so every reference to a shape rebuilt the whole tree below it (a chain of 20 structures, each referencing the next one twice, took about 2s to load and doubled with each extra level; on a real model with about 25,000 schemas and 600 services, loading went from about 7s to under 0.5s). Each shape's schema is now built once and shared by everything that references it, in [#2026](https://github.com/disneystreaming/smithy4s/pull/2026). Backport of [#2025](https://github.com/disneystreaming/smithy4s/pull/2025).
 
 # 0.18.59
 

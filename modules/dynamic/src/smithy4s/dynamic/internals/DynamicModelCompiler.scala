@@ -171,6 +171,10 @@ private[dynamic] object Compiler {
         traits: Map[IdRef, Document],
         lSchema: Eval[Schema[A]]
     ): Unit = {
+      // `memoize` ensures each shape's schema is computed once and shared by
+      // all the shapes referencing it. Without it, every reference re-runs the
+      // whole computation of its target, which is exponential in models where
+      // shapes are referenced from multiple places.
       schemaMap += (shapeId -> lSchema.map { sch =>
         resolve(
           sch
@@ -178,7 +182,7 @@ private[dynamic] object Compiler {
             .addHints(allHints(traits))
             .asInstanceOf[Schema[DynData]]
         )
-      })
+      }.memoize)
     }
 
     private def update[A](
