@@ -66,7 +66,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt scala-cli
 
       - name: Setup sbt
@@ -125,7 +125,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt scala-cli
 
       - name: Setup sbt
@@ -168,7 +168,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -201,7 +201,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -233,7 +233,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -293,7 +293,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -334,7 +334,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -417,7 +417,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -479,7 +479,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
@@ -529,7 +529,7 @@ jobs:
       - name: Setup Java and Scala
         uses: coursier/setup-action@v3
         with:
-          jvm: temurin:1.17
+          jvm: temurin:17
           apps: sbt
 
       - name: Setup sbt
