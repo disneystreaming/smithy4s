@@ -20,7 +20,9 @@ package internals
 import coursierapi.Dependency
 import coursierapi.Fetch
 import coursierapi.Repository
+import coursierapi.RepositoryParser
 import coursierapi.ScalaVersion
+import coursierapi.error.RepositoryParsingError
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
@@ -232,13 +234,15 @@ private[codegen] object ModelLoader {
       ScalaVersion.of(smithy4s.codegen.BuildInfo.scalaBinaryVersion)
 
     val deps = parseDependencies(dependencies, scalaVersion)
-    val repos = RepositoryParser.repositories(repositories).toEither match {
-      case Left(errorMessages) =>
-        throw new IllegalArgumentException(
-          s"Failed to parse repositories with errors: ${errorMessages.toList}"
-        )
-      case Right(r) => r.toList
-    }
+    val repos =
+      try RepositoryParser.repositories(repositories.asJava).asScala.toList
+      catch {
+        case e: RepositoryParsingError =>
+          throw new IllegalArgumentException(
+            s"Failed to parse repositories with errors: ${e.getErrors.asScala.map(_.getMessage).toList}",
+            e
+          )
+      }
 
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
