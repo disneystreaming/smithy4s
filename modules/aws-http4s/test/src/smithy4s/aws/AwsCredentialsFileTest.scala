@@ -162,5 +162,99 @@ object AwsCredentialsFileTest extends FunSuite {
     }
   }
 
+  test("values containing `=` are kept intact") {
+    expectRight(
+      AwsCredentialsFile.processFileLines(
+        asLines(
+          """|[default]
+             |aws_secret_access_key = sec
+             |aws_access_key_id     = key
+             |aws_session_token     = dG9rZW4=a==""".stripMargin
+        )
+      )
+    ) { res =>
+      expect.same(
+        Some(AwsCredentials.Default("key", "sec", Some("dG9rZW4=a=="))),
+        res.default
+      )
+    }
+  }
+
+  test("the default profile can be selected by name") {
+    expectRight(
+      AwsCredentialsFile
+        .processFileLines(
+          asLines(
+            """|[default]
+               |aws_secret_access_key = sec
+               |aws_access_key_id     = key
+               |aws_session_token     = token""".stripMargin
+          )
+        )
+        .flatMap(_.select(Some("default")))
+    ) { res =>
+      expect.same(creds, res)
+    }
+  }
+
+  test("a line without `=` is reported with its line number") {
+    val res = AwsCredentialsFile.processFileLines(
+      asLines(
+        """|[profile before]
+           |aws_secret_access_key = sec
+           |stray
+           |aws_access_key_id     = key
+           |[profile wanted]
+           |aws_secret_access_key = sec
+           |aws_access_key_id     = key""".stripMargin
+      )
+    )
+    expect.same(
+      Left(
+        AwsCredentialsFileException(
+          "Unable to parse credentials file at line 3: expected a `key = value` pair."
+        )
+      ),
+      res
+    )
+  }
+
+  test("a key-value pair before any profile header is rejected") {
+    val res = AwsCredentialsFile.processFileLines(
+      asLines(
+        """|# header comment
+           |aws_access_key_id = key
+           |[default]
+           |aws_secret_access_key = sec
+           |aws_access_key_id     = key""".stripMargin
+      )
+    )
+    expect.same(
+      Left(
+        AwsCredentialsFileException(
+          "Unable to parse credentials file at line 2: expected a profile header like `[default]`."
+        )
+      ),
+      res
+    )
+  }
+
+  test("a profile missing its secret key is reported by name") {
+    val res = AwsCredentialsFile.processFileLines(
+      asLines(
+        """|[profile p1]
+           |aws_access_key_id = key""".stripMargin
+      )
+    )
+    expect.same(
+      Left(
+        AwsCredentialsFileException(
+          "'aws_secret_access_key' is missing from the data of profile `p1`."
+        )
+      ),
+      res
+    )
+  }
+
   private def asLines(s: String) = s.split("\\n").toList
 }

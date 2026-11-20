@@ -32,7 +32,32 @@ final case class AwsCredentialsFileException(
 final case class AwsCredentialsFile(
     default: Option[AwsCredentials],
     profiles: Map[String, AwsCredentials]
-)
+) {
+
+  /**
+    * Selects the credentials of the given profile, or the default profile if
+    * none is given. The default profile can also be requested by name.
+    */
+  private[aws] def select(
+      profile: Option[String]
+  ): Either[AwsCredentialsFileException, AwsCredentials] =
+    profile match {
+      case Some("default") | None =>
+        default.toRight(
+          AwsCredentialsFileException(
+            "No default profile is available in the credentials file."
+          )
+        )
+      case Some(p) =>
+        profiles
+          .get(p)
+          .toRight(
+            AwsCredentialsFileException(
+              s"Profile `$p` was not found in the credentials file."
+            )
+          )
+    }
+}
 
 object AwsCredentialsFile {
   private type LoadCredentials[A] = Either[AwsCredentialsFileException, A]
@@ -44,89 +69,69 @@ object AwsCredentialsFile {
     for {
       lines <- Files.readUtf8Lines(path).compile.toList
       creds <- processFileLines(lines).liftTo[F]
-
-      defaultProfile = creds.default
-      requestedProfile <- profile.traverse { p =>
-        creds.profiles
-          .get(p)
-          .toRight(
-            AwsCredentialsFileException(
-              s"Profile `$p` was not found in the credentials file."
-            )
-          )
-          .liftTo[F]
-      }
-
-      finalProfile <- requestedProfile
-        .orElse(defaultProfile)
-        .toRight(
-          AwsCredentialsFileException(
-            "No default profile is available in the credentials file."
-          )
-        )
-        .liftTo[F]
-
+      finalProfile <- creds.select(profile).liftTo[F]
     } yield finalProfile
   }
 
   private[aws] def processFileLines(
       lines: List[String]
-  ): LoadCredentials[AwsCredentialsFile] = {
-    def inProfile(
-        rest: List[String],
-        currentProfile: String,
-        data: Map[String, String]
-    ): (Map[String, String], List[String]) = {
-      rest match {
-        case Nil =>
-          (data, Nil)
-        case head :: _ if head.trim().startsWith("[") =>
-          (data, rest)
-        case head :: next =>
-          val parts = head.split("=")
-          val key = parts(0).trim().toLowerCase
-          val value = parts(1).trim()
-          val updated = data + (key -> value)
-          inProfile(next, currentProfile, updated)
-      }
-    }
+  ): LoadCredentials[AwsCredentialsFile] =
+    parseProfiles(lines).flatMap(profilesFromMap)
 
-    def withoutComments(line: String): String = line.replaceAll("#.+", "")
+  private def withoutComments(line: String): String =
+    line.replaceAll("#.+", "")
 
-    def lookingForProfile(
-        rest: List[String],
-        data: Map[String, Map[String, String]]
-    ): Map[String, Map[String, String]] = {
-      rest match {
-        case head :: next =>
-          val profile = head.trim() match {
-            case Profile.Prefixed(profile)    => profile
-            case Profile.Default(profile)     => profile
-            case Profile.NonPrefixed(profile) => profile
+  private def parseProfiles(
+      lines: List[String]
+  ): LoadCredentials[Map[String, Map[String, String]]] = {
+    // The line's content is deliberately left out: it may well be a secret.
+    def parseError(lineNumber: Int, reason: String) =
+      AwsCredentialsFileException(
+        s"Unable to parse credentials file at line $lineNumber: $reason."
+      )
+
+    type State = (Option[String], Map[String, Map[String, String]])
+
+    lines.zipWithIndex
+      .map { case (line, i) => (withoutComments(line).trim(), i + 1) }
+      .filter { case (content, _) => content.nonEmpty }
+      .foldLeftM[LoadCredentials, State]((None, Map.empty)) {
+        case ((current, data), (content, lineNumber)) =>
+          content match {
+            case Profile.Header(profile) =>
+              val existing = data.getOrElse(profile, Map.empty[String, String])
+              Right((Some(profile), data.updated(profile, existing)))
+            case _ =>
+              current match {
+                case None =>
+                  Left(
+                    parseError(
+                      lineNumber,
+                      "expected a profile header like `[default]`"
+                    )
+                  )
+                case Some(profile) =>
+                  content.split("=", 2) match {
+                    case Array(key, value) =>
+                      val updated =
+                        data(profile) + (key.trim().toLowerCase -> value.trim())
+                      Right((current, data.updated(profile, updated)))
+                    case _ =>
+                      Left(
+                        parseError(
+                          lineNumber,
+                          "expected a `key = value` pair"
+                        )
+                      )
+                  }
+              }
           }
-
-          val (profileData, rest) = inProfile(next, profile, Map.empty)
-          lookingForProfile(rest, data + (profile -> profileData))
-        case Nil =>
-          data
       }
-    }
-    Either
-      .catchNonFatal(
-        lookingForProfile(
-          lines.map(withoutComments).filter(_.trim.nonEmpty),
-          Map.empty
-        )
-      )
-      .leftMap(ex =>
-        AwsCredentialsFileException("Unable to parse credentials file.", ex)
-      )
-      .flatMap { data =>
-        AwsCredentialsFile.profilesFromMap(data)
-      }
+      .map(_._2)
   }
 
   private def credentialsFromMap(
+      profile: String,
       data: Map[String, String]
   ): LoadCredentials[AwsCredentials] = {
     def required(key: String): LoadCredentials[String] =
@@ -134,7 +139,7 @@ object AwsCredentialsFile {
         .get(key.toLowerCase())
         .toRight(
           AwsCredentialsFileException(
-            s"'$key' is missing from the profile data."
+            s"'${key.toLowerCase()}' is missing from the data of profile `$profile`."
           )
         )
     def optional(key: String): Option[String] =
@@ -154,12 +159,12 @@ object AwsCredentialsFile {
     val defaultF: LoadCredentials[Option[AwsCredentials]] =
       dataPerProfile
         .get("default")
-        .traverse(credentialsFromMap)
+        .traverse(credentialsFromMap("default", _))
     val othersF: LoadCredentials[Map[String, AwsCredentials]] = dataPerProfile
       .filterNot(_._1 == "default")
       .toList
       .traverse { case (profile, data) =>
-        credentialsFromMap(data).tupleLeft(profile)
+        credentialsFromMap(profile, data).tupleLeft(profile)
       }
       .map(_.toMap)
 
@@ -169,6 +174,15 @@ object AwsCredentialsFile {
 
 private object Profile {
   private val profileMatch = "(.*)"
+
+  object Header {
+    def unapply(s: String): Option[String] =
+      Default
+        .unapply(s)
+        .orElse(Prefixed.unapply(s))
+        .orElse(NonPrefixed.unapply(s))
+  }
+
   object Default {
     def unapply(s: String): Option[String] =
       if (s == "[default]") Some("default") else None

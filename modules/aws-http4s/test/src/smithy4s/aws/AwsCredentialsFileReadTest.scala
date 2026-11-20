@@ -42,18 +42,21 @@ object AwsCredentialsFileReadTest extends SimpleIOSuite {
         .drain
       val readDefault = AwsCredentialsFile.fromDisk(path, None)
       val readP1 = AwsCredentialsFile.fromDisk(path, Some("p1"))
+      val readDefaultByName = AwsCredentialsFile.fromDisk(path, Some("default"))
 
       for {
         _ <- writeFile
 
         default <- readDefault
         p1 <- readP1
+        defaultByName <- readDefaultByName
       } yield {
         val expectedP1 =
           AwsCredentials.Default("key", "sec", Some("token"))
         val expectedDefault =
           AwsCredentials.Default("def_key", "def_sec", Some("def_token"))
         expect.same(expectedDefault, default) &&
+        expect.same(expectedDefault, defaultByName) &&
         expect.same(expectedP1, p1)
       }
     }
