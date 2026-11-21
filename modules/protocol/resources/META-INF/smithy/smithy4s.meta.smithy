@@ -197,7 +197,12 @@ list scalaImports {
         :is(
             number[trait|range],
             string[trait|pattern],
-            string[trait|length]
+            string[trait|length],
+            :test(-[trait]-> [trait|smithy4s.meta#refinement]),
+            list[trait|length],
+            map[trait|length],
+            list:test(> [trait|length], > [trait|range], > [trait|pattern]),
+            map:test(> [trait|length], > [trait|range], > [trait|pattern])
         )"""
     conflicts: [unwrap]
 )

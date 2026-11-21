@@ -37,6 +37,7 @@ import smithy4s.schema.Schema.string
 type Name = Name.Type
 
 object Name extends ValidatedNewtype[String] {
+
   val id: ShapeId = ShapeId("smithy4s.example", "Name")
 
   val hints: Hints = Hints.empty
@@ -46,13 +47,15 @@ object Name extends ValidatedNewtype[String] {
       .withId(id)
       .addHints(hints)
       .validated(smithy.api.Length(min = Some(5L), max = None))
-
+  
   val validator: Validator[String, Name] = 
-    Validator.of[String, Name](Bijection[String, Name](_.asInstanceOf[Name], value(_)))
+    Validator.Builder.simple[String]
       .validating(smithy.api.Length(min = Some(5L), max = None))
+      .biject(Bijection[String, Name](_.asInstanceOf[Name], value(_))).build()
 
   implicit val schema: Schema[Name] = validator.toSchema(underlyingSchema)
 
   @inline def apply(a: String): Either[String, Name] = validator.validate(a)
 }
+
 ```
