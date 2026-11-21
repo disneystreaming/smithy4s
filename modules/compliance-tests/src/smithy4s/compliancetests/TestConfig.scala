@@ -36,6 +36,7 @@ object TestConfig {
   val clientRes = TestConfig(AppliesTo.CLIENT, TestType.Response)
   val serverReq = TestConfig(AppliesTo.SERVER, TestType.Request)
   val serverRes = TestConfig(AppliesTo.SERVER, TestType.Response)
+  val serverMalformed = TestConfig(AppliesTo.SERVER, TestType.Malformed)
   sealed abstract class TestType(
       val stringValue: String,
       val intValue: Int
@@ -49,9 +50,10 @@ object TestConfig {
 
     def id: ShapeId = ShapeId("smithy4s.compliancetests.internals", "TestType")
     def hints: Hints = Hints.empty
-    def values: List[TestType] = List(Request, Response)
+    def values: List[TestType] = List(Request, Response, Malformed)
     case object Request extends TestType("request", 0)
-    case object Response extends TestType("response", 0)
+    case object Response extends TestType("response", 1)
+    case object Malformed extends TestType("malformed", 2)
 
     val schema: Schema[TestType] = Schema.stringEnumeration(values)
 

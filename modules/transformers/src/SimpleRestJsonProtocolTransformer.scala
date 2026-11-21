@@ -6,7 +6,8 @@ import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes.{Shape, ShapeId}
 import software.amazon.smithy.model.traits.Trait
-import software.amazon.smithy.protocoltests.traits.{HttpRequestTestCase, HttpRequestTestsTrait, HttpResponseTestCase, HttpResponseTestsTrait}
+import software.amazon.smithy.protocoltests.traits.{HttpMalformedRequestTestsTrait, HttpRequestTestCase, HttpRequestTestsTrait, HttpResponseTestCase, HttpResponseTestsTrait}
+import software.amazon.smithy.model.node.Node
 import java.util.function.BiFunction
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 final class SimpleRestJsonProtocolTransformer extends ProjectionTransformer {
@@ -28,6 +29,20 @@ final class SimpleRestJsonProtocolTransformer extends ProjectionTransformer {
               res.toBuilder.protocol(ShapeId.from("alloy#simpleRestJson")).build()
               else res
         }.asJava)
+        // ParameterizedHttpMalformedRequestTestCase is package-private in Java,
+        // so we round-trip through nodes and use the Provider to reconstruct.
+        case c: HttpMalformedRequestTestsTrait =>
+          val rewrittenNode = Node.fromNodes(
+            c.toNode().expectArrayNode().getElements.asScala.toList.map { elem =>
+              val obj = elem.expectObjectNode()
+              val protocol = obj.expectStringMember("protocol").getValue
+              if (protocol == "aws.protocols#restJson1")
+                obj.withMember("protocol", Node.from("alloy#simpleRestJson"))
+              else obj
+            }: _*
+          )
+          new HttpMalformedRequestTestsTrait.Provider()
+            .createTrait(HttpMalformedRequestTestsTrait.ID, rewrittenNode)
         case _ => theTrait
       }
     }
