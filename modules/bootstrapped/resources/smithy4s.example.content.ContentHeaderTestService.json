@@ -1,0 +1,284 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ContentHeaderTestService",
+        "version": ""
+    },
+    "paths": {
+        "/blob-no-media": {
+            "post": {
+                "description": "Operation with Blob input without media type",
+                "operationId": "BlobInputNoMediaType",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlobInputNoMediaTypeInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "BlobInputNoMediaType 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlobInputNoMediaTypeOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/blob-with-media": {
+            "post": {
+                "description": "Operation with Blob input that has media type",
+                "operationId": "BlobInputWithMediaType",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlobInputWithMediaTypeInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "BlobInputWithMediaType 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlobInputWithMediaTypeOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/default": {
+            "post": {
+                "description": "Operation with no media types - should use default Content-Type header",
+                "operationId": "DefaultContentHeader",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DefaultContentHeaderInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "DefaultContentHeader 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DefaultContentHeaderOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/empty-struct": {
+            "post": {
+                "description": "Operation with empty struct - should have Content-Type when writeEmptyStructs=true, none when false",
+                "operationId": "EmptyStructOperation",
+                "responses": {
+                    "200": {
+                        "description": "EmptyStructOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmptyStructOperationOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/explicit-content-type": {
+            "post": {
+                "description": "Operation with explicit Content-Type header - should override default behavior",
+                "operationId": "ExplicitContentTypeHeader",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExplicitContentTypeHeaderInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ExplicitContentTypeHeader 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExplicitContentTypeHeaderOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/no-body": {
+            "get": {
+                "description": "Operation with only metadata (no body) - should not have Content-Type header",
+                "operationId": "NoBodyOperation",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "NoBodyOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoBodyOperationOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/xml-input": {
+            "post": {
+                "description": "Operation with XML input media type",
+                "operationId": "XmlInput",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/XmlInputInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "XmlInput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/XmlInputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/xml-json": {
+            "post": {
+                "description": "Operation with different media types for input and output",
+                "operationId": "XmlInputJsonOutput",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/XmlInputJsonOutputInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "XmlInputJsonOutput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/XmlInputJsonOutputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "BlobInputNoMediaTypeInputPayload": {
+                "type": "string",
+                "format": "byte"
+            },
+            "BlobInputNoMediaTypeOutputPayload": {
+                "type": "string"
+            },
+            "BlobInputWithMediaTypeInputPayload": {
+                "type": "string",
+                "description": "PNG image blob type",
+                "format": "byte"
+            },
+            "BlobInputWithMediaTypeOutputPayload": {
+                "type": "string"
+            },
+            "DefaultContentHeaderInputPayload": {
+                "type": "string"
+            },
+            "DefaultContentHeaderOutputPayload": {
+                "type": "string"
+            },
+            "EmptyStructOperationOutputPayload": {
+                "type": "string"
+            },
+            "ExplicitContentTypeHeaderInputPayload": {
+                "type": "string",
+                "format": "byte"
+            },
+            "ExplicitContentTypeHeaderOutputPayload": {
+                "type": "string"
+            },
+            "NoBodyOperationOutputPayload": {
+                "type": "string"
+            },
+            "XmlInputInputPayload": {
+                "type": "string",
+                "description": "XML payload type"
+            },
+            "XmlInputJsonOutputInputPayload": {
+                "type": "string",
+                "description": "XML payload type"
+            },
+            "XmlInputJsonOutputOutputPayload": {
+                "type": "string",
+                "description": "JSON payload type"
+            },
+            "XmlInputOutputPayload": {
+                "type": "string"
+            }
+        }
+    }
+}
