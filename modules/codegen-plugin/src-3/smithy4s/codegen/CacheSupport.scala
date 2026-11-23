@@ -44,24 +44,7 @@ private[codegen] object CacheSupport {
     ()
   }
 
-  private val MinimumSbtVersion = Vector(2L, 0L, 4L)
-
-  // Def.declareOutput relies on ActionCache.registerOutput, added in sbt 2.0.4.
-  private def requireSupportedSbt(version: String): Unit = {
-    val supported = VersionNumber(version).numbers
-      .zipAll(MinimumSbtVersion, 0L, 0L)
-      .collectFirst {
-        case (actual, minimum) if actual != minimum => actual > minimum
-      }
-      .getOrElse(true)
-    if (!supported)
-      sys.error(
-        s"smithy4s-sbt-codegen requires sbt 2.0.4 or later when used with sbt 2, but found sbt $version"
-      )
-  }
-
   def layout(config: Configuration, action: String) = Def.uncachedTask {
-    requireSupportedSbt(sbtVersion.value)
     val root = rootOutputDirectory.value.toAbsolutePath.normalize()
     // Isolates the staging directories of different projects.
     val project = MessageDigest
