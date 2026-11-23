@@ -1,0 +1,16 @@
+> installNativeChecks
+> reload
+
+# A repeated call is a cache hit
+> checkMetadata
+> checkMetadataHit
+
+# Changing the wildcard argument regenerates the metadata file
+> set Compile / smithy4sWildcardArgument := "?"
+> checkMetadata
+> checkMetadataHit
+
+# Going back to the first wildcard reuses its cache entry
+> set Compile / smithy4sWildcardArgument := "_"
+> checkMetadataHit
+> checkMetadata
