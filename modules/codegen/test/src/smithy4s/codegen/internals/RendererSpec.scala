@@ -100,6 +100,33 @@ final class RendererSpec extends munit.ScalaCheckSuite {
     assert(foo.contains("byName: Option[Map[String, List[Bar]]]"), foo)
   }
 
+  test(
+    "bincompat: the no-arg constructor is kept when every member was added later"
+  ) {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#bincompatAdded
+        |use smithy4s.meta#bincompatFriendly
+        |
+        |@bincompatFriendly
+        |structure Foo {
+        |  @bincompatAdded(version: "2.0")
+        |  a: String
+        |}
+        |""".stripMargin
+
+    val foo = generateScalaCode(smithy)("smithy4s.Foo")
+    assert(foo.contains("def apply(): Foo = new Foo(a = None)"), foo)
+    assert(
+      foo.contains("def apply(a: Option[String]): Foo = new Foo(a = a)"),
+      foo
+    )
+  }
+
   test("map member hints should be preserved") {
     val smithy =
       """

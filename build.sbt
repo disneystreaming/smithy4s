@@ -261,16 +261,6 @@ lazy val core = projectMatrix
     mimaBinaryIssueFilters ++= Seq(
       ProblemFilters.exclude[DirectMissingMethodProblem](
         "smithy.waiters.Acceptor.apply"
-      ),
-      // smithy 1.75.0 added optional members to two prelude traits:
-      // `exists`/`notFound` to `idempotent` and `featureId` to `unstable`.
-      // The no-arg `apply()` is replaced by one taking these members, with defaults,
-      // so callers stay source compatible.
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy.api.Idempotent.apply"
-      ),
-      ProblemFilters.exclude[DirectMissingMethodProblem](
-        "smithy.api.Unstable.apply"
       )
     )
   )

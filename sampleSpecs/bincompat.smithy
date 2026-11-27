@@ -54,6 +54,13 @@ structure BincompatStruct {
 @bincompatFriendly
 structure BincompatEmptyStruct {}
 
+// every member was added later: the original no-arg constructor must still exist
+@bincompatFriendly
+structure BincompatOnlyAddedStruct {
+    @bincompatAdded(version: "2.0")
+    added2_1: String
+}
+
 @bincompatFriendly
 structure BincompatOneFieldStruct {
     s: String

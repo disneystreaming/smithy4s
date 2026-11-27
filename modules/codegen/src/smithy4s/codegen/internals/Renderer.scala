@@ -904,6 +904,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         .sortBy(_._1)
         .toNel
         .map(Bincompat.accumulateFieldsByVersion(_))
+        .map { groups =>
+          // if every field was added in a later version, the original (empty) constructor still exists
+          if (groups.head._1.isDefined) (None -> Nil) :: groups
+          else groups
+        }
         // no fields turns into "version None with no fields" so that we have an empty constructor
         .getOrElse(NonEmptyList.of(None -> Nil))
 

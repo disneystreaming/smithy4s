@@ -49,6 +49,23 @@ In this module, you'll find:
 
 Note: the HTTP functionality may get moved to another module in the future.
 
+#### Bumping Smithy (and other upstream models)
+
+The generated code for the `smithy.api` and `alloy` namespaces is rendered in the bincompat-friendly style (see [Binary compatibility](modules/docs/resources/markdown/04-codegen/01-customisation/16-binary-compatibility.md)): structures become classes with a private constructor and one `apply` overload per version.
+
+When a Smithy upgrade adds members to a prelude structure (e.g. Smithy 1.75.0 added `featureId` to `@unstable`), MiMa will report that the previous `apply` is missing. Don't filter that problem out. Instead, register each new member in the `smithy4sBincompatPreludeAdditions` metadata in [smithy4s.meta.smithy](modules/protocol/resources/META-INF/smithy/smithy4s.meta.smithy), with the smithy4s version that will first ship it:
+
+```smithy
+metadata smithy4sBincompatPreludeAdditions = [
+    {
+        shape: "smithy.api#unstable$featureId"
+        version: "0.19.14"
+    }
+]
+```
+
+The codegen treats these members as if they had the `@smithy4s.meta#bincompatAdded` trait, which keeps the previous `apply` overload in place.
+
 ### Code generation process
 
 There are essentially three parts to how code generation works:
