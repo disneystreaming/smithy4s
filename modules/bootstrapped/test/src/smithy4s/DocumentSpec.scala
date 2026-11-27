@@ -221,6 +221,21 @@ class DocumentSpec() extends ScalaCheckSuite {
     )
   }
 
+  test("IDL 2.1 inline collections - member traits are applied") {
+    import Document._
+    import smithy4s.example.InlineCollections
+    val result = Document.decode[InlineCollections](
+      obj(
+        "requiredStrings" -> array(),
+        "nonEmptyStrings" -> array()
+      )
+    )
+    assert(result.isLeft, result)
+    val error = result.swap.toOption.get.toString
+    assert(error.contains("nonEmptyStrings"), error)
+    assert(error.contains("length"), error)
+  }
+
   test("untagged unions encoding") {
     implicit val eitherSchema: Schema[Either[Long, String]] = {
       val left = Schema.long

@@ -41,10 +41,8 @@ private[http4s] class SimpleRestJsonCodecs(
     val hostPrefixInjection: Boolean,
     val smithyPathEncoding: Boolean
 ) extends SimpleProtocolCodecs {
-  // smithy.api#discriminated is not (yet) listed in alloy#simpleRestJson's protocol definition,
-  // but smithy4s supports it alongside alloy#discriminated.
   private val hintMask =
-    alloy.SimpleRestJson.protocol.hintMask ++ smithy4s.HintMask(smithy.api.Discriminated)
+    alloy.SimpleRestJson.protocol.hintMask
 
   def transformJsonCodecs(f: JsonPayloadCodecCompiler => JsonPayloadCodecCompiler): SimpleRestJsonCodecs =
     new SimpleRestJsonCodecs(f(jsonCodecs), fieldFilter, hostPrefixInjection, smithyPathEncoding)

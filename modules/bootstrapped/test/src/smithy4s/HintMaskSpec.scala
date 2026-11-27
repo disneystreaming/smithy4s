@@ -33,6 +33,15 @@ class HintMaskSpec() extends munit.FunSuite {
     expect.eql(expected, result)
   }
 
+  test("SimpleRestJson's hint mask keeps both discriminated traits") {
+    val hints = Hints(
+      alloy.Discriminated("type"),
+      smithy.api.Discriminated("kind")
+    )
+    val result = alloy.SimpleRestJson.protocol.hintMask(hints)
+    expect.eql(hints, result)
+  }
+
   test("empty mask masks all hints") {
     val hints = Hints(Discriminated("type"), Required(), HttpError(404))
     val mask = HintMask.empty

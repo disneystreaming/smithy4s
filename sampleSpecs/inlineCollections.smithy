@@ -17,6 +17,13 @@ structure InlineCollections {
     stringToStructs: {String: [InlineCollectionsItem]}
 
     ref: StringList
+
+    // member traits apply to inline collections just like to named ones
+    @length(min: 1)
+    nonEmptyStrings: [String]
+
+    @length(min: 1, max: 2)
+    smallMap: {String: Integer}
 }
 
 structure InlineCollectionsItem {

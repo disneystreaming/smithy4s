@@ -85,7 +85,24 @@ structure Person {
 }
 ```
 
-These render directly as `List[String]` and `Map[String, Int]`, and Smithy4s generates no separate type for them. Inline collections can't carry traits, so if you need a trait on the collection itself (e.g. `@uniqueItems`, or Smithy4s's `@vector`), define a named shape instead.
+These render directly as `List[String]` and `Map[String, Int]`, and Smithy4s generates no separate type for them.
+
+Traits applied to the member, such as `@length`, apply to inline collections just as they do to named ones:
+
+```smithy
+$version: "2.1"
+
+namespace foo
+
+structure Person {
+  @length(min: 1)
+  nicknames: [String]
+}
+```
+
+Here, decoding a `Person` with an empty `nicknames` list fails validation.
+
+Traits that only apply to list or map shapes (e.g. `@uniqueItems`, `@sparse`, or Smithy4s's `@vector`) can't be used with inline collections. Neither can traits on the element itself, such as `[@length(min: 1) String]`. If you need any of these, define a named shape instead.
 
 ### Enums
 

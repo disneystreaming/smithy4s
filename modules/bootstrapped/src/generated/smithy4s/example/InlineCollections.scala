@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class InlineCollections(requiredStrings: List[String] = List(), strings: Option[List[String]] = None, structs: Option[List[InlineCollectionsItem]] = None, nested: Option[List[List[Int]]] = None, stringToInt: Option[Map[String, Int]] = None, stringToStructs: Option[Map[String, List[InlineCollectionsItem]]] = None, ref: Option[List[String]] = None)
+final case class InlineCollections(requiredStrings: List[String] = List(), strings: Option[List[String]] = None, structs: Option[List[InlineCollectionsItem]] = None, nested: Option[List[List[Int]]] = None, stringToInt: Option[Map[String, Int]] = None, stringToStructs: Option[Map[String, List[InlineCollectionsItem]]] = None, ref: Option[List[String]] = None, nonEmptyStrings: Option[List[String]] = None, smallMap: Option[Map[String, Int]] = None)
 
 object InlineCollections extends ShapeTag.Companion[InlineCollections] {
   val id: ShapeId = ShapeId("smithy4s.example", "InlineCollections")
@@ -18,7 +18,7 @@ object InlineCollections extends ShapeTag.Companion[InlineCollections] {
   val hints: Hints = Hints.empty
 
   // constructor using the original order from the spec
-  private def make(strings: Option[List[String]], requiredStrings: List[String], structs: Option[List[InlineCollectionsItem]], nested: Option[List[List[Int]]], stringToInt: Option[Map[String, Int]], stringToStructs: Option[Map[String, List[InlineCollectionsItem]]], ref: Option[List[String]]): InlineCollections = InlineCollections(requiredStrings, strings, structs, nested, stringToInt, stringToStructs, ref)
+  private def make(strings: Option[List[String]], requiredStrings: List[String], structs: Option[List[InlineCollectionsItem]], nested: Option[List[List[Int]]], stringToInt: Option[Map[String, Int]], stringToStructs: Option[Map[String, List[InlineCollectionsItem]]], ref: Option[List[String]], nonEmptyStrings: Option[List[String]], smallMap: Option[Map[String, Int]]): InlineCollections = InlineCollections(requiredStrings, strings, structs, nested, stringToInt, stringToStructs, ref, nonEmptyStrings, smallMap)
 
   implicit val schema: Schema[InlineCollections] = struct[InlineCollections](
     list(string).optional[InlineCollections]("strings", _.strings),
@@ -28,5 +28,7 @@ object InlineCollections extends ShapeTag.Companion[InlineCollections] {
     map(string, int).optional[InlineCollections]("stringToInt", _.stringToInt),
     map(string, list(InlineCollectionsItem.schema)).optional[InlineCollections]("stringToStructs", _.stringToStructs),
     StringList.underlyingSchema.optional[InlineCollections]("ref", _.ref),
+    list(string).validated(smithy.api.Length(min = Some(1L), max = None)).optional[InlineCollections]("nonEmptyStrings", _.nonEmptyStrings),
+    map(string, int).validated(smithy.api.Length(min = Some(1L), max = Some(2L))).optional[InlineCollections]("smallMap", _.smallMap),
   )(make).withId(id).addHints(hints)
 }
