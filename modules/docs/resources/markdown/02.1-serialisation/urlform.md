@@ -47,6 +47,8 @@ By default, `UrlForm` codecs honour the following [alloy traits](https://github.
 For example, given the following Smithy definition:
 
 ```smithy
+$version: "2.1"
+
 use alloy#urlFormName
 use alloy#urlFormFlattened
 
@@ -56,11 +58,7 @@ structure Order {
     id: String
 
     @urlFormFlattened
-    items: ItemList
-}
-
-list ItemList {
-    member: String
+    items: [String]
 }
 ```
 

@@ -252,8 +252,8 @@ NB: the "set" type was supported in smithy 1.0, but has disappeared in smithy 2.
 
 Additionally, Smithy4s allows users to [annotate list shapes](../04-codegen/01-customisation/03-collections.md) to customise the type of collection used during code-generation.
 
-Smithy does not support generics, therefore all collection are named. Though seemingly tedious, it makes it easier to build tooling
-(and probably helps languages that do not support generics). Provided the following shape :
+Smithy does not support generics, therefore collections are named shapes. Though seemingly tedious, it makes it easier to build tooling
+(and probably helps languages that do not support generics). Since IDL 2.1, collections can also be declared inline in a member (e.g. `ints: [Integer]`): these are anonymous to the user, and Smithy4s renders their schema in place (as `list(int)`) rather than generating a newtype. Provided the following named shape :
 
 ```smithy
 namespace example

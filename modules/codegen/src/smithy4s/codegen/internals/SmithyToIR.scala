@@ -45,6 +45,7 @@ import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
+import software.amazon.smithy.model.traits.synthetic.SyntheticShapeTrait
 
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -220,6 +221,8 @@ private[codegen] class SmithyToIR(
     .filter(_.getId().getNamespace() == namespace)
     // Only structure mixins should be generated
     .filterNot { s => s.hasTrait(classOf[MixinTrait]) && !s.isStructureShape() }
+    // Synthetic shapes (e.g. IDL 2.1 inline collections) are rendered inline at use sites
+    .filterNot(isSyntheticShape)
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
@@ -624,6 +627,9 @@ private[codegen] class SmithyToIR(
       }
     }
 
+  private def isSyntheticShape(shape: Shape): Boolean =
+    shape.hasTrait(classOf[SyntheticShapeTrait])
+
   private def isRecursive(id: ShapeId): Boolean = {
     // A shape is recursive if there is a relationship from itself to itself.
     val shape = model.expectShape(id)
@@ -724,6 +730,17 @@ private[codegen] class SmithyToIR(
         shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
       }
 
+      // Collections created by the assembler (e.g. IDL 2.1 inline collections such as `tags: [String]`)
+      // don't get a dedicated type: they're rendered inline, just like their declared targets would be.
+      private def aliasUnlessSynthetic(x: Shape, tpe: Type): Type =
+        if (isSyntheticShape(x)) tpe
+        else {
+          val externalOrBase =
+            getExternalOrBase(x, tpe)
+          val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+          Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+        }
+
       def primitive(
           shape: Shape,
           primitiveId: String,
@@ -805,12 +822,7 @@ private[codegen] class SmithyToIR(
               Type.Collection(CollectionType.List, tpe, memberHints)
             }
           }
-          .map { tpe =>
-            val externalOrBase =
-              getExternalOrBase(x, tpe)
-            val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
-          }
+          .map(aliasUnlessSynthetic(x, _))
       }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
@@ -849,12 +861,7 @@ private[codegen] class SmithyToIR(
         getHints(k, x.getKey()),
         v,
         getHints(v, x.getValue())
-      )).map { tpe =>
-        val externalOrBase =
-          getExternalOrBase(x, tpe)
-        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
-      }
+      )).map(aliasUnlessSynthetic(x, _))
 
       def byteShape(x: ByteShape): Option[Type] =
         primitive(x, "smithy.api#Byte", Primitive.Byte)

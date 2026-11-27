@@ -71,6 +71,8 @@ Now let's define an API in Smithy. Create the following file:
 And add the content below:
 
 ```smithy
+$version: "2.1"
+
 namespace smithy4s.example.hello
 
 use alloy#simpleRestJson
@@ -93,7 +95,10 @@ structure Person {
   name: String,
 
   @httpQuery("town")
-  town: String
+  town: String,
+
+  @httpQuery("tags")
+  tags: [String]
 }
 
 structure Greeting {
@@ -124,11 +129,13 @@ import com.comcast.ip4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
 
 object HelloWorldImpl extends HelloWorldService[IO] {
-  def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
-    town match {
-      case None => Greeting(s"Hello $name!")
-      case Some(t) => Greeting(s"Hello $name from $t!")
+  def hello(name: String, town: Option[String], tags: Option[List[String]]): IO[Greeting] = IO.pure {
+    val greeting = town match {
+      case None => s"Hello $name!"
+      case Some(t) => s"Hello $name from $t!"
     }
+    val tagged = tags.filter(_.nonEmpty).fold("")(ts => s" (tags: ${ts.mkString(", ")})")
+    Greeting(greeting + tagged)
   }
 }
 

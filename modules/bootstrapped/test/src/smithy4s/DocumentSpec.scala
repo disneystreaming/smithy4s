@@ -175,6 +175,52 @@ class DocumentSpec() extends ScalaCheckSuite {
     expect.same(roundTripped, Right(fooOrBar))
   }
 
+  test("smithy.api#discriminated unions encoding - default discriminator") {
+    import Document._
+    import smithy4s.example.{InlineCollectionsItem, SmithyDiscriminatedDefault}
+    roundtripTest(
+      obj("name" -> fromString("hello"), "__type" -> fromString("one")),
+      SmithyDiscriminatedDefault.one(InlineCollectionsItem(Some("hello")))
+    )
+  }
+
+  test("smithy.api#discriminated unions encoding - explicit discriminator") {
+    import Document._
+    import smithy4s.example.{InlineCollectionsItem, SmithyDiscriminated}
+    roundtripTest(
+      obj("name" -> fromString("hello"), "kind" -> fromString("one")),
+      SmithyDiscriminated.one(InlineCollectionsItem(Some("hello")))
+    )
+  }
+
+  test("alloy#discriminated takes precedence over smithy.api#discriminated") {
+    import Document._
+    import smithy4s.example.{InlineCollectionsItem, BothDiscriminated}
+    roundtripTest(
+      obj("name" -> fromString("hello"), "type" -> fromString("one")),
+      BothDiscriminated.one(InlineCollectionsItem(Some("hello")))
+    )
+  }
+
+  test("IDL 2.1 inline collections") {
+    import Document._
+    import smithy4s.example.{InlineCollections, InlineCollectionsItem}
+    roundtripTest(
+      obj(
+        "strings" -> array(fromString("a")),
+        "requiredStrings" -> array(),
+        "nested" -> array(array(fromInt(1), fromInt(2))),
+        "stringToStructs" -> obj("k" -> array(obj("name" -> fromString("n"))))
+      ),
+      InlineCollections(
+        strings = Some(List("a")),
+        nested = Some(List(List(1, 2))),
+        stringToStructs =
+          Some(Map("k" -> List(InlineCollectionsItem(Some("n")))))
+      )
+    )
+  }
+
   test("untagged unions encoding") {
     implicit val eitherSchema: Schema[Either[Long, String]] = {
       val left = Schema.long

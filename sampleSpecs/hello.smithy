@@ -1,4 +1,4 @@
-$version: "2"
+$version: "2.1"
 
 namespace smithy4s.example.hello
 
@@ -45,6 +45,9 @@ structure Person {
 
     @httpQuery("town")
     town: String
+
+    @httpQuery("tags")
+    tags: [String]
 }
 
 structure Greeting {

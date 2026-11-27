@@ -19,7 +19,7 @@ Obviously, the generated methods can be overridden.
 import smithy4s.example.hello._
 import cats.effect._
 val overriddenHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub){
-  override def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
+  override def hello(name: String, town: Option[String], tags: Option[List[String]]): IO[Greeting] = IO.pure {
     Greeting(s"Hello $name!")
   }
 }

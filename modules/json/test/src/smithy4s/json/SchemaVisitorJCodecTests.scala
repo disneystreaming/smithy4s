@@ -412,6 +412,31 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(bin, jsonBin)
   }
 
+  test("smithy.api#discriminated union uses __type by default") {
+    import smithy4s.example.{InlineCollectionsItem, SmithyDiscriminatedDefault}
+    val value =
+      SmithyDiscriminatedDefault.one(InlineCollectionsItem(Some("hello")))
+    val json = """{"__type":"one","name":"hello"}"""
+    expect.same(writeToString[SmithyDiscriminatedDefault](value), json)
+    expect.same(readFromString[SmithyDiscriminatedDefault](json), value)
+  }
+
+  test("smithy.api#discriminated union uses the provided discriminator") {
+    import smithy4s.example.{InlineCollectionsItem, SmithyDiscriminated}
+    val value = SmithyDiscriminated.one(InlineCollectionsItem(Some("hello")))
+    val json = """{"kind":"one","name":"hello"}"""
+    expect.same(writeToString[SmithyDiscriminated](value), json)
+    expect.same(readFromString[SmithyDiscriminated](json), value)
+  }
+
+  test("alloy#discriminated takes precedence over smithy.api#discriminated") {
+    import smithy4s.example.{InlineCollectionsItem, BothDiscriminated}
+    val value = BothDiscriminated.one(InlineCollectionsItem(Some("hello")))
+    val json = """{"type":"one","name":"hello"}"""
+    expect.same(writeToString[BothDiscriminated](value), json)
+    expect.same(readFromString[BothDiscriminated](json), value)
+  }
+
   test("Discriminated union decoding tolerates whitespace") {
     val json = """ { "tpe": "one" , "value": "hello" }"""
     val result = readFromString[TestBiggerUnion](json)

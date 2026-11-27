@@ -70,6 +70,23 @@ map AgeMap {
 }
 ```
 
+#### Inline collections
+
+Since IDL version 2.1 (Smithy 1.75.0), a structure or union member can declare a list or map inline, without defining a named shape for it:
+
+```smithy
+$version: "2.1"
+
+namespace foo
+
+structure Person {
+  nicknames: [String]
+  ageByName: {String: Integer}
+}
+```
+
+These render directly as `List[String]` and `Map[String, Int]`, and Smithy4s generates no separate type for them. Inline collections can't carry traits, so if you need a trait on the collection itself (e.g. `@uniqueItems`, or Smithy4s's `@vector`), define a named shape instead.
+
 ### Enums
 
 Smithy supports two types of enums, for string and integers :

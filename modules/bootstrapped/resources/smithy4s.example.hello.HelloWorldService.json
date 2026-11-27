@@ -23,6 +23,18 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "tags",
+                        "in": "query",
+                        "style": "form",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "explode": true
                     }
                 ],
                 "responses": {
