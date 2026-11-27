@@ -13,6 +13,19 @@ metadata smithy4sBincompatPreludeAdditions = [
         shape: "smithy.api#cors$origins"
         version: "0.19.1"
     }
+    // added in smithy 1.75.0
+    {
+        shape: "smithy.api#idempotent$exists"
+        version: "0.19.14"
+    }
+    {
+        shape: "smithy.api#idempotent$notFound"
+        version: "0.19.14"
+    }
+    {
+        shape: "smithy.api#unstable$featureId"
+        version: "0.19.14"
+    }
 ]
 
 namespace smithy4s.meta

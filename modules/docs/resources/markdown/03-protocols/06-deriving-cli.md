@@ -9,6 +9,8 @@ title: Deriving CLIs
 - Let's revisit our HelloWorld smithy definition from the [Quickstart](../01-overview/02-quickstart.md)
 
 ```smithy
+$version: "2.1"
+
 namespace smithy4s.hello
 
 use alloy#simpleRestJson
@@ -31,7 +33,10 @@ structure Person {
   name: String,
 
   @httpQuery("town")
-  town: String
+  town: String,
+
+  @httpQuery("tags")
+  tags: [String]
 }
 
 structure Greeting {
@@ -48,7 +53,7 @@ import cats.effect.IO
 
 object HelloWorldServiceInstance{
   val simple = new HelloWorldService[IO]{
-    def hello(name: String, town: Option[String]): IO[Greeting] = {
+    def hello(name: String, town: Option[String], tags: Option[List[String]]): IO[Greeting] = {
       IO {
         Greeting(s"hello $name , who hails from $town")
       }

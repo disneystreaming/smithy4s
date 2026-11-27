@@ -66,7 +66,7 @@ import cats.effect.IO
 
 object HelloWorldImpl extends HelloWorldService[IO] {
 
-  def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
+  def hello(name: String, town: Option[String], tags: Option[List[String]]): IO[Greeting] = IO.pure {
     town match {
       case None => Greeting(s"Hello $name !")
       case Some(t) => Greeting(s"Hello $name from $t !")

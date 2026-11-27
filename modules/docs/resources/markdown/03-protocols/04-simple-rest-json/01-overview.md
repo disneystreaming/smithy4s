@@ -16,6 +16,8 @@ In this protocol, the values in shapes are bound to http metadata or body accord
 ## Example spec
 
 ```smithy
+$version: "2.1"
+
 namespace smithy4s.example
 
 use alloy#simpleRestJson
@@ -48,6 +50,9 @@ structure Person {
 
   @httpQuery("town")
   town: String
+
+  @httpQuery("tags")
+  tags: [String]
 }
 
 structure Greeting {

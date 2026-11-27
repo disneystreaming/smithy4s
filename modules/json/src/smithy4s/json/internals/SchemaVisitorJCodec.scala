@@ -18,7 +18,6 @@ package smithy4s
 package json
 package internals
 
-import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Nullable
 import alloy.PreserveKeyOrder
@@ -29,6 +28,7 @@ import smithy.api.JsonName
 import smithy.api.Required
 import smithy.api.TimestampFormat
 import smithy4s.internals.DiscriminatedUnionMember
+import smithy4s.internals.DiscriminatorField
 import smithy4s.schema.FieldFilter
 import smithy4s.schema.Primitive._
 import smithy4s.schema._
@@ -1262,7 +1262,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   private def discriminatedUnion[U](
       alternatives: Vector[Alt[U, _]],
-      discriminated: Discriminated
+      discriminator: String
   )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
     new UnionJCodec[U](alternatives, isDiscriminated = true)(dispatch) {
       def expecting: String = "discriminated-union"
@@ -1272,7 +1272,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       def decodeValue(cursor: Cursor, in: JsonReader): U =
         if (in.isNextToken('{')) {
           in.setMark()
-          if (in.skipToKey(discriminated.value)) {
+          if (in.skipToKey(discriminator)) {
             val key = in.readString("")
             in.rollbackToMark()
             in.rollbackToken()
@@ -1286,7 +1286,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             }
           } else
             in.decodeError(
-              s"Unable to find discriminator ${discriminated.value}"
+              s"Unable to find discriminator $discriminator"
             )
         } else in.decodeError("Expected JSON object")
 
@@ -1296,7 +1296,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             instance.hints.get(JsonName).map(_.value).getOrElse(label)
           val jcodecA = instance
             .addHints(
-              Hints(DiscriminatedUnionMember(discriminated.value, jsonLabel))
+              Hints(DiscriminatedUnionMember(discriminator, jsonLabel))
             )
             .compile(self)
           a => out => jcodecA.encodeValue(a, out)
@@ -1322,7 +1322,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       dispatch: Alt.Dispatcher[U]
   ): JCodec[U] = hints match {
     case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
-    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
+    case DiscriminatorField(d) => discriminatedUnion(alternatives, d)(dispatch)
     case _ =>
       if (lenientTaggedUnionDecoding) lenientTaggedUnion(alternatives)(dispatch)
       else taggedUnion(alternatives)(dispatch)

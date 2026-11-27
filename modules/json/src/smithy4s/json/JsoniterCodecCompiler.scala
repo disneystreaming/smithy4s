@@ -91,7 +91,8 @@ object JsoniterCodecCompiler {
     HintMask(
       JsonName,
       TimestampFormat,
-      Discriminated,
+      alloy.Discriminated,
+      smithy.api.Discriminated,
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,

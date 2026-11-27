@@ -17,7 +17,6 @@
 package smithy4s
 package internals
 
-import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Untagged
 import smithy.api.JsonName
@@ -289,9 +288,9 @@ class DocumentEncoderSchemaVisitor(
           case _ if schema.hints.has(JsonUnknown) =>
             self.apply(schema)
 
-          case Discriminated.hint(discriminated) =>
+          case DiscriminatorField(discriminator) =>
             val unionMemberHint = DiscriminatedUnionMember(
-              discriminated.value,
+              discriminator,
               jsonLabel
             )
             self.apply(schema.addHints(unionMemberHint))

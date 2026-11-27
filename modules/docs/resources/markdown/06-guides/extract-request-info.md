@@ -52,7 +52,7 @@ import cats.effect.IO
 import cats.effect.IOLocal
 
 final class HelloWorldServiceImpl(requestInfo: IO[RequestInfo]) extends HelloWorldService[IO] {
-  def hello(name: String, town: Option[String]): IO[Greeting] =
+  def hello(name: String, town: Option[String], tags: Option[List[String]]): IO[Greeting] =
     requestInfo.flatMap { reqInfo: RequestInfo =>
       IO.println("REQUEST_INFO: " + reqInfo)
         .as(Greeting(s"Hello, $name"))

@@ -19,7 +19,7 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
 
   /** HTTP POST /{name} */
-  def hello(name: String, town: Option[String] = None): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]
+  def hello(name: String, town: Option[String] = None, tags: Option[List[String]] = None): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]
 
 }
 
@@ -80,17 +80,17 @@ sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, Strea
 object HelloWorldServiceOperation {
 
   object reified extends HelloWorldServiceGen[HelloWorldServiceOperation] {
-    def hello(name: String, town: Option[String] = None): Hello = Hello(Person(name, town))
+    def hello(name: String, town: Option[String] = None, tags: Option[List[String]] = None): Hello = Hello(Person(name, town, tags))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def hello(name: String, town: Option[String] = None): P1[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = f[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing](this.alg.hello(name, town))
+    def hello(name: String, town: Option[String] = None, tags: Option[List[String]] = None): P1[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = f[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing](this.alg.hello(name, town, tags))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
   final case class Hello(input: Person) extends HelloWorldServiceOperation[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = impl.hello(input.name, input.town)
+    def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = impl.hello(input.name, input.town, input.tags)
     def ordinal: Int = 0
     def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = Hello
   }

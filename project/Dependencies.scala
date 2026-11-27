@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.72.0"
+    val smithyVersion = "1.75.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val smokeTestTraits = org % "smithy-smoke-test-traits" % smithyVersion
@@ -32,7 +32,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.3.40"
+    val alloyVersion = "0.3.41-2-d398e2"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val protobuf = org % "alloy-protobuf" % alloyVersion

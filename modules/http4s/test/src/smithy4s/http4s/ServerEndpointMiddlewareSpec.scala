@@ -321,7 +321,11 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
   private class FailingHelloImpl(throwable: Throwable)
       extends HelloWorldService[IO] {
-    def hello(name: String, town: Option[String]): IO[Greeting] =
+    def hello(
+        name: String,
+        town: Option[String],
+        tags: Option[List[String]]
+    ): IO[Greeting] =
       throwable.raiseError[IO, Greeting]
   }
   private object FailingHelloImpl
@@ -332,7 +336,11 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
       )
 
   private object HelloImpl extends HelloWorldService[IO] {
-    def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure(
+    def hello(
+        name: String,
+        town: Option[String],
+        tags: Option[List[String]]
+    ): IO[Greeting] = IO.pure(
       Greeting(s"Hello, $name")
     )
   }

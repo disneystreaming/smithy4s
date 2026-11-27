@@ -46,7 +46,7 @@ Smithy4s does not rely on the classic automated derivation mechanisms to determi
 
 By default, the specification of the Smithy language hints that the `tagged-union` encoding should be used. This is arguably the best encoding for unions, as it works with members of any type (not just structures), and does not require backtracking during parsing, which makes it more efficient.
 
-However, Smithy4s provides support for two additional encodings: `discriminated` and `untagged`, which users can opt-in via the `alloy#discriminated` and `alloy#untagged` trait, respectively. These are mostly offered as a way to retrofit existing APIs in Smithy.
+However, Smithy4s provides support for two additional encodings: `discriminated` and `untagged`, which users can opt-in via the `smithy.api#discriminated` (or `alloy#discriminated`) and `alloy#untagged` trait, respectively. These are mostly offered as a way to retrofit existing APIs in Smithy.
 
 
 #### Tagged union
@@ -117,9 +117,9 @@ In this encoding, the discriminator is inlined as a JSON field within JSON objec
 
 Despite the JSON payload exhibiting less nesting than in the `tagged union` encoding, this encoding often leads to bigger payloads, and requires backtracking once during parsing.
 
-```smithy
-use alloy#discriminated
+The `discriminated` trait is part of the Smithy prelude (`smithy.api#discriminated`, since Smithy 1.75.0), so it needs no import. When applied without a value (`@discriminated`), the discriminator field is named `__type`.
 
+```smithy
 @discriminated("tpe")
 union Discriminated {
   first: StringWrapper
@@ -148,6 +148,8 @@ are  encoded as such
 { "tpe": "first", "string": "smithy4s" }
 { "tpe": "second", "int": 42 }
 ```
+
+Smithy4s also supports the older `alloy#discriminated` trait, which works the same way but always requires a value. If a union has both `alloy#discriminated` and `smithy.api#discriminated`, the value of `alloy#discriminated` is used.
 
 #### Open unions
 

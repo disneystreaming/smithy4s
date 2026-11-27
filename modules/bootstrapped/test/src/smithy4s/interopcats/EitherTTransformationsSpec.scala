@@ -37,7 +37,8 @@ object EitherTTransformationsSpec extends FunSuite {
       new HelloWorldServiceGen.ErrorAware[EitherTTry] {
         def hello(
             name: String,
-            town: Option[String] = None
+            town: Option[String] = None,
+            tags: Option[List[String]] = None
         ): EitherT[Try, HelloError, Greeting] =
           if (name.isEmpty)
             EitherT.leftT(
@@ -68,7 +69,8 @@ object EitherTTransformationsSpec extends FunSuite {
       new HelloWorldServiceGen.ErrorAware[EitherTTry] {
         def hello(
             name: String,
-            town: Option[String] = None
+            town: Option[String] = None,
+            tags: Option[List[String]] = None
         ): EitherT[Try, HelloError, Greeting] =
           EitherT[Try, HelloError, Greeting](Failure(underlying))
       }
@@ -82,7 +84,11 @@ object EitherTTransformationsSpec extends FunSuite {
   test("surfaceError lifts a service from F to EitherT[F, *, *]") {
     val functor: HelloWorldService[Try] =
       new HelloWorldService[Try] {
-        def hello(name: String, town: Option[String] = None): Try[Greeting] =
+        def hello(
+            name: String,
+            town: Option[String] = None,
+            tags: Option[List[String]] = None
+        ): Try[Greeting] =
           if (name.isEmpty) Failure(GenericServerError(Some("name was empty")))
           else Success(Greeting(s"hello, $name"))
       }
@@ -111,7 +117,11 @@ object EitherTTransformationsSpec extends FunSuite {
 
     val functor: HelloWorldService[Try] =
       new HelloWorldService[Try] {
-        def hello(name: String, town: Option[String] = None): Try[Greeting] =
+        def hello(
+            name: String,
+            town: Option[String] = None,
+            tags: Option[List[String]] = None
+        ): Try[Greeting] =
           Failure(unknown)
       }
 
@@ -126,7 +136,8 @@ object EitherTTransformationsSpec extends FunSuite {
       new HelloWorldServiceGen.ErrorAware[EitherTTry] {
         def hello(
             name: String,
-            town: Option[String] = None
+            town: Option[String] = None,
+            tags: Option[List[String]] = None
         ): EitherT[Try, HelloError, Greeting] =
           if (name.isEmpty)
             EitherT.leftT(

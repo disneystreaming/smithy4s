@@ -17,7 +17,6 @@
 package smithy4s
 package internals
 
-import alloy.Discriminated
 import alloy.JsonUnknown
 import alloy.Nullable
 import alloy.Untagged
@@ -469,7 +468,7 @@ class DocumentDecoderSchemaVisitor(
     Map[String, (List[PayloadPath.Segment], Document) => S]
 
   private def discriminatedUnion[S](
-      discriminated: Discriminated,
+      discriminator: String,
       decoders: DecoderMap[S],
       handleUnknownTag: (String, List[PayloadPath.Segment], Document) => S
   ): DocumentDecoder[S] = handleUnion {
@@ -477,7 +476,7 @@ class DocumentDecoderSchemaVisitor(
       document match {
         case DObject(map) =>
           map
-            .get(discriminated.value) match {
+            .get(discriminator) match {
             case Some(value: Document.DString) =>
               decoders.get(value.value) match {
                 case Some(decoder) => decoder(pp, document)
@@ -487,7 +486,7 @@ class DocumentDecoderSchemaVisitor(
               throw new PayloadError(
                 PayloadPath(pp.reverse),
                 "Union",
-                s"Unable to locate discriminator under property '${discriminated.value}'"
+                s"Unable to locate discriminator under property '$discriminator'"
               )
           }
         case other =>
@@ -592,8 +591,8 @@ class DocumentDecoderSchemaVisitor(
         .toMap
 
     hints match {
-      case Discriminated.hint(discriminated) =>
-        discriminatedUnion(discriminated, decoders, handleUnknownTag)
+      case DiscriminatorField(discriminator) =>
+        discriminatedUnion(discriminator, decoders, handleUnknownTag)
       case Untagged.hint(_) =>
         untaggedUnion(decoders)
       case _ =>
